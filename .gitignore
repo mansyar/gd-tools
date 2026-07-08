@@ -1,0 +1,14 @@
+# CodeGraph index
+.codegraph/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# gd-tools runtime
+.gd-tools/
+.godot/
