@@ -1,7 +1,10 @@
+<protect>
+
 # Implementation Plan: Track 4 — Lint Wrapper
 
 ## Phase 1: Data Models & Config Fix
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [ ] Task: Define `LintIssue` and `LintResult` dataclasses
     - [ ] Write tests for `LintIssue` dataclass (construction, field types, severity values)
     - [ ] Write tests for `LintResult` dataclass (construction, empty lists, files_checked)
@@ -15,6 +18,7 @@
 
 ## Phase 2: File Discovery & Lint Runner Core
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [ ] Task: Implement file discovery function
     - [ ] Write tests for recursive `.gd` file collection (nested directories)
     - [ ] Write tests for case-insensitive `.gd` extension matching (`.GD`, `.Gd`)
@@ -37,6 +41,7 @@
 
 ## Phase 3: Output Formatting
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [ ] Task: Implement rich table terminal output
     - [ ] Write tests for text output with violations (table columns: File, Line, Column, Rule, Severity, Message)
     - [ ] Write tests for color coding (red for errors, yellow for warnings)
@@ -53,6 +58,7 @@
 
 ## Phase 4: CLI Integration
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [ ] Task: Update `lint` command in `src/gd_tools/cli.py`
     - [ ] Write tests for `lint` command with default path (no path arg → defaults to `.`)
     - [ ] Write tests for `lint` command with `--report-format json`
@@ -66,6 +72,7 @@
 
 ## Phase 5: Integration Tests & Coverage
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [ ] Task: Integration tests with fixture `.gd` files
     - [ ] Create fixture `.gd` files in `tests/fixtures/` (clean file, file with errors, file with warnings, syntax error file)
     - [ ] Write integration test: full `lint` run on fixture project (text output)
@@ -78,3 +85,5 @@
     - [ ] Run `black --check src/gd_tools/lint_runner.py` — verify formatting
     - [ ] Run full test suite — verify no regressions
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests & Coverage' (Protocol in workflow.md)
+
+</protect>

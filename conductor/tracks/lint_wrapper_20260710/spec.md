@@ -1,3 +1,5 @@
+<protect>
+
 # Track 4: Lint Wrapper — Specification
 
 ## Overview
@@ -122,3 +124,5 @@ class LintResult:
 - End-to-end (E2E) tests
 - Rule configuration/overrides (custom rule enabling/disabling)
 - `generate_gdformatrc()` fix (same pattern but out of scope for this track)
+
+</protect>
