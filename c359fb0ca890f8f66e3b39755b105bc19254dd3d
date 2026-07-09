@@ -1,0 +1,36 @@
+Phase 1 Checkpoint: Spike Project Scaffolding
+
+PHASE SUMMARY:
+Phase 1 completed all 4 tasks:
+- Task 1: Created spike project directory structure (commit 1cd1e13)
+- Task 2: Created spike/project.godot with Godot 4.6 config and _GDTCoverage autoload (commit 52c9989)
+- Task 3: Installed GUT 9.6.0 addon and enabled editor plugin (commit d181297)
+- Task 4: Created hand-written instrumentation plan plan.json (commit f0dd5d0)
+
+AUTOMATED VERIFICATION:
+1. plan.json validation: python -c "import json; json.load(open('spike/plan.json'))" → VALID JSON, version=1, 1 file entry
+2. GUT load test: C:\Godot\Godot_v4.6.2-stable_win64.exe --headless --path spike/ -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit → Exit code 0, GUT v9.6.0 loaded
+
+SOURCE CODE FILES:
+- spike/addons/gd-tools-coverage/tracker.gd (placeholder stub, extends Node + docstring only)
+  - Full TDD implementation deferred to Phase 3
+  - No tests required for placeholder at this stage
+
+NON-CODE FILES (no tests required):
+- spike/project.godot (Godot config)
+- spike/plan.json (instrumentation plan JSON)
+- spike/addons/gut/ (third-party GUT addon, 253 files)
+
+MANUAL VERIFICATION STEPS (presented to user):
+1. Verify project structure: spike/ contains project.godot, addons/gut/, addons/gd-tools-coverage/tracker.gd, scripts/, test/, plan.json
+2. Verify GUT is functional: headless run exits code 0
+3. Verify plan.json content: version=1, generated_by="spike", file res://scripts/calculator.gd with file_id=0 and 3 line entries
+4. Verify autoload registered: _GDTCoverage points to *res://addons/gd-tools-coverage/tracker.gd
+
+USER CONFIRMATION: User confirmed "Yes, verified" - all manual verification steps passed.
+
+DEVIATIONS:
+- Godot 4.6.2 used (spec references 4.5) - APIs stable across Godot 4.x
+- Placeholder tracker.gd created in Phase 1 (deferred to Phase 3 for full TDD)
+- GUT CLI flag is -gdir (not -gdirs) in GUT 9.6.0
+- headless --import pass required for new addons
