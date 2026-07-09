@@ -2,7 +2,7 @@
 
 # Implementation Plan: Track 4 — Lint Wrapper
 
-## Phase 1: Data Models & Config Fix
+## Phase 1: Data Models & Config Fix [checkpoint: 9f58755]
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Define `LintIssue` and `LintResult` dataclasses `062d74e`
