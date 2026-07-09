@@ -72,7 +72,7 @@
 - [x] Task: Implement `GUT_VERSION_MAP` and `get_gut_version_for_godot()` [663ab22]
 - [x] Task: Conductor - User Manual Verification 'Version Detection, Validation & GUT Mapping' (Protocol in workflow.md)
 
-## Phase 4: Godot Invocation Wrapper
+## Phase 4: Godot Invocation Wrapper [checkpoint: 3ce2f06]
 
 - [x] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [x] Task: Write tests for `run_godot()` [3a8a99f]
@@ -82,5 +82,5 @@
     - [x] Test raises `subprocess.TimeoutExpired` when timeout exceeded
     - [x] Test returns `subprocess.CompletedProcess`
 - [x] Task: Implement `run_godot()` [3a8a99f]
-- [ ] Task: Conductor - User Manual Verification 'Godot Invocation Wrapper' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Godot Invocation Wrapper' (Protocol in workflow.md)
 </protect>
