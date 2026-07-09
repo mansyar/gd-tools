@@ -1,0 +1,32 @@
+Phase 2 Checkpoint Verification Report
+
+Phase: Phase 2: File Discovery & Lint Runner Core
+
+Automated Test Command:
+  \='true'; python -m pytest --cov=gd_tools --cov-branch --cov-report=term-missing
+
+Test Results:
+  - 171 tests passed (0 failed)
+  - Total coverage: 99.25%
+  - lint_runner.py: 100% line coverage, 100% branch coverage (43 statements, 12 branches)
+  - All quality gates passed: ruff check ✅, black --check ✅
+
+Manual Verification Steps (approved by user):
+  1. Ensure gd-tools is installed: pip install -e .
+  2. Verify discover_gd_files(): Create temp dir with .gd files (including nested dirs
+     and excluded dirs like addons/), confirm excluded dirs are NOT listed.
+  3. Verify run_lint() with clean files: Create .gd file with 'extends Node', confirm
+     files_checked > 0, errors=0, warnings=0.
+  4. Verify run_lint() with lint errors: Create .gd file with 'func BadFunctionName():',
+     confirm errors >= 1, rule='function-name', severity='error'.
+  5. Verify syntax error handling: Create .gd file with 'func ():' (syntax error),
+     confirm errors >= 1, rule='SYNTAX_ERROR', severity='error'. Runner does not crash.
+
+User Confirmation: Approved (user selected 'Yes, approved')
+
+Phase 2 Tasks Completed:
+  - Task 1: Read spec.md and workflow.md (no commit needed)
+  - Task 2: Implement file discovery function (commit 2c0ea4a)
+  - Task 3: Implement run_lint() core logic (commit 63c86e2)
+  - Task 4: Implement syntax error handling (commit ca0cbc9)
+  - Task 5: User Manual Verification (this checkpoint)
