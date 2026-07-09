@@ -9,12 +9,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from gd_tools.config import GodotConfig
-from gd_tools.errors import GodotNotFoundError
+from gd_tools.errors import ConfigError, GodotNotFoundError
 from gd_tools.godot import (
+    GUT_VERSION_MAP,
     GodotInfo,
     check_version_compatible,
     find_godot,
     get_godot_version,
+    get_gut_version_for_godot,
 )
 
 # --- GodotInfo dataclass ---
@@ -410,3 +412,44 @@ def test_get_godot_version_failure_raises(mock_run):
 def test_check_version_compatible(version, expected):
     """Test version compatibility check against 4.5.0 threshold."""
     assert check_version_compatible(version) is expected
+
+
+# --- GUT_VERSION_MAP and get_gut_version_for_godot ---
+
+
+@pytest.mark.unit
+def test_gut_version_map_contents():
+    """Test GUT_VERSION_MAP has correct Godot-to-GUT version mappings."""
+    assert GUT_VERSION_MAP == {
+        "4.5": "9.5.0",
+        "4.6": "9.6.0",
+        "4.7": "9.7.0",
+    }
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "godot_version,expected_gut",
+    [
+        ("4.5.1", "9.5.0"),
+        ("4.6.0", "9.6.0"),
+        ("4.7.0", "9.7.0"),
+    ],
+)
+def test_get_gut_version_for_godot(godot_version, expected_gut):
+    """Test GUT version mapping uses major.minor prefix."""
+    assert get_gut_version_for_godot(godot_version) == expected_gut
+
+
+@pytest.mark.unit
+def test_get_gut_version_for_godot_unmapped_raises():
+    """Test ConfigError raised for unmapped Godot version."""
+    with pytest.raises(ConfigError):
+        get_gut_version_for_godot("4.4.0")
+
+
+@pytest.mark.unit
+def test_get_gut_version_for_godot_malformed_raises():
+    """Test ConfigError raised for malformed Godot version."""
+    with pytest.raises(ConfigError):
+        get_gut_version_for_godot("4")

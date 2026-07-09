@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from gd_tools.config import GodotConfig
-from gd_tools.errors import GodotNotFoundError
+from gd_tools.errors import ConfigError, GodotNotFoundError
 
 
 @dataclass
@@ -98,6 +98,42 @@ def check_version_compatible(version: str) -> bool:
         int(match.group(3)),
     )
     return (major, minor, patch) >= (4, 5, 0)
+
+
+GUT_VERSION_MAP = {
+    "4.5": "9.5.0",
+    "4.6": "9.6.0",
+    "4.7": "9.7.0",
+}
+
+
+def get_gut_version_for_godot(godot_version: str) -> str:
+    """Map a Godot version to its compatible GUT version.
+
+    Uses the ``major.minor`` prefix to look up the GUT version.
+
+    Args:
+        godot_version: Normalized Godot version (e.g., "4.5.1").
+
+    Returns:
+        Compatible GUT version string (e.g., "9.5.0").
+
+    Raises:
+        ConfigError: If the Godot version is not in the GUT_VERSION_MAP.
+    """
+    parts = godot_version.split(".")
+    if len(parts) < 2:
+        raise ConfigError(
+            f"Invalid Godot version '{godot_version}': "
+            f"expected format 'major.minor.patch'"
+        )
+    key = f"{parts[0]}.{parts[1]}"
+    if key not in GUT_VERSION_MAP:
+        raise ConfigError(
+            f"No GUT version mapping for Godot {key}. "
+            f"Supported versions: {', '.join(sorted(GUT_VERSION_MAP))}"
+        )
+    return GUT_VERSION_MAP[key]
 
 
 # --- Binary Resolution Chain ---
