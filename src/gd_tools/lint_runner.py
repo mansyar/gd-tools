@@ -10,7 +10,9 @@ or JSON.
 import os
 from dataclasses import dataclass, field
 
-from gd_tools.config import DEFAULT_EXCLUDES
+from gdtoolkit.linter import lint_code
+
+from gd_tools.config import DEFAULT_EXCLUDES, GdToolsConfig
 
 
 @dataclass
@@ -78,3 +80,52 @@ def discover_gd_files(
             if file.lower().endswith(".gd"):
                 gd_files.append(os.path.join(root, file))
     return gd_files
+
+
+def run_lint(
+    config: GdToolsConfig, path: str = ".", report_format: str = "text"
+) -> LintResult:
+    """Run gdlint on ``path``, respecting config excludes.
+
+    Discovers ``.gd`` files via :func:`discover_gd_files`, reads each
+    file, and invokes ``gdtoolkit.linter.lint_code`` to check for
+    issues.  All gdlint problems are treated as errors (gdlint does
+    not distinguish severities).
+
+    Args:
+        config: Project configuration with lint excludes.
+        path: Root directory to lint.
+        report_format: Output format hint (unused here; formatting
+            is handled by :func:`format_lint_text` /
+            :func:`format_lint_json`).
+
+    Returns:
+        :class:`LintResult` with file count and issue lists.
+    """
+    excludes = config.lint.exclude
+    gd_files = discover_gd_files(path, excludes)
+
+    errors: list[LintIssue] = []
+    warnings: list[LintIssue] = []
+
+    for file_path in gd_files:
+        with open(file_path, "r", encoding="utf-8") as f:
+            code = f.read()
+        problems = lint_code(code)
+        for problem in problems:
+            errors.append(
+                LintIssue(
+                    file=file_path,
+                    line=problem.line,
+                    column=problem.column,
+                    rule=problem.name,
+                    message=problem.description,
+                    severity="error",
+                )
+            )
+
+    return LintResult(
+        files_checked=len(gd_files),
+        errors=errors,
+        warnings=warnings,
+    )

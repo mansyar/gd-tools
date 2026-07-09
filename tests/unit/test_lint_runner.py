@@ -7,7 +7,13 @@ error handling.
 
 from pathlib import Path
 
-from gd_tools.lint_runner import LintIssue, LintResult, discover_gd_files
+from gd_tools.config import GdToolsConfig
+from gd_tools.lint_runner import (
+    LintIssue,
+    LintResult,
+    discover_gd_files,
+    run_lint,
+)
 
 # --- LintIssue dataclass ---
 
@@ -201,3 +207,81 @@ def test_discover_gd_files_default_excludes(tmp_path):
     result = discover_gd_files(str(tmp_path))
     assert len(result) == 1
     assert Path(result[0]).name == "player.gd"
+
+
+# --- run_lint core logic ---
+
+
+def test_run_lint_clean_files(tmp_path):
+    """Test run_lint with clean .gd files (no errors, no warnings)."""
+    (tmp_path / "clean.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.files_checked == 1
+    assert result.errors == []
+    assert result.warnings == []
+
+
+def test_run_lint_with_errors(tmp_path):
+    """Test run_lint with files that have lint errors."""
+    (tmp_path / "bad.gd").write_text(
+        "extends Node\n\nfunc BadFunctionName():\n    pass\n"
+    )
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.files_checked == 1
+    assert len(result.errors) >= 1
+    issue = result.errors[0]
+    assert issue.rule == "function-name"
+    assert issue.severity == "error"
+    assert issue.line == 3
+    assert issue.column == 6
+    assert "BadFunctionName" in issue.message
+
+
+def test_run_lint_warnings_empty(tmp_path):
+    """Test that warnings list is empty (gdlint does not produce warnings)."""
+    (tmp_path / "bad.gd").write_text(
+        "extends Node\n\nfunc BadFunctionName():\n    pass\n"
+    )
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.warnings == []
+
+
+def test_run_lint_respects_excludes(tmp_path):
+    """Test that run_lint respects config excludes."""
+    (tmp_path / "main.gd").write_text("extends Node\n")
+    (tmp_path / "addons").mkdir()
+    (tmp_path / "addons" / "plugin.gd").write_text(
+        "extends Node\n\nfunc BadFunctionName():\n    pass\n"
+    )
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.files_checked == 1
+    assert result.errors == []
+
+
+def test_run_lint_no_gd_files(tmp_path):
+    """Test run_lint with no .gd files in the path."""
+    (tmp_path / "readme.txt").write_text("hello\n")
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.files_checked == 0
+    assert result.errors == []
+    assert result.warnings == []
+
+
+def test_run_lint_multiple_files(tmp_path):
+    """Test run_lint with multiple files, some clean and some with errors."""
+    (tmp_path / "clean.gd").write_text("extends Node\n")
+    (tmp_path / "bad.gd").write_text(
+        "extends Node\n\nfunc BadFunctionName():\n    pass\n"
+    )
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.files_checked == 2
+    assert len(result.errors) >= 1
+    # All errors should be from the bad file
+    for issue in result.errors:
+        assert "bad.gd" in issue.file
