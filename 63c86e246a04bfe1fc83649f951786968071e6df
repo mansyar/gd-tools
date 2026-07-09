@@ -1,0 +1,26 @@
+Task: Implement run_lint() core logic
+
+Summary:
+Implemented run_lint(config, path, report_format) in src/gd_tools/lint_runner.py.
+The function discovers .gd files via discover_gd_files(), reads each file, and
+invokes gdtoolkit.linter.lint_code() to check for issues. All gdlint problems
+are treated as errors (gdlint does not distinguish severities — confirmed via
+print_problem source which labels all as 'Error'). The warnings list is always
+empty since gdlint doesn't produce warnings.
+
+Key API findings:
+- gdtoolkit.linter.lint_code(code_string) -> List[Problem]
+- Problem has: name, description, line, column (no severity field)
+- Syntax errors raise UnexpectedToken (from lark) with .line and .column attrs
+- This will be handled in the next task (syntax error handling)
+
+Files modified:
+- src/gd_tools/lint_runner.py: Added lint_code import from gdtoolkit.linter,
+  GdToolsConfig import, and run_lint() function (39 statements, 100% coverage).
+- tests/unit/test_lint_runner.py: Added GdToolsConfig and run_lint imports,
+  and 6 new tests covering clean files, lint errors, warnings empty, excludes,
+  no .gd files, and multiple files.
+
+Why: Core lint execution via Python API (not subprocess) per FR-1. File
+discovery is done in Python per FR-2. Syntax error handling deferred to
+next task per plan.
