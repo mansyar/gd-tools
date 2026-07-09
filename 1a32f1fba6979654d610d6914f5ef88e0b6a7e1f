@@ -1,0 +1,19 @@
+Task: Fix generate_gdlintrc() to YAML set format
+
+Summary:
+Changed generate_gdlintrc() in config.py to output YAML !!set format
+instead of plain text. The function now uses yaml.dump() to serialize
+the exclude list as a YAML set with the 'excluded_directories' key,
+matching the format gdtoolkit expects.
+
+Files modified:
+- src/gd_tools/config.py: Added 'import yaml', changed generate_gdlintrc()
+  to use yaml.dump() with set() for the exclude list
+- tests/unit/test_config.py: Added 5 tests for YAML set format validation
+  (format, entries, parseability, config matching, custom excludes)
+
+Why:
+gdtoolkit expects gdlintrc files in YAML set format
+(excluded_directories: !!set { dir: null, ... }), not plain text.
+The previous implementation wrote one path per line, which gdtoolkit
+could not parse correctly.
