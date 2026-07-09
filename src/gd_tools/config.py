@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 import tomli_w
+import yaml
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -254,8 +255,9 @@ def generate_gdlintrc(
 ) -> None:
     """Generate a gdlintrc file from the lint exclude list.
 
-    Writes one exclude path per line to ``gdlintrc`` in
-    the project root. Overwrites the file if it already
+    Writes the excludes as a YAML set to ``gdlintrc`` in
+    the project root, using the ``!!set`` tag format that
+    gdtoolkit expects. Overwrites the file if it already
     exists.
 
     Args:
@@ -263,7 +265,8 @@ def generate_gdlintrc(
         project_root: Path to the project root directory.
     """
     rc_file = project_root / "gdlintrc"
-    content = "\n".join(config.lint.exclude) + "\n"
+    data = {"excluded_directories": set(config.lint.exclude)}
+    content = yaml.dump(data, default_flow_style=False, sort_keys=True)
     rc_file.write_text(content, encoding="utf-8")
 
 

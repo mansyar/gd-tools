@@ -4,6 +4,7 @@ Covers Pydantic models, project-root discovery, TOML loading,
 serialization, and rc-file generation.
 """
 
+import yaml
 import pytest
 from pydantic import ValidationError
 
@@ -399,6 +400,53 @@ def test_generate_gdlintrc_custom_excludes(tmp_path):
     for exclude in custom_excludes:
         assert exclude in content
     assert "addons" not in content
+
+
+def test_generate_gdlintrc_yaml_set_format(tmp_path):
+    """Test generate_gdlintrc writes YAML !!set format."""
+    config = GdToolsConfig()
+    generate_gdlintrc(config, project_root=tmp_path)
+    content = (tmp_path / "gdlintrc").read_text()
+    assert "excluded_directories:" in content
+    assert "!!set" in content
+
+
+def test_generate_gdlintrc_yaml_set_entries(tmp_path):
+    """Test each exclude appears as key: null in YAML set."""
+    config = GdToolsConfig()
+    generate_gdlintrc(config, project_root=tmp_path)
+    content = (tmp_path / "gdlintrc").read_text()
+    for exclude in DEFAULT_EXCLUDES:
+        assert f"{exclude}: null" in content
+
+
+def test_generate_gdlintrc_valid_yaml_parseable(tmp_path):
+    """Test generated gdlintrc is valid YAML loadable by yaml.Loader."""
+    config = GdToolsConfig()
+    generate_gdlintrc(config, project_root=tmp_path)
+    content = (tmp_path / "gdlintrc").read_text()
+    parsed = yaml.load(content, Loader=yaml.Loader)
+    assert "excluded_directories" in parsed
+    assert isinstance(parsed["excluded_directories"], set)
+
+
+def test_generate_gdlintrc_yaml_set_matches_config(tmp_path):
+    """Test YAML set contains exactly the config exclude list."""
+    config = GdToolsConfig()
+    generate_gdlintrc(config, project_root=tmp_path)
+    content = (tmp_path / "gdlintrc").read_text()
+    parsed = yaml.load(content, Loader=yaml.Loader)
+    assert parsed["excluded_directories"] == set(DEFAULT_EXCLUDES)
+
+
+def test_generate_gdlintrc_custom_excludes_yaml(tmp_path):
+    """Test custom excludes produce correct YAML set format."""
+    custom_excludes = ["my_dir", "other_dir"]
+    config = GdToolsConfig(lint=LintConfig(exclude=custom_excludes))
+    generate_gdlintrc(config, project_root=tmp_path)
+    content = (tmp_path / "gdlintrc").read_text()
+    parsed = yaml.load(content, Loader=yaml.Loader)
+    assert parsed["excluded_directories"] == {"my_dir", "other_dir"}
 
 
 # --- generate_gdformatrc ---
