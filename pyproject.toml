@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gd-tools"
+version = "0.1.0"
+description = "A modern development workflow CLI for GDScript projects in Godot 4.5+"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "mansyar", email = "m.ansyarafi@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "gdtoolkit",
+    "click",
+    "junitparser",
+    "jinja2",
+    "rich",
+    "tomli; python_version < '3.11'",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "black",
+]
+
+[project.scripts]
+gd-tools = "gd_tools.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests for individual modules.",
+    "integration: Integration tests for command flows.",
+    "e2e: End-to-end tests for full workflows.",
+    "slow: Tests that take a long time to run.",
+]
+addopts = ["--cov=gd_tools", "--cov-report=term-missing"]
+
+[tool.coverage.run]
+source = ["gd_tools"]
+omit = ["tests/", "addons/"]
+
+[tool.coverage.report]
+fail_under = 80
+
+[tool.ruff]
+line-length = 80
+target-version = "py310"
+
+[tool.black]
+line-length = 80
+target-version = ["py310"]
