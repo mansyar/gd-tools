@@ -1,0 +1,19 @@
+Task: Implement file discovery function
+
+Summary:
+Implemented discover_gd_files(path, excludes) in src/gd_tools/lint_runner.py.
+The function recursively walks a directory path and collects all .gd files
+(case-insensitive extension matching). Directories whose names appear in the
+excludes list are pruned in-place during os.walk so their contents are never
+visited. When excludes is None, DEFAULT_EXCLUDES from config.py is used.
+
+Files modified:
+- src/gd_tools/lint_runner.py: Added os import, DEFAULT_EXCLUDES import, and
+  discover_gd_files() function (26 statements, 100% coverage).
+- tests/unit/test_lint_runner.py: Added Path import, discover_gd_files import,
+  and 6 new tests covering recursive collection, case-insensitive matching,
+  exclude filtering (top-level and nested), no files found, and default excludes.
+
+Why: File discovery is a prerequisite for run_lint(). It must happen in Python
+(not delegated to gdlint) so that config-driven excludes are respected before
+gdlint is invoked, per FR-2.
