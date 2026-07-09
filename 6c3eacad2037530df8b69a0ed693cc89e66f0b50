@@ -1,0 +1,28 @@
+Phase 6 Tasks 3-4: Run full spike flow + Verify success criteria
+
+TASK 3: Run full spike flow
+- Command: godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -d -gexit -gselect=test_calculator
+  (with env vars: GD_TOOLS_COVERAGE_ACTIVE=1, GD_TOOLS_COVERAGE_PLAN=<abs path>, GD_TOOLS_COVERAGE_OUTPUT=<abs path>)
+- Used .gutconfig.json for hook configuration (pre_run_script, post_run_script) instead of CLI flags
+- Used -gselect=test_calculator to run only calculator tests during coverage measurement
+  REASON: tracker tests call reset() in before_each(), which clears coverage data
+- stdout captured to spike/spike_output.log
+- No GDScript parse/compile errors
+
+TASK 4: All 6 success criteria verified
+1. Source modification compiles: "[gd-tools] Instrumented: res://scripts/calculator.gd (3 lines)" - no errors ✓
+2. Instrumented code executes: coverage.json exists, hits non-empty (3 hit points) ✓
+3. Correct lines recorded: hits match {"0:0": 2, "0:1": 1, "0:2": 1} ✓
+4. Original behavior preserved: 2 passing, 0 failing, "All tests passed!" ✓
+5. Coverage data serializable: Valid JSON with version/generated_at/hits keys ✓
+6. Works in CLI mode: Entire flow via godot -s ... -d without editor ✓
+
+coverage.json content:
+{
+  "generated_at": "2026-07-09T05:43:50Z",
+  "hits": {"0:0": 2, "0:1": 1, "0:2": 1},
+  "version": 1
+}
+
+DEVIATION: Plan specified -gpre_run_script/-gpost_run_script CLI flags, but .gutconfig.json was used instead (configured in Task 1). Functionally equivalent.
+DEVIATION: -gselect=test_calculator added to avoid tracker tests clearing coverage data via reset() calls.
