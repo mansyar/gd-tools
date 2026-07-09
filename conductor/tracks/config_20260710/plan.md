@@ -45,7 +45,7 @@
     - [x] Confirm all model tests pass
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Pydantic Configuration Models' (Protocol in workflow.md) [ffb6404]
 
-## Phase 3: Config Discovery & Loading — TDD [checkpoint: f9ddac5]
+## Phase 3: Config Discovery & Loading — TDD [checkpoint: a5f65b7]
 
 - [x] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [x] Task: Write unit tests for `find_project_root` (Red) [6c54a60]
@@ -76,7 +76,7 @@
 - [x] Task: Verify tests pass (Green check) [6c54a60]
     - [x] Run `CI=true pytest tests/unit/test_config.py -v`
     - [x] Confirm all discovery and loading tests pass
-- [x] Task: Conductor - User Manual Verification 'Phase 3: Config Discovery & Loading' (Protocol in workflow.md) [f9ddac5]
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Config Discovery & Loading' (Protocol in workflow.md) [a5f65b7]
 
 ## Phase 4: Serialization & RC Generation — TDD
 
