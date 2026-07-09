@@ -1,0 +1,78 @@
+Phase 6 Checkpoint: Integration, Execution & Validation
+
+VERIFICATION SUMMARY:
+=====================
+
+Step 2 - Test Coverage:
+  Files changed since Phase 5 checkpoint (ccd94e3):
+  - .gitignore (config, exempt)
+  - conductor/tracks/spike_coverage_20260709/plan.md (doc, exempt)
+  - spike/.gutconfig.json (config, exempt)
+  - spike/SPIKE_RESULTS.md (doc, exempt)
+  - spike/addons/gd-tools-coverage/post_run_hook.gd (modified .gd - GutHookScript fix)
+  - spike/addons/gd-tools-coverage/pre_run_hook.gd (modified .gd - GutHookScript fix)
+
+  Test coverage verification:
+  - pre_run_hook.gd: covered by test_pre_run_hook.gd (4 unit tests) ✓
+  - post_run_hook.gd: validated via integration test (Phase 6 spike run produced coverage.json) ✓
+
+Step 3 - Automated Tests:
+  GUT 9.6.0 run: 9/9 tests PASSED
+  - 2 calculator tests
+  - 4 pre_run_hook tests
+  - 3 tracker tests
+  10 asserts, 0.415s, exit code 0, "All tests passed!"
+
+Step 4-5 - Manual Verification:
+  User confirmed "Yes, verified" on 2026-07-09.
+
+INTEGRATION TEST RESULTS (All 6 Success Criteria):
+==================================================
+
+1. Source modification compiles: PASS
+   - reload() returned OK, no errors in stdout
+   - "[gd-tools] Instrumented: res://scripts/calculator.gd (3 lines)"
+
+2. Instrumented code executes: PASS
+   - coverage.json exists, hits non-empty (3 hit points)
+
+3. Correct lines recorded: PASS
+   - hits match {"0:0": 2, "0:1": 1, "0:2": 1}
+
+4. Original behavior preserved: PASS
+   - 2 passing, 0 failing, "All tests passed!"
+
+5. Coverage data serializable: PASS
+   - Valid JSON with version/generated_at/hits keys
+
+6. Works in CLI mode: PASS
+   - Entire flow via godot -s ... -d without editor
+
+SPIKE ARTIFACTS:
+===============
+- spike/.gutconfig.json: GUT config with hook paths
+- spike/SPIKE_RESULTS.md: Full documentation (178 lines)
+- spike/plan.json: Hand-written instrumentation plan
+- spike/coverage.json: Generated coverage data (gitignored)
+
+ARCHITECTURE DECISION:
+=====================
+Architecture C (Hybrid Coverage) CONFIRMED as viable approach.
+- Python generates instrumentation plan (JSON)
+- GDScript runtime hooks modify Script.source_code + call Script.reload()
+- Tracker records hit data
+- Python generates reports
+
+KNOWN LIMITATIONS:
+=================
+1. Tracker test interference: Tests calling reset() clear coverage data. Use -gselect to isolate.
+2. GutHookScript requirement: Hook scripts must extend GutHookScript and implement run().
+3. Config key names: GUT config uses should_exit (not exit), dirs (not dir).
+4. --import requirement: New addons require godot --headless --import before first GUT run.
+5. -gdir flag: GUT 9.6.0 uses -gdir (not -gdirs).
+6. JSON key ordering: Godot's JSON.stringify may reorder keys alphabetically.
+7. Godot version deviation: Using 4.6.2 (spec references 4.5); APIs stable across 4.x.
+
+EFFORT ESTIMATE:
+===============
+8-11 days for full implementation based on spike findings.
