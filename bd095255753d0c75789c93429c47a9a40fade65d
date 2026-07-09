@@ -1,0 +1,10 @@
+Task: Add pydantic and tomli_w to pyproject.toml + Update tech-stack.md + Install dependencies
+
+Summary: Added pydantic >= 2.0 and tomli_w to pyproject.toml dependencies for the configuration system. Updated conductor/tech-stack.md to document both additions. Installed both packages and verified imports work. Existing test suite (39 tests) passes with 98.85% coverage — no regressions.
+
+Files modified:
+- pyproject.toml: Added 'pydantic >= 2.0' and 'tomli_w' to [project] dependencies
+- conductor/tech-stack.md: Added pydantic and tomli_w rows to Runtime Dependencies table
+- conductor/tracks/config_20260710/plan.md: Marked Phase 1 setup tasks as complete
+
+Why: Pydantic v2 models validate gd-tools.toml structure (FR-1); tomli_w enables save_config() TOML writing (FR-6).
