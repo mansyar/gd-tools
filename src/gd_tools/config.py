@@ -152,9 +152,7 @@ class GdToolsConfig(BaseModel):
         ):
             raise ValueError(f"Invalid coverage format: {v.format}")
         if not 0 <= v.min_percent <= 100:
-            raise ValueError(
-                f"min_percent must be 0-100, got " f"{v.min_percent}"
-            )
+            raise ValueError(f"min_percent must be 0-100, got {v.min_percent}")
         return v
 
 
@@ -266,7 +264,7 @@ def generate_gdlintrc(
     """
     rc_file = project_root / "gdlintrc"
     content = "\n".join(config.lint.exclude) + "\n"
-    rc_file.write_text(content)
+    rc_file.write_text(content, encoding="utf-8")
 
 
 def generate_gdformatrc(
@@ -285,4 +283,4 @@ def generate_gdformatrc(
     """
     rc_file = project_root / "gdformatrc"
     content = "\n".join(config.format.exclude) + "\n"
-    rc_file.write_text(content)
+    rc_file.write_text(content, encoding="utf-8")
