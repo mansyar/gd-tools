@@ -40,7 +40,7 @@
     - [ ] Implement `src/gd_tools/errors.py` with full exception hierarchy per TDD §3.1
     - [ ] Verify: all tests pass, coverage >=80%
 
-- [ ] Task: Implement CLI skeleton (`cli.py`) — TDD
+- [x] Task: Implement CLI skeleton (`cli.py`) — TDD [e3d0e7f]
     - [ ] Write failing tests: `tests/unit/test_cli.py`
         - [ ] Test `cli` is a Click group
         - [ ] Test `gd-tools --version` outputs `gd-tools 0.1.0` (using Click's `CliRunner`)
