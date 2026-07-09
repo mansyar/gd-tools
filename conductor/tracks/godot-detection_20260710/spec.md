@@ -11,7 +11,7 @@ This module is a foundational dependency for Track 6 (Test Runner) and Track 7 (
 1. **Return Type:** The main detection function `find_godot()` returns a `GodotInfo` dataclass (path, version, is_valid) — not a bare string. This gives callers (init, doctor) both path and version in one call.
 2. **GUT Version Mapping:** `GUT_VERSION_MAP` and `get_gut_version_for_godot()` are included in this track, as the TDD §3.3 places them in `godot.py` and they are logically tied to Godot version detection.
 3. **run_godot() Wrapper:** The `run_godot()` subprocess wrapper is included in this track, as the TDD §3.3 places it in `godot.py` and having it early means Track 6 can simply call it.
-4. **Configurable Search Paths:** Core common locations are hardcoded per OS, plus users can add custom search paths via `gd-tools.toml` `[godot].search_paths`. This requires extending the existing `GodotConfig` model with a `search_paths` field.
+4. **Standard Names Only:** Common locations and PATH look for standard binary names only (`godot`, `godot4`, `Godot`). No globbing for versioned filenames (e.g., `Godot_v4.5.1-stable_win64.exe`). Non-standard filenames are handled by `config.godot.binary` — set via `gd-tools init` (Track 7) or manually in `gd-tools.toml`.
 
 ## Functional Requirements
 
@@ -22,18 +22,17 @@ The function `find_godot(config: GodotConfig) -> GodotInfo` resolves the Godot b
 1. **Config:** `config.godot.binary` — user-specified path in `gd-tools.toml` (highest priority)
 2. **Environment variables:** `GODOT_BIN` → `GODOT4_BIN` → `GODOT_PATH` (checked in order)
 3. **PATH lookup:** `shutil.which("godot")` → `shutil.which("godot4")`
-4. **Common install locations** (platform-specific, hardcoded core paths + user-configured `search_paths`):
-   - **Windows:** `C:\Program Files\Godot\`, `%LOCALAPPDATA%\Godot\`
+4. **Common install locations** (platform-specific, hardcoded paths, standard names only):
+   - **Windows:** `C:\Program Files\Godot\godot.exe`, `%LOCALAPPDATA%\Godot\godot.exe`
    - **macOS:** `/Applications/Godot.app/Contents/MacOS/Godot`, `/opt/homebrew/bin/godot`
    - **Linux:** `~/.local/bin/godot`, `/usr/bin/godot`, `/usr/local/bin/godot`
-   - **User-configured:** Any paths in `config.godot.search_paths` (checked after hardcoded locations)
 5. **Not found** → `GodotNotFoundError` with platform-specific install instructions
 
 Internal helper functions (private):
 - `_check_config(config: GodotConfig) -> str | None`
 - `_check_env_vars() -> str | None`
 - `_check_path() -> str | None`
-- `_check_common_locations(config: GodotConfig) -> str | None`
+- `_check_common_locations() -> str | None`
 
 Each candidate path must be verified to exist and be executable before being returned.
 
@@ -100,19 +99,6 @@ def run_godot(
 - Raises `subprocess.TimeoutExpired` if `timeout` is exceeded
 - Uses `subprocess.run` with `capture_output=True, text=True`
 
-### FR-7: Config Extension
-
-Extend the existing `GodotConfig` model in `config.py` with a `search_paths` field:
-
-```python
-class GodotConfig(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    binary: str | None = None
-    search_paths: list[str] = Field(default_factory=list)  # NEW: custom Godot search paths
-```
-
-This is a backward-compatible change — `search_paths` defaults to an empty list.
-
 ## Non-Functional Requirements
 
 ### NFR-1: Cross-Platform Support
@@ -130,7 +116,7 @@ This is a backward-compatible change — `search_paths` defaults to an empty lis
 - `GodotNotFoundError` message must include:
   - Which resolution methods were tried
   - Platform-specific install instructions (download URL, package manager commands)
-  - How to configure via `gd-tools.toml` or environment variables
+  - How to configure: run `gd-tools init`, set `GODOT_BIN` env var, or add `[godot].binary` to `gd-tools.toml`
 
 ## Acceptance Criteria
 
@@ -138,16 +124,14 @@ This is a backward-compatible change — `search_paths` defaults to an empty lis
 2. `find_godot()` returns a `GodotInfo` with correct path when `config.godot.binary` is set in `gd-tools.toml`
 3. PATH lookup finds `godot` or `godot4` when available via `shutil.which`
 4. Platform-specific common locations are checked on the respective OS
-5. User-configured `search_paths` are checked after hardcoded locations
-6. `GodotNotFoundError` is raised with platform-specific install instructions when no binary is found
-7. Version parsing handles `4.5.1-stable`, `4.6-dev`, `4.7`, `4.5.stable.linux` formats
-8. `check_version_compatible()` returns `False` for versions < 4.5.0
-9. `get_gut_version_for_godot()` maps `4.5.1` → `9.5.0`, `4.6.0` → `9.6.0`
-10. `get_gut_version_for_godot()` raises `ConfigError` for unmapped versions (e.g., `4.4.0`)
-11. `run_godot()` passes `--path` and args correctly to `subprocess.run`
-12. `run_godot()` raises `subprocess.TimeoutExpired` when timeout is exceeded
-13. `GodotConfig` accepts `search_paths` as a list of strings
-14. Line coverage > 80%, branch coverage > 70% for `godot.py`
+5. `GodotNotFoundError` is raised with platform-specific install instructions when no binary is found
+6. Version parsing handles `4.5.1-stable`, `4.6-dev`, `4.7`, `4.5.stable.linux` formats
+7. `check_version_compatible()` returns `False` for versions < 4.5.0
+8. `get_gut_version_for_godot()` maps `4.5.1` → `9.5.0`, `4.6.0` → `9.6.0`
+9. `get_gut_version_for_godot()` raises `ConfigError` for unmapped versions (e.g., `4.4.0`)
+10. `run_godot()` passes `--path` and args correctly to `subprocess.run`
+11. `run_godot()` raises `subprocess.TimeoutExpired` when timeout is exceeded
+12. Line coverage > 80%, branch coverage > 70% for `godot.py`
 
 ## Out of Scope
 
@@ -155,4 +139,4 @@ This is a backward-compatible change — `search_paths` defaults to an empty lis
 - Test runner orchestration (Track 6: Test Runner)
 - Doctor command health checks (Track 8)
 - CLI command wiring (Track 1 stubs exist; full wiring in later tracks)
-- Scoop/Chocolatey/Steam path detection (users can add these via `search_paths` if needed)
+- Scoop/Chocolatey/Steam path detection (users set these via `config.godot.binary` if needed)

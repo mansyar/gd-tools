@@ -1,14 +1,7 @@
 # Implementation Plan: Track 3 — Godot Binary Detection
 
-## Phase 1: Config Extension & Module Foundation
+## Phase 1: Module Foundation
 
-- [ ] Task: Write tests for `GodotConfig.search_paths` field
-    - [ ] Test that `search_paths` defaults to empty list
-    - [ ] Test that `search_paths` accepts a list of strings
-    - [ ] Test that `extra="forbid"` still rejects unknown fields
-- [ ] Task: Implement `search_paths` field in `GodotConfig`
-    - [ ] Add `search_paths: list[str] = Field(default_factory=list)` to `GodotConfig` in `config.py`
-    - [ ] Run existing config tests to verify no regressions
 - [ ] Task: Write tests for `GodotInfo` dataclass
     - [ ] Test `GodotInfo` construction with valid path, version, `is_valid=True`
     - [ ] Test `GodotInfo` with `version="unknown"`, `is_valid=False`
@@ -16,7 +9,7 @@
     - [ ] Create `src/gd_tools/godot.py`
     - [ ] Define `GodotInfo` dataclass with `path: str`, `version: str`, `is_valid: bool`
     - [ ] Add module docstring and imports
-- [ ] Task: Conductor - User Manual Verification 'Config Extension & Module Foundation' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Module Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Binary Detection Chain
 
@@ -40,7 +33,6 @@
     - [ ] Test Windows locations checked on `win32` platform
     - [ ] Test macOS locations checked on `darwin` platform
     - [ ] Test Linux locations checked on `linux` platform
-    - [ ] Test user-configured `search_paths` checked after hardcoded locations
     - [ ] Test returns `None` when no locations match
 - [ ] Task: Implement `_check_common_locations()`
 - [ ] Task: Write tests for `find_godot()`
