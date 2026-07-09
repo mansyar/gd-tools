@@ -14,7 +14,7 @@
     - [x] Write tests that generated gdlintrc is valid YAML parseable by gdtoolkit
     - [x] Implement YAML set format in `generate_gdlintrc()` in `src/gd_tools/config.py`
     - [x] Verify existing config tests still pass (regression check)
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Models & Config Fix' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Models & Config Fix' (Protocol in workflow.md)
 
 ## Phase 2: File Discovery & Lint Runner Core
 

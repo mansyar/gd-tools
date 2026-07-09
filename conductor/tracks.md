@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Lint Wrapper**
+- [~] **Track: Lint Wrapper**
 *Link: [./tracks/lint_wrapper_20260710/](./tracks/lint_wrapper_20260710/)*
