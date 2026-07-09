@@ -1,0 +1,13 @@
+Task: Write tests for GodotInfo dataclass + Implement GodotInfo dataclass and module skeleton
+
+Summary:
+- Created src/gd_tools/godot.py with module docstring and GodotInfo dataclass
+- GodotInfo has fields: path (str), version (str), is_valid (bool)
+- Created tests/unit/test_godot.py with 2 unit tests for GodotInfo construction
+- All tests pass, 100% coverage on godot.py
+
+Files created:
+- src/gd_tools/godot.py
+- tests/unit/test_godot.py
+
+Why: Foundation for Godot binary detection module. GodotInfo is the return type for find_godot() and carries path, version, and validity info.
