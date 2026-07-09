@@ -14,7 +14,7 @@
 - [x] Task: Install new dependencies [bd09525]
     - [x] Run `pip install -e ".[dev]"` to install pydantic and tomli_w
     - [x] Verify imports work (`python -c "import pydantic; import tomli_w"`)
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Dependencies & Project Setup' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Dependencies & Project Setup' (Protocol in workflow.md)
 
 ## Phase 2: Pydantic Configuration Models — TDD
 
