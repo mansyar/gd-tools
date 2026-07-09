@@ -199,10 +199,10 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Criterion 4 (Original behavior preserved): 2 passing, 0 failing, "All tests passed!"
     - [x] Criterion 5 (Coverage data serializable): Valid JSON with version/generated_at/hits keys
     - [x] Criterion 6 (Works in CLI mode): Entire flow via godot -s ... -d without editor
-- [ ] Task: Document spike results
-    - [ ] Write spike result report to `spike/SPIKE_RESULTS.md` — pass/fail for each criterion with evidence (stdout excerpts, coverage.json content)
-    - [ ] Record architecture decision — confirm Architecture C (all pass) or select fallback (see spec Section 8)
-    - [ ] Document known limitations discovered during the spike (edge cases, Godot version quirks, etc.)
-    - [ ] Estimate effort for full coverage implementation based on spike learnings
+- [x] Task: Document spike results [f75ab05]
+    - [x] Write spike result report to `spike/SPIKE_RESULTS.md` — pass/fail for each criterion with evidence (stdout excerpts, coverage.json content)
+    - [x] Record architecture decision — Architecture C CONFIRMED (all 6 criteria passed)
+    - [x] Document known limitations discovered during the spike (7 limitations documented)
+    - [x] Estimate effort for full coverage implementation (8-11 days estimated)
 
 - [ ] Task: Conductor - User Manual Verification 'Integration, Execution & Validation' (Protocol in workflow.md)
