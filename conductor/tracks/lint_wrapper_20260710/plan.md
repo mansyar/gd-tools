@@ -4,11 +4,11 @@
 
 ## Phase 1: Data Models & Config Fix
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
-- [ ] Task: Define `LintIssue` and `LintResult` dataclasses
-    - [ ] Write tests for `LintIssue` dataclass (construction, field types, severity values)
-    - [ ] Write tests for `LintResult` dataclass (construction, empty lists, files_checked)
-    - [ ] Implement `LintIssue` and `LintResult` dataclasses in `src/gd_tools/lint_runner.py`
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
+- [x] Task: Define `LintIssue` and `LintResult` dataclasses `062d74e`
+    - [x] Write tests for `LintIssue` dataclass (construction, field types, severity values)
+    - [x] Write tests for `LintResult` dataclass (construction, empty lists, files_checked)
+    - [x] Implement `LintIssue` and `LintResult` dataclasses in `src/gd_tools/lint_runner.py`
 - [ ] Task: Fix `generate_gdlintrc()` to YAML set format
     - [ ] Write tests for YAML set format output (`excluded_directories: !!set { addons: null, ... }`)
     - [ ] Write tests that generated gdlintrc is valid YAML parseable by gdtoolkit
