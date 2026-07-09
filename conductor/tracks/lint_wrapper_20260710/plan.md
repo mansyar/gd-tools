@@ -16,7 +16,7 @@
     - [x] Verify existing config tests still pass (regression check)
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Data Models & Config Fix' (Protocol in workflow.md)
 
-## Phase 2: File Discovery & Lint Runner Core
+## Phase 2: File Discovery & Lint Runner Core [checkpoint: a0af325]
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Implement file discovery function `2c0ea4a`
