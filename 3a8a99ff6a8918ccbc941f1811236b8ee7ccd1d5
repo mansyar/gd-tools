@@ -1,0 +1,22 @@
+Task: Add run_godot() subprocess wrapper (Phase 4)
+
+Implemented run_godot() in src/gd_tools/godot.py per spec FR-6:
+- Signature: run_godot(binary, project_path: Path, args: list[str], env: dict|None=None, timeout: int|None=None) -> subprocess.CompletedProcess
+- Constructs command as [binary, "--path", str(project_path), *args]
+- Merges env with os.environ (caller values take precedence): {**os.environ, **(env or {})}
+- Uses subprocess.run with capture_output=True, text=True
+- Passes timeout to subprocess.run (raises subprocess.TimeoutExpired)
+- Returns subprocess.CompletedProcess directly
+
+Tests added (5 new, total 46 in test_godot.py):
+- test_run_godot_passes_path_and_args: verifies --path and args in command list
+- test_run_godot_merges_env_caller_precedence: verifies env merge with caller precedence
+- test_run_godot_uses_capture_output_and_text: verifies capture_output=True, text=True
+- test_run_godot_raises_timeout_expired: verifies TimeoutExpired propagation
+- test_run_godot_returns_completed_process: verifies return value
+
+Verification:
+- All 136 tests pass (was 131, +5 new)
+- Coverage: 94.41% overall, godot.py 89% line / 92% branch
+- Lint: ruff check src/ tests/ — All checks passed
+- Format: black src/ tests/ — 1 file reformatted (test_godot.py)
