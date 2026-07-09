@@ -30,11 +30,14 @@ func _init() -> void:
 	_plan = json.data
 	_instrument_all()
 
+## Instruments all scripts listed in the instrumentation plan.
 func _instrument_all() -> void:
 	for file_entry in _plan["files"]:
 		var entry: Dictionary = file_entry
 		_instrument_script(entry["path"], entry["file_id"], entry["lines"])
 
+## Loads a GDScript, injects tracker calls, and reloads it.
+## On reload failure, restores the original source and reloads.
 func _instrument_script(script_path: String, file_id: int, lines: Array) -> void:
 	var script: GDScript = load(script_path)
 	if script == null:
@@ -52,6 +55,9 @@ func _instrument_script(script_path: String, file_id: int, lines: Array) -> void
 		return
 	print("[gd-tools] Instrumented: " + script_path + " (" + str(lines.size()) + " lines)")
 
+## Injects _GDTCoverage.hit() calls before each tracked line.
+## Processes bottom-to-top (descending) so earlier insertions don't shift
+## the line numbers of subsequent entries.
 static func _inject_trackers(source: String, file_id: int, lines: Array) -> String:
 	var source_lines: PackedStringArray = source.split("\n")
 	# Sort line entries descending by "line" (bottom-to-top to preserve line numbers)
@@ -69,6 +75,7 @@ static func _inject_trackers(source: String, file_id: int, lines: Array) -> Stri
 		source_lines.insert(target_index, tracker_call)
 	return "\n".join(source_lines)
 
+## Extracts leading whitespace (tabs and spaces) from a line.
 static func _get_indentation(line: String) -> String:
 	var indent: String = ""
 	for c in line:
