@@ -14,7 +14,7 @@
 | Package | Purpose | Notes |
 |---------|---------|-------|
 | `gdtoolkit` | Lark-based GDScript parser — used by lint, format, and coverage plan generation | Core dependency; provides `gdlint`, `gdformat`, and `parser.parse()` |
-| `click` *or* `typer` | CLI framework | TBD during implementation (PRD §16 Open Question). `click` has broader ecosystem; `typer` has better type hints |
+| `click` | CLI framework | Chosen over `typer` for broader ecosystem and simpler group/subcommand structure. PRD §16 Open Question resolved. |
 | `junitparser` | Parse GUT's JUnit XML test results | Converts XML → structured `TestResult` |
 | `jinja2` | HTML coverage report generation | Templates for source-highlighted coverage views |
 | `rich` | Terminal output — tables, colors, progress bars | All user-facing CLI output |
