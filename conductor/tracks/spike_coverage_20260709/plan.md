@@ -184,10 +184,10 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Configure `post_run_script` to `res://addons/gd-tools-coverage/post_run_hook.gd`
     - [x] Configure test directory (`res://test/`)
     - [x] Configure exit after tests (`"exit": true`)
-- [ ] Task: Set up execution environment
-    - [ ] Set `GD_TOOLS_COVERAGE_ACTIVE=1`
-    - [ ] Set `GD_TOOLS_COVERAGE_PLAN` to absolute path of `spike/plan.json`
-    - [ ] Set `GD_TOOLS_COVERAGE_OUTPUT` to absolute path of `spike/coverage.json`
+- [x] Task: Set up execution environment [6ad9c28]
+    - [x] Set `GD_TOOLS_COVERAGE_ACTIVE=1`
+    - [x] Set `GD_TOOLS_COVERAGE_PLAN` to absolute path of `spike/plan.json`
+    - [x] Set `GD_TOOLS_COVERAGE_OUTPUT` to absolute path of `spike/coverage.json`
 - [ ] Task: Run full spike flow
     - [ ] Execute: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -d -gexit -gpre_run_script="res://addons/gd-tools-coverage/pre_run_hook.gd" -gpost_run_script="res://addons/gd-tools-coverage/post_run_hook.gd"`
     - [ ] Capture full stdout output to `spike/spike_output.log`
