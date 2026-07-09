@@ -1,0 +1,29 @@
+Phase 3 Task 2: Implement tracker.gd (Green Phase)
+
+Replaced placeholder tracker.gd with full implementation (spec Section 6.4).
+
+Implementation:
+- extends Node (autoload singleton _GDTCoverage)
+- _active: bool — set in _ready() from OS.has_environment("GD_TOOLS_COVERAGE_ACTIVE")
+- _hits: Dictionary — keyed by "file_id:line_id", value is hit count
+- _ready(): Checks env var, sets _active, prints status if active
+- hit(file_id, line_id): No-op if inactive, else increments _hits["file_id:line_id"]
+- get_hits(): Returns _hits.duplicate(true) (deep copy)
+- reset(): Clears _hits
+- is_active(): Returns _active
+
+Green Phase verification:
+- Env var set: GD_TOOLS_COVERAGE_ACTIVE=1
+- GUT run: -gselect=test_tracker
+- Result: 3/3 tests PASSED, 3 asserts, 0 failures
+- "[gd-tools] Coverage tracking active" printed confirming env var pickup
+- All 3 test functions pass:
+  - test_hit_records_count: hit(0,1) x2 → get_hits()["0:1"] == 2 ✓
+  - test_reset_clears_hits: hit(0,1) → reset() → get_hits().is_empty() ✓
+  - test_get_hits_returns_copy: hit(0,1) → modify returned dict → internal unchanged ✓
+
+Autoload verification:
+- _GDTCoverage registered in project.godot [autoload] section (from Phase 1)
+- get_node("/root/_GDTCoverage") resolves correctly in tests
+
+Next: Phase 3 Task 3 - Refactor tracker.gd (Optional)
