@@ -142,7 +142,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Ensure error messages follow product guidelines (actionable + fix hints)
     - [x] Re-run tests to confirm still passing
 
-- [ ] Task: Conductor - User Manual Verification 'Pre-Run Hook Implementation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Pre-Run Hook Implementation' (Protocol in workflow.md)
 
 ---
 
