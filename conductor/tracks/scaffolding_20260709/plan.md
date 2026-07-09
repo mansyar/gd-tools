@@ -20,7 +20,7 @@
     - [ ] Configure `[tool.ruff]` and `[tool.black]` defaults
     - [ ] Verify: `pip install -e ".[dev]"` succeeds without errors
 
-- [ ] Task: Create package structure and version (`__init__.py`)
+- [x] Task: Create package structure and version (`__init__.py`) [d329fa3]
     - [ ] Write failing test: `tests/unit/test_package.py` — test that `gd_tools.__version__` equals `"0.1.0"`
     - [ ] Create `src/gd_tools/__init__.py` with `__version__ = "0.1.0"`
     - [ ] Verify: test passes, `from gd_tools import __version__` works
