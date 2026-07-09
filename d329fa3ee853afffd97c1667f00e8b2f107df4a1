@@ -1,0 +1,12 @@
+Task: Create package structure and version (__init__.py)
+
+Summary: Added the __version__ string to the gd_tools package init module using TDD. Wrote a failing test first (Red phase) confirming __version__ was not importable, then added __version__ = "0.1.0" to make it pass (Green phase). Also created the tests/unit/ directory structure with __init__.py.
+
+Files created/modified:
+- src/gd_tools/__init__.py (modified): Added module docstring and __version__ = "0.1.0"
+- tests/unit/__init__.py (new): Empty init for test package
+- tests/unit/test_package.py (new): Test that gd_tools.__version__ equals "0.1.0"
+
+Verification: Test passes. Coverage 100% for __init__.py. ruff check and black --check pass.
+
+Why: Establishes the package version identifier required by the CLI version_option and package metadata.
