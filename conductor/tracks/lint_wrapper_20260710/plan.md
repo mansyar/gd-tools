@@ -18,8 +18,8 @@
 
 ## Phase 2: File Discovery & Lint Runner Core
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
-- [ ] Task: Implement file discovery function
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
+- [x] Task: Implement file discovery function `2c0ea4a`
     - [ ] Write tests for recursive `.gd` file collection (nested directories)
     - [ ] Write tests for case-insensitive `.gd` extension matching (`.GD`, `.Gd`)
     - [ ] Write tests for exclude directory filtering (skip `addons/`, `.godot/`, `.git/`, `.gd-tools/` by name)
