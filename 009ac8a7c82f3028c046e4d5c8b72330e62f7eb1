@@ -1,0 +1,51 @@
+Phase 4 Checkpoint Verification Report
+=====================================
+Track: spike_coverage_20260709
+Phase: Phase 4 - Pre-Run Hook (pre_run_hook.gd) — TDD
+Checkpoint Commit: 009ac8a
+Date: 2026-07-09
+
+Step 2 - Test Coverage Verification:
+  git diff --name-only e662560 HEAD (Phase 3 checkpoint to HEAD)
+  Files changed:
+    - conductor/tracks/spike_coverage_20260709/plan.md (doc, exempt from test requirement)
+    - spike/addons/gd-tools-coverage/pre_run_hook.gd (NEW .gd source — test coverage required)
+    - spike/test/test_pre_run_hook.gd (NEW .gd test file — IS the test)
+  Test coverage:
+    - pre_run_hook.gd → covered by test_pre_run_hook.gd (4 unit tests targeting _inject_trackers static method) ✓
+
+Step 3 - Automated Test Results:
+  Command: $env:GD_TOOLS_COVERAGE_ACTIVE = "1"; godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit
+  GUT version: 9.6.0
+  Godot version: 4.6.2.stable.official.71f334935
+  Results:
+    - test_calculator.gd: 2/2 passed (test_divide_normal, test_divide_by_zero)
+    - test_pre_run_hook.gd: 4/4 passed (test_inject_single_line, test_inject_multiple_lines_preserves_order, test_inject_bottom_to_top, test_inject_preserves_indentation)
+    - test_tracker.gd: 3/3 passed (test_hit_records_count, test_reset_clears_hits, test_get_hits_returns_copy)
+    - Total: 9/9 tests PASSED, 10 asserts, 0.434s, exit code 0
+    - "All tests passed!"
+
+Step 4-5 - Manual Verification:
+  User confirmed: "Yes, verified"
+
+Phase 4 Deliverables:
+  - spike/test/test_pre_run_hook.gd (commit 2229913): 4 unit tests for _inject_trackers() static method
+    * test_inject_single_line: verifies single tracker call insertion with correct indentation
+    * test_inject_multiple_lines_preserves_order: verifies multiple lines injected bottom-to-top
+    * test_inject_bottom_to_top: verifies internal sort handles descending input
+    * test_inject_preserves_indentation: verifies tab and space indentation preservation
+  - spike/addons/gd-tools-coverage/pre_run_hook.gd (commit 681c2e5): Full implementation
+    * extends RefCounted, const TRACKER_NAME = "_GDTCoverage"
+    * _init(): reads GD_TOOLS_COVERAGE_PLAN env var, parses JSON plan, calls _instrument_all()
+    * _instrument_all(): iterates plan files, calls _instrument_script() for each
+    * _instrument_script(): loads GDScript, injects trackers, sets source_code, calls reload(), restores on failure
+    * _inject_trackers() [STATIC]: pure string manipulation, splits source, sorts lines descending, inserts tracker calls
+    * _get_indentation() [STATIC]: extracts leading whitespace
+  - Refactor (commit e0d1f9f): Added docstrings to 4 methods, no structural changes
+
+TDD Compliance:
+  - Red Phase: 0/4 tests failed (pre_run_hook.gd did not exist) ✓
+  - Green Phase: 4/4 tests passed after implementation ✓
+  - Refactor Phase: 4/4 tests still pass after docstring addition ✓
+
+Status: PASS — Phase 4 complete, all tests passing, checkpoint approved.
