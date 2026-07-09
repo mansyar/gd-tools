@@ -1,0 +1,14 @@
+Task: Create spike/project.godot with Godot project configuration
+
+Summary:
+Created project.godot for the spike Godot project and a minimal placeholder tracker.gd so the _GDTCoverage autoload resolves.
+
+Files created:
+- spike/project.godot (Godot 4.6.2, config_version=5)
+- spike/addons/gd-tools-coverage/tracker.gd (placeholder stub)
+Files removed:
+- spike/addons/gd-tools-coverage/.gitkeep (replaced by real file)
+
+Deviation: Spec referenced Godot 4.5 but environment has Godot 4.6.2. Script.source_code/reload() APIs are stable across Godot 4.x, so this is non-blocking. Placeholder tracker.gd created in Phase 1 (plan puts full impl in Phase 3) so the autoload resolves during scaffolding verification.
+
+Why: Establishes the Godot project configuration needed for GUT CLI runs. The _GDTCoverage autoload is the singleton that instrumented code will call (_GDTCoverage.hit(file_id, line_id)) during coverage tracking.
