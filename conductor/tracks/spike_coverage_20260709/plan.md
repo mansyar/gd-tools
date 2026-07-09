@@ -64,7 +64,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Confirm exit code 0 and both tests passing
     - [x] Record baseline output for comparison after instrumentation
 
-- [ ] Task: Conductor - User Manual Verification 'Test Target Implementation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Test Target Implementation' (Protocol in workflow.md)
 
 ---
 
