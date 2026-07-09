@@ -1,0 +1,13 @@
+Task: Define LintIssue and LintResult dataclasses
+
+Summary: Created the lint_runner module with two dataclasses:
+- LintIssue: Represents a single lint issue (file, line, column, rule, message, severity)
+- LintResult: Aggregated lint results (files_checked, errors list, warnings list)
+
+Files created:
+- src/gd_tools/lint_runner.py (module with dataclasses)
+- tests/unit/test_lint_runner.py (9 unit tests covering construction, field types, severity values, empty lists)
+
+Why: These data models are the foundation for the lint wrapper track. They provide structured representation of lint results that will be used by run_lint(), format_lint_text(), and format_lint_json() in subsequent tasks.
+
+Test results: 9/9 passed. lint_runner.py coverage: 100%.
