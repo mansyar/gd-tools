@@ -1,5 +1,7 @@
 """CLI entry point for gd-tools."""
 
+from typing import Any
+
 import click
 
 from . import __version__
@@ -14,7 +16,7 @@ class GdToolsGroup(click.Group):
     error convention.
     """
 
-    def invoke(self, ctx):
+    def invoke(self, ctx) -> Any:
         """Invoke the group, catching NotImplementedError as exit code 2.
 
         Args:

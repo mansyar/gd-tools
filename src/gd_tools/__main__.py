@@ -9,7 +9,7 @@ from .cli import cli
 from .errors import GdToolsError
 
 
-def main():
+def main() -> None:
     """Run the gd-tools CLI.
 
     Calls the Click CLI group and catches any :class:`GdToolsError`,

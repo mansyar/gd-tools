@@ -146,3 +146,17 @@ def test_coverage_report_stub_exit_code_2():
     runner = CliRunner()
     result = runner.invoke(cli, ["coverage", "report"])
     assert result.exit_code == 2
+
+
+def test_coverage_merge_stub_exit_code_2():
+    """Test invoking coverage merge raises error with exit code 2."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "merge", "file1.json"])
+    assert result.exit_code == 2
+
+
+def test_coverage_show_stub_exit_code_2():
+    """Test invoking coverage show raises error with exit code 2."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "show"])
+    assert result.exit_code == 2
