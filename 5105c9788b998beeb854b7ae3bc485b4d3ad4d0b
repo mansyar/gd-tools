@@ -1,0 +1,27 @@
+Task: Implement exception hierarchy (errors.py) — TDD
+Track: Project Scaffolding (scaffolding_20260709)
+
+Summary:
+Implemented the full exception hierarchy for gd-tools in src/gd_tools/errors.py.
+
+Classes:
+- GdToolsError(Exception): Base class with exit_code attribute (default 2).
+  Accepts optional keyword-only exit_code override via constructor.
+- ConfigError (exit 2): Configuration errors.
+- GodotNotFoundError (exit 2): Godot binary not found.
+- GUTNotInstalledError (exit 2): GUT addon not installed.
+- CoveragePlanError (exit 2): Coverage plan generation errors.
+- CoverageThresholdError (exit 1): Coverage below threshold.
+- TestFailureError (exit 1): Tests failed. (__test__=False to prevent
+  pytest collection warning since class name starts with "Test".)
+- LintError (exit 1): Linting found issues.
+- FormatError (exit 1): Formatting issues found.
+
+Tests: tests/unit/test_errors.py — 12 tests covering:
+- GdToolsError is Exception subclass
+- Default exit_code (2) and custom exit_code via constructor
+- Message storage
+- Parametrized tests for config-type errors (exit 2)
+- Parametrized tests for failure-type errors (exit 1)
+
+Results: 12 tests pass, 100% coverage (19/19 statements), ruff/black clean.
