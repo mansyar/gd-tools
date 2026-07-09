@@ -1,0 +1,42 @@
+Phase 5 Checkpoint: Post-Run Hook Implementation
+
+Phase: Phase 5 - Post-Run Hook (post_run_hook.gd)
+Previous Checkpoint: 009ac8a (Phase 4)
+
+Files Changed (since 009ac8a):
+- spike/addons/gd-tools-coverage/post_run_hook.gd (NEW .gd source)
+- spike/addons/gd-tools-coverage/post_run_hook.gd.uid (NEW, Godot import)
+- spike/addons/gd-tools-coverage/pre_run_hook.gd.uid (generated, from Phase 4)
+- spike/scripts/calculator.gd.uid (generated, from Phase 2)
+- spike/test/test_calculator.gd.uid (generated, from Phase 2)
+- spike/test/test_pre_run_hook.gd.uid (generated, from Phase 4)
+- spike/test/test_tracker.gd.uid (generated, from Phase 3)
+- conductor/tracks/spike_coverage_20260709/plan.md (doc)
+
+Test Coverage:
+- post_run_hook.gd: No dedicated unit test (plan-justified: "simple component,
+  validated primarily via integration in Phase 6"). Full validation in Phase 6.
+- All other .gd files from previous phases have unit tests.
+
+Automated Test Results (GUT 9.6.0):
+- Tests: 9, Passing: 9, Failing: 0, Asserts: 10
+- All tests passed (2 calculator + 4 pre_run_hook + 3 tracker)
+
+Verification:
+1. Godot --import: completed without syntax errors ✓
+2. GUT 9.6.0: 9/9 tests PASSED, 10 asserts ✓
+3. No existing tests broken ✓
+4. User manual verification: CONFIRMED ✓
+
+Key Implementation Details:
+- post_run_hook.gd extends RefCounted
+- _init() gets tracker, checks is_active(), reads output path, builds JSON,
+  writes to file
+- _get_tracker() uses Engine.get_main_loop() as SceneTree
+- Timestamp: Time.get_datetime_string_from_system(true, false) + "Z"
+- Output default: user://coverage.json (overridable via GD_TOOLS_COVERAGE_OUTPUT)
+
+Commits in Phase 5:
+- 9acbcb6 feat(spike): Implement post_run_hook.gd for coverage data serialization
+- 961f85a conductor(plan): Mark task 'Implement post_run_hook.gd' as complete
+- ccd94e3 conductor(checkpoint): Checkpoint end of Phase 5 - Post-Run Hook Implementation
