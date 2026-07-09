@@ -4,6 +4,8 @@ Covers GodotInfo dataclass, binary resolution chain, version
 detection/validation, GUT version mapping, and the subprocess wrapper.
 """
 
+import subprocess
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,6 +19,7 @@ from gd_tools.godot import (
     find_godot,
     get_godot_version,
     get_gut_version_for_godot,
+    run_godot,
 )
 
 # --- GodotInfo dataclass ---
@@ -453,3 +456,96 @@ def test_get_gut_version_for_godot_malformed_raises():
     """Test ConfigError raised for malformed Godot version."""
     with pytest.raises(ConfigError):
         get_gut_version_for_godot("4")
+
+
+# --- run_godot ---
+
+
+@pytest.mark.unit
+def test_run_godot_passes_path_and_args():
+    """Test run_godot passes --path and args correctly to subprocess.run."""
+    mock_result = MagicMock(spec=subprocess.CompletedProcess)
+    with patch(
+        "gd_tools.godot.subprocess.run", return_value=mock_result
+    ) as mock_run:
+        run_godot(
+            binary="/usr/bin/godot",
+            project_path=Path("/project"),
+            args=["--headless", "--script", "test.gd"],
+        )
+    mock_run.assert_called_once()
+    cmd = mock_run.call_args.args[0]
+    assert cmd[0] == "/usr/bin/godot"
+    assert cmd[1] == "--path"
+    assert cmd[2] == str(Path("/project"))
+    assert cmd[3:] == ["--headless", "--script", "test.gd"]
+
+
+@pytest.mark.unit
+def test_run_godot_merges_env_caller_precedence():
+    """Test run_godot merges env with os.environ, caller values take precedence."""
+    with patch.dict(
+        "os.environ", {"EXISTING_VAR": "original", "OTHER_VAR": "keep"}
+    ):
+        with patch(
+            "gd_tools.godot.subprocess.run", return_value=MagicMock()
+        ) as mock_run:
+            run_godot(
+                binary="/usr/bin/godot",
+                project_path=Path("/project"),
+                args=[],
+                env={"EXISTING_VAR": "overridden", "NEW_VAR": "added"},
+            )
+    call_env = mock_run.call_args.kwargs["env"]
+    assert call_env["EXISTING_VAR"] == "overridden"
+    assert call_env["OTHER_VAR"] == "keep"
+    assert call_env["NEW_VAR"] == "added"
+
+
+@pytest.mark.unit
+def test_run_godot_uses_capture_output_and_text():
+    """Test run_godot uses capture_output=True and text=True."""
+    with patch(
+        "gd_tools.godot.subprocess.run", return_value=MagicMock()
+    ) as mock_run:
+        run_godot(
+            binary="/usr/bin/godot",
+            project_path=Path("/project"),
+            args=[],
+        )
+    assert mock_run.call_args.kwargs["capture_output"] is True
+    assert mock_run.call_args.kwargs["text"] is True
+
+
+@pytest.mark.unit
+def test_run_godot_raises_timeout_expired():
+    """Test run_godot raises subprocess.TimeoutExpired when timeout exceeded."""
+    with patch(
+        "gd_tools.godot.subprocess.run",
+        side_effect=subprocess.TimeoutExpired(cmd=["godot"], timeout=10),
+    ):
+        with pytest.raises(subprocess.TimeoutExpired):
+            run_godot(
+                binary="/usr/bin/godot",
+                project_path=Path("/project"),
+                args=[],
+                timeout=10,
+            )
+
+
+@pytest.mark.unit
+def test_run_godot_returns_completed_process():
+    """Test run_godot returns subprocess.CompletedProcess."""
+    expected = subprocess.CompletedProcess(
+        args=["godot", "--path", "/project"],
+        returncode=0,
+        stdout="OK",
+        stderr="",
+    )
+    with patch("gd_tools.godot.subprocess.run", return_value=expected):
+        result = run_godot(
+            binary="/usr/bin/godot",
+            project_path=Path("/project"),
+            args=[],
+        )
+    assert result is expected

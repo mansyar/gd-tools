@@ -302,3 +302,42 @@ def find_godot(config: GodotConfig) -> GodotInfo:
         is_valid = False
 
     return GodotInfo(path=binary, version=version, is_valid=is_valid)
+
+
+# --- Godot Invocation Wrapper ---
+
+
+def run_godot(
+    binary: str,
+    project_path: Path,
+    args: list[str],
+    env: dict[str, str] | None = None,
+    timeout: int | None = None,
+) -> subprocess.CompletedProcess:
+    """Invoke Godot with the given project path and arguments.
+
+    Sets ``--path`` to ``project_path`` and merges the provided ``env``
+    with the current ``os.environ`` (caller values take precedence).
+
+    Args:
+        binary: Path to the Godot binary.
+        project_path: Path to the Godot project directory.
+        args: Additional arguments to pass to Godot.
+        env: Environment variables to merge with os.environ.
+        timeout: Timeout in seconds for the subprocess.
+
+    Returns:
+        The completed subprocess result.
+
+    Raises:
+        subprocess.TimeoutExpired: If the timeout is exceeded.
+    """
+    cmd = [binary, "--path", str(project_path), *args]
+    merged_env = {**os.environ, **(env or {})}
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        env=merged_env,
+        timeout=timeout,
+    )
