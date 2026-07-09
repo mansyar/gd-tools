@@ -25,7 +25,7 @@
     - [ ] Write tests for exclude directory filtering (skip `addons/`, `.godot/`, `.git/`, `.gd-tools/` by name)
     - [ ] Write tests for no `.gd` files found (returns empty list)
     - [ ] Implement `discover_gd_files(path, excludes)` in `src/gd_tools/lint_runner.py`
-- [ ] Task: Implement `run_lint()` core logic
+- [x] Task: Implement `run_lint()` core logic `63c86e2`
     - [ ] Write tests for `run_lint` with clean files (no errors, no warnings, files_checked > 0)
     - [ ] Write tests for `run_lint` with lint errors (errors list populated, correct file/line/col/rule/message)
     - [ ] Write tests for `run_lint` with warnings (warnings list populated, severity=warning)
