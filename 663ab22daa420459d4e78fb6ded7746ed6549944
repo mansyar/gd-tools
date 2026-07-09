@@ -1,0 +1,23 @@
+Task Summary: GUT Version Mapping and get_gut_version_for_godot
+================================================================
+
+Commit: 663ab22
+
+Changes:
+- Added GUT_VERSION_MAP constant: {"4.5": "9.5.0", "4.6": "9.6.0", "4.7": "9.7.0"}
+- Added get_gut_version_for_godot() function: maps Godot version (major.minor prefix)
+  to compatible GUT version. Raises ConfigError for unmapped or malformed versions.
+- Added ConfigError to imports in godot.py
+- Added 6 new tests: GUT_VERSION_MAP contents, 3 parametrized mapping tests,
+  unmapped version raises ConfigError, malformed version raises ConfigError
+
+Files modified:
+- src/gd_tools/godot.py (added GUT_VERSION_MAP, get_gut_version_for_godot, ConfigError import)
+- tests/unit/test_godot.py (added imports, 6 new tests for GUT mapping)
+
+Why: The GUT version mapping is needed so that gd-tools can automatically
+select the correct GUT version for the detected Godot version. This is a
+dependency for Track 7 (Init Command) which will install GUT.
+
+Test results: 41/41 tests in test_godot.py pass (130/130 full suite).
+Coverage: godot.py 89% (above 80% threshold).
