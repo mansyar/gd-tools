@@ -1,0 +1,23 @@
+Task: Write GUT test for calculator (Red Phase)
+
+Summary:
+Created the GUT test file for the calculator divide function. This is the Red Phase of TDD — tests are written to fail because calculator.gd does not exist yet.
+
+Files Created:
+- spike/test/test_calculator.gd (extends GutTest, 2 test methods: test_divide_normal, test_divide_by_zero)
+
+Files Removed:
+- spike/test/.gitkeep (placeholder replaced by real test file)
+
+Test Details:
+- test_divide_normal: calls divide(10.0, 2.0), asserts result["result"] == 5.0
+- test_divide_by_zero: calls divide(10.0, 0.0), asserts result["error"] == "division by zero"
+- before_each: loads res://scripts/calculator.gd and instantiates via .new()
+- after_each: cleans up _calc reference
+
+Red Phase Verification:
+- Ran: C:\Godot\Godot_v4.6.2-stable_win64.exe --headless --path spike/ -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit
+- Result: 2/2 tests FAILED as expected
+- Error: "Nonexistent function 'divide' in base 'Nil'" (load() returns null since calculator.gd doesn't exist)
+
+Why: TDD Red Phase — define expected behavior before implementation. Next task (Green Phase) will create calculator.gd to make these tests pass.
