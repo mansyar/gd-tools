@@ -1,0 +1,11 @@
+Task: Implement Pydantic models (Green) + Verify tests pass
+
+Summary: Implemented Pydantic v2 configuration models in src/gd_tools/config.py following TDD §3.2 model definitions. All models use extra='forbid' to reject unknown keys. GdToolsConfig has a field_validator on coverage that validates format in {html, lcov, cobertura, text} and min_percent in [0, 100]. TestConfig has __test__=False to prevent pytest collection.
+
+Wrote 27 unit tests in tests/unit/test_config.py covering: all model defaults, valid/invalid coverage formats, min_percent boundary/out-of-range, extra='forbid' rejection, and mutability for CLI overrides. All tests pass (66 total including existing). Coverage: config.py 100%, overall 99.22%.
+
+Files created:
+- src/gd_tools/config.py: Pydantic models (GodotConfig, TestConfig, LintConfig, FormatConfig, CoverageConfig, GdToolsConfig) + DEFAULT_EXCLUDES constant
+- tests/unit/test_config.py: 27 unit tests for all models
+
+Why: These models are the typed foundation for gd-tools.toml loading (FR-1). All subsequent tracks depend on GdToolsConfig.
