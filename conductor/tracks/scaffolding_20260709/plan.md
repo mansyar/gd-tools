@@ -25,7 +25,7 @@
     - [ ] Create `src/gd_tools/__init__.py` with `__version__ = "0.1.0"`
     - [ ] Verify: test passes, `from gd_tools import __version__` works
 
-- [ ] Task: Implement exception hierarchy (`errors.py`) — TDD
+- [x] Task: Implement exception hierarchy (`errors.py`) — TDD [5105c97]
     - [ ] Write failing tests: `tests/unit/test_errors.py`
         - [ ] Test `GdToolsError` is an `Exception` subclass with `exit_code` defaulting to `2`
         - [ ] Test `GdToolsError` accepts custom `exit_code` via constructor
