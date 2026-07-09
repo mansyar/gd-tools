@@ -1,0 +1,22 @@
+Phase 6 Task 1: Configure .gutconfig.json (commit 723c816)
+
+Created spike/.gutconfig.json with GUT configuration:
+- dirs: ["res://test"] (test directory)
+- pre_run_script: "res://addons/gd-tools-coverage/pre_run_hook.gd"
+- post_run_script: "res://addons/gd-tools-coverage/post_run_hook.gd"
+- should_exit: true
+
+Key name research: GUT config keys match default_options dictionary
+in gut_config.gd (lines 18-61). 'should_exit' (not 'exit'), 'dirs'
+(not 'dir'), 'pre_run_script'/'post_run_script' (not 'pre_run'/'post_run').
+
+VERIFICATION:
+- GUT auto-loads .gutconfig.json from res:// by default
+- Without env vars: 8/9 tests pass (tracker test needs GD_TOOLS_COVERAGE_ACTIVE=1)
+- With GD_TOOLS_COVERAGE_ACTIVE=1: 9/9 tests pass
+- Pre-run hook runs: prints "GD_TOOLS_COVERAGE_PLAN not set, skipping instrumentation"
+- Post-run hook runs: prints "Coverage data written to: user://coverage.json (0 hit points)"
+- Hooks validated by GUT (no "does not extend GutHookScript" error)
+
+Also includes fix commit 6d001ef: Hook scripts changed from extends
+RefCounted to extends GutHookScript, _init() to run().
