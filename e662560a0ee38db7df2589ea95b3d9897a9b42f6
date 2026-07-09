@@ -1,0 +1,37 @@
+Phase 3 Checkpoint: Tracker Autoload Implementation
+===================================================
+
+Track: spike_coverage_20260709
+Phase: 3 - Tracker Autoload (tracker.gd) — TDD
+Checkpoint Commit: e662560
+
+Files Changed (git diff 9bb1715 HEAD):
+- conductor/tracks/spike_coverage_20260709/plan.md (doc, exempt from tests)
+- spike/addons/gd-tools-coverage/tracker.gd (MODIFIED - replaced placeholder with full implementation)
+- spike/test/test_tracker.gd (NEW - GUT test file)
+
+Test Coverage:
+- spike/addons/gd-tools-coverage/tracker.gd → covered by spike/test/test_tracker.gd (3 tests)
+
+Automated Test Results (GUT 9.6.0):
+- Total tests: 5 (2 calculator + 3 tracker)
+- Passing: 5
+- Asserts: 5
+- Time: 0.434s
+- Result: All tests passed!
+
+Tracker Implementation (tracker.gd):
+- extends Node (autoload singleton _GDTCoverage)
+- _ready(): checks OS.has_environment("GD_TOOLS_COVERAGE_ACTIVE")
+- hit(file_id, line_id): no-op if inactive, else increments _hits["file_id:line_id"]
+- get_hits(): returns _hits.duplicate(true) (deep copy)
+- reset(): clears _hits
+- is_active(): returns _active
+- All public methods have docstrings (added in refactor task)
+
+Test Functions (test_tracker.gd):
+- test_hit_records_count(): hit(0,1) twice → get_hits()["0:1"] == 2
+- test_reset_clears_hits(): hit(0,1) → reset() → get_hits().is_empty()
+- test_get_hits_returns_copy(): hit(0,1) → get_hits() → modify copy → internal unchanged
+
+Manual Verification: User confirmed "Yes, verified"
