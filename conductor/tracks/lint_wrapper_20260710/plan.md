@@ -32,7 +32,7 @@
     - [ ] Write tests for `run_lint` respecting config excludes (excluded dirs not checked)
     - [ ] Write tests for `run_lint` with no `.gd` files (files_checked=0, empty lists, exit 0)
     - [ ] Implement `run_lint(config, path, report_format)` using gdtoolkit Python API import
-- [ ] Task: Implement syntax error handling
+- [x] Task: Implement syntax error handling `ca0cbc9`
     - [ ] Write tests for syntax error in a `.gd` file (reported as rule=SYNTAX_ERROR, severity=error)
     - [ ] Write tests for syntax error does not crash — continues linting other files
     - [ ] Write tests for syntax error results in exit code 1
