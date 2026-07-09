@@ -40,7 +40,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 ---
 
-## Phase 2: Test Target (calculator.gd) — TDD
+## Phase 2: Test Target (calculator.gd) — TDD [checkpoint: 9bb1715]
 
 > Implement the calculator GDScript file using TDD. This is the file that will be instrumented. Both branches of the if/else must be exercised by tests.
 
@@ -64,7 +64,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Confirm exit code 0 and both tests passing
     - [x] Record baseline output for comparison after instrumentation
 
-- [~] Task: Conductor - User Manual Verification 'Test Target Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Test Target Implementation' (Protocol in workflow.md)
 
 ---
 
