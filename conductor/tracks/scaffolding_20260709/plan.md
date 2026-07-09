@@ -8,7 +8,7 @@
     - [ ] Read `conductor/workflow.md`
     - [ ] Verify: understand TDD methodology, commit patterns, and task lifecycle
 
-- [ ] Task: Create build configuration (`pyproject.toml`)
+- [x] Task: Create build configuration (`pyproject.toml`) [d0cc81a]
     - [ ] Create `pyproject.toml` with PEP 621 metadata (name: `gd-tools`, version: `0.1.0`, requires-python: `>=3.10`)
     - [ ] Declare runtime dependencies: `gdtoolkit`, `click`, `junitparser`, `jinja2`, `rich`, `tomli; python_version < "3.11"`, `requests`
     - [ ] Declare dev dependencies: `pytest`, `pytest-cov`, `ruff`, `black`
