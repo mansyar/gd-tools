@@ -1,0 +1,208 @@
+# Implementation Plan: Coverage Instrumentation Spike
+
+**Track ID:** `spike_coverage_20260709`
+**Track Type:** Feature (Spike / Proof of Concept)
+**Spec:** [./spec.md](./spec.md)
+**Workflow:** [../../workflow.md](../../workflow.md)
+
+---
+
+## Overview
+
+This plan implements a spike to validate the core hypothesis of Architecture C (Hybrid coverage): that GDScript files can be instrumented at runtime via `Script.source_code` modification and `Script.reload()`, and that the instrumented code executes correctly when GUT runs tests against it.
+
+The spike is structured in 6 phases. Each phase follows the TDD workflow where practical (Red → Green → Refactor) for `.gd` source files. Integration-tested components are validated in Phase 6.
+
+**Spike project location:** `spike/` (relative to project root)
+
+---
+
+## Phase 1: Spike Project Scaffolding
+
+> Create the Godot project structure, install GUT, and prepare the hand-written instrumentation plan.
+
+- [ ] Task: Create spike project directory structure
+    - [ ] Create `spike/` directory with subdirectories: `addons/`, `addons/gd-tools-coverage/`, `scripts/`, `test/`
+- [ ] Task: Create `spike/project.godot` with Godot 4.5 project configuration
+    - [ ] Configure project name, main scene (none needed for CLI), and renderer
+    - [ ] Add `_GDTCoverage` autoload entry pointing to `res://addons/gd-tools-coverage/tracker.gd`
+    - [ ] Verify: `project.godot` is valid Godot 4.5 config format
+- [ ] Task: Install GUT addon into spike project
+    - [ ] Download or copy GUT addon into `spike/addons/gut/`
+    - [ ] Enable GUT plugin in `project.godot` (`[editor_plugins]` section)
+    - [ ] Verify: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` runs without error (GUT loads)
+- [ ] Task: Create hand-written instrumentation plan (`spike/plan.json`)
+    - [ ] Write JSON with version, generated_by, files array
+    - [ ] Include `res://scripts/calculator.gd` with file_id 0 and 3 line entries (lines 8, 9, 11)
+    - [ ] Verify: `plan.json` is valid JSON (parse with `python -c "import json; json.load(open('spike/plan.json'))"`)
+
+- [ ] Task: Conductor - User Manual Verification 'Spike Project Scaffolding' (Protocol in workflow.md)
+
+---
+
+## Phase 2: Test Target (calculator.gd) — TDD
+
+> Implement the calculator GDScript file using TDD. This is the file that will be instrumented. Both branches of the if/else must be exercised by tests.
+
+- [ ] Task: Write GUT test for calculator (Red Phase)
+    - [ ] Create `spike/test/test_calculator.gd` extending `GutTest`
+    - [ ] Implement `before_each()` to load and instantiate `calculator.gd`
+    - [ ] Implement `after_each()` to clean up
+    - [ ] Write `test_divide_normal()` — asserts `result["result"] == 5.0` for `divide(10.0, 2.0)`
+    - [ ] Write `test_divide_by_zero()` — asserts `result["error"] == "division by zero"` for `divide(10.0, 0.0)`
+    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm tests FAIL (calculator.gd does not exist yet)
+- [ ] Task: Implement calculator.gd (Green Phase)
+    - [ ] Create `spike/scripts/calculator.gd` extending `RefCounted`
+    - [ ] Add class docstring: "A simple calculator for spike testing."
+    - [ ] Implement `func divide(a: float, b: float) -> Dictionary` with if/else branch
+        - **Note:** Do NOT use `self` as a parameter name — it is a GDScript keyword
+    - [ ] If-true branch returns `{"error": "division by zero"}`
+    - [ ] Else branch returns `{"result": a / b}`
+    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm both tests PASS
+- [ ] Task: Verify GUT tests pass without instrumentation (baseline)
+    - [ ] Run GUT without any hooks
+    - [ ] Confirm exit code 0 and both tests passing
+    - [ ] Record baseline output for comparison after instrumentation
+
+- [ ] Task: Conductor - User Manual Verification 'Test Target Implementation' (Protocol in workflow.md)
+
+---
+
+## Phase 3: Tracker Autoload (tracker.gd) — TDD
+
+> Implement the coverage tracker singleton. It records hit counts per (file_id, line_id) pair and is no-op when inactive.
+
+- [ ] Task: Write GUT test for tracker (Red Phase)
+    - [ ] Create `spike/test/test_tracker.gd` extending `GutTest`
+    - [ ] Write `test_hit_records_count()` — call `hit(0, 1)` twice, assert `get_hits()["0:1"] == 2`
+    - [ ] Write `test_reset_clears_hits()` — call `hit(0, 1)`, then `reset()`, assert `get_hits()` is empty
+    - [ ] Write `test_get_hits_returns_copy()` — call `hit(0, 1)`, get hits, modify returned dict, assert tracker's internal dict unchanged
+    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_tracker` and confirm tests FAIL (tracker.gd does not exist yet)
+- [ ] Task: Implement tracker.gd (Green Phase)
+    - [ ] Create `spike/addons/gd-tools-coverage/tracker.gd` extending `Node`
+    - [ ] Add class docstring explaining autoload behavior and env var activation
+    - [ ] Implement `_ready()` — check `OS.has_environment("GD_TOOLS_COVERAGE_ACTIVE")`, set `_active`, print status
+    - [ ] Implement `hit(file_id: int, line_id: int)` — no-op if inactive, else increment `_hits["file_id:line_id"]` count
+    - [ ] Implement `get_hits()` — return `_hits.duplicate(true)` (deep copy)
+    - [ ] Implement `reset()` — clear `_hits`
+    - [ ] Implement `is_active()` — return `_active`
+    - [ ] Verify: `_GDTCoverage` autoload is registered in `project.godot` (from Phase 1)
+    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_tracker` and confirm all tests PASS
+- [ ] Task: Refactor tracker.gd (Optional)
+    - [ ] Review code for clarity and consistency with GDScript style guide
+    - [ ] Ensure all public methods have docstrings
+    - [ ] Re-run tests to confirm still passing
+
+- [ ] Task: Conductor - User Manual Verification 'Tracker Autoload Implementation' (Protocol in workflow.md)
+
+---
+
+## Phase 4: Pre-Run Hook (pre_run_hook.gd) — TDD
+
+> Implement the GUT pre_run_hook that reads the instrumentation plan, injects tracker calls into source code, and reloads scripts. The `_inject_trackers()` function is pure string manipulation and can be unit tested.
+
+- [ ] Task: Write GUT test for _inject_trackers (Red Phase)
+    - [ ] Create `spike/test/test_pre_run_hook.gd` extending `GutTest`
+    - [ ] Load `pre_run_hook.gd` script (use `load("res://addons/gd-tools-coverage/pre_run_hook.gd")`)
+    - [ ] Write `test_inject_single_line()` — pass simple source + one line entry, assert tracker call inserted with correct indentation
+    - [ ] Write `test_inject_multiple_lines_preserves_order()` — pass source with 3 line entries, assert all injected, line numbers preserved
+    - [ ] Write `test_inject_bottom_to_top()` — verify injection goes bottom-to-top (line numbers don't shift)
+    - [ ] Write `test_inject_preserves_indentation()` — verify tracker call matches indentation of target line (tabs and spaces)
+    - [ ] Run tests and confirm they FAIL (pre_run_hook.gd does not exist yet)
+- [ ] Task: Implement pre_run_hook.gd (Green Phase)
+    - [ ] Create `spike/addons/gd-tools-coverage/pre_run_hook.gd` extending `RefCounted`
+    - [ ] Add class docstring explaining GUT pre_run_hook purpose
+    - [ ] Define `const TRACKER_NAME = "_GDTCoverage"`
+    - [ ] Implement `_init()`:
+        - [ ] Read plan path from `OS.get_environment("GD_TOOLS_COVERAGE_PLAN")`
+        - [ ] If empty, warn and return (skip instrumentation)
+        - [ ] Open and parse JSON plan file
+        - [ ] On parse error, push error and return
+        - [ ] Call `_instrument_all()`
+    - [ ] Implement `_instrument_all()`:
+        - [ ] Iterate over `_plan["files"]` array
+        - [ ] Call `_instrument_script()` for each file entry
+    - [ ] Implement `_instrument_script(script_path, file_id, lines)`:
+        - [ ] `load()` the script as `GDScript`
+        - [ ] Get `script.source_code` (original)
+        - [ ] Call `_inject_trackers()` to produce instrumented source
+        - [ ] Store original source in `_instrumented_scripts` array for restoration
+        - [ ] Set `script.source_code = instrumented_source`
+        - [ ] Call `script.reload()` and check return code
+        - [ ] On reload failure: restore original source, reload, push error
+        - [ ] On success: print instrumentation summary
+    - [ ] Implement `_inject_trackers(source, file_id, lines)`:
+        - [ ] Split source into lines
+        - [ ] Sort line entries descending (bottom-to-top)
+        - [ ] For each entry: get target line, extract indentation, build tracker call, insert before target line
+        - [ ] Return joined source
+    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_pre_run_hook` and confirm all tests PASS
+- [ ] Task: Refactor pre_run_hook.gd (Optional)
+    - [ ] Review code for clarity
+    - [ ] Ensure error messages follow product guidelines (actionable + fix hints)
+    - [ ] Re-run tests to confirm still passing
+
+- [ ] Task: Conductor - User Manual Verification 'Pre-Run Hook Implementation' (Protocol in workflow.md)
+
+---
+
+## Phase 5: Post-Run Hook (post_run_hook.gd)
+
+> Implement the GUT post_run_hook that reads tracker hit data and serializes it to JSON. This component is simple (serialize dict to JSON) and validated primarily via integration in Phase 6.
+
+- [ ] Task: Implement post_run_hook.gd
+    - [ ] Create `spike/addons/gd-tools-coverage/post_run_hook.gd` extending `RefCounted`
+    - [ ] Add class docstring explaining GUT post_run_hook purpose
+    - [ ] Implement `_init()`:
+        - [ ] Get tracker autoload via `_get_tracker()` (access `SceneTree.root.get_node_or_null("_GDTCoverage")`)
+        - [ ] If tracker not found, push error and return
+        - [ ] If tracker not active, return silently
+        - [ ] Read output path from `OS.get_environment("GD_TOOLS_COVERAGE_OUTPUT")` (default: `user://coverage.json`)
+        - [ ] Get hits from `tracker.get_hits()`
+        - [ ] Build data dict: `{"version": 1, "generated_at": <ISO timestamp>, "hits": <hits>}`
+        - [ ] Open output file for writing
+        - [ ] Write `JSON.stringify(data, "  ")` to file
+        - [ ] Print summary: output path and total hit points
+    - [ ] Implement `_get_tracker()`:
+        - [ ] Get `Engine.get_main_loop()` as `SceneTree`
+        - [ ] Return `tree.root.get_node_or_null("_GDTCoverage")`
+        - [ ] Return null if SceneTree not available
+    - [ ] Verify: file exists and code has no syntax errors (load via `load()`)
+    - [ ] Note: Full validation of this hook occurs in Phase 6 integration test
+
+- [ ] Task: Conductor - User Manual Verification 'Post-Run Hook Implementation' (Protocol in workflow.md)
+
+---
+
+## Phase 6: Integration, Execution & Validation
+
+> Run the full spike flow end-to-end and validate all 6 success criteria. This is the critical validation phase.
+
+- [ ] Task: Configure `.gutconfig.json` with hook paths
+    - [ ] Create `spike/.gutconfig.json`
+    - [ ] Configure `pre_run_script` to `res://addons/gd-tools-coverage/pre_run_hook.gd`
+    - [ ] Configure `post_run_script` to `res://addons/gd-tools-coverage/post_run_hook.gd`
+    - [ ] Configure test directory (`res://test/`)
+    - [ ] Configure exit after tests (`"exit": true`)
+- [ ] Task: Set up execution environment
+    - [ ] Set `GD_TOOLS_COVERAGE_ACTIVE=1`
+    - [ ] Set `GD_TOOLS_COVERAGE_PLAN` to absolute path of `spike/plan.json`
+    - [ ] Set `GD_TOOLS_COVERAGE_OUTPUT` to absolute path of `spike/coverage.json`
+- [ ] Task: Run full spike flow
+    - [ ] Execute: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -d -gexit -gpre_run_script="res://addons/gd-tools-coverage/pre_run_hook.gd" -gpost_run_script="res://addons/gd-tools-coverage/post_run_hook.gd"`
+    - [ ] Capture full stdout output to `spike/spike_output.log`
+    - [ ] Check for GDScript parse/compile errors in output
+- [ ] Task: Verify success criteria
+    - [ ] Criterion 1 (Source modification compiles): Check stdout for `[gd-tools] Instrumented:` message and no reload errors
+    - [ ] Criterion 2 (Instrumented code executes): Check `coverage.json` exists and `hits` dict is non-empty
+    - [ ] Criterion 3 (Correct lines recorded): Verify hits match `{"0:0": 2, "0:1": 1, "0:2": 1}`
+    - [ ] Criterion 4 (Original behavior preserved): Check GUT test results show 2 passing, 0 failing
+    - [ ] Criterion 5 (Coverage data serializable): Parse `coverage.json` as valid JSON with correct structure (`version`, `generated_at`, `hits`)
+    - [ ] Criterion 6 (Works in CLI mode): Confirm entire flow ran via `godot -s ... -d` without editor
+- [ ] Task: Document spike results
+    - [ ] Write spike result report to `spike/SPIKE_RESULTS.md` — pass/fail for each criterion with evidence (stdout excerpts, coverage.json content)
+    - [ ] Record architecture decision — confirm Architecture C (all pass) or select fallback (see spec Section 8)
+    - [ ] Document known limitations discovered during the spike (edge cases, Godot version quirks, etc.)
+    - [ ] Estimate effort for full coverage implementation based on spike learnings
+
+- [ ] Task: Conductor - User Manual Verification 'Integration, Execution & Validation' (Protocol in workflow.md)
