@@ -9,7 +9,6 @@ extends GutHookScript
 const TRACKER_NAME = "_GDTCoverage"
 
 var _plan: Dictionary = {}
-var _instrumented_scripts: Array = []
 
 func run() -> void:
 	var plan_path: String = OS.get_environment("GD_TOOLS_COVERAGE_PLAN")
@@ -18,14 +17,14 @@ func run() -> void:
 		return
 	var file: FileAccess = FileAccess.open(plan_path, FileAccess.READ)
 	if file == null:
-		push_error("[gd-tools] Cannot open plan file: " + plan_path)
+		push_error("[gd-tools] Cannot open plan file: " + plan_path + "\n  Cause: File does not exist or is not readable.\n  Fix: Verify GD_TOOLS_COVERAGE_PLAN points to a valid JSON file.")
 		return
 	var json_text: String = file.get_as_text()
 	file.close()
 	var json: JSON = JSON.new()
 	var err: int = json.parse(json_text)
 	if err != OK:
-		push_error("[gd-tools] JSON parse error: " + json.get_error_message())
+		push_error("[gd-tools] JSON parse error: " + json.get_error_message() + "\n  Cause: Plan file is not valid JSON.\n  Fix: Check JSON syntax at the reported error line.")
 		return
 	_plan = json.data
 	_instrument_all()
@@ -41,15 +40,14 @@ func _instrument_all() -> void:
 func _instrument_script(script_path: String, file_id: int, lines: Array) -> void:
 	var script: GDScript = load(script_path)
 	if script == null:
-		push_error("[gd-tools] Cannot load script: " + script_path)
+		push_error("[gd-tools] Cannot load script: " + script_path + "\n  Cause: Script not found or has syntax errors.\n  Fix: Verify the path in plan.json exists and compiles.")
 		return
 	var original_source: String = script.source_code
 	var instrumented_source: String = _inject_trackers(original_source, file_id, lines)
-	_instrumented_scripts.append({"script": script, "original": original_source})
 	script.source_code = instrumented_source
 	var err: int = script.reload()
 	if err != OK:
-		push_error("[gd-tools] reload() failed for " + script_path + ", restoring original")
+		push_error("[gd-tools] reload() failed for " + script_path + ", restoring original\n  Cause: Instrumented source has syntax errors.\n  Fix: Check tracker injection logic for this script.")
 		script.source_code = original_source
 		script.reload()
 		return

@@ -9,7 +9,8 @@ var _active: bool = false
 var _hits: Dictionary = {}
 
 func _ready() -> void:
-	_active = OS.has_environment("GD_TOOLS_COVERAGE_ACTIVE")
+	var env_val: String = OS.get_environment("GD_TOOLS_COVERAGE_ACTIVE")
+	_active = env_val != "" and env_val != "0" and env_val.to_lower() != "false"
 	if _active:
 		print("[gd-tools] Coverage tracking active")
 
@@ -31,3 +32,7 @@ func reset() -> void:
 ## Return whether the tracker is active (env var was set at startup).
 func is_active() -> bool:
 	return _active
+
+## Set the active state manually (used by tests to avoid env var dependency).
+func set_active(active: bool) -> void:
+	_active = active

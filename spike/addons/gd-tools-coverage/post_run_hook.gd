@@ -11,7 +11,7 @@ extends GutHookScript
 func run() -> void:
 	var tracker: Node = _get_tracker()
 	if tracker == null:
-		push_error("[gd-tools] Cannot find _GDTCoverage autoload node")
+		push_error("[gd-tools] Cannot find _GDTCoverage autoload node\n  Cause: Tracker autoload is not registered in project.godot.\n  Fix: Verify _GDTCoverage is listed under [autoload] in project.godot.")
 		return
 	if not tracker.is_active():
 		return
@@ -26,7 +26,7 @@ func run() -> void:
 	}
 	var file: FileAccess = FileAccess.open(output_path, FileAccess.WRITE)
 	if file == null:
-		push_error("[gd-tools] Cannot open output file: " + output_path)
+		push_error("[gd-tools] Cannot open output file: " + output_path + "\n  Cause: Directory does not exist or is not writable.\n  Fix: Verify GD_TOOLS_COVERAGE_OUTPUT points to a writable path.")
 		return
 	file.store_string(JSON.stringify(data, "  "))
 	file.close()
