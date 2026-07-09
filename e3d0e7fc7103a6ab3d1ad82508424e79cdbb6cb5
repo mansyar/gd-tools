@@ -1,0 +1,24 @@
+Task 5: Implement CLI skeleton (cli.py) — TDD
+
+Implemented src/gd_tools/cli.py with:
+- GdToolsGroup custom Click Group class that catches NotImplementedError
+  from stub commands and exits with code 2 (config/usage error convention)
+- Top-level cli group with @click.version_option (message="%(prog)s %(version)s")
+  producing "gd-tools 0.1.0" output
+- 6 commands: init (--non-interactive), doctor, test (--coverage, --min,
+  --suite, --test, --junit-xml, --no-exit-code), lint (path, --report-format),
+  format (path, --check, --diff), coverage (group with report, merge, show)
+- 3 coverage subcommands: report (--format, --output-dir), merge (files, --output),
+  show (--min)
+- All command stubs raise NotImplementedError, caught by GdToolsGroup.invoke()
+
+Tests (tests/unit/test_cli.py): 17 tests
+- cli is a Click group
+- --version outputs "gd-tools 0.1.0"
+- --help shows all 6 command names
+- Each command's --help shows correct options/arguments
+- Stub invocations exit with code 2 for: test, lint, format, init, doctor,
+  coverage report
+
+Coverage: 97.33% (55/57 statements in cli.py, 2 missed: merge/show stub bodies)
+Quality gates: ruff pass, black pass
