@@ -1,0 +1,45 @@
+Phase 3 Checkpoint Verification Report
+=======================================
+Phase: Version Detection, Validation & GUT Mapping
+Checkpoint Commit: 44851d9
+Date: 2026-07-10
+
+1. SOURCE FILES CHANGED (since Phase 2 checkpoint 8c649b0)
+   - src/gd_tools/godot.py (source — has test file: tests/unit/test_godot.py)
+   - tests/unit/test_godot.py (test file)
+   - conductor/tracks/godot-detection_20260710/plan.md (documentation)
+
+2. TEST RESULTS
+   - Total tests: 131 passed, 0 failed, 0 errors
+   - Phase 3 new tests: 6 (GUT_VERSION_MAP contents, 3 parametrized mapping
+     tests, unmapped raises ConfigError, malformed raises ConfigError)
+   - Test commands: $env:CI='true'; python -m pytest --cov=gd_tools --cov-branch --cov-report=term-missing
+
+3. COVERAGE
+   - Overall: 94.35% (line), 92.6% (branch)
+   - godot.py: 88% line, 92% branch
+   - Missing lines (60-61, 74, 94, 151, 251-258): all from Phase 2 code
+     (platform-specific branches, defensive guards not on current OS)
+   - Phase 3 new code (GUT_VERSION_MAP, get_gut_version_for_godot): fully covered
+   - Threshold: 80% line, 70% branch — PASS
+
+4. CODE QUALITY
+   - ruff check src/ tests/ — All checks passed
+   - black --check src/ tests/ — 16 files would be left unchanged
+
+5. IMPLEMENTATION SUMMARY
+   - get_godot_version(): Implemented in Phase 2 [f238796]
+   - check_version_compatible(): Implemented in Phase 2 [f238796]
+   - GUT_VERSION_MAP: New constant {"4.5": "9.5.0", "4.6": "9.6.0", "4.7": "9.7.0"}
+   - get_gut_version_for_godot(): New function, maps Godot version to GUT version
+     using major.minor prefix. Raises ConfigError for unmapped/malformed versions.
+   - Code commit: 663ab22
+
+6. MANUAL VERIFICATION PLAN
+   - Full test suite passes (131/131)
+   - Lint and format clean
+   - GUT_VERSION_MAP has correct mappings
+   - get_gut_version_for_godot() returns correct GUT versions for 4.5.x/4.6.x/4.7.x
+   - ConfigError raised for unmapped versions (4.4.0) and malformed versions ("4")
+
+7. USER CONFIRMATION: Approved
