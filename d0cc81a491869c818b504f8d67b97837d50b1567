@@ -1,0 +1,13 @@
+Task: Create build configuration (pyproject.toml)
+
+Summary: Created the project build configuration following PEP 621 metadata standard. Configured setuptools build backend with src/gd_tools package layout, declared all runtime and dev dependencies per the tech stack, registered the gd-tools console script entry point, and set up tooling configuration for pytest (with coverage), ruff, and black.
+
+Files created/modified:
+- pyproject.toml (new): PEP 621 metadata, dependencies, entry point, tool configs
+- src/gd_tools/__init__.py (new): Minimal package init (empty, __version__ added in next task via TDD)
+- README.md (new): Minimal placeholder required by pyproject.toml readme field
+- conductor/tracks.md (modified): Track status updated to [~] In Progress
+
+Verification: pip install -e ".[dev]" succeeded. ruff check and black --check pass on src/.
+
+Why: Establishes the foundational build system and package structure upon which all subsequent tracks (test runner, linter, coverage) will build.
