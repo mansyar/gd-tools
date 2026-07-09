@@ -3,14 +3,14 @@
 
 ## Phase 1: Module Foundation
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
-- [ ] Task: Write tests for `GodotInfo` dataclass
-    - [ ] Test `GodotInfo` construction with valid path, version, `is_valid=True`
-    - [ ] Test `GodotInfo` with `version="unknown"`, `is_valid=False`
-- [ ] Task: Implement `GodotInfo` dataclass and module skeleton
-    - [ ] Create `src/gd_tools/godot.py`
-    - [ ] Define `GodotInfo` dataclass with `path: str`, `version: str`, `is_valid: bool`
-    - [ ] Add module docstring and imports
+- [x] Task: Read `spec.md` and `workflow.md` before starting this phase
+- [x] Task: Write tests for `GodotInfo` dataclass [4b312d8]
+    - [x] Test `GodotInfo` construction with valid path, version, `is_valid=True`
+    - [x] Test `GodotInfo` with `version="unknown"`, `is_valid=False`
+- [x] Task: Implement `GodotInfo` dataclass and module skeleton [4b312d8]
+    - [x] Create `src/gd_tools/godot.py`
+    - [x] Define `GodotInfo` dataclass with `path: str`, `version: str`, `is_valid: bool`
+    - [x] Add module docstring and imports
 - [ ] Task: Conductor - User Manual Verification 'Module Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Binary Detection Chain
