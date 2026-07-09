@@ -36,7 +36,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Include `res://scripts/calculator.gd` with file_id 0 and 3 line entries (lines 8, 9, 11)
     - [x] Verify: `plan.json` is valid JSON (parse with `python -c "import json; json.load(open('spike/plan.json'))"`)
 
-- [ ] Task: Conductor - User Manual Verification 'Spike Project Scaffolding' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Spike Project Scaffolding' (Protocol in workflow.md)
 
 ---
 
