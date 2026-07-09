@@ -3,17 +3,17 @@
 
 ## Phase 1: Dependencies & Project Setup
 
-- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
-- [ ] Task: Add pydantic and tomli_w to pyproject.toml
-    - [ ] Add `pydantic >= 2.0` to `[project] dependencies`
-    - [ ] Add `tomli_w` to `[project] dependencies`
-    - [ ] Verify pyproject.toml is valid
-- [ ] Task: Update conductor/tech-stack.md with new dependencies
-    - [ ] Document pydantic v2 addition and rationale (TDD §3.2 specifies Pydantic models)
-    - [ ] Document tomli_w addition (TOML writer for `save_config`)
-- [ ] Task: Install new dependencies
-    - [ ] Run `pip install -e ".[dev]"` to install pydantic and tomli_w
-    - [ ] Verify imports work (`python -c "import pydantic; import tomli_w"`)
+- [x] Task: Read spec.md and workflow.md to review requirements and workflow rules
+- [x] Task: Add pydantic and tomli_w to pyproject.toml
+    - [x] Add `pydantic >= 2.0` to `[project] dependencies`
+    - [x] Add `tomli_w` to `[project] dependencies`
+    - [x] Verify pyproject.toml is valid
+- [x] Task: Update conductor/tech-stack.md with new dependencies
+    - [x] Document pydantic v2 addition and rationale (TDD §3.2 specifies Pydantic models)
+    - [x] Document tomli_w addition (TOML writer for `save_config`)
+- [x] Task: Install new dependencies
+    - [x] Run `pip install -e ".[dev]"` to install pydantic and tomli_w
+    - [x] Verify imports work (`python -c "import pydantic; import tomli_w"`)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Dependencies & Project Setup' (Protocol in workflow.md)
 
 ## Phase 2: Pydantic Configuration Models — TDD

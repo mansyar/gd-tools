@@ -32,6 +32,8 @@ dependencies = [
     "jinja2",
     "rich",
     "tomli; python_version < '3.11'",
+    "tomli_w",
+    "pydantic >= 2.0",
     "requests",
 ]
 

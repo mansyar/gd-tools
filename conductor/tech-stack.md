@@ -19,6 +19,8 @@
 | `jinja2` | HTML coverage report generation | Templates for source-highlighted coverage views |
 | `rich` | Terminal output — tables, colors, progress bars | All user-facing CLI output |
 | `tomli` | TOML config parsing | Backport for Python < 3.11; `tomllib` used natively on 3.11+ |
+| `tomli_w` | TOML config writing | Write companion to `tomli`/`tomllib`; used by `save_config()` |
+| `pydantic` | Config model validation (Pydantic v2) | Validates `gd-tools.toml` structure; `extra='forbid'` catches typo'd keys |
 | `requests` | Download GUT releases from GitHub | Used by `gd-tools init` |
 
 ---
