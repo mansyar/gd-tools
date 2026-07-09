@@ -1,0 +1,70 @@
+Phase 4: Serialization & RC Generation — Verification Report
+=============================================================
+
+Date: 2026-07-10
+Track: config_20260710 (Configuration System)
+Phase: 4 — Serialization & RC Generation
+
+Functions Implemented:
+----------------------
+1. save_config(config: GdToolsConfig, project_root: Path) -> None
+   - Converts GdToolsConfig to dict via model_dump(exclude_none=True)
+   - Writes valid TOML using tomli_w to gd-tools.toml in project root
+   - Round-trips through load_config() successfully
+
+2. generate_gdlintrc(config: GdToolsConfig, project_root: Path) -> None
+   - Writes one exclude path per line to 'gdlintrc' in project root
+   - Overwrites existing file if present
+   - Uses config.lint.exclude list
+
+3. generate_gdformatrc(config: GdToolsConfig, project_root: Path) -> None
+   - Writes one exclude path per line to 'gdformatrc' in project root
+   - Overwrites existing file if present
+   - Uses config.format.exclude list
+
+Test Results:
+------------
+- Total tests: 51 (9 new tests for Phase 4)
+- All 51 tests PASSED
+- New tests:
+  * test_save_config_creates_file
+  * test_save_config_round_trip_default
+  * test_save_config_round_trip_custom
+  * test_generate_gdlintrc_creates_file
+  * test_generate_gdlintrc_overwrites_existing
+  * test_generate_gdlintrc_custom_excludes
+  * test_generate_gdformatrc_creates_file
+  * test_generate_gdformatrc_overwrites_existing
+  * test_generate_gdformatrc_custom_excludes
+
+Coverage (config.py):
+--------------------
+- Line coverage: 100% (85/85 statements)
+- Branch coverage: 100% (14/14 branches)
+- Quality gates: >80% line / >70% branch — EXCEEDED
+
+Code Quality:
+------------
+- ruff check: All checks passed
+- black --check: Files unchanged (already formatted)
+- Type hints: All public functions have type hints
+- Docstrings: All public functions have docstrings
+
+Spec Requirements Met:
+---------------------
+- FR-6: save_config writes gd-tools.toml using tomli_w, round-trips through load_config() ✓
+- FR-7: generate_gdlintrc and generate_gdformatrc generate config files from exclude lists, overwrite existing ✓
+- NFR-3: Type hints, docstrings, ruff/black, line-length=80 ✓
+
+Manual Verification:
+-------------------
+- User confirmed manual verification plan is acceptable
+- save_config round-trip tested with default and custom values
+- generate_gdlintrc/gdformatrc tested with default and custom exclude lists
+- Overwrite behavior verified
+
+Commits:
+-------
+- bef7cd5: feat(config): add save_config, generate_gdlintrc, and generate_gdformatrc
+- 4410955: chore(conductor): update plan for Phase 4 tasks complete
+- a05b2ec: chore(conductor): Phase 4 checkpoint — verified (this commit)
