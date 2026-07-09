@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 1 In Progress — Track 1 (Project Scaffolding) Complete
+**Status:** Phase 1 In Progress — Track 2 (Configuration System) Complete
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -254,6 +254,9 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | `src/gd_tools/config.py` |
 | **Effort** | 1 day |
 | **Risk** | LOW |
+| **Status** | ✅ **COMPLETED** (2026-07-10) — All 5 success criteria passed |
+| **Conductor track** | `config_20260710` (archived to `conductor/archive/`) |
+| **Commits** | `bd09525`..`e41e953` (18 commits) + review fix `d7b0ebe` |
 
 **Scope:**
 - Pydantic models for all config sections: `[godot]`, `[test]`, `[lint]`, `[format]`, `[coverage]`
@@ -273,9 +276,25 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 2. Missing config file falls back to defaults (no error)
 3. Invalid TOML / invalid values produce clear error messages with file path + line
 4. CLI flags override config values (e.g., `--min 90` overrides `min_percent = 80`)
-5. Exclude lists merge correctly (config + defaults)
+5. Exclude lists use TOML value when present, defaults when absent (replace semantics)
 
 **Key TDD references:** §3 (Module: config.py), §7 (Data Contracts)
+
+**Track 2 Results (2026-07-10):**
+- ✅ All 5 success criteria PASSED
+- ✅ 51 unit tests (config.py at 100% coverage), 90 tests total at 99.42% coverage
+- ✅ ruff check + black --check pass
+- **Review fixes applied:**
+  1. Added `encoding="utf-8"` to `write_text()` in `generate_gdlintrc` and `generate_gdformatrc` (prevents `UnicodeEncodeError` on Windows with non-ASCII paths)
+  2. Collapsed unnecessary split f-string in `validate_coverage` error message
+- **Key implementation notes:**
+  - Pydantic v2 models with `extra='forbid'` on all sections — catches typo'd config keys (e.g., `[covrage]`)
+  - `ConfigDict(extra="forbid")` used instead of inner `Config` class (Pydantic v2 pattern)
+  - `__test__ = False` on `TestConfig` prevents pytest from collecting it as a test class
+  - Exclude lists use **replace** semantics (not merge): if `exclude` key present in TOML, it replaces `DEFAULT_EXCLUDES`; if absent, `DEFAULT_EXCLUDES` from code is used
+  - `save_config` uses `model_dump(exclude_none=True)` — omits `binary=None` from written TOML
+  - `find_project_root` uses `Path.resolve()` to handle symlinks correctly
+  - TOML parsing uses conditional import: `tomllib` on Python 3.11+, `tomli` backport on 3.10
 
 ---
 

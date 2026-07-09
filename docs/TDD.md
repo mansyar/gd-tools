@@ -129,28 +129,34 @@ and `sys.exit(e.exit_code)`. Unknown exceptions propagate (bug report).
 #### Pydantic Models
 
 ```python
-from pydantic import BaseModel, Field, field_validator
 from pathlib import Path
-from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 DEFAULT_EXCLUDES = ["addons", ".godot", ".gd-tools", ".git"]
 
 class GodotConfig(BaseModel):
-    binary: Optional[str] = None  # Path to Godot binary; None = auto-detect
+    model_config = ConfigDict(extra="forbid")
+    binary: str | None = None  # Path to Godot binary; None = auto-detect
 
 class TestConfig(BaseModel):
+    __test__ = False  # Prevent pytest from collecting this as a test class
+    model_config = ConfigDict(extra="forbid")
     test_dirs: list[str] = Field(default_factory=lambda: ["test", "tests"])
     prefix: str = "test_"
     suffix: str = ".gd"
     gutconfig: str = ".gutconfig.json"
 
 class LintConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     exclude: list[str] = Field(default_factory=lambda: DEFAULT_EXCLUDES.copy())
 
 class FormatConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     exclude: list[str] = Field(default_factory=lambda: DEFAULT_EXCLUDES.copy())
 
 class CoverageConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     enabled: bool = False
     min_percent: int = 0
     format: str = "html"  # html | lcov | cobertura | text
@@ -159,6 +165,7 @@ class CoverageConfig(BaseModel):
     test_dirs: list[str] = Field(default_factory=lambda: ["test", "tests"])
 
 class GdToolsConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     godot: GodotConfig = Field(default_factory=GodotConfig)
     test: TestConfig = Field(default_factory=TestConfig)
     lint: LintConfig = Field(default_factory=LintConfig)
@@ -174,6 +181,10 @@ class GdToolsConfig(BaseModel):
             raise ValueError(f"min_percent must be 0-100, got {v.min_percent}")
         return v
 ```
+
+All models use `extra="forbid"` to reject unknown keys — catches typos like `[covrage]`.
+Exclude lists use **replace** semantics: if the `exclude` key is present in TOML, it
+replaces `DEFAULT_EXCLUDES`; if absent, `DEFAULT_EXCLUDES` from code is used.
 
 #### Functions
 

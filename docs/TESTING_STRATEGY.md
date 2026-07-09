@@ -190,9 +190,9 @@ pytest tests/unit/test_plan_generator.py::test_if_else_branches -v
 - CLI flag overrides config values
 - Invalid TOML raises `ConfigError`
 - Invalid values (e.g., negative `min_percent`) raises `ConfigError`
-- Config file not found → use all defaults (or error?)
+- Config file not found → use all defaults (no error)
 - Project root detection (walk up to find `project.godot`)
-- Exclude list merging (defaults + user config)
+- Exclude list replace semantics (TOML value replaces defaults when present)
 
 **Fixtures:**
 ```python
@@ -231,8 +231,8 @@ def test_negative_min_percent_raises(tmp_path):
 def test_project_root_detection(tmp_path):
     """Walks up from CWD to find project.godot."""
 
-def test_exclude_list_merging(tmp_path):
-    """User excludes extend, not replace, defaults."""
+def test_exclude_list_replace(tmp_path):
+    """User excludes replace, not extend, defaults."""
 ```
 
 ---
