@@ -1,0 +1,24 @@
+Hook Script Fix (commit 6d001ef)
+
+DISCOVERY:
+During Phase 6 integration preparation, while reading GUT source code
+(gut.gd lines 405-438), discovered that GUT's _validate_hook_script method
+requires hook scripts to:
+1. Extend GutHookScript (not RefCounted) - checked via 'inst is GutHookScript'
+2. Implement run() method - called via 'await inst.run()'
+3. Accept a 'gut' property - set via 'inst.gut = self'
+
+The base class GutHookScript (addons/gut/hook_script.gd) provides:
+- gut property (set by GUT before run())
+- run() virtual method (where hook logic goes)
+- abort(), should_abort(), set_exit_code(), get_exit_code() utilities
+
+FIX:
+Both pre_run_hook.gd and post_run_hook.gd were changed:
+- extends RefCounted -> extends GutHookScript
+- _init() -> run()
+
+VERIFICATION:
+- Godot --import completed without errors
+- All 9 GUT tests pass (2 calculator + 4 pre_run_hook + 3 tracker)
+- Static methods (_inject_trackers, _get_indentation) unchanged
