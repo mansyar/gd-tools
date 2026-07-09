@@ -21,8 +21,8 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 > Create the Godot project structure, install GUT, and prepare the hand-written instrumentation plan.
 
-- [ ] Task: Create spike project directory structure
-    - [ ] Create `spike/` directory with subdirectories: `addons/`, `addons/gd-tools-coverage/`, `scripts/`, `test/`
+- [x] Task: Create spike project directory structure [1cd1e13]
+    - [x] Create `spike/` directory with subdirectories: `addons/`, `addons/gd-tools-coverage/`, `scripts/`, `test/`
 - [ ] Task: Create `spike/project.godot` with Godot 4.5 project configuration
     - [ ] Configure project name, main scene (none needed for CLI), and renderer
     - [ ] Add `_GDTCoverage` autoload entry pointing to `res://addons/gd-tools-coverage/tracker.gd`
