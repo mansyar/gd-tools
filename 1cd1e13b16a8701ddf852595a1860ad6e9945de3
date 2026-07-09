@@ -1,0 +1,15 @@
+Task: Create spike project directory structure
+
+Summary:
+Created the spike project directory tree for the coverage instrumentation spike.
+
+Files created:
+- spike/.gitkeep
+- spike/addons/.gitkeep
+- spike/addons/gd-tools-coverage/.gitkeep
+- spike/addons/gut/.gitkeep
+- spike/scripts/.gitkeep
+- spike/test/.gitkeep
+
+Why:
+The spike validates Architecture C (hybrid coverage) by instrumenting GDScript at runtime. This scaffolding establishes the directory layout: addons/gd-tools-coverage/ for the tracker + hooks, addons/gut/ for the GUT test framework, scripts/ for the test target, and test/ for GUT tests. .gitkeep files ensure empty directories are tracked by git.
