@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 1 Implementation — Track 1 (Scaffolding) Complete
+**Status:** Phase 1 Implementation — Track 3 (Godot Binary Detection) Complete
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -219,11 +219,18 @@ def generate_gdformatrc(config: GdToolsConfig, project_root: Path) -> None:
 
 ### 3.3 `godot.py` — Godot Binary Detection & Invocation
 
+> **Implemented:** Track 3 (`godot-detection_20260710`, archived). See
+> `src/gd_tools/godot.py`. All 6 success criteria passed. Key deviation from
+> the original design below: `find_godot_binary()` was renamed to
+> `find_godot()` and returns `GodotInfo` (not `str`). Added `_is_executable()`
+> and `_build_not_found_message()` helpers.
+
 #### Binary Detection
 
 ```python
-def find_godot_binary(config: GodotConfig) -> str:
+def find_godot(config: GodotConfig) -> GodotInfo:
     """Resolve Godot binary path via priority chain.
+    Returns GodotInfo (path, version, is_valid).
     Raises GodotNotFoundError if not found."""
 
 def _check_config(config: GodotConfig) -> str | None:

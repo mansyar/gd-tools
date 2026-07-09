@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 1 In Progress — Track 2 (Configuration System) Complete
+**Status:** Phase 1 In Progress — Track 3 (Godot Binary Detection) Complete
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -298,7 +298,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ---
 
-### Track 3: Godot Binary Detection
+### Track 3: Godot Binary Detection ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -308,6 +308,9 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | `src/gd_tools/godot.py` |
 | **Effort** | 1 day |
 | **Risk** | MEDIUM — platform-specific edge cases |
+| **Status** | ✅ **COMPLETED** (2026-07-10) — All 6 success criteria passed |
+| **Conductor track** | `godot-detection_20260710` (archived to `conductor/archive/`) |
+| **Commits** | `50e5d50`..`3ce2f06` (15 commits) + review fix `f189c80` |
 
 **Scope:**
 - Resolution chain: config → env vars (`GODOT_BIN`, `GODOT4_BIN`, `GODOT_PATH`) → PATH (`which`) → common locations → error
@@ -331,6 +334,24 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 6. Version < 4.5 raises clear error
 
 **Key TDD references:** §3 (Module: godot.py), PRD §9
+
+**Track 3 Results (2026-07-10):**
+- ✅ All 6 success criteria PASSED
+- ✅ 51 unit tests (godot.py at 99% coverage), 142 tests total at 99.30% coverage
+- ✅ ruff check + black --check pass
+- **Review fixes applied:**
+  1. Added `test_get_godot_version_unparseable_output_raises` (regex-no-match path)
+  2. Added `test_get_godot_version_oserror_raises` (OSError exception path)
+  3. Added parametrized cases for invalid version format in `check_version_compatible`
+  4. Added macOS/Linux not-found message tests
+  5. Guarded `LOCALAPPDATA` edge case (unset → relative path bug)
+- **Key implementation notes:**
+  - `find_godot_binary()` renamed to `find_godot()` returning `GodotInfo` dataclass (path, version, is_valid)
+  - `GodotInfo.is_valid` is `False` (not an exception) when version < 4.5 — callers can decide whether to error
+  - `get_godot_version()` raises `GodotNotFoundError` on both subprocess failure AND unparseable output
+  - `GUT_VERSION_MAP` maps major.minor prefix → GUT version; `get_gut_version_for_godot()` raises `ConfigError` on unmapped versions
+  - `run_godot()` merges caller env with `os.environ` (caller takes precedence) and sets `--path` to project_path
+  - `_build_not_found_message()` generates platform-specific install instructions
 
 ---
 
