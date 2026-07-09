@@ -47,35 +47,35 @@
 
 ## Phase 3: Config Discovery & Loading — TDD
 
-- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
-- [ ] Task: Write unit tests for `find_project_root` (Red)
-    - [ ] Test: finds `project.godot` in CWD
-    - [ ] Test: walks up directory tree to find `project.godot` in parent
-    - [ ] Test: raises `ConfigError` when `project.godot` not found
-    - [ ] Test: uses custom start path when provided
-- [ ] Task: Write unit tests for `load_config` (Red)
-    - [ ] Test: loads valid `gd-tools.toml` with all sections → correct typed `GdToolsConfig`
-    - [ ] Test: loads valid `gd-tools.toml` with partial sections → defaults for missing sections
-    - [ ] Test: missing `gd-tools.toml` → returns `GdToolsConfig()` defaults (no error)
-    - [ ] Test: invalid TOML syntax → raises `ConfigError` with file path
-    - [ ] Test: invalid `min_percent` (negative) → raises `ConfigError`
-    - [ ] Test: invalid `format` value → raises `ConfigError`
-    - [ ] Test: unknown TOML key → raises `ConfigError` (extra='forbid')
-    - [ ] Test: exclude list present in TOML → uses TOML value (replace semantics)
-    - [ ] Test: exclude list absent in TOML → uses `DEFAULT_EXCLUDES`
-- [ ] Task: Implement `find_project_root` (Green)
-    - [ ] Implement walk-up logic from start path (default: `Path.cwd()`)
-    - [ ] Check for `project.godot` at each directory level
-    - [ ] Raise `ConfigError` if not found at filesystem root
-- [ ] Task: Implement `load_config` (Green)
-    - [ ] Implement TOML parsing with `tomllib`/`tomli` conditional import
-    - [ ] Read `gd-tools.toml` from project root
-    - [ ] Handle missing file → return `GdToolsConfig()` defaults
-    - [ ] Catch TOML parse errors → raise `ConfigError` with file path
-    - [ ] Catch Pydantic `ValidationError` → raise `ConfigError` with field details
-- [ ] Task: Verify tests pass (Green check)
-    - [ ] Run `CI=true pytest tests/unit/test_config.py -v`
-    - [ ] Confirm all discovery and loading tests pass
+- [x] Task: Read spec.md and workflow.md to review requirements and workflow rules
+- [x] Task: Write unit tests for `find_project_root` (Red) [6c54a60]
+    - [x] Test: finds `project.godot` in CWD
+    - [x] Test: walks up directory tree to find `project.godot` in parent
+    - [x] Test: raises `ConfigError` when `project.godot` not found
+    - [x] Test: uses custom start path when provided
+- [x] Task: Write unit tests for `load_config` (Red) [6c54a60]
+    - [x] Test: loads valid `gd-tools.toml` with all sections → correct typed `GdToolsConfig`
+    - [x] Test: loads valid `gd-tools.toml` with partial sections → defaults for missing sections
+    - [x] Test: missing `gd-tools.toml` → returns `GdToolsConfig()` defaults (no error)
+    - [x] Test: invalid TOML syntax → raises `ConfigError` with file path
+    - [x] Test: invalid `min_percent` (negative) → raises `ConfigError`
+    - [x] Test: invalid `format` value → raises `ConfigError`
+    - [x] Test: unknown TOML key → raises `ConfigError` (extra='forbid')
+    - [x] Test: exclude list present in TOML → uses TOML value (replace semantics)
+    - [x] Test: exclude list absent in TOML → uses `DEFAULT_EXCLUDES`
+- [x] Task: Implement `find_project_root` (Green) [6c54a60]
+    - [x] Implement walk-up logic from start path (default: `Path.cwd()`)
+    - [x] Check for `project.godot` at each directory level
+    - [x] Raise `ConfigError` if not found at filesystem root
+- [x] Task: Implement `load_config` (Green) [6c54a60]
+    - [x] Implement TOML parsing with `tomllib`/`tomli` conditional import
+    - [x] Read `gd-tools.toml` from project root
+    - [x] Handle missing file → return `GdToolsConfig()` defaults
+    - [x] Catch TOML parse errors → raise `ConfigError` with file path
+    - [x] Catch Pydantic `ValidationError` → raise `ConfigError` with field details
+- [x] Task: Verify tests pass (Green check) [6c54a60]
+    - [x] Run `CI=true pytest tests/unit/test_config.py -v`
+    - [x] Confirm all discovery and loading tests pass
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Config Discovery & Loading' (Protocol in workflow.md)
 
 ## Phase 4: Serialization & RC Generation — TDD
