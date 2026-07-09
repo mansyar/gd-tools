@@ -1,0 +1,24 @@
+Task: Verify GUT tests pass without instrumentation (baseline)
+
+Summary:
+Ran GUT test suite without any hooks or instrumentation to establish a baseline. This baseline will be compared against post-instrumentation results in later phases to verify behavior preservation.
+
+Verification Details:
+- Command: C:\Godot\Godot_v4.6.2-stable_win64.exe --headless --path spike/ -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit
+- No hooks configured (no -gpre_run_script or -gpost_run_script flags)
+- No instrumentation applied to calculator.gd
+
+Baseline Results:
+- Tests: 2
+- Passing Tests: 2
+- Failing Tests: 0
+- Asserts: 2/2
+- Time: 0.413s
+- Exit code: 0
+- Output: "All tests passed!"
+
+Test Details:
+- test_divide_normal: divide(10.0, 2.0) → result["result"] == 5.0 ✓
+- test_divide_by_zero: divide(10.0, 0.0) → result["error"] == "division by zero" ✓
+
+Why: Establishes the pre-instrumentation baseline. After Phase 4 (pre_run_hook) and Phase 5 (post_run_hook) add runtime instrumentation, the same tests must still pass with identical results to prove behavior preservation (Success Criterion #4).
