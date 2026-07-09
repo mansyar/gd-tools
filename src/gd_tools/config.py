@@ -8,6 +8,7 @@ See TDD §3.2 for model definitions and PRD §6 for config format.
 import sys
 from pathlib import Path
 
+import tomli_w
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -228,3 +229,60 @@ def load_config(
         raise ConfigError(
             f"Invalid configuration in {config_file}: " f"{exc}"
         ) from exc
+
+
+def save_config(
+    config: GdToolsConfig,
+    project_root: Path,
+) -> None:
+    """Write a GdToolsConfig to gd-tools.toml in the project root.
+
+    Produces valid TOML that round-trips through
+    :func:`load_config`.
+
+    Args:
+        config: The configuration to serialize.
+        project_root: Path to the project root directory.
+    """
+    config_file = project_root / "gd-tools.toml"
+    data = config.model_dump(exclude_none=True)
+    with open(config_file, "wb") as f:
+        tomli_w.dump(data, f)
+
+
+def generate_gdlintrc(
+    config: GdToolsConfig,
+    project_root: Path,
+) -> None:
+    """Generate a gdlintrc file from the lint exclude list.
+
+    Writes one exclude path per line to ``gdlintrc`` in
+    the project root. Overwrites the file if it already
+    exists.
+
+    Args:
+        config: The configuration to read excludes from.
+        project_root: Path to the project root directory.
+    """
+    rc_file = project_root / "gdlintrc"
+    content = "\n".join(config.lint.exclude) + "\n"
+    rc_file.write_text(content)
+
+
+def generate_gdformatrc(
+    config: GdToolsConfig,
+    project_root: Path,
+) -> None:
+    """Generate a gdformatrc file from the format exclude list.
+
+    Writes one exclude path per line to ``gdformatrc`` in
+    the project root. Overwrites the file if it already
+    exists.
+
+    Args:
+        config: The configuration to read excludes from.
+        project_root: Path to the project root directory.
+    """
+    rc_file = project_root / "gdformatrc"
+    content = "\n".join(config.format.exclude) + "\n"
+    rc_file.write_text(content)

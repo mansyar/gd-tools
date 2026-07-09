@@ -1,6 +1,7 @@
 """Unit tests for the configuration system.
 
-Covers Pydantic models, project-root discovery, and TOML loading.
+Covers Pydantic models, project-root discovery, TOML loading,
+serialization, and rc-file generation.
 """
 
 import pytest
@@ -15,7 +16,10 @@ from gd_tools.config import (
     LintConfig,
     TestConfig,
     find_project_root,
+    generate_gdformatrc,
+    generate_gdlintrc,
     load_config,
+    save_config,
 )
 from gd_tools.errors import ConfigError
 
@@ -322,3 +326,113 @@ def test_load_config_default_project_root(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     config = load_config()
     assert config.coverage.min_percent == 42
+
+
+# --- save_config ---
+
+
+def test_save_config_creates_file(tmp_path):
+    """Test save_config writes gd-tools.toml to project root."""
+    config = GdToolsConfig()
+    save_config(config, project_root=tmp_path)
+    assert (tmp_path / "gd-tools.toml").is_file()
+
+
+def test_save_config_round_trip_default(tmp_path):
+    """Test save_config + load_config round-trips with defaults."""
+    original = GdToolsConfig()
+    save_config(original, project_root=tmp_path)
+    loaded = load_config(project_root=tmp_path)
+    assert loaded == original
+
+
+def test_save_config_round_trip_custom(tmp_path):
+    """Test save_config + load_config round-trips with custom values."""
+    original = GdToolsConfig(
+        godot=GodotConfig(binary="/usr/bin/godot"),
+        test=TestConfig(test_dirs=["my_tests"], prefix="spec_"),
+        lint=LintConfig(exclude=["custom_lint_dir"]),
+        format=FormatConfig(exclude=["custom_fmt_dir"]),
+        coverage=CoverageConfig(
+            enabled=True,
+            min_percent=80,
+            format="lcov",
+        ),
+    )
+    save_config(original, project_root=tmp_path)
+    loaded = load_config(project_root=tmp_path)
+    assert loaded == original
+
+
+# --- generate_gdlintrc ---
+
+
+def test_generate_gdlintrc_creates_file(tmp_path):
+    """Test generate_gdlintrc creates file with exclude entries."""
+    config = GdToolsConfig()
+    generate_gdlintrc(config, project_root=tmp_path)
+    rc_file = tmp_path / "gdlintrc"
+    assert rc_file.is_file()
+    content = rc_file.read_text()
+    for exclude in DEFAULT_EXCLUDES:
+        assert exclude in content
+
+
+def test_generate_gdlintrc_overwrites_existing(tmp_path):
+    """Test generate_gdlintrc overwrites existing file."""
+    rc_file = tmp_path / "gdlintrc"
+    rc_file.write_text("old content\nshould be gone\n")
+    config = GdToolsConfig()
+    generate_gdlintrc(config, project_root=tmp_path)
+    content = rc_file.read_text()
+    assert "old content" not in content
+    for exclude in DEFAULT_EXCLUDES:
+        assert exclude in content
+
+
+def test_generate_gdlintrc_custom_excludes(tmp_path):
+    """Test generate_gdlintrc uses custom exclude list from config."""
+    custom_excludes = ["my_dir", "other_dir"]
+    config = GdToolsConfig(lint=LintConfig(exclude=custom_excludes))
+    generate_gdlintrc(config, project_root=tmp_path)
+    content = (tmp_path / "gdlintrc").read_text()
+    for exclude in custom_excludes:
+        assert exclude in content
+    assert "addons" not in content
+
+
+# --- generate_gdformatrc ---
+
+
+def test_generate_gdformatrc_creates_file(tmp_path):
+    """Test generate_gdformatrc creates file with exclude entries."""
+    config = GdToolsConfig()
+    generate_gdformatrc(config, project_root=tmp_path)
+    rc_file = tmp_path / "gdformatrc"
+    assert rc_file.is_file()
+    content = rc_file.read_text()
+    for exclude in DEFAULT_EXCLUDES:
+        assert exclude in content
+
+
+def test_generate_gdformatrc_overwrites_existing(tmp_path):
+    """Test generate_gdformatrc overwrites existing file."""
+    rc_file = tmp_path / "gdformatrc"
+    rc_file.write_text("old content\nshould be gone\n")
+    config = GdToolsConfig()
+    generate_gdformatrc(config, project_root=tmp_path)
+    content = rc_file.read_text()
+    assert "old content" not in content
+    for exclude in DEFAULT_EXCLUDES:
+        assert exclude in content
+
+
+def test_generate_gdformatrc_custom_excludes(tmp_path):
+    """Test generate_gdformatrc uses custom exclude list from config."""
+    custom_excludes = ["fmt_dir", "skip_dir"]
+    config = GdToolsConfig(format=FormatConfig(exclude=custom_excludes))
+    generate_gdformatrc(config, project_root=tmp_path)
+    content = (tmp_path / "gdformatrc").read_text()
+    for exclude in custom_excludes:
+        assert exclude in content
+    assert "addons" not in content
