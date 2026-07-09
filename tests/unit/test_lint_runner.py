@@ -5,10 +5,7 @@ lint execution via gdtoolkit, output formatting, and syntax
 error handling.
 """
 
-import pytest
-
 from gd_tools.lint_runner import LintIssue, LintResult
-
 
 # --- LintIssue dataclass ---
 
