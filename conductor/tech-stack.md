@@ -38,7 +38,7 @@
 
 | Component | Purpose |
 |-----------|---------|
-| **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
+| **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `tracker.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
 | **GUT** (installed by `gd-tools init`) | GDScript unit test framework. Downloaded from GitHub releases, not bundled. Version-mapped to Godot version (4.5→9.5.0, 4.6→9.6.0, 4.7→9.7.0) |
 
 ---
