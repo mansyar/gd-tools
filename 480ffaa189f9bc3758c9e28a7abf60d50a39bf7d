@@ -1,0 +1,19 @@
+Phase 3 Task 3: Refactor tracker.gd (Optional)
+
+Refactoring changes:
+- Added docstrings to 4 public methods:
+  - hit(): "Record a hit at (file_id, line_id). No-op if tracker is inactive."
+  - get_hits(): "Return a deep copy of the hit counts dictionary."
+  - reset(): "Clear all recorded hits."
+  - is_active(): "Return whether the tracker is active (env var was set at startup)."
+
+Review findings:
+- Code already follows GDScript style guide: tabs, snake_case, type annotations
+- Class docstring already present from spec implementation
+- No structural changes needed — code was clean from spec
+
+Post-refactor verification:
+- Env var set: GD_TOOLS_COVERAGE_ACTIVE=1
+- GUT run: -gselect=test_tracker
+- Result: 3/3 tests PASSED, 3 asserts, 0 failures
+- No behavior change (docstrings are comments only)
