@@ -31,10 +31,10 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Download or copy GUT addon into `spike/addons/gut/`
     - [x] Enable GUT plugin in `project.godot` (`[editor_plugins]` section)
     - [x] Verify: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` runs without error (GUT loads)
-- [ ] Task: Create hand-written instrumentation plan (`spike/plan.json`)
-    - [ ] Write JSON with version, generated_by, files array
-    - [ ] Include `res://scripts/calculator.gd` with file_id 0 and 3 line entries (lines 8, 9, 11)
-    - [ ] Verify: `plan.json` is valid JSON (parse with `python -c "import json; json.load(open('spike/plan.json'))"`)
+- [x] Task: Create hand-written instrumentation plan (`spike/plan.json`) [f0dd5d0]
+    - [x] Write JSON with version, generated_by, files array
+    - [x] Include `res://scripts/calculator.gd` with file_id 0 and 3 line entries (lines 8, 9, 11)
+    - [x] Verify: `plan.json` is valid JSON (parse with `python -c "import json; json.load(open('spike/plan.json'))"`)
 
 - [ ] Task: Conductor - User Manual Verification 'Spike Project Scaffolding' (Protocol in workflow.md)
 
