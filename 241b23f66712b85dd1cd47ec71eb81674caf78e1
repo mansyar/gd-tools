@@ -1,0 +1,26 @@
+Task: Implement calculator.gd (Green Phase)
+
+Summary:
+Created the calculator GDScript file that makes the GUT tests pass. This is the Green Phase of TDD — minimum implementation to satisfy the failing tests from the Red Phase.
+
+Files Created:
+- spike/scripts/calculator.gd (extends RefCounted, func divide(a, b) -> Dictionary with if/else branch)
+
+Files Removed:
+- spike/scripts/.gitkeep (placeholder replaced by real file)
+
+Implementation Details:
+- extends RefCounted (lightweight, auto-freed)
+- divide(a: float, b: float) -> Dictionary
+- if b == 0.0: returns {"error": "division by zero"}
+- else: returns {"result": a / b}
+- Class docstring: "A simple calculator for spike testing."
+- Note: parameter names are 'a' and 'b' (not 'self' which is a GDScript keyword)
+
+Green Phase Verification:
+- Ran: C:\Godot\Godot_v4.6.2-stable_win64.exe --headless --path spike/ -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit
+- Result: 2/2 tests PASSED, 2/2 asserts
+- test_divide_normal: divide(10.0, 2.0) → result["result"] == 5.0 ✓
+- test_divide_by_zero: divide(10.0, 0.0) → result["error"] == "division by zero" ✓
+
+Why: TDD Green Phase — minimum implementation to pass the Red Phase tests. This is the file that will be instrumented at runtime by the coverage spike in later phases.
