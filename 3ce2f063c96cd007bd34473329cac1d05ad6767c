@@ -1,0 +1,56 @@
+Phase 4 Checkpoint Verification Report
+======================================
+
+Track: Godot Binary Detection (Track 3)
+Phase: Phase 4 - Godot Invocation Wrapper
+Checkpoint Commit: 3ce2f06
+Code Commit: 3a8a99f
+Plan Update Commit: a7c88ca
+Previous Checkpoint: 44851d9 (Phase 3)
+
+Changed Files (since Phase 3 checkpoint):
+- conductor/tracks/godot-detection_20260710/plan.md (documentation)
+- src/gd_tools/godot.py (source — test file exists: tests/unit/test_godot.py ✓)
+- tests/unit/test_godot.py (test file)
+
+Test Results:
+- Total tests: 136 (was 131 at Phase 3, +5 new for run_godot)
+- All 136 tests PASSED
+- No failures, no errors
+
+Coverage:
+- Overall: 94.41% (threshold: 80%) ✓
+- godot.py: 89% line, 92% branch (thresholds: 80% line, 70% branch) ✓
+- Missing lines (60-61, 74, 94, 151, 251-258): All from Phase 2 — platform-specific
+  branches in _build_not_found_message() not on current OS, defensive guards in
+  get_godot_version(), check_version_compatible(), _check_config()
+
+Lint: ruff check src/ tests/ — All checks passed ✓
+Format: black --check src/ tests/ — All files formatted ✓
+
+Implementation Summary (FR-6: run_godot):
+- Function: run_godot(binary, project_path: Path, args: list[str], env: dict|None=None,
+  timeout: int|None=None) -> subprocess.CompletedProcess
+- Command construction: [binary, "--path", str(project_path), *args]
+- Env merging: {**os.environ, **(env or {})} — caller values take precedence
+- subprocess.run kwargs: capture_output=True, text=True, env=merged_env, timeout=timeout
+- Returns subprocess.CompletedProcess directly
+- Raises subprocess.TimeoutExpired (propagated from subprocess.run)
+
+Tests Added (5 new):
+1. test_run_godot_passes_path_and_args: verifies --path and args in command list
+2. test_run_godot_merges_env_caller_precedence: verifies env merge with caller precedence
+3. test_run_godot_uses_capture_output_and_text: verifies capture_output=True, text=True
+4. test_run_godot_raises_timeout_expired: verifies TimeoutExpired propagation
+5. test_run_godot_returns_completed_process: verifies return value
+
+Manual Verification Plan (approved by user):
+1. Test suite passes (136/136) ✓
+2. Lint and format pass ✓
+3. run_godot() command construction verified ✓
+4. Env merging with caller precedence verified ✓
+5. capture_output and text flags verified ✓
+6. TimeoutExpired propagation verified ✓
+7. Return value (CompletedProcess) verified ✓
+
+User Approval: Yes, proceed
