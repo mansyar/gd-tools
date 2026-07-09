@@ -1,3 +1,4 @@
+<protect>
 # Track: Project Scaffolding
 
 ## Overview
@@ -89,3 +90,4 @@ This track establishes the foundational Python package structure, build system, 
 - PyPI publishing configuration — deferred to a later track.
 - GDScript addon files (`coverage.gd`, hooks) — deferred to the coverage track.
 - Any modules beyond `cli.py`, `errors.py`, `__main__.py`, `__init__.py` (e.g., `config.py`, `godot.py`, `test_runner.py`) — these are placeholders for future tracks.
+</protect>

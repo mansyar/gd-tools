@@ -1,6 +1,12 @@
+<protect>
 # Implementation Plan: Project Scaffolding
 
 ## Phase 1: Project Scaffolding
+
+- [ ] Task: Read spec.md and workflow.md before starting implementation
+    - [ ] Read `conductor/tracks/scaffolding_20260709/spec.md`
+    - [ ] Read `conductor/workflow.md`
+    - [ ] Verify: understand TDD methodology, commit patterns, and task lifecycle
 
 - [ ] Task: Create build configuration (`pyproject.toml`)
     - [ ] Create `pyproject.toml` with PEP 621 metadata (name: `gd-tools`, version: `0.1.0`, requires-python: `>=3.10`)
@@ -72,3 +78,4 @@
     - [ ] Verify: files exist and are correctly formatted
 
 - [ ] Task: Conductor - User Manual Verification 'Project Scaffolding' (Protocol in workflow.md)
+</protect>
