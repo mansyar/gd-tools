@@ -44,13 +44,13 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 > Implement the calculator GDScript file using TDD. This is the file that will be instrumented. Both branches of the if/else must be exercised by tests.
 
-- [ ] Task: Write GUT test for calculator (Red Phase)
-    - [ ] Create `spike/test/test_calculator.gd` extending `GutTest`
-    - [ ] Implement `before_each()` to load and instantiate `calculator.gd`
-    - [ ] Implement `after_each()` to clean up
-    - [ ] Write `test_divide_normal()` — asserts `result["result"] == 5.0` for `divide(10.0, 2.0)`
-    - [ ] Write `test_divide_by_zero()` — asserts `result["error"] == "division by zero"` for `divide(10.0, 0.0)`
-    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm tests FAIL (calculator.gd does not exist yet)
+- [x] Task: Write GUT test for calculator (Red Phase) [03da2e2]
+    - [x] Create `spike/test/test_calculator.gd` extending `GutTest`
+    - [x] Implement `before_each()` to load and instantiate `calculator.gd`
+    - [x] Implement `after_each()` to clean up
+    - [x] Write `test_divide_normal()` — asserts `result["result"] == 5.0` for `divide(10.0, 2.0)`
+    - [x] Write `test_divide_by_zero()` — asserts `result["error"] == "division by zero"` for `divide(10.0, 0.0)`
+    - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm tests FAIL (calculator.gd does not exist yet)
 - [ ] Task: Implement calculator.gd (Green Phase)
     - [ ] Create `spike/scripts/calculator.gd` extending `RefCounted`
     - [ ] Add class docstring: "A simple calculator for spike testing."
