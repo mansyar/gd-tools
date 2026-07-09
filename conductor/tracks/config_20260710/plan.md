@@ -18,31 +18,31 @@
 
 ## Phase 2: Pydantic Configuration Models — TDD
 
-- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
-- [ ] Task: Write unit tests for Pydantic models (Red)
-    - [ ] Test `GodotConfig` default (`binary=None`)
-    - [ ] Test `TestConfig` defaults (`test_dirs`, `prefix`, `suffix`, `gutconfig`)
-    - [ ] Test `LintConfig` defaults (`exclude=DEFAULT_EXCLUDES`)
-    - [ ] Test `FormatConfig` defaults (`exclude=DEFAULT_EXCLUDES`)
-    - [ ] Test `CoverageConfig` defaults (`enabled`, `min_percent`, `format`, `output_dir`, `exclude`, `test_dirs`)
-    - [ ] Test `GdToolsConfig` defaults (all sections present with defaults)
-    - [ ] Test `GdToolsConfig` coverage validator: valid format values (html, lcov, cobertura, text)
-    - [ ] Test `GdToolsConfig` coverage validator: invalid format raises `ValidationError`
-    - [ ] Test `GdToolsConfig` coverage validator: `min_percent` out of range raises `ValidationError`
-    - [ ] Test `extra='forbid'`: unknown key in any section raises `ValidationError`
-    - [ ] Test mutability: fields can be updated after creation (for CLI overrides)
-- [ ] Task: Implement Pydantic models (Green)
-    - [ ] Define `DEFAULT_EXCLUDES` constant
-    - [ ] Implement `GodotConfig(BaseModel)` with `extra='forbid'`
-    - [ ] Implement `TestConfig(BaseModel)` with `extra='forbid'`
-    - [ ] Implement `LintConfig(BaseModel)` with `extra='forbid'`
-    - [ ] Implement `FormatConfig(BaseModel)` with `extra='forbid'`
-    - [ ] Implement `CoverageConfig(BaseModel)` with `extra='forbid'`
-    - [ ] Implement `GdToolsConfig(BaseModel)` with `field_validator` on coverage and `extra='forbid'`
-    - [ ] Verify models are mutable (Pydantic v2 default)
-- [ ] Task: Verify tests pass (Green check)
-    - [ ] Run `CI=true pytest tests/unit/test_config.py -v`
-    - [ ] Confirm all model tests pass
+- [x] Task: Read spec.md and workflow.md to review requirements and workflow rules
+- [x] Task: Write unit tests for Pydantic models (Red)
+    - [x] Test `GodotConfig` default (`binary=None`)
+    - [x] Test `TestConfig` defaults (`test_dirs`, `prefix`, `suffix`, `gutconfig`)
+    - [x] Test `LintConfig` defaults (`exclude=DEFAULT_EXCLUDES`)
+    - [x] Test `FormatConfig` defaults (`exclude=DEFAULT_EXCLUDES`)
+    - [x] Test `CoverageConfig` defaults (`enabled`, `min_percent`, `format`, `output_dir`, `exclude`, `test_dirs`)
+    - [x] Test `GdToolsConfig` defaults (all sections present with defaults)
+    - [x] Test `GdToolsConfig` coverage validator: valid format values (html, lcov, cobertura, text)
+    - [x] Test `GdToolsConfig` coverage validator: invalid format raises `ValidationError`
+    - [x] Test `GdToolsConfig` coverage validator: `min_percent` out of range raises `ValidationError`
+    - [x] Test `extra='forbid'`: unknown key in any section raises `ValidationError`
+    - [x] Test mutability: fields can be updated after creation (for CLI overrides)
+- [x] Task: Implement Pydantic models (Green) [ff15c1a]
+    - [x] Define `DEFAULT_EXCLUDES` constant
+    - [x] Implement `GodotConfig(BaseModel)` with `extra='forbid'`
+    - [x] Implement `TestConfig(BaseModel)` with `extra='forbid'`
+    - [x] Implement `LintConfig(BaseModel)` with `extra='forbid'`
+    - [x] Implement `FormatConfig(BaseModel)` with `extra='forbid'`
+    - [x] Implement `CoverageConfig(BaseModel)` with `extra='forbid'`
+    - [x] Implement `GdToolsConfig(BaseModel)` with `field_validator` on coverage and `extra='forbid'`
+    - [x] Verify models are mutable (Pydantic v2 default)
+- [x] Task: Verify tests pass (Green check) [ff15c1a]
+    - [x] Run `CI=true pytest tests/unit/test_config.py -v`
+    - [x] Confirm all model tests pass
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Pydantic Configuration Models' (Protocol in workflow.md)
 
 ## Phase 3: Config Discovery & Loading — TDD
