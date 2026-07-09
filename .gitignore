@@ -8,6 +8,7 @@ __pycache__/
 dist/
 build/
 .eggs/
+.coverage
 
 # gd-tools runtime
 .gd-tools/
