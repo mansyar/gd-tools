@@ -1,0 +1,72 @@
+Phase 3 Verification Report: Config Discovery & Loading
+======================================================
+
+Track: config_20260710 (Configuration System)
+Phase: 3 — Config Discovery & Loading (TDD)
+Checkpoint Commit: a5f65b7
+Date: 2026-07-10
+
+Implementation Summary
+----------------------
+- Implemented `find_project_root(start_path: Path | None = None) -> Path`
+  - Walks up directory tree from start_path (default: CWD)
+  - Finds nearest `project.godot` file
+  - Raises `ConfigError` if not found at filesystem root
+
+- Implemented `load_config(project_root: Path | None = None) -> GdToolsConfig`
+  - Discovers project root via `find_project_root()` if not provided
+  - Reads `gd-tools.toml` from project root
+  - Returns `GdToolsConfig()` defaults if file missing (no error)
+  - Uses `tomllib` (Python 3.11+) with `tomli` backport for 3.10
+  - Catches `TOMLDecodeError` → raises `ConfigError` with file path
+  - Catches Pydantic `ValidationError` → raises `ConfigError` with details
+
+Test Results
+------------
+- Total tests: 42 (all passed)
+- New Phase 3 tests: 15 (4 find_project_root + 9 load_config + 2 default-param)
+- config.py line coverage: 100% (71/71 statements)
+- config.py branch coverage: 100% (14/14 branches)
+- Ruff: All checks passed
+- Black: All files formatted correctly
+
+Test Cases Covered
+------------------
+find_project_root:
+  - Finds project.godot in start path (CWD)
+  - Walks up directory tree to find project.godot in parent
+  - Raises ConfigError when project.godot not found
+  - Uses custom start path
+  - Default CWD parameter path
+
+load_config:
+  - Loads valid gd-tools.toml with all sections
+  - Loads partial sections with defaults for missing fields
+  - Missing gd-tools.toml returns defaults (no error)
+  - Invalid TOML syntax raises ConfigError with file path
+  - Invalid min_percent (negative) raises ConfigError
+  - Invalid format value raises ConfigError
+  - Unknown TOML key raises ConfigError (extra='forbid')
+  - Exclude list present in TOML uses TOML value (replace semantics)
+  - Exclude list absent in TOML uses DEFAULT_EXCLUDES
+  - Default project_root discovery path
+
+Quality Gates
+-------------
+- [x] Tests pass (42/42)
+- [x] config.py line coverage > 80% (100%)
+- [x] config.py branch coverage > 70% (100%)
+- [x] Ruff clean
+- [x] Black clean
+- [x] Type hints on all public functions
+- [x] Docstrings on all public functions
+
+Manual Verification
+-------------------
+User approved without manual checks (automated tests sufficient).
+
+Commits
+-------
+- 6c54a60: feat(config): add find_project_root and load_config
+- 2ccf624: chore(conductor): update plan for Phase 3 tasks complete
+- a5f65b7: chore(conductor): Phase 3 checkpoint — verified
