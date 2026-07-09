@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Planning / Pre-implementation
+**Status:** Phase 0 Complete — Spike Validated, Architecture C Confirmed
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -70,7 +70,7 @@ Total estimated effort: ~25-30 days
 
 | Milestone | Phase Complete | What You Can Do |
 |-----------|---------------|-----------------|
-| **M0: Spike Pass** | Phase 0 | Confirmed that runtime GDScript instrumentation works |
+| **M0: Spike Pass** ✅ | Phase 0 | ✅ ACHIEVED — Runtime GDScript instrumentation validated (2026-07-09). All 6 success criteria passed. Architecture C confirmed. |
 | **M1: Foundation** | Phase 1 | Config loads, Godot binary detected, CLI skeleton runs |
 | **M2: First Usable** | Phase 2 | `gd-tools lint`, `format`, `test`, `init`, `doctor` all work |
 | **M3: Coverage Alpha** | Phase 3 | `gd-tools test --coverage` produces line+branch reports |
@@ -141,7 +141,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ## 4. Track Specifications
 
-### Track 0: Coverage Instrumentation Spike
+### Track 0: Coverage Instrumentation Spike ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -151,7 +151,10 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | None (standalone POC) |
 | **Effort** | 1-2 days |
 | **Risk** | HIGH — make-or-break for Architecture C |
+| **Status** | ✅ **COMPLETED** (2026-07-09) — All 6 success criteria passed |
 | **Spec doc** | [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md) |
+| **Conductor track** | `spike_coverage_20260709` (archived to `conductor/archive/`) |
+| **Commits** | `1cd1e13`..`f717a16` (47 commits, 16 source files, 651 insertions) |
 
 **Scope:**
 - Build a minimal Godot project with one source file (`calculator.gd`) and one GUT test file
@@ -176,6 +179,18 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 **Fallback (if spike fails):**
 - Fall back to Architecture B (fork jamie-pate/godot-code-coverage, update for Godot 4.5)
 - Or Architecture A (pure Python, accept Reconstructor limitations)
+
+**Spike Results (2026-07-09):**
+- ✅ All 6 success criteria PASSED
+- ✅ Architecture C (Hybrid) CONFIRMED — proceeding with full implementation
+- **Key learnings** (see [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md) §13):
+  1. GUT hooks must `extends GutHookScript` (not `RefCounted`) and use `run()` method (not `_init()`)
+  2. `.gutconfig.json` uses `should_exit` (not `exit`)
+  3. Godot 4.6.2 used (spec said 4.5) — works correctly
+  4. `tracker.gd` needs `set_active(bool)` method for testability (env var alone is insufficient)
+  5. Env var activation should check value, not just existence (`=0` or `=false` should deactivate)
+  6. Source restoration after instrumentation is not needed (process exits after tests)
+  7. Instrumentation must work bottom-to-top to preserve line numbers
 
 ---
 

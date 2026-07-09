@@ -924,21 +924,33 @@ def generate_cobertura_report(
 
 ### 4.1 `tracker.gd` — Autoload Coverage Tracker
 
+> **Spike-validated:** The spike (`spike_coverage_20260709`) confirmed this design
+> works. Key changes from original spec: added `set_active()` method for
+> testability, env var check now validates value (not just existence).
+
 ```gdscript
 extends Node
 ## Coverage tracker autoload singleton.
 ## Registered as _GDTCoverage in project.godot.
-## No-op when GD_TOOLS_COVERAGE_ACTIVE env var is not set.
+## No-op when GD_TOOLS_COVERAGE_ACTIVE env var is not set or is "0"/"false".
 
 var _active: bool = false
 var _hits: Dictionary = {}  # file_id → {line_id → hit_count}
 
 func _ready() -> void:
-    var env_active := OS.get_environment("GD_TOOLS_COVERAGE_ACTIVE")
-    _active = env_active == "1"
+    var env_val := OS.get_environment("GD_TOOLS_COVERAGE_ACTIVE")
+    _active = env_val != "" and env_val != "0" and env_val.to_lower() != "false"
     if not _active:
         return
     _hits.clear()
+
+func set_active(active: bool) -> void:
+    ## Enable/disable tracking. Used by tests and pre_run_hook.
+    _active = active
+    if active and _hits.is_empty():
+        pass  # Ready to track
+    elif not active:
+        pass  # No-op when inactive
 
 func hit(file_id: int, line_id: int) -> void:
     if not _active:
@@ -973,15 +985,14 @@ func is_active() -> bool:
 
 ### 4.2 `pre_run_hook.gd` — GUT Pre-Run Hook
 
+> **Spike-validated:** GUT hooks must `extends GutHookScript` (not `RefCounted`)
+> and use `run()` method (not `_init()`). GUT instantiates the hook script and
+> calls `run()`. The `_inject_trackers` method is `static` for testability.
+
 ```gdscript
-extends RefCounted
+extends GutHookScript
 ## GUT pre-run hook. Reads instrumentation plan, instruments scripts.
 ## Invoked by GUT before tests run.
-
-var _gut: Object  # GUT instance, passed by GUT
-
-func _init(gut: Object = null) -> void:
-    _gut = gut
 
 func run() -> void:
     ## Main entry point called by GUT.
@@ -1012,9 +1023,43 @@ func _load_plan(path: String) -> Dictionary:
         return {}
     return parsed
 
+static func _inject_trackers(source: String, file_id: int, lines: Array) -> String:
+    ## Inject tracker calls into source code.
+    ## Works bottom-to-top so line numbers don't shift.
+    ## Returns the instrumented source string.
+    var source_lines := source.split("\n")
+    var sorted_lines := lines.duplicate()
+    sorted_lines.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
+
+    for line_entry in sorted_lines:
+        var line_num: int = int(line_entry["line"])
+        var line_id: int = int(line_entry["id"])
+        var idx: int = line_num - 1
+
+        if idx < 0 or idx >= source_lines.size():
+            continue
+
+        var original_line := source_lines[idx]
+        var indent := _extract_indent(original_line)
+        var tracker_call := "%s_GDTCoverage.hit(%d, %d)" % [indent, file_id, line_id]
+        source_lines.insert(idx, tracker_call)
+
+    return "\n".join(source_lines)
+
+static func _extract_indent(line: String) -> String:
+    ## Extract leading whitespace from a line.
+    var indent := ""
+    for ch in line:
+        if ch == " " or ch == "\t":
+            indent += ch
+        else:
+            break
+    return indent
+
 func _instrument_file(file_entry: Dictionary) -> void:
     ## Instrument a single script file.
     var res_path: String = file_entry["path"]
+    var file_id: int = int(file_entry.get("file_id", 0))
     var lines: Array = file_entry["lines"]
 
     var script := load(res_path)
@@ -1023,26 +1068,8 @@ func _instrument_file(file_entry: Dictionary) -> void:
         return
 
     var source := script.source_code
-    var source_lines := source.split("\n")
+    var instrumented_source := _inject_trackers(source, file_id, lines)
 
-    # Work bottom-to-top so line numbers don't shift
-    lines.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
-
-    for line_entry in lines:
-        var line_num: int = int(line_entry["line"])
-        var line_id: int = int(line_entry["id"])
-        var file_id: int = int(file_entry["file_id"])
-
-        if line_num < 1 or line_num > source_lines.size():
-            continue
-
-        var original_line := source_lines[line_num - 1]
-        var indent := _extract_indent(original_line)
-        var tracker_call := "%s_GDTCoverage.hit(%d, %d)" % [indent, file_id, line_id]
-
-        source_lines.insert(line_num - 1, tracker_call)
-
-    var instrumented_source := "\n".join(source_lines)
     script.source_code = instrumented_source
     var err := script.reload()
     if err != OK:
@@ -1057,15 +1084,13 @@ line numbers), set `source_code`, call `reload()`.
 
 ### 4.3 `post_run_hook.gd` — GUT Post-Run Hook
 
+> **Spike-validated:** GUT hooks must `extends GutHookScript` (not `RefCounted`)
+> and use `run()` method (not `_init()`).
+
 ```gdscript
-extends RefCounted
+extends GutHookScript
 ## GUT post-run hook. Saves coverage data to JSON.
 ## Invoked by GUT after all tests complete.
-
-var _gut: Object  # GUT instance
-
-func _init(gut: Object = null) -> void:
-    _gut = gut
 
 func run() -> void:
     ## Main entry point called by GUT.

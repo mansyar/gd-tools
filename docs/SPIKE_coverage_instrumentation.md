@@ -1,10 +1,12 @@
 # Spike: Runtime GDScript Instrumentation via Source Code Modification
 
 **Document type:** Spike / Proof of Concept
-**Date:** 2026-07-08
-**Status:** Ready for execution
+**Date:** 2026-07-08 (spec), 2026-07-09 (execution)
+**Status:** ✅ COMPLETED — Architecture C CONFIRMED
 **Parent PRD:** `docs/PRD.md` (Section 10: Coverage Architecture)
 **Risk level:** HIGH — this is the riskiest component of the entire project
+**Conductor track:** `spike_coverage_20260709` (archived to `conductor/archive/`)
+**Commits:** `1cd1e13`..`f717a16` (47 commits)
 
 ---
 
@@ -572,3 +574,54 @@ After the spike is executed, produce:
 **Total: ~1 day**
 
 If the spike takes more than 2 days, it's a signal to evaluate fallback plans rather than continuing to debug.
+
+---
+
+## 13. Spike Results (2026-07-09)
+
+### Verdict: ✅ ALL 6 SUCCESS CRITERIA PASSED — Architecture C CONFIRMED
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | Source modification compiles | ✅ PASS | `script.reload()` returns `OK` for all instrumented files |
+| 2 | Instrumented code executes | ✅ PASS | Tracker `_hits` dict non-empty after test run |
+| 3 | Correct lines recorded | ✅ PASS | Hits match expected: `{0:0: 2, 0:1: 1, 0:2: 1}` |
+| 4 | Original behavior preserved | ✅ PASS | Both GUT tests pass on instrumented code (2/2) |
+| 5 | Coverage data serializable | ✅ PASS | `coverage.json` is valid JSON with correct structure |
+| 6 | Works in CLI mode | ✅ PASS | Full flow runs via `godot --headless -s ... -gexit` |
+
+### Test Results
+- **9/9 tests pass, 10/10 asserts** (without env vars — after review fixes)
+- **2/2 calculator tests pass** with full coverage flow (env vars + instrumentation)
+- **Coverage data:** `{0:0: 2, 0:1: 1, 0:2: 1}` — matches expected exactly
+
+### Key Deviations from Spec (all documented as Known Limitations)
+1. **Hooks extend `GutHookScript`** (not `RefCounted` per spec) — GUT requires this base class
+2. **Hooks use `run()` method** (not `_init()`) — GUT calls `run()` on hook scripts
+3. **`.gutconfig.json` uses `should_exit`** (not `exit`) — GUT 9.x API
+4. **Godot 4.6.2 used** (spec said 4.5) — available version, works correctly
+
+### Review Fixes Applied (commit `734d833`)
+1. Added `set_active(bool)` to `tracker.gd` — tests no longer depend on env var
+2. Converted `test_tracker.gd` from 4-space to tabs (consistency)
+3. Removed dead `_instrumented_scripts` array from `pre_run_hook.gd`
+4. Error messages now follow actionable format (Cause/Fix hints)
+5. Env var check now validates value (not just existence)
+
+### Known Limitations (for production implementation)
+1. Source restoration after run not implemented (process exits, not needed for spike)
+2. No error recovery if `reload()` fails mid-instrumentation
+3. No branch coverage (only line/statement tracking in spike)
+4. Single-file instrumentation only (production needs multi-file)
+5. No performance benchmarking
+6. Plan is hand-written (production uses gdtoolkit/Lark)
+7. No report generation (HTML/LCOV/Cobertura)
+
+### Impact on Production Design (TDD updates)
+The spike validated the core approach but revealed design changes needed in the TDD:
+- `pre_run_hook.gd` and `post_run_hook.gd` must `extends GutHookScript`, use `run()` method
+- `tracker.gd` needs `set_active(bool)` method (not just env var check in `_ready()`)
+- Env var activation should check value: `!= "" and != "0" and != "false"`
+- `.gutconfig.json` key is `should_exit` (not `exit`)
+
+These changes are reflected in the updated TDD §4 (GDScript Addon Specifications).
