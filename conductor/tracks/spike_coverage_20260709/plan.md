@@ -59,10 +59,10 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] If-true branch returns `{"error": "division by zero"}`
     - [x] Else branch returns `{"result": a / b}`
     - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm both tests PASS
-- [ ] Task: Verify GUT tests pass without instrumentation (baseline)
-    - [ ] Run GUT without any hooks
-    - [ ] Confirm exit code 0 and both tests passing
-    - [ ] Record baseline output for comparison after instrumentation
+- [x] Task: Verify GUT tests pass without instrumentation (baseline) [3f10582]
+    - [x] Run GUT without any hooks
+    - [x] Confirm exit code 0 and both tests passing
+    - [x] Record baseline output for comparison after instrumentation
 
 - [ ] Task: Conductor - User Manual Verification 'Test Target Implementation' (Protocol in workflow.md)
 
