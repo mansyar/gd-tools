@@ -77,5 +77,5 @@
     - [ ] Create `tests/` subdirectories with `__init__.py`: `unit/`, `integration/`, `e2e/`, `fixtures/`
     - [ ] Verify: files exist and are correctly formatted
 
-- [ ] Task: Conductor - User Manual Verification 'Project Scaffolding' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Project Scaffolding' (Protocol in workflow.md)
 </protect>
