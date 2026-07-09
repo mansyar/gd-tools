@@ -1,0 +1,15 @@
+Task 4: Create hand-written instrumentation plan (spike/plan.json)
+
+Created hand-written instrumentation plan JSON file containing:
+- version: 1
+- generated_by: "spike"
+- 1 file entry: res://scripts/calculator.gd (file_id: 0)
+- 3 line entries:
+  - line 8, id 0, type "statement" (if condition)
+  - line 9, id 1, type "branch_true" (b == 0 branch)
+  - line 11, id 2, type "branch_false" (else branch)
+
+Verified: python json.load parses successfully.
+
+Structure matches spec.md Section 6.3 exactly.
+File type: JSON config (not .py/.gd source) — no tests required per workflow.
