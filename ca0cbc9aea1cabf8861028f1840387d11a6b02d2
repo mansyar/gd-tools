@@ -1,0 +1,24 @@
+Task: Implement syntax error handling
+
+Summary:
+Added try/except around lint_code() call in run_lint() to catch parse errors
+per-file. When a syntax error is encountered:
+- The exception is caught (broad Exception catch since lark exceptions like
+  UnexpectedToken inherit from LarkError, not GDToolkitError)
+- A LintIssue is created with rule='SYNTAX_ERROR', severity='error'
+- Line and column are extracted from the exception via getattr(e, 'line', 0)
+  and getattr(e, 'column', 0) — lark's UnexpectedToken has these attributes
+- The message is str(e) which includes the full parse error description
+- The 'continue' statement skips problem processing and moves to the next file
+
+Files modified:
+- src/gd_tools/lint_runner.py: Added try/except/continue around lint_code() call
+  (43 statements, 100% line + branch coverage).
+- tests/unit/test_lint_runner.py: Added 3 new tests for syntax error handling:
+  test_run_lint_syntax_error, test_run_lint_syntax_error_continues,
+  test_run_lint_syntax_error_counts_as_error.
+
+Why: Per FR-5, syntax errors must not crash the runner. They should be reported
+as LintIssue with rule=SYNTAX_ERROR and severity=error, and the runner should
+continue linting remaining files. Exit code 1 is implied since syntax errors
+go into the errors list.
