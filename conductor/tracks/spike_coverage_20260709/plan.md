@@ -150,25 +150,25 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 > Implement the GUT post_run_hook that reads tracker hit data and serializes it to JSON. This component is simple (serialize dict to JSON) and validated primarily via integration in Phase 6.
 
-- [ ] Task: Implement post_run_hook.gd
-    - [ ] Create `spike/addons/gd-tools-coverage/post_run_hook.gd` extending `RefCounted`
-    - [ ] Add class docstring explaining GUT post_run_hook purpose
-    - [ ] Implement `_init()`:
-        - [ ] Get tracker autoload via `_get_tracker()` (access `SceneTree.root.get_node_or_null("_GDTCoverage")`)
-        - [ ] If tracker not found, push error and return
-        - [ ] If tracker not active, return silently
-        - [ ] Read output path from `OS.get_environment("GD_TOOLS_COVERAGE_OUTPUT")` (default: `user://coverage.json`)
-        - [ ] Get hits from `tracker.get_hits()`
-        - [ ] Build data dict: `{"version": 1, "generated_at": <ISO timestamp>, "hits": <hits>}`
-        - [ ] Open output file for writing
-        - [ ] Write `JSON.stringify(data, "  ")` to file
-        - [ ] Print summary: output path and total hit points
-    - [ ] Implement `_get_tracker()`:
-        - [ ] Get `Engine.get_main_loop()` as `SceneTree`
-        - [ ] Return `tree.root.get_node_or_null("_GDTCoverage")`
-        - [ ] Return null if SceneTree not available
-    - [ ] Verify: file exists and code has no syntax errors (load via `load()`)
-    - [ ] Note: Full validation of this hook occurs in Phase 6 integration test
+- [x] Task: Implement post_run_hook.gd [9acbcb6]
+    - [x] Create `spike/addons/gd-tools-coverage/post_run_hook.gd` extending `RefCounted`
+    - [x] Add class docstring explaining GUT post_run_hook purpose
+    - [x] Implement `_init()`:
+        - [x] Get tracker autoload via `_get_tracker()` (access `SceneTree.root.get_node_or_null("_GDTCoverage")`)
+        - [x] If tracker not found, push error and return
+        - [x] If tracker not active, return silently
+        - [x] Read output path from `OS.get_environment("GD_TOOLS_COVERAGE_OUTPUT")` (default: `user://coverage.json`)
+        - [x] Get hits from `tracker.get_hits()`
+        - [x] Build data dict: `{"version": 1, "generated_at": <ISO timestamp>, "hits": <hits>}`
+        - [x] Open output file for writing
+        - [x] Write `JSON.stringify(data, "  ")` to file
+        - [x] Print summary: output path and total hit points
+    - [x] Implement `_get_tracker()`:
+        - [x] Get `Engine.get_main_loop()` as `SceneTree`
+        - [x] Return `tree.root.get_node_or_null("_GDTCoverage")`
+        - [x] Return null if SceneTree not available
+    - [x] Verify: file exists and code has no syntax errors (load via `load()`)
+    - [x] Note: Full validation of this hook occurs in Phase 6 integration test
 
 - [ ] Task: Conductor - User Manual Verification 'Post-Run Hook Implementation' (Protocol in workflow.md)
 
