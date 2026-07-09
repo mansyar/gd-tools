@@ -1,0 +1,17 @@
+Phase 3 Task 1: Write GUT test for tracker (Red Phase)
+
+Created: spike/test/test_tracker.gd
+
+Test functions:
+- test_hit_records_count(): Calls hit(0,1) twice, asserts get_hits()["0:1"] == 2
+- test_reset_clears_hits(): Calls hit(0,1), then reset(), asserts get_hits() is empty
+- test_get_hits_returns_copy(): Calls hit(0,1), gets hits, modifies returned dict, asserts internal dict unchanged
+
+Red Phase verification:
+- GUT run: -gselect=test_tracker
+- Result: 0/3 tests passed, 3 failing
+- Errors: "Nonexistent function 'reset'/'hit' in base 'Node (tracker.gd)'"
+- Cause: Placeholder tracker.gd (extends Node + docstring only) has no hit/get_hits/reset methods
+- Expected: Tests fail because tracker methods are not yet implemented
+
+Next: Phase 3 Task 2 - Implement tracker.gd (Green Phase)
