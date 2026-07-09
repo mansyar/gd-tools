@@ -9,11 +9,11 @@
     - [x] Write tests for `LintIssue` dataclass (construction, field types, severity values)
     - [x] Write tests for `LintResult` dataclass (construction, empty lists, files_checked)
     - [x] Implement `LintIssue` and `LintResult` dataclasses in `src/gd_tools/lint_runner.py`
-- [ ] Task: Fix `generate_gdlintrc()` to YAML set format
-    - [ ] Write tests for YAML set format output (`excluded_directories: !!set { addons: null, ... }`)
-    - [ ] Write tests that generated gdlintrc is valid YAML parseable by gdtoolkit
-    - [ ] Implement YAML set format in `generate_gdlintrc()` in `src/gd_tools/config.py`
-    - [ ] Verify existing config tests still pass (regression check)
+- [x] Task: Fix `generate_gdlintrc()` to YAML set format `1a32f1f`
+    - [x] Write tests for YAML set format output (`excluded_directories: !!set { addons: null, ... }`)
+    - [x] Write tests that generated gdlintrc is valid YAML parseable by gdtoolkit
+    - [x] Implement YAML set format in `generate_gdlintrc()` in `src/gd_tools/config.py`
+    - [x] Verify existing config tests still pass (regression check)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Models & Config Fix' (Protocol in workflow.md)
 
 ## Phase 2: File Discovery & Lint Runner Core
