@@ -1,7 +1,9 @@
+<protect>
 # Track 2: Configuration System — Implementation Plan
 
 ## Phase 1: Dependencies & Project Setup
 
+- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [ ] Task: Add pydantic and tomli_w to pyproject.toml
     - [ ] Add `pydantic >= 2.0` to `[project] dependencies`
     - [ ] Add `tomli_w` to `[project] dependencies`
@@ -16,6 +18,7 @@
 
 ## Phase 2: Pydantic Configuration Models — TDD
 
+- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [ ] Task: Write unit tests for Pydantic models (Red)
     - [ ] Test `GodotConfig` default (`binary=None`)
     - [ ] Test `TestConfig` defaults (`test_dirs`, `prefix`, `suffix`, `gutconfig`)
@@ -44,6 +47,7 @@
 
 ## Phase 3: Config Discovery & Loading — TDD
 
+- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [ ] Task: Write unit tests for `find_project_root` (Red)
     - [ ] Test: finds `project.godot` in CWD
     - [ ] Test: walks up directory tree to find `project.godot` in parent
@@ -76,6 +80,7 @@
 
 ## Phase 4: Serialization & RC Generation — TDD
 
+- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [ ] Task: Write unit tests for `save_config` (Red)
     - [ ] Test: writes valid TOML file from `GdToolsConfig`
     - [ ] Test: round-trip — `save_config` then `load_config` returns equivalent config
@@ -104,6 +109,7 @@
 
 ## Phase 5: Finalization & Quality Gates
 
+- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [ ] Task: Verify test coverage
     - [ ] Run `CI=true pytest --cov=gd_tools.config --cov-report=term-missing tests/unit/test_config.py`
     - [ ] Confirm >80% line coverage for `config.py`
@@ -116,3 +122,4 @@
     - [ ] Run `CI=true pytest` to ensure no regressions
     - [ ] Confirm all existing tests still pass
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Finalization & Quality Gates' (Protocol in workflow.md)
+</protect>

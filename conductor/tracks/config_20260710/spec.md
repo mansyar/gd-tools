@@ -1,3 +1,4 @@
+<protect>
 # Track 2: Configuration System
 
 ## Overview
@@ -107,3 +108,4 @@ All models use `extra='forbid'` to reject unknown keys (catches typos like `[cov
 - Godot binary auto-detection chain (Track 4)
 - GUT configuration file (`.gutconfig.json`) generation
 - Coverage instrumentation logic
+</protect>
