@@ -1,7 +1,7 @@
 <protect>
 # Implementation Plan: Track 3 — Godot Binary Detection
 
-## Phase 1: Module Foundation
+## Phase 1: Module Foundation [checkpoint: ccc8761]
 
 - [x] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [x] Task: Write tests for `GodotInfo` dataclass [4b312d8]
