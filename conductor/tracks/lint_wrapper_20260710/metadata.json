@@ -1,0 +1,8 @@
+{
+  "track_id": "lint_wrapper_20260710",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-10T00:00:00Z",
+  "updated_at": "2026-07-10T00:00:00Z",
+  "description": "Wrap gdlint with config-driven excludes and clean output via Python API"
+}
