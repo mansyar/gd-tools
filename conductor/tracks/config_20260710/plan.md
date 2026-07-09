@@ -16,7 +16,7 @@
     - [x] Verify imports work (`python -c "import pydantic; import tomli_w"`)
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Dependencies & Project Setup' (Protocol in workflow.md) [c0e5752]
 
-## Phase 2: Pydantic Configuration Models — TDD
+## Phase 2: Pydantic Configuration Models — TDD [checkpoint: ffb6404]
 
 - [x] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [x] Task: Write unit tests for Pydantic models (Red)
@@ -43,7 +43,7 @@
 - [x] Task: Verify tests pass (Green check) [ff15c1a]
     - [x] Run `CI=true pytest tests/unit/test_config.py -v`
     - [x] Confirm all model tests pass
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Pydantic Configuration Models' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Pydantic Configuration Models' (Protocol in workflow.md) [ffb6404]
 
 ## Phase 3: Config Discovery & Loading — TDD
 
