@@ -97,7 +97,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 ---
 
-## Phase 4: Pre-Run Hook (pre_run_hook.gd) — TDD
+## Phase 4: Pre-Run Hook (pre_run_hook.gd) — TDD [checkpoint: 009ac8a]
 
 > Implement the GUT pre_run_hook that reads the instrumentation plan, injects tracker calls into source code, and reloads scripts. The `_inject_trackers()` function is pure string manipulation and can be unit tested.
 
@@ -142,7 +142,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Ensure error messages follow product guidelines (actionable + fix hints)
     - [x] Re-run tests to confirm still passing
 
-- [~] Task: Conductor - User Manual Verification 'Pre-Run Hook Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Pre-Run Hook Implementation' (Protocol in workflow.md)
 
 ---
 
