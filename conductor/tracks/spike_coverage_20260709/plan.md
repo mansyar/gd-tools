@@ -178,12 +178,12 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 > Run the full spike flow end-to-end and validate all 6 success criteria. This is the critical validation phase.
 
-- [ ] Task: Configure `.gutconfig.json` with hook paths
-    - [ ] Create `spike/.gutconfig.json`
-    - [ ] Configure `pre_run_script` to `res://addons/gd-tools-coverage/pre_run_hook.gd`
-    - [ ] Configure `post_run_script` to `res://addons/gd-tools-coverage/post_run_hook.gd`
-    - [ ] Configure test directory (`res://test/`)
-    - [ ] Configure exit after tests (`"exit": true`)
+- [x] Task: Configure `.gutconfig.json` with hook paths [723c816]
+    - [x] Create `spike/.gutconfig.json`
+    - [x] Configure `pre_run_script` to `res://addons/gd-tools-coverage/pre_run_hook.gd`
+    - [x] Configure `post_run_script` to `res://addons/gd-tools-coverage/post_run_hook.gd`
+    - [x] Configure test directory (`res://test/`)
+    - [x] Configure exit after tests (`"exit": true`)
 - [ ] Task: Set up execution environment
     - [ ] Set `GD_TOOLS_COVERAGE_ACTIVE=1`
     - [ ] Set `GD_TOOLS_COVERAGE_PLAN` to absolute path of `spike/plan.json`
