@@ -137,10 +137,10 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
         - [x] For each entry: get target line, extract indentation, build tracker call, insert before target line
         - [x] Return joined source
     - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_pre_run_hook` and confirm all tests PASS
-- [ ] Task: Refactor pre_run_hook.gd (Optional)
-    - [ ] Review code for clarity
-    - [ ] Ensure error messages follow product guidelines (actionable + fix hints)
-    - [ ] Re-run tests to confirm still passing
+- [x] Task: Refactor pre_run_hook.gd (Optional) [e0d1f9f]
+    - [x] Review code for clarity
+    - [x] Ensure error messages follow product guidelines (actionable + fix hints)
+    - [x] Re-run tests to confirm still passing
 
 - [ ] Task: Conductor - User Manual Verification 'Pre-Run Hook Implementation' (Protocol in workflow.md)
 
