@@ -43,7 +43,7 @@
 - [x] Task: Verify tests pass (Green check) [ff15c1a]
     - [x] Run `CI=true pytest tests/unit/test_config.py -v`
     - [x] Confirm all model tests pass
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Pydantic Configuration Models' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Pydantic Configuration Models' (Protocol in workflow.md)
 
 ## Phase 3: Config Discovery & Loading — TDD
 
