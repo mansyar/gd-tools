@@ -109,34 +109,34 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Write `test_inject_bottom_to_top()` — verify injection goes bottom-to-top (line numbers don't shift)
     - [x] Write `test_inject_preserves_indentation()` — verify tracker call matches indentation of target line (tabs and spaces)
     - [x] Run tests and confirm they FAIL (pre_run_hook.gd does not exist yet)
-- [ ] Task: Implement pre_run_hook.gd (Green Phase)
-    - [ ] Create `spike/addons/gd-tools-coverage/pre_run_hook.gd` extending `RefCounted`
-    - [ ] Add class docstring explaining GUT pre_run_hook purpose
-    - [ ] Define `const TRACKER_NAME = "_GDTCoverage"`
-    - [ ] Implement `_init()`:
-        - [ ] Read plan path from `OS.get_environment("GD_TOOLS_COVERAGE_PLAN")`
-        - [ ] If empty, warn and return (skip instrumentation)
-        - [ ] Open and parse JSON plan file
-        - [ ] On parse error, push error and return
-        - [ ] Call `_instrument_all()`
-    - [ ] Implement `_instrument_all()`:
-        - [ ] Iterate over `_plan["files"]` array
-        - [ ] Call `_instrument_script()` for each file entry
-    - [ ] Implement `_instrument_script(script_path, file_id, lines)`:
-        - [ ] `load()` the script as `GDScript`
-        - [ ] Get `script.source_code` (original)
-        - [ ] Call `_inject_trackers()` to produce instrumented source
-        - [ ] Store original source in `_instrumented_scripts` array for restoration
-        - [ ] Set `script.source_code = instrumented_source`
-        - [ ] Call `script.reload()` and check return code
-        - [ ] On reload failure: restore original source, reload, push error
-        - [ ] On success: print instrumentation summary
-    - [ ] Implement `_inject_trackers(source, file_id, lines)`:
-        - [ ] Split source into lines
-        - [ ] Sort line entries descending (bottom-to-top)
-        - [ ] For each entry: get target line, extract indentation, build tracker call, insert before target line
-        - [ ] Return joined source
-    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_pre_run_hook` and confirm all tests PASS
+- [x] Task: Implement pre_run_hook.gd (Green Phase) [681c2e5]
+    - [x] Create `spike/addons/gd-tools-coverage/pre_run_hook.gd` extending `RefCounted`
+    - [x] Add class docstring explaining GUT pre_run_hook purpose
+    - [x] Define `const TRACKER_NAME = "_GDTCoverage"`
+    - [x] Implement `_init()`:
+        - [x] Read plan path from `OS.get_environment("GD_TOOLS_COVERAGE_PLAN")`
+        - [x] If empty, warn and return (skip instrumentation)
+        - [x] Open and parse JSON plan file
+        - [x] On parse error, push error and return
+        - [x] Call `_instrument_all()`
+    - [x] Implement `_instrument_all()`:
+        - [x] Iterate over `_plan["files"]` array
+        - [x] Call `_instrument_script()` for each file entry
+    - [x] Implement `_instrument_script(script_path, file_id, lines)`:
+        - [x] `load()` the script as `GDScript`
+        - [x] Get `script.source_code` (original)
+        - [x] Call `_inject_trackers()` to produce instrumented source
+        - [x] Store original source in `_instrumented_scripts` array for restoration
+        - [x] Set `script.source_code = instrumented_source`
+        - [x] Call `script.reload()` and check return code
+        - [x] On reload failure: restore original source, reload, push error
+        - [x] On success: print instrumentation summary
+    - [x] Implement `_inject_trackers(source, file_id, lines)`:
+        - [x] Split source into lines
+        - [x] Sort line entries descending (bottom-to-top)
+        - [x] For each entry: get target line, extract indentation, build tracker call, insert before target line
+        - [x] Return joined source
+    - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_pre_run_hook` and confirm all tests PASS
 - [ ] Task: Refactor pre_run_hook.gd (Optional)
     - [ ] Review code for clarity
     - [ ] Ensure error messages follow product guidelines (actionable + fix hints)
