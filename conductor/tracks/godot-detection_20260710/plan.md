@@ -47,7 +47,7 @@
 - [x] Task: Implement `find_godot()` [f238796]
 - [x] Task: Conductor - User Manual Verification 'Binary Detection Chain' (Protocol in workflow.md)
 
-## Phase 3: Version Detection, Validation & GUT Mapping
+## Phase 3: Version Detection, Validation & GUT Mapping [checkpoint: 44851d9]
 
 - [x] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [x] Task: Write tests for `get_godot_version()` [f238796]
@@ -70,7 +70,7 @@
     - [x] Test `"4.7.0"` → `"9.7.0"`
     - [x] Test raises `ConfigError` for unmapped version (e.g., `"4.4.0"`)
 - [x] Task: Implement `GUT_VERSION_MAP` and `get_gut_version_for_godot()` [663ab22]
-- [ ] Task: Conductor - User Manual Verification 'Version Detection, Validation & GUT Mapping' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Version Detection, Validation & GUT Mapping' (Protocol in workflow.md)
 
 ## Phase 4: Godot Invocation Wrapper
 
