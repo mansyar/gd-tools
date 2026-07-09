@@ -101,14 +101,14 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 > Implement the GUT pre_run_hook that reads the instrumentation plan, injects tracker calls into source code, and reloads scripts. The `_inject_trackers()` function is pure string manipulation and can be unit tested.
 
-- [ ] Task: Write GUT test for _inject_trackers (Red Phase)
-    - [ ] Create `spike/test/test_pre_run_hook.gd` extending `GutTest`
-    - [ ] Load `pre_run_hook.gd` script (use `load("res://addons/gd-tools-coverage/pre_run_hook.gd")`)
-    - [ ] Write `test_inject_single_line()` — pass simple source + one line entry, assert tracker call inserted with correct indentation
-    - [ ] Write `test_inject_multiple_lines_preserves_order()` — pass source with 3 line entries, assert all injected, line numbers preserved
-    - [ ] Write `test_inject_bottom_to_top()` — verify injection goes bottom-to-top (line numbers don't shift)
-    - [ ] Write `test_inject_preserves_indentation()` — verify tracker call matches indentation of target line (tabs and spaces)
-    - [ ] Run tests and confirm they FAIL (pre_run_hook.gd does not exist yet)
+- [x] Task: Write GUT test for _inject_trackers (Red Phase) [2229913]
+    - [x] Create `spike/test/test_pre_run_hook.gd` extending `GutTest`
+    - [x] Load `pre_run_hook.gd` script (use `load("res://addons/gd-tools-coverage/pre_run_hook.gd")`)
+    - [x] Write `test_inject_single_line()` — pass simple source + one line entry, assert tracker call inserted with correct indentation
+    - [x] Write `test_inject_multiple_lines_preserves_order()` — pass source with 3 line entries, assert all injected, line numbers preserved
+    - [x] Write `test_inject_bottom_to_top()` — verify injection goes bottom-to-top (line numbers don't shift)
+    - [x] Write `test_inject_preserves_indentation()` — verify tracker call matches indentation of target line (tabs and spaces)
+    - [x] Run tests and confirm they FAIL (pre_run_hook.gd does not exist yet)
 - [ ] Task: Implement pre_run_hook.gd (Green Phase)
     - [ ] Create `spike/addons/gd-tools-coverage/pre_run_hook.gd` extending `RefCounted`
     - [ ] Add class docstring explaining GUT pre_run_hook purpose
