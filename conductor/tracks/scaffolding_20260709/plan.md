@@ -63,7 +63,7 @@
         - [ ] Stubs raise `NotImplementedError` wrapped to exit with code `2`
     - [ ] Verify: all tests pass, coverage >=80%
 
-- [ ] Task: Implement module entry point (`__main__.py`) — TDD
+- [x] Task: Implement module entry point (`__main__.py`) — TDD [b65d03b]
     - [ ] Write failing tests: `tests/unit/test_main.py`
         - [ ] Test `python -m gd_tools --version` outputs `gd-tools 0.1.0` (subprocess test)
         - [ ] Test `python -m gd_tools --help` exits with code `0`
