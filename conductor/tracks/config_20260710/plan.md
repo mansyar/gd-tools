@@ -80,31 +80,31 @@
 
 ## Phase 4: Serialization & RC Generation — TDD
 
-- [ ] Task: Read spec.md and workflow.md to review requirements and workflow rules
-- [ ] Task: Write unit tests for `save_config` (Red)
-    - [ ] Test: writes valid TOML file from `GdToolsConfig`
-    - [ ] Test: round-trip — `save_config` then `load_config` returns equivalent config
-    - [ ] Test: writes to specified `project_root` path
-- [ ] Task: Write unit tests for `generate_gdlintrc` (Red)
-    - [ ] Test: generates gdlintrc file from `[lint]` exclude list
-    - [ ] Test: overwrites existing gdlintrc file
-    - [ ] Test: writes to project root directory
-- [ ] Task: Write unit tests for `generate_gdformatrc` (Red)
-    - [ ] Test: generates gdformatrc file from `[format]` exclude list
-    - [ ] Test: overwrites existing gdformatrc file
-    - [ ] Test: writes to project root directory
-- [ ] Task: Implement `save_config` (Green)
-    - [ ] Convert `GdToolsConfig` to dict via `model_dump()`
-    - [ ] Use `tomli_w` to write TOML to `gd-tools.toml` in project root
-- [ ] Task: Implement `generate_gdlintrc` (Green)
-    - [ ] Read `[lint]` exclude list from config
-    - [ ] Write gdlintrc file to project root
-- [ ] Task: Implement `generate_gdformatrc` (Green)
-    - [ ] Read `[format]` exclude list from config
-    - [ ] Write gdformatrc file to project root
-- [ ] Task: Verify tests pass (Green check)
-    - [ ] Run `CI=true pytest tests/unit/test_config.py -v`
-    - [ ] Confirm all serialization and generation tests pass
+- [x] Task: Read spec.md and workflow.md to review requirements and workflow rules
+- [x] Task: Write unit tests for `save_config` (Red) [bef7cd5]
+    - [x] Test: writes valid TOML file from `GdToolsConfig`
+    - [x] Test: round-trip — `save_config` then `load_config` returns equivalent config
+    - [x] Test: writes to specified `project_root` path
+- [x] Task: Write unit tests for `generate_gdlintrc` (Red) [bef7cd5]
+    - [x] Test: generates gdlintrc file from `[lint]` exclude list
+    - [x] Test: overwrites existing gdlintrc file
+    - [x] Test: writes to project root directory
+- [x] Task: Write unit tests for `generate_gdformatrc` (Red) [bef7cd5]
+    - [x] Test: generates gdformatrc file from `[format]` exclude list
+    - [x] Test: overwrites existing gdformatrc file
+    - [x] Test: writes to project root directory
+- [x] Task: Implement `save_config` (Green) [bef7cd5]
+    - [x] Convert `GdToolsConfig` to dict via `model_dump(exclude_none=True)`
+    - [x] Use `tomli_w` to write TOML to `gd-tools.toml` in project root
+- [x] Task: Implement `generate_gdlintrc` (Green) [bef7cd5]
+    - [x] Read `[lint]` exclude list from config
+    - [x] Write gdlintrc file to project root
+- [x] Task: Implement `generate_gdformatrc` (Green) [bef7cd5]
+    - [x] Read `[format]` exclude list from config
+    - [x] Write gdformatrc file to project root
+- [x] Task: Verify tests pass (Green check) [bef7cd5]
+    - [x] Run `CI=true pytest tests/unit/test_config.py -v`
+    - [x] Confirm all serialization and generation tests pass
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Serialization & RC Generation' (Protocol in workflow.md)
 
 ## Phase 5: Finalization & Quality Gates
