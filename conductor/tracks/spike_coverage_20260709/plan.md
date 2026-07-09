@@ -27,10 +27,10 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Configure project name, main scene (none needed for CLI), and renderer
     - [x] Add `_GDTCoverage` autoload entry pointing to `res://addons/gd-tools-coverage/tracker.gd`
     - [x] Verify: `project.godot` is valid Godot 4.5 config format
-- [ ] Task: Install GUT addon into spike project
-    - [ ] Download or copy GUT addon into `spike/addons/gut/`
-    - [ ] Enable GUT plugin in `project.godot` (`[editor_plugins]` section)
-    - [ ] Verify: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` runs without error (GUT loads)
+- [x] Task: Install GUT addon into spike project [d181297]
+    - [x] Download or copy GUT addon into `spike/addons/gut/`
+    - [x] Enable GUT plugin in `project.godot` (`[editor_plugins]` section)
+    - [x] Verify: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` runs without error (GUT loads)
 - [ ] Task: Create hand-written instrumentation plan (`spike/plan.json`)
     - [ ] Write JSON with version, generated_by, files array
     - [ ] Include `res://scripts/calculator.gd` with file_id 0 and 3 line entries (lines 8, 9, 11)
