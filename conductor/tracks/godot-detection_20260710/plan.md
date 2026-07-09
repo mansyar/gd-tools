@@ -49,27 +49,27 @@
 
 ## Phase 3: Version Detection, Validation & GUT Mapping
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
-- [ ] Task: Write tests for `get_godot_version()`
-    - [ ] Test parsing `"4.5.1-stable"` → `"4.5.1"`
-    - [ ] Test parsing `"4.6-dev"` → `"4.6.0"`
-    - [ ] Test parsing `"4.7"` → `"4.7.0"`
-    - [ ] Test parsing `"4.5.stable.linux"` → `"4.5.0"`
-    - [ ] Test raises `GodotNotFoundError` on unparseable output
-    - [ ] Test raises `GodotNotFoundError` on subprocess failure
-- [ ] Task: Implement `get_godot_version()`
-- [ ] Task: Write tests for `check_version_compatible()`
-    - [ ] Test `"4.5.0"` → `True`
-    - [ ] Test `"4.4.3"` → `False`
-    - [ ] Test `"4.6.1"` → `True`
-    - [ ] Test `"4.7.0"` → `True`
-- [ ] Task: Implement `check_version_compatible()`
-- [ ] Task: Write tests for `GUT_VERSION_MAP` and `get_gut_version_for_godot()`
-    - [ ] Test `"4.5.1"` → `"9.5.0"`
-    - [ ] Test `"4.6.0"` → `"9.6.0"`
-    - [ ] Test `"4.7.0"` → `"9.7.0"`
-    - [ ] Test raises `ConfigError` for unmapped version (e.g., `"4.4.0"`)
-- [ ] Task: Implement `GUT_VERSION_MAP` and `get_gut_version_for_godot()`
+- [x] Task: Read `spec.md` and `workflow.md` before starting this phase
+- [x] Task: Write tests for `get_godot_version()` [f238796]
+    - [x] Test parsing `"4.5.1-stable"` → `"4.5.1"`
+    - [x] Test parsing `"4.6-dev"` → `"4.6.0"`
+    - [x] Test parsing `"4.7"` → `"4.7.0"`
+    - [x] Test parsing `"4.5.stable.linux"` → `"4.5.0"`
+    - [x] Test raises `GodotNotFoundError` on unparseable output
+    - [x] Test raises `GodotNotFoundError` on subprocess failure
+- [x] Task: Implement `get_godot_version()` [f238796]
+- [x] Task: Write tests for `check_version_compatible()` [f238796]
+    - [x] Test `"4.5.0"` → `True`
+    - [x] Test `"4.4.3"` → `False`
+    - [x] Test `"4.6.1"` → `True`
+    - [x] Test `"4.7.0"` → `True`
+- [x] Task: Implement `check_version_compatible()` [f238796]
+- [x] Task: Write tests for `GUT_VERSION_MAP` and `get_gut_version_for_godot()` [663ab22]
+    - [x] Test `"4.5.1"` → `"9.5.0"`
+    - [x] Test `"4.6.0"` → `"9.6.0"`
+    - [x] Test `"4.7.0"` → `"9.7.0"`
+    - [x] Test raises `ConfigError` for unmapped version (e.g., `"4.4.0"`)
+- [x] Task: Implement `GUT_VERSION_MAP` and `get_gut_version_for_godot()` [663ab22]
 - [ ] Task: Conductor - User Manual Verification 'Version Detection, Validation & GUT Mapping' (Protocol in workflow.md)
 
 ## Phase 4: Godot Invocation Wrapper
