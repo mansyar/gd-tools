@@ -350,6 +350,46 @@ def test_find_godot_version_detection_failure(
     assert result.is_valid is False
 
 
+@pytest.mark.unit
+@patch("gd_tools.godot._check_common_locations", return_value=None)
+@patch("gd_tools.godot._check_path", return_value=None)
+@patch("gd_tools.godot._check_env_vars", return_value=None)
+@patch("gd_tools.godot._check_config", return_value=None)
+@patch("gd_tools.godot.sys")
+def test_find_godot_not_found_message_macos(
+    mock_sys, mock_cfg, mock_env, mock_path, mock_common
+):
+    """Test not-found error includes macOS install instructions."""
+    mock_sys.platform = "darwin"
+    config = GodotConfig()
+    with pytest.raises(GodotNotFoundError) as exc_info:
+        find_godot(config)
+    msg = str(exc_info.value)
+    assert "Godot binary not found" in msg
+    assert "godotengine.org/download/macos" in msg
+    assert "brew install --cask godot" in msg
+
+
+@pytest.mark.unit
+@patch("gd_tools.godot._check_common_locations", return_value=None)
+@patch("gd_tools.godot._check_path", return_value=None)
+@patch("gd_tools.godot._check_env_vars", return_value=None)
+@patch("gd_tools.godot._check_config", return_value=None)
+@patch("gd_tools.godot.sys")
+def test_find_godot_not_found_message_linux(
+    mock_sys, mock_cfg, mock_env, mock_path, mock_common
+):
+    """Test not-found error includes Linux install instructions."""
+    mock_sys.platform = "linux"
+    config = GodotConfig()
+    with pytest.raises(GodotNotFoundError) as exc_info:
+        find_godot(config)
+    msg = str(exc_info.value)
+    assert "Godot binary not found" in msg
+    assert "godotengine.org/download/linux" in msg
+    assert "flatpak install org.godotengine.Godot" in msg
+
+
 # --- get_godot_version ---
 
 
@@ -396,6 +436,25 @@ def test_get_godot_version_failure_raises(mock_run):
         get_godot_version("/usr/bin/godot")
 
 
+@pytest.mark.unit
+@patch("gd_tools.godot.subprocess.run")
+def test_get_godot_version_unparseable_output_raises(mock_run):
+    """Test GodotNotFoundError raised on unparseable version output."""
+    mock_run.return_value = MagicMock(
+        stdout="not-a-version\n", stderr="", returncode=0
+    )
+    with pytest.raises(GodotNotFoundError):
+        get_godot_version("/usr/bin/godot")
+
+
+@pytest.mark.unit
+@patch("gd_tools.godot.subprocess.run", side_effect=OSError("not found"))
+def test_get_godot_version_oserror_raises(mock_run):
+    """Test GodotNotFoundError raised when binary fails to run."""
+    with pytest.raises(GodotNotFoundError):
+        get_godot_version("/usr/bin/godot")
+
+
 # --- check_version_compatible ---
 
 
@@ -410,6 +469,8 @@ def test_get_godot_version_failure_raises(mock_run):
         ("4.4.9", False),
         ("3.5.0", False),
         ("5.0.0", True),
+        ("invalid", False),
+        ("4.5", False),
     ],
 )
 def test_check_version_compatible(version, expected):

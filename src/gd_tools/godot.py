@@ -204,10 +204,13 @@ def _check_common_locations() -> str | None:
         Binary path if found at a common location, None otherwise.
     """
     if sys.platform == "win32":
+        localappdata = os.environ.get("LOCALAPPDATA")
         candidates = [
             r"C:\Program Files\Godot\godot.exe",
-            os.path.join(
-                os.environ.get("LOCALAPPDATA", ""), "Godot", "godot.exe"
+            (
+                os.path.join(localappdata, "Godot", "godot.exe")
+                if localappdata
+                else None
             ),
         ]
     elif sys.platform == "darwin":
