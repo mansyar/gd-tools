@@ -1,0 +1,18 @@
+Task: Phase 4 Task 1 - Write GUT test for _inject_trackers (Red Phase)
+Commit: 2229913
+
+Created: spike/test/test_pre_run_hook.gd
+- extends GutTest
+- 4 test functions:
+  1. test_inject_single_line() - single line injection, verify tracker call inserted before target
+  2. test_inject_multiple_lines_preserves_order() - 3 lines, verify all injected correctly
+  3. test_inject_bottom_to_top() - pass lines in descending order, verify output matches ascending (tests internal sort)
+  4. test_inject_preserves_indentation() - verify tab and space indentation preserved
+
+Test approach: Load pre_run_hook.gd via load(), call static _inject_trackers(source, file_id, lines) directly.
+
+Red Phase Result: 0/4 passed, 4 failing.
+- All fail with "Attempt to call function '_inject_trackers' in base 'null instance' on a null instance"
+- pre_run_hook.gd does not exist yet, load() returns null
+
+GUT cmd: godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit -gselect=test_pre_run_hook
