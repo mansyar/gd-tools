@@ -15,36 +15,36 @@
 
 ## Phase 2: Binary Detection Chain
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
-- [ ] Task: Write tests for `_check_config()`
-    - [ ] Test returns path when `config.godot.binary` is set and file exists
-    - [ ] Test returns `None` when `config.godot.binary` is `None`
-    - [ ] Test returns `None` when configured path doesn't exist on disk
-- [ ] Task: Implement `_check_config()`
-- [ ] Task: Write tests for `_check_env_vars()`
-    - [ ] Test `GODOT_BIN` is checked first and returned if set
-    - [ ] Test `GODOT4_BIN` is checked when `GODOT_BIN` not set
-    - [ ] Test `GODOT_PATH` is checked when first two not set
-    - [ ] Test returns `None` when no env vars are set
-- [ ] Task: Implement `_check_env_vars()`
-- [ ] Task: Write tests for `_check_path()`
-    - [ ] Test `shutil.which("godot")` is checked first
-    - [ ] Test `shutil.which("godot4")` is checked as fallback
-    - [ ] Test returns `None` when neither is found
-- [ ] Task: Implement `_check_path()`
-- [ ] Task: Write tests for `_check_common_locations()`
-    - [ ] Test Windows locations checked on `win32` platform
-    - [ ] Test macOS locations checked on `darwin` platform
-    - [ ] Test Linux locations checked on `linux` platform
-    - [ ] Test returns `None` when no locations match
-- [ ] Task: Implement `_check_common_locations()`
-- [ ] Task: Write tests for `find_godot()`
-    - [ ] Test config takes priority over env vars
-    - [ ] Test env vars take priority over PATH
-    - [ ] Test PATH takes priority over common locations
-    - [ ] Test `GodotNotFoundError` raised with install instructions when nothing found
-    - [ ] Test returns `GodotInfo` with correct path, version, and `is_valid`
-- [ ] Task: Implement `find_godot()`
+- [x] Task: Read `spec.md` and `workflow.md` before starting this phase
+- [x] Task: Write tests for `_check_config()`
+    - [x] Test returns path when `config.godot.binary` is set and file exists
+    - [x] Test returns `None` when `config.godot.binary` is `None`
+    - [x] Test returns `None` when configured path doesn't exist on disk
+- [x] Task: Implement `_check_config()`
+- [x] Task: Write tests for `_check_env_vars()`
+    - [x] Test `GODOT_BIN` is checked first and returned if set
+    - [x] Test `GODOT4_BIN` is checked when `GODOT_BIN` not set
+    - [x] Test `GODOT_PATH` is checked when first two not set
+    - [x] Test returns `None` when no env vars are set
+- [x] Task: Implement `_check_env_vars()`
+- [x] Task: Write tests for `_check_path()`
+    - [x] Test `shutil.which("godot")` is checked first
+    - [x] Test `shutil.which("godot4")` is checked as fallback
+    - [x] Test returns `None` when neither is found
+- [x] Task: Implement `_check_path()`
+- [x] Task: Write tests for `_check_common_locations()`
+    - [x] Test Windows locations checked on `win32` platform
+    - [x] Test macOS locations checked on `darwin` platform
+    - [x] Test Linux locations checked on `linux` platform
+    - [x] Test returns `None` when no locations match
+- [x] Task: Implement `_check_common_locations()`
+- [x] Task: Write tests for `find_godot()`
+    - [x] Test config takes priority over env vars
+    - [x] Test env vars take priority over PATH
+    - [x] Test PATH takes priority over common locations
+    - [x] Test `GodotNotFoundError` raised with install instructions when nothing found
+    - [x] Test returns `GodotInfo` with correct path, version, and `is_valid`
+- [x] Task: Implement `find_godot()` [f238796]
 - [ ] Task: Conductor - User Manual Verification 'Binary Detection Chain' (Protocol in workflow.md)
 
 ## Phase 3: Version Detection, Validation & GUT Mapping
