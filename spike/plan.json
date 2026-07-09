@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "generated_by": "spike",
+  "files": [
+    {
+      "path": "res://scripts/calculator.gd",
+      "file_id": 0,
+      "lines": [
+        {"line": 8, "id": 0, "type": "statement", "desc": "if condition"},
+        {"line": 9, "id": 1, "type": "branch_true", "desc": "b == 0 branch"},
+        {"line": 11, "id": 2, "type": "branch_false", "desc": "else branch"}
+      ]
+    }
+  ]
+}
