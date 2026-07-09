@@ -12,3 +12,7 @@ build/
 # gd-tools runtime
 .gd-tools/
 .godot/
+
+# Spike generated artifacts
+spike/coverage.json
+spike/spike_output.log
