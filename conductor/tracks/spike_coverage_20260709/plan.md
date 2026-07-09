@@ -72,12 +72,12 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 > Implement the coverage tracker singleton. It records hit counts per (file_id, line_id) pair and is no-op when inactive.
 
-- [ ] Task: Write GUT test for tracker (Red Phase)
-    - [ ] Create `spike/test/test_tracker.gd` extending `GutTest`
-    - [ ] Write `test_hit_records_count()` — call `hit(0, 1)` twice, assert `get_hits()["0:1"] == 2`
-    - [ ] Write `test_reset_clears_hits()` — call `hit(0, 1)`, then `reset()`, assert `get_hits()` is empty
-    - [ ] Write `test_get_hits_returns_copy()` — call `hit(0, 1)`, get hits, modify returned dict, assert tracker's internal dict unchanged
-    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_tracker` and confirm tests FAIL (tracker.gd does not exist yet)
+- [x] Task: Write GUT test for tracker (Red Phase) [9e83cd9]
+    - [x] Create `spike/test/test_tracker.gd` extending `GutTest`
+    - [x] Write `test_hit_records_count()` — call `hit(0, 1)` twice, assert `get_hits()["0:1"] == 2`
+    - [x] Write `test_reset_clears_hits()` — call `hit(0, 1)`, then `reset()`, assert `get_hits()` is empty
+    - [x] Write `test_get_hits_returns_copy()` — call `hit(0, 1)`, get hits, modify returned dict, assert tracker's internal dict unchanged
+    - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_tracker` and confirm tests FAIL (tracker.gd does not exist yet)
 - [ ] Task: Implement tracker.gd (Green Phase)
     - [ ] Create `spike/addons/gd-tools-coverage/tracker.gd` extending `Node`
     - [ ] Add class docstring explaining autoload behavior and env var activation
