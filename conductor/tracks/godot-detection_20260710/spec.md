@@ -1,3 +1,4 @@
+<protect>
 # Track 3: Godot Binary Detection
 
 ## Overview
@@ -140,3 +141,4 @@ def run_godot(
 - Doctor command health checks (Track 8)
 - CLI command wiring (Track 1 stubs exist; full wiring in later tracks)
 - Scoop/Chocolatey/Steam path detection (users set these via `config.godot.binary` if needed)
+</protect>

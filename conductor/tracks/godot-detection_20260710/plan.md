@@ -1,7 +1,9 @@
+<protect>
 # Implementation Plan: Track 3 — Godot Binary Detection
 
 ## Phase 1: Module Foundation
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [ ] Task: Write tests for `GodotInfo` dataclass
     - [ ] Test `GodotInfo` construction with valid path, version, `is_valid=True`
     - [ ] Test `GodotInfo` with `version="unknown"`, `is_valid=False`
@@ -13,6 +15,7 @@
 
 ## Phase 2: Binary Detection Chain
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [ ] Task: Write tests for `_check_config()`
     - [ ] Test returns path when `config.godot.binary` is set and file exists
     - [ ] Test returns `None` when `config.godot.binary` is `None`
@@ -46,6 +49,7 @@
 
 ## Phase 3: Version Detection, Validation & GUT Mapping
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [ ] Task: Write tests for `get_godot_version()`
     - [ ] Test parsing `"4.5.1-stable"` → `"4.5.1"`
     - [ ] Test parsing `"4.6-dev"` → `"4.6.0"`
@@ -70,6 +74,7 @@
 
 ## Phase 4: Godot Invocation Wrapper
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [ ] Task: Write tests for `run_godot()`
     - [ ] Test passes `--path` and args correctly to `subprocess.run`
     - [ ] Test merges `env` with `os.environ` (caller values take precedence)
@@ -78,3 +83,4 @@
     - [ ] Test returns `subprocess.CompletedProcess`
 - [ ] Task: Implement `run_godot()`
 - [ ] Task: Conductor - User Manual Verification 'Godot Invocation Wrapper' (Protocol in workflow.md)
+</protect>
