@@ -74,13 +74,13 @@
 
 ## Phase 4: Godot Invocation Wrapper
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting this phase
-- [ ] Task: Write tests for `run_godot()`
-    - [ ] Test passes `--path` and args correctly to `subprocess.run`
-    - [ ] Test merges `env` with `os.environ` (caller values take precedence)
-    - [ ] Test uses `capture_output=True, text=True`
-    - [ ] Test raises `subprocess.TimeoutExpired` when timeout exceeded
-    - [ ] Test returns `subprocess.CompletedProcess`
-- [ ] Task: Implement `run_godot()`
+- [x] Task: Read `spec.md` and `workflow.md` before starting this phase
+- [x] Task: Write tests for `run_godot()` [3a8a99f]
+    - [x] Test passes `--path` and args correctly to `subprocess.run`
+    - [x] Test merges `env` with `os.environ` (caller values take precedence)
+    - [x] Test uses `capture_output=True, text=True`
+    - [x] Test raises `subprocess.TimeoutExpired` when timeout exceeded
+    - [x] Test returns `subprocess.CompletedProcess`
+- [x] Task: Implement `run_godot()` [3a8a99f]
 - [ ] Task: Conductor - User Manual Verification 'Godot Invocation Wrapper' (Protocol in workflow.md)
 </protect>
