@@ -37,7 +37,7 @@
     - [ ] Write tests for syntax error does not crash — continues linting other files
     - [ ] Write tests for syntax error results in exit code 1
     - [ ] Implement syntax error catch-and-report in `run_lint()`
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: File Discovery & Lint Runner Core' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: File Discovery & Lint Runner Core' (Protocol in workflow.md)
 
 ## Phase 3: Output Formatting
 
