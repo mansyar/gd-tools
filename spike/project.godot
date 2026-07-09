@@ -19,6 +19,10 @@ run/main_scene=""
 
 _GDTCoverage="*res://addons/gd-tools-coverage/tracker.gd"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
 [display]
 
 window/size/viewport_width=800
