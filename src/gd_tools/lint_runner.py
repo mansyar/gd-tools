@@ -111,7 +111,21 @@ def run_lint(
     for file_path in gd_files:
         with open(file_path, "r", encoding="utf-8") as f:
             code = f.read()
-        problems = lint_code(code)
+        try:
+            problems = lint_code(code)
+        except Exception as e:
+            # Syntax/parse error — report and continue linting other files
+            errors.append(
+                LintIssue(
+                    file=file_path,
+                    line=getattr(e, "line", 0),
+                    column=getattr(e, "column", 0),
+                    rule="SYNTAX_ERROR",
+                    message=str(e),
+                    severity="error",
+                )
+            )
+            continue
         for problem in problems:
             errors.append(
                 LintIssue(

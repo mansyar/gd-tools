@@ -285,3 +285,47 @@ def test_run_lint_multiple_files(tmp_path):
     # All errors should be from the bad file
     for issue in result.errors:
         assert "bad.gd" in issue.file
+
+
+# --- Syntax error handling ---
+
+
+def test_run_lint_syntax_error(tmp_path):
+    """Test that a syntax error is reported as rule=SYNTAX_ERROR, severity=error."""
+    (tmp_path / "broken.gd").write_text("extends Node\n\nfunc ():\n    pass\n")
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.files_checked == 1
+    assert len(result.errors) == 1
+    issue = result.errors[0]
+    assert issue.rule == "SYNTAX_ERROR"
+    assert issue.severity == "error"
+    assert issue.line == 3
+    assert issue.column == 6
+    assert "broken.gd" in issue.file
+
+
+def test_run_lint_syntax_error_continues(tmp_path):
+    """Test that a syntax error does not crash — other files are still linted."""
+    (tmp_path / "broken.gd").write_text("extends Node\n\nfunc ():\n    pass\n")
+    (tmp_path / "bad.gd").write_text(
+        "extends Node\n\nfunc BadFunctionName():\n    pass\n"
+    )
+    (tmp_path / "clean.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert result.files_checked == 3
+    # Should have the syntax error plus the function-name error
+    assert len(result.errors) >= 2
+    rules = [issue.rule for issue in result.errors]
+    assert "SYNTAX_ERROR" in rules
+    assert "function-name" in rules
+
+
+def test_run_lint_syntax_error_counts_as_error(tmp_path):
+    """Test that syntax errors are in the errors list (would cause exit code 1)."""
+    (tmp_path / "broken.gd").write_text("extends Node\n\nfunc ():\n    pass\n")
+    config = GdToolsConfig()
+    result = run_lint(config, str(tmp_path))
+    assert len(result.errors) >= 1
+    assert len(result.warnings) == 0
