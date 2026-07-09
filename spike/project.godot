@@ -1,0 +1,29 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Syntax:
+;   - All settings are in INI-like format: key=value
+;   - Sections start with [section_name]
+;   - Comments start with ; or #
+
+config_version=5
+
+[application]
+
+config/name="gd-tools Coverage Spike"
+config/description="Spike to validate runtime GDScript source modification + Script.reload() for coverage tracking"
+run/main_scene=""
+
+[autoload]
+
+_GDTCoverage="*res://addons/gd-tools-coverage/tracker.gd"
+
+[display]
+
+window/size/viewport_width=800
+window/size/viewport_height=600
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
