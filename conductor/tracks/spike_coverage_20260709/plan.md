@@ -78,16 +78,16 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Write `test_reset_clears_hits()` — call `hit(0, 1)`, then `reset()`, assert `get_hits()` is empty
     - [x] Write `test_get_hits_returns_copy()` — call `hit(0, 1)`, get hits, modify returned dict, assert tracker's internal dict unchanged
     - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_tracker` and confirm tests FAIL (tracker.gd does not exist yet)
-- [ ] Task: Implement tracker.gd (Green Phase)
-    - [ ] Create `spike/addons/gd-tools-coverage/tracker.gd` extending `Node`
-    - [ ] Add class docstring explaining autoload behavior and env var activation
-    - [ ] Implement `_ready()` — check `OS.has_environment("GD_TOOLS_COVERAGE_ACTIVE")`, set `_active`, print status
-    - [ ] Implement `hit(file_id: int, line_id: int)` — no-op if inactive, else increment `_hits["file_id:line_id"]` count
-    - [ ] Implement `get_hits()` — return `_hits.duplicate(true)` (deep copy)
-    - [ ] Implement `reset()` — clear `_hits`
-    - [ ] Implement `is_active()` — return `_active`
-    - [ ] Verify: `_GDTCoverage` autoload is registered in `project.godot` (from Phase 1)
-    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_tracker` and confirm all tests PASS
+- [x] Task: Implement tracker.gd (Green Phase) [77ca936]
+    - [x] Create `spike/addons/gd-tools-coverage/tracker.gd` extending `Node`
+    - [x] Add class docstring explaining autoload behavior and env var activation
+    - [x] Implement `_ready()` — check `OS.has_environment("GD_TOOLS_COVERAGE_ACTIVE")`, set `_active`, print status
+    - [x] Implement `hit(file_id: int, line_id: int)` — no-op if inactive, else increment `_hits["file_id:line_id"]` count
+    - [x] Implement `get_hits()` — return `_hits.duplicate(true)` (deep copy)
+    - [x] Implement `reset()` — clear `_hits`
+    - [x] Implement `is_active()` — return `_active`
+    - [x] Verify: `_GDTCoverage` autoload is registered in `project.godot` (from Phase 1)
+    - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit -gselect=test_tracker` and confirm all tests PASS
 - [ ] Task: Refactor tracker.gd (Optional)
     - [ ] Review code for clarity and consistency with GDScript style guide
     - [ ] Ensure all public methods have docstrings
