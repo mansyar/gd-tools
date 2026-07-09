@@ -1,0 +1,24 @@
+Task 6: Implement module entry point (__main__.py)
+
+TDD implementation of src/gd_tools/__main__.py.
+
+Tests (tests/unit/test_main.py):
+- 7 tests total: 3 subprocess + 4 unit tests
+- TestSubprocess: python -m gd_tools --version, --help, test (exit 2)
+- TestMain: main() function called directly with monkeypatched sys.argv
+- test_main_catches_gd_tools_error: mocks cli to raise ConfigError,
+  verifies GdToolsError catch prints to stderr and exits with
+  e.exit_code
+
+Implementation (src/gd_tools/__main__.py):
+- main() function: calls cli(), catches GdToolsError, prints to stderr,
+  sys.exit(e.exit_code)
+- if __name__ == "__main__": main() guard for direct execution
+
+Coverage: 96.51% (86 stmts, 3 miss)
+- __main__.py: 91% (1 miss: line 31 = main() call in __name__ guard)
+- cli.py: 96% (2 miss: merge/show stub bodies)
+- errors.py: 100%
+- __init__.py: 100%
+
+Quality gates: ruff check pass, black --check pass
