@@ -1,0 +1,8 @@
+{
+  "dirs": [
+    "res://test"
+  ],
+  "pre_run_script": "res://addons/gd-tools-coverage/pre_run_hook.gd",
+  "post_run_script": "res://addons/gd-tools-coverage/post_run_hook.gd",
+  "should_exit": true
+}
