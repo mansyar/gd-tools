@@ -13,7 +13,7 @@
     - [x] Add module docstring and imports
 - [ ] Task: Conductor - User Manual Verification 'Module Foundation' (Protocol in workflow.md)
 
-## Phase 2: Binary Detection Chain
+## Phase 2: Binary Detection Chain [checkpoint: 8c649b0]
 
 - [x] Task: Read `spec.md` and `workflow.md` before starting this phase
 - [x] Task: Write tests for `_check_config()`
@@ -45,7 +45,7 @@
     - [x] Test `GodotNotFoundError` raised with install instructions when nothing found
     - [x] Test returns `GodotInfo` with correct path, version, and `is_valid`
 - [x] Task: Implement `find_godot()` [f238796]
-- [ ] Task: Conductor - User Manual Verification 'Binary Detection Chain' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Binary Detection Chain' (Protocol in workflow.md)
 
 ## Phase 3: Version Detection, Validation & GUT Mapping
 
