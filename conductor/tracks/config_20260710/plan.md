@@ -78,7 +78,7 @@
     - [x] Confirm all discovery and loading tests pass
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Config Discovery & Loading' (Protocol in workflow.md) [a5f65b7]
 
-## Phase 4: Serialization & RC Generation — TDD [checkpoint: TBD]
+## Phase 4: Serialization & RC Generation — TDD [checkpoint: a05b2ec]
 
 - [x] Task: Read spec.md and workflow.md to review requirements and workflow rules
 - [x] Task: Write unit tests for `save_config` (Red) [bef7cd5]
@@ -105,7 +105,7 @@
 - [x] Task: Verify tests pass (Green check) [bef7cd5]
     - [x] Run `CI=true pytest tests/unit/test_config.py -v`
     - [x] Confirm all serialization and generation tests pass
-- [~] Task: Conductor - User Manual Verification 'Phase 4: Serialization & RC Generation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Serialization & RC Generation' (Protocol in workflow.md) [a05b2ec]
 
 ## Phase 5: Finalization & Quality Gates
 
