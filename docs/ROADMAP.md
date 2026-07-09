@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 0 Complete — Spike Validated, Architecture C Confirmed
+**Status:** Phase 1 In Progress — Track 1 (Project Scaffolding) Complete
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -194,7 +194,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ---
 
-### Track 1: Project Scaffolding
+### Track 1: Project Scaffolding ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -204,6 +204,9 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | `pyproject.toml`, `src/gd_tools/__init__.py`, `src/gd_tools/__main__.py`, `src/gd_tools/cli.py` (skeleton) |
 | **Effort** | 0.5 day |
 | **Risk** | LOW |
+| **Status** | ✅ **COMPLETED** (2026-07-09) — All 4 success criteria passed |
+| **Conductor track** | `scaffolding_20260709` (archived to `conductor/archive/`) |
+| **Commits** | `d0cc81a`..`f882b6e` (6 commits) + review fix `39ae6d9` |
 
 **Scope:**
 - `pyproject.toml` with all dependencies from TDD §12
@@ -225,6 +228,19 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 2. `gd-tools --version` outputs `gd-tools 0.1.0`
 3. All command groups appear in `--help` output (even if they error "not implemented")
 4. Package imports cleanly: `from gd_tools import cli`
+
+**Track 1 Results (2026-07-09):**
+- ✅ All 4 success criteria PASSED
+- ✅ 39 unit tests, 98.85% coverage (cli.py at 100%)
+- ✅ ruff check + black --check pass
+- **Review fixes applied:**
+  1. Added return type annotations on `main()` and `GdToolsGroup.invoke()`
+  2. Added stub tests for `coverage merge` and `coverage show` commands
+- **Key implementation notes:**
+  - `errors.py` implements full exception hierarchy with `exit_code` attribute and keyword-only override
+  - `cli.py` uses custom `GdToolsGroup` class that catches `NotImplementedError` → exit code 2
+  - `__main__.py` catches `GdToolsError` → prints to stderr → `sys.exit(e.exit_code)`
+  - All command stubs raise `NotImplementedError` (full implementation in Tracks 4-8, 13)
 
 ---
 

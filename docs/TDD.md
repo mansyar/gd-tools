@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Design / Pre-implementation
+**Status:** Phase 1 Implementation — Track 1 (Scaffolding) Complete
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -79,6 +79,11 @@ internal dependencies.
 ## 3. Module Specifications
 
 ### 3.1 `errors.py` — Exception Hierarchy
+
+> **Implemented:** Track 1 (scaffolding_20260709). See `src/gd_tools/errors.py`.
+> The constructor accepts a message and an optional keyword-only `exit_code`
+> override. `TestFailureError` has `__test__ = False` to prevent pytest
+> collection.
 
 ```python
 class GdToolsError(Exception):
@@ -277,6 +282,11 @@ def run_godot(
 
 ### 3.4 `cli.py` — CLI Definitions (Click)
 
+> **Implemented (stubs):** Track 1 (scaffolding_20260709). See
+> `src/gd_tools/cli.py`. All commands raise `NotImplementedError`, caught by
+> a custom `GdToolsGroup` class that exits with code 2. Full implementation
+> in Tracks 4-8, 13.
+
 ```python
 import click
 
@@ -341,6 +351,9 @@ def show(min_percent):
 ```
 
 #### Entry Point
+
+> **Implemented:** Track 1 (scaffolding_20260709). See
+> `src/gd_tools/__main__.py`.
 
 ```python
 # __main__.py
