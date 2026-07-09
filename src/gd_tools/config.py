@@ -5,12 +5,23 @@ default resolution of ``gd-tools.toml`` configuration files.
 See TDD §3.2 for model definitions and PRD §6 for config format.
 """
 
+import sys
+from pathlib import Path
+
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    ValidationError,
     field_validator,
 )
+
+from gd_tools.errors import ConfigError
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover
+    import tomli as tomllib
 
 DEFAULT_EXCLUDES = ["addons", ".godot", ".gd-tools", ".git"]
 
@@ -144,3 +155,76 @@ class GdToolsConfig(BaseModel):
                 f"min_percent must be 0-100, got " f"{v.min_percent}"
             )
         return v
+
+
+def find_project_root(
+    start_path: Path | None = None,
+) -> Path:
+    """Walk up from start_path to find the nearest project.godot.
+
+    Args:
+        start_path: Directory to start searching from.
+            Defaults to the current working directory.
+
+    Returns:
+        The directory containing ``project.godot``.
+
+    Raises:
+        ConfigError: If ``project.godot`` is not found in any
+            parent directory.
+    """
+    if start_path is None:
+        start_path = Path.cwd()
+    current = start_path.resolve()
+    while True:
+        if (current / "project.godot").is_file():
+            return current
+        if current == current.parent:
+            raise ConfigError(
+                "project.godot not found in any parent "
+                f"directory starting from {start_path}"
+            )
+        current = current.parent
+
+
+def load_config(
+    project_root: Path | None = None,
+) -> GdToolsConfig:
+    """Load gd-tools.toml configuration from the project root.
+
+    If ``project_root`` is None, discovers it via
+    :func:`find_project_root`.
+
+    Args:
+        project_root: Path to the project root directory.
+            If None, the project root is discovered
+            automatically.
+
+    Returns:
+        A typed ``GdToolsConfig`` object. If
+        ``gd-tools.toml`` is missing, returns an object
+        with all default values.
+
+    Raises:
+        ConfigError: If the TOML file is invalid or contains
+            values that fail Pydantic validation.
+    """
+    if project_root is None:
+        project_root = find_project_root()
+
+    config_file = project_root / "gd-tools.toml"
+    if not config_file.is_file():
+        return GdToolsConfig()
+
+    try:
+        with open(config_file, "rb") as f:
+            data = tomllib.load(f)
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"Invalid TOML in {config_file}: {exc}") from exc
+
+    try:
+        return GdToolsConfig(**data)
+    except ValidationError as exc:
+        raise ConfigError(
+            f"Invalid configuration in {config_file}: " f"{exc}"
+        ) from exc
