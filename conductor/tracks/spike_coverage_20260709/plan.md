@@ -146,7 +146,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 ---
 
-## Phase 5: Post-Run Hook (post_run_hook.gd)
+## Phase 5: Post-Run Hook (post_run_hook.gd) [checkpoint: ccd94e3]
 
 > Implement the GUT post_run_hook that reads tracker hit data and serializes it to JSON. This component is simple (serialize dict to JSON) and validated primarily via integration in Phase 6.
 
@@ -170,7 +170,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Verify: file exists and code has no syntax errors (load via `load()`)
     - [x] Note: Full validation of this hook occurs in Phase 6 integration test
 
-- [~] Task: Conductor - User Manual Verification 'Post-Run Hook Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Post-Run Hook Implementation' (Protocol in workflow.md)
 
 ---
 
