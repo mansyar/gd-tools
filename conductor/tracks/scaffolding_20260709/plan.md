@@ -3,7 +3,7 @@
 
 ## Phase 1: Project Scaffolding
 
-- [ ] Task: Read spec.md and workflow.md before starting implementation
+- [x] Task: Read spec.md and workflow.md before starting implementation
     - [ ] Read `conductor/tracks/scaffolding_20260709/spec.md`
     - [ ] Read `conductor/workflow.md`
     - [ ] Verify: understand TDD methodology, commit patterns, and task lifecycle
