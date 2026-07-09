@@ -68,7 +68,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
 
 ---
 
-## Phase 3: Tracker Autoload (tracker.gd) — TDD
+## Phase 3: Tracker Autoload (tracker.gd) — TDD [checkpoint: e662560]
 
 > Implement the coverage tracker singleton. It records hit counts per (file_id, line_id) pair and is no-op when inactive.
 
@@ -93,7 +93,7 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Ensure all public methods have docstrings
     - [x] Re-run tests to confirm still passing
 
-- [~] Task: Conductor - User Manual Verification 'Tracker Autoload Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Tracker Autoload Implementation' (Protocol in workflow.md)
 
 ---
 
