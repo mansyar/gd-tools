@@ -1,7 +1,7 @@
 <protect>
 # Implementation Plan: Project Scaffolding
 
-## Phase 1: Project Scaffolding
+## Phase 1: Project Scaffolding [checkpoint: 9ca2365]
 
 - [x] Task: Read spec.md and workflow.md before starting implementation
     - [ ] Read `conductor/tracks/scaffolding_20260709/spec.md`
@@ -77,5 +77,5 @@
     - [ ] Create `tests/` subdirectories with `__init__.py`: `unit/`, `integration/`, `e2e/`, `fixtures/`
     - [ ] Verify: files exist and are correctly formatted
 
-- [~] Task: Conductor - User Manual Verification 'Project Scaffolding' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Project Scaffolding' (Protocol in workflow.md)
 </protect>
