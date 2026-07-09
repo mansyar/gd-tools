@@ -188,17 +188,17 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Set `GD_TOOLS_COVERAGE_ACTIVE=1`
     - [x] Set `GD_TOOLS_COVERAGE_PLAN` to absolute path of `spike/plan.json`
     - [x] Set `GD_TOOLS_COVERAGE_OUTPUT` to absolute path of `spike/coverage.json`
-- [ ] Task: Run full spike flow
-    - [ ] Execute: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -d -gexit -gpre_run_script="res://addons/gd-tools-coverage/pre_run_hook.gd" -gpost_run_script="res://addons/gd-tools-coverage/post_run_hook.gd"`
-    - [ ] Capture full stdout output to `spike/spike_output.log`
-    - [ ] Check for GDScript parse/compile errors in output
-- [ ] Task: Verify success criteria
-    - [ ] Criterion 1 (Source modification compiles): Check stdout for `[gd-tools] Instrumented:` message and no reload errors
-    - [ ] Criterion 2 (Instrumented code executes): Check `coverage.json` exists and `hits` dict is non-empty
-    - [ ] Criterion 3 (Correct lines recorded): Verify hits match `{"0:0": 2, "0:1": 1, "0:2": 1}`
-    - [ ] Criterion 4 (Original behavior preserved): Check GUT test results show 2 passing, 0 failing
-    - [ ] Criterion 5 (Coverage data serializable): Parse `coverage.json` as valid JSON with correct structure (`version`, `generated_at`, `hits`)
-    - [ ] Criterion 6 (Works in CLI mode): Confirm entire flow ran via `godot -s ... -d` without editor
+- [x] Task: Run full spike flow [6c3eaca]
+    - [x] Execute: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -d -gexit -gselect=test_calculator` (hooks via .gutconfig.json; -gselect to avoid tracker tests clearing coverage)
+    - [x] Capture full stdout output to `spike/spike_output.log`
+    - [x] Check for GDScript parse/compile errors in output (none found)
+- [x] Task: Verify success criteria [6c3eaca]
+    - [x] Criterion 1 (Source modification compiles): "[gd-tools] Instrumented: res://scripts/calculator.gd (3 lines)" - no errors
+    - [x] Criterion 2 (Instrumented code executes): coverage.json exists, hits non-empty (3 hit points)
+    - [x] Criterion 3 (Correct lines recorded): hits match `{"0:0": 2, "0:1": 1, "0:2": 1}`
+    - [x] Criterion 4 (Original behavior preserved): 2 passing, 0 failing, "All tests passed!"
+    - [x] Criterion 5 (Coverage data serializable): Valid JSON with version/generated_at/hits keys
+    - [x] Criterion 6 (Works in CLI mode): Entire flow via godot -s ... -d without editor
 - [ ] Task: Document spike results
     - [ ] Write spike result report to `spike/SPIKE_RESULTS.md` — pass/fail for each criterion with evidence (stdout excerpts, coverage.json content)
     - [ ] Record architecture decision — confirm Architecture C (all pass) or select fallback (see spec Section 8)
