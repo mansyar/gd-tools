@@ -51,14 +51,14 @@ The spike is structured in 6 phases. Each phase follows the TDD workflow where p
     - [x] Write `test_divide_normal()` — asserts `result["result"] == 5.0` for `divide(10.0, 2.0)`
     - [x] Write `test_divide_by_zero()` — asserts `result["error"] == "division by zero"` for `divide(10.0, 0.0)`
     - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm tests FAIL (calculator.gd does not exist yet)
-- [ ] Task: Implement calculator.gd (Green Phase)
-    - [ ] Create `spike/scripts/calculator.gd` extending `RefCounted`
-    - [ ] Add class docstring: "A simple calculator for spike testing."
-    - [ ] Implement `func divide(a: float, b: float) -> Dictionary` with if/else branch
+- [x] Task: Implement calculator.gd (Green Phase) [241b23f]
+    - [x] Create `spike/scripts/calculator.gd` extending `RefCounted`
+    - [x] Add class docstring: "A simple calculator for spike testing."
+    - [x] Implement `func divide(a: float, b: float) -> Dictionary` with if/else branch
         - **Note:** Do NOT use `self` as a parameter name — it is a GDScript keyword
-    - [ ] If-true branch returns `{"error": "division by zero"}`
-    - [ ] Else branch returns `{"result": a / b}`
-    - [ ] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm both tests PASS
+    - [x] If-true branch returns `{"error": "division by zero"}`
+    - [x] Else branch returns `{"result": a / b}`
+    - [x] Run: `godot --headless --path spike/ -s addons/gut/gut_cmdln.gd -gexit` and confirm both tests PASS
 - [ ] Task: Verify GUT tests pass without instrumentation (baseline)
     - [ ] Run GUT without any hooks
     - [ ] Confirm exit code 0 and both tests passing
