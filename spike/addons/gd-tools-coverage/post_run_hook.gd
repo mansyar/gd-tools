@@ -1,4 +1,4 @@
-extends RefCounted
+extends GutHookScript
 
 ## GUT post-run hook for coverage data serialization.
 ##
@@ -8,7 +8,7 @@ extends RefCounted
 ## Output path configured via GD_TOOLS_COVERAGE_OUTPUT
 ## environment variable (default: user://coverage.json).
 
-func _init() -> void:
+func run() -> void:
 	var tracker: Node = _get_tracker()
 	if tracker == null:
 		push_error("[gd-tools] Cannot find _GDTCoverage autoload node")

@@ -1,4 +1,4 @@
-extends RefCounted
+extends GutHookScript
 
 ## GUT pre-run hook for coverage instrumentation.
 ##
@@ -11,7 +11,7 @@ const TRACKER_NAME = "_GDTCoverage"
 var _plan: Dictionary = {}
 var _instrumented_scripts: Array = []
 
-func _init() -> void:
+func run() -> void:
 	var plan_path: String = OS.get_environment("GD_TOOLS_COVERAGE_PLAN")
 	if plan_path.is_empty():
 		push_warning("[gd-tools] GD_TOOLS_COVERAGE_PLAN not set, skipping instrumentation")
