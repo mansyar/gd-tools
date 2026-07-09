@@ -71,7 +71,7 @@
     - [ ] Implement `src/gd_tools/__main__.py` — import `cli`, catch `GdToolsError`, print to stderr, `sys.exit(e.exit_code)`
     - [ ] Verify: all tests pass, coverage >=80%
 
-- [ ] Task: Create supporting files
+- [x] Task: Create supporting files [f882b6e]
     - [ ] Create `.gitignore` with Python ignores, `.gd-tools/`, `.godot/`
     - [ ] Create `README.md` placeholder with project name, brief description, install instructions
     - [ ] Create `tests/` subdirectories with `__init__.py`: `unit/`, `integration/`, `e2e/`, `fixtures/`
