@@ -3,9 +3,9 @@
 
 ## Phase 1: Project Detection and Godot Version Detection
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [ ] Task: Set up `init.py` module skeleton and import reusable functions
     - [ ] Create `src/gd_tools/init.py` with module docstring
@@ -26,9 +26,9 @@
 
 ## Phase 2: GUT Installation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [ ] Task: Implement `check_gut_installed(project_root: Path) -> bool`
     - [ ] Write failing tests: `test_check_gut_installed_returns_true_when_present`, `test_check_gut_installed_returns_false_when_absent`
@@ -70,9 +70,9 @@
 
 ## Phase 3: Coverage Addon Deployment
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [ ] Task: Create placeholder GDScript files as package data
     - [ ] Create `src/gd_tools/addons/gd-tools-coverage/coverage.gd` — `extends Node`, TODO comment for Phase 3
@@ -91,9 +91,9 @@
 
 ## Phase 4: Configuration File Generation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [ ] Task: Implement `update_gutconfig(project_root: Path, config: GdToolsConfig) -> None`
     - [ ] Write failing tests: `test_update_gutconfig_creates_new_with_template`, `test_update_gutconfig_merges_existing_preserves_user_keys`, `test_update_gutconfig_overwrites_hook_keys`, `test_update_gutconfig_preserves_custom_dirs`
@@ -117,9 +117,9 @@
 
 ## Phase 5: Data Directory, Summary, and Orchestration
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [ ] Task: Implement `create_data_dir(project_root: Path) -> None`
     - [ ] Write failing tests: `test_create_data_dir_creates_directory`, `test_create_data_dir_adds_to_gitignore`, `test_create_data_dir_gitignore_idempotent`, `test_create_data_dir_creates_gitignore_if_missing`
@@ -149,9 +149,9 @@
 
 ## Phase 6: Integration Tests
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [ ] Task: Write integration tests for full init flow
     - [ ] Write `test_init_fresh_project` — full flow on a clean `tmp_path` with mocked Godot/GUT download, verify all artifacts created
