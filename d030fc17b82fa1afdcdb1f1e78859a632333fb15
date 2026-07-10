@@ -1,0 +1,13 @@
+Phase 2 Complete: FormatResult Dataclass and run_format Function
+
+- Created src/gd_tools/format_runner.py with FormatResult dataclass and run_format()
+- FormatResult fields: files_checked, files_formatted, files_needing_format, diffs
+- run_format supports: default (in-place), --check (report only), --diff (unified diffs)
+- Mutual exclusion: check+diff raises FormatError (exit_code=2)
+- Syntax error handling: LarkError caught, file skipped, processing continues
+- No files found: returns FormatResult with all zeros
+- 17 tests covering all modes, edge cases, and error handling
+- format_runner.py: 100% line coverage
+- All 207 tests pass, 99.53% overall coverage
+- ruff check: all passed
+- black --check: all passed
