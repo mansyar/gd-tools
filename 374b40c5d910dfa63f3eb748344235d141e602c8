@@ -1,0 +1,46 @@
+Task: Implement run_tests() — main orchestration function
+
+Summary:
+Implemented the run_tests() function in src/gd_tools/test_runner.py that
+orchestrates the full GUT test lifecycle via Godot CLI. The function:
+1. Finds project root via find_project_root()
+2. Checks GUT is installed via check_gut_installed()
+3. Finds Godot binary via find_godot()
+4. Creates .gd-tools/ directory if missing
+5. Builds GUT args via build_gut_args()
+6. Sets GD_TOOLS_COVERAGE_ACTIVE=1 env var when coverage=True
+7. Invokes Godot via run_godot()
+8. Handles subprocess.TimeoutExpired → GdToolsError (exit code 2)
+9. Handles non-zero Godot exit → GdToolsError (exit code 2)
+10. Parses JUnit XML via parse_junit_xml()
+11. Assembles TestResult with all fields
+12. Sets coverage_data_path when coverage=True
+13. Raises TestFailureError when tests fail and no_exit_code=False (exit code 1)
+
+Files changed:
+- src/gd_tools/test_runner.py: Added imports (subprocess, GdToolsConfig,
+  find_project_root, TestFailureError, find_godot, run_godot). Added
+  run_tests() function (~120 lines with docstring).
+- tests/unit/test_test_runner.py: Added 12 unit tests for run_tests()
+  covering: GUT not installed, Godot not found, correct args passed to
+  run_godot, stdout/stderr capture, TestResult assembly, all-pass no error,
+  test failures raise TestFailureError, no_exit_code=True suppresses error,
+  timeout raises GdToolsError, non-zero exit raises GdToolsError, .gd-tools
+  dir creation, junit_xml_path set correctly.
+
+Key decisions:
+- Added timeout parameter (spec FR-3 requires it, plan signature omitted it)
+- Coverage env var and coverage_data_path implemented now (natural part of
+  run_tests flow); build_gut_args hook args deferred to coverage task
+- min_percent accepted but del'd (enforcement deferred to Phase 3)
+- Used @patch decorators to mock find_project_root, find_godot, run_godot,
+  and parse_junit_xml for unit isolation
+- Created gut_project fixture (tmp_path with addons/gut/gut_cmdln.gd)
+
+Verification:
+- 36 tests in test_test_runner.py pass (12 new + 24 existing)
+- 261 total tests pass (no regressions)
+- test_runner.py coverage: 97% (3 uncovered lines: coverage infrastructure)
+- Overall coverage: 98.60%
+- ruff check: passed
+- black --check: passed
