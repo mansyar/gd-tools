@@ -1,0 +1,27 @@
+Task: Implement JSON output format
+
+Summary:
+Implemented format_lint_json() in src/gd_tools/lint_runner.py. The function
+takes a LintResult and returns a valid JSON string.
+
+Key changes:
+- Added import: json
+- format_lint_json(result) serializes LintResult to JSON with:
+  - files_checked (int)
+  - errors (list of issue dicts)
+  - warnings (list of issue dicts)
+- Each issue dict has all fields: file, line, column, rule, message, severity
+- Empty lists are [] not null (per FR-3b)
+- Uses json.dumps with indent=2 for readable output
+
+Tests added (3 new tests in tests/unit/test_lint_runner.py):
+- test_format_lint_json_schema: verifies files_checked, errors, warnings keys
+- test_format_lint_json_issue_fields: verifies all LintIssue fields present
+- test_format_lint_json_no_violations: verifies empty arrays not null
+
+Files modified:
+- src/gd_tools/lint_runner.py (added format_lint_json, 1 new import)
+- tests/unit/test_lint_runner.py (3 new tests, added json import, black reformatted)
+
+Coverage: lint_runner.py 100% (70 statements, 0 missed)
+Full suite: 179 tests passed, 99.44% total coverage
