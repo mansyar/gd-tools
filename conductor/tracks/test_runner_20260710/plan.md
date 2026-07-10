@@ -40,11 +40,11 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 
 ## Phase 2: Core Functions (Argument Builder, GUT Check, JUnit Parser)
 
-- [ ] Task: Read spec.md and workflow.md before starting phase implementation
-    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
-    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
+- [x] Task: Read spec.md and workflow.md before starting phase implementation
+    - [x] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [x] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
-- [ ] Task: Implement `build_gut_args()` — GUT CLI argument construction
+- [x] Task: Implement `build_gut_args()` — GUT CLI argument construction (d6c2981)
     - [ ] Write failing tests for base command args (`-s addons/gut/gut_cmdln.gd -d --path <project_root> -gexit`)
     - [ ] Write failing tests for test dir args (`-gdirs=res://test/` conversion from config)
     - [ ] Write failing tests for prefix/suffix args (`-gprefix=test_`, `-gsuffix=.gd`)
