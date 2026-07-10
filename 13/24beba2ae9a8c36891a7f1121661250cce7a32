@@ -1,0 +1,20 @@
+Task: Wire CLI doctor command to run_doctor() and format_doctor_table()
+
+Implementation:
+- Added imports: rom .doctor import format_doctor_table, run_doctor to cli.py
+- Replaced aise NotImplementedError in doctor command with:
+  - Call un_doctor() to get DoctorResult
+  - Print table via console.print(format_doctor_table(result))
+  - Exit 0 if all_passed, exit 1 if any check fails (FR-6)
+
+Tests (4 new in test_cli.py, replaced test_doctor_stub_exit_code_2):
+- test_cli_doctor_calls_run_doctor — verifies run_doctor is called
+- test_cli_doctor_prints_table — verifies table output contains check names
+- test_cli_doctor_exits_zero_when_all_pass — exit code 0 when all_passed=True
+- test_cli_doctor_exits_one_when_any_fails — exit code 1 when all_passed=False
+
+Coverage: cli.py 97% (142 statements, 4 missed - init error handling),
+          doctor.py 100% (142 statements, 0 missed)
+Overall: 386 passed, 7 skipped, 98.56%
+ruff: All checks passed
+black: 2 files unchanged (after reformatting test_cli.py)
