@@ -495,3 +495,66 @@ def print_summary(project_root: Path, actions: list[str]) -> None:
     console.print(
         "  • Run [cyan]gd-tools format[/cyan] to format GDScript files"
     )
+
+
+def run_init(non_interactive: bool = False) -> None:
+    """Run the full init flow to bootstrap a Godot project.
+
+    Orchestrates all initialization steps:
+    1. Detect project root
+    2. Load or create config
+    3. Detect Godot version
+    4. Resolve GUT version
+    5. Check if GUT is installed
+    6. Install GUT if needed
+    7. Enable GUT plugin in project.godot
+    8. Deploy coverage addon
+    9. Create/update .gutconfig.json
+    10. Create gd-tools.toml if missing
+    11. Generate gdlintrc and gdformatrc
+    12. Create .gd-tools/ data directory
+    13. Print summary
+
+    Args:
+        non_interactive: If True, skip all interactive prompts
+            and assume defaults.
+    """
+    project_root = find_project_root()
+    config = load_config(project_root)
+
+    actions: list[str] = []
+
+    godot_version = detect_godot_version(config)
+    gut_version = get_gut_version_for_godot(godot_version)
+
+    is_installed = check_gut_installed(project_root)
+    if is_installed:
+        installed = get_installed_gut_version(project_root)
+        if installed:
+            actions.append(f"GUT already installed (v{installed})")
+        else:
+            actions.append("GUT already installed (version unknown)")
+    else:
+        actions.append(f"Installing GUT v{gut_version}")
+
+    install_gut(project_root, godot_version, non_interactive=non_interactive)
+
+    enable_gut_plugin(project_root)
+    actions.append("Enabled GUT plugin in project.godot")
+
+    install_coverage_addon(project_root)
+    actions.append("Deployed coverage addon")
+
+    update_gutconfig(project_root, config)
+    actions.append("Created/updated .gutconfig.json")
+
+    create_config_file(project_root, config)
+    actions.append("Ensured gd-tools.toml exists")
+
+    generate_lint_format_rcs(project_root, config)
+    actions.append("Generated gdlintrc and gdformatrc")
+
+    create_data_dir(project_root)
+    actions.append("Created .gd-tools/ directory")
+
+    print_summary(project_root, actions)

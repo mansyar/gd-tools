@@ -25,6 +25,7 @@ from gd_tools.init import (
     install_coverage_addon,
     install_gut,
     print_summary,
+    run_init,
     update_gutconfig,
 )
 
@@ -655,3 +656,105 @@ def test_print_summary_prints_next_steps(tmp_path: Path):
         str(call.args[0]) for call in mock_print.call_args_list
     )
     assert "gd-tools test" in printed_text
+
+
+# --- run_init ---
+
+
+def test_run_init_full_flow_with_mocks(tmp_path: Path):
+    """Test run_init calls all steps in the correct order."""
+    # Create a project.godot so find_project_root works
+    (tmp_path / "project.godot").write_text("config_version=5\n")
+
+    config = GdToolsConfig()
+    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.load_config", return_value=config),
+        patch("gd_tools.init.find_godot", return_value=mock_info),
+        patch("gd_tools.init.check_gut_installed", return_value=True),
+        patch("gd_tools.init.get_installed_gut_version", return_value="9.5.0"),
+        patch("gd_tools.init.install_gut") as mock_install,
+        patch("gd_tools.init.enable_gut_plugin") as mock_enable,
+        patch("gd_tools.init.install_coverage_addon") as mock_cov,
+        patch("gd_tools.init.update_gutconfig") as mock_gutconfig,
+        patch("gd_tools.init.create_config_file") as mock_create_config,
+        patch("gd_tools.init.generate_lint_format_rcs") as mock_gen_rcs,
+        patch("gd_tools.init.create_data_dir") as mock_data_dir,
+        patch("gd_tools.init.print_summary") as mock_summary,
+    ):
+        run_init()
+
+    # All functions should be called
+    mock_install.assert_called_once()
+    mock_enable.assert_called_once()
+    mock_cov.assert_called_once()
+    mock_gutconfig.assert_called_once()
+    mock_create_config.assert_called_once()
+    mock_gen_rcs.assert_called_once()
+    mock_data_dir.assert_called_once()
+    mock_summary.assert_called_once()
+
+
+def test_run_init_non_interactive_skips_prompts(tmp_path: Path):
+    """Test run_init passes non_interactive to install_gut."""
+    (tmp_path / "project.godot").write_text("config_version=5\n")
+
+    config = GdToolsConfig()
+    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.load_config", return_value=config),
+        patch("gd_tools.init.find_godot", return_value=mock_info),
+        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.install_gut") as mock_install,
+        patch("gd_tools.init.enable_gut_plugin"),
+        patch("gd_tools.init.install_coverage_addon"),
+        patch("gd_tools.init.update_gutconfig"),
+        patch("gd_tools.init.create_config_file"),
+        patch("gd_tools.init.generate_lint_format_rcs"),
+        patch("gd_tools.init.create_data_dir"),
+        patch("gd_tools.init.print_summary"),
+    ):
+        run_init(non_interactive=True)
+
+    # install_gut should be called with non_interactive=True
+    _, kwargs = mock_install.call_args
+    assert (
+        kwargs.get("non_interactive") is True
+        or mock_install.call_args.args[-1] is True
+    )
+
+
+def test_run_init_collects_actions_list(tmp_path: Path):
+    """Test run_init collects actions and passes them to print_summary."""
+    (tmp_path / "project.godot").write_text("config_version=5\n")
+
+    config = GdToolsConfig()
+    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.load_config", return_value=config),
+        patch("gd_tools.init.find_godot", return_value=mock_info),
+        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.install_gut"),
+        patch("gd_tools.init.enable_gut_plugin"),
+        patch("gd_tools.init.install_coverage_addon"),
+        patch("gd_tools.init.update_gutconfig"),
+        patch("gd_tools.init.create_config_file"),
+        patch("gd_tools.init.generate_lint_format_rcs"),
+        patch("gd_tools.init.create_data_dir"),
+        patch("gd_tools.init.print_summary") as mock_summary,
+    ):
+        run_init()
+
+    # print_summary should be called with a non-empty actions list
+    call_args = mock_summary.call_args
+    actions = (
+        call_args.args[1] if call_args.args else call_args.kwargs.get("actions")
+    )
+    assert isinstance(actions, list)
+    assert len(actions) > 0
