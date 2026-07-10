@@ -1,0 +1,38 @@
+Phase 3 Verification Report: CLI Format Command Implementation
+
+Checkpoint: 94bccd6
+Date: 2026-07-10
+
+## Changed Files (since Phase 2 checkpoint 1515e50)
+- src/gd_tools/cli.py (modified - format command implementation)
+- src/gd_tools/format_runner.py (modified - added files_needing_format_paths field)
+- tests/unit/test_cli.py (modified - 9 new format tests, removed stub test)
+- tests/unit/test_format_runner.py (modified - added files_needing_format_paths assertions)
+- conductor/tracks/format_wrapper_20260710/plan.md (updated)
+
+## Automated Test Results
+- 215 tests passed in 3.51s
+- Total coverage: 99.47% (461 stmts, 2 missed; 108 branches, 1 missed)
+- cli.py: 100% line, 100% branch (111 stmts, 0 miss, 22 branches, 0 BrPart)
+- format_runner.py: 100% line, 100% branch (44 stmts, 0 miss, 12 branches, 0 BrPart)
+- Quality gates: >80% line PASSED, >70% branch PASSED
+
+## Linting
+- ruff check: All checks passed
+- black --check: All files formatted correctly (23 files unchanged)
+
+## Test File Coverage
+- src/gd_tools/cli.py -> tests/unit/test_cli.py
+- src/gd_tools/format_runner.py -> tests/unit/test_format_runner.py
+
+## Manual Verification Plan
+1. pip install -e .
+2. Default mode: unformatted .gd file -> gd-tools format <file> -> formats in place
+3. --check mode: unformatted .gd file -> gd-tools format --check <file> -> reports file, exit 1
+4. --diff mode: unformatted .gd file -> gd-tools format --diff <file> -> unified diff
+5. Mutual exclusion: gd-tools format --check --diff <file> -> error, exit 2
+6. No files found: gd-tools format /empty/dir -> "No .gd files found.", exit 0
+7. Already formatted: gd-tools format --check <formatted_file> -> "All N file(s) are formatted", exit 0
+
+## User Confirmation
+User confirmed: "Yes, confirmed"
