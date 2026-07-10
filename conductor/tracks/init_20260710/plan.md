@@ -68,7 +68,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 2: GUT Installation' (Protocol in workflow.md)
 
-## Phase 3: Coverage Addon Deployment
+## Phase 3: Coverage Addon Deployment [checkpoint: e78d25c]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
