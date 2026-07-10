@@ -153,12 +153,12 @@
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Write integration tests for full init flow
-    - [ ] Write `test_init_fresh_project` — full flow on a clean `tmp_path` with mocked Godot/GUT download, verify all artifacts created
-    - [ ] Write `test_init_project_with_existing_gut` — GUT already installed, verify no download attempt, plugin still enabled
-    - [ ] Write `test_init_idempotent` — run init twice, verify no duplicate entries in any file
-    - [ ] Run full test suite (`CI=true pytest`), verify all pass and overall coverage thresholds still met
-    - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`
+- [x] Task: Write integration tests for full init flow
+    - [x] Write `test_init_fresh_project` — full flow on a clean `tmp_path` with mocked Godot/GUT download, verify all artifacts created
+    - [x] Write `test_init_project_with_existing_gut` — GUT already installed, verify no download attempt, plugin still enabled
+    - [x] Write `test_init_idempotent` — run init twice, verify no duplicate entries in any file
+    - [x] Run full test suite (`CI=true pytest`), verify all pass and overall coverage thresholds still met
+    - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Integration Tests' (Protocol in workflow.md)
 </protect>
