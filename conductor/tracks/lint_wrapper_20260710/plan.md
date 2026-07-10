@@ -70,7 +70,7 @@
     - [ ] Update `test_lint_stub_exit_code_2` test (replace stub behavior with real command tests)
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Integration' (Protocol in workflow.md)
 
-## Phase 5: Integration Tests & Coverage
+## Phase 5: Integration Tests & Coverage [checkpoint: cb14c35]
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Integration tests with fixture `.gd` files `d8b47cc`
@@ -84,6 +84,6 @@
     - [x] Run `ruff check src/gd_tools/lint_runner.py` — verify no lint issues
     - [x] Run `black --check src/gd_tools/lint_runner.py` — verify formatting
     - [x] Run full test suite — verify no regressions
-- [~] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests & Coverage' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests & Coverage' (Protocol in workflow.md)
 
 </protect>
