@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from junitparser import JUnitXml
+from rich.console import Console
+from rich.table import Table
 
 from gd_tools.config import GdToolsConfig, TestConfig, find_project_root
 from gd_tools.errors import (
@@ -239,6 +241,48 @@ def parse_junit_xml(
     return (total, passed, failed, skipped, duration, test_details)
 
 
+def format_test_results(result: TestResult) -> None:
+    """Print a Rich table summarizing test results.
+
+    Always prints a table with total, passed, failed, skipped, and
+    duration. When tests fail, also prints GUT's stdout and stderr
+    for debugging context (truncated to 5000 characters if longer).
+
+    Args:
+        result: The :class:`TestResult` to format and print.
+    """
+    console = Console(force_terminal=True)
+    table = Table(title="Test Results")
+    table.add_column("Total", justify="right")
+    table.add_column("Passed", justify="right", style="green")
+    table.add_column("Failed", justify="right", style="red")
+    table.add_column("Skipped", justify="right", style="yellow")
+    table.add_column("Duration", justify="right")
+    table.add_row(
+        str(result.total),
+        str(result.passed),
+        str(result.failed),
+        str(result.skipped),
+        f"{result.duration:.2f}s",
+    )
+    console.print(table)
+
+    # On failure, surface GUT stdout/stderr for debugging.
+    if result.failed > 0:
+        if result.stdout:
+            console.print("\n--- GUT stdout ---")
+            stdout_text = result.stdout
+            if len(stdout_text) > 5000:
+                stdout_text = stdout_text[:5000] + "\n... (truncated)"
+            console.print(stdout_text)
+        if result.stderr:
+            console.print("\n--- GUT stderr ---")
+            stderr_text = result.stderr
+            if len(stderr_text) > 5000:
+                stderr_text = stderr_text[:5000] + "\n... (truncated)"
+            console.print(stderr_text)
+
+
 def run_tests(
     config: GdToolsConfig,
     coverage: bool = False,
@@ -363,6 +407,9 @@ def run_tests(
         stderr=result.stderr,
         test_details=test_details,
     )
+
+    # Print Rich summary table (always, on every run).
+    format_test_results(test_result)
 
     # Raise TestFailureError if tests failed and no_exit_code is False.
     if failed > 0 and not no_exit_code:

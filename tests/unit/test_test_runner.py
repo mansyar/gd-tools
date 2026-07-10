@@ -25,6 +25,7 @@ from gd_tools.test_runner import (
     TestResult,
     build_gut_args,
     check_gut_installed,
+    format_test_results,
     parse_junit_xml,
     run_tests,
 )
@@ -844,3 +845,116 @@ def test_run_tests_no_coverage_coverage_data_path_none(
 
     result = run_tests(GdToolsConfig(), coverage=False)
     assert result.coverage_data_path is None
+
+
+# --- format_test_results ---
+
+
+@pytest.mark.unit
+def test_format_test_results_all_pass(capsys):
+    """format_test_results with all-passing tests shows table, no GUT output."""
+    result = TestResult(
+        total=3,
+        passed=3,
+        failed=0,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=Path("/fake/results.xml"),
+        coverage_data_path=None,
+        stdout="Running tests...",
+        stderr="",
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "3" in captured.out
+    # Should NOT print GUT stdout/stderr when no failures.
+    assert "GUT stdout" not in captured.out
+    assert "Running tests" not in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_with_failures(capsys):
+    """format_test_results with failures shows table + GUT output."""
+    result = TestResult(
+        total=3,
+        passed=2,
+        failed=1,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=Path("/fake/results.xml"),
+        coverage_data_path=None,
+        stdout="Some output from GUT",
+        stderr="Some error from GUT",
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "Some output from GUT" in captured.out
+    assert "Some error from GUT" in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_truncates_long_output(capsys):
+    """format_test_results truncates stdout/stderr > 5000 chars."""
+    long_stdout = "x" * 6000
+    long_stderr = "y" * 6000
+    result = TestResult(
+        total=1,
+        passed=0,
+        failed=1,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout=long_stdout,
+        stderr=long_stderr,
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "truncated" in captured.out.lower()
+    # The full output should NOT be present.
+    assert long_stdout not in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_zero_tests(capsys):
+    """format_test_results with zero tests shows 0/0/0/0."""
+    result = TestResult(
+        total=0,
+        passed=0,
+        failed=0,
+        skipped=0,
+        duration=0.0,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "Test Results" in captured.out
+    assert "0" in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_color_coding(capsys):
+    """format_test_results uses ANSI color codes for pass/fail."""
+    result = TestResult(
+        total=3,
+        passed=2,
+        failed=1,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    # ANSI escape codes should be present (force_terminal=True).
+    assert "\x1b[" in captured.out
