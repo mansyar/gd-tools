@@ -1,0 +1,20 @@
+TASK SUMMARY: get_installed_gut_version
+========================================
+Task: Implement get_installed_gut_version(project_root: Path) -> str | None
+Commit: d31d9082eac04e41d96aa2c8084612340fafe661
+
+Changes:
+- Added get_installed_gut_version() to src/gd_tools/init.py
+- Added 3 unit tests to tests/unit/test_init.py
+- Added configparser import
+
+Function:
+- get_installed_gut_version(project_root: Path) -> str | None
+- Parses addons/gut/plugin.cfg for the version key in [plugin] section
+- Returns version string (quotes stripped) or None if file/key missing
+
+Test Results:
+- 8 tests in test_init.py, all passing
+- init.py: 100% coverage
+
+Why: Part of Phase 2 (GUT Installation). Used by install_gut() to check if the installed GUT version matches the expected version from GUT_VERSION_MAP.
