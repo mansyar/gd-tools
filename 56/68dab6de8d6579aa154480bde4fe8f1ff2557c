@@ -1,0 +1,16 @@
+Task: Implement check_godot_version(config: GdToolsConfig) -> CheckResult
+
+Summary:
+- Added check_godot_version() to doctor.py - calls find_godot(config.godot), then check_version_compatible(info.version)
+- On success (>= 4.5.0): CheckResult(name="Godot Version", passed=True, message="Godot <version> is >= 4.5.0")
+- On failure (< 4.5.0): CheckResult(passed=False, message="Godot <version> is below required 4.5.0", fix_hint="Install Godot 4.5+...", severity="critical")
+- On GodotNotFoundError: CheckResult(passed=False, message="Godot binary not found - cannot check version", severity="critical")
+- Added check_version_compatible to imports from .godot
+- 4 unit tests: pass when >= 4.5.0, fail when < 4.5.0, critical severity, fails when Godot not found
+- 100% coverage on doctor.py (28 statements, 2 branches, 0 missed)
+
+Files modified:
+- src/gd_tools/doctor.py
+- tests/unit/test_doctor.py
+
+Why: Second of 9 diagnostic checks. Verifies Godot version meets the >= 4.5.0 requirement.
