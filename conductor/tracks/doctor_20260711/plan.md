@@ -116,7 +116,7 @@
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Orchestration, Output, and CLI Integration' (Protocol in workflow.md)
 
-## Phase 5: Integration Tests and Coverage
+## Phase 5: Integration Tests and Coverage [checkpoint: f29253f]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
     - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
@@ -128,5 +128,5 @@
     - [x] Run full test suite (`CI=true pytest`), verify all pass and overall coverage thresholds still met
     - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests and Coverage' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests and Coverage' (Protocol in workflow.md)
 </protect>
