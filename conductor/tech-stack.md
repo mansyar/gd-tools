@@ -21,6 +21,7 @@
 | `tomli` | TOML config parsing | Backport for Python < 3.11; `tomllib` used natively on 3.11+ |
 | `tomli_w` | TOML config writing | Write companion to `tomli`/`tomllib`; used by `save_config()` |
 | `pydantic` | Config model validation (Pydantic v2) | Validates `gd-tools.toml` structure; `extra='forbid'` catches typo'd keys |
+| `pyyaml` | YAML config file generation | Used by `gd-tools init` and config to generate `gdlintrc` (YAML set format) |
 | `requests` | Download GUT releases from GitHub | Used by `gd-tools init` |
 
 ---
@@ -40,7 +41,7 @@
 
 | Component | Purpose |
 |-----------|---------|
-| **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `tracker.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
+| **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
 | **GUT** (installed by `gd-tools init`) | GDScript unit test framework. Downloaded from GitHub releases, not bundled. Version-mapped to Godot version (4.5→9.5.0, 4.6→9.6.0, 4.7→9.7.0) |
 
 ---
