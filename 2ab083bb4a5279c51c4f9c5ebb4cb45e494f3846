@@ -1,0 +1,17 @@
+Task: Implement format_test_results() — Rich terminal output
+
+Changes:
+- Added format_test_results(result: TestResult) -> None to test_runner.py
+- Creates Rich Table with columns: Total, Passed (green), Failed (red), Skipped (yellow), Duration
+- On failure (failed > 0): prints GUT stdout/stderr, truncated to 5000 chars
+- Uses Console(force_terminal=True) for testability
+- Wired format_test_results() call into run_tests() before TestFailureError check
+- Added rich.console.Console and rich.table.Table imports
+- Added 5 unit tests: all_pass, with_failures, truncates_long_output, zero_tests, color_coding
+
+Verification:
+- 273 tests pass (5 new + 268 existing, no regressions)
+- test_runner.py coverage: 99% (1 missed: del min_percent line)
+- Overall coverage: 99.50%
+- ruff check: passed
+- black --check: passed
