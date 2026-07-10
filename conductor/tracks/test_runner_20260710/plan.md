@@ -162,27 +162,27 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
 
-- [ ] Task: Wire `test` command in `cli.py` — CLI integration
-    - [ ] Write failing test: `gd-tools test --help` shows all flags (`--coverage`, `--min`, `--suite`, `--test`, `--junit-xml`, `--no-exit-code`)
-    - [ ] Write failing test: `gd-tools test` with mocked `run_tests()` → calls with correct args from config
-    - [ ] Write failing test: `gd-tools test --suite MySuite` passes `suite="MySuite"` to `run_tests()`
-    - [ ] Write failing test: `gd-tools test --test MyTest` passes `test_name="MyTest"` to `run_tests()`
-    - [ ] Write failing test: `gd-tools test --coverage` passes `coverage=True` to `run_tests()`
-    - [ ] Write failing test: `gd-tools test --junit-xml /path/to.xml` passes `junit_xml="/path/to.xml"`
-    - [ ] Write failing test: `gd-tools test --no-exit-code` passes `no_exit_code=True`
-    - [ ] Write failing test: `gd-tools test` → all pass → exit code 0
-    - [ ] Write failing test: `gd-tools test` → test failures → exit code 1
-    - [ ] Write failing test: `gd-tools test` → GUT not installed → exit code 2
-    - [ ] Replace `NotImplementedError` stub in `cli.py` `test` command with actual `run_tests()` call
-    - [ ] Handle `TestFailureError` → exit code 1, `GdToolsError` → exit code 2
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `CI=true pytest tests/test_cli.py` and confirm all pass (including existing tests)
-    - [ ] Run `CI=true pytest` to ensure no regressions across full suite
-    - [ ] Run `ruff check src/ tests/ && black --check src/ tests/`
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Commit with message `feat(cli): Wire test command to run_tests with all flags`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Wire `test` command in `cli.py` — CLI integration (b6321cc)
+    - [x] Write failing test: `gd-tools test --help` shows all flags (`--coverage`, `--min`, `--suite`, `--test`, `--junit-xml`, `--no-exit-code`)
+    - [x] Write failing test: `gd-tools test` with mocked `run_tests()` → calls with correct args from config
+    - [x] Write failing test: `gd-tools test --suite MySuite` passes `suite="MySuite"` to `run_tests()`
+    - [x] Write failing test: `gd-tools test --test MyTest` passes `test_name="MyTest"` to `run_tests()`
+    - [x] Write failing test: `gd-tools test --coverage` passes `coverage=True` to `run_tests()`
+    - [x] Write failing test: `gd-tools test --junit-xml /path/to.xml` passes `junit_xml="/path/to.xml"`
+    - [x] Write failing test: `gd-tools test --no-exit-code` passes `no_exit_code=True`
+    - [x] Write failing test: `gd-tools test` → all pass → exit code 0
+    - [x] Write failing test: `gd-tools test` → test failures → exit code 1
+    - [x] Write failing test: `gd-tools test` → GUT not installed → exit code 2
+    - [x] Replace `NotImplementedError` stub in `cli.py` `test` command with actual `run_tests()` call
+    - [x] Handle `TestFailureError` → exit code 1, `GdToolsError` → exit code 2
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `CI=true pytest tests/test_cli.py` and confirm all pass (including existing tests)
+    - [x] Run `CI=true pytest` to ensure no regressions across full suite
+    - [x] Run `ruff check src/ tests/ && black --check src/ tests/`
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Commit with message `feat(cli): Wire test command to run_tests with all flags`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 
 - [ ] Task: Conductor - User Manual Verification 'Rich Terminal Output & CLI Integration' (Protocol in workflow.md)
 
