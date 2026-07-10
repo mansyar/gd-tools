@@ -4,36 +4,36 @@
 
 ## Phase 1: Shared File Discovery Refactor
 
-- [ ] Task: Read spec.md and workflow.md to review requirements and TDD methodology
-    - [ ] Read conductor/tracks/format_wrapper_20260710/spec.md
-    - [ ] Read conductor/workflow.md
+- [x] Task: Read spec.md and workflow.md to review requirements and TDD methodology
+    - [x] Read conductor/tracks/format_wrapper_20260710/spec.md
+    - [x] Read conductor/workflow.md
 
-- [ ] Task: Write tests for file_discovery.py module
-    - [ ] Test discover_gd_files discovers .gd files recursively
-    - [ ] Test discover_gd_files skips excluded directories (addons, .godot, etc.)
-    - [ ] Test discover_gd_files handles case-insensitive .gd extension
-    - [ ] Test discover_gd_files returns empty list when no .gd files found
-    - [ ] Test discover_gd_files uses DEFAULT_EXCLUDES when excludes=None
-    - [ ] Verify: Tests fail (Red) — module does not exist yet
+- [x] Task: Write tests for file_discovery.py module `d51db2b`
+    - [x] Test discover_gd_files discovers .gd files recursively
+    - [x] Test discover_gd_files skips excluded directories (addons, .godot, etc.)
+    - [x] Test discover_gd_files handles case-insensitive .gd extension
+    - [x] Test discover_gd_files returns empty list when no .gd files found
+    - [x] Test discover_gd_files uses DEFAULT_EXCLUDES when excludes=None
+    - [x] Verify: Tests fail (Red) — module does not exist yet
 
-- [ ] Task: Create file_discovery.py and extract discover_gd_files
-    - [ ] Create src/gd_tools/file_discovery.py
-    - [ ] Move discover_gd_files function and its imports from lint_runner.py
-    - [ ] Verify: file_discovery tests pass (Green)
+- [x] Task: Create file_discovery.py and extract discover_gd_files `d51db2b`
+    - [x] Create src/gd_tools/file_discovery.py
+    - [x] Move discover_gd_files function and its imports from lint_runner.py
+    - [x] Verify: file_discovery tests pass (Green)
 
-- [ ] Task: Update lint_runner.py to import from file_discovery.py
-    - [ ] Replace local discover_gd_files definition with import from file_discovery
-    - [ ] Remove now-unused imports from lint_runner.py if applicable
-    - [ ] Verify: All existing lint tests still pass (no regressions)
+- [x] Task: Update lint_runner.py to import from file_discovery.py `d51db2b`
+    - [x] Replace local discover_gd_files definition with import from file_discovery
+    - [x] Remove now-unused imports from lint_runner.py if applicable
+    - [x] Verify: All existing lint tests still pass (no regressions)
 
-- [ ] Task: Run full test suite and verify coverage
-    - [ ] Run pytest — all tests pass
-    - [ ] Verify file_discovery.py coverage >80% line / >70% branch
-    - [ ] Run ruff check and black --check
+- [x] Task: Run full test suite and verify coverage `d51db2b`
+    - [x] Run pytest — all tests pass (190 tests)
+    - [x] Verify file_discovery.py coverage >80% line / >70% branch (100% line)
+    - [x] Run ruff check and black --check
 
-- [ ] Task: Commit Phase 1 changes
-    - [ ] git add and commit: refactor(format): Extract shared file_discovery.py from lint_runner
-    - [ ] Add git note summarizing Phase 1 completion
+- [x] Task: Commit Phase 1 changes `d51db2b`
+    - [x] git add and commit: refactor(format): Extract shared file_discovery.py from lint_runner
+    - [x] Add git note summarizing Phase 1 completion
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Shared File Discovery Refactor' (Protocol in workflow.md)
 
