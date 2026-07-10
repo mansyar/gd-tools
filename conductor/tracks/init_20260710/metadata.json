@@ -1,0 +1,8 @@
+{
+  "track_id": "init_20260710",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-10T19:00:40Z",
+  "updated_at": "2026-07-10T19:00:40Z",
+  "description": "Track 7: Init Command - Bootstrap a Godot project: install GUT, deploy coverage addon, generate configs"
+}
