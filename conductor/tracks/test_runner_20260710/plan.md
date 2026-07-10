@@ -16,23 +16,23 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 
 ## Phase 1: Data Structures & Error Verification
 
-- [ ] Task: Read spec.md and workflow.md before starting phase implementation
-    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
-    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
+- [x] Task: Read spec.md and workflow.md before starting phase implementation
+    - [x] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [x] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
-- [ ] Task: Define TestResult and TestDetail dataclasses
-    - [ ] Write failing tests in `tests/test_test_runner.py` for `TestResult` dataclass (verify fields: total, passed, failed, skipped, duration, junit_xml_path, coverage_data_path, stdout, stderr, test_details)
-    - [ ] Write failing tests for `TestDetail` dataclass (verify fields: name, suite, status, message, duration)
-    - [ ] Implement `TestResult` and `TestDetail` dataclasses in `src/gd_tools/test_runner.py`
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Verify `GUTNotInstalledError` exists in `src/gd_tools/errors.py` (should exist from Track 1 — add if missing)
-    - [ ] Verify `junitparser` is listed in `pyproject.toml` dependencies (should exist from Track 1 — add if missing)
-    - [ ] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
-    - [ ] Run `ruff check src/ tests/ && black --check src/ tests/`
-    - [ ] Verify coverage >80% line, >70% branch for `test_runner.py`
-    - [ ] Commit with message `feat(test_runner): Define TestResult and TestDetail dataclasses`
-    - [ ] Attach git note with task summary (files changed, key decisions)
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Define TestResult and TestDetail dataclasses (5987228)
+    - [x] Write failing tests in `tests/test_test_runner.py` for `TestResult` dataclass (verify fields: total, passed, failed, skipped, duration, junit_xml_path, coverage_data_path, stdout, stderr, test_details)
+    - [x] Write failing tests for `TestDetail` dataclass (verify fields: name, suite, status, message, duration)
+    - [x] Implement `TestResult` and `TestDetail` dataclasses in `src/gd_tools/test_runner.py`
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Verify `GUTNotInstalledError` exists in `src/gd_tools/errors.py` (should exist from Track 1 — add if missing)
+    - [x] Verify `junitparser` is listed in `pyproject.toml` dependencies (should exist from Track 1 — add if missing)
+    - [x] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
+    - [x] Run `ruff check src/ tests/ && black --check src/ tests/`
+    - [x] Verify coverage >80% line, >70% branch for `test_runner.py`
+    - [x] Commit with message `feat(test_runner): Define TestResult and TestDetail dataclasses`
+    - [x] Attach git note with task summary (files changed, key decisions)
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 
 - [ ] Task: Conductor - User Manual Verification 'Data Structures & Error Verification' (Protocol in workflow.md)
 
