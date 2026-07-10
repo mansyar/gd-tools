@@ -1,0 +1,23 @@
+Task: Implement enable_gut_plugin(project_root: Path) -> None
+
+## Implementation
+- Function: enable_gut_plugin(project_root) -> None
+- Text-based parse of project.godot
+- Idempotent: if "res://addons/gut/plugin.gd" already in content, returns immediately
+- If [editor_plugins] section exists: finds enabled= line, inserts GUT into PackedStringArray
+- If [editor_plugins] section exists but no enabled=: inserts enabled=PackedStringArray(...) before next section
+- If [editor_plugins] section doesn't exist: appends section with enabled= entry
+- Added GUT_PLUGIN_PATH constant
+
+## Tests (TDD)
+- test_enable_gut_plugin_adds_section_to_empty_file: file with just config_version=5, verifies [editor_plugins] added
+- test_enable_gut_plugin_adds_entry_to_existing_section: existing enabled list, verifies GUT added alongside other plugin
+- test_enable_gut_plugin_idempotent_no_duplicate: GUT already enabled, verifies file unchanged
+- test_enable_gut_plugin_preserves_existing_content: multiple sections, verifies all preserved + GUT added
+
+## Verification
+- init.py: 94.2% line (104 stmts, 6 missed)
+- init.py: 76.3% branch (38 branches, 9 missed)
+- Full suite: 302 passed, 7 skipped, 98.76% overall coverage
+- ruff check: All checks passed
+- black --check: reformatted init.py (applied)
