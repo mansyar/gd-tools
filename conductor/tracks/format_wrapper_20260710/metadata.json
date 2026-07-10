@@ -1,8 +1,0 @@
-{
-  "track_id": "format_wrapper_20260710",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-07-10T12:10:28Z",
-  "updated_at": "2026-07-10T12:10:28Z",
-  "description": "Wrap gdformat with --check and --diff modes"
-}
