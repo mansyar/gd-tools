@@ -1,0 +1,29 @@
+Task: Implement rich table terminal output
+
+Summary:
+Implemented format_lint_text() in src/gd_tools/lint_runner.py. The function
+takes a LintResult and returns a formatted string using rich.table.Table.
+
+Key changes:
+- Added imports: rich.console.Console, rich.table.Table
+- format_lint_text(result) handles 4 cases:
+  1. No .gd files found -> 'No GDScript files found.'
+  2. Clean (no errors/warnings) -> '[OK] No lint issues found.'
+  3. Violations present -> Rich table with columns (File, Line, Column, Rule,
+     Severity, Message), error rows styled red, warning rows styled yellow,
+     followed by summary line 'X errors, Y warnings, Z files checked'
+- Console(force_terminal=True) ensures ANSI color codes are always produced
+
+Tests added (5 new tests in tests/unit/test_lint_runner.py):
+- test_format_lint_text_with_violations: verifies table columns and values
+- test_format_lint_text_color_coding: verifies ANSI escape codes present
+- test_format_lint_text_summary: verifies summary line format
+- test_format_lint_text_clean: verifies success message
+- test_format_lint_text_no_files: verifies informational message
+
+Files modified:
+- src/gd_tools/lint_runner.py (added format_lint_text, 2 new imports)
+- tests/unit/test_lint_runner.py (5 new tests, updated import)
+
+Coverage: lint_runner.py 100% (66 statements, 0 missed)
+Full suite: 176 tests passed, 99.44% total coverage
