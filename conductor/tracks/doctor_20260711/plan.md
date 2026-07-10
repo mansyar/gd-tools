@@ -108,7 +108,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Wire CLI `doctor` command to `run_doctor()` and `format_doctor_table()`
+- [x] Task: Wire CLI `doctor` command to `run_doctor()` and `format_doctor_table()` [1324beb]
     - [ ] Write failing tests: `test_cli_doctor_calls_run_doctor`, `test_cli_doctor_prints_table`, `test_cli_doctor_exits_zero_when_all_pass`, `test_cli_doctor_exits_one_when_any_fails`
     - [ ] Implement — replace `raise NotImplementedError` in `cli.py` doctor command with call to `run_doctor()`, print table via `format_doctor_table()`, set exit code based on `result.all_passed`
     - [ ] Verify coverage >80% line, >70% branch
