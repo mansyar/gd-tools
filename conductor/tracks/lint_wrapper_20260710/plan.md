@@ -49,7 +49,7 @@
     - [ ] Write tests for clean files output (success message, exit 0)
     - [ ] Write tests for no `.gd` files output (informational message "No GDScript files found.")
     - [ ] Implement `format_lint_text(result)` using `rich.table.Table`
-- [ ] Task: Implement JSON output format
+- [x] Task: Implement JSON output format `0026499`
     - [ ] Write tests for JSON output schema (`files_checked`, `errors[]`, `warnings[]` arrays)
     - [ ] Write tests for JSON serialization of `LintIssue` objects (all fields present)
     - [ ] Write tests for JSON output with no violations (empty arrays, not null)
