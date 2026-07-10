@@ -131,68 +131,73 @@
 
 ## Phase 3: CLI Format Command Implementation
 
-- [ ] Task: Read spec.md and workflow.md to review requirements and TDD methodology
-    - [ ] Read conductor/tracks/format_wrapper_20260710/spec.md
-    - [ ] Read conductor/workflow.md
+- [x] Task: Read spec.md and workflow.md to review requirements and TDD methodology
+    - [x] Read conductor/tracks/format_wrapper_20260710/spec.md
+    - [x] Read conductor/workflow.md
 
-- [ ] Task: Write tests for CLI format command (default mode)
-    - [ ] Test `gd-tools format <path>` formats files and prints summary
-    - [ ] Test exit code 0 on success
-    - [ ] Test path defaults to '.' when not provided
-    - [ ] Verify: Tests fail (Red) — command still raises NotImplementedError
+- [x] Task: Write tests for CLI format command (default mode) `101e883`
+    - [x] Test `gd-tools format <path>` formats files and prints summary
+    - [x] Test exit code 0 on success
+    - [x] Test path defaults to '.' when not provided
+    - [x] Verify: Tests fail (Red) — command still raises NotImplementedError
 
-- [ ] Task: Implement CLI format command (default mode)
-    - [ ] Replace NotImplementedError with actual implementation
-    - [ ] Update @click.argument to required=False, default='.'
-    - [ ] Load config via load_config()
-    - [ ] Call run_format(config, path) and print summary
-    - [ ] Handle ConfigError (exit 2)
-    - [ ] Verify: Default mode CLI tests pass (Green)
+- [x] Task: Implement CLI format command (default mode) `101e883`
+    - [x] Replace NotImplementedError with actual implementation
+    - [x] Update @click.argument to required=False, default='.'
+    - [x] Load config via load_config()
+    - [x] Call run_format(config, path) and print summary
+    - [x] Handle ConfigError (exit 2)
+    - [x] Verify: Default mode CLI tests pass (Green)
 
-- [ ] Task: Write tests for CLI format --check mode
-    - [ ] Test `gd-tools format --check <path>` lists unformatted files
-    - [ ] Test exit code 1 when files need formatting
-    - [ ] Test exit code 0 when all files are formatted
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for CLI format --check mode `101e883`
+    - [x] Test `gd-tools format --check <path>` lists unformatted files
+    - [x] Test exit code 1 when files need formatting
+    - [x] Test exit code 0 when all files are formatted
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement CLI format --check mode
-    - [ ] Call run_format(config, path, check=True)
-    - [ ] Print list of files needing formatting
-    - [ ] Exit 1 if files_needing_format > 0, else exit 0
-    - [ ] Verify: --check CLI tests pass (Green)
+- [x] Task: Implement CLI format --check mode `101e883`
+    - [x] Call run_format(config, path, check=True)
+    - [x] Print list of files needing formatting
+    - [x] Exit 1 if files_needing_format > 0, else exit 0
+    - [x] Verify: --check CLI tests pass (Green)
 
-- [ ] Task: Write tests for CLI format --diff mode
-    - [ ] Test `gd-tools format --diff <path>` renders diffs via rich Console
-    - [ ] Test diffs include file path headers
-    - [ ] Test green/red syntax highlighting in diff output
-    - [ ] Test exit code 0
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for CLI format --diff mode `101e883`
+    - [x] Test `gd-tools format --diff <path>` renders diffs via rich Console
+    - [x] Test diffs include file path headers
+    - [x] Test green/red syntax highlighting in diff output
+    - [x] Test exit code 0
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement CLI format --diff mode
-    - [ ] Call run_format(config, path, diff=True)
-    - [ ] Render each diff with rich Console (green additions, red deletions)
-    - [ ] Prefix each diff block with file path
-    - [ ] Verify: --diff CLI tests pass (Green)
+- [x] Task: Implement CLI format --diff mode `101e883`
+    - [x] Call run_format(config, path, diff=True)
+    - [x] Render each diff with rich Console (green additions, red deletions)
+    - [x] Prefix each diff block with file path
+    - [x] Verify: --diff CLI tests pass (Green)
 
-- [ ] Task: Write tests for CLI --check + --diff conflict
-    - [ ] Test `gd-tools format --check --diff <path>` prints error message
-    - [ ] Test exit code 2
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for CLI --check + --diff conflict `101e883`
+    - [x] Test `gd-tools format --check --diff <path>` prints error message
+    - [x] Test exit code 2
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement CLI --check + --diff conflict handling
-    - [ ] Add early check: if check and diff, echo error, exit 2
-    - [ ] Verify: Conflict handling tests pass (Green)
+- [x] Task: Implement CLI --check + --diff conflict handling `101e883`
+    - [x] Add early check: if check and diff, echo error, exit 2
+    - [x] Verify: Conflict handling tests pass (Green)
 
-- [ ] Task: Refactor and verify CLI format command
-    - [ ] Review for consistency with lint command pattern
-    - [ ] Run ruff check and black --check on cli.py
-    - [ ] Verify cli.py format-related coverage >80% line / >70% branch
+- [x] Task: Refactor and verify CLI format command `101e883`
+    - [x] Review for consistency with lint command pattern
+    - [x] Run ruff check and black --check on cli.py
+    - [x] Verify cli.py format-related coverage >80% line / >70% branch (100% line, 100% branch)
 
-- [ ] Task: Commit Phase 3 changes
-    - [ ] git add and commit: feat(format): Implement CLI format command with --check and --diff modes
-    - [ ] Add git note summarizing Phase 3 completion
+- [x] Task: Commit Phase 3 changes `101e883`
+    - [x] git add and commit: feat(format): Implement CLI format command with --check and --diff modes
+    - [x] Add git note summarizing Phase 3 completion
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: CLI Format Command Implementation' (Protocol in workflow.md)
+
+> **Deviation Note:** Added `files_needing_format_paths: list[str]` field to
+> `FormatResult` in `format_runner.py` (not in original Phase 3 plan) to satisfy
+> spec FR-4 point 7: "Print list of files needing formatting." Updated
+> `test_format_runner.py` with assertions for the new field.
 
 ## Phase 4: Integration and gdformatrc Verification
 
