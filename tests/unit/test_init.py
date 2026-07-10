@@ -18,6 +18,7 @@ from gd_tools.init import (
     enable_gut_plugin,
     extract_gut,
     get_installed_gut_version,
+    install_coverage_addon,
     install_gut,
 )
 
@@ -332,3 +333,39 @@ def test_enable_gut_plugin_preserves_existing_content(tmp_path: Path):
     assert 'config/icon="res://icon.svg"' in content
     assert "[editor_plugins]" in content
     assert '"res://addons/gut/plugin.gd"' in content
+
+
+# --- install_coverage_addon ---
+
+
+def test_install_coverage_addon_copies_all_files(tmp_path: Path):
+    """Test install_coverage_addon copies all 3 .gd files to project."""
+    install_coverage_addon(tmp_path)
+
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+    assert (target_dir / "coverage.gd").exists()
+    assert (target_dir / "pre_run_hook.gd").exists()
+    assert (target_dir / "post_run_hook.gd").exists()
+
+
+def test_install_coverage_addon_overwrites_stale_files(tmp_path: Path):
+    """Test install_coverage_addon overwrites existing stale files."""
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+    target_dir.mkdir(parents=True)
+    for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]:
+        (target_dir / gd_file).write_text("old stale content")
+
+    install_coverage_addon(tmp_path)
+
+    for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]:
+        content = (target_dir / gd_file).read_text()
+        assert content != "old stale content"
+
+
+def test_install_coverage_addon_creates_target_dir(tmp_path: Path):
+    """Test install_coverage_addon creates the target directory."""
+    assert not (tmp_path / "addons" / "gd-tools-coverage").exists()
+
+    install_coverage_addon(tmp_path)
+
+    assert (tmp_path / "addons" / "gd-tools-coverage").is_dir()

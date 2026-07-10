@@ -58,6 +58,12 @@ GUT_DOWNLOAD_URL = (
 
 GUT_PLUGIN_PATH = "res://addons/gut/plugin.gd"
 
+COVERAGE_ADDON_FILES = [
+    "coverage.gd",
+    "pre_run_hook.gd",
+    "post_run_hook.gd",
+]
+
 console = Console()
 
 
@@ -309,3 +315,23 @@ def enable_gut_plugin(project_root: Path) -> None:
             f"enabled=PackedStringArray({gut_entry})\n"
         )
         project_godot.write_text(content)
+
+
+# --- Phase 3: Coverage Addon Deployment ---
+
+
+def install_coverage_addon(project_root: Path) -> None:
+    """Copy bundled coverage addon placeholder files to the project.
+
+    Copies the placeholder GDScript stubs from the package data to
+    ``project_root/addons/gd-tools-coverage/``. Always overwrites
+    existing files to ensure they are up-to-date.
+
+    Args:
+        project_root: Path to the Godot project root.
+    """
+    source_dir = Path(__file__).parent / "addons" / "gd-tools-coverage"
+    target_dir = project_root / "addons" / "gd-tools-coverage"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    for gd_file in COVERAGE_ADDON_FILES:
+        shutil.copy2(source_dir / gd_file, target_dir / gd_file)
