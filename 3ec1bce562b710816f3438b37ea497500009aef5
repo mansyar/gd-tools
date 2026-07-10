@@ -1,0 +1,20 @@
+Task Summary: Integration tests with real Godot + GUT
+
+Created:
+- tests/fixtures/projects/sample_project/project.godot — minimal Godot 4.x config, GUT plugin enabled
+- tests/fixtures/projects/sample_project/scripts/calculator.gd — RefCounted class with add(), subtract(), divide()
+- tests/fixtures/projects/sample_project/test/test_calculator.gd — 4 passing GUT tests
+- tests/fixtures/projects/sample_project/test/test_failing.gd — 1 always-failing test
+- tests/integration/test_test_runner_integration.py — 7 integration tests, all marked @pytest.mark.integration and @skip_if_no_godot
+
+Tests:
+1. test_run_tests_executes_gut_and_produces_junit — runs GUT, verifies JUnit XML produced
+2. test_run_tests_all_passing_exit_code_0 — all-passing, no TestFailureError
+3. test_run_tests_failing_exit_code_1 — failing test, TestFailureError raised
+4. test_run_tests_suite_filter — suite filter, only named suite runs
+5. test_run_tests_test_name_filter — test name filter, only matching tests run
+6. test_run_tests_no_exit_code_true — no_exit_code=True, no exception even with failures
+7. test_run_tests_coverage_flag — coverage flag, coverage_data_path set
+
+All tests skip when Godot binary not in PATH. 282 passed, 7 skipped, no regressions.
+ruff check: passed. black --check: passed. Coverage: 99.52% overall.
