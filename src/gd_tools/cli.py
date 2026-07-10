@@ -3,10 +3,13 @@
 from typing import Any
 
 import click
+from rich.console import Console
+from rich.syntax import Syntax
 
 from . import __version__
 from .config import load_config
 from .errors import ConfigError
+from .format_runner import run_format
 from .lint_runner import format_lint_json, format_lint_text, run_lint
 
 
@@ -128,12 +131,59 @@ def lint(path, report_format, fix):
 
 
 @cli.command()
-@click.argument("path")
+@click.argument("path", required=False, default=".")
 @click.option("--check", is_flag=True, help="Check only, don't modify files.")
 @click.option("--diff", is_flag=True, help="Show diff of changes.")
 def format(path, check, diff):
     """Format GDScript files."""
-    raise NotImplementedError
+    if check and diff:
+        click.echo("Error: --check and --diff are mutually exclusive", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    result = run_format(config, path, check=check, diff=diff)
+
+    ctx = click.get_current_context()
+    if result.files_checked == 0:
+        click.echo("No .gd files found.")
+        ctx.exit(0)
+
+    if check:
+        if result.files_needing_format > 0:
+            for file_path in result.files_needing_format_paths:
+                click.echo(f"  {file_path}")
+            click.echo(
+                f"\n{result.files_needing_format} file(s) need "
+                f"formatting (out of {result.files_checked} checked)."
+            )
+            ctx.exit(1)
+        else:
+            click.echo(f"All {result.files_checked} file(s) are formatted.")
+            ctx.exit(0)
+    elif diff:
+        console = Console()
+        for diff_str in result.diffs:
+            syntax = Syntax(diff_str, "diff", theme="ansi_dark")
+            console.print(syntax)
+        ctx.exit(0)
+    else:
+        if result.files_formatted > 0:
+            click.echo(
+                f"Formatted {result.files_formatted} of "
+                f"{result.files_checked} file(s)."
+            )
+        else:
+            click.echo(
+                f"All {result.files_checked} file(s) " "already formatted."
+            )
+        ctx.exit(0)
 
 
 @cli.group()

@@ -27,6 +27,8 @@ class FormatResult:
         files_needing_format: Number of files whose formatted
             version differs from the original. Non-zero in --check
             and --diff modes.
+        files_needing_format_paths: List of file paths that need
+            formatting. Only populated in --check mode.
         diffs: List of unified diff strings for files that differ.
             Only populated in --diff mode.
     """
@@ -34,6 +36,7 @@ class FormatResult:
     files_checked: int = 0
     files_formatted: int = 0
     files_needing_format: int = 0
+    files_needing_format_paths: list[str] = field(default_factory=list)
     diffs: list[str] = field(default_factory=list)
 
 
@@ -72,6 +75,7 @@ def run_format(
     files_checked = len(gd_files)
     files_formatted = 0
     files_needing_format = 0
+    files_needing_format_paths: list[str] = []
     diffs_list: list[str] = []
 
     for file_path in gd_files:
@@ -84,6 +88,7 @@ def run_format(
             if formatted_code != original_code:
                 if check:
                     files_needing_format += 1
+                    files_needing_format_paths.append(file_path)
                 elif diff:
                     diff_str = "".join(
                         difflib.unified_diff(
@@ -106,5 +111,6 @@ def run_format(
         files_checked=files_checked,
         files_formatted=files_formatted,
         files_needing_format=files_needing_format,
+        files_needing_format_paths=files_needing_format_paths,
         diffs=diffs_list,
     )

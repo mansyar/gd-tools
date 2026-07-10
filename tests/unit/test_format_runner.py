@@ -18,6 +18,7 @@ def test_format_result_defaults():
     assert result.files_checked == 0
     assert result.files_formatted == 0
     assert result.files_needing_format == 0
+    assert result.files_needing_format_paths == []
     assert result.diffs == []
 
 
@@ -27,11 +28,13 @@ def test_format_result_all_fields():
         files_checked=10,
         files_formatted=7,
         files_needing_format=3,
+        files_needing_format_paths=["a.gd", "b.gd", "c.gd"],
         diffs=["diff1", "diff2"],
     )
     assert result.files_checked == 10
     assert result.files_formatted == 7
     assert result.files_needing_format == 3
+    assert result.files_needing_format_paths == ["a.gd", "b.gd", "c.gd"]
     assert result.diffs == ["diff1", "diff2"]
 
 
@@ -118,6 +121,8 @@ def test_run_format_check_reports_unformatted(tmp_path):
     assert result.files_checked == 1
     assert result.files_needing_format == 1
     assert result.files_formatted == 0
+    assert len(result.files_needing_format_paths) == 1
+    assert "player.gd" in result.files_needing_format_paths[0]
 
 
 def test_run_format_check_already_formatted(tmp_path):
@@ -134,6 +139,7 @@ def test_run_format_check_already_formatted(tmp_path):
 
     assert result.files_checked == 1
     assert result.files_needing_format == 0
+    assert result.files_needing_format_paths == []
 
 
 def test_run_format_check_does_not_modify(tmp_path):
@@ -239,6 +245,8 @@ def test_run_format_syntax_error_in_check_mode(tmp_path):
 
     assert result.files_checked == 2
     assert result.files_needing_format == 1
+    assert len(result.files_needing_format_paths) == 1
+    assert "valid.gd" in result.files_needing_format_paths[0]
 
 
 # --- run_format no files found ---

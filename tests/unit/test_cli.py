@@ -7,6 +7,7 @@ from click.testing import CliRunner
 
 from gd_tools.cli import cli
 from gd_tools.errors import ConfigError
+from gd_tools.format_runner import FormatResult
 from gd_tools.lint_runner import LintIssue, LintResult
 
 
@@ -242,11 +243,136 @@ def test_lint_wired_to_run_lint():
     mock_run.assert_called_once_with(mock_config, "some/path", "json")
 
 
-def test_format_stub_exit_code_2():
-    """Test invoking format raises error with exit code 2."""
+def test_format_config_error_exit_2():
+    """Test format exits with code 2 when config loading fails."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["format", "some_path"])
+    with patch(
+        "gd_tools.cli.load_config",
+        side_effect=ConfigError("project.godot not found"),
+    ):
+        result = runner.invoke(cli, ["format", "some_path"])
     assert result.exit_code == 2
+
+
+def test_format_default_mode():
+    """Test format command in default mode formats files."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(files_checked=3, files_formatted=2)
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["format", "some/path"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(
+        mock_config, "some/path", check=False, diff=False
+    )
+    assert "Formatted 2 of 3 file(s)" in result.output
+
+
+def test_format_default_path():
+    """Test format command defaults to '.' when no path is given."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(files_checked=0)
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["format"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(mock_config, ".", check=False, diff=False)
+
+
+def test_format_default_all_formatted():
+    """Test format reports all files already formatted."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(files_checked=2, files_formatted=0)
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["format", "some/path"])
+    assert result.exit_code == 0
+    assert "already formatted" in result.output
+
+
+def test_format_check_needs_formatting():
+    """Test format --check exits 1 when files need formatting."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(
+        files_checked=3,
+        files_needing_format=2,
+        files_needing_format_paths=["a.gd", "b.gd"],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["format", "--check", "some/path"])
+    assert result.exit_code == 1
+    assert "a.gd" in result.output
+    assert "b.gd" in result.output
+    assert "2 file(s) need formatting" in result.output
+
+
+def test_format_check_all_formatted():
+    """Test format --check exits 0 when all files are formatted."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(files_checked=2, files_needing_format=0)
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["format", "--check", "some/path"])
+    assert result.exit_code == 0
+    assert "All 2 file(s) are formatted" in result.output
+
+
+def test_format_diff_renders_diffs():
+    """Test format --diff renders unified diffs with file path headers."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(
+        files_checked=1,
+        diffs=[
+            "--- test.gd\n+++ test.gd\n@@ -1,3 +1,4 @@\n"
+            "-extends Node\n+extends Node\n"
+        ],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["format", "--diff", "some/path"])
+    assert result.exit_code == 0
+    assert "test.gd" in result.output
+
+
+def test_format_check_diff_conflict():
+    """Test format --check --diff exits 2 with error message."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["format", "--check", "--diff", "some/path"])
+    assert result.exit_code == 2
+    assert "mutually exclusive" in result.output
+
+
+def test_format_no_files_found():
+    """Test format exits 0 with graceful message when no .gd files found."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(files_checked=0)
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["format", "some/path"])
+    assert result.exit_code == 0
+    assert "No .gd files found" in result.output
 
 
 def test_init_stub_exit_code_2():
