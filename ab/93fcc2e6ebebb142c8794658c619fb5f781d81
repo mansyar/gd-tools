@@ -1,0 +1,38 @@
+Phase 3 Verification Report — Doctor Command (track: doctor_20260711)
+=====================================================================
+
+Checkpoint: ab93fcc
+Previous checkpoint: 56a1b4a (Phase 2)
+
+Changed files (git diff --name-only 56a1b4a HEAD):
+  - src/gd_tools/doctor.py
+  - tests/unit/test_doctor.py
+  - conductor/tracks/doctor_20260711/plan.md
+
+Test file coverage:
+  - src/gd_tools/doctor.py → tests/unit/test_doctor.py ✓
+
+Phase 3 implemented check functions (6 total, checks 3-9 from spec):
+  1. check_gut_installed(project_root: Path) -> CheckResult [98e4386]
+     - Checks addons/gut/gut.gd exists. Severity: critical.
+  2. check_gut_version(project_root: Path, godot_version: str) -> CheckResult [cf54a81]
+     - Compares installed GUT version vs expected from GUT_VERSION_MAP. Severity: warning.
+  3. check_coverage_addon(project_root: Path) -> CheckResult [420674b]
+     - Checks all COVERAGE_ADDON_FILES exist in addons/gd-tools-coverage/. Severity: warning.
+  4. check_gutconfig(project_root: Path) -> CheckResult [91530fe]
+     - Validates .gutconfig.json is valid JSON with pre_run_script + post_run_script keys. Severity: warning.
+  5. check_gd_tools_toml(project_root: Path) -> CheckResult [1ffc0b1]
+     - Checks gd-tools.toml exists and is parseable TOML. Severity: critical.
+  6. check_autoload(project_root: Path) -> CheckResult [a475208]
+     - Checks _GDTCoverage autoload registered in project.godot [autoload] section. Severity: critical.
+
+Test results:
+  - 369 passed, 7 skipped
+  - Overall coverage: 98.48%
+  - doctor.py: 100% coverage (98 statements, 0 missed)
+
+Linting:
+  - ruff check: All checks passed
+  - black --check: 2 files unchanged
+
+User manual verification: Confirmed (Yes)
