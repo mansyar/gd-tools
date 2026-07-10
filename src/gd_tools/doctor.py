@@ -7,6 +7,7 @@ fix hints. See TDD \u00a73.6 and PRD \u00a78.
 
 from dataclasses import dataclass
 from pathlib import Path
+import json
 import subprocess
 
 from .config import GdToolsConfig
@@ -248,4 +249,54 @@ def check_coverage_addon(project_root: Path) -> CheckResult:
         name="Coverage Addon",
         passed=True,
         message="Coverage addon is installed",
+    )
+
+
+def check_gutconfig(project_root: Path) -> CheckResult:
+    """Check that .gutconfig.json is valid JSON with hook script keys.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        CheckResult indicating whether .gutconfig.json exists, is valid
+        JSON, and contains both ``pre_run_script`` and ``post_run_script``
+        keys.
+    """
+    gutconfig_path = project_root / ".gutconfig.json"
+    if not gutconfig_path.exists():
+        return CheckResult(
+            name="GUT Config",
+            passed=False,
+            message=".gutconfig.json not found",
+            fix_hint="Run `gd-tools init` to generate .gutconfig.json.",
+            severity="warning",
+        )
+    try:
+        content = json.loads(gutconfig_path.read_text())
+    except (json.JSONDecodeError, ValueError) as exc:
+        return CheckResult(
+            name="GUT Config",
+            passed=False,
+            message=f".gutconfig.json is invalid JSON: {exc}",
+            fix_hint="Fix the JSON syntax in .gutconfig.json or run `gd-tools init`.",
+            severity="warning",
+        )
+    missing_keys = [
+        key
+        for key in ("pre_run_script", "post_run_script")
+        if key not in content
+    ]
+    if missing_keys:
+        return CheckResult(
+            name="GUT Config",
+            passed=False,
+            message=f"Missing keys: {', '.join(missing_keys)}",
+            fix_hint="Run `gd-tools init` to regenerate .gutconfig.json with hook scripts.",
+            severity="warning",
+        )
+    return CheckResult(
+        name="GUT Config",
+        passed=True,
+        message=".gutconfig.json is valid with hook scripts",
     )

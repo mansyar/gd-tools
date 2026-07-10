@@ -20,6 +20,7 @@ from gd_tools.doctor import (
     check_gut_installed,
     check_gut_version,
     check_coverage_addon,
+    check_gutconfig,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -372,5 +373,66 @@ def test_check_coverage_addon_fails_when_files_missing(tmp_path):
 def test_check_coverage_addon_warning_severity(tmp_path):
     """Test check_coverage_addon has warning severity on failure."""
     result = check_coverage_addon(tmp_path)
+    assert result.severity == "warning"
+    assert "gd-tools init" in result.fix_hint
+
+
+# --- check_gutconfig ---
+
+
+@pytest.mark.unit
+def test_check_gutconfig_passes_when_valid_with_hooks(tmp_path):
+    """Test check_gutconfig passes when .gutconfig.json is valid with hooks."""
+    gutconfig = tmp_path / ".gutconfig.json"
+    gutconfig.write_text(
+        '{"pre_run_script": "res://addons/gd-tools-coverage/'
+        'pre_run_hook.gd", '
+        '"post_run_script": "res://addons/gd-tools-coverage/'
+        'post_run_hook.gd"}'
+    )
+    result = check_gutconfig(tmp_path)
+    assert result.passed is True
+    assert result.name == "GUT Config"
+    assert "valid" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_gutconfig_fails_when_missing(tmp_path):
+    """Test check_gutconfig fails when .gutconfig.json does not exist."""
+    result = check_gutconfig(tmp_path)
+    assert result.passed is False
+    assert result.name == "GUT Config"
+    assert "not found" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_gutconfig_fails_when_invalid_json(tmp_path):
+    """Test check_gutconfig fails when .gutconfig.json is invalid JSON."""
+    gutconfig = tmp_path / ".gutconfig.json"
+    gutconfig.write_text("{invalid json content")
+    result = check_gutconfig(tmp_path)
+    assert result.passed is False
+    assert (
+        "invalid" in result.message.lower() or "parse" in result.message.lower()
+    )
+
+
+@pytest.mark.unit
+def test_check_gutconfig_fails_when_no_hook_paths(tmp_path):
+    """Test check_gutconfig fails when pre/post run script keys are missing."""
+    gutconfig = tmp_path / ".gutconfig.json"
+    gutconfig.write_text('{"some_other_key": "value"}')
+    result = check_gutconfig(tmp_path)
+    assert result.passed is False
+    assert (
+        "pre_run_script" in result.message
+        or "post_run_script" in result.message
+    )
+
+
+@pytest.mark.unit
+def test_check_gutconfig_warning_severity(tmp_path):
+    """Test check_gutconfig has warning severity on failure."""
+    result = check_gutconfig(tmp_path)
     assert result.severity == "warning"
     assert "gd-tools init" in result.fix_hint
