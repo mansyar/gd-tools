@@ -1,0 +1,13 @@
+Task: Set up doctor.py module skeleton with imports and data structures
+
+Summary:
+- Created src/gd_tools/doctor.py with module docstring referencing TDD section 3.6 and PRD section 8
+- Defined CheckResult dataclass with fields: name, passed, message, fix_hint (default=''), severity (default='critical')
+- Defined DoctorResult dataclass with fields: checks (list[CheckResult]), all_passed (bool)
+- Created tests/unit/test_doctor.py with 6 unit tests covering CheckResult and DoctorResult construction, defaults, and severity variants
+
+Files created:
+- src/gd_tools/doctor.py
+- tests/unit/test_doctor.py
+
+Why: Establish the data structure foundation for the doctor diagnostic command. CheckResult and DoctorResult are used by all subsequent check functions and the orchestration layer.
