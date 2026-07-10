@@ -1,0 +1,23 @@
+Verification Report for 15c675d
+
+Task: Create placeholder GDScript files as package data (Phase 3)
+
+Files Created:
+- src/gd_tools/addons/__init__.py (empty, makes gd_tools.addons a sub-package)
+- src/gd_tools/addons/gd-tools-coverage/coverage.gd (extends Node, TODO: Phase 3 tracking)
+- src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (extends GutHookScript, TODO: Phase 3 instrumentation)
+- src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd (extends GutHookScript, TODO: Phase 3 coverage saving)
+
+Files Modified:
+- pyproject.toml: Added [tool.setuptools.package-data] section
+
+Verification:
+- pip install -e . successful
+- importlib.resources confirms all 3 .gd files accessible
+- Full test suite: 302 passed, 7 skipped, 98.76% coverage
+- ruff check: All checks passed
+- black --check: All files unchanged
+
+Spec FR-6 Compliance:
+- Placeholder stubs with TODO comments (no real instrumentation)
+- Files ship as package data inside the Python distribution
