@@ -1,0 +1,34 @@
+PHASE 2 VERIFICATION REPORT - FormatResult Dataclass and run_format Function
+
+=== Automated Test Results ===
+Command: CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing
+Result: 207 tests passed, 0 failed
+Total coverage: 99.42%
+format_runner.py: 100% line, 100% branch
+ruff check: all passed
+black --check: all files formatted correctly
+
+=== Changed Files (since Phase 1 checkpoint a413bd9) ===
+1. src/gd_tools/format_runner.py (NEW - FormatResult dataclass + run_format function)
+2. tests/unit/test_format_runner.py (NEW - 17 unit tests)
+3. conductor/tracks/format_wrapper_20260710/plan.md (updated)
+
+=== Source Code Test Coverage Verification ===
+- src/gd_tools/format_runner.py -> tests/unit/test_format_runner.py (EXISTS, 17 tests)
+
+=== Manual Verification Plan ===
+1. pip install -e .
+2. Create unformatted .gd file (extends Node\nfunc _ready():\n    pass\n)
+3. Test default mode: run_format(GdToolsConfig(), path='.') - file formatted in place
+4. Test --check mode: run_format(config, check=True) - reports files_needing_format, no disk changes
+5. Test --diff mode: run_format(config, diff=True) - returns unified diffs list
+6. Test mutual exclusion: run_format(config, check=True, diff=True) raises FormatError exit_code=2
+7. Clean up test file
+
+=== User Confirmation ===
+User confirmed: 'Yes, confirmed' on July 10, 2026
+
+=== Code Commit ===
+Phase 2 code: d030fc1 - feat(format): Implement FormatResult and run_format function
+Phase 2 plan update: d54dd0f
+Phase 2 checkpoint: 1515e50
