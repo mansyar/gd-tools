@@ -10,7 +10,13 @@ from pathlib import Path
 import pytest
 
 from gd_tools.config import TestConfig
-from gd_tools.test_runner import TestDetail, TestResult, build_gut_args
+from gd_tools.errors import GUTNotInstalledError
+from gd_tools.test_runner import (
+    TestDetail,
+    TestResult,
+    build_gut_args,
+    check_gut_installed,
+)
 
 # --- TestDetail dataclass ---
 
@@ -266,3 +272,26 @@ def test_build_gut_args_default_junit_xml_path(tmp_path):
     assert xml_path.is_absolute()
     assert ".gd-tools" in xml_path.parts
     assert xml_path.name == "results.xml"
+
+
+# --- check_gut_installed ---
+
+
+@pytest.mark.unit
+def test_check_gut_installed_present(tmp_path):
+    """Test that no error is raised when GUT is installed."""
+    gut_path = tmp_path / "addons" / "gut" / "gut_cmdln.gd"
+    gut_path.parent.mkdir(parents=True)
+    gut_path.touch()
+    result = check_gut_installed(tmp_path)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_check_gut_installed_missing(tmp_path):
+    """Test that GUTNotInstalledError is raised when GUT is not installed."""
+    with pytest.raises(GUTNotInstalledError) as exc_info:
+        check_gut_installed(tmp_path)
+    assert exc_info.value.exit_code == 2
+    assert "GUT is not installed" in str(exc_info.value)
+    assert "gd-tools init" in str(exc_info.value)
