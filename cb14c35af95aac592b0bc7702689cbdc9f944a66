@@ -1,0 +1,50 @@
+Phase 5 Checkpoint Verification Report
+
+Phase: Phase 5 - Integration Tests & Coverage
+Track: Lint Wrapper (Track 4)
+Checkpoint Commit: cb14c35af95aac592b0bc7702689cbdc9f944a66
+
+== Automated Test Results ==
+Command: $env:CI='true'; python -m pytest --cov=gd_tools --cov-branch --cov-report=term-missing
+Result: 190 tests passed, 0 failures
+Total Coverage: 99.35% (exceeds >80% line, >70% branch requirement)
+
+Module-specific coverage:
+- lint_runner.py: 70 statements, 0 missed, 20 branches, 0 partial — 100% line + 100% branch
+- cli.py: 76 statements, 0 missed, 6 branches, 0 partial — 100% line + 100% branch
+- config.py: 87 statements, 0 missed, 14 branches, 0 partial — 100% line + 100% branch
+
+Quality Gates:
+- ruff check: All checks passed
+- black --check: All files formatted correctly
+
+== Files Changed in Phase 5 (since Phase 4 checkpoint b16407d) ==
+- tests/fixtures/clean.gd (new) — clean GDScript fixture file
+- tests/fixtures/bad.gd (new) — fixture with function-name lint error
+- tests/fixtures/broken.gd (new) — fixture with syntax error
+- tests/fixtures/addons/plugin.gd (new) — fixture in excluded directory
+- tests/integration/test_lint_integration.py (new) — 4 integration tests
+- conductor/tracks/lint_wrapper_20260710/plan.md (updated) — task status updates
+
+No source code files (.py in src/gd_tools/) were modified in this phase.
+All source code was implemented in Phases 1-4.
+
+== Integration Tests Written ==
+1. test_lint_full_run_text_output — full lint run with text output; verifies table headers, function-name rule, summary line, exit code 1
+2. test_lint_full_run_json_output — full lint run with JSON output; verifies JSON schema, rule name, exit code 1
+3. test_lint_excludes_respected — verifies files in addons/ are not linted; exit code 0
+4. test_lint_fix_flag_noop — verifies --fix warning, no file modification, exit code 1
+
+== Manual Verification Plan (User Approved) ==
+1. Ensure gd-tools is installed: pip install -e .
+2. Create a test Godot project with .gd files (clean, bad, addons/)
+3. Run: gd-tools lint .
+4. Confirm: rich table with columns, red error rows, summary line, exit code 1
+5. Run: gd-tools lint . --report-format json
+6. Confirm: valid JSON with files_checked, errors, warnings keys
+7. Run: gd-tools lint . --fix
+8. Confirm: warning message, no file modifications
+9. Run on clean project: gd-tools lint .
+10. Confirm: [OK] message, exit code 0
+
+User Confirmation: Approved
