@@ -1,0 +1,19 @@
+TDD Verification Report - update_gutconfig
+
+Tests (4 new, all passing):
+- test_update_gutconfig_creates_new_with_template: Creates .gutconfig.json from template when missing
+- test_update_gutconfig_merges_existing_preserves_user_keys: Preserves dirs/prefix/suffix/include_subdirs, overwrites hook keys
+- test_update_gutconfig_overwrites_hook_keys: Always overwrites should_exit/junit_xml_file/pre_run_script/post_run_script
+- test_update_gutconfig_preserves_custom_dirs: Preserves custom dirs while adding hook keys
+
+Implementation:
+- If .gutconfig.json missing: writes GUTCONFIG_TEMPLATE as JSON
+- If exists: merges by preserving user keys (dirs, prefix, suffix, include_subdirs) and overwriting hook keys (should_exit, junit_xml_file, pre_run_script, post_run_script)
+
+Coverage:
+- init.py: 91% line, ~78% branch (above 80%/70% thresholds)
+- Overall: 309 passed, 7 skipped, 97.67% coverage
+
+Linting:
+- ruff check: passed
+- black: reformatted init.py (minor formatting)
