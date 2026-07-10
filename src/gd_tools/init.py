@@ -155,3 +155,49 @@ def download_gut(version: str, dest: Path) -> Path:
         ) from exc
     dest.write_bytes(response.content)
     return dest
+
+
+def extract_gut(zip_path: Path, project_root: Path) -> None:
+    """Extract the GUT zip archive and copy addons/gut/ to the project.
+
+    The GitHub archive contains a top-level directory (e.g.,
+    ``Gut-9.5.0/``) with ``addons/gut/`` inside it. This function
+    extracts to a temporary directory, locates ``addons/gut/``, copies
+    it to ``project_root/addons/gut/``, and cleans up the temp dir.
+
+    Args:
+        zip_path: Path to the downloaded GUT zip file.
+        project_root: Path to the Godot project root.
+
+    Raises:
+        GdToolsError: If the archive does not contain an
+            ``addons/gut/`` directory.
+    """
+    tmpdir = tempfile.mkdtemp()
+    try:
+        tmp_path = Path(tmpdir)
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(tmp_path)
+        gut_source: Path | None = None
+        for addons_dir in tmp_path.rglob("addons"):
+            gut_dir = addons_dir / "gut"
+            if gut_dir.is_dir():
+                gut_source = gut_dir
+                break
+        if gut_source is None:
+            raise GdToolsError(
+                "[Error] Failed to extract GUT\n"
+                "  Cause: addons/gut/ directory not found in archive\n"
+                "  Fix: Download GUT manually from:\n"
+                "    - Godot Asset Library: "
+                "https://godotengine.org/asset-library/asset/116\n"
+                "    - GitHub: https://github.com/bitwes/Gut\n"
+                "    Extract the 'addons/gut/' folder to your project's "
+                "'addons/' directory."
+            )
+        dest = project_root / "addons" / "gut"
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(gut_source, dest)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)

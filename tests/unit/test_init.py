@@ -3,6 +3,8 @@
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import zipfile
+
 import pytest
 import requests
 
@@ -13,6 +15,7 @@ from gd_tools.init import (
     check_gut_installed,
     detect_godot_version,
     download_gut,
+    extract_gut,
     get_installed_gut_version,
 )
 
@@ -138,3 +141,43 @@ def test_download_gut_fails_with_instructions_on_network_error(
     assert "Failed to download GUT" in msg
     assert "github.com/bitwes/Gut" in msg
     assert "asset-library" in msg.lower() or "Asset Library" in msg
+
+
+# --- extract_gut ---
+
+
+def test_extract_gut_copies_addons_dir(tmp_path: Path):
+    """Test extract_gut copies addons/gut/ from the zip to the project."""
+    zip_path = tmp_path / "gut.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("Gut-9.5.0/addons/gut/gut.gd", "extends Node")
+        zf.writestr(
+            "Gut-9.5.0/addons/gut/plugin.cfg",
+            '[plugin]\nversion="9.5.0"\n',
+        )
+
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+
+    extract_gut(zip_path, project_root)
+
+    assert (project_root / "addons" / "gut" / "gut.gd").exists()
+    assert (project_root / "addons" / "gut" / "plugin.cfg").exists()
+
+
+def test_extract_gut_cleans_up_temp_dir(tmp_path: Path):
+    """Test extract_gut cleans up the temporary extraction directory."""
+    zip_path = tmp_path / "gut.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("Gut-9.5.0/addons/gut/gut.gd", "extends Node")
+
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+
+    temp_dir = tmp_path / "fake_temp"
+    temp_dir.mkdir()
+
+    with patch("gd_tools.init.tempfile.mkdtemp", return_value=str(temp_dir)):
+        extract_gut(zip_path, project_root)
+
+    assert not temp_dir.exists()
