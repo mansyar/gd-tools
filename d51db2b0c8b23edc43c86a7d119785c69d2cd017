@@ -1,0 +1,10 @@
+Phase 1 Complete: Shared File Discovery Refactor
+
+- Created src/gd_tools/file_discovery.py with discover_gd_files()
+- Updated lint_runner.py to import from file_discovery (removed os, DEFAULT_EXCLUDES)
+- Moved discover_gd_files tests from test_lint_runner.py to test_file_discovery.py
+- All 190 tests pass, 99.48% overall coverage
+- file_discovery.py: 100% line coverage
+- lint_runner.py: 100% line coverage
+- ruff check: all passed
+- black --check: all passed
