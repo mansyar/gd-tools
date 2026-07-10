@@ -5,6 +5,7 @@ lint execution via gdtoolkit, output formatting, and syntax
 error handling.
 """
 
+import json
 from pathlib import Path
 
 from gd_tools.config import GdToolsConfig
@@ -12,6 +13,7 @@ from gd_tools.lint_runner import (
     LintIssue,
     LintResult,
     discover_gd_files,
+    format_lint_json,
     format_lint_text,
     run_lint,
 )
@@ -393,3 +395,43 @@ def test_format_lint_text_no_files():
     result = LintResult(files_checked=0, errors=[], warnings=[])
     output = format_lint_text(result)
     assert "No GDScript files found." in output
+
+
+# --- format_lint_json ---
+
+
+def test_format_lint_json_schema():
+    """Test JSON output has files_checked, errors, warnings keys."""
+    errors = [LintIssue("a.gd", 10, 1, "rule1", "msg1", "error")]
+    warnings = [LintIssue("b.gd", 5, 3, "rule2", "msg2", "warning")]
+    result = LintResult(files_checked=2, errors=errors, warnings=warnings)
+    data = json.loads(format_lint_json(result))
+    assert "files_checked" in data
+    assert "errors" in data
+    assert "warnings" in data
+    assert data["files_checked"] == 2
+
+
+def test_format_lint_json_issue_fields():
+    """Test JSON serialization of LintIssue objects (all fields present)."""
+    errors = [
+        LintIssue("src/foo.gd", 10, 1, "function-name", "Bad name", "error")
+    ]
+    result = LintResult(files_checked=1, errors=errors, warnings=[])
+    data = json.loads(format_lint_json(result))
+    issue = data["errors"][0]
+    assert issue["file"] == "src/foo.gd"
+    assert issue["line"] == 10
+    assert issue["column"] == 1
+    assert issue["rule"] == "function-name"
+    assert issue["message"] == "Bad name"
+    assert issue["severity"] == "error"
+
+
+def test_format_lint_json_no_violations():
+    """Test JSON output with no violations (empty arrays, not null)."""
+    result = LintResult(files_checked=0, errors=[], warnings=[])
+    data = json.loads(format_lint_json(result))
+    assert data["errors"] == []
+    assert data["warnings"] == []
+    assert data["files_checked"] == 0

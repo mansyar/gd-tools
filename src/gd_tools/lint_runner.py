@@ -7,6 +7,7 @@ dataclasses, and renders results as either a rich terminal table
 or JSON.
 """
 
+import json
 import os
 from dataclasses import dataclass, field
 
@@ -207,3 +208,46 @@ def format_lint_text(result: LintResult) -> str:
     )
 
     return capture.get() + "\n" + summary
+
+
+def format_lint_json(result: LintResult) -> str:
+    """Format lint results as a JSON string.
+
+    Serializes the :class:`LintResult` to a JSON object with
+    ``files_checked``, ``errors``, and ``warnings`` keys.  Each
+    issue is a dict with ``file``, ``line``, ``column``, ``rule``,
+    ``message``, and ``severity`` fields.  Empty lists are ``[]``,
+    not ``null``.
+
+    Args:
+        result: Lint results to format.
+
+    Returns:
+        Valid JSON string.
+    """
+    data = {
+        "files_checked": result.files_checked,
+        "errors": [
+            {
+                "file": issue.file,
+                "line": issue.line,
+                "column": issue.column,
+                "rule": issue.rule,
+                "message": issue.message,
+                "severity": issue.severity,
+            }
+            for issue in result.errors
+        ],
+        "warnings": [
+            {
+                "file": issue.file,
+                "line": issue.line,
+                "column": issue.column,
+                "rule": issue.rule,
+                "message": issue.message,
+                "severity": issue.severity,
+            }
+            for issue in result.warnings
+        ],
+    }
+    return json.dumps(data, indent=2)
