@@ -5,6 +5,9 @@ from typing import Any
 import click
 
 from . import __version__
+from .config import load_config
+from .errors import ConfigError
+from .lint_runner import format_lint_json, format_lint_text, run_lint
 
 
 class GdToolsGroup(click.Group):
@@ -83,14 +86,45 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code):
 
 
 @cli.command()
-@click.argument("path")
+@click.argument("path", required=False, default=".")
 @click.option(
     "--report-format",
+    type=click.Choice(["text", "json"]),
+    default="text",
     help="Output format for the lint report.",
 )
-def lint(path, report_format):
+@click.option(
+    "--fix",
+    is_flag=True,
+    help="Attempt to fix lint issues (no-op for gdlint).",
+)
+def lint(path, report_format, fix):
     """Lint GDScript files."""
-    raise NotImplementedError
+    if fix:
+        click.echo(
+            "Warning: gdlint is read-only; --fix has no effect.", err=True
+        )
+
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    result = run_lint(config, path, report_format)
+
+    if report_format == "json":
+        output = format_lint_json(result)
+    else:
+        output = format_lint_text(result)
+
+    click.echo(output)
+
+    ctx = click.get_current_context()
+    if result.errors:
+        ctx.exit(1)
+    ctx.exit(0)
 
 
 @cli.command()

@@ -1,9 +1,13 @@
 """Unit tests for the gd_tools CLI skeleton."""
 
+from unittest.mock import MagicMock, patch
+
 import click
 from click.testing import CliRunner
 
 from gd_tools.cli import cli
+from gd_tools.errors import ConfigError
+from gd_tools.lint_runner import LintIssue, LintResult
 
 
 def test_cli_is_group():
@@ -52,13 +56,14 @@ def test_test_help_shows_options():
         assert opt in result.output
 
 
-def test_lint_help_shows_path_and_report_format():
-    """Test lint --help shows PATH argument and --report-format option."""
+def test_lint_help_shows_path_report_format_and_fix():
+    """Test lint --help shows PATH argument, --report-format, and --fix."""
     runner = CliRunner()
     result = runner.invoke(cli, ["lint", "--help"])
     assert result.exit_code == 0
     assert "PATH" in result.output
     assert "--report-format" in result.output
+    assert "--fix" in result.output
 
 
 def test_format_help_shows_path_check_diff():
@@ -113,11 +118,128 @@ def test_test_stub_exit_code_2():
     assert result.exit_code == 2
 
 
-def test_lint_stub_exit_code_2():
-    """Test invoking lint raises error with exit code 2."""
+def test_lint_exit_code_2_config_error():
+    """Test lint exits with code 2 when config loading fails."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["lint", "some_path"])
+    with patch(
+        "gd_tools.cli.load_config",
+        side_effect=ConfigError("project.godot not found"),
+    ):
+        result = runner.invoke(cli, ["lint"])
     assert result.exit_code == 2
+
+
+def test_lint_default_path():
+    """Test lint command defaults to '.' when no path is given."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(files_checked=0, errors=[], warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["lint"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(mock_config, ".", "text")
+
+
+def test_lint_report_format_json():
+    """Test lint --report-format json produces JSON output."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(files_checked=1, errors=[], warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["lint", "--report-format", "json"])
+    assert result.exit_code == 0
+    assert '"files_checked"' in result.output
+    assert '"errors"' in result.output
+    assert '"warnings"' in result.output
+
+
+def test_lint_report_format_text_default():
+    """Test lint defaults to text format."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(files_checked=1, errors=[], warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["lint"])
+    assert result.exit_code == 0
+    assert "[OK]" in result.output
+
+
+def test_lint_fix_flag_warning():
+    """Test --fix flag prints warning that gdlint is read-only."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(files_checked=0, errors=[], warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["lint", "--fix"])
+    assert "gdlint is read-only" in result.output
+    assert "--fix has no effect" in result.output
+
+
+def test_lint_exit_code_0_clean():
+    """Test lint exits 0 when no errors found."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(files_checked=2, errors=[], warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["lint"])
+    assert result.exit_code == 0
+
+
+def test_lint_exit_code_1_errors():
+    """Test lint exits 1 when lint errors are found."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(
+        files_checked=1,
+        errors=[
+            LintIssue(
+                file="test.gd",
+                line=1,
+                column=1,
+                rule="test-rule",
+                message="test error",
+                severity="error",
+            )
+        ],
+        warnings=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["lint"])
+    assert result.exit_code == 1
+
+
+def test_lint_wired_to_run_lint():
+    """Test lint command calls run_lint with config and path."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(files_checked=0, errors=[], warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(
+            cli, ["lint", "some/path", "--report-format", "json"]
+        )
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(mock_config, "some/path", "json")
 
 
 def test_format_stub_exit_code_2():
