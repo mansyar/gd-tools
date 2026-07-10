@@ -90,7 +90,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 3: GUT and Project Configuration Checks' (Protocol in workflow.md)
 
-## Phase 4: Orchestration, Output, and CLI Integration
+## Phase 4: Orchestration, Output, and CLI Integration [checkpoint: 2290e7b]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
     - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
