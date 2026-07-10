@@ -96,11 +96,11 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 
 ## Phase 3: run_tests() Orchestration & Coverage Infrastructure
 
-- [ ] Task: Read spec.md and workflow.md before starting phase implementation
-    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
-    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
+- [x] Task: Read spec.md and workflow.md before starting phase implementation
+    - [x] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [x] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
-- [ ] Task: Implement `run_tests()` — main orchestration function
+- [x] Task: Implement `run_tests()` — main orchestration function (374b40c)
     - [ ] Write failing test: `run_tests()` calls `check_gut_installed()` — raises `GUTNotInstalledError` when GUT missing (mock filesystem)
     - [ ] Write failing test: `run_tests()` calls `find_godot()` — raises `GodotNotFoundError` when Godot missing (mock)
     - [ ] Write failing test: `run_tests()` calls `build_gut_args()` — correct args passed to `run_godot()` (mock `run_godot`)
