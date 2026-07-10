@@ -1,0 +1,37 @@
+Task: Implement --coverage flag infrastructure
+
+Summary:
+Implemented the coverage flag infrastructure in build_gut_args() and
+verified the existing coverage env var / coverage_data_path in run_tests().
+
+Changes to build_gut_args():
+- Replaced 'del coverage' with actual hook arg logic
+- When coverage=True, adds:
+  -gpre_run_script=res://addons/gd-tools-coverage/pre_run_hook.gd
+  -gpost_run_script=res://addons/gd-tools-coverage/post_run_hook.gd
+- Updated docstring for coverage parameter
+
+run_tests() already had coverage infrastructure from Task 2:
+- Sets GD_TOOLS_COVERAGE_ACTIVE=1 env var when coverage=True
+- Sets coverage_data_path to .gd-tools/coverage/coverage.json when coverage=True
+- Sets coverage_data_path to None when coverage=False
+
+Tests added (7 new, 43 total in file):
+build_gut_args coverage tests:
+1. test_build_gut_args_coverage_adds_pre_run_script
+2. test_build_gut_args_coverage_adds_post_run_script
+3. test_build_gut_args_no_coverage_no_hook_scripts
+
+run_tests coverage tests:
+4. test_run_tests_coverage_sets_env_var
+5. test_run_tests_no_coverage_no_env_var
+6. test_run_tests_coverage_sets_coverage_data_path
+7. test_run_tests_no_coverage_coverage_data_path_none
+
+Verification:
+- 43 tests in test_test_runner.py pass
+- 254 total tests pass (no regressions)
+- test_runner.py coverage: 99% (1 missed line: del min_percent)
+- Overall coverage: 99.48%
+- ruff check: passed
+- black --check: passed
