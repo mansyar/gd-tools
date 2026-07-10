@@ -1,16 +1,18 @@
 """Unit tests for the init command module."""
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 from gd_tools.config import GdToolsConfig
-from gd_tools.errors import GodotNotFoundError
+from gd_tools.errors import GdToolsError, GodotNotFoundError
 from gd_tools.godot import GodotInfo
 from gd_tools.init import (
     check_gut_installed,
     detect_godot_version,
+    download_gut,
     get_installed_gut_version,
 )
 
@@ -98,3 +100,41 @@ def test_get_installed_gut_version_returns_none_if_no_version_key(
     plugin_cfg = gut_dir / "plugin.cfg"
     plugin_cfg.write_text('[plugin]\nname="GUT"\n')
     assert get_installed_gut_version(tmp_path) is None
+
+
+# --- download_gut ---
+
+
+def test_download_gut_downloads_zip(tmp_path: Path):
+    """Test download_gut downloads the zip and writes it to dest."""
+    mock_response = Mock()
+    mock_response.content = b"fake zip data"
+    mock_response.raise_for_status = Mock()
+    dest = tmp_path / "gut.zip"
+    with patch(
+        "gd_tools.init.requests.get", return_value=mock_response
+    ) as mock_get:
+        result = download_gut("9.5.0", dest)
+    mock_get.assert_called_once_with(
+        "https://github.com/bitwes/Gut/archive/refs/tags/v9.5.0.zip",
+        timeout=30,
+    )
+    assert result == dest
+    assert dest.read_bytes() == b"fake zip data"
+
+
+def test_download_gut_fails_with_instructions_on_network_error(
+    tmp_path: Path,
+):
+    """Test download_gut raises GdToolsError with manual install instructions."""
+    dest = tmp_path / "gut.zip"
+    with patch(
+        "gd_tools.init.requests.get",
+        side_effect=requests.RequestException("Connection error"),
+    ):
+        with pytest.raises(GdToolsError) as exc_info:
+            download_gut("9.5.0", dest)
+    msg = str(exc_info.value)
+    assert "Failed to download GUT" in msg
+    assert "github.com/bitwes/Gut" in msg
+    assert "asset-library" in msg.lower() or "Asset Library" in msg

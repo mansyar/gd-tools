@@ -122,3 +122,36 @@ def get_installed_gut_version(project_root: Path) -> str | None:
     if version is None:
         return None
     return version.strip('"')
+
+
+def download_gut(version: str, dest: Path) -> Path:
+    """Download the GUT zip archive for the given version.
+
+    Args:
+        version: The GUT version string (e.g., ``"9.5.0"``).
+        dest: Destination path for the downloaded zip file.
+
+    Returns:
+        The path to the downloaded zip file.
+
+    Raises:
+        GdToolsError: If the download fails (network error, HTTP error,
+            etc.). The error message includes manual install instructions.
+    """
+    url = GUT_DOWNLOAD_URL.format(version=version)
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise GdToolsError(
+            f"[Error] Failed to download GUT v{version}\n"
+            f"  Cause: {exc}\n"
+            f"  Fix: Download GUT manually from:\n"
+            f"    - Godot Asset Library: "
+            f"https://godotengine.org/asset-library/asset/116\n"
+            f"    - GitHub: {url}\n"
+            f"    Extract the 'addons/gut/' folder to your project's "
+            f"'addons/' directory."
+        ) from exc
+    dest.write_bytes(response.content)
+    return dest
