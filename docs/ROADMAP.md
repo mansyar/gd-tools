@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 2 In Progress — Track 6 (Test Runner) Complete
+**Status:** Phase 2 In Progress — Track 7 (Init Command) Complete
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -561,7 +561,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ---
 
-### Track 7: Init Command
+### Track 7: Init Command ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -571,6 +571,9 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | `src/gd_tools/init.py` |
 | **Effort** | 2-3 days |
 | **Risk** | MEDIUM — `project.godot` editing, zip download/extract, idempotency |
+| **Status** | ✅ **COMPLETED** (2026-07-11) — All 10 success criteria passed |
+| **Conductor track** | `init_20260710` (archived to `conductor/archive/`) |
+| **Commits** | `1af60d5`..`1f542a2` (42 commits) + review fix `ca5e743` |
 
 **Scope:**
 - Detect project root (find `project.godot`)
@@ -609,6 +612,44 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 10. GUT download fails gracefully (network error → instructions for manual install)
 
 **Key TDD references:** §3 (Module: init.py), PRD §7
+
+**Track 7 Results (2026-07-11):**
+- ✅ All 10 success criteria PASSED
+- ✅ 329 tests total (41 unit tests in `test_init.py`, 3 CLI tests in
+  `test_cli.py`, 3 integration tests in `test_init_integration.py`), 7
+  skipped (require Godot), 0 failed
+- ✅ 98.30% overall coverage; `init.py` at 96%
+- ✅ ruff check + black --check pass
+- **Review fixes applied:**
+  1. Changed `install_gut()` return type from `None` → `bool`. Returns
+     `True` when GUT installed/already present, `False` when user declines.
+     `run_init()` now calls `sys.exit(0)` when user declines (spec FR-3:
+     "Exit 0") — prevents enabling a non-existent plugin downstream
+  2. Replaced non-ASCII bullet `•` (U+2022) with `-` in `print_summary`
+     (product-guidelines §7: ASCII-only terminal output)
+  3. Removed unused imports from `init.py` (`generate_gdformatrc`,
+     `generate_gdlintrc`, `ConfigError`, `GodotNotFoundError`, `GodotInfo`)
+     and the `# ruff: noqa: F401` directive
+  4. Updated `plan.md` sub-task checkboxes from `[ ]` to `[x]`
+- **Key implementation notes:**
+  - 14 functions in `init.py` (561 lines): `run_init`, `find_project_root`,
+    `detect_godot_version`, `check_gut_installed`, `install_gut`,
+    `download_gut`, `extract_gut`, `enable_gut_plugin`,
+    `install_coverage_addon`, `update_gutconfig`, `create_config_file`,
+    `create_data_dir`, `generate_lint_format_rcs`, `print_summary`
+  - GUT download from GitHub releases (`bitwes/Gut`), zip extraction to
+    temp dir, copy `addons/gut/` to project
+  - `project.godot` editing: `[editor_plugins]` enabled entry (idempotent)
+  - Coverage addon stubs deployed as package data via
+    `[tool.setuptools.package-data]` in `pyproject.toml`
+  - `.gutconfig.json` merge: preserves user keys (`dirs`, `prefix`, `suffix`,
+    `include_subdirs`), always overwrites hook paths + `should_exit` +
+    `junit_xml_file`
+  - `gdlintrc`/`gdformatrc` generation policy: generate-if-missing,
+    warn-if-differs (PRD §16 Open Question 1 resolved)
+  - `.gd-tools/` data directory created, added to `.gitignore` if not present
+  - `--non-interactive` flag: assumes yes for GUT install, skips all prompts
+  - `print_summary()` prints ASCII-only summary of actions taken
 
 ---
 

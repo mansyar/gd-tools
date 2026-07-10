@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 Implementation — Track 6 (Test Runner) Complete
+**Status:** Phase 2 Implementation — Track 7 (Init Command) Complete
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -404,9 +404,10 @@ def check_gut_installed(project_root: Path) -> bool:
     """Check if addons/gut/gut.gd exists."""
 
 def install_gut(project_root: Path, godot_version: str,
-                non_interactive: bool) -> None:
+                non_interactive: bool) -> bool:
     """Download GUT from GitHub, extract, copy addons/gut/.
-    Prompts user unless non_interactive."""
+    Prompts user unless non_interactive.
+    Returns True if GUT installed or already present, False if user declines."""
 
 def download_gut(version: str, dest: Path) -> Path:
     """Download GUT zip from GitHub releases. Returns path to downloaded zip.
@@ -475,6 +476,24 @@ GUTCONFIG_TEMPLATE = {
 When merging with existing config: preserve user's `dirs`, `prefix`, `suffix`,
 `include_subdirs`. Always set/overwrite `pre_run_script`, `post_run_script`,
 `junit_xml_file`, `should_exit`.
+
+**Implementation notes (Track 7, 2026-07-11):**
+
+- `install_gut()` returns `bool`: `True` when GUT installed or already
+  present, `False` when user declines. `run_init()` calls `sys.exit(0)` when
+  `install_gut()` returns `False` (spec FR-3: user decline = exit 0) —
+  prevents enabling a non-existent plugin downstream.
+- 14 functions in `init.py` (561 lines). Added `generate_lint_format_rcs()`
+  helper (not in original spec) for `gdlintrc`/`gdformatrc` generation with
+  generate-if-missing/warn-if-differs policy.
+- Coverage addon stubs deployed as package data via
+  `[tool.setuptools.package-data]` in `pyproject.toml` (3 placeholder `.gd`
+  files: `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` with TODO
+  comments — real implementation in Phase 3, Tracks 10-11).
+- `print_summary()` uses ASCII `-` bullets (not `•`) per product-guidelines
+  §7 (ASCII-only terminal output).
+- CLI `init` command catches `GdToolsError` and calls `ctx.exit(e.exit_code)`
+  (consistent with test/lint/format commands).
 
 ---
 
