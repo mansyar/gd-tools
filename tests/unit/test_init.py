@@ -8,7 +8,11 @@ import pytest
 from gd_tools.config import GdToolsConfig
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
-from gd_tools.init import check_gut_installed, detect_godot_version
+from gd_tools.init import (
+    check_gut_installed,
+    detect_godot_version,
+    get_installed_gut_version,
+)
 
 # --- detect_godot_version ---
 
@@ -64,3 +68,33 @@ def test_check_gut_installed_returns_true_when_present(tmp_path: Path):
 def test_check_gut_installed_returns_false_when_absent(tmp_path: Path):
     """Test check_gut_installed returns False when gut.gd does not exist."""
     assert check_gut_installed(tmp_path) is False
+
+
+# --- get_installed_gut_version ---
+
+
+def test_get_installed_gut_version_reads_plugin_cfg(tmp_path: Path):
+    """Test get_installed_gut_version reads version from plugin.cfg."""
+    gut_dir = tmp_path / "addons" / "gut"
+    gut_dir.mkdir(parents=True)
+    plugin_cfg = gut_dir / "plugin.cfg"
+    plugin_cfg.write_text(
+        '[plugin]\nname="GUT"\ndescription="Unit Testing"\nauthor="Butch Wesley"\nversion="9.5.0"\nscript="plugin.gd"\n'
+    )
+    assert get_installed_gut_version(tmp_path) == "9.5.0"
+
+
+def test_get_installed_gut_version_returns_none_if_no_cfg(tmp_path: Path):
+    """Test get_installed_gut_version returns None when plugin.cfg is missing."""
+    assert get_installed_gut_version(tmp_path) is None
+
+
+def test_get_installed_gut_version_returns_none_if_no_version_key(
+    tmp_path: Path,
+):
+    """Test get_installed_gut_version returns None when version key is absent."""
+    gut_dir = tmp_path / "addons" / "gut"
+    gut_dir.mkdir(parents=True)
+    plugin_cfg = gut_dir / "plugin.cfg"
+    plugin_cfg.write_text('[plugin]\nname="GUT"\n')
+    assert get_installed_gut_version(tmp_path) is None

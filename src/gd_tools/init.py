@@ -17,6 +17,7 @@ same end state without duplicating entries.
 # ruff: noqa: F401
 # Imports below are used in functions implemented in subsequent tasks.
 
+import configparser
 import json
 import shutil
 import tempfile
@@ -100,3 +101,24 @@ def check_gut_installed(project_root: Path) -> bool:
         True if ``addons/gut/gut.gd`` exists, False otherwise.
     """
     return (project_root / "addons" / "gut" / "gut.gd").exists()
+
+
+def get_installed_gut_version(project_root: Path) -> str | None:
+    """Get the installed GUT version from ``addons/gut/plugin.cfg``.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        The GUT version string (e.g., ``"9.5.0"``), or ``None`` if
+        ``plugin.cfg`` does not exist or has no ``version`` key.
+    """
+    plugin_cfg = project_root / "addons" / "gut" / "plugin.cfg"
+    if not plugin_cfg.exists():
+        return None
+    parser = configparser.ConfigParser()
+    parser.read(plugin_cfg)
+    version = parser.get("plugin", "version", fallback=None)
+    if version is None:
+        return None
+    return version.strip('"')
