@@ -3,11 +3,11 @@
 
 ## Phase 1: Module Skeleton and Data Structures
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Set up `doctor.py` module skeleton with imports and data structures
+- [x] Task: Set up `doctor.py` module skeleton with imports and data structures [e0c5ad3]
     - [ ] Create `src/gd_tools/doctor.py` with module docstring referencing TDD §3.6 and PRD §8
     - [ ] Import `find_godot`, `check_version_compatible`, `get_gut_version_for_godot`, `GodotInfo`, `GodotNotFoundError` from `godot`
     - [ ] Import `find_project_root`, `load_config`, `GdToolsConfig`, `ConfigError` from `config`
