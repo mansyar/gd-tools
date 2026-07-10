@@ -31,16 +31,16 @@
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [x] Task: Implement `check_gut_installed(project_root: Path) -> bool` (714164c)
-    - [ ] Write failing tests: `test_check_gut_installed_returns_true_when_present`, `test_check_gut_installed_returns_false_when_absent`
-    - [ ] Implement `check_gut_installed()` — check if `project_root/addons/gut/gut.gd` exists
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+    - [x] Write failing tests: `test_check_gut_installed_returns_true_when_present`, `test_check_gut_installed_returns_false_when_absent`
+    - [x] Implement `check_gut_installed()` — check if `project_root/addons/gut/gut.gd` exists
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [x] Task: Implement `get_installed_gut_version(project_root: Path) -> str | None` (d31d908)
-    - [ ] Write failing tests: `test_get_installed_gut_version_reads_plugin_cfg`, `test_get_installed_gut_version_returns_none_if_no_cfg`
-    - [ ] Implement `get_installed_gut_version()` — parse `addons/gut/plugin.cfg` for `version` key
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+    - [x] Write failing tests: `test_get_installed_gut_version_reads_plugin_cfg`, `test_get_installed_gut_version_returns_none_if_no_cfg`
+    - [x] Implement `get_installed_gut_version()` — parse `addons/gut/plugin.cfg` for `version` key
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [x] Task: Implement `download_gut(version: str, dest: Path) -> Path` (6abbefc)
     - [x] Write failing tests: `test_download_gut_downloads_zip`, `test_download_gut_fails_with_instructions_on_network_error`
@@ -54,7 +54,7 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [x] Task: Implement `install_gut(project_root: Path, godot_version: str, non_interactive: bool) -> None`
+- [x] Task: Implement `install_gut(project_root: Path, godot_version: str, non_interactive: bool) -> bool`
     - [x] Write failing tests: `test_install_gut_prompts_interactive_yes`, `test_install_gut_non_interactive_assumes_yes`, `test_install_gut_user_declines_prints_manual_instructions`, `test_install_gut_version_mismatch_warning`
     - [x] Implement `install_gut()` — prompt logic (interactive Y/n), call `download_gut()` + `extract_gut()`, or print manual instructions. Check installed GUT version vs expected, warn if mismatch.
     - [x] Verify coverage >80% line, >70% branch
@@ -96,22 +96,22 @@
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
 - [x] Task: Implement `update_gutconfig(project_root: Path, config: GdToolsConfig) -> None`
-    - [ ] Write failing tests: `test_update_gutconfig_creates_new_with_template`, `test_update_gutconfig_merges_existing_preserves_user_keys`, `test_update_gutconfig_overwrites_hook_keys`, `test_update_gutconfig_preserves_custom_dirs`
-    - [ ] Implement `update_gutconfig()` — if no `.gutconfig.json`, write `GUTCONFIG_TEMPLATE`. If exists, merge: preserve `dirs`, `prefix`, `suffix`, `include_subdirs`; always set `pre_run_script`, `post_run_script`, `junit_xml_file`, `should_exit`.
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+    - [x] Write failing tests: `test_update_gutconfig_creates_new_with_template`, `test_update_gutconfig_merges_existing_preserves_user_keys`, `test_update_gutconfig_overwrites_hook_keys`, `test_update_gutconfig_preserves_custom_dirs`
+    - [x] Implement `update_gutconfig()` — if no `.gutconfig.json`, write `GUTCONFIG_TEMPLATE`. If exists, merge: preserve `dirs`, `prefix`, `suffix`, `include_subdirs`; always set `pre_run_script`, `post_run_script`, `junit_xml_file`, `should_exit`.
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [x] Task: Implement `create_config_file(project_root: Path, config: GdToolsConfig) -> None`
-    - [ ] Write failing tests: `test_create_config_file_creates_defaults_if_missing`, `test_create_config_file_preserves_existing`
-    - [ ] Implement `create_config_file()` — if `gd-tools.toml` exists, return (preserve). If not, call `save_config(config, project_root)`.
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+    - [x] Write failing tests: `test_create_config_file_creates_defaults_if_missing`, `test_create_config_file_preserves_existing`
+    - [x] Implement `create_config_file()` — if `gd-tools.toml` exists, return (preserve). If not, call `save_config(config, project_root)`.
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [x] Task: Implement lint/format RC generation with "generate if missing, warn if differs" policy
-    - [ ] Write failing tests: `test_generate_rcs_generates_if_missing`, `test_generate_rcs_warns_if_differs`, `test_generate_rcs_skips_if_matches`
-    - [ ] Implement `generate_lint_format_rcs(project_root, config)` — for each of `gdlintrc` and `gdformatrc`: generate expected content, if file missing write it, if exists and differs print warning, if matches do nothing
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+    - [x] Write failing tests: `test_generate_rcs_generates_if_missing`, `test_generate_rcs_warns_if_differs`, `test_generate_rcs_skips_if_matches`
+    - [x] Implement `generate_lint_format_rcs(project_root, config)` — for each of `gdlintrc` and `gdformatrc`: generate expected content, if file missing write it, if exists and differs print warning, if matches do nothing
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Configuration File Generation' (Protocol in workflow.md)
 
@@ -161,4 +161,8 @@
     - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
 - [x] Task: Conductor - User Manual Verification 'Phase 6: Integration Tests' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions ca5e743
 </protect>
