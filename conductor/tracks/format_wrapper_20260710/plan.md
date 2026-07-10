@@ -129,7 +129,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 2: FormatResult Dataclass and run_format Function' (Protocol in workflow.md)
 
-## Phase 3: CLI Format Command Implementation
+## Phase 3: CLI Format Command Implementation [checkpoint: 94bccd6]
 
 - [x] Task: Read spec.md and workflow.md to review requirements and TDD methodology
     - [x] Read conductor/tracks/format_wrapper_20260710/spec.md
@@ -192,7 +192,7 @@
     - [x] git add and commit: feat(format): Implement CLI format command with --check and --diff modes
     - [x] Add git note summarizing Phase 3 completion
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: CLI Format Command Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: CLI Format Command Implementation' (Protocol in workflow.md)
 
 > **Deviation Note:** Added `files_needing_format_paths: list[str]` field to
 > `FormatResult` in `format_runner.py` (not in original Phase 3 plan) to satisfy
