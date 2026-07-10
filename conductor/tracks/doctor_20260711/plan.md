@@ -1,7 +1,7 @@
 <protect>
 # Track 8: Doctor Command — Implementation Plan
 
-## Phase 1: Module Skeleton and Data Structures
+## Phase 1: Module Skeleton and Data Structures [checkpoint: c5fc9c2]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
     - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
@@ -18,7 +18,7 @@
     - [ ] Write tests for `CheckResult` and `DoctorResult` dataclasses
     - [ ] Run `ruff check src/gd_tools/doctor.py` — verify no import errors
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Module Skeleton and Data Structures' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Module Skeleton and Data Structures' (Protocol in workflow.md)
 
 ## Phase 2: Godot and External Tool Checks
 
