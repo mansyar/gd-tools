@@ -121,7 +121,7 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
     - [ ] Attach git note with task summary
     - [ ] Update plan.md: mark task `[x]` with commit SHA
 
-- [ ] Task: Implement `--coverage` flag infrastructure (Phase 2 stub)
+- [x] Task: Implement `--coverage` flag infrastructure (Phase 2 stub) (c083047)
     - [ ] Write failing test: `coverage=True` sets `GD_TOOLS_COVERAGE_ACTIVE=1` in subprocess env (verify env dict passed to `run_godot`)
     - [ ] Write failing test: `coverage=True` adds `-gpre_run_script=res://addons/gd-tools-coverage/pre_run_hook.gd` to GUT args
     - [ ] Write failing test: `coverage=True` adds `-gpost_run_script=res://addons/gd-tools-coverage/post_run_hook.gd` to GUT args
