@@ -10,6 +10,9 @@ or JSON.
 import os
 from dataclasses import dataclass, field
 
+from rich.console import Console
+from rich.table import Table
+
 from gdtoolkit.linter import lint_code
 
 from gd_tools.config import DEFAULT_EXCLUDES, GdToolsConfig
@@ -143,3 +146,64 @@ def run_lint(
         errors=errors,
         warnings=warnings,
     )
+
+
+def format_lint_text(result: LintResult) -> str:
+    """Format lint results as a rich terminal table.
+
+    Renders a table with columns File, Line, Column, Rule, Severity,
+    and Message.  Error rows are styled red, warning rows yellow.
+    A summary line is appended below the table.
+
+    Args:
+        result: Lint results to format.
+
+    Returns:
+        Formatted string with table and summary, or an informational
+        message when there are no files or no issues.
+    """
+    if result.files_checked == 0:
+        return "No GDScript files found."
+
+    if not result.errors and not result.warnings:
+        return "[OK] No lint issues found."
+
+    console = Console(force_terminal=True)
+    table = Table()
+    table.add_column("File")
+    table.add_column("Line")
+    table.add_column("Column")
+    table.add_column("Rule")
+    table.add_column("Severity")
+    table.add_column("Message")
+
+    for issue in result.errors:
+        table.add_row(
+            issue.file,
+            str(issue.line),
+            str(issue.column),
+            issue.rule,
+            f"[red]{issue.severity}[/red]",
+            issue.message,
+        )
+
+    for issue in result.warnings:
+        table.add_row(
+            issue.file,
+            str(issue.line),
+            str(issue.column),
+            issue.rule,
+            f"[yellow]{issue.severity}[/yellow]",
+            issue.message,
+        )
+
+    with console.capture() as capture:
+        console.print(table)
+
+    summary = (
+        f"{len(result.errors)} errors, "
+        f"{len(result.warnings)} warnings, "
+        f"{result.files_checked} files checked"
+    )
+
+    return capture.get() + "\n" + summary

@@ -12,6 +12,7 @@ from gd_tools.lint_runner import (
     LintIssue,
     LintResult,
     discover_gd_files,
+    format_lint_text,
     run_lint,
 )
 
@@ -329,3 +330,66 @@ def test_run_lint_syntax_error_counts_as_error(tmp_path):
     result = run_lint(config, str(tmp_path))
     assert len(result.errors) >= 1
     assert len(result.warnings) == 0
+
+
+# --- format_lint_text ---
+
+
+def test_format_lint_text_with_violations():
+    """Test text output with violations contains table columns and values."""
+    errors = [
+        LintIssue("src/player.gd", 10, 1, "function-name", "Bad name", "error"),
+    ]
+    warnings = [
+        LintIssue("src/enemy.gd", 5, 3, "some-rule", "Warning msg", "warning"),
+    ]
+    result = LintResult(files_checked=2, errors=errors, warnings=warnings)
+    output = format_lint_text(result)
+    assert "File" in output
+    assert "Line" in output
+    assert "Column" in output
+    assert "Rule" in output
+    assert "Severity" in output
+    assert "Message" in output
+    assert "src/player.gd" in output
+    assert "10" in output
+    assert "function-name" in output
+    assert "Bad name" in output
+    assert "src/enemy.gd" in output
+    assert "some-rule" in output
+    assert "Warning msg" in output
+
+
+def test_format_lint_text_color_coding():
+    """Test that errors are red and warnings are yellow (ANSI codes present)."""
+    errors = [LintIssue("a.gd", 1, 1, "R", "msg", "error")]
+    warnings = [LintIssue("b.gd", 2, 1, "R", "msg", "warning")]
+    result = LintResult(files_checked=2, errors=errors, warnings=warnings)
+    output = format_lint_text(result)
+    # ANSI escape codes should be present (colors are applied)
+    assert "\x1b[" in output
+
+
+def test_format_lint_text_summary():
+    """Test that the summary line is present."""
+    errors = [LintIssue("a.gd", 1, 1, "R", "msg", "error")]
+    warnings = [LintIssue("b.gd", 2, 1, "R", "msg", "warning")]
+    result = LintResult(files_checked=5, errors=errors, warnings=warnings)
+    output = format_lint_text(result)
+    assert "1 errors" in output
+    assert "1 warnings" in output
+    assert "5 files checked" in output
+
+
+def test_format_lint_text_clean():
+    """Test clean files output (success message)."""
+    result = LintResult(files_checked=3, errors=[], warnings=[])
+    output = format_lint_text(result)
+    assert "[OK] No lint issues found." in output
+
+
+def test_format_lint_text_no_files():
+    """Test no .gd files output (informational message)."""
+    result = LintResult(files_checked=0, errors=[], warnings=[])
+    output = format_lint_text(result)
+    assert "No GDScript files found." in output
