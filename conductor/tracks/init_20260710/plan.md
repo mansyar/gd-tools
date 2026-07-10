@@ -16,11 +16,11 @@
     - [x] Define `GUTCONFIG_TEMPLATE` constant and `GUT_DOWNLOAD_URL` constant
     - [x] Run `ruff check src/gd_tools/init.py` — verify no import errors
 
-- [ ] Task: Implement `detect_godot_version(config: GdToolsConfig) -> str`
-    - [ ] Write failing tests: `test_detect_godot_version_returns_version`, `test_detect_godot_version_raises_godot_not_found`, `test_detect_godot_version_warns_if_invalid_version`
-    - [ ] Implement `detect_godot_version()` — call `find_godot(config.godot)`, return `GodotInfo.version`, warn if `is_valid` is False
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check` on modified files
+- [x] Task: Implement `detect_godot_version(config: GdToolsConfig) -> str` (26f30a7)
+    - [x] Write failing tests: `test_detect_godot_version_returns_version`, `test_detect_godot_version_raises_godot_not_found`, `test_detect_godot_version_warns_if_invalid_version`
+    - [x] Implement `detect_godot_version()` — call `find_godot(config.godot)`, return `GodotInfo.version`, warn if `is_valid` is False
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check` on modified files
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Detection and Godot Version Detection' (Protocol in workflow.md)
 
