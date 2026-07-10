@@ -10,7 +10,12 @@ from unittest.mock import patch
 import pytest
 
 from gd_tools.config import GdToolsConfig
-from gd_tools.doctor import CheckResult, DoctorResult, check_godot_binary
+from gd_tools.doctor import (
+    CheckResult,
+    DoctorResult,
+    check_godot_binary,
+    check_godot_version,
+)
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
 
@@ -134,3 +139,59 @@ def test_check_godot_binary_critical_severity(mock_find_godot):
     assert result.severity == "critical"
     assert "Install Godot 4.5+" in result.fix_hint
     assert "godotengine.org" in result.fix_hint
+
+
+# --- check_godot_version ---
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.find_godot")
+def test_check_godot_version_passes_when_45_plus(mock_find_godot):
+    """Test check_godot_version passes when Godot version >= 4.5.0."""
+    mock_find_godot.return_value = GodotInfo(
+        path="/usr/bin/godot", version="4.6.2", is_valid=True
+    )
+    config = GdToolsConfig()
+    result = check_godot_version(config)
+    assert result.passed is True
+    assert result.name == "Godot Version"
+    assert "4.6.2" in result.message
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.find_godot")
+def test_check_godot_version_fails_when_below_45(mock_find_godot):
+    """Test check_godot_version fails when Godot version < 4.5.0."""
+    mock_find_godot.return_value = GodotInfo(
+        path="/usr/bin/godot", version="4.3.0", is_valid=False
+    )
+    config = GdToolsConfig()
+    result = check_godot_version(config)
+    assert result.passed is False
+    assert result.name == "Godot Version"
+    assert "4.3.0" in result.message
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.find_godot")
+def test_check_godot_version_critical_severity(mock_find_godot):
+    """Test check_godot_version has critical severity on failure."""
+    mock_find_godot.return_value = GodotInfo(
+        path="/usr/bin/godot", version="4.3.0", is_valid=False
+    )
+    config = GdToolsConfig()
+    result = check_godot_version(config)
+    assert result.severity == "critical"
+    assert "Install Godot 4.5+" in result.fix_hint
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.find_godot")
+def test_check_godot_version_fails_when_godot_not_found(mock_find_godot):
+    """Test check_godot_version fails when Godot binary is not found."""
+    mock_find_godot.side_effect = GodotNotFoundError("Godot not found")
+    config = GdToolsConfig()
+    result = check_godot_version(config)
+    assert result.passed is False
+    assert "not found" in result.message.lower()
+    assert result.severity == "critical"
