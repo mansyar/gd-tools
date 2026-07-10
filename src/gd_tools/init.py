@@ -85,3 +85,18 @@ def detect_godot_version(config: GdToolsConfig) -> str:
             "work.[/yellow]"
         )
     return info.version
+
+
+# --- Phase 2: GUT Installation ---
+
+
+def check_gut_installed(project_root: Path) -> bool:
+    """Check if GUT is installed in the project.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        True if ``addons/gut/gut.gd`` exists, False otherwise.
+    """
+    return (project_root / "addons" / "gut" / "gut.gd").exists()

@@ -1,5 +1,6 @@
 """Unit tests for the init command module."""
 
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -7,7 +8,7 @@ import pytest
 from gd_tools.config import GdToolsConfig
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
-from gd_tools.init import detect_godot_version
+from gd_tools.init import check_gut_installed, detect_godot_version
 
 # --- detect_godot_version ---
 
@@ -47,3 +48,19 @@ def test_detect_godot_version_warns_if_invalid_version():
     mock_print.assert_called_once()
     call_args = mock_print.call_args[0][0]
     assert "Warning" in call_args or "warning" in call_args
+
+
+# --- check_gut_installed ---
+
+
+def test_check_gut_installed_returns_true_when_present(tmp_path: Path):
+    """Test check_gut_installed returns True when gut.gd exists."""
+    gut_dir = tmp_path / "addons" / "gut"
+    gut_dir.mkdir(parents=True)
+    (gut_dir / "gut.gd").touch()
+    assert check_gut_installed(tmp_path) is True
+
+
+def test_check_gut_installed_returns_false_when_absent(tmp_path: Path):
+    """Test check_gut_installed returns False when gut.gd does not exist."""
+    assert check_gut_installed(tmp_path) is False
