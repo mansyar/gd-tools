@@ -82,7 +82,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `check_autoload(project_root: Path) -> CheckResult`
+- [x] Task: Implement `check_autoload(project_root: Path) -> CheckResult` [a475208]
     - [ ] Write failing tests: `test_check_autoload_passes_when_registered`, `test_check_autoload_fails_when_not_registered`, `test_check_autoload_fails_when_no_project_godot`, `test_check_autoload_critical_severity`
     - [ ] Implement `check_autoload()` — read `project.godot`, parse `[autoload]` section, check for `_GDTCoverage` entry, return `CheckResult(severity="critical")` with fix hint "Run `gd-tools init` to deploy coverage addon (autoload registration in Phase 3)."
     - [ ] Verify coverage >80% line, >70% branch
