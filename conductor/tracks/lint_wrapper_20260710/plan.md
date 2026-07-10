@@ -79,11 +79,11 @@
     - [x] Write integration test: full `lint` run on fixture project (JSON output)
     - [x] Write integration test: excludes respected on fixture project (addon dir with `.gd` files skipped)
     - [x] Write integration test: `--fix` flag no-op behavior
-- [~] Task: Coverage and code quality verification
-    - [ ] Run `pytest --cov=gd_tools.lint_runner` — verify >80% line coverage
-    - [ ] Run `ruff check src/gd_tools/lint_runner.py` — verify no lint issues
-    - [ ] Run `black --check src/gd_tools/lint_runner.py` — verify formatting
-    - [ ] Run full test suite — verify no regressions
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests & Coverage' (Protocol in workflow.md)
+- [x] Task: Coverage and code quality verification
+    - [x] Run `pytest --cov=gd_tools.lint_runner` — verify >80% line coverage
+    - [x] Run `ruff check src/gd_tools/lint_runner.py` — verify no lint issues
+    - [x] Run `black --check src/gd_tools/lint_runner.py` — verify formatting
+    - [x] Run full test suite — verify no regressions
+- [~] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests & Coverage' (Protocol in workflow.md)
 
 </protect>
