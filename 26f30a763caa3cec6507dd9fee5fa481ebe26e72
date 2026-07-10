@@ -1,0 +1,20 @@
+Task: Implement detect_godot_version(config: GdToolsConfig) -> str
+
+Summary:
+- Implemented detect_godot_version() in src/gd_tools/init.py
+- Function calls find_godot(config.godot) to get GodotInfo
+- Returns GodotInfo.version string
+- Prints Rich yellow warning if is_valid is False (version < 4.5.0)
+- Propagates GodotNotFoundError if Godot binary not found
+
+Tests (tests/unit/test_init.py):
+- test_detect_godot_version_returns_version: verifies version returned for valid Godot
+- test_detect_godot_version_raises_godot_not_found: verifies exception propagation
+- test_detect_godot_version_warns_if_invalid_version: verifies warning printed for invalid version
+
+Coverage: 100% line, 100% branch for init.py
+Quality gates: ruff check passes, black --check passes
+
+Files modified:
+- src/gd_tools/init.py (added detect_godot_version function)
+- tests/unit/test_init.py (new test file)
