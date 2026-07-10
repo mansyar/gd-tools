@@ -95,7 +95,7 @@
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Implement `update_gutconfig(project_root: Path, config: GdToolsConfig) -> None`
+- [x] Task: Implement `update_gutconfig(project_root: Path, config: GdToolsConfig) -> None`
     - [ ] Write failing tests: `test_update_gutconfig_creates_new_with_template`, `test_update_gutconfig_merges_existing_preserves_user_keys`, `test_update_gutconfig_overwrites_hook_keys`, `test_update_gutconfig_preserves_custom_dirs`
     - [ ] Implement `update_gutconfig()` — if no `.gutconfig.json`, write `GUTCONFIG_TEMPLATE`. If exists, merge: preserve `dirs`, `prefix`, `suffix`, `include_subdirs`; always set `pre_run_script`, `post_run_script`, `junit_xml_file`, `should_exit`.
     - [ ] Verify coverage >80% line, >70% branch
