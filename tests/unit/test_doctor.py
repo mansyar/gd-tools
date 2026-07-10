@@ -16,6 +16,7 @@ from gd_tools.doctor import (
     check_godot_binary,
     check_godot_version,
     check_gdtoolkit,
+    check_gut_installed,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -242,3 +243,35 @@ def test_check_gdtoolkit_critical_severity(mock_run):
     result = check_gdtoolkit()
     assert result.severity == "critical"
     assert "pip install gdtoolkit" in result.fix_hint
+
+
+# --- check_gut_installed ---
+
+
+@pytest.mark.unit
+def test_check_gut_installed_passes_when_present(tmp_path):
+    """Test check_gut_installed passes when gut.gd exists."""
+    gut_dir = tmp_path / "addons" / "gut"
+    gut_dir.mkdir(parents=True)
+    (gut_dir / "gut.gd").touch()
+    result = check_gut_installed(tmp_path)
+    assert result.passed is True
+    assert result.name == "GUT Installed"
+    assert "installed" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_gut_installed_fails_when_absent(tmp_path):
+    """Test check_gut_installed fails when gut.gd does not exist."""
+    result = check_gut_installed(tmp_path)
+    assert result.passed is False
+    assert result.name == "GUT Installed"
+
+
+@pytest.mark.unit
+def test_check_gut_installed_critical_severity(tmp_path):
+    """Test check_gut_installed has critical severity on failure."""
+    result = check_gut_installed(tmp_path)
+    assert result.severity == "critical"
+    assert "gd-tools init" in result.fix_hint
+    assert "github.com/bitwes/Gut" in result.fix_hint

@@ -6,6 +6,7 @@ fix hints. See TDD \u00a73.6 and PRD \u00a78.
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 import subprocess
 
 from .config import GdToolsConfig
@@ -147,4 +148,35 @@ def check_gdtoolkit() -> CheckResult:
         name="GD Toolkit",
         passed=True,
         message="gdlint and gdformat are installed",
+    )
+
+
+# --- GUT and Project Configuration Checks ---
+
+
+def check_gut_installed(project_root: Path) -> CheckResult:
+    """Check that GUT is installed in the project.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        CheckResult indicating whether GUT is installed.
+    """
+    gut_path = project_root / "addons" / "gut" / "gut.gd"
+    if gut_path.exists():
+        return CheckResult(
+            name="GUT Installed",
+            passed=True,
+            message="GUT is installed",
+        )
+    return CheckResult(
+        name="GUT Installed",
+        passed=False,
+        message="GUT is not installed",
+        fix_hint=(
+            "Run `gd-tools init` to install GUT, "
+            "or see https://github.com/bitwes/Gut."
+        ),
+        severity="critical",
     )
