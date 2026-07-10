@@ -1,0 +1,24 @@
+Phase 3: CLI Format Command Implementation
+
+Changes:
+- src/gd_tools/format_runner.py: Added files_needing_format_paths field to
+  FormatResult, populated in --check mode (enables CLI to list file paths)
+- src/gd_tools/cli.py: Replaced NotImplementedError stub with full format
+  command implementation. Added rich Console + Syntax imports for --diff
+  rendering. Changed @click.argument to required=False, default='.'.
+  Handles: default mode (format in place), --check (report files needing
+  formatting, exit 1), --diff (render unified diffs via rich Syntax),
+  --check+--diff conflict (exit 2), ConfigError (exit 2), no files found
+  (exit 0).
+- tests/unit/test_format_runner.py: Added assertions for
+  files_needing_format_paths in --check mode tests
+- tests/unit/test_cli.py: Replaced test_format_stub_exit_code_2 with 9
+  proper format tests covering all modes, exit codes, and edge cases
+
+Test Results:
+- 215 tests pass (207 existing + 9 new - 1 removed stub test)
+- 99.47% total coverage
+- cli.py: 100% line, 100% branch
+- format_runner.py: 100% line, 100% branch
+- ruff: all checks passed
+- black: all files formatted correctly
