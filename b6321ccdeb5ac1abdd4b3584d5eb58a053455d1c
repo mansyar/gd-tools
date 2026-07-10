@@ -1,0 +1,19 @@
+Task: Wire test command in cli.py — CLI integration
+
+Changes:
+- Replaced NotImplementedError stub in cli.py test command with run_tests() call
+- Added imports: run_tests from test_runner, GdToolsError and TestFailureError from errors
+- Error handling: ConfigError -> exit 2, TestFailureError -> exit 1, GdToolsError -> exit e.exit_code
+- All flags wired: --coverage, --min, --suite, --test, --junit-xml, --no-exit-code
+- Replaced test_test_stub_exit_code_2 with test_test_config_error_exit_code_2
+- Added 9 new CLI tests: calls_run_tests_with_correct_args, suite_flag, test_name_flag,
+  coverage_flag, junit_xml_flag, no_exit_code_flag, all_pass_exit_code_0,
+  failures_exit_code_1, gut_not_installed_exit_code_2
+
+Verification:
+- 282 tests pass (9 new + 273 existing, no regressions)
+- cli.py coverage: 100%
+- test_runner.py coverage: 99%
+- Overall coverage: 99.52%
+- ruff check: passed
+- black --check: passed
