@@ -1,0 +1,30 @@
+Task: Implement run_doctor() -> DoctorResult
+Phase: 4 - Orchestration, Output, and CLI Integration
+
+Implementation:
+- Added imports: find_project_root, load_config from .config; ConfigError from .errors
+- Implemented run_doctor() -> DoctorResult:
+  - Resolves project root via find_project_root(), falls back to Path.cwd() on ConfigError
+  - Loads config via load_config(), falls back to GdToolsConfig() on ConfigError
+  - Gets Godot version via find_godot() for GUT version check, passes "unknown" on GodotNotFoundError
+  - Runs all 9 checks in order, wrapping each in try/except
+  - Exceptions converted to failed CheckResult with message "Unexpected error: {exc}"
+  - Returns DoctorResult with all_passed = all(c.passed for c in checks)
+  - Never raises (NFR-3 compliant)
+
+Tests (8 new):
+- test_run_doctor_returns_doctor_result
+- test_run_doctor_runs_all_9_checks
+- test_run_doctor_all_passed_when_no_failures
+- test_run_doctor_all_passed_false_when_any_fails
+- test_run_doctor_never_raises_on_check_exception
+- test_run_doctor_handles_project_root_not_found
+- test_run_doctor_handles_config_load_failure
+- test_run_doctor_handles_godot_not_found_for_version
+- Uses _mock_doctor_deps fixture mocking all 12 dependencies
+
+Coverage:
+- doctor.py: 100% (123 statements, 0 missed)
+- Overall: 377 passed, 7 skipped, 98.52%
+- ruff: All checks passed
+- black: 2 files unchanged
