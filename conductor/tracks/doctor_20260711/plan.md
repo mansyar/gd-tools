@@ -58,7 +58,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `check_gut_version(project_root: Path, godot_version: str) -> CheckResult`
+- [x] Task: Implement `check_gut_version(project_root: Path, godot_version: str) -> CheckResult` (cf54a81)
     - [ ] Write failing tests: `test_check_gut_version_passes_when_matches`, `test_check_gut_version_fails_as_warning_when_mismatch`, `test_check_gut_version_warning_severity`, `test_check_gut_version_passes_when_version_unknown`
     - [ ] Implement `check_gut_version()` — call `get_installed_gut_version(project_root)` and `get_gut_version_for_godot(godot_version)`, compare, return `CheckResult(severity="warning")` with correct version suggestion on mismatch
     - [ ] Verify coverage >80% line, >70% branch
