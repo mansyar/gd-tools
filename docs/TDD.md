@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 Implementation — Track 4 (Lint Wrapper) Complete
+**Status:** Phase 2 Implementation — Track 5 (Format Wrapper) Complete
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -650,11 +650,32 @@ def run_format(
 
 @dataclass
 class FormatResult:
-    files_checked: int
-    files_formatted: int
-    files_needing_format: int  # when --check
-    diffs: list[str]  # when --diff
+    files_checked: int = 0
+    files_formatted: int = 0
+    files_needing_format: int = 0  # when --check
+    files_needing_format_paths: list[str] = field(default_factory=list)
+    diffs: list[str] = field(default_factory=list)  # when --diff
 ```
+
+**Implementation notes (Track 5, 2026-07-10):**
+
+- `run_format()` uses `gdtoolkit.formatter.format_code()` Python API (not
+  subprocess) with `max_line_length=100`.
+- `files_needing_format_paths` (not in original spec) lists specific file
+  paths that need formatting in `--check` mode.
+- `--check` mode returns data; the CLI layer decides exit code (0 or 1),
+  consistent with `run_lint` pattern. `run_format` does not raise
+  `FormatError` in check mode.
+- `--diff` mode uses `difflib.unified_diff` and renders via `rich.Console`
+  + `rich.syntax.Syntax`.
+- Syntax errors (`LarkError`) are caught and reported as warnings to
+  stderr (`"Warning: Skipping {file_path}: {e}"`), then the file is
+  skipped — does not crash the tool.
+- Mutual exclusion of `--check` and `--diff` raises
+  `FormatError(exit_code=2)`.
+- File discovery extracted to shared `file_discovery.py` module
+  (`discover_gd_files(path, excludes)`), used by both `lint_runner` and
+  `format_runner`.
 
 ---
 
