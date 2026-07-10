@@ -1,0 +1,16 @@
+Task: Implement check_gut_installed(project_root: Path) -> CheckResult
+
+TDD Cycle:
+- Red: 3 tests written (test_check_gut_installed_passes_when_present, test_check_gut_installed_fails_when_absent, test_check_gut_installed_critical_severity)
+- Green: Implemented check_gut_installed() checking addons/gut/gut.gd existence
+- Refactor: No changes needed
+
+Coverage:
+- doctor.py: 100% (45 statements, 0 missed)
+- All 20 doctor tests pass
+
+Quality:
+- ruff check: passed
+- black --check: passed
+
+Commit: 98e4386
