@@ -55,3 +55,33 @@ GUT_DOWNLOAD_URL = (
 )
 
 console = Console()
+
+
+# --- Phase 1: Project Detection and Godot Version Detection ---
+
+
+def detect_godot_version(config: GdToolsConfig) -> str:
+    """Detect the Godot version using the config's Godot settings.
+
+    Calls :func:`find_godot` to resolve the binary and parse its
+    version. If the detected version is below 4.5.0, a warning is
+    printed but the version is still returned.
+
+    Args:
+        config: The gd-tools configuration containing Godot settings.
+
+    Returns:
+        The detected Godot version string (e.g., ``"4.5.1"``).
+
+    Raises:
+        GodotNotFoundError: If the Godot binary cannot be found.
+    """
+    info = find_godot(config.godot)
+    if not info.is_valid:
+        console.print(
+            "[yellow]Warning: Godot "
+            f"{info.version} is below the required "
+            "version 4.5.0. Some features may not "
+            "work.[/yellow]"
+        )
+    return info.version
