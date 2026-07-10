@@ -38,7 +38,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `check_gdtoolkit() -> CheckResult`
+- [x] Task: Implement `check_gdtoolkit() -> CheckResult` [c387804]
     - [ ] Write failing tests: `test_check_gdtoolkit_passes_when_installed`, `test_check_gdtoolkit_fails_when_gdlint_missing`, `test_check_gdtoolkit_fails_when_gdformat_missing`, `test_check_gdtoolkit_critical_severity`
     - [ ] Implement `check_gdtoolkit()` — run `subprocess.run(["gdlint", "--version"])` and `subprocess.run(["gdformat", "--version"])`, return pass/fail `CheckResult` with fix hint "Run `pip install gdtoolkit`"
     - [ ] Verify coverage >80% line, >70% branch
