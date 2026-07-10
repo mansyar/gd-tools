@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import json
 import subprocess
+import tomllib
 
 from .config import GdToolsConfig
 from .godot import (
@@ -299,4 +300,41 @@ def check_gutconfig(project_root: Path) -> CheckResult:
         name="GUT Config",
         passed=True,
         message=".gutconfig.json is valid with hook scripts",
+    )
+
+
+def check_gd_tools_toml(project_root: Path) -> CheckResult:
+    """Check that gd-tools.toml exists and is parseable TOML.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        CheckResult indicating whether gd-tools.toml exists and
+        is valid TOML.
+    """
+    toml_path = project_root / "gd-tools.toml"
+    if not toml_path.exists():
+        return CheckResult(
+            name="gd-tools.toml",
+            passed=False,
+            message="gd-tools.toml not found",
+            fix_hint="Run `gd-tools init` to generate gd-tools.toml.",
+            severity="critical",
+        )
+    try:
+        with open(toml_path, "rb") as f:
+            tomllib.load(f)
+    except tomllib.TOMLDecodeError as exc:
+        return CheckResult(
+            name="gd-tools.toml",
+            passed=False,
+            message=f"gd-tools.toml is invalid TOML: {exc}",
+            fix_hint="Fix the TOML syntax in gd-tools.toml or run `gd-tools init`.",
+            severity="critical",
+        )
+    return CheckResult(
+        name="gd-tools.toml",
+        passed=True,
+        message="gd-tools.toml is valid",
     )

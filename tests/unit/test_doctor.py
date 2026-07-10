@@ -21,6 +21,7 @@ from gd_tools.doctor import (
     check_gut_version,
     check_coverage_addon,
     check_gutconfig,
+    check_gd_tools_toml,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -436,3 +437,42 @@ def test_check_gutconfig_warning_severity(tmp_path):
     result = check_gutconfig(tmp_path)
     assert result.severity == "warning"
     assert "gd-tools init" in result.fix_hint
+
+
+# --- check_gd_tools_toml ---
+
+
+@pytest.mark.unit
+def test_check_gd_tools_toml_passes_when_valid(tmp_path):
+    """Test check_gd_tools_toml passes when gd-tools.toml is valid TOML."""
+    toml_file = tmp_path / "gd-tools.toml"
+    toml_file.write_text('[godot]\nbinary = "/usr/bin/godot"\n')
+    result = check_gd_tools_toml(tmp_path)
+    assert result.passed is True
+    assert "gd-tools.toml" in result.message
+
+
+@pytest.mark.unit
+def test_check_gd_tools_toml_fails_when_missing(tmp_path):
+    """Test check_gd_tools_toml fails when gd-tools.toml does not exist."""
+    result = check_gd_tools_toml(tmp_path)
+    assert result.passed is False
+    assert "not found" in result.message.lower()
+    assert "gd-tools init" in result.fix_hint
+
+
+@pytest.mark.unit
+def test_check_gd_tools_toml_fails_when_invalid_toml(tmp_path):
+    """Test check_gd_tools_toml fails when gd-tools.toml is invalid TOML."""
+    toml_file = tmp_path / "gd-tools.toml"
+    toml_file.write_text("this is = = not valid toml [[")
+    result = check_gd_tools_toml(tmp_path)
+    assert result.passed is False
+    assert "invalid" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_gd_tools_toml_critical_severity(tmp_path):
+    """Test check_gd_tools_toml has critical severity on failure."""
+    result = check_gd_tools_toml(tmp_path)
+    assert result.severity == "critical"
