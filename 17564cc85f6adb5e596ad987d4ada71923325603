@@ -1,0 +1,21 @@
+Task: Implement extract_gut(zip_path: Path, project_root: Path) -> None
+
+## Implementation
+- Function: extract_gut(zip_path: Path, project_root: Path) -> None
+- Extracts GUT zip to temp dir using zipfile.ZipFile.extractall
+- Locates addons/gut/ via rglob (handles GitHub archive top-level dir like Gut-9.5.0/)
+- Copies to project_root/addons/gut/ via shutil.copytree
+- Overwrites existing gut dir if present (shutil.rmtree + copytree)
+- Cleans up temp dir in finally block (shutil.rmtree with ignore_errors=True)
+- Raises GdToolsError with NFR-2 format if addons/gut/ not found in archive
+
+## Tests (TDD)
+- test_extract_gut_copies_addons_dir: Creates real zip with Gut-9.5.0/addons/gut/ structure, verifies gut.gd and plugin.cfg copied to project
+- test_extract_gut_cleans_up_temp_dir: Mocks tempfile.mkdtemp to known path, verifies temp dir removed after extraction
+
+## Verification
+- init.py: 97% line (59 stmts, 2 missed: 188 raise GdToolsError, 200 rmtree existing dest)
+- init.py: 71.4% branch (14 branches, 4 missed)
+- Full suite: 294 passed, 7 skipped, 99.26% overall coverage
+- ruff check: All checks passed
+- black --check: reformatted test_init.py (applied)
