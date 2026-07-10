@@ -62,17 +62,17 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
     - [ ] Attach git note with task summary
     - [ ] Update plan.md: mark task `[x]` with commit SHA
 
-- [ ] Task: Implement `check_gut_installed()` — proactive GUT presence verification
-    - [ ] Write failing test: GUT present (`addons/gut/gut_cmdln.gd` exists) → returns True / no error
-    - [ ] Write failing test: GUT missing → raises `GUTNotInstalledError` (exit code 2) with actionable message
-    - [ ] Implement `check_gut_installed(project_root: Path) -> None` in `test_runner.py`
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
-    - [ ] Run `ruff check src/ tests/ && black --check src/ tests/`
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Commit with message `feat(test_runner): Implement GUT installation check with GUTNotInstalledError`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Implement `check_gut_installed()` — proactive GUT presence verification (e6057ca)
+    - [x] Write failing test: GUT present (`addons/gut/gut_cmdln.gd` exists) → returns None / no error
+    - [x] Write failing test: GUT missing → raises `GUTNotInstalledError` (exit code 2) with actionable message
+    - [x] Implement `check_gut_installed(project_root: Path) -> None` in `test_runner.py`
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
+    - [x] Run `ruff check src/ tests/ && black --check src/ tests/`
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Commit with message `feat(test_runner): Implement GUT installation check with GUTNotInstalledError`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 
 - [ ] Task: Implement `parse_junit_xml()` — JUnit XML parsing with junitparser
     - [ ] Create fixture JUnit XML file in `tests/fixtures/junit/` (valid XML with pass/fail/skip test cases)
