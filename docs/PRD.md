@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 In Progress — Track 5 (Format Wrapper) Complete
+**Status:** Phase 2 In Progress — Track 6 (Test Runner) Complete
 **Target Godot Version:** 4.5+
 
 ---

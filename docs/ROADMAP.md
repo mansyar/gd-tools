@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 2 In Progress — Track 5 (Format Wrapper) Complete
+**Status:** Phase 2 In Progress — Track 6 (Test Runner) Complete
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -486,7 +486,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ---
 
-### Track 6: Test Runner (GUT Wrapper)
+### Track 6: Test Runner (GUT Wrapper) ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -496,6 +496,9 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | `src/gd_tools/test_runner.py` |
 | **Effort** | 2 days |
 | **Risk** | MEDIUM — GUT CLI interaction, path handling |
+| **Status** | ✅ **COMPLETED** (2026-07-10) — All 8 success criteria passed |
+| **Conductor track** | `test_runner_20260710` (archived to `conductor/archive/`) |
+| **Commits** | `5987228`..`a094ba0` (26 commits) + review fix `e487b9a` |
 
 **Scope:**
 - Build GUT command line: `godot -s addons/gut/gut_cmdln.gd -d --path "$PWD" -gexit`
@@ -524,6 +527,37 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 8. Works on Windows, macOS, Linux (path handling)
 
 **Key TDD references:** §3 (Module: test_runner.py), §5 (End-to-end flow), §7 (Data Contracts)
+
+**Track 6 Results (2026-07-10):**
+- ✅ All 8 success criteria PASSED
+- ✅ 282 tests total (99.52% coverage; test_runner.py at 99%, cli.py at 100%)
+- ✅ ruff check + black --check pass
+- **Test breakdown:** 52 unit tests in `test_test_runner.py`, ~10 CLI tests in
+  `test_cli.py`, 7 integration tests in `test_test_runner_integration.py`
+- **Review fixes applied:**
+  1. Removed hardcoded `force_terminal=True` in `format_test_results()` — added
+     optional `console` parameter (auto-detect by default, injectable for tests)
+  2. Fixed GUT CLI flag names in spec.md and TDD.md: `-gdirs` → `-gdir`,
+     `-gname` → `-gunit_test_name` (verified against GUT 9.x source)
+  3. Replaced non-idiomatic `del min_percent` with a comment for API
+     compatibility documentation
+- **Key implementation notes:**
+  - `TestDetail` and `TestResult` dataclasses with `__test__ = False` to
+    prevent pytest collection
+  - `build_gut_args()` uses GUT 9.x CLI flags: `-gdir` (comma-separated test
+    dirs), `-gselect` (suite filter), `-gunit_test_name` (test name filter),
+    `-gjunit_xml_file`, `-gpre_run_script`, `-gpost_run_script`
+  - `check_gut_installed()` verifies `addons/gut/gut_cmdln.gd` exists
+  - `parse_junit_xml()` uses `junitparser`, handles missing/malformed XML
+  - `run_tests()` orchestrates: `find_project_root()` →
+    `check_gut_installed()` → `find_godot()` → `build_gut_args()` →
+    `run_godot()` → `parse_junit_xml()` → `format_test_results()`
+  - `run_godot()` merges env with `os.environ` (caller takes precedence) —
+    coverage env vars passed safely without clobbering existing environment
+  - `TestFailureError` (exit 1) caught before `GdToolsError` (exit 2) in CLI
+  - Integration tests use `@skip_if_no_godot` marker (7 skipped in CI)
+  - `--coverage` flag sets `GD_TOOLS_COVERAGE_*` env vars (no-op until
+    Phase 3, but infrastructure in place)
 
 ---
 

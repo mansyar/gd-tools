@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 Implementation — Track 5 (Format Wrapper) Complete
+**Status:** Phase 2 Implementation — Track 6 (Test Runner) Complete
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
