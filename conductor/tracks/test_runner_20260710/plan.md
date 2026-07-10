@@ -90,7 +90,7 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
 
-- [x] Task: Conductor - User Manual Verification 'Core Functions' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Core Functions' (Protocol in workflow.md) [Checkpoint: 09fae6b]
 
 ---
 
