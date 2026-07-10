@@ -23,6 +23,7 @@ from gd_tools.doctor import (
     check_gutconfig,
     check_gd_tools_toml,
     check_autoload,
+    run_doctor,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -519,3 +520,140 @@ def test_check_autoload_critical_severity(tmp_path):
     """Test check_autoload has critical severity on failure."""
     result = check_autoload(tmp_path)
     assert result.severity == "critical"
+
+
+# --- run_doctor ---
+
+
+@pytest.fixture
+def _mock_doctor_deps():
+    """Mock all doctor dependencies for run_doctor tests.
+
+    By default, all checks pass and Godot is found at version 4.6.2.
+    Individual tests can override specific mocks via the returned dict.
+    """
+    with (
+        patch("gd_tools.doctor.find_project_root") as mock_root,
+        patch("gd_tools.doctor.load_config") as mock_config,
+        patch("gd_tools.doctor.find_godot") as mock_godot,
+        patch("gd_tools.doctor.check_godot_binary") as mock_bin,
+        patch("gd_tools.doctor.check_godot_version") as mock_ver,
+        patch("gd_tools.doctor.check_gut_installed") as mock_gut_inst,
+        patch("gd_tools.doctor.check_gut_version") as mock_gut_ver,
+        patch("gd_tools.doctor.check_coverage_addon") as mock_cov,
+        patch("gd_tools.doctor.check_gutconfig") as mock_gutconfig,
+        patch("gd_tools.doctor.check_gd_tools_toml") as mock_toml,
+        patch("gd_tools.doctor.check_gdtoolkit") as mock_gdtoolkit,
+        patch("gd_tools.doctor.check_autoload") as mock_autoload,
+    ):
+        mock_root.return_value = Path("/fake/project")
+        mock_config.return_value = GdToolsConfig()
+        mock_godot.return_value = GodotInfo(
+            path="/usr/bin/godot", version="4.6.2", is_valid=True
+        )
+
+        pass_result = CheckResult(name="test", passed=True, message="OK")
+        mock_bin.return_value = pass_result
+        mock_ver.return_value = pass_result
+        mock_gut_inst.return_value = pass_result
+        mock_gut_ver.return_value = pass_result
+        mock_cov.return_value = pass_result
+        mock_gutconfig.return_value = pass_result
+        mock_toml.return_value = pass_result
+        mock_gdtoolkit.return_value = pass_result
+        mock_autoload.return_value = pass_result
+
+        yield {
+            "root": mock_root,
+            "config": mock_config,
+            "godot": mock_godot,
+            "binary": mock_bin,
+            "version": mock_ver,
+            "gut_inst": mock_gut_inst,
+            "gut_ver": mock_gut_ver,
+            "cov": mock_cov,
+            "gutconfig": mock_gutconfig,
+            "toml": mock_toml,
+            "gdtoolkit": mock_gdtoolkit,
+            "autoload": mock_autoload,
+        }
+
+
+@pytest.mark.unit
+def test_run_doctor_returns_doctor_result(_mock_doctor_deps):
+    """Test run_doctor returns a DoctorResult instance."""
+    result = run_doctor()
+    assert isinstance(result, DoctorResult)
+
+
+@pytest.mark.unit
+def test_run_doctor_runs_all_9_checks(_mock_doctor_deps):
+    """Test run_doctor runs exactly 9 checks."""
+    result = run_doctor()
+    assert len(result.checks) == 9
+
+
+@pytest.mark.unit
+def test_run_doctor_all_passed_when_no_failures(_mock_doctor_deps):
+    """Test all_passed is True when every check passes."""
+    result = run_doctor()
+    assert result.all_passed is True
+    assert all(c.passed for c in result.checks)
+
+
+@pytest.mark.unit
+def test_run_doctor_all_passed_false_when_any_fails(_mock_doctor_deps):
+    """Test all_passed is False when any check fails."""
+    _mock_doctor_deps["binary"].return_value = CheckResult(
+        name="Godot Binary",
+        passed=False,
+        message="Not found",
+        severity="critical",
+    )
+    result = run_doctor()
+    assert result.all_passed is False
+    assert any(not c.passed for c in result.checks)
+
+
+@pytest.mark.unit
+def test_run_doctor_never_raises_on_check_exception(_mock_doctor_deps):
+    """Test run_doctor catches exceptions and converts to failed CheckResult."""
+    _mock_doctor_deps["binary"].side_effect = RuntimeError("boom")
+    result = run_doctor()
+    assert isinstance(result, DoctorResult)
+    assert len(result.checks) == 9
+    failed = [c for c in result.checks if not c.passed]
+    assert len(failed) == 1
+    assert "boom" in failed[0].message
+    assert result.all_passed is False
+
+
+@pytest.mark.unit
+def test_run_doctor_handles_project_root_not_found(_mock_doctor_deps):
+    """Test run_doctor falls back to cwd when project root not found."""
+    from gd_tools.errors import ConfigError
+
+    _mock_doctor_deps["root"].side_effect = ConfigError("not found")
+    result = run_doctor()
+    assert isinstance(result, DoctorResult)
+    assert len(result.checks) == 9
+
+
+@pytest.mark.unit
+def test_run_doctor_handles_config_load_failure(_mock_doctor_deps):
+    """Test run_doctor uses default config when load_config fails."""
+    from gd_tools.errors import ConfigError
+
+    _mock_doctor_deps["config"].side_effect = ConfigError("bad config")
+    result = run_doctor()
+    assert isinstance(result, DoctorResult)
+    assert len(result.checks) == 9
+
+
+@pytest.mark.unit
+def test_run_doctor_handles_godot_not_found_for_version(_mock_doctor_deps):
+    """Test run_doctor passes 'unknown' version when Godot not found."""
+    _mock_doctor_deps["godot"].side_effect = GodotNotFoundError("no godot")
+    result = run_doctor()
+    assert isinstance(result, DoctorResult)
+    assert len(result.checks) == 9

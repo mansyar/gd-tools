@@ -11,7 +11,8 @@ import json
 import subprocess
 import tomllib
 
-from .config import GdToolsConfig
+from .config import GdToolsConfig, find_project_root, load_config
+from .errors import ConfigError
 from .godot import (
     GodotNotFoundError,
     check_version_compatible,
@@ -383,3 +384,67 @@ def check_autoload(project_root: Path) -> CheckResult:
         ),
         severity="critical",
     )
+
+
+# --- Orchestration ---
+
+
+def run_doctor() -> DoctorResult:
+    """Run all diagnostic checks and return aggregated result.
+
+    Resolves project root, loads config, and runs all 9 checks in
+    order. Never raises — all exceptions are caught and converted
+    to failed CheckResults.
+
+    Returns:
+        DoctorResult with all check results.
+    """
+    checks = []
+
+    try:
+        project_root = find_project_root()
+    except ConfigError:
+        project_root = Path.cwd()
+
+    try:
+        config = load_config()
+    except ConfigError:
+        config = GdToolsConfig()
+
+    godot_version = "unknown"
+    try:
+        info = find_godot(config.godot)
+        godot_version = info.version
+    except GodotNotFoundError:
+        pass
+
+    check_specs = [
+        ("Godot Binary", lambda: check_godot_binary(config)),
+        ("Godot Version", lambda: check_godot_version(config)),
+        ("GUT Installed", lambda: check_gut_installed(project_root)),
+        (
+            "GUT Version",
+            lambda: check_gut_version(project_root, godot_version),
+        ),
+        ("Coverage Addon", lambda: check_coverage_addon(project_root)),
+        ("GUT Config", lambda: check_gutconfig(project_root)),
+        ("gd-tools.toml", lambda: check_gd_tools_toml(project_root)),
+        ("GD Toolkit", lambda: check_gdtoolkit()),
+        ("Autoload", lambda: check_autoload(project_root)),
+    ]
+
+    for name, fn in check_specs:
+        try:
+            checks.append(fn())
+        except Exception as exc:
+            checks.append(
+                CheckResult(
+                    name=name,
+                    passed=False,
+                    message=f"Unexpected error: {exc}",
+                    severity="critical",
+                )
+            )
+
+    all_passed = all(c.passed for c in checks)
+    return DoctorResult(checks=checks, all_passed=all_passed)
