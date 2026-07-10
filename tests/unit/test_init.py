@@ -15,6 +15,7 @@ from gd_tools.godot import GodotInfo
 from gd_tools.init import (
     check_gut_installed,
     create_config_file,
+    create_data_dir,
     detect_godot_version,
     download_gut,
     enable_gut_plugin,
@@ -584,3 +585,41 @@ def test_generate_rcs_skips_if_matches(tmp_path: Path):
     assert (tmp_path / "gdformatrc").read_text() == original_format
     # No warning should be printed
     assert not mock_print.called
+
+
+# --- create_data_dir ---
+
+
+def test_create_data_dir_creates_directory(tmp_path: Path):
+    """Test create_data_dir creates the .gd-tools directory."""
+    create_data_dir(tmp_path)
+    assert (tmp_path / ".gd-tools").is_dir()
+
+
+def test_create_data_dir_adds_to_gitignore(tmp_path: Path):
+    """Test create_data_dir appends .gd-tools/ to existing .gitignore."""
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text("*.tmp\nbuild/\n", encoding="utf-8")
+    create_data_dir(tmp_path)
+    content = gitignore.read_text(encoding="utf-8")
+    assert ".gd-tools/" in content
+    assert "*.tmp" in content
+    assert "build/" in content
+
+
+def test_create_data_dir_gitignore_idempotent(tmp_path: Path):
+    """Test create_data_dir does not add duplicate .gd-tools/ entries."""
+    gitignore = tmp_path / ".gitignore"
+    gitignore.write_text(".gd-tools/\n*.tmp\n", encoding="utf-8")
+    create_data_dir(tmp_path)
+    content = gitignore.read_text(encoding="utf-8")
+    assert content.count(".gd-tools/") == 1
+
+
+def test_create_data_dir_creates_gitignore_if_missing(tmp_path: Path):
+    """Test create_data_dir creates .gitignore if it does not exist."""
+    create_data_dir(tmp_path)
+    gitignore = tmp_path / ".gitignore"
+    assert gitignore.exists()
+    content = gitignore.read_text(encoding="utf-8")
+    assert ".gd-tools/" in content

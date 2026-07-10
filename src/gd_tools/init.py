@@ -445,3 +445,31 @@ def generate_lint_format_rcs(project_root: Path, config: GdToolsConfig) -> None:
             "content. Delete it and re-run 'gd-tools init' to "
             "regenerate.[/yellow]"
         )
+
+
+# --- Phase 5: Data Directory, Summary, and Orchestration ---
+
+
+def create_data_dir(project_root: Path) -> None:
+    """Create the ``.gd-tools/`` data directory and update ``.gitignore``.
+
+    Creates ``project_root/.gd-tools/`` if it does not exist (idempotent).
+    Appends ``.gd-tools/`` to ``project_root/.gitignore``, creating the
+    file if necessary. If ``.gd-tools/`` is already present in
+    ``.gitignore``, no duplicate is added.
+
+    Args:
+        project_root: Path to the Godot project root.
+    """
+    data_dir = project_root / ".gd-tools"
+    data_dir.mkdir(exist_ok=True)
+
+    gitignore = project_root / ".gitignore"
+    entry = ".gd-tools/"
+    if gitignore.exists():
+        lines = gitignore.read_text(encoding="utf-8").splitlines()
+        if entry not in lines:
+            with gitignore.open("a", encoding="utf-8") as f:
+                f.write(f"\n{entry}\n")
+    else:
+        gitignore.write_text(f"{entry}\n", encoding="utf-8")
