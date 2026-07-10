@@ -22,11 +22,11 @@
 
 ## Phase 2: Godot and External Tool Checks
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Implement `check_godot_binary(config: GdToolsConfig) -> CheckResult`
+- [x] Task: Implement `check_godot_binary(config: GdToolsConfig) -> CheckResult` [2e76a09]
     - [ ] Write failing tests: `test_check_godot_binary_passes_when_found`, `test_check_godot_binary_fails_when_not_found`, `test_check_godot_binary_critical_severity`
     - [ ] Implement `check_godot_binary()` — call `find_godot(config.godot)`, return `CheckResult(passed=True, message="Godot <version> at <path>")` or `CheckResult(passed=False, fix_hint="Install Godot 4.5+ from https://godotengine.org and set GODOT_BIN or add to PATH.", severity="critical")`
     - [ ] Verify coverage >80% line, >70% branch
