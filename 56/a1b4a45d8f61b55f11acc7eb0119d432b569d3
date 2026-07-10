@@ -1,0 +1,36 @@
+Phase 2 Verification Report: Godot and External Tool Checks
+
+Checkpoint: 56a1b4a
+Previous checkpoint: c5fc9c2 (Phase 1)
+
+Changed files:
+- src/gd_tools/doctor.py — Added check_godot_binary, check_godot_version, check_gdtoolkit
+- tests/unit/test_doctor.py — Added 11 unit tests (17 total)
+
+Implementation details:
+1. check_godot_binary(config: GdToolsConfig) -> CheckResult
+   - Calls find_godot(config.godot)
+   - Pass: CheckResult(name="Godot Binary", passed=True, message="Godot <version> at <path>")
+   - Fail: CheckResult(passed=False, message="Godot binary not found", fix_hint="Install Godot 4.5+...", severity="critical")
+   - Commit: 2e76a09
+
+2. check_godot_version(config: GdToolsConfig) -> CheckResult
+   - Calls find_godot(config.godot), then check_version_compatible(info.version)
+   - Pass: CheckResult(name="Godot Version", passed=True, message="Godot <version> is >= 4.5.0")
+   - Fail: CheckResult(passed=False, message="Godot <version> is below required 4.5.0", severity="critical")
+   - Not found: CheckResult(passed=False, message="Godot binary not found - cannot check version", severity="critical")
+   - Commit: 5668dab
+
+3. check_gdtoolkit() -> CheckResult
+   - Runs subprocess.run([tool, "--version"]) for gdlint and gdformat
+   - Pass: CheckResult(name="GD Toolkit", passed=True, message="gdlint and gdformat are installed")
+   - Fail: CheckResult(passed=False, message="Missing tools: <list>", fix_hint="Install gdtoolkit: pip install gdtoolkit", severity="critical")
+   - Commit: c387804
+
+Test results:
+- 346 passed, 7 skipped (full suite)
+- doctor.py: 100% coverage (39 statements, 6 branches, 0 missed)
+- Overall coverage: 98.37%
+- ruff: clean, black: clean
+
+User verification: Confirmed "Yes" — Phase 2 meets expectations.
