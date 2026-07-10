@@ -1,0 +1,27 @@
+Task: Implement build_gut_args for GUT CLI construction
+
+Summary:
+- Implemented build_gut_args() in src/gd_tools/test_runner.py
+- Builds GUT CLI argument list from TestConfig for invocation via run_godot()
+- Correct GUT 9.x CLI flag names verified from spike/addons/gut/cli/gut_cli.gd source:
+  - -gdir (NOT -gdirs as spec states) for test directories, comma-separated
+  - -gunit_test_name (NOT -gname as spec states) for test name filter
+  - -gselect for suite/script filter (correct in spec)
+  - -gprefix, -gsuffix, -gexit, -gjunit_xml_file (all correct in spec)
+- --path is NOT included in args (handled by run_godot() which adds it automatically)
+- JUnit XML path is resolved to absolute (GUT may treat relative as user://-relative)
+- Default JUnit XML path: <project_root>/.gd-tools/results.xml
+- coverage parameter included in signature but not yet implemented (Phase 3)
+
+Files changed:
+- src/gd_tools/test_runner.py: Added TestConfig import, build_gut_args() function
+- tests/unit/test_test_runner.py: Added 11 unit tests for build_gut_args
+
+Key decisions:
+- Used -gdir (not -gdirs) per GUT 9.6.0 source code (spike finding)
+- Used -gunit_test_name (not -gname) per GUT 9.6.0 source code
+- Test dirs passed as comma-separated value (e.g., -gdir=res://test/,res://tests/)
+- Used del coverage to acknowledge unused Phase 3 parameter without linter warnings
+- Tests use tmp_path fixture for JUnit XML path tests requiring absolute paths
+
+Test results: 242 passed, test_runner.py 98% coverage (above 80% threshold)
