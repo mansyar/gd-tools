@@ -81,11 +81,11 @@
     - [x] Update `pyproject.toml` to include addon `.gd` files as package data
     - [x] Verify `pip install -e .` includes the addon files
 
-- [ ] Task: Implement `install_coverage_addon(project_root: Path) -> None`
-    - [ ] Write failing tests: `test_install_coverage_addon_copies_all_files`, `test_install_coverage_addon_overwrites_stale_files`, `test_install_coverage_addon_creates_target_dir`
-    - [ ] Implement `install_coverage_addon()` — copy bundled `.gd` files from package data to `project_root/addons/gd-tools-coverage/`. Always overwrite.
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `install_coverage_addon(project_root: Path) -> None`
+    - [x] Write failing tests: `test_install_coverage_addon_copies_all_files`, `test_install_coverage_addon_overwrites_stale_files`, `test_install_coverage_addon_creates_target_dir`
+    - [x] Implement `install_coverage_addon()` — copy bundled `.gd` files from package data to `project_root/addons/gd-tools-coverage/`. Always overwrite.
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Coverage Addon Deployment' (Protocol in workflow.md)
 
