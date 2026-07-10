@@ -56,7 +56,7 @@
     - [ ] Implement `format_lint_json(result)` returning valid JSON string
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Output Formatting' (Protocol in workflow.md)
 
-## Phase 4: CLI Integration
+## Phase 4: CLI Integration [checkpoint: b16407d]
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Update `lint` command in `src/gd_tools/cli.py` `f591dc4`
