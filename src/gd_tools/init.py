@@ -24,6 +24,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+import click
 import requests
 from rich.console import Console
 
@@ -199,5 +200,53 @@ def extract_gut(zip_path: Path, project_root: Path) -> None:
         if dest.exists():
             shutil.rmtree(dest)
         shutil.copytree(gut_source, dest)
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def install_gut(
+    project_root: Path, godot_version: str, non_interactive: bool
+) -> None:
+    """Install GUT if not already installed.
+
+    If GUT is already installed, checks the installed version against
+    the expected version for the detected Godot version and warns if
+    they differ. If GUT is not installed, prompts the user (interactive
+    mode) or auto-installs (non-interactive mode).
+
+    Args:
+        project_root: Path to the Godot project root.
+        godot_version: The detected Godot version (e.g., ``"4.5.1"``).
+        non_interactive: If True, skip prompts and assume yes.
+    """
+    if check_gut_installed(project_root):
+        installed_version = get_installed_gut_version(project_root)
+        expected_version = get_gut_version_for_godot(godot_version)
+        if installed_version != expected_version:
+            console.print(
+                "[yellow]Warning: GUT version "
+                f"{installed_version} does not match expected "
+                f"version {expected_version} for Godot "
+                f"{godot_version}.[/yellow]"
+            )
+        return
+
+    if not non_interactive:
+        if not click.confirm("Install GUT?", default=True):
+            console.print(
+                "GUT not installed. To install manually:\n"
+                "  1. Download from: "
+                "https://godotengine.org/asset-library/asset/116\n"
+                "  2. Extract the 'addons/gut/' folder to your "
+                "project's 'addons/' directory."
+            )
+            return
+
+    gut_version = get_gut_version_for_godot(godot_version)
+    tmpdir = tempfile.mkdtemp()
+    zip_dest = Path(tmpdir) / "gut.zip"
+    try:
+        download_gut(gut_version, zip_dest)
+        extract_gut(zip_dest, project_root)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)

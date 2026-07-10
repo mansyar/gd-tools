@@ -17,6 +17,7 @@ from gd_tools.init import (
     download_gut,
     extract_gut,
     get_installed_gut_version,
+    install_gut,
 )
 
 # --- detect_godot_version ---
@@ -181,3 +182,84 @@ def test_extract_gut_cleans_up_temp_dir(tmp_path: Path):
         extract_gut(zip_path, project_root)
 
     assert not temp_dir.exists()
+
+
+# --- install_gut ---
+
+
+def test_install_gut_prompts_interactive_yes(tmp_path: Path):
+    """Test install_gut prompts in interactive mode and installs on yes."""
+    with (
+        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.click.confirm", return_value=True),
+        patch("gd_tools.init.download_gut") as mock_download,
+        patch("gd_tools.init.extract_gut") as mock_extract,
+        patch(
+            "gd_tools.init.get_gut_version_for_godot",
+            return_value="9.5.0",
+        ),
+    ):
+        install_gut(tmp_path, "4.5.1", non_interactive=False)
+    mock_download.assert_called_once()
+    mock_extract.assert_called_once()
+
+
+def test_install_gut_non_interactive_assumes_yes(tmp_path: Path):
+    """Test install_gut installs without prompting in non-interactive mode."""
+    with (
+        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.click.confirm") as mock_confirm,
+        patch("gd_tools.init.download_gut") as mock_download,
+        patch("gd_tools.init.extract_gut") as mock_extract,
+        patch(
+            "gd_tools.init.get_gut_version_for_godot",
+            return_value="9.5.0",
+        ),
+    ):
+        install_gut(tmp_path, "4.5.1", non_interactive=True)
+    mock_confirm.assert_not_called()
+    mock_download.assert_called_once()
+    mock_extract.assert_called_once()
+
+
+def test_install_gut_user_declines_prints_manual_instructions(
+    tmp_path: Path,
+):
+    """Test install_gut prints manual instructions when user declines."""
+    with (
+        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.click.confirm", return_value=False),
+        patch("gd_tools.init.download_gut") as mock_download,
+        patch("gd_tools.init.extract_gut") as mock_extract,
+        patch("gd_tools.init.console.print") as mock_print,
+    ):
+        install_gut(tmp_path, "4.5.1", non_interactive=False)
+    mock_download.assert_not_called()
+    mock_extract.assert_not_called()
+    mock_print.assert_called()
+    printed = " ".join(str(c) for c in mock_print.call_args[0])
+    assert "manual" in printed.lower() or "install" in printed.lower()
+
+
+def test_install_gut_version_mismatch_warning(tmp_path: Path):
+    """Test install_gut warns when installed GUT version doesn't match."""
+    with (
+        patch("gd_tools.init.check_gut_installed", return_value=True),
+        patch(
+            "gd_tools.init.get_installed_gut_version",
+            return_value="9.4.0",
+        ),
+        patch(
+            "gd_tools.init.get_gut_version_for_godot",
+            return_value="9.5.0",
+        ),
+        patch("gd_tools.init.console.print") as mock_print,
+        patch("gd_tools.init.download_gut") as mock_download,
+    ):
+        install_gut(tmp_path, "4.5.1", non_interactive=False)
+    mock_download.assert_not_called()
+    mock_print.assert_called_once()
+    call_args = mock_print.call_args[0][0]
+    assert "Warning" in call_args or "warning" in call_args
+    assert "9.4.0" in call_args
+    assert "9.5.0" in call_args
