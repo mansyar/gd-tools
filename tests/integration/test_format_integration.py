@@ -162,6 +162,9 @@ def test_format_syntax_error_skipped(tmp_path):
     assert result.exit_code == 0
     # 2 files checked, 1 formatted (broken.gd skipped)
     assert "Formatted 1 of 2 file(s)" in result.output
+    # Syntax error reported with file path
+    assert "broken.gd" in result.output
+    assert "Warning" in result.output
     # broken.gd not modified (syntax error, skipped)
     assert broken_file.read_text() == original_broken
     # bad.gd was reformatted

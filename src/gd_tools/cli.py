@@ -180,9 +180,7 @@ def format(path, check, diff):
                 f"{result.files_checked} file(s)."
             )
         else:
-            click.echo(
-                f"All {result.files_checked} file(s) " "already formatted."
-            )
+            click.echo(f"All {result.files_checked} file(s) already formatted.")
         ctx.exit(0)
 
 

@@ -216,7 +216,7 @@ def test_run_format_mutual_exclusion_raises(tmp_path):
 # --- run_format syntax error handling ---
 
 
-def test_run_format_syntax_error_continues(tmp_path):
+def test_run_format_syntax_error_continues(tmp_path, capsys):
     """Test syntax-error .gd file does not crash, continues processing."""
     # Valid file
     (tmp_path / "valid.gd").write_text(
@@ -231,6 +231,10 @@ def test_run_format_syntax_error_continues(tmp_path):
     # Valid file should still be formatted
     assert result.files_checked == 2
     assert result.files_formatted == 1
+    # Syntax error should be reported to stderr with file path
+    captured = capsys.readouterr()
+    assert "broken.gd" in captured.err
+    assert "Warning" in captured.err
 
 
 def test_run_format_syntax_error_in_check_mode(tmp_path):

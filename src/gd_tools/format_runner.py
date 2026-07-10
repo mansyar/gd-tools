@@ -6,6 +6,7 @@ invokes the formatter programmatically, and returns structured results.
 """
 
 import difflib
+import sys
 from dataclasses import dataclass, field
 
 from gdtoolkit.formatter import format_code
@@ -103,8 +104,9 @@ def run_format(
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.write(formatted_code)
                     files_formatted += 1
-        except LarkError:
-            # Syntax error: skip this file, continue processing
+        except LarkError as e:
+            # Syntax error: report file path and description, then skip
+            print(f"Warning: Skipping {file_path}: {e}", file=sys.stderr)
             continue
 
     return FormatResult(
