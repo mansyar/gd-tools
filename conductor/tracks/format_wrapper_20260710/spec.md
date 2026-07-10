@@ -1,3 +1,5 @@
+<protect>
+
 # Track: Format Wrapper (format_wrapper_20260710)
 
 ## Overview
@@ -84,3 +86,5 @@ Implement the `gd-tools format` command, wrapping `gdformat` from the `gdtoolkit
 - Integration with git pre-commit hooks.
 - Changes to `generate_gdformatrc()` implementation (already done in Track 2).
 - Watch mode or auto-format on file change.
+
+</protect>

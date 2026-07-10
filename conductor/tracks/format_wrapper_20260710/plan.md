@@ -1,6 +1,12 @@
+<protect>
+
 # Implementation Plan: Format Wrapper (format_wrapper_20260710)
 
 ## Phase 1: Shared File Discovery Refactor
+
+- [ ] Task: Read spec.md and workflow.md to review requirements and TDD methodology
+    - [ ] Read conductor/tracks/format_wrapper_20260710/spec.md
+    - [ ] Read conductor/workflow.md
 
 - [ ] Task: Write tests for file_discovery.py module
     - [ ] Test discover_gd_files discovers .gd files recursively
@@ -32,6 +38,10 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Shared File Discovery Refactor' (Protocol in workflow.md)
 
 ## Phase 2: FormatResult Dataclass and run_format Function
+
+- [ ] Task: Read spec.md and workflow.md to review requirements and TDD methodology
+    - [ ] Read conductor/tracks/format_wrapper_20260710/spec.md
+    - [ ] Read conductor/workflow.md
 
 - [ ] Task: Write tests for FormatResult dataclass
     - [ ] Test FormatResult instantiation with default values
@@ -121,6 +131,10 @@
 
 ## Phase 3: CLI Format Command Implementation
 
+- [ ] Task: Read spec.md and workflow.md to review requirements and TDD methodology
+    - [ ] Read conductor/tracks/format_wrapper_20260710/spec.md
+    - [ ] Read conductor/workflow.md
+
 - [ ] Task: Write tests for CLI format command (default mode)
     - [ ] Test `gd-tools format <path>` formats files and prints summary
     - [ ] Test exit code 0 on success
@@ -182,6 +196,10 @@
 
 ## Phase 4: Integration and gdformatrc Verification
 
+- [ ] Task: Read spec.md and workflow.md to review requirements and TDD methodology
+    - [ ] Read conductor/tracks/format_wrapper_20260710/spec.md
+    - [ ] Read conductor/workflow.md
+
 - [ ] Task: Write integration tests for gdformatrc + format runner
     - [ ] Test gd-tools init generates valid gdformatrc
     - [ ] Test format runner respects excludes from gdformatrc
@@ -207,3 +225,5 @@
     - [ ] Add git note summarizing Phase 4 completion and track completion
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Integration and gdformatrc Verification' (Protocol in workflow.md)
+
+</protect>
