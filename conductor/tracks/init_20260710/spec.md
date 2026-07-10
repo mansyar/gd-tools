@@ -1,3 +1,4 @@
+<protect>
 # Track 7: Init Command — Specification
 
 ## Overview
@@ -145,3 +146,4 @@ The `init` command bootstraps a Godot project for use with gd-tools. It detects 
 - **GUT update/uninstall**: If GUT is installed with an incompatible version, only warn. Do not auto-update or uninstall.
 - **Interactive project.godot editing UI**: Direct file manipulation only.
 - **Multi-project support**: Init operates on a single project root.
+</protect>
