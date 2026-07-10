@@ -30,7 +30,7 @@
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Implement `check_gut_installed(project_root: Path) -> bool`
+- [x] Task: Implement `check_gut_installed(project_root: Path) -> bool` (714164c)
     - [ ] Write failing tests: `test_check_gut_installed_returns_true_when_present`, `test_check_gut_installed_returns_false_when_absent`
     - [ ] Implement `check_gut_installed()` — check if `project_root/addons/gut/gut.gd` exists
     - [ ] Verify coverage >80% line, >70% branch
