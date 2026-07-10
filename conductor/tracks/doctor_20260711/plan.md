@@ -20,7 +20,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Module Skeleton and Data Structures' (Protocol in workflow.md)
 
-## Phase 2: Godot and External Tool Checks
+## Phase 2: Godot and External Tool Checks [checkpoint: 56a1b4a]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
     - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
@@ -44,7 +44,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Godot and External Tool Checks' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Godot and External Tool Checks' (Protocol in workflow.md)
 
 ## Phase 3: GUT and Project Configuration Checks
 
