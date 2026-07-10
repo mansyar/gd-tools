@@ -1,0 +1,18 @@
+Task: run_init(non_interactive: bool = False) -> None
+
+TDD Cycle:
+- Red: 3 tests (test_run_init_full_flow_with_mocks, test_run_init_non_interactive_skips_prompts, test_run_init_collects_actions_list)
+- Green: Implemented run_init orchestration function
+- Refactor: ruff passed, black reformatted test_init.py
+
+Implementation:
+- Orchestrates full init flow: find_project_root -> load_config -> detect_godot_version -> get_gut_version_for_godot -> check_gut_installed -> install_gut -> enable_gut_plugin -> install_coverage_addon -> update_gutconfig -> create_config_file -> generate_lint_format_rcs -> create_data_dir -> print_summary
+- Collects actions list throughout the flow
+- Passes non_interactive flag to install_gut
+- Does not catch errors (error handling deferred to CLI layer)
+
+Coverage:
+- init.py: 190 stmts, 7 missed, 96% line
+- Overall: 323 passed, 7 skipped, 98.77% coverage
+
+Spec FRs: FR-1 through FR-12 (full orchestration)
