@@ -1,0 +1,15 @@
+Task: Implement check_coverage_addon(project_root: Path) -> CheckResult
+
+Changes:
+- Added COVERAGE_ADDON_FILES to imports from .init
+- Implemented check_coverage_addon: checks all files in COVERAGE_ADDON_FILES exist in project_root/addons/gd-tools-coverage/
+- Pass: CheckResult(name="Coverage Addon", passed=True, message="Coverage addon is installed")
+- Fail: CheckResult(name="Coverage Addon", passed=False, message="Missing coverage files: ...", fix_hint="Run gd-tools init to install the coverage addon.", severity="warning")
+
+Tests added (3):
+- test_check_coverage_addon_passes_when_all_files_present
+- test_check_coverage_addon_fails_when_files_missing
+- test_check_coverage_addon_warning_severity
+
+Coverage: doctor.py 100% (60 statements, 0 missed). 356 passed, 7 skipped, 98.41% overall.
+Lint: ruff clean, black clean.
