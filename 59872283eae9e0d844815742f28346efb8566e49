@@ -1,0 +1,22 @@
+Task: Define TestResult and TestDetail dataclasses
+
+Summary: Created src/gd_tools/test_runner.py with TestResult and TestDetail dataclasses.
+TestResult holds aggregated test results (total, passed, failed, skipped, duration, junit_xml_path, coverage_data_path, stdout, stderr, test_details).
+TestDetail holds per-test details (name, suite, status, message, duration).
+Both have __test__ = False to prevent pytest collection warnings.
+
+Files created:
+- src/gd_tools/test_runner.py
+- tests/unit/test_test_runner.py (6 unit tests, all passing)
+
+Verification:
+- 6 tests pass
+- test_runner.py coverage: 100% line
+- ruff check: passed
+- black --check: passed
+
+Key decisions:
+- Used field(default_factory=list) for test_details to avoid mutable default
+- Added __test__ = False to both dataclasses (matches TestConfig pattern)
+- Verified GUTNotInstalledError exists in errors.py (no changes needed)
+- Verified junitparser is listed in pyproject.toml dependencies
