@@ -102,7 +102,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `format_doctor_table(result: DoctorResult) -> Table`
+- [x] Task: Implement `format_doctor_table(result: DoctorResult) -> Table` [581e5ad]
     - [ ] Write failing tests: `test_format_doctor_table_has_4_columns`, `test_format_doctor_table_shows_checkmark_for_pass`, `test_format_doctor_table_shows_x_for_critical_fail`, `test_format_doctor_table_shows_warning_for_warning_fail`, `test_format_doctor_table_includes_fix_hints`, `test_format_doctor_table_shows_summary_line`
     - [ ] Implement `format_doctor_table()` — build `rich.table.Table` with Check/Status/Message/Fix Hint columns, color-code rows (green=pass, red=critical fail, yellow=warning fail), add summary line (X/9 checks passed)
     - [ ] Verify coverage >80% line, >70% branch
