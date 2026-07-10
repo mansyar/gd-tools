@@ -557,7 +557,7 @@ def build_gut_args(
 ) -> list[str]:
     """Build GUT CLI args list.
     Base: ['-s', 'addons/gut/gut_cmdln.gd', '-d', '--path', str(project_root), '-gexit']
-    Add: ['-gdir=<test_dirs>'], ['-gselect=<suite>'], ['-gname=<test_name>']
+    Add: ['-gdir=<test_dirs>'], ['-gselect=<suite>'], ['-gunit_test_name=<test_name>']
     Add: ['-gjunit_xml_file=<path>']"""
 
 def run_gut_with_coverage(
@@ -588,7 +588,7 @@ def check_coverage_threshold(
 godot -s addons/gut/gut_cmdln.gd -d --path <project_root> -gexit \
   [-gdir=res://test/] \
   [-gselect=<suite>] \
-  [-gname=<test_name>] \
+  [-gunit_test_name=<test_name>] \
   [-gjunit_xml_file=<path>] \
   [-gpre_run_script=res://addons/gd-tools-coverage/pre_run_hook.gd] \
   [-gpost_run_script=res://addons/gd-tools-coverage/post_run_hook.gd]

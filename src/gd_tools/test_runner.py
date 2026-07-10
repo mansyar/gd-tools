@@ -241,7 +241,9 @@ def parse_junit_xml(
     return (total, passed, failed, skipped, duration, test_details)
 
 
-def format_test_results(result: TestResult) -> None:
+def format_test_results(
+    result: TestResult, console: Console | None = None
+) -> None:
     """Print a Rich table summarizing test results.
 
     Always prints a table with total, passed, failed, skipped, and
@@ -250,8 +252,14 @@ def format_test_results(result: TestResult) -> None:
 
     Args:
         result: The :class:`TestResult` to format and print.
+        console: Optional :class:`rich.console.Console` for output.
+            When ``None``, a default ``Console()`` is created which
+            auto-detects terminal capabilities (no ANSI codes when
+            piped).  Tests may pass ``Console(force_terminal=True)``
+            to force ANSI output for color assertions.
     """
-    console = Console(force_terminal=True)
+    if console is None:
+        console = Console()
     table = Table(title="Test Results")
     table.add_column("Total", justify="right")
     table.add_column("Passed", justify="right", style="green")
@@ -328,7 +336,7 @@ def run_tests(
         TestFailureError: If tests fail and ``no_exit_code`` is False
             (exit code 1).
     """
-    del min_percent  # Enforcement deferred to Phase 3
+    # min_percent is accepted for API compatibility; enforcement deferred to Phase 3.
 
     project_root = find_project_root()
 

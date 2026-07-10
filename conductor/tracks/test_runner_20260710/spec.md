@@ -27,10 +27,10 @@ This is Track 6 in the project roadmap (Phase 2 — MVP1), delivering the first 
 The module must build GUT CLI arguments from config:
 
 - **Base command:** `godot -s addons/gut/gut_cmdln.gd -d --path <project_root> -gexit`
-- **Test dirs:** Pass each configured test directory via `-gdirs=res://<dir>/`
+- **Test dirs:** Pass test directories via `-gdir=res://<dir1>/,res://<dir2>/` (comma-separated, verified against GUT 9.x source)
 - **Prefix/suffix:** Pass via `-gprefix=<prefix>` and `-gsuffix=<suffix>` (from `TestConfig`)
 - **Suite filter:** When `--suite NAME` is provided, pass `-gselect=<NAME>`
-- **Test name filter:** When `--test NAME` is provided, pass `-gname=<NAME>`
+- **Test name filter:** When `--test NAME` is provided, pass `-gunit_test_name=<NAME>`
 - **JUnit XML output:** Pass `-gjunit_xml_file=<absolute_path>` (default: `<project_root>/.gd-tools/results.xml`)
 - **Config source:** All test configuration passed via CLI flags. `.gutconfig.json` is NOT used for test execution (it is managed by `gd-tools init` for coverage hooks only).
 

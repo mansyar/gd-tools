@@ -19,6 +19,8 @@ from gd_tools.errors import (
     GodotNotFoundError,
     TestFailureError,
 )
+from rich.console import Console
+
 from gd_tools.godot import GodotInfo
 from gd_tools.test_runner import (
     TestDetail,
@@ -954,7 +956,7 @@ def test_format_test_results_color_coding(capsys):
         stderr="",
         test_details=[],
     )
-    format_test_results(result)
+    format_test_results(result, console=Console(force_terminal=True))
     captured = capsys.readouterr()
     # ANSI escape codes should be present (force_terminal=True).
     assert "\x1b[" in captured.out
