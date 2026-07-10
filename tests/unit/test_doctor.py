@@ -19,6 +19,7 @@ from gd_tools.doctor import (
     check_gdtoolkit,
     check_gut_installed,
     check_gut_version,
+    check_coverage_addon,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -336,3 +337,40 @@ def test_check_gut_version_passes_when_version_unknown(
     mock_get_expected.return_value = "9.5.0"
     result = check_gut_version(Path("/fake"), "4.5.0")
     assert result.passed is True
+
+
+# --- check_coverage_addon ---
+
+
+@pytest.mark.unit
+def test_check_coverage_addon_passes_when_all_files_present(tmp_path):
+    """Test check_coverage_addon passes when all coverage files exist."""
+    cov_dir = tmp_path / "addons" / "gd-tools-coverage"
+    cov_dir.mkdir(parents=True)
+    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+        (cov_dir / fname).touch()
+    result = check_coverage_addon(tmp_path)
+    assert result.passed is True
+    assert result.name == "Coverage Addon"
+    assert "installed" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_coverage_addon_fails_when_files_missing(tmp_path):
+    """Test check_coverage_addon fails when some coverage files are missing."""
+    cov_dir = tmp_path / "addons" / "gd-tools-coverage"
+    cov_dir.mkdir(parents=True)
+    (cov_dir / "coverage.gd").touch()
+    result = check_coverage_addon(tmp_path)
+    assert result.passed is False
+    assert result.name == "Coverage Addon"
+    assert "pre_run_hook.gd" in result.message
+    assert "post_run_hook.gd" in result.message
+
+
+@pytest.mark.unit
+def test_check_coverage_addon_warning_severity(tmp_path):
+    """Test check_coverage_addon has warning severity on failure."""
+    result = check_coverage_addon(tmp_path)
+    assert result.severity == "warning"
+    assert "gd-tools init" in result.fix_hint

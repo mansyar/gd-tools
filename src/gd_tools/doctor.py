@@ -16,7 +16,7 @@ from .godot import (
     find_godot,
     get_gut_version_for_godot,
 )
-from .init import get_installed_gut_version
+from .init import COVERAGE_ADDON_FILES, get_installed_gut_version
 
 
 @dataclass
@@ -222,4 +222,30 @@ def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
             f"Install GUT version {expected} " f"for Godot {godot_version}"
         ),
         severity="warning",
+    )
+
+
+def check_coverage_addon(project_root: Path) -> CheckResult:
+    """Check that the gd-tools-coverage addon files are present.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        CheckResult indicating whether all coverage addon files exist.
+    """
+    cov_dir = project_root / "addons" / "gd-tools-coverage"
+    missing = [f for f in COVERAGE_ADDON_FILES if not (cov_dir / f).exists()]
+    if missing:
+        return CheckResult(
+            name="Coverage Addon",
+            passed=False,
+            message=f"Missing coverage files: {', '.join(missing)}",
+            fix_hint="Run `gd-tools init` to install the coverage addon.",
+            severity="warning",
+        )
+    return CheckResult(
+        name="Coverage Addon",
+        passed=True,
+        message="Coverage addon is installed",
     )
