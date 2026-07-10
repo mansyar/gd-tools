@@ -107,7 +107,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement lint/format RC generation with "generate if missing, warn if differs" policy
+- [x] Task: Implement lint/format RC generation with "generate if missing, warn if differs" policy
     - [ ] Write failing tests: `test_generate_rcs_generates_if_missing`, `test_generate_rcs_warns_if_differs`, `test_generate_rcs_skips_if_matches`
     - [ ] Implement `generate_lint_format_rcs(project_root, config)` — for each of `gdlintrc` and `gdformatrc`: generate expected content, if file missing write it, if exists and differs print warning, if matches do nothing
     - [ ] Verify coverage >80% line, >70% branch
