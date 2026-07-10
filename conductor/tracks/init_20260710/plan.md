@@ -139,11 +139,11 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [ ] Task: Wire CLI `init` command to `run_init()`
-    - [ ] Write failing tests: `test_cli_init_calls_run_init`, `test_cli_init_passes_non_interactive_flag`, `test_cli_init_exits_zero_on_success`
-    - [ ] Implement — replace `raise NotImplementedError` with `run_init(non_interactive)`, add error handling (catch `GdToolsError`, exit with `e.exit_code`)
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Wire CLI `init` command to `run_init()`
+    - [x] Write failing tests: `test_cli_init_calls_run_init`, `test_cli_init_passes_non_interactive_flag`, `test_cli_init_exits_zero_on_success`
+    - [x] Implement — replace `raise NotImplementedError` with `run_init(non_interactive)`, add error handling (catch `GdToolsError`, exit with `e.exit_code`)
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Data Directory, Summary, and Orchestration' (Protocol in workflow.md)
 
