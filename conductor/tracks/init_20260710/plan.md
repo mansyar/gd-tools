@@ -66,7 +66,7 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: GUT Installation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: GUT Installation' (Protocol in workflow.md)
 
 ## Phase 3: Coverage Addon Deployment
 
