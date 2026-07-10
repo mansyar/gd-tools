@@ -147,7 +147,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 5: Data Directory, Summary, and Orchestration' (Protocol in workflow.md)
 
-## Phase 6: Integration Tests
+## Phase 6: Integration Tests [checkpoint: 1f542a2]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
@@ -160,5 +160,5 @@
     - [x] Run full test suite (`CI=true pytest`), verify all pass and overall coverage thresholds still met
     - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: Integration Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 6: Integration Tests' (Protocol in workflow.md)
 </protect>
