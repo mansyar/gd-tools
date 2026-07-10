@@ -39,93 +39,93 @@
 
 ## Phase 2: FormatResult Dataclass and run_format Function
 
-- [ ] Task: Read spec.md and workflow.md to review requirements and TDD methodology
-    - [ ] Read conductor/tracks/format_wrapper_20260710/spec.md
-    - [ ] Read conductor/workflow.md
+- [x] Task: Read spec.md and workflow.md to review requirements and TDD methodology
+    - [x] Read conductor/tracks/format_wrapper_20260710/spec.md
+    - [x] Read conductor/workflow.md
 
-- [ ] Task: Write tests for FormatResult dataclass
-    - [ ] Test FormatResult instantiation with default values
-    - [ ] Test FormatResult with all fields populated
-    - [ ] Verify: Tests fail (Red) — FormatResult does not exist yet
+- [x] Task: Write tests for FormatResult dataclass `d030fc1`
+    - [x] Test FormatResult instantiation with default values
+    - [x] Test FormatResult with all fields populated
+    - [x] Verify: Tests fail (Red) — FormatResult does not exist yet
 
-- [ ] Task: Implement FormatResult dataclass
-    - [ ] Create src/gd_tools/format_runner.py
-    - [ ] Define FormatResult dataclass with fields: files_checked, files_formatted, files_needing_format, diffs
-    - [ ] Add docstrings
-    - [ ] Verify: FormatResult tests pass (Green)
+- [x] Task: Implement FormatResult dataclass `d030fc1`
+    - [x] Create src/gd_tools/format_runner.py
+    - [x] Define FormatResult dataclass with fields: files_checked, files_formatted, files_needing_format, diffs
+    - [x] Add docstrings
+    - [x] Verify: FormatResult tests pass (Green)
 
-- [ ] Task: Write tests for run_format default mode (format in place)
-    - [ ] Test run_format formats an unformatted .gd file in place
-    - [ ] Test run_format returns FormatResult with correct files_formatted count
-    - [ ] Test run_format on already-formatted files makes no changes
-    - [ ] Test run_format uses discover_gd_files for file enumeration
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for run_format default mode (format in place) `d030fc1`
+    - [x] Test run_format formats an unformatted .gd file in place
+    - [x] Test run_format returns FormatResult with correct files_formatted count
+    - [x] Test run_format on already-formatted files makes no changes
+    - [x] Test run_format uses discover_gd_files for file enumeration
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement run_format default mode
-    - [ ] Import gdformat API from gdtoolkit (investigate gdtoolkit formatter API)
-    - [ ] Implement run_format with check=False, diff=False path
-    - [ ] Format each file in place via gdtoolkit Python API
-    - [ ] Verify: Default mode tests pass (Green)
+- [x] Task: Implement run_format default mode `d030fc1`
+    - [x] Import gdformat API from gdtoolkit (investigate gdtoolkit formatter API)
+    - [x] Implement run_format with check=False, diff=False path
+    - [x] Format each file in place via gdtoolkit Python API
+    - [x] Verify: Default mode tests pass (Green)
 
-- [ ] Task: Write tests for run_format --check mode
-    - [ ] Test --check reports files_needing_format count for unformatted files
-    - [ ] Test --check returns 0 files_needing_format for already-formatted files
-    - [ ] Test --check does not modify files on disk
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for run_format --check mode `d030fc1`
+    - [x] Test --check reports files_needing_format count for unformatted files
+    - [x] Test --check returns 0 files_needing_format for already-formatted files
+    - [x] Test --check does not modify files on disk
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement run_format --check mode
-    - [ ] Add check=True branch: compare formatted vs original, count differences
-    - [ ] Populate files_needing_format in FormatResult
-    - [ ] Verify: --check mode tests pass (Green)
+- [x] Task: Implement run_format --check mode `d030fc1`
+    - [x] Add check=True branch: compare formatted vs original, count differences
+    - [x] Populate files_needing_format in FormatResult
+    - [x] Verify: --check mode tests pass (Green)
 
-- [ ] Task: Write tests for run_format --diff mode
-    - [ ] Test --diff returns list of unified diff strings
-    - [ ] Test --diff does not modify files on disk
-    - [ ] Test --diff returns empty diffs list for already-formatted files
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for run_format --diff mode `d030fc1`
+    - [x] Test --diff returns list of unified diff strings
+    - [x] Test --diff does not modify files on disk
+    - [x] Test --diff returns empty diffs list for already-formatted files
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement run_format --diff mode
-    - [ ] Add diff=True branch: generate unified diff per file using difflib
-    - [ ] Populate diffs list in FormatResult
-    - [ ] Verify: --diff mode tests pass (Green)
+- [x] Task: Implement run_format --diff mode `d030fc1`
+    - [x] Add diff=True branch: generate unified diff per file using difflib
+    - [x] Populate diffs list in FormatResult
+    - [x] Verify: --diff mode tests pass (Green)
 
-- [ ] Task: Write tests for run_format mutual exclusion
-    - [ ] Test check=True and diff=True raises FormatError with exit_code=2
-    - [ ] Test error message is "--check and --diff are mutually exclusive"
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for run_format mutual exclusion `d030fc1`
+    - [x] Test check=True and diff=True raises FormatError with exit_code=2
+    - [x] Test error message is "--check and --diff are mutually exclusive"
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement run_format mutual exclusion guard
-    - [ ] Add early check: if check and diff, raise FormatError(msg, exit_code=2)
-    - [ ] Verify: Mutual exclusion tests pass (Green)
+- [x] Task: Implement run_format mutual exclusion guard `d030fc1`
+    - [x] Add early check: if check and diff, raise FormatError(msg, exit_code=2)
+    - [x] Verify: Mutual exclusion tests pass (Green)
 
-- [ ] Task: Write tests for run_format syntax error handling
-    - [ ] Test syntax-error .gd file produces clear error, does not crash
-    - [ ] Test syntax error includes file path in error message
-    - [ ] Test run_format continues processing remaining files after a syntax error
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for run_format syntax error handling `d030fc1`
+    - [x] Test syntax-error .gd file produces clear error, does not crash
+    - [x] Test syntax error includes file path in error message
+    - [x] Test run_format continues processing remaining files after a syntax error
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement run_format syntax error handling
-    - [ ] Catch gdtoolkit parse exceptions (LarkError or equivalent)
-    - [ ] Report file path and error description, continue processing
-    - [ ] Verify: Syntax error tests pass (Green)
+- [x] Task: Implement run_format syntax error handling `d030fc1`
+    - [x] Catch gdtoolkit parse exceptions (LarkError or equivalent)
+    - [x] Report file path and error description, continue processing
+    - [x] Verify: Syntax error tests pass (Green)
 
-- [ ] Task: Write tests for run_format no files found
-    - [ ] Test run_format on empty directory returns FormatResult with all zeros
-    - [ ] Test no crash, graceful handling
-    - [ ] Verify: Tests fail (Red)
+- [x] Task: Write tests for run_format no files found `d030fc1`
+    - [x] Test run_format on empty directory returns FormatResult with all zeros
+    - [x] Test no crash, graceful handling
+    - [x] Verify: Tests fail (Red)
 
-- [ ] Task: Implement run_format no files found handling
-    - [ ] Return FormatResult(files_checked=0, files_formatted=0, files_needing_format=0, diffs=[])
-    - [ ] Verify: No files found tests pass (Green)
+- [x] Task: Implement run_format no files found handling `d030fc1`
+    - [x] Return FormatResult(files_checked=0, files_formatted=0, files_needing_format=0, diffs=[])
+    - [x] Verify: No files found tests pass (Green)
 
-- [ ] Task: Refactor and verify run_format
-    - [ ] Review for code duplication, extract helpers if needed
-    - [ ] Run ruff check and black --check on format_runner.py
-    - [ ] Verify format_runner.py coverage >80% line / >70% branch
+- [x] Task: Refactor and verify run_format `d030fc1`
+    - [x] Review for code duplication, extract helpers if needed
+    - [x] Run ruff check and black --check on format_runner.py
+    - [x] Verify format_runner.py coverage >80% line / >70% branch (100% line)
 
-- [ ] Task: Commit Phase 2 changes
-    - [ ] git add and commit: feat(format): Implement FormatResult and run_format function
-    - [ ] Add git note summarizing Phase 2 completion
+- [x] Task: Commit Phase 2 changes `d030fc1`
+    - [x] git add and commit: feat(format): Implement FormatResult and run_format function
+    - [x] Add git note summarizing Phase 2 completion
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: FormatResult Dataclass and run_format Function' (Protocol in workflow.md)
 
