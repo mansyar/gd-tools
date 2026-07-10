@@ -6,6 +6,7 @@ import click
 from click.testing import CliRunner
 
 from gd_tools.cli import cli
+from gd_tools.doctor import CheckResult, DoctorResult
 from gd_tools.errors import ConfigError, GUTNotInstalledError, TestFailureError
 from gd_tools.format_runner import FormatResult
 from gd_tools.lint_runner import LintIssue, LintResult
@@ -623,11 +624,61 @@ def test_cli_init_exits_zero_on_success():
     assert result.exit_code == 0
 
 
-def test_doctor_stub_exit_code_2():
-    """Test invoking doctor raises error with exit code 2."""
+def test_cli_doctor_calls_run_doctor():
+    """Test invoking doctor calls run_doctor."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["doctor"])
-    assert result.exit_code == 2
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["doctor"])
+    mock_run.assert_called_once()
+    assert result.exit_code == 0
+
+
+def test_cli_doctor_prints_table():
+    """Test doctor command prints the table with check names."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(
+            checks=[
+                CheckResult(name="Godot Binary", passed=True, message="Found"),
+            ],
+            all_passed=True,
+        )
+        result = runner.invoke(cli, ["doctor"])
+    assert "Godot Binary" in result.output
+
+
+def test_cli_doctor_exits_zero_when_all_pass():
+    """Test doctor exits with code 0 when all checks pass."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(
+            checks=[
+                CheckResult(name="Test", passed=True, message="OK"),
+            ],
+            all_passed=True,
+        )
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 0
+
+
+def test_cli_doctor_exits_one_when_any_fails():
+    """Test doctor exits with code 1 when any check fails."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(
+            checks=[
+                CheckResult(
+                    name="Test",
+                    passed=False,
+                    message="Failed",
+                    severity="critical",
+                ),
+            ],
+            all_passed=False,
+        )
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 1
 
 
 def test_coverage_report_stub_exit_code_2():

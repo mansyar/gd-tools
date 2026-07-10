@@ -8,6 +8,7 @@ from rich.syntax import Syntax
 
 from . import __version__
 from .config import load_config
+from .doctor import format_doctor_table, run_doctor
 from .errors import ConfigError, GdToolsError, TestFailureError
 from .format_runner import run_format
 from .init import run_init
@@ -79,7 +80,11 @@ def init(non_interactive):
 @cli.command()
 def doctor():
     """Check the environment for required tools."""
-    raise NotImplementedError
+    result = run_doctor()
+    console = Console()
+    console.print(format_doctor_table(result))
+    ctx = click.get_current_context()
+    ctx.exit(0 if result.all_passed else 1)
 
 
 @cli.command()
