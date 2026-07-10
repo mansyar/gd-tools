@@ -1,0 +1,8 @@
+{
+  "track_id": "test_runner_20260710",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-10T15:54:55Z",
+  "updated_at": "2026-07-10T15:54:55Z",
+  "description": "Track 6: Test Runner (GUT Wrapper) — orchestrate GUT via Godot CLI, parse JUnit XML, return structured results"
+}
