@@ -1,0 +1,27 @@
+Phase 6 Checkpoint Verification Report
+
+Phase: Phase 6 - Integration Tests
+Checkpoint SHA: 1f542a2
+Previous checkpoint: 09a97d3 (Phase 5)
+
+Changed files since 09a97d3:
+  - tests/integration/test_init_integration.py (+175 lines): 3 new integration tests
+  - conductor/tracks/init_20260710/plan.md: Task status updates
+
+Automated Verification:
+  - Tests: 328 passed, 7 skipped (3 new integration tests)
+  - Overall coverage: 98.29%
+  - ruff check: PASSED
+  - black --check: PASSED
+
+Manual Verification Plan:
+  1. Review test_init_fresh_project — full flow, all artifacts verified
+  2. Review test_init_project_with_existing_gut — no download, plugin still enabled
+  3. Review test_init_idempotent — no duplicates after double run
+
+User Confirmation: Yes - checkpoint approved
+
+Tests Summary:
+  - test_init_fresh_project: Mocks find_project_root, find_godot, requests.get. Creates fake GUT zip. Verifies all artifacts (addons/gut/, coverage addon, .gutconfig.json, gd-tools.toml, gdlintrc, gdformatrc, .gd-tools/, .gitignore, project.godot with GUT plugin enabled)
+  - test_init_project_with_existing_gut: Pre-installs GUT, verifies requests.get NOT called, plugin still enabled
+  - test_init_idempotent: Runs init twice, verifies no duplicate entries in project.godot, .gitignore, .gutconfig.json
