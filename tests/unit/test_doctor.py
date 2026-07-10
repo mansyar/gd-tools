@@ -5,6 +5,7 @@ checks, run_doctor orchestration, and format_doctor_table output.
 See TDD S3.6 and PRD S8.
 """
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,6 +18,7 @@ from gd_tools.doctor import (
     check_godot_version,
     check_gdtoolkit,
     check_gut_installed,
+    check_gut_version,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -275,3 +277,62 @@ def test_check_gut_installed_critical_severity(tmp_path):
     assert result.severity == "critical"
     assert "gd-tools init" in result.fix_hint
     assert "github.com/bitwes/Gut" in result.fix_hint
+
+
+# --- check_gut_version ---
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.get_gut_version_for_godot")
+@patch("gd_tools.doctor.get_installed_gut_version")
+def test_check_gut_version_passes_when_matches(
+    mock_get_installed, mock_get_expected
+):
+    """Test check_gut_version passes when installed matches expected."""
+    mock_get_installed.return_value = "9.5.0"
+    mock_get_expected.return_value = "9.5.0"
+    result = check_gut_version(Path("/fake"), "4.5.0")
+    assert result.passed is True
+    assert result.name == "GUT Version"
+    assert "9.5.0" in result.message
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.get_gut_version_for_godot")
+@patch("gd_tools.doctor.get_installed_gut_version")
+def test_check_gut_version_fails_as_warning_when_mismatch(
+    mock_get_installed, mock_get_expected
+):
+    """Test check_gut_version fails as warning when version mismatch."""
+    mock_get_installed.return_value = "9.4.0"
+    mock_get_expected.return_value = "9.5.0"
+    result = check_gut_version(Path("/fake"), "4.5.0")
+    assert result.passed is False
+    assert "9.4.0" in result.message
+    assert "9.5.0" in result.message
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.get_gut_version_for_godot")
+@patch("gd_tools.doctor.get_installed_gut_version")
+def test_check_gut_version_warning_severity(
+    mock_get_installed, mock_get_expected
+):
+    """Test check_gut_version has warning severity on failure."""
+    mock_get_installed.return_value = "9.4.0"
+    mock_get_expected.return_value = "9.5.0"
+    result = check_gut_version(Path("/fake"), "4.5.0")
+    assert result.severity == "warning"
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.get_gut_version_for_godot")
+@patch("gd_tools.doctor.get_installed_gut_version")
+def test_check_gut_version_passes_when_version_unknown(
+    mock_get_installed, mock_get_expected
+):
+    """Test check_gut_version passes when installed version is unknown."""
+    mock_get_installed.return_value = None
+    mock_get_expected.return_value = "9.5.0"
+    result = check_gut_version(Path("/fake"), "4.5.0")
+    assert result.passed is True

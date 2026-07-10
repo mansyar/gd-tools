@@ -10,7 +10,13 @@ from pathlib import Path
 import subprocess
 
 from .config import GdToolsConfig
-from .godot import GodotNotFoundError, check_version_compatible, find_godot
+from .godot import (
+    GodotNotFoundError,
+    check_version_compatible,
+    find_godot,
+    get_gut_version_for_godot,
+)
+from .init import get_installed_gut_version
 
 
 @dataclass
@@ -179,4 +185,41 @@ def check_gut_installed(project_root: Path) -> CheckResult:
             "or see https://github.com/bitwes/Gut."
         ),
         severity="critical",
+    )
+
+
+def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
+    """Check that the installed GUT version matches the expected version.
+
+    Args:
+        project_root: Path to the Godot project root.
+        godot_version: The detected Godot version string.
+
+    Returns:
+        CheckResult indicating whether the GUT version is compatible.
+    """
+    installed = get_installed_gut_version(project_root)
+    if installed is None:
+        return CheckResult(
+            name="GUT Version",
+            passed=True,
+            message="GUT version unknown - cannot verify",
+        )
+    expected = get_gut_version_for_godot(godot_version)
+    if installed == expected:
+        return CheckResult(
+            name="GUT Version",
+            passed=True,
+            message=f"GUT version {installed} matches expected {expected}",
+        )
+    return CheckResult(
+        name="GUT Version",
+        passed=False,
+        message=(
+            f"GUT version {installed} does not match " f"expected {expected}"
+        ),
+        fix_hint=(
+            f"Install GUT version {expected} " f"for Godot {godot_version}"
+        ),
+        severity="warning",
     )
