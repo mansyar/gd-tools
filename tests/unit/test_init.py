@@ -24,6 +24,7 @@ from gd_tools.init import (
     get_installed_gut_version,
     install_coverage_addon,
     install_gut,
+    print_summary,
     update_gutconfig,
 )
 
@@ -623,3 +624,34 @@ def test_create_data_dir_creates_gitignore_if_missing(tmp_path: Path):
     assert gitignore.exists()
     content = gitignore.read_text(encoding="utf-8")
     assert ".gd-tools/" in content
+
+
+# --- print_summary ---
+
+
+def test_print_summary_lists_actions(tmp_path: Path):
+    """Test print_summary lists all actions taken."""
+    actions = [
+        "Created .gd-tools/ directory",
+        "Installed GUT v9.5.0",
+        "Enabled GUT plugin in project.godot",
+    ]
+    with patch("gd_tools.init.console.print") as mock_print:
+        print_summary(tmp_path, actions)
+    # Verify all actions appear in the output
+    printed_text = " ".join(
+        str(call.args[0]) for call in mock_print.call_args_list
+    )
+    for action in actions:
+        assert action in printed_text
+
+
+def test_print_summary_prints_next_steps(tmp_path: Path):
+    """Test print_summary prints next steps guidance."""
+    actions = ["Created .gd-tools/ directory"]
+    with patch("gd_tools.init.console.print") as mock_print:
+        print_summary(tmp_path, actions)
+    printed_text = " ".join(
+        str(call.args[0]) for call in mock_print.call_args_list
+    )
+    assert "gd-tools test" in printed_text

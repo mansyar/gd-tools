@@ -473,3 +473,25 @@ def create_data_dir(project_root: Path) -> None:
                 f.write(f"\n{entry}\n")
     else:
         gitignore.write_text(f"{entry}\n", encoding="utf-8")
+
+
+def print_summary(project_root: Path, actions: list[str]) -> None:
+    """Print a Rich-formatted summary of init actions and next steps.
+
+    Lists all actions taken during initialization and prints guidance
+    on what the user should do next (e.g., run tests).
+
+    Args:
+        project_root: Path to the Godot project root.
+        actions: List of action descriptions to display.
+    """
+    console.print("\n[bold green]gd-tools init complete![/bold green]\n")
+    console.print("[bold]Actions taken:[/bold]")
+    for action in actions:
+        console.print(f"  • {action}")
+    console.print("\n[bold]Next steps:[/bold]")
+    console.print("  • Run [cyan]gd-tools test[/cyan] to execute tests")
+    console.print("  • Run [cyan]gd-tools lint[/cyan] to check code style")
+    console.print(
+        "  • Run [cyan]gd-tools format[/cyan] to format GDScript files"
+    )
