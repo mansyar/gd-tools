@@ -10,6 +10,7 @@ from . import __version__
 from .config import load_config
 from .errors import ConfigError, GdToolsError, TestFailureError
 from .format_runner import run_format
+from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .test_runner import run_tests
 
@@ -64,7 +65,15 @@ def cli():
 )
 def init(non_interactive):
     """Initialize a new gd-tools configuration."""
-    raise NotImplementedError
+    try:
+        run_init(non_interactive=non_interactive)
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
+
+    ctx = click.get_current_context()
+    ctx.exit(0)
 
 
 @cli.command()

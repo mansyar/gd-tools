@@ -597,11 +597,30 @@ def test_format_no_files_found():
     assert "No .gd files found" in result.output
 
 
-def test_init_stub_exit_code_2():
-    """Test invoking init raises error with exit code 2."""
+def test_cli_init_calls_run_init():
+    """Test invoking init calls run_init."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["init"])
-    assert result.exit_code == 2
+    with patch("gd_tools.cli.run_init") as mock_run:
+        result = runner.invoke(cli, ["init"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once()
+
+
+def test_cli_init_passes_non_interactive_flag():
+    """Test invoking init with --non-interactive passes the flag."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_init") as mock_run:
+        result = runner.invoke(cli, ["init", "--non-interactive"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(non_interactive=True)
+
+
+def test_cli_init_exits_zero_on_success():
+    """Test init exits with code 0 on success."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_init"):
+        result = runner.invoke(cli, ["init"])
+    assert result.exit_code == 0
 
 
 def test_doctor_stub_exit_code_2():
