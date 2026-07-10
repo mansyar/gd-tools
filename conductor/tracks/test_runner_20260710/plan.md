@@ -74,21 +74,21 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
 
-- [ ] Task: Implement `parse_junit_xml()` — JUnit XML parsing with junitparser
-    - [ ] Create fixture JUnit XML file in `tests/fixtures/junit/` (valid XML with pass/fail/skip test cases)
-    - [ ] Write failing test: parse valid JUnit XML → correct totals (total/passed/failed/skipped)
-    - [ ] Write failing test: parse valid JUnit XML → correct per-test details (name, suite, status, message, duration)
-    - [ ] Write failing test: missing JUnit XML file → raises `GdToolsError` (exit code 2) with clear message
-    - [ ] Write failing test: malformed/unparseable JUnit XML → raises `GdToolsError` (exit code 2)
-    - [ ] Write failing test: empty test suite (0 tests) → returns zeroed TestResult fields
-    - [ ] Implement `parse_junit_xml(path: Path) -> tuple[int, int, int, int, float, list[TestDetail]]` in `test_runner.py`
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
-    - [ ] Run `ruff check src/ tests/ && black --check src/ tests/`
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Commit with message `feat(test_runner): Implement JUnit XML parsing with junitparser`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Implement `parse_junit_xml()` — JUnit XML parsing with junitparser (a08f185)
+    - [x] Create fixture JUnit XML file in `tests/fixtures/junit/` (valid XML with pass/fail/skip test cases)
+    - [x] Write failing test: parse valid JUnit XML → correct totals (total/passed/failed/skipped)
+    - [x] Write failing test: parse valid JUnit XML → correct per-test details (name, suite, status, message, duration)
+    - [x] Write failing test: missing JUnit XML file → raises `GdToolsError` (exit code 2) with clear message
+    - [x] Write failing test: malformed/unparseable JUnit XML → raises `GdToolsError` (exit code 2)
+    - [x] Write failing test: empty test suite (0 tests) → returns zeroed TestResult fields
+    - [x] Implement `parse_junit_xml(path: Path) -> tuple[int, int, int, int, float, list[TestDetail]]` in `test_runner.py`
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
+    - [x] Run `ruff check src/ tests/ && black --check src/ tests/`
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Commit with message `feat(test_runner): Implement JUnit XML parsing with junitparser`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 
 - [ ] Task: Conductor - User Manual Verification 'Core Functions' (Protocol in workflow.md)
 
