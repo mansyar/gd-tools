@@ -48,11 +48,11 @@
 
 ## Phase 3: GUT and Project Configuration Checks
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Implement `check_gut_installed(project_root: Path) -> CheckResult`
+- [x] Task: Implement `check_gut_installed(project_root: Path) -> CheckResult` [98e4386]
     - [ ] Write failing tests: `test_check_gut_installed_passes_when_present`, `test_check_gut_installed_fails_when_absent`, `test_check_gut_installed_critical_severity`
     - [ ] Implement `check_gut_installed()` — check if `project_root/addons/gut/gut.gd` exists, return `CheckResult` with fix hint "Run `gd-tools init` to install GUT, or see https://github.com/bitwes/Gut."
     - [ ] Verify coverage >80% line, >70% branch
