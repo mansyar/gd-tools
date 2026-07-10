@@ -1,0 +1,18 @@
+Task: Write integration tests for full init flow
+
+Verification Report:
+- Tests: 328 passed, 7 skipped (3 new integration tests)
+- Overall coverage: 98.29%
+- ruff check: PASSED
+- black --check: PASSED (after reformatting)
+
+Tests written:
+1. test_init_fresh_project — full flow on clean tmp_path with mocked Godot/GUT download, verifies all artifacts created (addons/gut/, addons/gd-tools-coverage/, .gutconfig.json, gd-tools.toml, gdlintrc, gdformatrc, .gd-tools/, .gitignore, project.godot with GUT plugin enabled)
+2. test_init_project_with_existing_gut — GUT pre-installed, verifies requests.get NOT called, plugin still enabled, other artifacts created
+3. test_init_idempotent — runs init twice, verifies no duplicate entries in project.godot, .gitignore, .gutconfig.json
+
+Mocking strategy:
+- find_project_root -> tmp_path (no real project.godot in cwd)
+- find_godot -> GodotInfo(path='/fake/godot', version='4.5.1', is_valid=True) (no real Godot binary)
+- requests.get -> mock response with fake GUT zip (no network call)
+- All file I/O, config generation, plugin enabling run for real
