@@ -1,0 +1,20 @@
+TASK SUMMARY: check_gut_installed
+==================================
+Task: Implement check_gut_installed(project_root: Path) -> bool
+Commit: 714164c2cf7a1a34863baedcb802c4a4d0ad5d8f
+
+Changes:
+- Added check_gut_installed() to src/gd_tools/init.py
+- Added 2 unit tests to tests/unit/test_init.py
+
+Function:
+- check_gut_installed(project_root: Path) -> bool
+- Checks if addons/gut/gut.gd exists in the project root
+- Returns True if present, False otherwise
+
+Test Results:
+- 287 passed, 7 skipped
+- init.py: 100% coverage
+- Overall: 99.53%
+
+Why: Part of Phase 2 (GUT Installation). This function is used by install_gut() to determine if GUT needs to be downloaded and installed.
