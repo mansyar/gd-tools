@@ -58,8 +58,8 @@
 
 ## Phase 4: CLI Integration
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
-- [ ] Task: Update `lint` command in `src/gd_tools/cli.py`
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
+- [x] Task: Update `lint` command in `src/gd_tools/cli.py` `f591dc4`
     - [ ] Write tests for `lint` command with default path (no path arg → defaults to `.`)
     - [ ] Write tests for `lint` command with `--report-format json`
     - [ ] Write tests for `lint` command with `--report-format text` (default)
