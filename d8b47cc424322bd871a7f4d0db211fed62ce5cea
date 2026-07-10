@@ -1,0 +1,33 @@
+Task: Integration tests with fixture .gd files
+
+Summary:
+Created fixture .gd files in tests/fixtures/ and wrote 4 integration tests
+in tests/integration/test_lint_integration.py that test the full CLI lint
+flow end-to-end (load_config mocked, run_lint and formatters are real).
+
+Fixture files created:
+- tests/fixtures/clean.gd — clean GDScript file (extends Node)
+- tests/fixtures/bad.gd — file with function-name lint error
+- tests/fixtures/broken.gd — file with syntax error (missing function name)
+- tests/fixtures/addons/plugin.gd — file in excluded directory (addons/)
+
+Integration tests written:
+1. test_lint_full_run_text_output — full lint run with text output on project
+   with clean + bad files; verifies table headers, function-name rule, summary
+   line, and exit code 1.
+2. test_lint_full_run_json_output — full lint run with JSON output; verifies
+   JSON schema (files_checked, errors, warnings), rule name, and exit code 1.
+3. test_lint_excludes_respected — verifies files in addons/ directory are not
+   linted; only clean.gd checked, exit code 0.
+4. test_lint_fix_flag_noop — verifies --fix flag prints warning, does not
+   modify files, and lint still runs (exit code 1 for bad file).
+
+Test results: 190 tests passed, 99.35% total coverage.
+Quality gates: ruff OK, black OK, coverage OK.
+
+Files created:
+- tests/fixtures/clean.gd
+- tests/fixtures/bad.gd
+- tests/fixtures/broken.gd
+- tests/fixtures/addons/plugin.gd
+- tests/integration/test_lint_integration.py
