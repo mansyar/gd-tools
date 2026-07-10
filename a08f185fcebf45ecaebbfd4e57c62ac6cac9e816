@@ -1,0 +1,22 @@
+Task: Implement parse_junit_xml() - JUnit XML parsing with junitparser
+
+Files changed:
+- src/gd_tools/test_runner.py: Added parse_junit_xml() function + JUnitXml/GdToolsError imports
+- tests/unit/test_test_runner.py: Added 5 tests for parse_junit_xml + updated imports
+- tests/fixtures/junit/sample_results.xml: New fixture with pass/fail/skip test cases
+
+Key decisions:
+- Used JUnitXml.fromfile() for file parsing (not .parse() which doesn't exist)
+- Counts totals from individual test cases rather than suite-level attributes for accuracy
+- Treats both is_failure and is_error as status='fail' (JUnit XML distinguishes assertion failures vs errors)
+- Uses tc.classname for suite name (falls back to suite.name if classname is None)
+- Handles tc.time=None by defaulting to 0.0
+- Handles tc.result being empty or message being None by defaulting to empty string
+- Catches broad Exception for XML parsing errors (malformed XML can fail in many ways)
+- Checks file existence before parsing for clear error messages
+
+Verification:
+- All 249 tests pass (24 test_runner + 225 existing)
+- test_runner.py coverage: 100% (81 stmts, 0 missed)
+- ruff check: passed
+- black --check: passed
