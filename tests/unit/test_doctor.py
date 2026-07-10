@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from rich.console import Console
 
 from gd_tools.config import GdToolsConfig
 from gd_tools.doctor import (
@@ -24,6 +25,7 @@ from gd_tools.doctor import (
     check_gd_tools_toml,
     check_autoload,
     run_doctor,
+    format_doctor_table,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -657,3 +659,108 @@ def test_run_doctor_handles_godot_not_found_for_version(_mock_doctor_deps):
     result = run_doctor()
     assert isinstance(result, DoctorResult)
     assert len(result.checks) == 9
+
+
+# --- format_doctor_table ---
+
+
+def _render_table(table):
+    """Render a rich Table to string for testing."""
+    console = Console(width=120)
+    with console.capture() as capture:
+        console.print(table)
+    return capture.get()
+
+
+@pytest.mark.unit
+def test_format_doctor_table_has_4_columns():
+    """Test format_doctor_table creates a table with 4 columns."""
+    result = DoctorResult(checks=[], all_passed=True)
+    table = format_doctor_table(result)
+    assert len(table.columns) == 4
+
+
+@pytest.mark.unit
+def test_format_doctor_table_shows_checkmark_for_pass():
+    """Test format_doctor_table shows checkmark for passing checks."""
+    result = DoctorResult(
+        checks=[
+            CheckResult(name="Test Check", passed=True, message="All good"),
+        ],
+        all_passed=True,
+    )
+    table = format_doctor_table(result)
+    output = _render_table(table)
+    assert "\u2713" in output
+
+
+@pytest.mark.unit
+def test_format_doctor_table_shows_x_for_critical_fail():
+    """Test format_doctor_table shows X for critical failures."""
+    result = DoctorResult(
+        checks=[
+            CheckResult(
+                name="Test Check",
+                passed=False,
+                message="Failed",
+                severity="critical",
+            ),
+        ],
+        all_passed=False,
+    )
+    table = format_doctor_table(result)
+    output = _render_table(table)
+    assert "\u2717" in output
+
+
+@pytest.mark.unit
+def test_format_doctor_table_shows_warning_for_warning_fail():
+    """Test format_doctor_table shows warning symbol for warning failures."""
+    result = DoctorResult(
+        checks=[
+            CheckResult(
+                name="Test Check",
+                passed=False,
+                message="Warning issue",
+                severity="warning",
+            ),
+        ],
+        all_passed=False,
+    )
+    table = format_doctor_table(result)
+    output = _render_table(table)
+    assert "\u26a0" in output
+
+
+@pytest.mark.unit
+def test_format_doctor_table_includes_fix_hints():
+    """Test format_doctor_table includes fix hints for failures."""
+    result = DoctorResult(
+        checks=[
+            CheckResult(
+                name="Test Check",
+                passed=False,
+                message="Failed",
+                fix_hint="Run this command to fix",
+                severity="critical",
+            ),
+        ],
+        all_passed=False,
+    )
+    table = format_doctor_table(result)
+    output = _render_table(table)
+    assert "Run this command to fix" in output
+
+
+@pytest.mark.unit
+def test_format_doctor_table_shows_summary_line():
+    """Test format_doctor_table shows X/9 checks passed summary."""
+    checks = [
+        CheckResult(name=f"Check {i}", passed=True, message="OK")
+        for i in range(9)
+    ]
+    result = DoctorResult(checks=checks, all_passed=True)
+    table = format_doctor_table(result)
+    output = _render_table(table)
+    assert "9/9" in output
+    assert "passed" in output.lower()

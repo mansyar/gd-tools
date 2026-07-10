@@ -11,6 +11,8 @@ import json
 import subprocess
 import tomllib
 
+from rich.table import Table
+
 from .config import GdToolsConfig, find_project_root, load_config
 from .errors import ConfigError
 from .godot import (
@@ -448,3 +450,40 @@ def run_doctor() -> DoctorResult:
 
     all_passed = all(c.passed for c in checks)
     return DoctorResult(checks=checks, all_passed=all_passed)
+
+
+def format_doctor_table(result: DoctorResult) -> Table:
+    """Build a rich Table from doctor check results.
+
+    Creates a color-coded table with Check, Status, Message, and
+    Fix Hint columns. Passing checks show a green checkmark, critical
+    failures show a red X, and warning failures show a yellow warning
+    symbol. A summary line shows the pass count.
+
+    Args:
+        result: The DoctorResult to format.
+
+    Returns:
+        A rich.table.Table ready for console printing.
+    """
+    table = Table(title="gd-tools Doctor")
+    table.add_column("Check", style="cyan")
+    table.add_column("Status")
+    table.add_column("Message")
+    table.add_column("Fix Hint")
+
+    passed_count = 0
+    for check in result.checks:
+        if check.passed:
+            status = "[green]\u2713[/green]"
+            passed_count += 1
+        elif check.severity == "critical":
+            status = "[red]\u2717[/red]"
+        else:
+            status = "[yellow]\u26a0[/yellow]"
+        table.add_row(check.name, status, check.message, check.fix_hint)
+
+    total = len(result.checks)
+    table.caption = f"{passed_count}/{total} checks passed"
+
+    return table
