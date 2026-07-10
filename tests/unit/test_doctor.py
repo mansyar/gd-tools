@@ -5,12 +5,14 @@ checks, run_doctor orchestration, and format_doctor_table output.
 See TDD S3.6 and PRD S8.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from gd_tools.doctor import CheckResult, DoctorResult
-
+from gd_tools.config import GdToolsConfig
+from gd_tools.doctor import CheckResult, DoctorResult, check_godot_binary
+from gd_tools.errors import GodotNotFoundError
+from gd_tools.godot import GodotInfo
 
 # --- CheckResult dataclass ---
 
@@ -91,3 +93,44 @@ def test_doctor_result_empty_checks():
     result = DoctorResult(checks=[], all_passed=True)
     assert result.checks == []
     assert result.all_passed is True
+
+
+# --- check_godot_binary ---
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.find_godot")
+def test_check_godot_binary_passes_when_found(mock_find_godot):
+    """Test check_godot_binary passes when Godot binary is found."""
+    mock_find_godot.return_value = GodotInfo(
+        path="/usr/bin/godot", version="4.6.2", is_valid=True
+    )
+    config = GdToolsConfig()
+    result = check_godot_binary(config)
+    assert result.passed is True
+    assert result.name == "Godot Binary"
+    assert "4.6.2" in result.message
+    assert "/usr/bin/godot" in result.message
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.find_godot")
+def test_check_godot_binary_fails_when_not_found(mock_find_godot):
+    """Test check_godot_binary fails when Godot binary is not found."""
+    mock_find_godot.side_effect = GodotNotFoundError("Godot not found")
+    config = GdToolsConfig()
+    result = check_godot_binary(config)
+    assert result.passed is False
+    assert result.name == "Godot Binary"
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.find_godot")
+def test_check_godot_binary_critical_severity(mock_find_godot):
+    """Test check_godot_binary has critical severity on failure."""
+    mock_find_godot.side_effect = GodotNotFoundError("Godot not found")
+    config = GdToolsConfig()
+    result = check_godot_binary(config)
+    assert result.severity == "critical"
+    assert "Install Godot 4.5+" in result.fix_hint
+    assert "godotengine.org" in result.fix_hint

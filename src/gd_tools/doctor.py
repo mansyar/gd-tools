@@ -7,6 +7,9 @@ fix hints. See TDD \u00a73.6 and PRD \u00a78.
 
 from dataclasses import dataclass
 
+from .config import GdToolsConfig
+from .godot import GodotNotFoundError, find_godot
+
 
 @dataclass
 class CheckResult:
@@ -38,3 +41,36 @@ class DoctorResult:
 
     checks: list[CheckResult]
     all_passed: bool
+
+
+# --- Godot and External Tool Checks ---
+
+
+def check_godot_binary(config: GdToolsConfig) -> CheckResult:
+    """Check that a Godot binary is found via the detection chain.
+
+    Args:
+        config: The gd-tools configuration containing Godot settings.
+
+    Returns:
+        CheckResult indicating whether the Godot binary was found.
+    """
+    try:
+        info = find_godot(config.godot)
+    except GodotNotFoundError:
+        return CheckResult(
+            name="Godot Binary",
+            passed=False,
+            message="Godot binary not found",
+            fix_hint=(
+                "Install Godot 4.5+ from "
+                "https://godotengine.org and set GODOT_BIN "
+                "or add to PATH."
+            ),
+            severity="critical",
+        )
+    return CheckResult(
+        name="Godot Binary",
+        passed=True,
+        message=f"Godot {info.version} at {info.path}",
+    )
