@@ -6,9 +6,10 @@ import click
 from click.testing import CliRunner
 
 from gd_tools.cli import cli
-from gd_tools.errors import ConfigError
+from gd_tools.errors import ConfigError, GUTNotInstalledError, TestFailureError
 from gd_tools.format_runner import FormatResult
 from gd_tools.lint_runner import LintIssue, LintResult
+from gd_tools.test_runner import TestResult
 
 
 def test_cli_is_group():
@@ -112,10 +113,231 @@ def test_coverage_show_help_shows_min():
     assert "--min" in result.output
 
 
-def test_test_stub_exit_code_2():
-    """Test invoking test raises error with exit code 2."""
+def test_test_config_error_exit_code_2():
+    """Test test exits with code 2 when config loading fails."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["test"])
+    with patch(
+        "gd_tools.cli.load_config",
+        side_effect=ConfigError("project.godot not found"),
+    ):
+        result = runner.invoke(cli, ["test"])
+    assert result.exit_code == 2
+
+
+def test_test_calls_run_tests_with_correct_args():
+    """Test test command calls run_tests with config and default flags."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=3,
+        passed=3,
+        failed=0,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["test"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(
+        mock_config,
+        coverage=False,
+        min_percent=None,
+        suite=None,
+        test_name=None,
+        junit_xml=None,
+        no_exit_code=False,
+    )
+
+
+def test_test_suite_flag():
+    """Test --suite passes suite to run_tests."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["test", "--suite", "MySuite"])
+    assert result.exit_code == 0
+    _, kwargs = mock_run.call_args
+    assert kwargs["suite"] == "MySuite"
+
+
+def test_test_name_flag():
+    """Test --test passes test_name to run_tests."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["test", "--test", "MyTest"])
+    assert result.exit_code == 0
+    _, kwargs = mock_run.call_args
+    assert kwargs["test_name"] == "MyTest"
+
+
+def test_test_coverage_flag():
+    """Test --coverage passes coverage=True to run_tests."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["test", "--coverage"])
+    assert result.exit_code == 0
+    _, kwargs = mock_run.call_args
+    assert kwargs["coverage"] is True
+
+
+def test_test_junit_xml_flag():
+    """Test --junit-xml passes junit_xml to run_tests."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["test", "--junit-xml", "/path/to.xml"])
+    assert result.exit_code == 0
+    _, kwargs = mock_run.call_args
+    assert kwargs["junit_xml"] == "/path/to.xml"
+
+
+def test_test_no_exit_code_flag():
+    """Test --no-exit-code passes no_exit_code=True to run_tests."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["test", "--no-exit-code"])
+    assert result.exit_code == 0
+    _, kwargs = mock_run.call_args
+    assert kwargs["no_exit_code"] is True
+
+
+def test_test_all_pass_exit_code_0():
+    """Test test command exits 0 when all tests pass."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=3,
+        passed=3,
+        failed=0,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["test"])
+    assert result.exit_code == 0
+
+
+def test_test_failures_exit_code_1():
+    """Test test command exits 1 when tests fail."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_tests",
+            side_effect=TestFailureError("2 test(s) failed"),
+        ),
+    ):
+        result = runner.invoke(cli, ["test"])
+    assert result.exit_code == 1
+
+
+def test_test_gut_not_installed_exit_code_2():
+    """Test test command exits 2 when GUT is not installed."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_tests",
+            side_effect=GUTNotInstalledError("GUT is not installed"),
+        ),
+    ):
+        result = runner.invoke(cli, ["test"])
     assert result.exit_code == 2
 
 

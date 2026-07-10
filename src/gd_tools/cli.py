@@ -8,9 +8,10 @@ from rich.syntax import Syntax
 
 from . import __version__
 from .config import load_config
-from .errors import ConfigError
+from .errors import ConfigError, GdToolsError, TestFailureError
 from .format_runner import run_format
 from .lint_runner import format_lint_json, format_lint_text, run_lint
+from .test_runner import run_tests
 
 
 class GdToolsGroup(click.Group):
@@ -85,7 +86,34 @@ def doctor():
 )
 def test(coverage, min, suite, test, junit_xml, no_exit_code):
     """Run GDScript tests using GUT."""
-    raise NotImplementedError
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        run_tests(
+            config,
+            coverage=coverage,
+            min_percent=min,
+            suite=suite,
+            test_name=test,
+            junit_xml=junit_xml,
+            no_exit_code=no_exit_code,
+        )
+    except TestFailureError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
+
+    ctx = click.get_current_context()
+    ctx.exit(0)
 
 
 @cli.command()
