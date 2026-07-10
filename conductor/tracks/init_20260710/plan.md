@@ -7,14 +7,14 @@
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Set up `init.py` module skeleton and import reusable functions
-    - [ ] Create `src/gd_tools/init.py` with module docstring
-    - [ ] Import `find_project_root` from `config` (reuse, no new implementation)
-    - [ ] Import `load_config`, `save_config`, `generate_gdlintrc`, `generate_gdformatrc` from `config`
-    - [ ] Import `find_godot`, `get_gut_version_for_godot`, `GodotInfo` from `godot`
-    - [ ] Import `ConfigError`, `GodotNotFoundError`, `GdToolsError` from `errors`
-    - [ ] Define `GUTCONFIG_TEMPLATE` constant and `GUT_DOWNLOAD_URL` constant
-    - [ ] Run `ruff check src/gd_tools/init.py` — verify no import errors
+- [x] Task: Set up `init.py` module skeleton and import reusable functions (1af60d5)
+    - [x] Create `src/gd_tools/init.py` with module docstring
+    - [x] Import `find_project_root` from `config` (reuse, no new implementation)
+    - [x] Import `load_config`, `save_config`, `generate_gdlintrc`, `generate_gdformatrc` from `config`
+    - [x] Import `find_godot`, `get_gut_version_for_godot`, `GodotInfo` from `godot`
+    - [x] Import `ConfigError`, `GodotNotFoundError`, `GdToolsError` from `errors`
+    - [x] Define `GUTCONFIG_TEMPLATE` constant and `GUT_DOWNLOAD_URL` constant
+    - [x] Run `ruff check src/gd_tools/init.py` — verify no import errors
 
 - [ ] Task: Implement `detect_godot_version(config: GdToolsConfig) -> str`
     - [ ] Write failing tests: `test_detect_godot_version_returns_version`, `test_detect_godot_version_raises_godot_not_found`, `test_detect_godot_version_warns_if_invalid_version`
