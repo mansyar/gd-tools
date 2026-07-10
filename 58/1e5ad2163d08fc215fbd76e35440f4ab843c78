@@ -1,0 +1,22 @@
+Task: format_doctor_table(result: DoctorResult) -> Table
+
+Implementation:
+- Added rom rich.table import Table import to doctor.py
+- Implemented format_doctor_table() that builds a rich Table with 4 columns:
+  Check (cyan), Status, Message, Fix Hint
+- Status symbols: green checkmark for pass, red X for critical fail,
+  yellow warning symbol for warning fail
+- Caption shows passed/total count (e.g., "9/9 checks passed")
+
+Tests (6 new, total 60 in test_doctor.py):
+- test_format_doctor_table_has_4_columns
+- test_format_doctor_table_shows_checkmark_for_pass
+- test_format_doctor_table_shows_x_for_critical_fail
+- test_format_doctor_table_shows_warning_for_warning_fail
+- test_format_doctor_table_includes_fix_hints
+- test_format_doctor_table_shows_summary_line
+
+Coverage: doctor.py 100% (142 statements, 0 missed)
+Overall: 383 passed, 7 skipped, 98.55%
+ruff: All checks passed
+black: 2 files unchanged
