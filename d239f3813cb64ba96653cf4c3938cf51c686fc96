@@ -1,0 +1,28 @@
+Phase 2 Checkpoint: GUT Installation
+
+## Tasks Completed
+1. check_gut_installed(project_root) -> bool — checks addons/gut/gut.gd existence
+2. get_installed_gut_version(project_root) -> str | None — parses addons/gut/plugin.cfg
+3. download_gut(version, dest) -> Path — downloads GUT zip from GitHub, fail-fast with manual instructions
+4. extract_gut(zip_path, project_root) -> None — extracts to temp, copies addons/gut/, cleans up
+5. install_gut(project_root, godot_version, non_interactive) -> None — orchestrates check/prompt/download/extract, version mismatch warning
+6. enable_gut_plugin(project_root) -> None — text-based project.godot edit, idempotent
+
+## Changed Files Since c2718a2 (Phase 1 checkpoint)
+- src/gd_tools/init.py: +224 lines (6 functions, GUT_PLUGIN_PATH constant, import click)
+- tests/unit/test_init.py: +291 lines (14 new tests, total 20 in file)
+
+## Automated Verification
+- 302 passed, 7 skipped, 98.76% overall coverage
+- init.py: 94.2% line (104 stmts, 6 missed), 76.3% branch (38 branches, 9 missed)
+- ruff check: All checks passed
+- black --check: All files unchanged
+
+## Manual Verification Plan
+1. Review init.py — verify 6 new functions match spec FR-3 through FR-5
+2. Review test_init.py — verify tests cover interactive/non-interactive, idempotency, version mismatch, content preservation
+3. Run full test suite
+4. Run ruff check and black --check
+
+## User Confirmation
+User approved Phase 2 checkpoint.
