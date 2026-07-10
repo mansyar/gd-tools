@@ -6,6 +6,7 @@ fix hints. See TDD \u00a73.6 and PRD \u00a78.
 """
 
 from dataclasses import dataclass
+import subprocess
 
 from .config import GdToolsConfig
 from .godot import GodotNotFoundError, check_version_compatible, find_godot
@@ -115,4 +116,35 @@ def check_godot_version(config: GdToolsConfig) -> CheckResult:
             "or add to PATH."
         ),
         severity="critical",
+    )
+
+
+def check_gdtoolkit() -> CheckResult:
+    """Check that gdlint and gdformat CLI tools are installed.
+
+    Returns:
+        CheckResult indicating whether both tools are available.
+    """
+    missing = []
+    for tool in ("gdlint", "gdformat"):
+        try:
+            subprocess.run(
+                [tool, "--version"],
+                capture_output=True,
+            )
+        except FileNotFoundError:
+            missing.append(tool)
+
+    if missing:
+        return CheckResult(
+            name="GD Toolkit",
+            passed=False,
+            message=f"Missing tools: {', '.join(missing)}",
+            fix_hint="Install gdtoolkit: pip install gdtoolkit",
+            severity="critical",
+        )
+    return CheckResult(
+        name="GD Toolkit",
+        passed=True,
+        message="gdlint and gdformat are installed",
     )

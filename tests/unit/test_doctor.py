@@ -5,7 +5,7 @@ checks, run_doctor orchestration, and format_doctor_table output.
 See TDD S3.6 and PRD S8.
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,6 +15,7 @@ from gd_tools.doctor import (
     DoctorResult,
     check_godot_binary,
     check_godot_version,
+    check_gdtoolkit,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -195,3 +196,49 @@ def test_check_godot_version_fails_when_godot_not_found(mock_find_godot):
     assert result.passed is False
     assert "not found" in result.message.lower()
     assert result.severity == "critical"
+
+
+# --- check_gdtoolkit ---
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.subprocess.run")
+def test_check_gdtoolkit_passes_when_installed(mock_run):
+    """Test check_gdtoolkit passes when both gdlint and gdformat exist."""
+    mock_run.return_value = MagicMock()
+    result = check_gdtoolkit()
+    assert result.passed is True
+    assert result.name == "GD Toolkit"
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.subprocess.run")
+def test_check_gdtoolkit_fails_when_gdlint_missing(mock_run):
+    """Test check_gdtoolkit fails when gdlint is not installed."""
+    mock_run.side_effect = [FileNotFoundError("gdlint not found"), MagicMock()]
+    result = check_gdtoolkit()
+    assert result.passed is False
+    assert "gdlint" in result.message
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.subprocess.run")
+def test_check_gdtoolkit_fails_when_gdformat_missing(mock_run):
+    """Test check_gdtoolkit fails when gdformat is not installed."""
+    mock_run.side_effect = [
+        MagicMock(),
+        FileNotFoundError("gdformat not found"),
+    ]
+    result = check_gdtoolkit()
+    assert result.passed is False
+    assert "gdformat" in result.message
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.subprocess.run")
+def test_check_gdtoolkit_critical_severity(mock_run):
+    """Test check_gdtoolkit has critical severity on failure."""
+    mock_run.side_effect = FileNotFoundError("gdlint not found")
+    result = check_gdtoolkit()
+    assert result.severity == "critical"
+    assert "pip install gdtoolkit" in result.fix_hint
