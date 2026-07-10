@@ -9,8 +9,10 @@ returns a :class:`TestResult`.
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from junitparser import JUnitXml
+
 from gd_tools.config import TestConfig
-from gd_tools.errors import GUTNotInstalledError
+from gd_tools.errors import GdToolsError, GUTNotInstalledError
 
 
 @dataclass
@@ -151,3 +153,74 @@ def check_gut_installed(project_root: Path) -> None:
         raise GUTNotInstalledError(
             "GUT is not installed. Run `gd-tools init` to install it."
         )
+
+
+def parse_junit_xml(
+    path: Path,
+) -> tuple[int, int, int, int, float, list[TestDetail]]:
+    """Parse a JUnit XML file into structured test results.
+
+    Uses ``junitparser`` to read a JUnit-format XML file (produced by
+    GUT's ``-gjunit_xml_file`` flag) and extract aggregate totals plus
+    per-test details.
+
+    Args:
+        path: Path to the JUnit XML file.
+
+    Returns:
+        A tuple of ``(total, passed, failed, skipped, duration,
+        test_details)`` where ``duration`` is the summed test-case time
+        in seconds and ``test_details`` is a list of
+        :class:`TestDetail` objects.
+
+    Raises:
+        GdToolsError: If the file is missing, empty, or contains
+            malformed XML (exit code 2).
+    """
+    if not path.exists():
+        raise GdToolsError(f"JUnit XML file not found: {path}")
+
+    try:
+        xml = JUnitXml.fromfile(str(path))
+    except Exception as exc:
+        raise GdToolsError(f"Failed to parse JUnit XML file: {path}") from exc
+
+    total = 0
+    passed = 0
+    failed = 0
+    skipped = 0
+    duration = 0.0
+    test_details: list[TestDetail] = []
+
+    for suite in xml:
+        suite_name = suite.name or ""
+        for tc in suite:
+            total += 1
+            tc_time = tc.time if tc.time is not None else 0.0
+            duration += tc_time
+
+            results = tc.result
+            if tc.is_failure or tc.is_error:
+                status = "fail"
+                failed += 1
+            elif tc.is_skipped:
+                status = "skip"
+                skipped += 1
+            else:
+                status = "pass"
+                passed += 1
+
+            message = ""
+            if results and results[0].message:
+                message = str(results[0].message)
+
+            detail = TestDetail(
+                name=tc.name or "",
+                suite=tc.classname or suite_name,
+                status=status,
+                message=message,
+                duration=tc_time,
+            )
+            test_details.append(detail)
+
+    return (total, passed, failed, skipped, duration, test_details)

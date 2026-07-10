@@ -1,0 +1,11 @@
+<testsuites>
+  <testsuite name="TestCalculator" tests="3" failures="1" errors="0" skipped="1" time="0.3">
+    <testcase name="test_addition" classname="TestCalculator" time="0.1" />
+    <testcase name="test_subtraction" classname="TestCalculator" time="0.2">
+      <failure message="Expected 3 but got 2" type="AssertionError">assert 2 == 3</failure>
+    </testcase>
+    <testcase name="test_skipped" classname="TestCalculator" time="0.0">
+      <skipped message="Not implemented yet" />
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -10,12 +10,18 @@ from pathlib import Path
 import pytest
 
 from gd_tools.config import TestConfig
-from gd_tools.errors import GUTNotInstalledError
+from gd_tools.errors import GdToolsError, GUTNotInstalledError
 from gd_tools.test_runner import (
     TestDetail,
     TestResult,
     build_gut_args,
     check_gut_installed,
+    parse_junit_xml,
+)
+
+# Path to the fixture JUnit XML file.
+FIXTURE_JUNIT_XML = (
+    Path(__file__).parent.parent / "fixtures" / "junit" / "sample_results.xml"
 )
 
 # --- TestDetail dataclass ---
@@ -295,3 +301,97 @@ def test_check_gut_installed_missing(tmp_path):
     assert exc_info.value.exit_code == 2
     assert "GUT is not installed" in str(exc_info.value)
     assert "gd-tools init" in str(exc_info.value)
+
+
+# --- parse_junit_xml ---
+
+
+@pytest.mark.unit
+def test_parse_junit_xml_valid_totals():
+    """Test parsing valid JUnit XML returns correct totals."""
+    total, passed, failed, skipped, duration, details = parse_junit_xml(
+        FIXTURE_JUNIT_XML
+    )
+    assert total == 3
+    assert passed == 1
+    assert failed == 1
+    assert skipped == 1
+    assert duration == pytest.approx(0.3)
+    assert len(details) == 3
+
+
+@pytest.mark.unit
+def test_parse_junit_xml_valid_details():
+    """Test parsing valid JUnit XML returns correct per-test details."""
+    _, _, _, _, _, details = parse_junit_xml(FIXTURE_JUNIT_XML)
+
+    # First test: passing
+    assert details[0].name == "test_addition"
+    assert details[0].suite == "TestCalculator"
+    assert details[0].status == "pass"
+    assert details[0].message == ""
+    assert details[0].duration == pytest.approx(0.1)
+
+    # Second test: failing
+    assert details[1].name == "test_subtraction"
+    assert details[1].suite == "TestCalculator"
+    assert details[1].status == "fail"
+    assert "Expected 3 but got 2" in details[1].message
+    assert details[1].duration == pytest.approx(0.2)
+
+    # Third test: skipped
+    assert details[2].name == "test_skipped"
+    assert details[2].suite == "TestCalculator"
+    assert details[2].status == "skip"
+    assert "Not implemented yet" in details[2].message
+    assert details[2].duration == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_parse_junit_xml_missing_file(tmp_path):
+    """Test that GdToolsError is raised for a missing JUnit XML file."""
+    missing_path = tmp_path / "nonexistent.xml"
+    with pytest.raises(GdToolsError) as exc_info:
+        parse_junit_xml(missing_path)
+    assert exc_info.value.exit_code == 2
+    assert (
+        "not found" in str(exc_info.value).lower()
+        or "missing" in str(exc_info.value).lower()
+    )
+
+
+@pytest.mark.unit
+def test_parse_junit_xml_malformed(tmp_path):
+    """Test that GdToolsError is raised for malformed JUnit XML."""
+    malformed_path = tmp_path / "malformed.xml"
+    malformed_path.write_text("this is not valid xml <<<<", encoding="utf-8")
+    with pytest.raises(GdToolsError) as exc_info:
+        parse_junit_xml(malformed_path)
+    assert exc_info.value.exit_code == 2
+    assert (
+        "parse" in str(exc_info.value).lower()
+        or "xml" in str(exc_info.value).lower()
+    )
+
+
+@pytest.mark.unit
+def test_parse_junit_xml_empty_suite(tmp_path):
+    """Test parsing JUnit XML with zero test cases returns zeroed fields."""
+    empty_path = tmp_path / "empty.xml"
+    empty_path.write_text(
+        "<testsuites>\n"
+        '  <testsuite name="EmptySuite" tests="0"'
+        ' failures="0" errors="0" skipped="0" time="0.0">\n'
+        "  </testsuite>\n"
+        "</testsuites>\n",
+        encoding="utf-8",
+    )
+    total, passed, failed, skipped, duration, details = parse_junit_xml(
+        empty_path
+    )
+    assert total == 0
+    assert passed == 0
+    assert failed == 0
+    assert skipped == 0
+    assert duration == pytest.approx(0.0)
+    assert details == []
