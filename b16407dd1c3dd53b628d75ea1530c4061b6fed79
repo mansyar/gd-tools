@@ -1,0 +1,25 @@
+Phase 4: CLI Integration - Verification Report
+
+Automated Test Command: CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing
+
+Results:
+- 186 tests passed, 0 failed
+- Total coverage: 99.35%
+- cli.py: 76 statements, 0 missed, 6 branches, 0 partial — 100% line + 100% branch
+- lint_runner.py: 70 statements, 0 missed, 20 branches, 0 partial — 100% line + 100% branch
+- Quality gates: ruff ✅, black ✅, coverage ✅
+
+Phase Scope (files changed since Phase 3 checkpoint c89b97e):
+- src/gd_tools/cli.py (source code — tested by tests/unit/test_cli.py)
+- tests/unit/test_cli.py (test file)
+- conductor/tracks/lint_wrapper_20260710/plan.md (non-code)
+
+Manual Verification Plan:
+1. pip install -e .
+2. gd-tools lint . — verify lint output (text table or 'No GDScript files found.')
+3. gd-tools lint . --report-format json — verify JSON output with files_checked, errors, warnings keys
+4. gd-tools lint . --fix — verify warning 'gdlint is read-only; --fix has no effect'
+5. gd-tools lint . — verify exit code 0 (clean) or 1 (errors)
+6. gd-tools lint from dir without project.godot — verify exit code 2
+
+User Confirmation: Approved
