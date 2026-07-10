@@ -42,11 +42,11 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `download_gut(version: str, dest: Path) -> Path`
-    - [ ] Write failing tests: `test_download_gut_downloads_zip`, `test_download_gut_fails_with_instructions_on_network_error`
-    - [ ] Implement `download_gut()` — `requests.get(GUT_DOWNLOAD_URL.format(version=version))`, save to `dest`, raise actionable error on failure with manual install instructions
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `download_gut(version: str, dest: Path) -> Path` (6abbefc)
+    - [x] Write failing tests: `test_download_gut_downloads_zip`, `test_download_gut_fails_with_instructions_on_network_error`
+    - [x] Implement `download_gut()` — `requests.get(GUT_DOWNLOAD_URL.format(version=version))`, save to `dest`, raise actionable error on failure with manual install instructions
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Implement `extract_gut(zip_path: Path, project_root: Path) -> None`
     - [ ] Write failing tests: `test_extract_gut_copies_addons_dir`, `test_extract_gut_cleans_up_temp_dir`
