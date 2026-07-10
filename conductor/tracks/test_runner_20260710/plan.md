@@ -194,7 +194,7 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
     - [x] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
     - [x] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
-- [x] Task: Write integration tests with real Godot + GUT (PENDING)
+- [x] Task: Write integration tests with real Godot + GUT (3ec1bce)
     - [x] Create or verify sample Godot project fixture in `tests/fixtures/projects/sample_project/` (with `project.godot`, `scripts/calculator.gd`, `test/test_calculator.gd`, GUT installed)
     - [x] Write integration test: `gd-tools test` runs GUT → tests execute → JUnit XML produced (marked `@pytest.mark.integration`)
     - [x] Write integration test: all-passing tests → exit code 0, TestResult.failed == 0
