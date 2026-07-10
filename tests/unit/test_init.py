@@ -15,6 +15,7 @@ from gd_tools.init import (
     check_gut_installed,
     detect_godot_version,
     download_gut,
+    enable_gut_plugin,
     extract_gut,
     get_installed_gut_version,
     install_gut,
@@ -263,3 +264,71 @@ def test_install_gut_version_mismatch_warning(tmp_path: Path):
     assert "Warning" in call_args or "warning" in call_args
     assert "9.4.0" in call_args
     assert "9.5.0" in call_args
+
+
+# --- enable_gut_plugin ---
+
+
+def test_enable_gut_plugin_adds_section_to_empty_file(tmp_path: Path):
+    """Test enable_gut_plugin adds [editor_plugins] to a file without it."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text("config_version=5\n")
+
+    enable_gut_plugin(tmp_path)
+
+    content = project_godot.read_text()
+    assert "[editor_plugins]" in content
+    assert '"res://addons/gut/plugin.gd"' in content
+
+
+def test_enable_gut_plugin_adds_entry_to_existing_section(
+    tmp_path: Path,
+):
+    """Test enable_gut_plugin adds GUT to existing enabled list."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "config_version=5\n\n"
+        "[editor_plugins]\n\n"
+        'enabled=PackedStringArray("res://addons/other/plugin.gd")\n'
+    )
+
+    enable_gut_plugin(tmp_path)
+
+    content = project_godot.read_text()
+    assert '"res://addons/gut/plugin.gd"' in content
+    assert '"res://addons/other/plugin.gd"' in content
+
+
+def test_enable_gut_plugin_idempotent_no_duplicate(tmp_path: Path):
+    """Test enable_gut_plugin doesn't duplicate when already enabled."""
+    project_godot = tmp_path / "project.godot"
+    original = (
+        "config_version=5\n\n"
+        "[editor_plugins]\n\n"
+        'enabled=PackedStringArray("res://addons/gut/plugin.gd")\n'
+    )
+    project_godot.write_text(original)
+
+    enable_gut_plugin(tmp_path)
+
+    assert project_godot.read_text() == original
+
+
+def test_enable_gut_plugin_preserves_existing_content(tmp_path: Path):
+    """Test enable_gut_plugin preserves all existing content."""
+    project_godot = tmp_path / "project.godot"
+    original = (
+        "config_version=5\n\n"
+        "[application]\n\n"
+        'config/name="MyGame"\n'
+        'config/icon="res://icon.svg"\n'
+    )
+    project_godot.write_text(original)
+
+    enable_gut_plugin(tmp_path)
+
+    content = project_godot.read_text()
+    assert 'config/name="MyGame"' in content
+    assert 'config/icon="res://icon.svg"' in content
+    assert "[editor_plugins]" in content
+    assert '"res://addons/gut/plugin.gd"' in content

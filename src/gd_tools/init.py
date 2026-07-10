@@ -56,6 +56,8 @@ GUT_DOWNLOAD_URL = (
     "https://github.com/bitwes/Gut/archive/refs/tags/v{version}.zip"
 )
 
+GUT_PLUGIN_PATH = "res://addons/gut/plugin.gd"
+
 console = Console()
 
 
@@ -250,3 +252,60 @@ def install_gut(
         extract_gut(zip_dest, project_root)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def enable_gut_plugin(project_root: Path) -> None:
+    """Enable the GUT plugin in ``project.godot``.
+
+    Adds the ``[editor_plugins]`` section with the GUT plugin in the
+    ``enabled`` list if not already present. Idempotent: running
+    multiple times produces the same result.
+
+    Args:
+        project_root: Path to the Godot project root.
+    """
+    project_godot = project_root / "project.godot"
+    content = project_godot.read_text()
+
+    gut_entry = f'"{GUT_PLUGIN_PATH}"'
+
+    # Idempotent: if GUT is already in the file, do nothing
+    if gut_entry in content:
+        return
+
+    if "[editor_plugins]" in content:
+        # Section exists, add GUT to enabled list
+        lines = content.split("\n")
+        for i, line in enumerate(lines):
+            if line.strip() == "[editor_plugins]":
+                # Look for enabled= in subsequent lines
+                for j in range(i + 1, len(lines)):
+                    next_stripped = lines[j].strip()
+                    if next_stripped.startswith("["):
+                        # Reached next section, insert enabled= before it
+                        lines.insert(
+                            j,
+                            f"enabled=PackedStringArray({gut_entry})",
+                        )
+                        break
+                    if next_stripped.startswith("enabled="):
+                        # Add GUT to existing PackedStringArray
+                        lines[j] = lines[j].replace(
+                            "PackedStringArray(",
+                            f"PackedStringArray({gut_entry}, ",
+                        )
+                        break
+                else:
+                    # No enabled= and no next section, append at end
+                    lines.append(f"enabled=PackedStringArray({gut_entry})")
+                break
+        project_godot.write_text("\n".join(lines))
+    else:
+        # No [editor_plugins] section, append it
+        if not content.endswith("\n"):
+            content += "\n"
+        content += (
+            f"\n[editor_plugins]\n\n"
+            f"enabled=PackedStringArray({gut_entry})\n"
+        )
+        project_godot.write_text(content)
