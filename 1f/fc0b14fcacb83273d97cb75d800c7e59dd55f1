@@ -1,0 +1,18 @@
+Task: Implement check_gd_tools_toml(project_root: Path) -> CheckResult
+
+Implementation:
+- Added import tomllib to doctor.py imports
+- Implemented check_gd_tools_toml() — checks if gd-tools.toml exists in project_root
+  - Missing: fail with severity="critical", fix_hint="Run gd-tools init to generate gd-tools.toml."
+  - Invalid TOML: fail with severity="critical", message includes parse error, fix_hint="Fix the TOML syntax in gd-tools.toml or run gd-tools init."
+  - Valid TOML: pass with message "gd-tools.toml is valid"
+
+Tests (4 added):
+- test_check_gd_tools_toml_passes_when_valid
+- test_check_gd_tools_toml_fails_when_missing
+- test_check_gd_tools_toml_fails_when_invalid_toml
+- test_check_gd_tools_toml_critical_severity
+
+Coverage: doctor.py at 100% (84 statements, 0 missed)
+Full suite: 365 passed, 7 skipped, 98.45% overall
+ruff: clean, black: clean
