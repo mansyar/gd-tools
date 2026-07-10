@@ -1,0 +1,22 @@
+Task: Implement install_gut(project_root: Path, godot_version: str, non_interactive: bool) -> None
+
+## Implementation
+- Function: install_gut(project_root, godot_version, non_interactive) -> None
+- If GUT installed: checks version via get_installed_gut_version vs get_gut_version_for_godot, warns on mismatch
+- If GUT not installed + interactive: prompts via click.confirm("Install GUT?", default=True)
+- If user declines: prints manual install instructions
+- If yes or non-interactive: calls download_gut + extract_gut in temp dir, cleans up
+- Added 'import click' to init.py
+
+## Tests (TDD)
+- test_install_gut_prompts_interactive_yes: mocks check_gut_installed→False, click.confirm→True, verifies download+extract called
+- test_install_gut_non_interactive_assumes_yes: verifies click.confirm NOT called, download+extract called
+- test_install_gut_user_declines_prints_manual_instructions: click.confirm→False, verifies download NOT called, manual instructions printed
+- test_install_gut_version_mismatch_warning: check_gut_installed→True, version mismatch 9.4.0 vs 9.5.0, verifies warning printed
+
+## Verification
+- init.py: 97.4% line (78 stmts, 2 missed: 189 raise GdToolsError, 201 rmtree existing dest)
+- init.py: 77.3% branch (22 branches, 5 missed)
+- Full suite: 298 passed, 7 skipped, 99.28% overall coverage
+- ruff check: All checks passed
+- black --check: All files unchanged
