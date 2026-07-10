@@ -1,5 +1,6 @@
 """Unit tests for the init command module."""
 
+import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -20,6 +21,7 @@ from gd_tools.init import (
     get_installed_gut_version,
     install_coverage_addon,
     install_gut,
+    update_gutconfig,
 )
 
 # --- detect_godot_version ---
@@ -369,3 +371,123 @@ def test_install_coverage_addon_creates_target_dir(tmp_path: Path):
     install_coverage_addon(tmp_path)
 
     assert (tmp_path / "addons" / "gd-tools-coverage").is_dir()
+
+
+# --- update_gutconfig ---
+
+
+def test_update_gutconfig_creates_new_with_template(tmp_path: Path):
+    """Test update_gutconfig creates .gutconfig.json from template if missing."""
+    config = GdToolsConfig()
+    update_gutconfig(tmp_path, config)
+
+    gutconfig = tmp_path / ".gutconfig.json"
+    assert gutconfig.exists()
+    data = json.loads(gutconfig.read_text())
+    assert data["dirs"] == ["res://test/", "res://tests/"]
+    assert data["include_subdirs"] is True
+    assert data["prefix"] == "test_"
+    assert data["suffix"] == ".gd"
+    assert data["should_exit"] is True
+    assert data["junit_xml_file"] == ".gd-tools/results.xml"
+    assert (
+        data["pre_run_script"]
+        == "res://addons/gd-tools-coverage/pre_run_hook.gd"
+    )
+    assert (
+        data["post_run_script"]
+        == "res://addons/gd-tools-coverage/post_run_hook.gd"
+    )
+
+
+def test_update_gutconfig_merges_existing_preserves_user_keys(
+    tmp_path: Path,
+):
+    """Test update_gutconfig preserves user's dirs/prefix/suffix/include_subdirs."""
+    gutconfig = tmp_path / ".gutconfig.json"
+    existing = {
+        "dirs": ["res://my_tests/"],
+        "include_subdirs": False,
+        "prefix": "spec_",
+        "suffix": ".gd",
+        "should_exit": False,
+        "junit_xml_file": "old/path.xml",
+        "pre_run_script": "old/pre.gd",
+        "post_run_script": "old/post.gd",
+    }
+    gutconfig.write_text(json.dumps(existing))
+
+    config = GdToolsConfig()
+    update_gutconfig(tmp_path, config)
+
+    data = json.loads(gutconfig.read_text())
+    # User keys preserved
+    assert data["dirs"] == ["res://my_tests/"]
+    assert data["include_subdirs"] is False
+    assert data["prefix"] == "spec_"
+    assert data["suffix"] == ".gd"
+    # Hook keys overwritten
+    assert data["should_exit"] is True
+    assert data["junit_xml_file"] == ".gd-tools/results.xml"
+    assert (
+        data["pre_run_script"]
+        == "res://addons/gd-tools-coverage/pre_run_hook.gd"
+    )
+    assert (
+        data["post_run_script"]
+        == "res://addons/gd-tools-coverage/post_run_hook.gd"
+    )
+
+
+def test_update_gutconfig_overwrites_hook_keys(tmp_path: Path):
+    """Test update_gutconfig always overwrites hook-related keys."""
+    gutconfig = tmp_path / ".gutconfig.json"
+    existing = {
+        "dirs": ["res://test/"],
+        "include_subdirs": True,
+        "prefix": "test_",
+        "suffix": ".gd",
+        "should_exit": False,
+        "junit_xml_file": "custom/results.xml",
+        "pre_run_script": "custom/pre.gd",
+        "post_run_script": "custom/post.gd",
+    }
+    gutconfig.write_text(json.dumps(existing))
+
+    config = GdToolsConfig()
+    update_gutconfig(tmp_path, config)
+
+    data = json.loads(gutconfig.read_text())
+    assert data["should_exit"] is True
+    assert data["junit_xml_file"] == ".gd-tools/results.xml"
+    assert (
+        data["pre_run_script"]
+        == "res://addons/gd-tools-coverage/pre_run_hook.gd"
+    )
+    assert (
+        data["post_run_script"]
+        == "res://addons/gd-tools-coverage/post_run_hook.gd"
+    )
+
+
+def test_update_gutconfig_preserves_custom_dirs(tmp_path: Path):
+    """Test update_gutconfig preserves custom dirs from existing config."""
+    gutconfig = tmp_path / ".gutconfig.json"
+    existing = {
+        "dirs": ["res://unit/", "res://integration/"],
+        "include_subdirs": True,
+        "prefix": "test_",
+        "suffix": ".gd",
+    }
+    gutconfig.write_text(json.dumps(existing))
+
+    config = GdToolsConfig()
+    update_gutconfig(tmp_path, config)
+
+    data = json.loads(gutconfig.read_text())
+    assert data["dirs"] == ["res://unit/", "res://integration/"]
+    # Hook keys should be added
+    assert "should_exit" in data
+    assert "junit_xml_file" in data
+    assert "pre_run_script" in data
+    assert "post_run_script" in data

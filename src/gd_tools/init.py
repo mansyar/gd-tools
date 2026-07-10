@@ -335,3 +335,52 @@ def install_coverage_addon(project_root: Path) -> None:
     target_dir.mkdir(parents=True, exist_ok=True)
     for gd_file in COVERAGE_ADDON_FILES:
         shutil.copy2(source_dir / gd_file, target_dir / gd_file)
+
+
+# --- Phase 4: Configuration File Generation ---
+
+# Keys in .gutconfig.json that are always overwritten from the template.
+_GUTCONFIG_OVERWRITE_KEYS = (
+    "should_exit",
+    "junit_xml_file",
+    "pre_run_script",
+    "post_run_script",
+)
+
+# Keys in .gutconfig.json that are preserved from the user's existing file.
+_GUTCONFIG_PRESERVE_KEYS = (
+    "dirs",
+    "prefix",
+    "suffix",
+    "include_subdirs",
+)
+
+
+def update_gutconfig(project_root: Path, config: GdToolsConfig) -> None:
+    """Create or merge ``.gutconfig.json`` in the project root.
+
+    If the file does not exist, writes ``GUTCONFIG_TEMPLATE`` as JSON.
+    If it exists, merges: preserves the user's ``dirs``, ``prefix``,
+    ``suffix``, and ``include_subdirs``; always overwrites
+    ``should_exit``, ``junit_xml_file``, ``pre_run_script``, and
+    ``post_run_script`` from the template.
+
+    Args:
+        project_root: Path to the Godot project root.
+        config: The gd-tools configuration (unused but kept for
+            signature consistency with other init functions).
+    """
+    gutconfig_path = project_root / ".gutconfig.json"
+
+    if not gutconfig_path.exists():
+        gutconfig_path.write_text(
+            json.dumps(GUTCONFIG_TEMPLATE, indent=2) + "\n"
+        )
+        return
+
+    existing = json.loads(gutconfig_path.read_text())
+    merged = GUTCONFIG_TEMPLATE.copy()
+    for key in _GUTCONFIG_PRESERVE_KEYS:
+        if key in existing:
+            merged[key] = existing[key]
+    gutconfig_path.write_text(json.dumps(merged, indent=2) + "\n")
