@@ -2,7 +2,7 @@
 
 # Implementation Plan: Format Wrapper (format_wrapper_20260710)
 
-## Phase 1: Shared File Discovery Refactor
+## Phase 1: Shared File Discovery Refactor [checkpoint: a413bd9]
 
 - [x] Task: Read spec.md and workflow.md to review requirements and TDD methodology
     - [x] Read conductor/tracks/format_wrapper_20260710/spec.md
@@ -35,7 +35,7 @@
     - [x] git add and commit: refactor(format): Extract shared file_discovery.py from lint_runner
     - [x] Add git note summarizing Phase 1 completion
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Shared File Discovery Refactor' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Shared File Discovery Refactor' (Protocol in workflow.md)
 
 ## Phase 2: FormatResult Dataclass and run_format Function
 
