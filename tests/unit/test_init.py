@@ -19,6 +19,7 @@ from gd_tools.init import (
     download_gut,
     enable_gut_plugin,
     extract_gut,
+    generate_lint_format_rcs,
     get_installed_gut_version,
     install_coverage_addon,
     install_gut,
@@ -529,3 +530,57 @@ def test_create_config_file_preserves_existing(tmp_path: Path):
     create_config_file(tmp_path, config)
 
     assert config_file.read_text() == original_content
+
+
+# --- generate_lint_format_rcs ---
+
+
+def test_generate_rcs_generates_if_missing(tmp_path: Path):
+    """Test generate_lint_format_rcs creates gdlintrc and gdformatrc if missing."""
+    config = GdToolsConfig()
+    generate_lint_format_rcs(tmp_path, config)
+
+    assert (tmp_path / "gdlintrc").exists()
+    assert (tmp_path / "gdformatrc").exists()
+    # Verify content is non-empty
+    assert (tmp_path / "gdlintrc").read_text().strip()
+    assert (tmp_path / "gdformatrc").read_text().strip()
+
+
+def test_generate_rcs_warns_if_differs(tmp_path: Path):
+    """Test generate_lint_format_rcs warns but does not overwrite when content differs."""
+    # Create files with wrong content
+    (tmp_path / "gdlintrc").write_text("wrong content\n")
+    (tmp_path / "gdformatrc").write_text("also wrong\n")
+
+    config = GdToolsConfig()
+    with patch("gd_tools.init.console.print") as mock_print:
+        generate_lint_format_rcs(tmp_path, config)
+
+    # Files should NOT be overwritten
+    assert (tmp_path / "gdlintrc").read_text() == "wrong content\n"
+    assert (tmp_path / "gdformatrc").read_text() == "also wrong\n"
+    # Warning should have been printed
+    assert mock_print.called
+
+
+def test_generate_rcs_skips_if_matches(tmp_path: Path):
+    """Test generate_lint_format_rcs does nothing when files already match."""
+    # Generate correct files using existing functions
+    from gd_tools.config import generate_gdlintrc, generate_gdformatrc
+
+    config = GdToolsConfig()
+    generate_gdlintrc(config, tmp_path)
+    generate_gdformatrc(config, tmp_path)
+
+    original_lint = (tmp_path / "gdlintrc").read_text()
+    original_format = (tmp_path / "gdformatrc").read_text()
+
+    with patch("gd_tools.init.console.print") as mock_print:
+        generate_lint_format_rcs(tmp_path, config)
+
+    # Files should be unchanged
+    assert (tmp_path / "gdlintrc").read_text() == original_lint
+    assert (tmp_path / "gdformatrc").read_text() == original_format
+    # No warning should be printed
+    assert not mock_print.called

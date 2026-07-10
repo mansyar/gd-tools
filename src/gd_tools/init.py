@@ -26,6 +26,7 @@ from pathlib import Path
 
 import click
 import requests
+import yaml
 from rich.console import Console
 
 from .config import (
@@ -401,3 +402,46 @@ def create_config_file(project_root: Path, config: GdToolsConfig) -> None:
     if config_file.exists():
         return
     save_config(config, project_root)
+
+
+def generate_lint_format_rcs(project_root: Path, config: GdToolsConfig) -> None:
+    """Generate ``gdlintrc`` and ``gdformatrc`` if missing, warn if differs.
+
+    For each file:
+    - If the file does not exist: generate it from the config's
+      exclude lists.
+    - If the file exists but differs from what init would produce:
+      print a warning. Do not overwrite.
+    - If the file exists and matches: do nothing.
+
+    Args:
+        project_root: Path to the Godot project root.
+        config: The configuration to read exclude lists from.
+    """
+    # gdlintrc — YAML set format (same as config.generate_gdlintrc)
+    expected_lint = yaml.dump(
+        {"excluded_directories": set(config.lint.exclude)},
+        default_flow_style=False,
+        sort_keys=True,
+    )
+    lint_file = project_root / "gdlintrc"
+    if not lint_file.exists():
+        lint_file.write_text(expected_lint, encoding="utf-8")
+    elif lint_file.read_text(encoding="utf-8") != expected_lint:
+        console.print(
+            "[yellow]Warning: gdlintrc differs from expected "
+            "content. Delete it and re-run 'gd-tools init' to "
+            "regenerate.[/yellow]"
+        )
+
+    # gdformatrc — one exclude per line (same as config.generate_gdformatrc)
+    expected_format = "\n".join(config.format.exclude) + "\n"
+    format_file = project_root / "gdformatrc"
+    if not format_file.exists():
+        format_file.write_text(expected_format, encoding="utf-8")
+    elif format_file.read_text(encoding="utf-8") != expected_format:
+        console.print(
+            "[yellow]Warning: gdformatrc differs from expected "
+            "content. Delete it and re-run 'gd-tools init' to "
+            "regenerate.[/yellow]"
+        )
