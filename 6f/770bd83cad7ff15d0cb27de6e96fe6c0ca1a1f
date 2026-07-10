@@ -1,0 +1,17 @@
+Task: print_summary(project_root: Path, actions: list[str]) -> None
+
+TDD Cycle:
+- Red: 2 tests (test_print_summary_lists_actions, test_print_summary_prints_next_steps)
+- Green: Implemented print_summary with Rich-formatted output
+- Refactor: ruff passed, black reformatted init.py
+
+Implementation:
+- Prints 'gd-tools init complete!' header in green
+- Lists all actions taken with bullet points
+- Prints next steps: gd-tools test, gd-tools lint, gd-tools format
+
+Coverage:
+- init.py: 163 stmts, 6 missed, 96% line
+- Overall: 320 passed, 7 skipped, 98.85% coverage
+
+Spec FR: FR-11 (summary output with Rich)
