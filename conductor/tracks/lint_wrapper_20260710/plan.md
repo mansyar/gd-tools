@@ -39,7 +39,7 @@
     - [ ] Implement syntax error catch-and-report in `run_lint()`
 - [x] Task: Conductor - User Manual Verification 'Phase 2: File Discovery & Lint Runner Core' (Protocol in workflow.md)
 
-## Phase 3: Output Formatting
+## Phase 3: Output Formatting [checkpoint: c89b97e]
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Implement rich table terminal output `d91a860`
