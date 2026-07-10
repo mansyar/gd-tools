@@ -36,7 +36,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `get_installed_gut_version(project_root: Path) -> str | None`
+- [x] Task: Implement `get_installed_gut_version(project_root: Path) -> str | None` (d31d908)
     - [ ] Write failing tests: `test_get_installed_gut_version_reads_plugin_cfg`, `test_get_installed_gut_version_returns_none_if_no_cfg`
     - [ ] Implement `get_installed_gut_version()` — parse `addons/gut/plugin.cfg` for `version` key
     - [ ] Verify coverage >80% line, >70% branch
