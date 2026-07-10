@@ -1,0 +1,1 @@
+Task: Set up init.py module skeleton. Created src/gd_tools/init.py with imports from config/godot/errors, GUTCONFIG_TEMPLATE and GUT_DOWNLOAD_URL constants, Rich Console. Verified ruff and black pass.
