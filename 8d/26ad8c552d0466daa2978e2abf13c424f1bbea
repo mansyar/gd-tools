@@ -1,0 +1,17 @@
+TDD Verification Report - create_config_file
+
+Tests (2 new, all passing):
+- test_create_config_file_creates_defaults_if_missing: Creates gd-tools.toml with default config when missing
+- test_create_config_file_preserves_existing: Does not overwrite existing gd-tools.toml
+
+Implementation:
+- If gd-tools.toml exists: return immediately (preserve)
+- If missing: call save_config(config, project_root)
+
+Coverage:
+- init.py: 91% line, ~79% branch (above 80%/70% thresholds)
+- Overall: 311 passed, 7 skipped, 97.69% coverage
+
+Linting:
+- ruff check: passed
+- black: reformatted init.py (minor formatting)
