@@ -20,54 +20,54 @@
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Implement file discovery function `2c0ea4a`
-    - [ ] Write tests for recursive `.gd` file collection (nested directories)
-    - [ ] Write tests for case-insensitive `.gd` extension matching (`.GD`, `.Gd`)
-    - [ ] Write tests for exclude directory filtering (skip `addons/`, `.godot/`, `.git/`, `.gd-tools/` by name)
-    - [ ] Write tests for no `.gd` files found (returns empty list)
-    - [ ] Implement `discover_gd_files(path, excludes)` in `src/gd_tools/lint_runner.py`
+    - [x] Write tests for recursive `.gd` file collection (nested directories)
+    - [x] Write tests for case-insensitive `.gd` extension matching (`.GD`, `.Gd`)
+    - [x] Write tests for exclude directory filtering (skip `addons/`, `.godot/`, `.git/`, `.gd-tools/` by name)
+    - [x] Write tests for no `.gd` files found (returns empty list)
+    - [x] Implement `discover_gd_files(path, excludes)` in `src/gd_tools/lint_runner.py`
 - [x] Task: Implement `run_lint()` core logic `63c86e2`
-    - [ ] Write tests for `run_lint` with clean files (no errors, no warnings, files_checked > 0)
-    - [ ] Write tests for `run_lint` with lint errors (errors list populated, correct file/line/col/rule/message)
-    - [ ] Write tests for `run_lint` with warnings (warnings list populated, severity=warning)
-    - [ ] Write tests for `run_lint` respecting config excludes (excluded dirs not checked)
-    - [ ] Write tests for `run_lint` with no `.gd` files (files_checked=0, empty lists, exit 0)
-    - [ ] Implement `run_lint(config, path, report_format)` using gdtoolkit Python API import
+    - [x] Write tests for `run_lint` with clean files (no errors, no warnings, files_checked > 0)
+    - [x] Write tests for `run_lint` with lint errors (errors list populated, correct file/line/col/rule/message)
+    - [x] Write tests for `run_lint` with warnings (warnings list populated, severity=warning)
+    - [x] Write tests for `run_lint` respecting config excludes (excluded dirs not checked)
+    - [x] Write tests for `run_lint` with no `.gd` files (files_checked=0, empty lists, exit 0)
+    - [x] Implement `run_lint(config, path, report_format)` using gdtoolkit Python API import
 - [x] Task: Implement syntax error handling `ca0cbc9`
-    - [ ] Write tests for syntax error in a `.gd` file (reported as rule=SYNTAX_ERROR, severity=error)
-    - [ ] Write tests for syntax error does not crash — continues linting other files
-    - [ ] Write tests for syntax error results in exit code 1
-    - [ ] Implement syntax error catch-and-report in `run_lint()`
+    - [x] Write tests for syntax error in a `.gd` file (reported as rule=SYNTAX_ERROR, severity=error)
+    - [x] Write tests for syntax error does not crash — continues linting other files
+    - [x] Write tests for syntax error results in exit code 1
+    - [x] Implement syntax error catch-and-report in `run_lint()`
 - [x] Task: Conductor - User Manual Verification 'Phase 2: File Discovery & Lint Runner Core' (Protocol in workflow.md)
 
 ## Phase 3: Output Formatting [checkpoint: c89b97e]
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Implement rich table terminal output `d91a860`
-    - [ ] Write tests for text output with violations (table columns: File, Line, Column, Rule, Severity, Message)
-    - [ ] Write tests for color coding (red for errors, yellow for warnings)
-    - [ ] Write tests for summary line (X errors, Y warnings, Z files checked)
-    - [ ] Write tests for clean files output (success message, exit 0)
-    - [ ] Write tests for no `.gd` files output (informational message "No GDScript files found.")
-    - [ ] Implement `format_lint_text(result)` using `rich.table.Table`
+    - [x] Write tests for text output with violations (table columns: File, Line, Column, Rule, Severity, Message)
+    - [x] Write tests for color coding (red for errors, yellow for warnings)
+    - [x] Write tests for summary line (X errors, Y warnings, Z files checked)
+    - [x] Write tests for clean files output (success message, exit 0)
+    - [x] Write tests for no `.gd` files output (informational message "No GDScript files found.")
+    - [x] Implement `format_lint_text(result)` using `rich.table.Table`
 - [x] Task: Implement JSON output format `0026499`
-    - [ ] Write tests for JSON output schema (`files_checked`, `errors[]`, `warnings[]` arrays)
-    - [ ] Write tests for JSON serialization of `LintIssue` objects (all fields present)
-    - [ ] Write tests for JSON output with no violations (empty arrays, not null)
-    - [ ] Implement `format_lint_json(result)` returning valid JSON string
+    - [x] Write tests for JSON output schema (`files_checked`, `errors[]`, `warnings[]` arrays)
+    - [x] Write tests for JSON serialization of `LintIssue` objects (all fields present)
+    - [x] Write tests for JSON output with no violations (empty arrays, not null)
+    - [x] Implement `format_lint_json(result)` returning valid JSON string
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Output Formatting' (Protocol in workflow.md)
 
 ## Phase 4: CLI Integration [checkpoint: b16407d]
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
 - [x] Task: Update `lint` command in `src/gd_tools/cli.py` `f591dc4`
-    - [ ] Write tests for `lint` command with default path (no path arg → defaults to `.`)
-    - [ ] Write tests for `lint` command with `--report-format json`
-    - [ ] Write tests for `lint` command with `--report-format text` (default)
-    - [ ] Write tests for `--fix` flag (no-op, prints warning that gdlint is read-only)
-    - [ ] Write tests for exit codes (0 clean, 1 lint errors, 2 config/env error)
-    - [ ] Write tests for `lint` command wired to `run_lint()` end-to-end
-    - [ ] Update `lint` command: `path` → `required=False, default="."`, add `click.Choice(["text","json"])` + `default="text"`, add `--fix` no-op flag, wire to `run_lint()` + formatters
-    - [ ] Update `test_lint_stub_exit_code_2` test (replace stub behavior with real command tests)
+    - [x] Write tests for `lint` command with default path (no path arg → defaults to `.`)
+    - [x] Write tests for `lint` command with `--report-format json`
+    - [x] Write tests for `lint` command with `--report-format text` (default)
+    - [x] Write tests for `--fix` flag (no-op, prints warning that gdlint is read-only)
+    - [x] Write tests for exit codes (0 clean, 1 lint errors, 2 config/env error)
+    - [x] Write tests for `lint` command wired to `run_lint()` end-to-end
+    - [x] Update `lint` command: `path` → `required=False, default="."`, add `click.Choice(["text","json"])` + `default="text"`, add `--fix` no-op flag, wire to `run_lint()` + formatters
+    - [x] Update `test_lint_stub_exit_code_2` test (replace stub behavior with real command tests)
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: CLI Integration' (Protocol in workflow.md)
 
 ## Phase 5: Integration Tests & Coverage [checkpoint: cb14c35]
@@ -85,5 +85,9 @@
     - [x] Run `black --check src/gd_tools/lint_runner.py` — verify formatting
     - [x] Run full test suite — verify no regressions
 - [x] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests & Coverage' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions `f60bb71`
 
 </protect>
