@@ -15,6 +15,7 @@ from rich.console import Console
 from rich.table import Table
 
 from gdtoolkit.linter import lint_code
+from lark.exceptions import LarkError
 
 from gd_tools.config import DEFAULT_EXCLUDES, GdToolsConfig
 
@@ -117,8 +118,8 @@ def run_lint(
             code = f.read()
         try:
             problems = lint_code(code)
-        except Exception as e:
-            # Syntax/parse error — report and continue linting other files
+        except LarkError as e:
+            # Parse/syntax error from Lark — report and continue linting
             errors.append(
                 LintIssue(
                     file=file_path,
