@@ -1,3 +1,4 @@
+<protect>
 # Track 8: Doctor Command
 
 ## Overview
@@ -137,3 +138,4 @@ The `doctor` command takes no arguments and no flags. It is a simple diagnostic 
 - Coverage system checks beyond file/autoload presence (coverage functionality is Phase 3)
 - Network connectivity checks
 - Performance benchmarks
+</protect>

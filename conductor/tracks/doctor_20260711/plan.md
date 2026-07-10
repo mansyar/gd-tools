@@ -1,3 +1,4 @@
+<protect>
 # Track 8: Doctor Command — Implementation Plan
 
 ## Phase 1: Module Skeleton and Data Structures
@@ -128,3 +129,4 @@
     - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests and Coverage' (Protocol in workflow.md)
+</protect>
