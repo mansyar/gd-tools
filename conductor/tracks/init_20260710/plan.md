@@ -74,12 +74,12 @@
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Create placeholder GDScript files as package data
-    - [ ] Create `src/gd_tools/addons/gd-tools-coverage/coverage.gd` — `extends Node`, TODO comment for Phase 3
-    - [ ] Create `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` — `extends GutHookScript`, TODO comment
-    - [ ] Create `src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd` — `extends GutHookScript`, TODO comment
-    - [ ] Update `pyproject.toml` to include addon `.gd` files as package data
-    - [ ] Verify `pip install -e .` includes the addon files
+- [x] Task: Create placeholder GDScript files as package data
+    - [x] Create `src/gd_tools/addons/gd-tools-coverage/coverage.gd` — `extends Node`, TODO comment for Phase 3
+    - [x] Create `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` — `extends GutHookScript`, TODO comment
+    - [x] Create `src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd` — `extends GutHookScript`, TODO comment
+    - [x] Update `pyproject.toml` to include addon `.gd` files as package data
+    - [x] Verify `pip install -e .` includes the addon files
 
 - [ ] Task: Implement `install_coverage_addon(project_root: Path) -> None`
     - [ ] Write failing tests: `test_install_coverage_addon_copies_all_files`, `test_install_coverage_addon_overwrites_stale_files`, `test_install_coverage_addon_creates_target_dir`
