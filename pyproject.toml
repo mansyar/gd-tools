@@ -52,6 +52,9 @@ gd-tools = "gd_tools.cli:cli"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"gd_tools.addons" = ["gd-tools-coverage/*.gd"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
