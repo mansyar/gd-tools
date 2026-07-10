@@ -1,0 +1,41 @@
+Phase 2 Checkpoint Verification Report
+======================================
+
+Phase: Core Functions (Argument Builder, GUT Check, JUnit Parser)
+Track: test_runner_20260710
+Checkpoint Commit: 09fae6b48920a44ad7fef95ebfcbd63df569a357
+
+Functions Implemented:
+1. build_gut_args() - Builds GUT CLI args with verified GUT 9.6.0 flag names
+   - -gdir (test dirs), -gprefix, -gsuffix, -gselect, -gunit_test_name, -gjunit_xml_file
+   - Does NOT include --path (handled by run_godot())
+   - Default JUnit XML path: .gd-tools/results.xml under project_root
+
+2. check_gut_installed() - Verifies addons/gut/gut_cmdln.gd exists
+   - Raises GUTNotInstalledError (exit code 2) if missing
+
+3. parse_junit_xml() - Parses JUnit XML using junitparser
+   - Returns tuple of (total, passed, failed, skipped, duration, test_details)
+   - Handles missing files and malformed XML with GdToolsError (exit code 2)
+
+Files Changed in Phase 2:
+- src/gd_tools/test_runner.py (build_gut_args, check_gut_installed, parse_junit_xml)
+- tests/unit/test_test_runner.py (18 new tests added - total 24)
+- tests/fixtures/junit/sample_results.xml (JUnit XML fixture)
+- conductor/tracks/test_runner_20260710/plan.md (task tracking)
+
+Automated Test Results:
+- Command: \ = 'true'; python -m pytest --cov=src/gd_tools --cov-report=term-missing
+- Result: 249 passed in 4.45s
+- test_runner.py coverage: 100% (81 stmts, 0 missed)
+- Overall project coverage: 99.63%
+- ruff check: All checks passed
+- black --check: All done, 26 files unchanged
+
+Manual Verification Plan:
+1. Review test_runner.py for spec compliance (3 core functions)
+2. Review test_test_runner.py for comprehensive test coverage (24 tests)
+3. Review fixtures/junit/sample_results.xml for fixture validity
+4. Optionally run: pytest tests/unit/test_test_runner.py -v
+
+User Confirmation: Approved - Phase 2 is complete and verified.
