@@ -1,3 +1,5 @@
+<protect>
+
 # Track 6: Test Runner (GUT Wrapper) — Implementation Plan
 
 ## Track ID
@@ -13,6 +15,10 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 ---
 
 ## Phase 1: Data Structures & Error Verification
+
+- [ ] Task: Read spec.md and workflow.md before starting phase implementation
+    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
 - [ ] Task: Define TestResult and TestDetail dataclasses
     - [ ] Write failing tests in `tests/test_test_runner.py` for `TestResult` dataclass (verify fields: total, passed, failed, skipped, duration, junit_xml_path, coverage_data_path, stdout, stderr, test_details)
@@ -33,6 +39,10 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 ---
 
 ## Phase 2: Core Functions (Argument Builder, GUT Check, JUnit Parser)
+
+- [ ] Task: Read spec.md and workflow.md before starting phase implementation
+    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
 - [ ] Task: Implement `build_gut_args()` — GUT CLI argument construction
     - [ ] Write failing tests for base command args (`-s addons/gut/gut_cmdln.gd -d --path <project_root> -gexit`)
@@ -86,6 +96,10 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 
 ## Phase 3: run_tests() Orchestration & Coverage Infrastructure
 
+- [ ] Task: Read spec.md and workflow.md before starting phase implementation
+    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
+
 - [ ] Task: Implement `run_tests()` — main orchestration function
     - [ ] Write failing test: `run_tests()` calls `check_gut_installed()` — raises `GUTNotInstalledError` when GUT missing (mock filesystem)
     - [ ] Write failing test: `run_tests()` calls `find_godot()` — raises `GodotNotFoundError` when Godot missing (mock)
@@ -128,6 +142,10 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 ---
 
 ## Phase 4: Rich Terminal Output & CLI Integration
+
+- [ ] Task: Read spec.md and workflow.md before starting phase implementation
+    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
 - [ ] Task: Implement Rich summary output — `format_test_results()`
     - [ ] Write failing test: `format_test_results()` with all-passing tests → Rich table with total/passed/failed/skipped/duration, no stderr output
@@ -172,6 +190,10 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 
 ## Phase 5: Integration Tests
 
+- [ ] Task: Read spec.md and workflow.md before starting phase implementation
+    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
+
 - [ ] Task: Write integration tests with real Godot + GUT
     - [ ] Create or verify sample Godot project fixture in `tests/fixtures/projects/sample_project/` (with `project.godot`, `scripts/calculator.gd`, `test/test_calculator.gd`, GUT installed)
     - [ ] Write integration test: `gd-tools test` runs GUT → tests execute → JUnit XML produced (marked `@pytest.mark.integration`)
@@ -190,3 +212,5 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
     - [ ] Update plan.md: mark task `[x]` with commit SHA
 
 - [ ] Task: Conductor - User Manual Verification 'Integration Tests' (Protocol in workflow.md)
+
+</protect>

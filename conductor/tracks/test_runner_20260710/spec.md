@@ -1,3 +1,5 @@
+<protect>
+
 # Track 6: Test Runner (GUT Wrapper)
 
 ## Track ID
@@ -172,3 +174,5 @@ Wire the `test` command in `cli.py` to call `run_tests()`:
 - **PRD.md** §5: `gd-tools test` command surface, flags, exit codes
 - **TESTING_STRATEGY.md** §5.2: Integration test cases for `test_test_runner.py`
 - **TDD.md** §5.4: `.gutconfig.json` format (managed by init, not by test_runner)
+
+</protect>
