@@ -101,7 +101,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `create_config_file(project_root: Path, config: GdToolsConfig) -> None`
+- [x] Task: Implement `create_config_file(project_root: Path, config: GdToolsConfig) -> None`
     - [ ] Write failing tests: `test_create_config_file_creates_defaults_if_missing`, `test_create_config_file_preserves_existing`
     - [ ] Implement `create_config_file()` — if `gd-tools.toml` exists, return (preserve). If not, call `save_config(config, project_root)`.
     - [ ] Verify coverage >80% line, >70% branch
