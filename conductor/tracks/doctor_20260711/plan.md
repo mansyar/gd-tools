@@ -76,7 +76,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `check_gd_tools_toml(project_root: Path) -> CheckResult`
+- [x] Task: Implement `check_gd_tools_toml(project_root: Path) -> CheckResult` [1ffc0b1]
     - [ ] Write failing tests: `test_check_gd_tools_toml_passes_when_valid`, `test_check_gd_tools_toml_fails_when_missing`, `test_check_gd_tools_toml_fails_when_invalid_toml`, `test_check_gd_tools_toml_critical_severity`
     - [ ] Implement `check_gd_tools_toml()` — check if `gd-tools.toml` exists and is parseable TOML (use `load_config` or `tomllib`/`tomli`), return `CheckResult(severity="critical")` with fix hint
     - [ ] Verify coverage >80% line, >70% branch
