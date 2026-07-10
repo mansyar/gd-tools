@@ -199,7 +199,7 @@
 > spec FR-4 point 7: "Print list of files needing formatting." Updated
 > `test_format_runner.py` with assertions for the new field.
 
-## Phase 4: Integration and gdformatrc Verification
+## Phase 4: Integration and gdformatrc Verification [checkpoint: 434bd68]
 
 - [x] Task: Read spec.md and workflow.md to review requirements and TDD methodology
     - [x] Read conductor/tracks/format_wrapper_20260710/spec.md
@@ -237,6 +237,6 @@
     - [x] git add and commit: test(format): Add integration tests for format and gdformatrc verification
     - [x] Add git note summarizing Phase 4 completion and track completion
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Integration and gdformatrc Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Integration and gdformatrc Verification' (Protocol in workflow.md)
 
 </protect>
