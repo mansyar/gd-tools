@@ -1,0 +1,33 @@
+Verification Report for b713ac6
+
+Task: Implement install_coverage_addon(project_root: Path) -> None (Phase 3)
+
+TDD Process:
+- Red: 3 tests written (ImportError - function didn't exist)
+- Green: Implemented install_coverage_addon, all 3 tests pass
+
+Tests:
+- test_install_coverage_addon_copies_all_files: verifies all 3 .gd files copied
+- test_install_coverage_addon_overwrites_stale_files: pre-creates stale files, verifies overwrite
+- test_install_coverage_addon_creates_target_dir: verifies target dir creation
+
+Implementation:
+- COVERAGE_ADDON_FILES constant: ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]
+- Uses Path(__file__).parent / "addons" / "gd-tools-coverage" to locate bundled files
+- Creates target_dir with mkdir(parents=True, exist_ok=True)
+- Copies each file with shutil.copy2 (preserves metadata, overwrites)
+
+Coverage:
+- init.py: 111 statements, 6 missed, 40 branches, 9 partial, 90% overall
+- Line coverage: 94.6% (>80% threshold)
+- Branch coverage: 77.5% (>70% threshold)
+- Full suite: 305 passed, 7 skipped, 98.77% overall coverage
+
+Linting:
+- ruff check: All checks passed
+- black --check: All files unchanged
+
+Spec FR-6 Compliance:
+- Copies bundled placeholder GDScript files to addons/gd-tools-coverage/
+- Always overwrites stale files
+- Files ship as package data inside the Python distribution
