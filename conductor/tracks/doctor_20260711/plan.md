@@ -92,11 +92,11 @@
 
 ## Phase 4: Orchestration, Output, and CLI Integration
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Implement `run_doctor() -> DoctorResult`
+- [x] Task: Implement `run_doctor() -> DoctorResult` [b3a7892]
     - [ ] Write failing tests: `test_run_doctor_returns_doctor_result`, `test_run_doctor_runs_all_9_checks`, `test_run_doctor_all_passed_when_no_failures`, `test_run_doctor_all_passed_false_when_any_fails`, `test_run_doctor_never_raises_on_check_exception`
     - [ ] Implement `run_doctor()` — resolve project root via `find_project_root()`, load config, run all 9 checks in order, catch exceptions per check and convert to failed `CheckResult`, return `DoctorResult`
     - [ ] Verify coverage >80% line, >70% branch
