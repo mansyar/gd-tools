@@ -41,8 +41,8 @@
 
 ## Phase 3: Output Formatting
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
-- [ ] Task: Implement rich table terminal output
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
+- [x] Task: Implement rich table terminal output `d91a860`
     - [ ] Write tests for text output with violations (table columns: File, Line, Column, Rule, Severity, Message)
     - [ ] Write tests for color coding (red for errors, yellow for warnings)
     - [ ] Write tests for summary line (X errors, Y warnings, Z files checked)
