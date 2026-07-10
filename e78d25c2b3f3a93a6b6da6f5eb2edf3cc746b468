@@ -1,0 +1,45 @@
+Phase 3 Checkpoint Verification Report
+
+Phase: Phase 3 - Coverage Addon Deployment
+Checkpoint Commit: e78d25c
+
+Tasks Completed:
+1. Create placeholder GDScript files as package data (commit: 15c675d)
+   - Created src/gd_tools/addons/__init__.py (empty, makes gd_tools.addons a sub-package)
+   - Created src/gd_tools/addons/gd-tools-coverage/coverage.gd (extends Node, TODO)
+   - Created src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (extends GutHookScript, TODO)
+   - Created src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd (extends GutHookScript, TODO)
+   - Updated pyproject.toml with [tool.setuptools.package-data] section
+   - Verified pip install -e . includes all addon files via importlib.resources
+
+2. Implement install_coverage_addon (commit: b713ac6)
+   - TDD: 3 tests written and passing
+   - Implementation: copies bundled .gd files to project_root/addons/gd-tools-coverage/
+   - Always overwrites stale files
+   - Creates target directory if missing
+
+Changed Files (since d239f38):
+- conductor/tracks/init_20260710/plan.md
+- pyproject.toml
+- src/gd_tools/addons/__init__.py (new)
+- src/gd_tools/addons/gd-tools-coverage/coverage.gd (new)
+- src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (new)
+- src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd (new)
+- src/gd_tools/init.py
+- tests/unit/test_init.py
+
+Automated Verification:
+- Full test suite: 305 passed, 7 skipped
+- Overall coverage: 98.77%
+- init.py: 111 statements, 6 missed, 95% line coverage
+- Branch coverage: 77.5% (>70% threshold)
+- ruff check: All checks passed
+- black --check: All files unchanged
+
+Manual Verification:
+- User confirmed Phase 3 checkpoint approval
+
+Spec FR-6 Compliance:
+- Placeholder GDScript files copied to addons/gd-tools-coverage/
+- Files ship as package data inside the Python distribution
+- Always overwrites stale files
