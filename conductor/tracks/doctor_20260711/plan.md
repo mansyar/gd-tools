@@ -64,7 +64,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `check_coverage_addon(project_root: Path) -> CheckResult`
+- [x] Task: Implement `check_coverage_addon(project_root: Path) -> CheckResult` (420674b)
     - [ ] Write failing tests: `test_check_coverage_addon_passes_when_all_files_present`, `test_check_coverage_addon_fails_when_missing_files`, `test_check_coverage_addon_warning_severity`
     - [ ] Implement `check_coverage_addon()` — check all `addons/gd-tools-coverage/*.gd` files exist (coverage.gd, pre_run_hook.gd, post_run_hook.gd), return `CheckResult(severity="warning")` with fix hint "Run `gd-tools init` to deploy coverage addon."
     - [ ] Verify coverage >80% line, >70% branch
