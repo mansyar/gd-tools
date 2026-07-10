@@ -143,24 +143,24 @@ This plan implements `src/gd_tools/test_runner.py` following TDD methodology (Re
 
 ## Phase 4: Rich Terminal Output & CLI Integration
 
-- [ ] Task: Read spec.md and workflow.md before starting phase implementation
-    - [ ] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
-    - [ ] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
+- [x] Task: Read spec.md and workflow.md before starting phase implementation
+    - [x] Read `conductor/tracks/test_runner_20260710/spec.md` to refresh requirements
+    - [x] Read `conductor/workflow.md` to review TDD lifecycle and quality gates
 
-- [ ] Task: Implement Rich summary output — `format_test_results()`
-    - [ ] Write failing test: `format_test_results()` with all-passing tests → Rich table with total/passed/failed/skipped/duration, no stderr output
-    - [ ] Write failing test: `format_test_results()` with failures → Rich table + GUT stdout/stderr surfaced (truncated if >5000 chars)
-    - [ ] Write failing test: `format_test_results()` with zero tests → table showing 0/0/0/0
-    - [ ] Write failing test: output contains color coding (green for pass count, red for fail count) — use `force_terminal=True` for testability
-    - [ ] Implement `format_test_results(result: TestResult) -> None` using `rich.console.Console` and `rich.table.Table` in `test_runner.py`
-    - [ ] Call `format_test_results()` at end of `run_tests()` before returning
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
-    - [ ] Run `ruff check src/ tests/ && black --check src/ tests/`
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Commit with message `feat(test_runner): Implement Rich terminal output for test results`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Implement Rich summary output — `format_test_results()` (2ab083b)
+    - [x] Write failing test: `format_test_results()` with all-passing tests → Rich table with total/passed/failed/skipped/duration, no stderr output
+    - [x] Write failing test: `format_test_results()` with failures → Rich table + GUT stdout/stderr surfaced (truncated if >5000 chars)
+    - [x] Write failing test: `format_test_results()` with zero tests → table showing 0/0/0/0
+    - [x] Write failing test: output contains color coding (green for pass count, red for fail count) — use `force_terminal=True` for testability
+    - [x] Implement `format_test_results(result: TestResult) -> None` using `rich.console.Console` and `rich.table.Table` in `test_runner.py`
+    - [x] Call `format_test_results()` at end of `run_tests()` before returning
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `CI=true pytest tests/test_test_runner.py` and confirm all pass
+    - [x] Run `ruff check src/ tests/ && black --check src/ tests/`
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Commit with message `feat(test_runner): Implement Rich terminal output for test results`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 
 - [ ] Task: Wire `test` command in `cli.py` — CLI integration
     - [ ] Write failing test: `gd-tools test --help` shows all flags (`--coverage`, `--min`, `--suite`, `--test`, `--junit-xml`, `--no-exit-code`)
