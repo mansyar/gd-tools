@@ -5,18 +5,28 @@ construction, GUT installation check, JUnit XML parsing, run_tests
 orchestration, coverage flag infrastructure, and Rich output.
 """
 
+import subprocess
 from pathlib import Path
+from subprocess import CompletedProcess
+from unittest.mock import patch
 
 import pytest
 
-from gd_tools.config import TestConfig
-from gd_tools.errors import GdToolsError, GUTNotInstalledError
+from gd_tools.config import GdToolsConfig, TestConfig
+from gd_tools.errors import (
+    GdToolsError,
+    GUTNotInstalledError,
+    GodotNotFoundError,
+    TestFailureError,
+)
+from gd_tools.godot import GodotInfo
 from gd_tools.test_runner import (
     TestDetail,
     TestResult,
     build_gut_args,
     check_gut_installed,
     parse_junit_xml,
+    run_tests,
 )
 
 # Path to the fixture JUnit XML file.
@@ -395,3 +405,312 @@ def test_parse_junit_xml_empty_suite(tmp_path):
     assert skipped == 0
     assert duration == pytest.approx(0.0)
     assert details == []
+
+
+# --- run_tests ---
+
+
+def _make_completed_process(returncode=0, stdout="", stderr=""):
+    """Helper: create a CompletedProcess for mocking run_godot."""
+    return CompletedProcess(
+        args=[], returncode=returncode, stdout=stdout, stderr=stderr
+    )
+
+
+def _make_godot_info():
+    """Helper: create a GodotInfo for mocking find_godot."""
+    return GodotInfo(path="/fake/godot", version="4.5.1", is_valid=True)
+
+
+@pytest.fixture
+def gut_project(tmp_path):
+    """Fixture: tmp_path with GUT installed (addons/gut/gut_cmdln.gd)."""
+    gut_path = tmp_path / "addons" / "gut" / "gut_cmdln.gd"
+    gut_path.parent.mkdir(parents=True)
+    gut_path.touch()
+    return tmp_path
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_gut_not_installed(mock_find_root, tmp_path):
+    """run_tests raises GUTNotInstalledError when GUT is missing."""
+    mock_find_root.return_value = tmp_path
+    config = GdToolsConfig()
+    with pytest.raises(GUTNotInstalledError) as exc_info:
+        run_tests(config)
+    assert exc_info.value.exit_code == 2
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_godot_not_found(
+    mock_find_root, mock_find_godot, gut_project
+):
+    """run_tests raises GodotNotFoundError when Godot binary is missing."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.side_effect = GodotNotFoundError("Godot not found")
+    config = GdToolsConfig()
+    with pytest.raises(GodotNotFoundError):
+        run_tests(config)
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_calls_run_godot_with_correct_args(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests calls run_godot with correct binary, project, and GUT args."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(
+        stdout="All tests passed", stderr=""
+    )
+    mock_parse.return_value = (1, 1, 0, 0, 0.1, [])
+
+    run_tests(GdToolsConfig())
+
+    mock_run_godot.assert_called_once()
+    call_args = mock_run_godot.call_args
+    assert call_args.args[0] == "/fake/godot"
+    assert call_args.args[1] == gut_project
+    gut_args = call_args.args[2]
+    assert "-s" in gut_args
+    assert "addons/gut/gut_cmdln.gd" in gut_args
+    assert "-gexit" in gut_args
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_captures_stdout_stderr(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests captures stdout and stderr from the subprocess."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(
+        stdout="GUT output here", stderr="Some warnings"
+    )
+    mock_parse.return_value = (1, 1, 0, 0, 0.1, [])
+
+    result = run_tests(GdToolsConfig())
+    assert result.stdout == "GUT output here"
+    assert result.stderr == "Some warnings"
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_assembles_test_result(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests assembles TestResult from parsed JUnit data + subprocess."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(
+        stdout="Running tests...", stderr=""
+    )
+    details = [
+        TestDetail(
+            name="test_one",
+            suite="Suite",
+            status="pass",
+            message="",
+            duration=0.1,
+        )
+    ]
+    mock_parse.return_value = (1, 1, 0, 0, 0.1, details)
+
+    result = run_tests(GdToolsConfig())
+    assert result.total == 1
+    assert result.passed == 1
+    assert result.failed == 0
+    assert result.skipped == 0
+    assert result.duration == 0.1
+    assert result.stdout == "Running tests..."
+    assert len(result.test_details) == 1
+    assert result.test_details[0].name == "test_one"
+    assert result.junit_xml_path is not None
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_all_pass_no_error(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests with all passing tests does not raise TestFailureError."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(
+        stdout="All passed", stderr=""
+    )
+    mock_parse.return_value = (3, 3, 0, 0, 0.3, [])
+
+    result = run_tests(GdToolsConfig())
+    assert result.failed == 0
+    assert result.passed == 3
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_failures_raise_test_failure_error(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests raises TestFailureError when tests fail and no_exit_code=False."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(
+        stdout="Tests ran", stderr=""
+    )
+    mock_parse.return_value = (3, 2, 1, 0, 0.3, [])
+
+    with pytest.raises(TestFailureError) as exc_info:
+        run_tests(GdToolsConfig())
+    assert exc_info.value.exit_code == 1
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_failures_no_exit_code_true(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests with no_exit_code=True does not raise on test failures."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(
+        stdout="Tests ran", stderr=""
+    )
+    mock_parse.return_value = (3, 2, 1, 0, 0.3, [])
+
+    result = run_tests(GdToolsConfig(), no_exit_code=True)
+    assert result.failed == 1
+    assert result.passed == 2
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_timeout_raises_gdtools_error(
+    mock_find_root, mock_find_godot, mock_run_godot, gut_project
+):
+    """run_tests raises GdToolsError when Godot subprocess times out."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.side_effect = subprocess.TimeoutExpired(
+        cmd=["godot"], timeout=30
+    )
+
+    with pytest.raises(GdToolsError) as exc_info:
+        run_tests(GdToolsConfig(), timeout=30)
+    assert exc_info.value.exit_code == 2
+    assert (
+        "timeout" in str(exc_info.value).lower()
+        or "timed out" in str(exc_info.value).lower()
+    )
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_nonzero_exit_raises_gdtools_error(
+    mock_find_root, mock_find_godot, mock_run_godot, gut_project
+):
+    """run_tests raises GdToolsError when Godot exits with non-zero code."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(
+        returncode=1, stdout="", stderr="Godot crashed"
+    )
+
+    with pytest.raises(GdToolsError) as exc_info:
+        run_tests(GdToolsConfig())
+    assert exc_info.value.exit_code == 2
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_creates_gd_tools_dir(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests creates .gd-tools/ directory if it doesn't exist."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    run_tests(GdToolsConfig())
+    assert (gut_project / ".gd-tools").is_dir()
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_sets_junit_xml_path(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests sets junit_xml_path in TestResult to the resolved XML path."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    result = run_tests(GdToolsConfig())
+    expected_path = (gut_project / ".gd-tools" / "results.xml").resolve()
+    assert result.junit_xml_path == expected_path
