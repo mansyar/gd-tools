@@ -9,7 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from gd_tools.test_runner import TestDetail, TestResult
+from gd_tools.config import TestConfig
+from gd_tools.test_runner import TestDetail, TestResult, build_gut_args
 
 # --- TestDetail dataclass ---
 
@@ -158,3 +159,110 @@ def test_test_result_holds_multiple_details():
     assert len(result.test_details) == 5
     assert result.test_details[0].status == "pass"
     assert result.test_details[1].status == "fail"
+
+
+# --- build_gut_args ---
+
+
+@pytest.mark.unit
+def test_build_gut_args_base_command():
+    """Test base command args: -s, -d, -gexit present."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"))
+    assert "-s" in args
+    idx = args.index("-s")
+    assert args[idx + 1] == "addons/gut/gut_cmdln.gd"
+    assert "-d" in args
+    assert "-gexit" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_no_path_flag():
+    """Test that --path is NOT in args (handled by run_godot)."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"))
+    assert "--path" not in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_test_dirs():
+    """Test test dir args: -gdir=res://<dir>/ conversion from config."""
+    config = TestConfig(test_dirs=["test"])
+    args = build_gut_args(config, Path("/fake/project"))
+    assert "-gdir=res://test/" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_multiple_test_dirs():
+    """Test multiple test dirs as comma-separated value."""
+    config = TestConfig(test_dirs=["test", "tests"])
+    args = build_gut_args(config, Path("/fake/project"))
+    assert "-gdir=res://test/,res://tests/" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_prefix_suffix():
+    """Test prefix and suffix args."""
+    config = TestConfig(prefix="test_", suffix=".gd")
+    args = build_gut_args(config, Path("/fake/project"))
+    assert "-gprefix=test_" in args
+    assert "-gsuffix=.gd" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_suite_filter():
+    """Test suite filter arg when suite provided."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"), suite="MySuite")
+    assert "-gselect=MySuite" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_no_suite_filter():
+    """Test no suite filter when suite not provided."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"))
+    assert not any(a.startswith("-gselect") for a in args)
+
+
+@pytest.mark.unit
+def test_build_gut_args_test_name_filter():
+    """Test name filter arg when test_name provided."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"), test_name="MyTest")
+    assert "-gunit_test_name=MyTest" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_no_test_name_filter():
+    """Test no name filter when test_name not provided."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"))
+    assert not any(a.startswith("-gunit_test_name") for a in args)
+
+
+@pytest.mark.unit
+def test_build_gut_args_junit_xml_custom_path(tmp_path):
+    """Test custom JUnit XML path is absolute."""
+    config = TestConfig()
+    custom_path = str(tmp_path / "custom_results.xml")
+    args = build_gut_args(config, tmp_path, junit_xml=custom_path)
+    junit_args = [a for a in args if a.startswith("-gjunit_xml_file=")]
+    assert len(junit_args) == 1
+    path_str = junit_args[0].split("=", 1)[1]
+    assert Path(path_str).is_absolute()
+    assert path_str.endswith("custom_results.xml")
+
+
+@pytest.mark.unit
+def test_build_gut_args_default_junit_xml_path(tmp_path):
+    """Test default JUnit XML path is .gd-tools/results.xml under project_root."""
+    config = TestConfig()
+    args = build_gut_args(config, tmp_path)
+    junit_args = [a for a in args if a.startswith("-gjunit_xml_file=")]
+    assert len(junit_args) == 1
+    path_str = junit_args[0].split("=", 1)[1]
+    xml_path = Path(path_str)
+    assert xml_path.is_absolute()
+    assert ".gd-tools" in xml_path.parts
+    assert xml_path.name == "results.xml"
