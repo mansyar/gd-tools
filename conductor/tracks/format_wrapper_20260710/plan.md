@@ -205,7 +205,7 @@
     - [x] Read conductor/tracks/format_wrapper_20260710/spec.md
     - [x] Read conductor/workflow.md
 
-- [x] Task: Write integration tests for gdformatrc + format runner `8765432`
+- [x] Task: Write integration tests for gdformatrc + format runner `a0a11d2`
     - [x] Test generate_gdformatrc creates valid gdformatrc matching config excludes
     - [x] Test format runner respects same excludes as gdformatrc
     - [x] Test addons/ directory excluded by default
@@ -219,13 +219,13 @@
 > `generate_gdformatrc()` directly and verify the generated file content matches
 > `DEFAULT_EXCLUDES`, then verify `gd-tools format` respects those same excludes.
 
-- [x] Task: Verify gdformatrc integration `8765432`
+- [x] Task: Verify gdformatrc integration `a0a11d2`
     - [x] generate_gdformatrc() creates valid gdformatrc in temp project
     - [x] gd-tools format on project with addons/ confirms addons excluded
     - [x] gdformatrc content matches config exclude list (one path per line)
     - [x] Verify: All integration tests pass
 
-- [x] Task: Run full test suite and final verification `8765432`
+- [x] Task: Run full test suite and final verification `a0a11d2`
     - [x] Run pytest — all 225 tests pass (215 existing + 10 new integration)
     - [x] Verify no regressions in lint tests (all lint tests pass)
     - [x] Verify overall coverage thresholds maintained (99.47% total, >80% line / >70% branch)
@@ -233,7 +233,7 @@
     - [x] Run black --check on entire codebase (all formatted)
     - [x] mypy not configured in project (no mypy section in pyproject.toml)
 
-- [x] Task: Commit Phase 4 changes `8765432`
+- [x] Task: Commit Phase 4 changes `a0a11d2`
     - [x] git add and commit: test(format): Add integration tests for format and gdformatrc verification
     - [x] Add git note summarizing Phase 4 completion and track completion
 
