@@ -1,0 +1,18 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Syntax:
+;   - All settings are in INI-like format: key=value
+;   - Sections start with [section_name]
+;   - Comments start with ; or #
+
+config_version=5
+
+[application]
+
+config/name="gd-tools Sample Project"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
