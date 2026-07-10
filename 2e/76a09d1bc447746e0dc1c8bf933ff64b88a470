@@ -1,0 +1,15 @@
+Task: Implement check_godot_binary(config: GdToolsConfig) -> CheckResult
+
+Summary:
+- Added check_godot_binary() to doctor.py - calls find_godot(config.godot) and returns CheckResult
+- On success: CheckResult(name="Godot Binary", passed=True, message="Godot <version> at <path>")
+- On GodotNotFoundError: CheckResult(passed=False, message="Godot binary not found", fix_hint="Install Godot 4.5+...", severity="critical")
+- Added imports: find_godot, GodotNotFoundError from .godot; GdToolsConfig from .config
+- Added 3 unit tests: pass when found, fail when not found, critical severity with fix hint
+- Removed unused MagicMock import from test file, applied black formatting
+
+Files modified:
+- src/gd_tools/doctor.py
+- tests/unit/test_doctor.py
+
+Why: First of 9 diagnostic checks. Detects whether a Godot binary is available via the resolution chain.
