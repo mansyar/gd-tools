@@ -54,11 +54,11 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `install_gut(project_root: Path, godot_version: str, non_interactive: bool) -> None`
-    - [ ] Write failing tests: `test_install_gut_prompts_interactive_yes`, `test_install_gut_non_interactive_assumes_yes`, `test_install_gut_user_declines_prints_manual_instructions`, `test_install_gut_version_mismatch_warning`
-    - [ ] Implement `install_gut()` — prompt logic (interactive Y/n), call `download_gut()` + `extract_gut()`, or print manual instructions. Check installed GUT version vs expected, warn if mismatch.
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `install_gut(project_root: Path, godot_version: str, non_interactive: bool) -> None`
+    - [x] Write failing tests: `test_install_gut_prompts_interactive_yes`, `test_install_gut_non_interactive_assumes_yes`, `test_install_gut_user_declines_prints_manual_instructions`, `test_install_gut_version_mismatch_warning`
+    - [x] Implement `install_gut()` — prompt logic (interactive Y/n), call `download_gut()` + `extract_gut()`, or print manual instructions. Check installed GUT version vs expected, warn if mismatch.
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Implement `enable_gut_plugin(project_root: Path) -> None`
     - [ ] Write failing tests: `test_enable_gut_plugin_adds_section_to_empty_file`, `test_enable_gut_plugin_adds_entry_to_existing_section`, `test_enable_gut_plugin_idempotent_no_duplicate`, `test_enable_gut_plugin_preserves_existing_content`
