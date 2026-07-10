@@ -1,0 +1,18 @@
+Task: create_data_dir(project_root: Path) -> None
+
+TDD Cycle:
+- Red: 4 tests written (test_create_data_dir_creates_directory, test_create_data_dir_adds_to_gitignore, test_create_data_dir_gitignore_idempotent, test_create_data_dir_creates_gitignore_if_missing)
+- Green: Implemented create_data_dir in init.py
+- Refactor: ruff check passed, black --check passed (no changes)
+
+Implementation:
+- Creates .gd-tools/ directory with mkdir(exist_ok=True)
+- Appends .gd-tools/ to .gitignore if not already present
+- Creates .gitignore if it doesn't exist
+- Idempotent: no duplicate entries
+
+Coverage:
+- init.py: 154 stmts, 6 missed, 96% line coverage
+- Overall: 318 passed, 7 skipped, 98.84% coverage
+
+Spec FR: FR-10 (.gd-tools/ dir + .gitignore)
