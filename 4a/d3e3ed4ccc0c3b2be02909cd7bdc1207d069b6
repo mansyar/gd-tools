@@ -1,0 +1,20 @@
+TDD Verification Report - generate_lint_format_rcs
+
+Tests (3 new, all passing):
+- test_generate_rcs_generates_if_missing: Creates gdlintrc and gdformatrc when missing
+- test_generate_rcs_warns_if_differs: Prints warning when content differs, does NOT overwrite
+- test_generate_rcs_skips_if_matches: Does nothing when files already match
+
+Implementation:
+- For gdlintrc: generates YAML set format content, writes if missing, warns if differs
+- For gdformatrc: generates one-exclude-per-line content, writes if missing, warns if differs
+- Uses inline content generation matching config.generate_gdlintrc/generate_gdformatrc logic
+- Added 'import yaml' to init.py
+
+Coverage:
+- init.py: 92% line, ~82% branch (above 80%/70% thresholds)
+- Overall: 314 passed, 7 skipped, 97.74% coverage
+
+Linting:
+- ruff check: passed
+- black: reformatted init.py (minor formatting)
