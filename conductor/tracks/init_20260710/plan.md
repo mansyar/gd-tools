@@ -48,11 +48,11 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `extract_gut(zip_path: Path, project_root: Path) -> None`
-    - [ ] Write failing tests: `test_extract_gut_copies_addons_dir`, `test_extract_gut_cleans_up_temp_dir`
-    - [ ] Implement `extract_gut()` — `zipfile.ZipFile.extractall` to temp dir, copy `addons/gut/` to `project_root/addons/gut/`, clean up temp
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `extract_gut(zip_path: Path, project_root: Path) -> None`
+    - [x] Write failing tests: `test_extract_gut_copies_addons_dir`, `test_extract_gut_cleans_up_temp_dir`
+    - [x] Implement `extract_gut()` — `zipfile.ZipFile.extractall` to temp dir, copy `addons/gut/` to `project_root/addons/gut/`, clean up temp
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Implement `install_gut(project_root: Path, godot_version: str, non_interactive: bool) -> None`
     - [ ] Write failing tests: `test_install_gut_prompts_interactive_yes`, `test_install_gut_non_interactive_assumes_yes`, `test_install_gut_user_declines_prints_manual_instructions`, `test_install_gut_version_mismatch_warning`
