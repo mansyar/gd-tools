@@ -121,11 +121,11 @@
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
     - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Implement `create_data_dir(project_root: Path) -> None`
-    - [ ] Write failing tests: `test_create_data_dir_creates_directory`, `test_create_data_dir_adds_to_gitignore`, `test_create_data_dir_gitignore_idempotent`, `test_create_data_dir_creates_gitignore_if_missing`
-    - [ ] Implement `create_data_dir()` — `mkdir(exist_ok=True)` for `.gd-tools/`, append `.gd-tools/` to `.gitignore` if not present (create `.gitignore` if missing)
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `create_data_dir(project_root: Path) -> None`
+    - [x] Write failing tests: `test_create_data_dir_creates_directory`, `test_create_data_dir_adds_to_gitignore`, `test_create_data_dir_gitignore_idempotent`, `test_create_data_dir_creates_gitignore_if_missing`
+    - [x] Implement `create_data_dir()` — `mkdir(exist_ok=True)` for `.gd-tools/`, append `.gd-tools/` to `.gitignore` if not present (create `.gitignore` if missing)
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Implement `print_summary(project_root: Path, actions: list[str]) -> None`
     - [ ] Write failing tests: `test_print_summary_lists_actions`, `test_print_summary_prints_next_steps`
