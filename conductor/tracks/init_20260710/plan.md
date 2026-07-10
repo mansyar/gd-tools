@@ -60,11 +60,11 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `enable_gut_plugin(project_root: Path) -> None`
-    - [ ] Write failing tests: `test_enable_gut_plugin_adds_section_to_empty_file`, `test_enable_gut_plugin_adds_entry_to_existing_section`, `test_enable_gut_plugin_idempotent_no_duplicate`, `test_enable_gut_plugin_preserves_existing_content`
-    - [ ] Implement `enable_gut_plugin()` — text-based parse of `project.godot`, add `[editor_plugins]` with `enabled=PackedStringArray("res://addons/gut/plugin.gd")` if not present. Idempotent.
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `enable_gut_plugin(project_root: Path) -> None`
+    - [x] Write failing tests: `test_enable_gut_plugin_adds_section_to_empty_file`, `test_enable_gut_plugin_adds_entry_to_existing_section`, `test_enable_gut_plugin_idempotent_no_duplicate`, `test_enable_gut_plugin_preserves_existing_content`
+    - [x] Implement `enable_gut_plugin()` — text-based parse of `project.godot`, add `[editor_plugins]` with `enabled=PackedStringArray("res://addons/gut/plugin.gd")` if not present. Idempotent.
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: GUT Installation' (Protocol in workflow.md)
 
