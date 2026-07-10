@@ -208,7 +208,8 @@ def test_install_gut_prompts_interactive_yes(tmp_path: Path):
             return_value="9.5.0",
         ),
     ):
-        install_gut(tmp_path, "4.5.1", non_interactive=False)
+        result = install_gut(tmp_path, "4.5.1", non_interactive=False)
+    assert result is True
     mock_download.assert_called_once()
     mock_extract.assert_called_once()
 
@@ -225,7 +226,8 @@ def test_install_gut_non_interactive_assumes_yes(tmp_path: Path):
             return_value="9.5.0",
         ),
     ):
-        install_gut(tmp_path, "4.5.1", non_interactive=True)
+        result = install_gut(tmp_path, "4.5.1", non_interactive=True)
+    assert result is True
     mock_confirm.assert_not_called()
     mock_download.assert_called_once()
     mock_extract.assert_called_once()
@@ -242,7 +244,8 @@ def test_install_gut_user_declines_prints_manual_instructions(
         patch("gd_tools.init.extract_gut") as mock_extract,
         patch("gd_tools.init.console.print") as mock_print,
     ):
-        install_gut(tmp_path, "4.5.1", non_interactive=False)
+        result = install_gut(tmp_path, "4.5.1", non_interactive=False)
+    assert result is False
     mock_download.assert_not_called()
     mock_extract.assert_not_called()
     mock_print.assert_called()
@@ -265,7 +268,8 @@ def test_install_gut_version_mismatch_warning(tmp_path: Path):
         patch("gd_tools.init.console.print") as mock_print,
         patch("gd_tools.init.download_gut") as mock_download,
     ):
-        install_gut(tmp_path, "4.5.1", non_interactive=False)
+        result = install_gut(tmp_path, "4.5.1", non_interactive=False)
+    assert result is True
     mock_download.assert_not_called()
     mock_print.assert_called_once()
     call_args = mock_print.call_args[0][0]
@@ -758,3 +762,27 @@ def test_run_init_collects_actions_list(tmp_path: Path):
     )
     assert isinstance(actions, list)
     assert len(actions) > 0
+
+
+def test_run_init_exits_when_user_declines_gut(tmp_path: Path):
+    """Test run_init exits when user declines GUT installation."""
+    (tmp_path / "project.godot").write_text("config_version=5\n")
+
+    config = GdToolsConfig()
+    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.load_config", return_value=config),
+        patch("gd_tools.init.find_godot", return_value=mock_info),
+        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.install_gut", return_value=False),
+        patch("gd_tools.init.enable_gut_plugin") as mock_enable,
+        patch("gd_tools.init.print_summary") as mock_summary,
+    ):
+        with pytest.raises(SystemExit) as exc_info:
+            run_init()
+
+    assert exc_info.value.code == 0
+    mock_enable.assert_not_called()
+    mock_summary.assert_not_called()

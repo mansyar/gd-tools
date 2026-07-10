@@ -14,12 +14,10 @@ The command is idempotent: running it multiple times produces the
 same end state without duplicating entries.
 """
 
-# ruff: noqa: F401
-# Imports below are used in functions implemented in subsequent tasks.
-
 import configparser
 import json
 import shutil
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -32,13 +30,11 @@ from rich.console import Console
 from .config import (
     GdToolsConfig,
     find_project_root,
-    generate_gdformatrc,
-    generate_gdlintrc,
     load_config,
     save_config,
 )
-from .errors import ConfigError, GdToolsError, GodotNotFoundError
-from .godot import GodotInfo, find_godot, get_gut_version_for_godot
+from .errors import GdToolsError
+from .godot import find_godot, get_gut_version_for_godot
 
 # --- Constants ---
 
@@ -215,7 +211,7 @@ def extract_gut(zip_path: Path, project_root: Path) -> None:
 
 def install_gut(
     project_root: Path, godot_version: str, non_interactive: bool
-) -> None:
+) -> bool:
     """Install GUT if not already installed.
 
     If GUT is already installed, checks the installed version against
@@ -227,6 +223,10 @@ def install_gut(
         project_root: Path to the Godot project root.
         godot_version: The detected Godot version (e.g., ``"4.5.1"``).
         non_interactive: If True, skip prompts and assume yes.
+
+    Returns:
+        True if GUT is installed (or was already present),
+        False if the user declined installation.
     """
     if check_gut_installed(project_root):
         installed_version = get_installed_gut_version(project_root)
@@ -238,7 +238,7 @@ def install_gut(
                 f"version {expected_version} for Godot "
                 f"{godot_version}.[/yellow]"
             )
-        return
+        return True
 
     if not non_interactive:
         if not click.confirm("Install GUT?", default=True):
@@ -249,7 +249,7 @@ def install_gut(
                 "  2. Extract the 'addons/gut/' folder to your "
                 "project's 'addons/' directory."
             )
-            return
+            return False
 
     gut_version = get_gut_version_for_godot(godot_version)
     tmpdir = tempfile.mkdtemp()
@@ -259,6 +259,7 @@ def install_gut(
         extract_gut(zip_dest, project_root)
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+    return True
 
 
 def enable_gut_plugin(project_root: Path) -> None:
@@ -488,12 +489,12 @@ def print_summary(project_root: Path, actions: list[str]) -> None:
     console.print("\n[bold green]gd-tools init complete![/bold green]\n")
     console.print("[bold]Actions taken:[/bold]")
     for action in actions:
-        console.print(f"  • {action}")
+        console.print(f"  - {action}")
     console.print("\n[bold]Next steps:[/bold]")
-    console.print("  • Run [cyan]gd-tools test[/cyan] to execute tests")
-    console.print("  • Run [cyan]gd-tools lint[/cyan] to check code style")
+    console.print("  - Run [cyan]gd-tools test[/cyan] to execute tests")
+    console.print("  - Run [cyan]gd-tools lint[/cyan] to check code style")
     console.print(
-        "  • Run [cyan]gd-tools format[/cyan] to format GDScript files"
+        "  - Run [cyan]gd-tools format[/cyan] to format GDScript files"
     )
 
 
@@ -537,7 +538,14 @@ def run_init(non_interactive: bool = False) -> None:
     else:
         actions.append(f"Installing GUT v{gut_version}")
 
-    install_gut(project_root, godot_version, non_interactive=non_interactive)
+    if not install_gut(
+        project_root, godot_version, non_interactive=non_interactive
+    ):
+        console.print(
+            "\n[yellow]Init aborted: GUT was not installed.[/yellow]\n"
+            "Install GUT manually, then re-run 'gd-tools init'."
+        )
+        sys.exit(0)
 
     enable_gut_plugin(project_root)
     actions.append("Enabled GUT plugin in project.godot")
