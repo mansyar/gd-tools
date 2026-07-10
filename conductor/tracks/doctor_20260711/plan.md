@@ -32,7 +32,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check` on modified files
 
-- [ ] Task: Implement `check_godot_version(config: GdToolsConfig) -> CheckResult`
+- [x] Task: Implement `check_godot_version(config: GdToolsConfig) -> CheckResult` [5668dab]
     - [ ] Write failing tests: `test_check_godot_version_passes_when_45_plus`, `test_check_godot_version_fails_when_below_45`, `test_check_godot_version_critical_severity`
     - [ ] Implement `check_godot_version()` — call `find_godot(config.godot)`, use `check_version_compatible(info.version)`, return pass/fail `CheckResult` with actionable fix hint
     - [ ] Verify coverage >80% line, >70% branch
