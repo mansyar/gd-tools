@@ -133,11 +133,11 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `run_init(non_interactive: bool = False) -> None`
-    - [ ] Write failing tests: `test_run_init_full_flow_with_mocks`, `test_run_init_non_interactive_skips_prompts`, `test_run_init_collects_actions_list`
-    - [ ] Implement `run_init()` — orchestrate: find_project_root → load_config → detect_godot_version → get_gut_version → check_gut_installed → install_gut (if needed) → enable_gut_plugin → install_coverage_addon → update_gutconfig → create_config_file → generate_lint_format_rcs → create_data_dir → print_summary
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `run_init(non_interactive: bool = False) -> None`
+    - [x] Write failing tests: `test_run_init_full_flow_with_mocks`, `test_run_init_non_interactive_skips_prompts`, `test_run_init_collects_actions_list`
+    - [x] Implement `run_init()` — orchestrate: find_project_root → load_config → detect_godot_version → get_gut_version → check_gut_installed → install_gut (if needed) → enable_gut_plugin → install_coverage_addon → update_gutconfig → create_config_file → generate_lint_format_rcs → create_data_dir → print_summary
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Wire CLI `init` command to `run_init()`
     - [ ] Write failing tests: `test_cli_init_calls_run_init`, `test_cli_init_passes_non_interactive_flag`, `test_cli_init_exits_zero_on_success`
