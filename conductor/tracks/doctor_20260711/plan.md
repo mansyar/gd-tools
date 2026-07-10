@@ -70,7 +70,7 @@
     - [ ] Verify coverage >80% line, >70% branch
     - [ ] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `check_gutconfig(project_root: Path) -> CheckResult`
+- [x] Task: Implement `check_gutconfig(project_root: Path) -> CheckResult` [91530fe]
     - [ ] Write failing tests: `test_check_gutconfig_passes_when_valid_with_hooks`, `test_check_gutconfig_fails_when_missing`, `test_check_gutconfig_fails_when_invalid_json`, `test_check_gutconfig_fails_when_no_hook_paths`, `test_check_gutconfig_warning_severity`
     - [ ] Implement `check_gutconfig()` — read `.gutconfig.json`, parse JSON, check for `pre_run_script` and `post_run_script` keys, return `CheckResult(severity="warning")` with fix hint
     - [ ] Verify coverage >80% line, >70% branch
