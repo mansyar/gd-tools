@@ -72,14 +72,14 @@
 
 ## Phase 5: Integration Tests & Coverage
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
-- [ ] Task: Integration tests with fixture `.gd` files
-    - [ ] Create fixture `.gd` files in `tests/fixtures/` (clean file, file with errors, file with warnings, syntax error file)
-    - [ ] Write integration test: full `lint` run on fixture project (text output)
-    - [ ] Write integration test: full `lint` run on fixture project (JSON output)
-    - [ ] Write integration test: excludes respected on fixture project (addon dir with `.gd` files skipped)
-    - [ ] Write integration test: `--fix` flag no-op behavior
-- [ ] Task: Coverage and code quality verification
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow rules
+- [x] Task: Integration tests with fixture `.gd` files `d8b47cc`
+    - [x] Create fixture `.gd` files in `tests/fixtures/` (clean file, file with errors, file with warnings, syntax error file)
+    - [x] Write integration test: full `lint` run on fixture project (text output)
+    - [x] Write integration test: full `lint` run on fixture project (JSON output)
+    - [x] Write integration test: excludes respected on fixture project (addon dir with `.gd` files skipped)
+    - [x] Write integration test: `--fix` flag no-op behavior
+- [~] Task: Coverage and code quality verification
     - [ ] Run `pytest --cov=gd_tools.lint_runner` — verify >80% line coverage
     - [ ] Run `ruff check src/gd_tools/lint_runner.py` — verify no lint issues
     - [ ] Run `black --check src/gd_tools/lint_runner.py` — verify formatting
