@@ -1,0 +1,18 @@
+Task: Update lint command in src/gd_tools/cli.py
+
+Summary:
+- Replaced lint command stub with full implementation
+- path argument: required=False, default='.'
+- --report-format: click.Choice(['text', 'json']), default='text'
+- --fix: no-op flag that prints warning 'gdlint is read-only; --fix has no effect'
+- Wired to load_config() -> run_lint() -> format_lint_text()/format_lint_json()
+- Exit codes: 0 (clean), 1 (lint errors), 2 (config error via ConfigError catch)
+- Updated test_lint_help to also check for --fix option
+- Replaced test_lint_stub_exit_code_2 with test_lint_exit_code_2_config_error
+- Added 8 new tests: default path, json format, text default, fix warning, exit 0/1/2, wired end-to-end
+
+Files modified:
+- src/gd_tools/cli.py: Added imports (load_config, ConfigError, run_lint, format_lint_text, format_lint_json), updated lint command
+- tests/unit/test_cli.py: Added imports (MagicMock, patch, ConfigError, LintIssue, LintResult), updated help test, replaced stub test, added 8 new tests
+
+Coverage: cli.py 100% line + 100% branch, 186 tests pass, 99.35% total
