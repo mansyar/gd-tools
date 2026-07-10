@@ -118,15 +118,15 @@
 
 ## Phase 5: Integration Tests and Coverage
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
-    - [ ] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
-    - [ ] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
+- [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
+    - [x] Read `conductor/tracks/doctor_20260711/spec.md` for functional requirements, acceptance criteria, and constraints
+    - [x] Read `conductor/workflow.md` for TDD lifecycle (Red → Green → Refactor), coverage thresholds, and commit conventions
 
-- [ ] Task: Write integration tests for doctor command
-    - [ ] Write `test_doctor_on_fresh_project` — run `gd-tools doctor` before `gd-tools init`, verify checks report missing components
-    - [ ] Write `test_doctor_after_init` — run `gd-tools init` then `gd-tools doctor`, verify all checks pass (except autoload, which is Phase 3)
-    - [ ] Run full test suite (`CI=true pytest`), verify all pass and overall coverage thresholds still met
-    - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`
+- [x] Task: Write integration tests for doctor command [6a100fa]
+    - [x] Write `test_doctor_on_fresh_project` — run `gd-tools doctor` before `gd-tools init`, verify checks report missing components
+    - [x] Write `test_doctor_after_init` — run `gd-tools init` then `gd-tools doctor`, verify all checks pass (except autoload, which is Phase 3)
+    - [x] Run full test suite (`CI=true pytest`), verify all pass and overall coverage thresholds still met
+    - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Integration Tests and Coverage' (Protocol in workflow.md)
 </protect>
