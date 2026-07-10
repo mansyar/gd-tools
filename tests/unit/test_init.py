@@ -14,6 +14,7 @@ from gd_tools.errors import GdToolsError, GodotNotFoundError
 from gd_tools.godot import GodotInfo
 from gd_tools.init import (
     check_gut_installed,
+    create_config_file,
     detect_godot_version,
     download_gut,
     enable_gut_plugin,
@@ -491,3 +492,40 @@ def test_update_gutconfig_preserves_custom_dirs(tmp_path: Path):
     assert "junit_xml_file" in data
     assert "pre_run_script" in data
     assert "post_run_script" in data
+
+
+# --- create_config_file ---
+
+
+def test_create_config_file_creates_defaults_if_missing(tmp_path: Path):
+    """Test create_config_file creates gd-tools.toml with defaults if missing."""
+    config = GdToolsConfig()
+    create_config_file(tmp_path, config)
+
+    config_file = tmp_path / "gd-tools.toml"
+    assert config_file.exists()
+    # Verify it's valid TOML with expected structure
+    import tomllib
+
+    with open(config_file, "rb") as f:
+        data = tomllib.load(f)
+    assert "godot" in data
+    assert "test" in data
+    assert "lint" in data
+    assert "format" in data
+    assert "coverage" in data
+
+
+def test_create_config_file_preserves_existing(tmp_path: Path):
+    """Test create_config_file does not overwrite existing gd-tools.toml."""
+    config_file = tmp_path / "gd-tools.toml"
+    original_content = (
+        "[godot]\nbinary = '/custom/godot'\n\n"
+        "[test]\ntest_dirs = ['my_tests']\n"
+    )
+    config_file.write_text(original_content)
+
+    config = GdToolsConfig()
+    create_config_file(tmp_path, config)
+
+    assert config_file.read_text() == original_content

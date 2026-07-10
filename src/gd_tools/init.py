@@ -384,3 +384,20 @@ def update_gutconfig(project_root: Path, config: GdToolsConfig) -> None:
         if key in existing:
             merged[key] = existing[key]
     gutconfig_path.write_text(json.dumps(merged, indent=2) + "\n")
+
+
+def create_config_file(project_root: Path, config: GdToolsConfig) -> None:
+    """Create ``gd-tools.toml`` if it does not exist.
+
+    If the file already exists, it is preserved unchanged. If it
+    does not exist, the provided config is written via
+    :func:`save_config`.
+
+    Args:
+        project_root: Path to the Godot project root.
+        config: The configuration to write if the file is missing.
+    """
+    config_file = project_root / "gd-tools.toml"
+    if config_file.exists():
+        return
+    save_config(config, project_root)
