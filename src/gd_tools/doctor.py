@@ -338,3 +338,48 @@ def check_gd_tools_toml(project_root: Path) -> CheckResult:
         passed=True,
         message="gd-tools.toml is valid",
     )
+
+
+def check_autoload(project_root: Path) -> CheckResult:
+    """Check that _GDTCoverage autoload is registered in project.godot.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        CheckResult indicating whether the ``_GDTCoverage`` autoload
+        is registered in the ``[autoload]`` section of
+        ``project.godot``.
+    """
+    project_godot = project_root / "project.godot"
+    if not project_godot.exists():
+        return CheckResult(
+            name="Autoload",
+            passed=False,
+            message="project.godot not found",
+            fix_hint="Run `gd-tools init` to deploy coverage addon.",
+            severity="critical",
+        )
+    content = project_godot.read_text()
+    in_autoload = False
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("["):
+            in_autoload = stripped == "[autoload]"
+            continue
+        if in_autoload and stripped.startswith("_GDTCoverage"):
+            return CheckResult(
+                name="Autoload",
+                passed=True,
+                message="_GDTCoverage autoload is registered",
+            )
+    return CheckResult(
+        name="Autoload",
+        passed=False,
+        message="_GDTCoverage autoload is not registered",
+        fix_hint=(
+            "Run `gd-tools init` to deploy coverage addon "
+            "(autoload registration in Phase 3)."
+        ),
+        severity="critical",
+    )

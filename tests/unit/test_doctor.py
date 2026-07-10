@@ -22,6 +22,7 @@ from gd_tools.doctor import (
     check_coverage_addon,
     check_gutconfig,
     check_gd_tools_toml,
+    check_autoload,
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
@@ -475,4 +476,46 @@ def test_check_gd_tools_toml_fails_when_invalid_toml(tmp_path):
 def test_check_gd_tools_toml_critical_severity(tmp_path):
     """Test check_gd_tools_toml has critical severity on failure."""
     result = check_gd_tools_toml(tmp_path)
+    assert result.severity == "critical"
+
+
+# --- check_autoload ---
+
+
+@pytest.mark.unit
+def test_check_autoload_passes_when_registered(tmp_path):
+    """Test check_autoload passes when _GDTCoverage is in [autoload]."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "[autoload]\n\n"
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"\n'
+    )
+    result = check_autoload(tmp_path)
+    assert result.passed is True
+    assert "_GDTCoverage" in result.message
+
+
+@pytest.mark.unit
+def test_check_autoload_fails_when_not_registered(tmp_path):
+    """Test check_autoload fails when _GDTCoverage is not in [autoload]."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text('[autoload]\n\nSomeOther="*res://other.gd"\n')
+    result = check_autoload(tmp_path)
+    assert result.passed is False
+    assert "_GDTCoverage" in result.message
+    assert "gd-tools init" in result.fix_hint
+
+
+@pytest.mark.unit
+def test_check_autoload_fails_when_no_project_godot(tmp_path):
+    """Test check_autoload fails when project.godot does not exist."""
+    result = check_autoload(tmp_path)
+    assert result.passed is False
+    assert "project.godot" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_autoload_critical_severity(tmp_path):
+    """Test check_autoload has critical severity on failure."""
+    result = check_autoload(tmp_path)
     assert result.severity == "critical"
