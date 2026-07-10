@@ -1,0 +1,16 @@
+Task: Implement check_gdtoolkit() -> CheckResult
+
+Summary:
+- Added check_gdtoolkit() to doctor.py - runs subprocess.run([tool, "--version"]) for gdlint and gdformat
+- Catches FileNotFoundError for missing tools, collects missing tool names
+- On success: CheckResult(name="GD Toolkit", passed=True, message="gdlint and gdformat are installed")
+- On failure: CheckResult(passed=False, message="Missing tools: <list>", fix_hint="Install gdtoolkit: pip install gdtoolkit", severity="critical")
+- Added import subprocess to doctor.py
+- 4 unit tests: pass when installed, fail when gdlint missing, fail when gdformat missing, critical severity
+- 100% coverage on doctor.py (39 statements, 6 branches, 0 missed)
+
+Files modified:
+- src/gd_tools/doctor.py
+- tests/unit/test_doctor.py
+
+Why: Third of 9 diagnostic checks. Verifies that gdtoolkit (gdlint + gdformat) CLI tools are installed.
