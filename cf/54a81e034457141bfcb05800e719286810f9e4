@@ -1,0 +1,17 @@
+Task: Implement check_gut_version(project_root: Path, godot_version: str) -> CheckResult
+
+Commit: cf54a81
+
+Changes:
+- Added imports to doctor.py: get_gut_version_for_godot from .godot, get_installed_gut_version from .init
+- Implemented check_gut_version() - calls get_installed_gut_version(project_root) and get_gut_version_for_godot(godot_version), compares versions
+- Pass when versions match, pass when installed version is None (unknown), fail with warning severity on mismatch
+- 4 tests added: test_check_gut_version_passes_when_matches, test_check_gut_version_fails_as_warning_when_mismatch, test_check_gut_version_warning_severity, test_check_gut_version_passes_when_version_unknown
+
+Test Results:
+- 24 doctor tests pass (all)
+- 353 total tests pass, 7 skipped
+- doctor.py: 100% coverage (54 statements, 0 missed)
+- Overall: 98.40% coverage
+- ruff: All checks passed
+- black: Clean (after reformat)
