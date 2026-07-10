@@ -127,11 +127,11 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [ ] Task: Implement `print_summary(project_root: Path, actions: list[str]) -> None`
-    - [ ] Write failing tests: `test_print_summary_lists_actions`, `test_print_summary_prints_next_steps`
-    - [ ] Implement `print_summary()` — Rich-formatted output, list all actions taken, print next steps (e.g., "Run `gd-tools test` to execute tests")
-    - [ ] Verify coverage >80% line, >70% branch
-    - [ ] Run `ruff check` and `black --check`
+- [x] Task: Implement `print_summary(project_root: Path, actions: list[str]) -> None`
+    - [x] Write failing tests: `test_print_summary_lists_actions`, `test_print_summary_prints_next_steps`
+    - [x] Implement `print_summary()` — Rich-formatted output, list all actions taken, print next steps (e.g., "Run `gd-tools test` to execute tests")
+    - [x] Verify coverage >80% line, >70% branch
+    - [x] Run `ruff check` and `black --check`
 
 - [ ] Task: Implement `run_init(non_interactive: bool = False) -> None`
     - [ ] Write failing tests: `test_run_init_full_flow_with_mocks`, `test_run_init_non_interactive_skips_prompts`, `test_run_init_collects_actions_list`
