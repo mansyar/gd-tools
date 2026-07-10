@@ -96,14 +96,12 @@ def build_gut_args(
             ``-gunit_test_name``).
         junit_xml: Optional JUnit XML output path. Defaults to
             ``<project_root>/.gd-tools/results.xml``.
-        coverage: Whether coverage hooks should be included. Currently
-            unused (Phase 3 infrastructure).
+        coverage: Whether coverage hooks should be included. When True,
+            adds ``-gpre_run_script`` and ``-gpost_run_script`` args.
 
     Returns:
         List of CLI arguments for Godot/GUT.
     """
-    del coverage  # Phase 3 will implement coverage hook args
-
     args: list[str] = [
         "-s",
         "addons/gut/gut_cmdln.gd",
@@ -137,6 +135,15 @@ def build_gut_args(
     else:
         xml_path = (project_root / ".gd-tools" / "results.xml").resolve()
     args.append(f"-gjunit_xml_file={xml_path}")
+
+    # Coverage hooks (pre/post run scripts for hybrid coverage system).
+    if coverage:
+        args.append(
+            "-gpre_run_script=res://addons/gd-tools-coverage/pre_run_hook.gd"
+        )
+        args.append(
+            "-gpost_run_script=res://addons/gd-tools-coverage/post_run_hook.gd"
+        )
 
     return args
 

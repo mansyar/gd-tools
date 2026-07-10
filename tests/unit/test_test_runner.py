@@ -714,3 +714,133 @@ def test_run_tests_sets_junit_xml_path(
     result = run_tests(GdToolsConfig())
     expected_path = (gut_project / ".gd-tools" / "results.xml").resolve()
     assert result.junit_xml_path == expected_path
+
+
+# --- coverage flag infrastructure ---
+
+
+@pytest.mark.unit
+def test_build_gut_args_coverage_adds_pre_run_script():
+    """coverage=True adds -gpre_run_script to GUT args."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"), coverage=True)
+    assert any(
+        a == "-gpre_run_script=res://addons/gd-tools-coverage/pre_run_hook.gd"
+        for a in args
+    )
+
+
+@pytest.mark.unit
+def test_build_gut_args_coverage_adds_post_run_script():
+    """coverage=True adds -gpost_run_script to GUT args."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"), coverage=True)
+    assert any(
+        a == "-gpost_run_script=res://addons/gd-tools-coverage/post_run_hook.gd"
+        for a in args
+    )
+
+
+@pytest.mark.unit
+def test_build_gut_args_no_coverage_no_hook_scripts():
+    """coverage=False does not add hook script args."""
+    config = TestConfig()
+    args = build_gut_args(config, Path("/fake/project"), coverage=False)
+    assert not any(a.startswith("-gpre_run_script") for a in args)
+    assert not any(a.startswith("-gpost_run_script") for a in args)
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_coverage_sets_env_var(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=True sets GD_TOOLS_COVERAGE_ACTIVE=1 in subprocess env."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    run_tests(GdToolsConfig(), coverage=True)
+
+    call_args = mock_run_godot.call_args
+    env = call_args.kwargs.get("env")
+    assert env is not None
+    assert env.get("GD_TOOLS_COVERAGE_ACTIVE") == "1"
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_no_coverage_no_env_var(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=False does not set coverage env vars."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    run_tests(GdToolsConfig(), coverage=False)
+
+    call_args = mock_run_godot.call_args
+    env = call_args.kwargs.get("env")
+    assert env is None
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_coverage_sets_coverage_data_path(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=True sets coverage_data_path in TestResult."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    result = run_tests(GdToolsConfig(), coverage=True)
+    expected_path = gut_project / ".gd-tools" / "coverage" / "coverage.json"
+    assert result.coverage_data_path == expected_path
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_no_coverage_coverage_data_path_none(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=False sets coverage_data_path to None."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    result = run_tests(GdToolsConfig(), coverage=False)
+    assert result.coverage_data_path is None
