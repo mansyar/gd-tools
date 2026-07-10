@@ -24,7 +24,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Project Detection and Godot Version Detection' (Protocol in workflow.md)
 
-## Phase 2: GUT Installation
+## Phase 2: GUT Installation [checkpoint: d239f38]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align implementation with requirements and TDD protocol
     - [x] Read `conductor/tracks/init_20260710/spec.md` for functional requirements, acceptance criteria, and constraints
@@ -66,7 +66,7 @@
     - [x] Verify coverage >80% line, >70% branch
     - [x] Run `ruff check` and `black --check`
 
-- [~] Task: Conductor - User Manual Verification 'Phase 2: GUT Installation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: GUT Installation' (Protocol in workflow.md)
 
 ## Phase 3: Coverage Addon Deployment
 
