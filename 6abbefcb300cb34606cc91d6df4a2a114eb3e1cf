@@ -1,0 +1,18 @@
+Task: download_gut(version: str, dest: Path) -> Path
+Commit: 6abbefc
+
+## Tests Written (Red Phase)
+- test_download_gut_downloads_zip: Mocks requests.get, verifies correct URL called with timeout=30, verifies zip content written to dest, verifies dest path returned
+- test_download_gut_fails_with_instructions_on_network_error: Mocks requests.get to raise RequestException, verifies GdToolsError raised with manual install instructions (GitHub URL + Asset Library link)
+
+## Implementation (Green Phase)
+- Builds URL from GUT_DOWNLOAD_URL.format(version=version)
+- Uses requests.get(url, timeout=30) + response.raise_for_status()
+- Writes response.content to dest, returns dest
+- On requests.RequestException: raises GdToolsError with [Error] format including manual install instructions (Asset Library + GitHub URL)
+
+## Verification
+- init.py: 100% line coverage, 100% branch
+- Full suite: 292 passed, 7 skipped, 99.55% overall coverage
+- ruff check: All checks passed
+- black --check: 2 files would be left unchanged
