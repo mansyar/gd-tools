@@ -1,0 +1,19 @@
+Task: check_gut_installed() implementation
+
+Files changed:
+- src/gd_tools/test_runner.py: Added check_gut_installed(project_root: Path) -> None
+- tests/unit/test_test_runner.py: Added 2 tests (present/missing), updated imports
+
+Key decisions:
+- Function returns None (not bool) — matches plan signature. Either passes silently or raises.
+- Checks addons/gut/gut_cmdln.gd existence via pathlib.Path.exists()
+- Raises GUTNotInstalledError with actionable message: 'GUT is not installed. Run gd-tools init to install it.'
+- GUTNotInstalledError already has exit_code=2 from errors.py hierarchy
+- Tests use tmp_path fixture for filesystem isolation
+
+Verification:
+- 244 tests pass (2 new + 242 existing), no regressions
+- test_runner.py: 100% line coverage (46 stmts, 0 missed)
+- Overall: 99.61% coverage
+- ruff check: passed
+- black --check: passed
