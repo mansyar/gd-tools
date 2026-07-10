@@ -1,0 +1,18 @@
+Task: Implement check_autoload(project_root: Path) -> CheckResult
+
+Implementation:
+- Implemented check_autoload() — reads project.godot, parses [autoload] section
+  - Missing project.godot: fail with severity="critical", fix_hint="Run gd-tools init to deploy coverage addon."
+  - _GDTCoverage not in [autoload]: fail with severity="critical", fix_hint="Run gd-tools init to deploy coverage addon (autoload registration in Phase 3)."
+  - _GDTCoverage found: pass with message "_GDTCoverage autoload is registered"
+- Parsing approach: line-by-line scan, track in_autoload flag when entering [autoload] section, check for _GDTCoverage prefix
+
+Tests (4 added):
+- test_check_autoload_passes_when_registered
+- test_check_autoload_fails_when_not_registered
+- test_check_autoload_fails_when_no_project_godot
+- test_check_autoload_critical_severity
+
+Coverage: doctor.py at 100% (98 statements, 0 missed)
+Full suite: 369 passed, 7 skipped, 98.48% overall
+ruff: clean, black: clean (reformatted test file)
