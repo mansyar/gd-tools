@@ -1,0 +1,27 @@
+Phase 4: Integration and gdformatrc Verification
+
+## Summary
+Created 10 integration tests in tests/integration/test_format_integration.py covering:
+- Full format runs in default, --check, and --diff modes with real gdtoolkit
+- addons/ directory excluded by default (DEFAULT_EXCLUDES)
+- Syntax error files skipped, other files still formatted
+- No files found graceful message and exit 0
+- gdformatrc generation: generate_gdformatrc() creates valid file matching config excludes
+- Format runner respects same excludes as gdformatrc
+
+## Adaptation
+The init CLI command is still a stub (NotImplementedError). Instead of testing
+gd-tools init at CLI level, integration tests call generate_gdformatrc() directly
+and verify the generated file content matches DEFAULT_EXCLUDES.
+
+## Test Results
+- 225 tests pass (215 existing + 10 new integration)
+- 99.47% total coverage
+- format_runner.py: 100% line, 100% branch
+- cli.py: 100% line, 100% branch
+- ruff: all checks passed
+- black: all files formatted correctly
+
+## Files Changed
+- NEW: tests/integration/test_format_integration.py (10 tests, ~200 lines)
+- MODIFIED: conductor/tracks/format_wrapper_20260710/plan.md
