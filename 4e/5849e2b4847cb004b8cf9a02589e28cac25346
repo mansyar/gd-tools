@@ -1,0 +1,26 @@
+CONDUCTOR CHECKPOINT - Phase 2: pre_run_hook.gd Plan Loading (TDD)
+
+Commit: 4e5849e
+Phase: 2 of 6
+Track: coverage_hooks_20260711
+
+COMPLETED TASKS:
+- Write GUT tests for plan loading (Red): 13 tests written
+- Implement plan loading in pre_run_hook.gd (Green): All 13 tests pass
+- Refactor plan loading (Refactor): No refactoring needed - code is clean
+
+VERIFICATION:
+- GUT tests: 13/13 pass (~12s)
+- Python tests: 458 pass (98.65% coverage)
+- gdformat: 4 files clean
+- gdlint: No problems found
+
+CHANGED FILES:
+- src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (126 lines) - Plan loading implementation
+- tests/fixtures/gdscript/test_pre_run_hook.gd (~140 lines) - 13 GUT tests
+- tests/integration/test_coverage_hooks.py - test_pre_run_hook_gut_tests_pass integration test
+
+KEY DECISIONS:
+- GutHookScript extends RefCounted (not Node), so hooks cannot use get_tree()/add_child()/queue_free()
+- Used assert_push_error() for tests expecting push_error() calls (GUT error tracking)
+- Cast JSON.parse_string() results to int for version comparison (Godot parses int as float)
