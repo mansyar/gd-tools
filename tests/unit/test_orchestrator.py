@@ -15,7 +15,10 @@ from unittest.mock import patch
 import pytest
 
 from gd_tools.config import GdToolsConfig
-from gd_tools.coverage.orchestrator import run_coverage_test
+from gd_tools.coverage.orchestrator import (
+    generate_coverage_report,
+    run_coverage_test,
+)
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan, LinePlan
 from gd_tools.coverage.reporter import (
     CoverageData,
@@ -23,7 +26,11 @@ from gd_tools.coverage.reporter import (
     FileCoverage,
     ReportResult,
 )
-from gd_tools.errors import CoverageThresholdError, TestFailureError
+from gd_tools.errors import (
+    CoveragePlanError,
+    CoverageThresholdError,
+    TestFailureError,
+)
 from gd_tools.test_runner import TestResult
 
 # --- Helpers ---
@@ -244,3 +251,81 @@ def test_run_coverage_test_no_exit_code_passes_flag(mock_deps):
     kwargs = mock_deps["run_tests"].call_args.kwargs
     assert kwargs.get("no_exit_code") is True
     mock_deps["generate_report"].assert_called_once()
+
+
+# --- generate_coverage_report() ---
+
+
+@pytest.mark.unit
+def test_generate_coverage_report_reads_plan(mock_deps):
+    """generate_coverage_report() reads plan from <output_dir>/plan.json."""
+    generate_coverage_report(_make_config())
+
+    mock_deps["read_plan_json"].assert_called_once()
+    plan_path = mock_deps["read_plan_json"].call_args[0][0]
+    assert plan_path.endswith("plan.json")
+    assert "coverage" in plan_path
+
+
+@pytest.mark.unit
+def test_generate_coverage_report_reads_coverage_data(mock_deps):
+    """generate_coverage_report() reads coverage data from <output_dir>/coverage.json."""
+    generate_coverage_report(_make_config())
+
+    mock_deps["read_coverage_json"].assert_called_once()
+    cov_path = mock_deps["read_coverage_json"].call_args[0][0]
+    assert str(cov_path).endswith("coverage.json")
+
+
+@pytest.mark.unit
+def test_generate_coverage_report_calls_generate_report(mock_deps):
+    """generate_coverage_report() calls reporter.generate_report() with correct parameters."""
+    generate_coverage_report(_make_config())
+
+    mock_deps["generate_report"].assert_called_once()
+    call_args = mock_deps["generate_report"].call_args
+    # positional args: (plan, data, output_dir, format)
+    assert isinstance(call_args[0][2], Path)  # output_dir
+    assert call_args[0][3] == "html"  # default format from config
+
+
+@pytest.mark.unit
+def test_generate_coverage_report_format_override(mock_deps):
+    """--format flag overrides config.coverage.format."""
+    generate_coverage_report(_make_config(), format="lcov")
+
+    format_arg = mock_deps["generate_report"].call_args[0][3]
+    assert format_arg == "lcov"
+
+
+@pytest.mark.unit
+def test_generate_coverage_report_output_dir_override(mock_deps):
+    """--output-dir flag overrides config.coverage.output_dir."""
+    generate_coverage_report(_make_config(), output_dir=".gd-tools/custom")
+
+    plan_path = mock_deps["read_plan_json"].call_args[0][0]
+    assert "custom" in plan_path
+
+
+@pytest.mark.unit
+def test_generate_coverage_report_missing_coverage_raises_plan_error(
+    mock_deps,
+):
+    """Missing coverage.json raises CoveragePlanError (exit code 2)."""
+    mock_deps["read_coverage_json"].side_effect = CoveragePlanError(
+        "File not found"
+    )
+
+    with pytest.raises(CoveragePlanError):
+        generate_coverage_report(_make_config())
+
+
+@pytest.mark.unit
+def test_generate_coverage_report_missing_plan_raises_plan_error(mock_deps):
+    """Missing plan.json raises CoveragePlanError (exit code 2)."""
+    mock_deps["read_plan_json"].side_effect = CoveragePlanError(
+        "File not found"
+    )
+
+    with pytest.raises(CoveragePlanError):
+        generate_coverage_report(_make_config())

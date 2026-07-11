@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
+from gd_tools.coverage.reporter import ReportResult
 from gd_tools.errors import CoverageThresholdError, TestFailureError
 from gd_tools.test_runner import TestResult, run_tests
 
@@ -108,3 +109,47 @@ def run_coverage_test(
 
     assert result is not None  # test_error is None implies run_tests succeeded
     return result
+
+
+def generate_coverage_report(
+    config: GdToolsConfig,
+    format: str | None = None,
+    output_dir: str | None = None,
+) -> ReportResult:
+    """Regenerate reports from existing coverage data without re-running tests.
+
+    Reads existing ``plan.json`` and ``coverage.json`` from the output
+    directory and regenerates reports in the specified format.
+
+    Args:
+        config: Project configuration.
+        format: Report format override (e.g., ``"html"``, ``"lcov"``,
+            ``"cobertura"``, ``"terminal"``).  If ``None``, uses
+            ``config.coverage.format``.
+        output_dir: Output directory override.  If ``None``, uses
+            ``config.coverage.output_dir``.
+
+    Returns:
+        The :class:`ReportResult` from report generation.
+
+    Raises:
+        CoveragePlanError: If ``plan.json`` or ``coverage.json`` is
+            missing or invalid.
+    """
+    project_root = find_project_root()
+
+    # Resolve effective output_dir: flag > config > default.
+    effective_output_dir = (
+        output_dir if output_dir is not None else config.coverage.output_dir
+    )
+    output_path = project_root / effective_output_dir
+
+    # Resolve effective format: flag > config > default.
+    effective_format = format if format is not None else config.coverage.format
+
+    # Read existing plan and coverage data.
+    plan = plan_generator.read_plan_json(str(output_path / "plan.json"))
+    data = reporter.read_coverage_json(output_path / "coverage.json")
+
+    # Generate report.
+    return reporter.generate_report(plan, data, output_path, effective_format)

@@ -69,7 +69,7 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Mock: `plan_generator`, `test_runner.run_tests`, `reporter.read_coverage_json`, `reporter.read_plan_json`, `reporter.generate_report`
     - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "run_coverage" --no-header -q` fails as expected (RED)
 
-- [x] Task: Implement `run_coverage_test()`
+- [x] Task: Implement `run_coverage_test()` (b4f7203)
     - [ ] Signature: `run_coverage_test(config: GdToolsConfig, suite: str | None = None, test_name: str | None = None, junit_xml: str | None = None, no_exit_code: bool = False, min_percent: int | None = None, timeout: int | None = None) -> TestResult`
     - [ ] Derive `output_dir = project_root / config.coverage.output_dir`
     - [ ] Generate plan via `plan_generator.generate_plan(str(project_root), None, config.coverage.exclude, config.coverage.test_dirs)`
@@ -84,7 +84,7 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Return `TestResult`
     - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "run_coverage" --no-header -q` passes (GREEN)
 
-- [ ] Task: Write failing unit tests for `generate_coverage_report()`
+- [x] Task: Write failing unit tests for `generate_coverage_report()`
     - [ ] Test that it reads plan from `<output_dir>/plan.json`
     - [ ] Test that it reads coverage data from `<output_dir>/coverage.json`
     - [ ] Test that it calls `reporter.generate_report()` with correct parameters
@@ -95,7 +95,7 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Mock: `plan_generator.read_plan_json`, `reporter.read_coverage_json`, `reporter.generate_report`
     - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "generate_report" --no-header -q` fails as expected (RED)
 
-- [ ] Task: Implement `generate_coverage_report()`
+- [x] Task: Implement `generate_coverage_report()`
     - [ ] Signature: `generate_coverage_report(config: GdToolsConfig, format: str | None = None, output_dir: str | None = None) -> ReportResult`
     - [ ] Resolve effective `output_dir`: `--output-dir` flag > `config.coverage.output_dir` > default
     - [ ] Resolve effective `format`: `--format` flag > `config.coverage.format` > `"html"`
