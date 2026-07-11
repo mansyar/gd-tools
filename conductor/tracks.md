@@ -4,6 +4,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Coverage Hooks (Instrumentation Engine)**
+- [x] **Track: Coverage Hooks (Instrumentation Engine)**
 *Link: [./tracks/coverage_hooks_20260711/](./tracks/coverage_hooks_20260711/)*
 
