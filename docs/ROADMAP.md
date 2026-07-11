@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 3 In Progress — Coverage Plan Generator delivered (Track 9)
+**Status:** Phase 3 In Progress — Coverage Tracker Addon delivered (Track 10)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -73,7 +73,7 @@ Total estimated effort: ~25-30 days
 | **M0: Spike Pass** ✅ | Phase 0 | ✅ ACHIEVED — Runtime GDScript instrumentation validated (2026-07-09). All 6 success criteria passed. Architecture C confirmed. |
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
 | **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
-| **M3: Coverage Alpha** | Phase 3 | `gd-tools test --coverage` produces line+branch reports |
+| **M3: Coverage Alpha** 🔄 | Phase 3 | `gd-tools test --coverage` produces line+branch reports — Tracks 9 & 10 complete, Track 11 (hooks) next |
 | **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80% coverage |
 
 ---
@@ -825,16 +825,19 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ---
 
-### Track 10: Coverage Tracker Addon (GDScript)
+### Track 10: Coverage Tracker Addon (GDScript) ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
 | **Phase** | 3 — MVP2 |
 | **Goal** | Implement the GDScript autoload singleton that tracks hit counts |
 | **Dependencies** | Track 0 (spike validated approach) |
-| **Modules** | `src/gd_tools/addons/gd-tools-coverage/tracker.gd` (bundled) |
+| **Modules** | `src/gd_tools/addons/gd-tools-coverage/coverage.gd` (bundled) |
 | **Effort** | 1 day |
 | **Risk** | LOW |
+| **Status** | ✅ **COMPLETED** (2026-07-11) — All 7 success criteria passed |
+| **Conductor track** | `coverage_tracker_20260711` (archived to `conductor/archive/`) |
+| **Commits** | `995405c`..`cba89f5` (7 commits) + review fix `a207175` |
 
 **Scope:**
 - Autoload singleton (`_GDTCoverage` / `GDTTracker`)
@@ -863,9 +866,74 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 **Key TDD references:** §6 (GDScript Addon: tracker.gd)
 
----
+**Track 10 Results (2026-07-11):**
+- ✅ All 7 success criteria PASSED
+- ✅ 442 tests total (3 new unit tests in `test_init.py` for
+  `register_coverage_autoload`, 6 GUT tests in
+  `test_coverage_tracker.gd`, 1 integration test in
+  `test_coverage_tracker_integration.py`), 8 skipped (require Godot), 0
+  failed
+- ✅ 98.74% overall coverage; `init.py` at 97%
+- ✅ ruff check + black --check pass
+- ✅ gdlint + gdformat pass on GDScript files
+- **Review fixes applied:**
+  1. Fixed `test_doctor_after_init` regression — Track 10 added
+     `register_coverage_autoload()` to `run_init()`, causing the
+     autoload check to pass after init (previously asserted failure).
+     Updated test to assert `all_passed` and `check_map["Autoload"].passed`
+  2. Replaced manual autoload string construction in integration test
+     with `register_coverage_autoload(tmp_path)` call
+  3. Removed duplicate unchecked task in `plan.md`
+  4. Added `test_register_coverage_autoload_handles_no_trailing_newline`
+     for uncovered branch
+- **Key implementation notes:**
+  - `coverage.gd` extends `Node`, registered as autoload `_GDTCoverage`
+  - `_hits: Dictionary` keyed by `file_id`, value is `Dictionary` of
+    `line_id → count`
+  - `_ready()` checks `GD_TOOLS_COVERAGE_ACTIVE` env var (value-aware:
+    `0`/`false`/empty deactivates)
+  - `hit(file_id, line_id)` is no-op when inactive (single bool check)
+  - `register_coverage_autoload()` in `init.py` adds autoload entry to
+    `project.godot` `[autoload]` section (idempotent, handles trailing
+    newline)
+  - `COVERAGE_AUTOLOAD_PATH` constant in `init.py` points to bundled
+    `coverage.gd`
 
-### Track 11: Coverage Hooks (Instrumentation Engine)
+**GUT Integration Bug Fixes (post-Track 10, commits `67c9aa3`, `6d48a05`):**
+
+After Track 10, integration tests were found to be always skipped due to a
+skip condition bug. Once fixed, four pre-existing bugs in
+`test_runner.py` surfaced:
+
+1. **Skip condition ignored `GODOT_BIN` env var** — Integration tests used
+   `shutil.which("godot") is None` as sole skip condition, ignoring the
+   `GODOT_BIN` env var. Added `.env` file loading via `conftest.py` and
+   updated skip condition to `not (os.environ.get("GODOT_BIN") or
+   shutil.which("godot"))` (commit `67c9aa3`)
+
+2. **Missing `--import` step** — `run_tests()` didn't run
+   `godot --headless --import` before GUT. On fresh projects without
+   `.godot/` cache, GUT class names aren't registered, causing silent
+   failure (exit 0, no JUnit XML). Added import step after `find_godot()`,
+   before `.gd-tools/` dir creation. Does not check returncode (benign
+   import warnings may produce non-zero exit)
+
+3. **`-gselect` with `res://` prefix doesn't match** — GUT's `-gselect`
+   matches against filename only, not `res://`-prefixed paths. Fixed
+   `build_gut_args()` to strip `res://` prefix and extract filename via
+   `Path(select_name).name`
+
+4. **GUT exit code 1 treated as crash** — GUT exits 0 (all pass) or 1
+   (some fail). Code checked `returncode != 0`, treating test failures as
+   crashes and preventing `TestFailureError`. Changed to
+   `returncode > 1` (crash codes only)
+
+5. **Missing `--headless` flag** — Godot window opened during test runs.
+   Added `--headless` as first element in GUT base args
+
+**Final test results after all fixes:** 452 passed, 0 failed, 0 skipped
+(425 unit + 27 integration). 98.65% overall coverage. These were the
+FIRST integration tests to ever actually run.
 
 | Field | Value |
 |-------|-------|

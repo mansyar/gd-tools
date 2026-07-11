@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Plan Generator delivered (Track 9)
+**Status:** Phase 3 In Progress — Coverage Tracker Addon delivered (Track 10)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -627,6 +627,24 @@ When `--coverage` is NOT specified, the pre/post run hooks are omitted from
 args (GUT runs normally without instrumentation). The autoload tracker is
 still present but inactive (checks `GD_TOOLS_COVERAGE_ACTIVE` env var).
 
+**Implementation notes (Track 6 + post-Track 10 fixes, 2026-07-11):**
+
+- `run_tests()` runs `godot --headless --import` before GUT to register
+  class names in `.godot/` cache. Without this, GUT silently fails on
+  fresh projects (exit 0, no JUnit XML). Import step does NOT check
+  returncode (benign import warnings may produce non-zero exit).
+- `build_gut_args()` base args include `--headless` as first element
+  (GUT tests are pure GDScript, no display needed).
+- `-gselect` strips `res://` prefix and extracts filename via
+  `Path(select_name).name` — GUT's `-gselect` matches filename only,
+  not `res://`-prefixed paths.
+- Exit code check changed from `returncode != 0` to `returncode > 1`.
+  GUT with `-gexit` exits 0 (all pass) or 1 (some fail). Exit code 1
+  means tests ran but some failed — proceeds to parse JUnit XML for
+  details and raises `TestFailureError`. Exit code > 1 indicates a crash.
+- Integration test skip condition: `not (os.environ.get("GODOT_BIN") or
+  shutil.which("godot"))` — checks both env var and PATH.
+
 ---
 
 ### 3.8 `lint_runner.py` — gdlint Wrapper
@@ -1041,6 +1059,13 @@ def generate_cobertura_report(
 > **Spike-validated:** The spike (`spike_coverage_20260709`) confirmed this design
 > works. Key changes from original spec: added `set_active()` method for
 > testability, env var check now validates value (not just existence).
+>
+> **Implemented:** Track 10 (`coverage_tracker_20260711`, archived). See
+> `src/gd_tools/addons/gd-tools-coverage/coverage.gd`. All 7 success criteria
+> passed. File named `coverage.gd` (not `tracker.gd` as in original spec).
+> Autoload registered via `register_coverage_autoload()` in `init.py` with
+> `COVERAGE_AUTOLOAD_PATH` constant. 6 GUT tests in
+> `tests/fixtures/gdscript/test_coverage_tracker.gd`.
 
 ```gdscript
 extends Node

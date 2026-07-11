@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Plan Generator delivered (Track 9)
+**Status:** Phase 3 In Progress — Coverage Tracker Addon delivered (Track 10)
 **Target Godot Version:** 4.5+
 
 ---
@@ -455,6 +455,11 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 > **Implemented:** Track 9 (`coverage-plan-generator_20260711`, archived).
 > See `src/gd_tools/coverage/plan_generator.py`. All 12 acceptance criteria
 > passed. `plan_generator.py` at 100% coverage.
+>
+> **Tracker implemented:** Track 10 (`coverage_tracker_20260711`, archived).
+> See `src/gd_tools/addons/gd-tools-coverage/coverage.gd`. All 7 success
+> criteria passed. Tracker deployed via `register_coverage_autoload()` in
+> `init.py`. 6 GUT tests in `test_coverage_tracker.gd`.
 
 ```json
 {
