@@ -9,6 +9,7 @@ dist/
 build/
 .eggs/
 .coverage
+.venv/
 
 # gd-tools runtime
 .gd-tools/
