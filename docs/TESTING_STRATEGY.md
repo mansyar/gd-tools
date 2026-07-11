@@ -69,6 +69,7 @@ guard against regressions.
 ### Test Discovery
 
 ```
+conftest.py             # Root: loads .env for local dev (GODOT_BIN, etc.)
 tests/
 ├── unit/              # Fast, no Godot
 │   ├── conftest.py
@@ -1203,6 +1204,43 @@ Unit Tests (fast, no Godot)
     │           └── FAIL → Block
     │
     └── FAIL → Block (fast feedback, no point running slow tests)
+```
+
+### Local Development Setup
+
+Integration and E2E tests require a real Godot 4.5+ binary. Unit tests
+run without Godot and are always executed.
+
+**Configuring `GODOT_BIN` for local test runs:**
+
+1. Copy `.env.example` to `.env` (gitignored):
+   ```bash
+   cp .env.example .env
+   ```
+2. Edit `.env` and set `GODOT_BIN` to your Godot binary path:
+   ```ini
+   GODOT_BIN=C:\Godot\Godot_v4.6.2-stable_win64.exe
+   ```
+3. The root-level `conftest.py` loads `.env` before test collection,
+   making `GODOT_BIN` available to both skip conditions and the
+   production discovery chain. Real environment variables take
+   precedence (via `os.environ.setdefault`).
+
+**Without `.env` or `GODOT_BIN` on PATH:** Integration tests are
+automatically skipped (not failed). This is the default on CI without
+Godot installed.
+
+**Running tests locally:**
+
+```bash
+# Unit tests only (fast, no Godot needed)
+pytest tests/unit/ -m unit
+
+# Integration tests (requires Godot via GODOT_BIN or PATH)
+pytest tests/integration/ -m integration
+
+# All tests with coverage
+pytest --cov=src/gd_tools --cov-report=term-missing
 ```
 
 ---
