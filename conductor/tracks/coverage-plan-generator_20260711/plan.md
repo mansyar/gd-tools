@@ -129,11 +129,11 @@
 
 ## Phase 6: Performance & Final Quality
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md before starting this phase
+    - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Performance benchmark
+- [x] Task: Performance benchmark [7c36e6f]
     - [ ] Write test: `test_performance_100_files` — generate plan for 100 .gd files completes in <1 second
     - [ ] Create 100-file benchmark fixture (or use tmp_path with generated files)
     - [ ] Verify benchmark passes
