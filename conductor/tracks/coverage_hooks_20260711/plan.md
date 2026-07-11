@@ -140,18 +140,18 @@
 
 ## Phase 6: Performance and Edge Cases
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
-    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
-- [ ] Task: Write performance test for 50-file instrumentation
-    - [ ] Create fixture with 50 GDScript files, each with multiple tracked lines
-    - [ ] Create plan JSON referencing all 50 files
-    - [ ] Time the pre_run_hook instrumentation
-    - [ ] Assert instrumentation completes in under 5 seconds
-- [ ] Task: Test edge cases
-    - [ ] Test: empty plan (no files) -> warning logged, no instrumentation, tracker not activated
-    - [ ] Test: plan with files but no tracked lines -> files loaded, no injection, reload not called
-    - [ ] Test: script with existing syntax errors -> error logged clearly, file skipped
-    - [ ] Test: very long file (1000+ lines) with many tracked lines -> correct injection
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: Performance and Edge Cases' (Protocol in workflow.md)
+- [x] Task: Read spec.md and workflow.md before starting this phase
+    - [x] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [x] Read `conductor/workflow.md` for TDD methodology and quality gates
+- [x] Task: Write performance test for 50-file instrumentation [ed65874]
+    - [x] Create fixture with 50 GDScript files, each with multiple tracked lines
+    - [x] Create plan JSON referencing all 50 files
+    - [x] Time the pre_run_hook instrumentation
+    - [x] Assert instrumentation completes in under 5 seconds
+- [x] Task: Test edge cases [ed65874]
+    - [x] Test: empty plan (no files) -> warning logged, no instrumentation, tracker not activated
+    - [x] Test: plan with files but no tracked lines -> files loaded, no injection, reload not called
+    - [x] Test: script with existing syntax errors -> error logged clearly, file skipped
+    - [x] Test: very long file (1000+ lines) with many tracked lines -> correct injection
+- [x] Task: Conductor - User Manual Verification 'Phase 6: Performance and Edge Cases' (Protocol in workflow.md) [ed65874]
 </protect>
