@@ -34,7 +34,7 @@
 
 ## Phase 2: GDScript Test Fixtures [checkpoint: d6d4a64]
 
-- [~] Task: Read spec.md and workflow.md before starting this phase
+- [x] Task: Read spec.md and workflow.md before starting this phase
     - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
     - [x] Read `conductor/workflow.md`
 
@@ -119,11 +119,11 @@
     - [x] Read `conductor/workflow.md`
 
 - [x] Task: Implement `tools/generate_expected_plans.py` [1359ec6]
-    - [ ] Write test: script runs and regenerates all 6 expected plan JSON fixtures from `.gd` fixtures
-    - [ ] Write test: regenerated fixtures match committed fixtures (no drift)
-    - [ ] Implement `tools/generate_expected_plans.py` — reads `.gd` fixtures, runs `generate_plan`, writes to `tests/fixtures/plans/`
-    - [ ] Verify tests pass and coverage >80% line / >70% branch
-    - [ ] Commit: `feat(coverage): add fixture generation script`
+    - [x] Write test: script runs and regenerates all 6 expected plan JSON fixtures from `.gd` fixtures
+    - [x] Write test: regenerated fixtures match committed fixtures (no drift)
+    - [x] Implement `tools/generate_expected_plans.py` — reads `.gd` fixtures, runs `generate_plan`, writes to `tests/fixtures/plans/`
+    - [x] Verify tests pass and coverage >80% line / >70% branch
+    - [x] Commit: `feat(coverage): add fixture generation script`
 
 - [x] Task: Conductor - User Manual Verification 'Fixture Generation Tool' (Protocol in workflow.md) [checkpoint: c08dcea]
 
@@ -134,10 +134,10 @@
     - [x] Read `conductor/workflow.md`
 
 - [x] Task: Performance benchmark [7c36e6f]
-    - [ ] Write test: `test_performance_100_files` — generate plan for 100 .gd files completes in <1 second
-    - [ ] Create 100-file benchmark fixture (or use tmp_path with generated files)
-    - [ ] Verify benchmark passes
-    - [ ] Commit: `test(coverage): add performance benchmark`
+    - [x] Write test: `test_performance_100_files` — generate plan for 100 .gd files completes in <1 second
+    - [x] Create 100-file benchmark fixture (or use tmp_path with generated files)
+    - [x] Verify benchmark passes
+    - [x] Commit: `test(coverage): add performance benchmark`
 
 - [x] Task: Final quality gate verification
     - [x] Run full test suite: `CI=true pytest` — all tests pass
@@ -149,4 +149,7 @@
     - [x] Commit (if any formatting fixes needed): `style(coverage): format plan_generator code`
 
 - [x] Task: Conductor - User Manual Verification 'Performance & Final Quality' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions d822a5b
 </protect>
