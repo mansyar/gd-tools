@@ -5,22 +5,22 @@
 
 - [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [x] Task: Update existing test fixtures to Track 11 runtime format [36c648f]
-    - [ ] Update `tests/fixtures/coverage_data/full_coverage.json` -- replace `"path"` key with `"file_id"` + `"hits"` (string keys)
-    - [ ] Update `tests/fixtures/coverage_data/partial_coverage.json` -- same format change
-    - [ ] Update `tests/fixtures/coverage_data/zero_coverage.json` -- same format change
-    - [ ] Create or verify `tests/fixtures/coverage_plans/` directory with matching plan fixtures (containing `file_id`, `path`, `source_hash`, `lines`)
+    - [x] Update `tests/fixtures/coverage_data/full_coverage.json` -- replace `"path"` key with `"file_id"` + `"hits"` (string keys)
+    - [x] Update `tests/fixtures/coverage_data/partial_coverage.json` -- same format change
+    - [x] Update `tests/fixtures/coverage_data/zero_coverage.json` -- same format change
+    - [x] Create or verify `tests/fixtures/coverage_plans/` directory with matching plan fixtures (containing `file_id`, `path`, `source_hash`, `lines`)
 - [x] Task: Write tests for data models and JSON I/O (Red) [9c1fbec]
-    - [ ] Test `CoverageData` and `FileCoverage` dataclass construction and field access
-    - [ ] Test `read_coverage_json()` with valid fixture files (full, partial, zero)
-    - [ ] Test `read_coverage_json()` raises `CoveragePlanError` on version mismatch
-    - [ ] Test `read_coverage_json()` handles string keys in `hits` dict correctly
-    - [ ] Test `merge_coverage_data()` sums hit counts across multiple files for same `file_id`/`line_id`
-    - [ ] Test `merge_coverage_data()` with empty list returns empty `CoverageData`
+    - [x] Test `CoverageData` and `FileCoverage` dataclass construction and field access
+    - [x] Test `read_coverage_json()` with valid fixture files (full, partial, zero)
+    - [x] Test `read_coverage_json()` raises `CoveragePlanError` on version mismatch
+    - [x] Test `read_coverage_json()` handles string keys in `hits` dict correctly
+    - [x] Test `merge_coverage_data()` sums hit counts across multiple files for same `file_id`/`line_id`
+    - [x] Test `merge_coverage_data()` with empty list returns empty `CoverageData`
 - [x] Task: Implement data models and JSON I/O (Green) [9c1fbec]
-    - [ ] Implement `CoverageData`, `FileCoverage` dataclasses (with `file_id: int`, NOT `path: str`)
-    - [ ] Implement `CoverageSummary`, `FileSummary`, `ReportResult` dataclasses
-    - [ ] Implement `read_coverage_json(path: Path) -> CoverageData` with version validation
-    - [ ] Implement `merge_coverage_data(files: list[Path]) -> CoverageData`
+    - [x] Implement `CoverageData`, `FileCoverage` dataclasses (with `file_id: int`, NOT `path: str`)
+    - [x] Implement `CoverageSummary`, `FileSummary`, `ReportResult` dataclasses
+    - [x] Implement `read_coverage_json(path: Path) -> CoverageData` with version validation
+    - [x] Implement `merge_coverage_data(files: list[Path]) -> CoverageData`
 - [x] Task: Conductor - User Manual Verification 'Test Fixtures & Data Models' (Protocol in workflow.md) [checkpoint: b2f1f19]
 
 ## Phase 2: Coverage Metrics Computation
@@ -161,4 +161,8 @@
     - [x] Manually verify LCOV output with `lcov --summary` if available, or validate format manually
     - [x] Manually verify Cobertura XML parses with a standard XML parser
 - [x] Task: Conductor - User Manual Verification 'Final Integration & Coverage Verification' (Protocol in workflow.md) [checkpoint: 6aff1d0]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions [e9457ec]
 </protect>
