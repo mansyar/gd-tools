@@ -95,7 +95,7 @@
 
 - [x] Task: Implement `generate_plan` function [baa3890]
     - [x] Write test: `test_multiple_files_in_project` — multiple .gd files produce multiple `FilePlan` entries with sequential `file_id`s
-    - [ ] Write test: `test_plan_generation_matches_expected` (parametrized across all 6 fixtures) — generated plan matches expected JSON fixture for each *(deferred to Phase 4 Task 3 after fixtures created)*
+    - [x] Write test: `test_plan_generation_matches_expected` (parametrized across all 6 fixtures) — generated plan matches expected JSON fixture for each [8a8c3bc]
     - [x] Write test: `test_source_hash_computed` — each file entry has correct `sha256:` prefixed source hash
     - [x] Write test: file discovery excludes `addons/` directory by default
     - [x] Write test: file discovery excludes `test_dirs` from coverage targets
@@ -104,11 +104,11 @@
     - [x] Verify tests pass and coverage >80% line / >70% branch
     - [x] Commit: `feat(coverage): implement generate_plan with file discovery`
 
-- [ ] Task: Generate expected plan JSON fixtures
-    - [ ] Run `generate_plan` against each of the 6 `.gd` fixtures
-    - [ ] Manually verify each generated plan JSON matches expected line IDs, branch types, and IDs
-    - [ ] Write verified outputs to `tests/fixtures/plans/simple.expected.json`, `branches.expected.json`, `loops.expected.json`, `match_stmt.expected.json`, `nested.expected.json`, `edge_cases.expected.json`
-    - [ ] Commit: `test(coverage): add expected plan JSON fixtures`
+- [x] Task: Generate expected plan JSON fixtures [8a8c3bc]
+    - [x] Run `generate_plan` against each of the 6 `.gd` fixtures
+    - [x] Manually verify each generated plan JSON matches expected line IDs, branch types, and IDs
+    - [x] Write verified outputs to `tests/fixtures/plans/simple.expected.json`, `branches.expected.json`, `loops.expected.json`, `match_stmt.expected.json`, `nested.expected.json`, `edge_cases.expected.json`
+    - [x] Commit: `test(coverage): add expected plan JSON fixtures`
 
 - [ ] Task: Conductor - User Manual Verification 'File Discovery & Plan Generation' (Protocol in workflow.md)
 
