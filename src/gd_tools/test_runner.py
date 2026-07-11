@@ -380,10 +380,18 @@ def run_tests(
         coverage=coverage,
     )
 
-    # Set up environment variables for coverage (Phase 3 infrastructure).
+    # Set up environment variables for coverage.
     env: dict[str, str] | None = None
     if coverage:
-        env = {"GD_TOOLS_COVERAGE_ACTIVE": "1"}
+        coverage_dir = project_root / config.coverage.output_dir
+        coverage_dir.mkdir(parents=True, exist_ok=True)
+        plan_path = (coverage_dir / "plan.json").resolve()
+        output_path = (coverage_dir / "coverage.json").resolve()
+        env = {
+            "GD_TOOLS_COVERAGE_ACTIVE": "1",
+            "GD_TOOLS_COVERAGE_PLAN": str(plan_path),
+            "GD_TOOLS_COVERAGE_OUTPUT": str(output_path),
+        }
 
     # Run Godot with GUT.
     try:
@@ -416,11 +424,11 @@ def run_tests(
         junit_path
     )
 
-    # Determine coverage data path (Phase 3 infrastructure).
+    # Determine coverage data path.
     coverage_data_path: Path | None = None
     if coverage:
         coverage_data_path = (
-            project_root / ".gd-tools" / "coverage" / "coverage.json"
+            project_root / config.coverage.output_dir / "coverage.json"
         )
 
     # Build TestResult from parsed data and subprocess output.

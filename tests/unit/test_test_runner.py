@@ -898,6 +898,99 @@ def test_run_tests_no_coverage_coverage_data_path_none(
     assert result.coverage_data_path is None
 
 
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_coverage_sets_plan_env_var(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=True sets GD_TOOLS_COVERAGE_PLAN to absolute path of plan.json."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    run_tests(GdToolsConfig(), coverage=True)
+
+    call_args = mock_run_godot.call_args
+    env = call_args.kwargs.get("env")
+    assert env is not None
+    assert "GD_TOOLS_COVERAGE_PLAN" in env
+    plan_path = Path(env["GD_TOOLS_COVERAGE_PLAN"])
+    assert plan_path.is_absolute()
+    assert plan_path.name == "plan.json"
+    assert "coverage" in plan_path.parts
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_coverage_sets_output_env_var(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=True sets GD_TOOLS_COVERAGE_OUTPUT to absolute path of coverage.json."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    run_tests(GdToolsConfig(), coverage=True)
+
+    call_args = mock_run_godot.call_args
+    env = call_args.kwargs.get("env")
+    assert env is not None
+    assert "GD_TOOLS_COVERAGE_OUTPUT" in env
+    output_path = Path(env["GD_TOOLS_COVERAGE_OUTPUT"])
+    assert output_path.is_absolute()
+    assert output_path.name == "coverage.json"
+    assert "coverage" in output_path.parts
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_coverage_env_vars_use_config_output_dir(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=True uses config.coverage.output_dir for env var paths and coverage_data_path."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    config = GdToolsConfig()
+    config.coverage.output_dir = ".gd-tools/custom-coverage"
+    result = run_tests(config, coverage=True)
+
+    call_args = mock_run_godot.call_args
+    env = call_args.kwargs.get("env")
+    assert env is not None
+    plan_path = Path(env["GD_TOOLS_COVERAGE_PLAN"])
+    output_path = Path(env["GD_TOOLS_COVERAGE_OUTPUT"])
+    assert "custom-coverage" in plan_path.parts
+    assert "custom-coverage" in output_path.parts
+    assert result.coverage_data_path is not None
+    assert "custom-coverage" in result.coverage_data_path.parts
+
+
 # --- format_test_results ---
 
 
