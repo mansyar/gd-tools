@@ -1,0 +1,11 @@
+Task: Write tests for data models and JSON I/O (Red) + Implement data models and JSON I/O (Green)
+
+Summary: Created the coverage reporter module (src/gd_tools/coverage/reporter.py) with data models and JSON I/O functions. Implemented 5 dataclasses: FileCoverage (file_id + hits dict with string keys), CoverageData (version + generated_at + files), CoverageSummary (line/branch rates and counts), FileSummary (per-file metrics with uncovered_lines), ReportResult (output info + threshold status). Implemented read_coverage_json() with version validation, error handling for missing files/invalid JSON/wrong version, and no requirement for 'path' field. Implemented merge_coverage_data() for summing hit counts across multiple CI shards.
+
+Tests: 22 tests in tests/unit/test_reporter.py covering dataclass construction, read_coverage_json with full/partial/zero fixtures, version mismatch, missing fields, string key handling, and merge_coverage_data summing/multiple files/empty/single file. All tests pass. Reporter module at 93% coverage.
+
+Files created:
+- src/gd_tools/coverage/reporter.py
+- tests/unit/test_reporter.py
+
+Why: This is Phase 1 of the Coverage Reporter track (Track 12). These data models and JSON I/O functions are the foundation that all subsequent phases (metrics computation, report dispatch, LCOV/Cobertura/HTML/Terminal reporters) will build upon.
