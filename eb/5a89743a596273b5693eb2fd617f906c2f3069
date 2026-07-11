@@ -1,0 +1,35 @@
+CONDUCTOR CHECKPOINT - Phase 3: pre_run_hook.gd Source Instrumentation (TDD)
+
+Commit: eb5a897
+Phase: 3 of 6
+Track: coverage_hooks_20260711
+
+COMPLETED TASKS:
+- Write GUT tests for _extract_indent() (Red): 4 tests
+- Implement _extract_indent() (Green): static method, extracts leading whitespace
+- Write GUT tests for _inject_trackers() (Red): 5 tests
+- Implement _inject_trackers() (Green): static method, bottom-to-top injection
+- Write GUT tests for _instrument_file() (Red): 3 tests
+- Implement _instrument_file() (Green): load, inject, reload, skip-and-continue
+- Write GUT tests for tracker activation (Red): 2 tests
+- Implement tracker activation in run() (Green): _activate_tracker() via SceneTree
+- Refactor: No refactoring needed - code is clean
+
+VERIFICATION:
+- GUT tests: 27/27 pass (~12s)
+- Python tests: 458 pass (98.65% coverage)
+- gdformat: 2 files clean
+- gdlint: No problems found
+
+CHANGED FILES:
+- src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (220 lines) - Full instrumentation
+- tests/fixtures/gdscript/test_pre_run_hook.gd (~270 lines) - 27 GUT tests
+- tests/integration/test_coverage_hooks.py - Updated expected count to 27
+
+KEY DECISIONS:
+- _extract_indent() and _inject_trackers() are static func (pure functions)
+- _instrument_file() returns false for empty lines (no instrumentation needed)
+- Tracker accessed via Engine.get_main_loop() as SceneTree (RefCounted, not Node)
+- test_run_valid_env_var updated to use valid path with empty lines (avoids side effects)
+- test_instrument_file_invalid_path uses assert_engine_error_count(2) for load() errors
+- Calculator.gd source restored in after_each() after instrumentation tests
