@@ -1,0 +1,21 @@
+Phase 2 Tasks 2-4 - register_coverage_autoload (COMPLETED)
+
+Implementation:
+- Added COVERAGE_AUTOLOAD_PATH constant
+- Implemented register_coverage_autoload(project_root: Path) -> None in init.py
+  * Parses project.godot, adds _GDTCoverage autoload entry
+  * Idempotent: returns early if already registered
+  * Creates [autoload] section if missing
+  * Preserves existing autoload entries
+- Wired into run_init() after install_coverage_addon()
+
+Tests (3 new, all passing):
+- test_register_coverage_autoload_creates_section_when_missing
+- test_register_coverage_autoload_idempotent
+- test_register_coverage_autoload_preserves_existing_autoloads
+
+Quality gates:
+- ruff check: PASS
+- black --check: PASS (after reformatting test file)
+- pytest test_init.py: 45 passed (0 failures, no regressions)
+- init.py coverage: 93% (214 stmts, 8 miss, 78 branches)
