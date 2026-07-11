@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://nested.gd",
+      "source_hash": "sha256:48ef8fb3b9cf48af7aa75521c21d26a735bafdaa4324f03fb27381faec76ceb3",
+      "lines": [
+        {
+          "line": 9,
+          "id": 0,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 11,
+          "id": 1,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 8,
+          "id": 2,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 10,
+          "id": 3,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 6,
+          "id": 4,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 13,
+          "id": 5,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 5,
+          "id": 6,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 12,
+          "id": 7,
+          "type": "branch",
+          "branch_type": "if_false"
+        },
+        {
+          "line": 4,
+          "id": 8,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 14,
+          "id": 9,
+          "type": "statement",
+          "branch_type": null
+        }
+      ]
+    }
+  ]
+}

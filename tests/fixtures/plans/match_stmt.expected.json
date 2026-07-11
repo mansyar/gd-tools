@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://match_stmt.gd",
+      "source_hash": "sha256:fc93938b46f479a2b18f777a86ff10896a5ba9d62f67810d4ffcd3fcb651cdc5",
+      "lines": [
+        {
+          "line": 6,
+          "id": 0,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 8,
+          "id": 1,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 10,
+          "id": 2,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 12,
+          "id": 3,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 5,
+          "id": 4,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 7,
+          "id": 5,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 9,
+          "id": 6,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 11,
+          "id": 7,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 13,
+          "id": 8,
+          "type": "statement",
+          "branch_type": null
+        }
+      ]
+    }
+  ]
+}

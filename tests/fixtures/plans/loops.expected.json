@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://loops.gd",
+      "source_hash": "sha256:998a0611c2fca51f2ee535529f8e1a9ec071bc0eb84ede39f0b94fd634d89aee",
+      "lines": [
+        {
+          "line": 4,
+          "id": 0,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 6,
+          "id": 1,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 7,
+          "id": 2,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 12,
+          "id": 3,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 17,
+          "id": 4,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 5,
+          "id": 5,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 8,
+          "id": 6,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 11,
+          "id": 7,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 13,
+          "id": 8,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 16,
+          "id": 9,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 18,
+          "id": 10,
+          "type": "statement",
+          "branch_type": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://branches.gd",
+      "source_hash": "sha256:038fefe5f2b9634f19708c78a7743a62880a0ffe5dd4a84570becf6d593d26a9",
+      "lines": [
+        {
+          "line": 15,
+          "id": 0,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 17,
+          "id": 1,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 20,
+          "id": 2,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 22,
+          "id": 3,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 14,
+          "id": 4,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 16,
+          "id": 5,
+          "type": "branch",
+          "branch_type": "if_false"
+        },
+        {
+          "line": 19,
+          "id": 6,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 21,
+          "id": 7,
+          "type": "branch",
+          "branch_type": "if_false"
+        },
+        {
+          "line": 5,
+          "id": 8,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 7,
+          "id": 9,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 9,
+          "id": 10,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 4,
+          "id": 11,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 6,
+          "id": 12,
+          "type": "branch",
+          "branch_type": "elif_true"
+        },
+        {
+          "line": 8,
+          "id": 13,
+          "type": "branch",
+          "branch_type": "if_false"
+        },
+        {
+          "line": 13,
+          "id": 14,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 18,
+          "id": 15,
+          "type": "branch",
+          "branch_type": "if_false"
+        },
+        {
+          "line": 10,
+          "id": 16,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 23,
+          "id": 17,
+          "type": "statement",
+          "branch_type": null
+        }
+      ]
+    }
+  ]
+}

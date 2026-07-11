@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://simple.gd",
+      "source_hash": "sha256:bf4d46eb73c162ba3fe1cf4f7eb8d56256086088822b48c1022674be7c90c796",
+      "lines": [
+        {
+          "line": 7,
+          "id": 0,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 8,
+          "id": 1,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 9,
+          "id": 2,
+          "type": "statement",
+          "branch_type": null
+        }
+      ]
+    }
+  ]
+}

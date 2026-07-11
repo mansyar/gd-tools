@@ -6,6 +6,8 @@ classification, branch classification, and plan generation.
 """
 
 import json
+from pathlib import Path
+
 import pytest
 
 from gd_tools.coverage.plan_generator import (
@@ -537,3 +539,27 @@ def test_generate_plan_res_prefix(tmp_path):
 
     cp = generate_plan(str(tmp_path))
     assert cp.files[0].path.startswith("res://")
+
+
+# --- Expected plan fixtures ---
+
+
+_FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "gdscript"
+_PLANS_DIR = Path(__file__).parent.parent / "fixtures" / "plans"
+
+
+@pytest.mark.parametrize(
+    "fixture_name",
+    ["simple", "branches", "loops", "match_stmt", "nested", "edge_cases"],
+)
+def test_plan_generation_matches_expected(tmp_path, fixture_name):
+    """Generated plan matches expected JSON fixture for each .gd fixture."""
+    gd_source = (_FIXTURES_DIR / f"{fixture_name}.gd").read_text(
+        encoding="utf-8"
+    )
+    (tmp_path / f"{fixture_name}.gd").write_text(gd_source, encoding="utf-8")
+
+    generated = generate_plan(str(tmp_path))
+    expected = read_plan_json(str(_PLANS_DIR / f"{fixture_name}.expected.json"))
+
+    assert generated == expected

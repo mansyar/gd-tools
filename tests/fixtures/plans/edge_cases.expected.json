@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://edge_cases.gd",
+      "source_hash": "sha256:a28c1d71d96292cea8f5ea8a92aaac9f201cbabe1cbf2cfe76aee969f4485ef4",
+      "lines": [
+        {
+          "line": 12,
+          "id": 0,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 19,
+          "id": 1,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 31,
+          "id": 2,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 11,
+          "id": 3,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 18,
+          "id": 4,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 30,
+          "id": 5,
+          "type": "branch",
+          "branch_type": "if_true"
+        },
+        {
+          "line": 13,
+          "id": 6,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 20,
+          "id": 7,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 24,
+          "id": 8,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 28,
+          "id": 9,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 32,
+          "id": 10,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 10,
+          "id": 11,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 14,
+          "id": 12,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 17,
+          "id": 13,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 21,
+          "id": 14,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 25,
+          "id": 15,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 29,
+          "id": 16,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 33,
+          "id": 17,
+          "type": "statement",
+          "branch_type": null
+        }
+      ]
+    }
+  ]
+}
