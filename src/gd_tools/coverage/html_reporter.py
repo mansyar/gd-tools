@@ -81,6 +81,9 @@ def generate_html_report(
                 {
                     "number": line_plan.line,
                     "hits": hit_count,
+                    # TODO: Source code display deferred — requires reading
+                    # .gd files from disk. Spec FR-4.3 partially met: line
+                    # numbers shown, source content not yet populated.
                     "source": "",
                     "css_class": css_class,
                 }

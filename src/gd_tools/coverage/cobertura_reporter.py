@@ -133,4 +133,4 @@ def _format_rate(total: int, hit: int) -> str:
     """
     if total == 0:
         return "0.0"
-    return f"{hit / total:.4f}".rstrip("0").rstrip(".") or "0"
+    return f"{hit / total:.4f}".rstrip("0").rstrip(".")

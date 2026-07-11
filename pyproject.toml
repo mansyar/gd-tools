@@ -54,6 +54,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "gd_tools.addons" = ["gd-tools-coverage/*.gd"]
+"gd_tools.coverage" = ["templates/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
