@@ -1,7 +1,7 @@
 <protect>
 # Track 9: Coverage Plan Generator — Implementation Plan
 
-## Phase 1: Data Structures & JSON I/O
+## Phase 1: Data Structures & JSON I/O [checkpoint: d095f59]
 
 - [x] Task: Read spec.md and workflow.md before starting this phase
     - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
@@ -50,7 +50,7 @@
 
 - [ ] Task: Conductor - User Manual Verification 'GDScript Test Fixtures' (Protocol in workflow.md)
 
-## Phase 3: AST Parsing & Statement Classification
+## Phase 3: AST Parsing & Statement Classification [checkpoint: d095f59]
 
 - [x] Task: Read spec.md and workflow.md before starting this phase
     - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
