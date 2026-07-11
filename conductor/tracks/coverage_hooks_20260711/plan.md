@@ -81,40 +81,40 @@
 
 ## Phase 4: post_run_hook.gd — Data Collection and Output (TDD)
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
-    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
-- [ ] Task: Write GUT tests for `_get_tracker()` (Red)
-    - [ ] Test: `_GDTCoverage` autoload present -> returns tracker Node
-    - [ ] Test: `_GDTCoverage` autoload missing -> error logged with Cause/Fix, returns null
-- [ ] Task: Implement `_get_tracker()` (Green)
-    - [ ] Implement: access `_GDTCoverage` autoload via SceneTree, return Node or null with error
-- [ ] Task: Write GUT tests for `_build_coverage_json()` (Red)
-    - [ ] Test: empty hits -> valid JSON structure with version and generated_at
-    - [ ] Test: hits with data -> correct file_id and hit counts in output
-    - [ ] Test: multiple files in hits -> all files present in output
-- [ ] Task: Implement `_build_coverage_json()` (Green)
-    - [ ] Implement: build Dictionary with version, generated_at, files array containing file_id and hits
-- [ ] Task: Write GUT tests for `_write_json()` (Red)
-    - [ ] Test: valid path -> file created with correct JSON content
-    - [ ] Test: parent directories missing -> created automatically
-    - [ ] Test: output path not set -> error logged with Cause/Fix
-    - [ ] Test: path not writable -> error logged with Cause/Fix
-- [ ] Task: Implement `_write_json()` (Green)
-    - [ ] Implement: read env var, create parent dirs, serialize JSON with indentation, write to file
-    - [ ] Add error handling for missing env var and write failures
-- [ ] Task: Write GUT tests for summary logging (Red)
-    - [ ] Test: summary contains total files instrumented
-    - [ ] Test: summary contains total lines tracked
-    - [ ] Test: summary contains output path
-- [ ] Task: Implement summary logging in `run()` (Green)
-    - [ ] Implement: log summary to stdout with file count, line count, output path
-- [ ] Task: Implement `run()` entry point for post_run_hook.gd (Green)
-    - [ ] Wire together: `_get_tracker()` -> `_build_coverage_json()` -> `_write_json()` -> summary log
-- [ ] Task: Refactor data collection and output (Refactor)
-    - [ ] Review code for clarity and error handling consistency
-    - [ ] Ensure all error messages follow Cause/Fix format and are ASCII-only
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: post_run_hook.gd — Data Collection and Output' (Protocol in workflow.md)
+- [x] Task: Read spec.md and workflow.md before starting this phase [5b119ec]
+    - [x] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [x] Read `conductor/workflow.md` for TDD methodology and quality gates
+- [x] Task: Write GUT tests for `_get_tracker()` (Red) [5b119ec]
+    - [x] Test: `_GDTCoverage` autoload present -> returns tracker Node
+    - [x] Test: `_GDTCoverage` autoload missing -> error logged with Cause/Fix, returns null
+- [x] Task: Implement `_get_tracker()` (Green) [5b119ec]
+    - [x] Implement: access `_GDTCoverage` autoload via SceneTree, return Node or null with error
+- [x] Task: Write GUT tests for `_build_coverage_json()` (Red) [5b119ec]
+    - [x] Test: empty hits -> valid JSON structure with version and generated_at
+    - [x] Test: hits with data -> correct file_id and hit counts in output
+    - [x] Test: multiple files in hits -> all files present in output
+- [x] Task: Implement `_build_coverage_json()` (Green) [5b119ec]
+    - [x] Implement: build Dictionary with version, generated_at, files array containing file_id and hits
+- [x] Task: Write GUT tests for `_write_json()` (Red) [5b119ec]
+    - [x] Test: valid path -> file created with correct JSON content
+    - [x] Test: parent directories missing -> created automatically
+    - [x] Test: output path not set -> error logged with Cause/Fix
+    - [x] Test: path not writable -> error logged with Cause/Fix
+- [x] Task: Implement `_write_json()` (Green) [5b119ec]
+    - [x] Implement: read env var, create parent dirs, serialize JSON with indentation, write to file
+    - [x] Add error handling for missing env var and write failures
+- [x] Task: Write GUT tests for summary logging (Red) [5b119ec]
+    - [x] Test: summary contains total files instrumented
+    - [x] Test: summary contains total lines tracked
+    - [x] Test: summary contains output path
+- [x] Task: Implement summary logging in `run()` (Green) [5b119ec]
+    - [x] Implement: log summary to stdout with file count, line count, output path
+- [x] Task: Implement `run()` entry point for post_run_hook.gd (Green) [5b119ec]
+    - [x] Wire together: `_get_tracker()` -> `_build_coverage_json()` -> `_write_json()` -> summary log
+- [x] Task: Refactor data collection and output (Refactor) [5b119ec]
+    - [x] Review code for clarity and error handling consistency
+    - [x] Ensure all error messages follow Cause/Fix format and are ASCII-only
+- [x] Task: Conductor - User Manual Verification 'Phase 4: post_run_hook.gd — Data Collection and Output' [5b119ec]
 
 ## Phase 5: Python Integration Tests
 
