@@ -852,7 +852,7 @@ def test_coverage_report_format_override():
         result = runner.invoke(cli, ["coverage", "report", "--format", "lcov"])
     assert result.exit_code == 0
     _, kwargs = mock_report.call_args
-    assert kwargs["format"] == "lcov"
+    assert kwargs["report_format"] == "lcov"
 
 
 def test_coverage_report_output_dir_override():
@@ -912,10 +912,14 @@ def test_coverage_merge_calls_orchestrator():
     """Test coverage merge calls merge_coverage_files with list of Paths."""
     runner = CliRunner()
     mock_result = MagicMock()
-    with patch(
-        "gd_tools.cli.merge_coverage_files",
-        return_value=mock_result,
-    ) as mock_merge:
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.merge_coverage_files",
+            return_value=mock_result,
+        ) as mock_merge,
+    ):
         result = runner.invoke(
             cli, ["coverage", "merge", "file1.json", "file2.json"]
         )
@@ -931,10 +935,14 @@ def test_coverage_merge_output_override():
     """Test --output passes output path to orchestrator."""
     runner = CliRunner()
     mock_result = MagicMock()
-    with patch(
-        "gd_tools.cli.merge_coverage_files",
-        return_value=mock_result,
-    ) as mock_merge:
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.merge_coverage_files",
+            return_value=mock_result,
+        ) as mock_merge,
+    ):
         result = runner.invoke(
             cli, ["coverage", "merge", "file1.json", "--output", "merged.json"]
         )
@@ -955,9 +963,13 @@ def test_coverage_merge_success_exit_0():
     """Test coverage merge exits 0 on success."""
     runner = CliRunner()
     mock_result = MagicMock()
-    with patch(
-        "gd_tools.cli.merge_coverage_files",
-        return_value=mock_result,
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.merge_coverage_files",
+            return_value=mock_result,
+        ),
     ):
         result = runner.invoke(cli, ["coverage", "merge", "file1.json"])
     assert result.exit_code == 0

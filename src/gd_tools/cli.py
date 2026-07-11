@@ -273,7 +273,7 @@ def report(format, output_dir):
 
     try:
         result = generate_coverage_report(
-            config, format=format, output_dir=output_dir
+            config, report_format=format, output_dir=output_dir
         )
         click.echo(f"Report written to: {result.output_path}")
     except GdToolsError as e:
@@ -288,9 +288,17 @@ def report(format, output_dir):
 def merge(files, output):
     """Merge multiple coverage files."""
     try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
         merge_coverage_files(
             [Path(f) for f in files],
             Path(output) if output else None,
+            config=config,
         )
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)

@@ -306,7 +306,7 @@ def test_generate_coverage_report_calls_generate_report(mock_deps):
 @pytest.mark.unit
 def test_generate_coverage_report_format_override(mock_deps):
     """--format flag overrides config.coverage.format."""
-    generate_coverage_report(_make_config(), format="lcov")
+    generate_coverage_report(_make_config(), report_format="lcov")
 
     format_arg = mock_deps["generate_report"].call_args[0][3]
     assert format_arg == "lcov"

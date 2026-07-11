@@ -105,7 +105,7 @@ class ReportResult:
     Attributes:
         output_path: Path to the generated report file or directory.
         format: Report format (``"html"``, ``"lcov"``, ``"cobertura"``,
-            ``"terminal"``).
+            ``"text"``).
         summary: Overall coverage summary.
         file_summaries: Per-file coverage breakdowns.
         threshold_met: Whether coverage met the minimum threshold.
@@ -282,6 +282,30 @@ def merge_coverage_data(files: list[Path]) -> CoverageData:
         generated_at=generated_at,
         files=result_files,
     )
+
+
+def write_coverage_json(data: CoverageData, path: Path) -> None:
+    """Write coverage data to a JSON file.
+
+    Serializes a :class:`CoverageData` object to the same JSON format
+    produced by the runtime tracker, ensuring round-trip compatibility
+    with :func:`read_coverage_json`.
+
+    Args:
+        data: The coverage data to serialize.
+        path: Path to the output JSON file.
+    """
+    cov_path = Path(path)
+    cov_path.parent.mkdir(parents=True, exist_ok=True)
+
+    data_dict = {
+        "version": data.version,
+        "generated_at": data.generated_at,
+        "files": [
+            {"file_id": fc.file_id, "hits": fc.hits} for fc in data.files
+        ],
+    }
+    cov_path.write_text(json.dumps(data_dict, indent=2), encoding="utf-8")
 
 
 # --- Coverage computation (FR-2) ---

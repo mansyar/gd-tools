@@ -8,7 +8,6 @@ business logic directly.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from rich.console import Console
@@ -123,7 +122,7 @@ def run_coverage_test(
 
 def generate_coverage_report(
     config: GdToolsConfig,
-    format: str | None = None,
+    report_format: str | None = None,
     output_dir: str | None = None,
 ) -> ReportResult:
     """Regenerate reports from existing coverage data without re-running tests.
@@ -133,8 +132,8 @@ def generate_coverage_report(
 
     Args:
         config: Project configuration.
-        format: Report format override (e.g., ``"html"``, ``"lcov"``,
-            ``"cobertura"``, ``"terminal"``).  If ``None``, uses
+        report_format: Report format override (e.g., ``"html"``, ``"lcov"``,
+            ``"cobertura"``, ``"text"``).  If ``None``, uses
             ``config.coverage.format``.
         output_dir: Output directory override.  If ``None``, uses
             ``config.coverage.output_dir``.
@@ -155,7 +154,9 @@ def generate_coverage_report(
     output_path = project_root / effective_output_dir
 
     # Resolve effective format: flag > config > default.
-    effective_format = format if format is not None else config.coverage.format
+    effective_format = (
+        report_format if report_format is not None else config.coverage.format
+    )
 
     # Read existing plan and coverage data.
     plan = plan_generator.read_plan_json(str(output_path / "plan.json"))
@@ -168,6 +169,7 @@ def generate_coverage_report(
 def merge_coverage_files(
     files: list[Path],
     output: Path | None = None,
+    config: GdToolsConfig | None = None,
 ) -> CoverageData:
     """Merge multiple coverage data files into one.
 
@@ -177,26 +179,27 @@ def merge_coverage_files(
     Args:
         files: List of paths to coverage data JSON files.
         output: Path for the merged output file. If ``None``,
-            defaults to ``.gd-tools/coverage/coverage.json``
-            relative to the current working directory.
+            defaults to ``<output_dir>/coverage.json`` (resolved via
+            ``find_project_root`` and ``config.coverage.output_dir``
+            when ``config`` is provided, or ``.gd-tools/coverage/
+            coverage.json`` relative to the current working directory
+            otherwise).
+        config: Optional project configuration for resolving the
+            default output path.
 
     Returns:
         The merged :class:`CoverageData`.
     """
     if output is None:
-        output = Path.cwd() / ".gd-tools" / "coverage" / "coverage.json"
+        if config is not None:
+            project_root = find_project_root()
+            output = project_root / config.coverage.output_dir / "coverage.json"
+        else:
+            output = Path.cwd() / ".gd-tools" / "coverage" / "coverage.json"
 
     merged = reporter.merge_coverage_data(files)
 
-    output.parent.mkdir(parents=True, exist_ok=True)
-    data_dict = {
-        "version": merged.version,
-        "generated_at": merged.generated_at,
-        "files": [
-            {"file_id": fc.file_id, "hits": fc.hits} for fc in merged.files
-        ],
-    }
-    output.write_text(json.dumps(data_dict, indent=2), encoding="utf-8")
+    reporter.write_coverage_json(merged, output)
 
     console = Console()
     console.print(
@@ -268,8 +271,12 @@ def show_coverage_summary(
     # Threshold check.
     if min_percent is not None and summary.line_rate * 100 < min_percent:
         raise CoverageThresholdError(
-            f"Line coverage {summary.line_rate * 100:.1f}% is below "
-            f"minimum threshold {min_percent}%"
+            f"[Error] Line coverage {summary.line_rate * 100:.1f}% is "
+            f"below minimum threshold {min_percent}%\n"
+            f"  Cause: Only {summary.covered_lines} of "
+            f"{summary.total_lines} lines were executed.\n"
+            f"  Fix: Add tests to cover uncovered lines or lower the "
+            "--min threshold."
         )
 
     return summary
