@@ -1,0 +1,21 @@
+Phase 3 Checkpoint: Report Dispatch & Threshold Check
+
+Verification Results:
+- Reporter tests: 40/40 passing (31 Phase 1-2 + 9 Phase 3)
+- reporter.py coverage: 96% (6 uncovered lines: pre-existing error handling in read_coverage_json)
+- Ruff: all checks passed
+- Black: formatted
+
+Deliverables:
+- generate_report() function in reporter.py
+  - Validates format against {html, lcov, cobertura, terminal}
+  - Raises CoveragePlanError for unsupported formats
+  - Computes summary via compute_summary()
+  - Computes file_summaries via compute_file_summary()
+  - Threshold check: raises CoverageThresholdError if line_rate < min_threshold
+  - Dispatches to format-specific stubs (placeholder files)
+- 9 new tests in test_reporter.py covering all dispatch, threshold, and result scenarios
+
+Git commits in Phase 3:
+- 7269463 - feat(coverage): Implement report dispatch and threshold check
+- 027691f - conductor(plan): Mark Phase 3 tests and implementation tasks as complete
