@@ -44,22 +44,22 @@
 
 ## Phase 3: Report Dispatch & Threshold Check
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Write tests for report dispatch and threshold (Red)
-    - [ ] Test `generate_report()` with `format="terminal"` returns `ReportResult` with correct format
-    - [ ] Test `generate_report()` with `format="lcov"` dispatches to LCOV reporter
-    - [ ] Test `generate_report()` with `format="cobertura"` dispatches to Cobertura reporter
-    - [ ] Test `generate_report()` with `format="html"` dispatches to HTML reporter
-    - [ ] Test `generate_report()` with unsupported format raises appropriate error
-    - [ ] Test `generate_report()` with `min_threshold=0.80` and line_rate=0.79 raises `CoverageThresholdError`
-    - [ ] Test `generate_report()` with `min_threshold=0.80` and line_rate=0.80 does NOT raise
-    - [ ] Test `generate_report()` with `min_threshold=None` never raises threshold error
-    - [ ] Test `ReportResult` contains correct `summary`, `file_summaries`, `threshold_met` fields
-- [ ] Task: Implement report dispatch and threshold (Green)
-    - [ ] Implement `generate_report()` dispatching to format-specific reporters
-    - [ ] Implement threshold check logic (compare `line_rate` against `min_threshold`, raise `CoverageThresholdError` if below)
-    - [ ] Set `threshold_met` field on `ReportResult`
-    - [ ] Initially wire to terminal reporter only (others implemented in later phases); use placeholder/stub calls that will be replaced
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Write tests for report dispatch and threshold (Red)
+    - [x] Test `generate_report()` with `format="terminal"` returns `ReportResult` with correct format
+    - [x] Test `generate_report()` with `format="lcov"` dispatches to LCOV reporter
+    - [x] Test `generate_report()` with `format="cobertura"` dispatches to Cobertura reporter
+    - [x] Test `generate_report()` with `format="html"` dispatches to HTML reporter
+    - [x] Test `generate_report()` with unsupported format raises appropriate error
+    - [x] Test `generate_report()` with `min_threshold=0.80` and line_rate=0.79 raises `CoverageThresholdError`
+    - [x] Test `generate_report()` with `min_threshold=0.80` and line_rate=0.80 does NOT raise
+    - [x] Test `generate_report()` with `min_threshold=None` never raises threshold error
+    - [x] Test `ReportResult` contains correct `summary`, `file_summaries`, `threshold_met` fields
+- [x] Task: Implement report dispatch and threshold (Green)
+    - [x] Implement `generate_report()` dispatching to format-specific reporters
+    - [x] Implement threshold check logic (compare `line_rate` against `min_threshold`, raise `CoverageThresholdError` if below)
+    - [x] Set `threshold_met` field on `ReportResult`
+    - [x] Initially wire to terminal reporter only (others implemented in later phases); use placeholder/stub calls that will be replaced
 - [ ] Task: Conductor - User Manual Verification 'Report Dispatch & Threshold Check' (Protocol in workflow.md)
 
 ## Phase 4: LCOV Reporter
