@@ -105,6 +105,7 @@ def build_gut_args(
         List of CLI arguments for Godot/GUT.
     """
     args: list[str] = [
+        "--headless",
         "-s",
         "addons/gut/gut_cmdln.gd",
         "-d",
@@ -120,10 +121,15 @@ def build_gut_args(
     args.append(f"-gprefix={config.prefix}")
     args.append(f"-gsuffix={config.suffix}")
 
-    # Suite/script filter (GUT -gselect: scripts containing the
-    # specified string in their filename will be run).
+    # Suite/script filter (GUT -gselect: matches against the script
+    # filename, not the full res:// path. Strip any res:// prefix
+    # and directory components so -gselect receives just the filename.
     if suite:
-        args.append(f"-gselect={suite}")
+        select_name = suite
+        if select_name.startswith("res://"):
+            select_name = select_name[len("res://") :]
+        select_name = Path(select_name).name
+        args.append(f"-gselect={select_name}")
 
     # Test name filter (GUT -gunit_test_name: tests containing the
     # specified text will be run, others skipped).
@@ -304,9 +310,9 @@ def run_tests(
     """Run GUT tests via the Godot CLI.
 
     Orchestrates the full test lifecycle: checks GUT is installed,
-    finds the Godot binary, builds GUT args, invokes Godot as a
-    subprocess, parses the JUnit XML output, and returns a
-    :class:`TestResult`.
+    finds the Godot binary, runs a headless import to register GUT
+    class names, builds GUT args, invokes Godot as a subprocess,
+    parses the JUnit XML output, and returns a :class:`TestResult`.
 
     Args:
         config: Project configuration (godot, test, coverage sections).
@@ -331,8 +337,9 @@ def run_tests(
     Raises:
         GUTNotInstalledError: If GUT is not installed (exit code 2).
         GodotNotFoundError: If the Godot binary cannot be found.
-        GdToolsError: If the subprocess times out, Godot exits
-            non-zero, or JUnit XML is missing/malformed (exit code 2).
+        GdToolsError: If the subprocess times out, Godot exits with a
+            crash code (>1), or JUnit XML is missing/malformed
+            (exit code 2).
         TestFailureError: If tests fail and ``no_exit_code`` is False
             (exit code 1).
     """
@@ -345,6 +352,19 @@ def run_tests(
 
     # Find the Godot binary.
     godot_info = find_godot(config.godot)
+
+    # Run headless import to register GUT class names. Required for
+    # fresh projects without a .godot/ cache. Non-zero exit codes are
+    # ignored — Godot may emit warnings during import.
+    try:
+        run_godot(
+            godot_info.path,
+            project_root,
+            ["--headless", "--import"],
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        raise GdToolsError(f"Godot import timed out after {timeout}s")
 
     # Ensure .gd-tools/ directory exists for JUnit XML output.
     results_dir = project_root / ".gd-tools"
@@ -377,8 +397,9 @@ def run_tests(
     except subprocess.TimeoutExpired:
         raise GdToolsError(f"Godot/GUT timed out after {timeout}s")
 
-    # Handle non-zero exit codes (crash, not test failure).
-    if result.returncode != 0:
+    # Handle crash exit codes (>1). Exit code 1 means tests ran but
+    # some failed — proceed to parse JUnit XML for details.
+    if result.returncode > 1:
         raise GdToolsError(
             f"Godot exited with code {result.returncode}: "
             f"{result.stderr.strip()}"

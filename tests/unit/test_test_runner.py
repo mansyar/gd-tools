@@ -191,9 +191,10 @@ def test_test_result_holds_multiple_details():
 
 @pytest.mark.unit
 def test_build_gut_args_base_command():
-    """Test base command args: -s, -d, -gexit present."""
+    """Test base command args: --headless, -s, -d, -gexit present."""
     config = TestConfig()
     args = build_gut_args(config, Path("/fake/project"))
+    assert "--headless" in args
     assert "-s" in args
     idx = args.index("-s")
     assert args[idx + 1] == "addons/gut/gut_cmdln.gd"
@@ -240,6 +241,18 @@ def test_build_gut_args_suite_filter():
     config = TestConfig()
     args = build_gut_args(config, Path("/fake/project"), suite="MySuite")
     assert "-gselect=MySuite" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_suite_strips_res_prefix():
+    """build_gut_args strips res:// prefix and directory from suite."""
+    config = TestConfig()
+    args = build_gut_args(
+        config,
+        Path("/fake/project"),
+        suite="res://test/test_calculator.gd",
+    )
+    assert "-gselect=test_calculator.gd" in args
 
 
 @pytest.mark.unit
@@ -481,14 +494,50 @@ def test_run_tests_calls_run_godot_with_correct_args(
 
     run_tests(GdToolsConfig())
 
-    mock_run_godot.assert_called_once()
-    call_args = mock_run_godot.call_args
-    assert call_args.args[0] == "/fake/godot"
-    assert call_args.args[1] == gut_project
-    gut_args = call_args.args[2]
-    assert "-s" in gut_args
-    assert "addons/gut/gut_cmdln.gd" in gut_args
-    assert "-gexit" in gut_args
+    # Two calls: (1) headless import, (2) GUT test run.
+    assert mock_run_godot.call_count == 2
+
+    # First call is the headless import.
+    import_args = mock_run_godot.call_args_list[0].args
+    assert import_args[0] == "/fake/godot"
+    assert import_args[1] == gut_project
+    assert import_args[2] == ["--headless", "--import"]
+
+    # Second call is the GUT test run.
+    gut_args = mock_run_godot.call_args_list[1].args
+    assert gut_args[0] == "/fake/godot"
+    assert gut_args[1] == gut_project
+    assert "--headless" in gut_args[2]
+    assert "-s" in gut_args[2]
+    assert "addons/gut/gut_cmdln.gd" in gut_args[2]
+    assert "-gexit" in gut_args[2]
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_import_nonzero_exit_ignored(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests ignores non-zero exit from the headless import step."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.side_effect = [
+        _make_completed_process(
+            returncode=1, stdout="", stderr="import warnings"
+        ),
+        _make_completed_process(returncode=0, stdout="", stderr=""),
+    ]
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    result = run_tests(GdToolsConfig())
+    assert result is not None
 
 
 @pytest.mark.unit
@@ -662,11 +711,11 @@ def test_run_tests_timeout_raises_gdtools_error(
 def test_run_tests_nonzero_exit_raises_gdtools_error(
     mock_find_root, mock_find_godot, mock_run_godot, gut_project
 ):
-    """run_tests raises GdToolsError when Godot exits with non-zero code."""
+    """run_tests raises GdToolsError when Godot exits with crash code (>1)."""
     mock_find_root.return_value = gut_project
     mock_find_godot.return_value = _make_godot_info()
     mock_run_godot.return_value = _make_completed_process(
-        returncode=1, stdout="", stderr="Godot crashed"
+        returncode=2, stdout="", stderr="Godot crashed"
     )
 
     with pytest.raises(GdToolsError) as exc_info:
