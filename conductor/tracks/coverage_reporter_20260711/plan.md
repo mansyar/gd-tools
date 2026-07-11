@@ -60,7 +60,7 @@
     - [x] Implement threshold check logic (compare `line_rate` against `min_threshold`, raise `CoverageThresholdError` if below)
     - [x] Set `threshold_met` field on `ReportResult`
     - [x] Initially wire to terminal reporter only (others implemented in later phases); use placeholder/stub calls that will be replaced
-- [ ] Task: Conductor - User Manual Verification 'Report Dispatch & Threshold Check' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Report Dispatch & Threshold Check' (Protocol in workflow.md) [checkpoint: 53978ca]
 
 ## Phase 4: LCOV Reporter
 
