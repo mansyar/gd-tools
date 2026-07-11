@@ -1,0 +1,30 @@
+Phase 3 Verification Checkpoint (2eb4073)
+
+=== Phase Completion Verification Report ===
+
+Phase: 3 - CLI Wiring: test --coverage Command
+
+--- Changed Files (since Phase 2 checkpoint b560fd1) ---
+1. src/gd_tools/cli.py - Added run_coverage_test import, --timeout option, conditional dispatch
+2. tests/unit/test_cli.py - Replaced 1 old test with 7 new tests
+3. conductor/tracks/coverage_cli_20260711/plan.md - Updated task statuses
+
+--- Automated Tests ---
+- 537/537 unit tests pass (7 new CLI + 530 existing, 0 regressions)
+- Coverage: 98.50% overall, cli.py at 97%
+
+--- Quality Gates ---
+- ruff: All checks passed
+- black: 52 files unchanged
+
+--- Commits ---
+- b5fcdc8 - feat(coverage): wire test --coverage to orchestrator
+- 6b57a8d - docs(conductor): update plan.md Phase 3 complete
+- 2eb4073 - docs(conductor): mark Phase 3 verification complete (this checkpoint)
+
+--- User Decision ---
+User approved Phase 3 (automated tests sufficient, proceed to Phase 4)
+
+--- Deviations ---
+- Added --timeout option to test command (required by orchestrator signature)
+- Changed --min from type=float to type=int (aligns with spec min_percent 0-100)
