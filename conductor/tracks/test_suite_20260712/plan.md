@@ -18,7 +18,7 @@
 - [x] Verify: `pytest --co` collects all tests without errors
 - [x] Verify: `pytest --strict-markers` runs without marker warnings
 
-### Task 1.2: Create root conftest.py
+### Task 1.2: Create root conftest.py [sha: 5c2e07f]
 - [x] Create `conftest.py` at project root
 - [x] Implement `.env` loading via `os.environ.setdefault`
 - [x] Implement `GODOT_BIN` environment variable detection
