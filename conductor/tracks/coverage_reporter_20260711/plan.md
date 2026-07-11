@@ -98,7 +98,7 @@
     - [x] Set `line-rate` and `branch-rate` on root and per-class elements
     - [x] Use `xml.etree.ElementTree` (stdlib)
     - [x] Include zero-coverage files
-- [ ] Task: Conductor - User Manual Verification 'Cobertura Reporter' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Cobertura Reporter' (Protocol in workflow.md) [checkpoint: fb02d87]
 
 ## Phase 6: HTML Reporter
 
