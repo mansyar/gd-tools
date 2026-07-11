@@ -1,0 +1,11 @@
+Track 13 Phase 1: Coverage Env Var Completion
+
+Changes:
+- test_runner.py: Added GD_TOOLS_COVERAGE_PLAN and GD_TOOLS_COVERAGE_OUTPUT env vars to run_tests() when coverage=True
+- test_runner.py: Replaced hardcoded project_root/.gd-tools/coverage with project_root/config.coverage.output_dir for coverage_data_path
+- test_runner.py: Create coverage directory (mkdir parents=True, exist_ok=True) when coverage=True
+- test_test_runner.py: Added 3 new unit tests for env var setting and config-based output_dir
+
+Tests: 53 passed (3 new, 50 existing)
+Quality: ruff clean, black clean
+Commit: d2ca397
