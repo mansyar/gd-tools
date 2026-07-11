@@ -64,14 +64,22 @@ markers = [
     "e2e: End-to-end tests for full workflows.",
     "slow: Tests that take a long time to run.",
 ]
-addopts = ["--cov=gd_tools", "--cov-report=term-missing"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=gd_tools",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
 
 [tool.coverage.run]
 source = ["gd_tools"]
-omit = ["tests/", "addons/"]
+omit = ["*/tests/*", "*/addons/*"]
 
 [tool.coverage.report]
 fail_under = 80
+show_missing = true
 
 [tool.ruff]
 line-length = 80

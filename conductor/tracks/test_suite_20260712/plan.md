@@ -5,18 +5,18 @@
 ## Phase 1: Test Infrastructure Setup
 
 ### Task 1.0: Read spec.md and workflow.md
-- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
-- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
+- [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
 ### Task 1.1: Configure pyproject.toml pytest/coverage settings
-- [ ] Read current pyproject.toml to understand existing configuration
-- [ ] Register pytest markers: `unit`, `integration`, `e2e`, `slow`
-- [ ] Add `--strict-markers`, `--strict-config` to `addopts`
-- [ ] Add `--cov=gd_tools`, `--cov-branch`, `--cov-report=term-missing`, `--cov-report=html` to `addopts`
-- [ ] Set `fail_under = 80` in `[tool.coverage.report]`
-- [ ] Configure `[tool.coverage.run]` with `source = ["gd_tools"]`, `omit = ["*/tests/*", "*/addons/*"]`
-- [ ] Verify: `pytest --co` collects all tests without errors
-- [ ] Verify: `pytest --strict-markers` runs without marker warnings
+- [x] Read current pyproject.toml to understand existing configuration
+- [x] Register pytest markers: `unit`, `integration`, `e2e`, `slow`
+- [x] Add `--strict-markers`, `--strict-config` to `addopts`
+- [x] Add `--cov=gd_tools`, `--cov-branch`, `--cov-report=term-missing`, `--cov-report=html` to `addopts`
+- [x] Set `fail_under = 80` in `[tool.coverage.report]`
+- [x] Configure `[tool.coverage.run]` with `source = ["gd_tools"]`, `omit = ["*/tests/*", "*/addons/*"]`
+- [x] Verify: `pytest --co` collects all tests without errors
+- [x] Verify: `pytest --strict-markers` runs without marker warnings
 
 ### Task 1.2: Create root conftest.py
 - [ ] Create `conftest.py` at project root
