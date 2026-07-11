@@ -118,25 +118,25 @@
 
 ## Phase 5: Python Integration Tests
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
-    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
-- [ ] Task: Write Python integration test for end-to-end flow
-    - [ ] Set env vars: `GD_TOOLS_COVERAGE_PLAN`, `GD_TOOLS_COVERAGE_OUTPUT`, `GD_TOOLS_COVERAGE_ACTIVE`
-    - [ ] Create fixture plan JSON with tracked lines
-    - [ ] Run Godot headless with GUT hooks configured
-    - [ ] Assert output JSON file exists at expected path
-    - [ ] Assert output JSON has correct structure: version, generated_at, files array
-    - [ ] Assert hit data contains expected line IDs with non-zero counts
-- [ ] Task: Write Python integration test for error scenarios
-    - [ ] Test: missing `GD_TOOLS_COVERAGE_PLAN` env var -> no instrumentation, warning in Godot output
-    - [ ] Test: missing `GD_TOOLS_COVERAGE_OUTPUT` env var -> error in Godot output
-    - [ ] Test: plan references non-existent script -> error logged, file skipped, other files still instrumented
-    - [ ] Test: malformed plan JSON -> error logged, instrumentation aborted
-- [ ] Task: Write Python integration test for headless mode
-    - [ ] Test: full flow works with `--headless` flag
-    - [ ] Test: Godot exits cleanly after tests with `-gexit`
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Python Integration Tests' (Protocol in workflow.md)
+- [x] Task: Read spec.md and workflow.md before starting this phase [af3a36c]
+    - [x] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [x] Read `conductor/workflow.md` for TDD methodology and quality gates
+- [x] Task: Write Python integration test for end-to-end flow [af3a36c]
+    - [x] Set env vars: `GD_TOOLS_COVERAGE_PLAN`, `GD_TOOLS_COVERAGE_OUTPUT`, `GD_TOOLS_COVERAGE_ACTIVE`
+    - [x] Create fixture plan JSON with tracked lines
+    - [x] Run Godot headless with GUT hooks configured
+    - [x] Assert output JSON file exists at expected path
+    - [x] Assert output JSON has correct structure: version, generated_at, files array
+    - [x] Assert hit data contains expected line IDs with non-zero counts
+- [x] Task: Write Python integration test for error scenarios [af3a36c]
+    - [x] Test: missing `GD_TOOLS_COVERAGE_PLAN` env var -> no instrumentation, warning in Godot output
+    - [x] Test: missing `GD_TOOLS_COVERAGE_OUTPUT` env var -> error in Godot output
+    - [x] Test: plan references non-existent script -> error logged, file skipped, other files still instrumented
+    - [x] Test: malformed plan JSON -> error logged, instrumentation aborted
+- [x] Task: Write Python integration test for headless mode [af3a36c]
+    - [x] Test: full flow works with `--headless` flag
+    - [x] Test: Godot exits cleanly after tests with `-gexit`
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Python Integration Tests' (Protocol in workflow.md) [af3a36c]
 
 ## Phase 6: Performance and Edge Cases
 
