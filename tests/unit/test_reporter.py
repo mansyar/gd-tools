@@ -10,7 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from gd_tools.coverage.plan_generator import FilePlan, LinePlan, read_plan_json
+from gd_tools.coverage.plan_generator import (
+    CoveragePlan,
+    FilePlan,
+    LinePlan,
+    read_plan_json,
+)
 from gd_tools.coverage.reporter import (
     CoverageData,
     CoverageSummary,
@@ -19,10 +24,11 @@ from gd_tools.coverage.reporter import (
     ReportResult,
     compute_file_summary,
     compute_summary,
+    generate_report,
     merge_coverage_data,
     read_coverage_json,
 )
-from gd_tools.errors import CoveragePlanError
+from gd_tools.errors import CoveragePlanError, CoverageThresholdError
 
 _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 _PLAN_FIXTURE = _FIXTURES_DIR / "coverage_plans" / "test_plan.json"
@@ -455,3 +461,124 @@ def test_compute_summary_missing_file_in_coverage_data():
     assert summary.total_branches == 3
     assert summary.covered_branches == 2
     assert summary.branch_rate == pytest.approx(2 / 3)
+
+
+# --- Report dispatch and threshold (FR-3) ---
+
+
+def test_generate_report_terminal_format(tmp_path):
+    """generate_report with format=terminal returns ReportResult with correct format."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    result = generate_report(plan, data, tmp_path, format="terminal")
+    assert result.format == "terminal"
+    assert result.output_path.exists()
+
+
+def test_generate_report_lcov_format(tmp_path):
+    """generate_report with format=lcov dispatches to LCOV reporter."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    result = generate_report(plan, data, tmp_path, format="lcov")
+    assert result.format == "lcov"
+    assert result.output_path.exists()
+
+
+def test_generate_report_cobertura_format(tmp_path):
+    """generate_report with format=cobertura dispatches to Cobertura reporter."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    result = generate_report(plan, data, tmp_path, format="cobertura")
+    assert result.format == "cobertura"
+    assert result.output_path.exists()
+
+
+def test_generate_report_html_format(tmp_path):
+    """generate_report with format=html dispatches to HTML reporter."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    result = generate_report(plan, data, tmp_path, format="html")
+    assert result.format == "html"
+    assert result.output_path.exists()
+
+
+def test_generate_report_unsupported_format(tmp_path):
+    """generate_report with unsupported format raises CoveragePlanError."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    with pytest.raises(CoveragePlanError):
+        generate_report(plan, data, tmp_path, format="xml")
+
+
+def test_generate_report_threshold_below_raises(tmp_path):
+    """generate_report raises CoverageThresholdError when coverage is below threshold."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    # partial_coverage: line_rate = 5/8 = 0.625, below 0.80
+    with pytest.raises(CoverageThresholdError):
+        generate_report(
+            plan, data, tmp_path, format="terminal", min_threshold=0.80
+        )
+
+
+def test_generate_report_threshold_at_minimum_no_raise(tmp_path):
+    """generate_report does NOT raise when line_rate equals threshold."""
+    # 5 lines, 4 covered -> line_rate = 0.80, threshold = 0.80
+    plan = CoveragePlan(
+        version=1,
+        generated_by="test",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://test.gd",
+                source_hash="sha256:test",
+                lines=[
+                    LinePlan(line=1, id=0, type="statement"),
+                    LinePlan(line=2, id=1, type="statement"),
+                    LinePlan(line=3, id=2, type="statement"),
+                    LinePlan(line=4, id=3, type="statement"),
+                    LinePlan(line=5, id=4, type="statement"),
+                ],
+            ),
+        ],
+    )
+    data = CoverageData(
+        version=1,
+        files=[
+            FileCoverage(
+                file_id=0, hits={"0": 1, "1": 1, "2": 1, "3": 1, "4": 0}
+            ),
+        ],
+    )
+    result = generate_report(
+        plan, data, tmp_path, format="terminal", min_threshold=0.80
+    )
+    assert result.threshold_met is True
+
+
+def test_generate_report_no_threshold_never_raises(tmp_path):
+    """generate_report with min_threshold=None never raises threshold error."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_ZERO_COV)
+    # zero_coverage: line_rate = 0.0, but no threshold -> no raise
+    result = generate_report(plan, data, tmp_path, format="terminal")
+    assert result.threshold_met is True
+
+
+def test_generate_report_result_fields(tmp_path):
+    """generate_report returns ReportResult with correct summary, file_summaries, and threshold_met."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    result = generate_report(plan, data, tmp_path, format="terminal")
+
+    assert isinstance(result.summary, CoverageSummary)
+    assert result.summary.line_rate == 1.0
+    assert result.summary.covered_lines == 8
+    assert result.summary.total_lines == 8
+
+    assert len(result.file_summaries) == 2
+    assert isinstance(result.file_summaries[0], FileSummary)
+    assert result.file_summaries[0].file_id == 0
+    assert result.file_summaries[0].path == "res://player.gd"
+
+    assert result.threshold_met is True

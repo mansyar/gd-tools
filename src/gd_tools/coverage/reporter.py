@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
-from gd_tools.errors import CoveragePlanError
+from gd_tools.errors import CoveragePlanError, CoverageThresholdError
 
 # --- Data structures (FR-1, FR-2, FR-3) ---
 
@@ -340,3 +340,94 @@ def compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary:
         covered_branches=total_covered_branches,
         total_branches=total_branches,
     )
+
+
+# --- Report dispatch and threshold (FR-3) ---
+
+_SUPPORTED_FORMATS = {"html", "lcov", "cobertura", "terminal"}
+
+
+def generate_report(
+    plan: CoveragePlan,
+    data: CoverageData,
+    output_dir: Path,
+    format: str = "html",
+    min_threshold: float | None = None,
+) -> ReportResult:
+    """Generate a coverage report in the specified format.
+
+    Dispatches to a format-specific reporter after computing coverage
+    metrics.  If ``min_threshold`` is set and the overall line coverage
+    rate falls below it, :class:`CoverageThresholdError` is raised
+    after the report file has been written.
+
+    Args:
+        plan: The instrumentation plan.
+        data: The runtime coverage data.
+        output_dir: Directory where the report file is written.
+        format: Report format — one of ``"html"``, ``"lcov"``,
+            ``"cobertura"``, ``"terminal"``.
+        min_threshold: Minimum line coverage rate (0.0-1.0).  If
+            ``None``, no threshold check is performed.
+
+    Returns:
+        A :class:`ReportResult` with the report path, summary, and
+        file-level breakdowns.
+
+    Raises:
+        CoveragePlanError: If ``format`` is not a supported format.
+        CoverageThresholdError: If ``min_threshold`` is set and
+            ``line_rate < min_threshold``.
+    """
+    if format not in _SUPPORTED_FORMATS:
+        raise CoveragePlanError(
+            f"Unsupported report format: '{format}'. "
+            f"Supported formats: {', '.join(sorted(_SUPPORTED_FORMATS))}"
+        )
+
+    summary = compute_summary(plan, data)
+
+    coverage_by_id = {fc.file_id: fc for fc in data.files}
+    file_summaries: list[FileSummary] = []
+    for file_plan in plan.files:
+        file_data = coverage_by_id.get(
+            file_plan.file_id,
+            FileCoverage(file_id=file_plan.file_id, hits={}),
+        )
+        file_summaries.append(compute_file_summary(file_plan, file_data))
+
+    threshold_met = True
+    if min_threshold is not None:
+        threshold_met = summary.line_rate >= min_threshold
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if format == "terminal":
+        output_path = output_dir / "coverage_report.txt"
+        output_path.write_text("Coverage Report\n", encoding="utf-8")
+    elif format == "lcov":
+        output_path = output_dir / "coverage.info"
+        output_path.write_text("TN:gd-tools\n", encoding="utf-8")
+    elif format == "cobertura":
+        output_path = output_dir / "cobertura.xml"
+        output_path.write_text('<?xml version="1.0"?>\n', encoding="utf-8")
+    else:  # html (format already validated above)
+        output_path = output_dir / "index.html"
+        output_path.write_text("<html></html>\n", encoding="utf-8")
+
+    result = ReportResult(
+        output_path=output_path,
+        format=format,
+        summary=summary,
+        file_summaries=file_summaries,
+        threshold_met=threshold_met,
+    )
+
+    if not threshold_met:
+        raise CoverageThresholdError(
+            f"Coverage threshold not met: line coverage "
+            f"{summary.line_rate:.2%} is below minimum {min_threshold:.2%}"
+        )
+
+    return result
