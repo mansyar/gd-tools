@@ -32,7 +32,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Data Structures & JSON I/O' (Protocol in workflow.md)
 
-## Phase 2: GDScript Test Fixtures
+## Phase 2: GDScript Test Fixtures [checkpoint: pending]
 
 - [~] Task: Read spec.md and workflow.md before starting this phase
     - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
@@ -48,7 +48,7 @@
     - [x] Verify fixtures are valid GDScript (parse with `gdtoolkit.parser.parse`)
     - [x] Commit: `test(coverage): add GDScript fixture files for plan generator`
 
-- [ ] Task: Conductor - User Manual Verification 'GDScript Test Fixtures' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'GDScript Test Fixtures' (Protocol in workflow.md)
 
 ## Phase 3: AST Parsing & Statement Classification [checkpoint: d095f59]
 
