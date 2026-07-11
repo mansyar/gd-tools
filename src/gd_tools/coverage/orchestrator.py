@@ -12,10 +12,15 @@ import json
 from pathlib import Path
 
 from rich.console import Console
+from rich.table import Table
 
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
-from gd_tools.coverage.reporter import CoverageData, ReportResult
+from gd_tools.coverage.reporter import (
+    CoverageData,
+    CoverageSummary,
+    ReportResult,
+)
 from gd_tools.errors import CoverageThresholdError, TestFailureError
 from gd_tools.test_runner import TestResult, run_tests
 
@@ -200,3 +205,71 @@ def merge_coverage_files(
     )
 
     return merged
+
+
+def show_coverage_summary(
+    config: GdToolsConfig,
+    min_percent: int | None = None,
+) -> CoverageSummary:
+    """Display a terminal summary table of coverage results.
+
+    Reads existing ``plan.json`` and ``coverage.json``, computes a
+    summary, prints a Rich table, and optionally enforces a minimum
+    threshold.
+
+    Args:
+        config: Project configuration.
+        min_percent: Minimum coverage percentage (0-100). If set and
+            coverage is below this, raises
+            :class:`CoverageThresholdError`.
+
+    Returns:
+        The :class:`CoverageSummary`.
+
+    Raises:
+        CoverageThresholdError: If ``min_percent`` is set and line
+            coverage is below the threshold.
+        CoveragePlanError: If ``plan.json`` or ``coverage.json`` is
+            missing or invalid.
+    """
+    project_root = find_project_root()
+    output_dir = project_root / config.coverage.output_dir
+
+    # Read plan and coverage data.
+    plan = plan_generator.read_plan_json(str(output_dir / "plan.json"))
+    data = reporter.read_coverage_json(output_dir / "coverage.json")
+
+    # Compute summary.
+    summary = reporter.compute_summary(plan, data)
+
+    # Print Rich terminal table.
+    console = Console()
+    table = Table(title="Coverage Summary")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Found", justify="right")
+    table.add_column("Hit", justify="right")
+    table.add_column("Rate", justify="right", style="green")
+
+    table.add_row(
+        "Lines",
+        str(summary.total_lines),
+        str(summary.covered_lines),
+        f"{summary.line_rate * 100:.1f}%",
+    )
+    table.add_row(
+        "Branches",
+        str(summary.total_branches),
+        str(summary.covered_branches),
+        f"{summary.branch_rate * 100:.1f}%",
+    )
+
+    console.print(table)
+
+    # Threshold check.
+    if min_percent is not None and summary.line_rate * 100 < min_percent:
+        raise CoverageThresholdError(
+            f"Line coverage {summary.line_rate * 100:.1f}% is below "
+            f"minimum threshold {min_percent}%"
+        )
+
+    return summary

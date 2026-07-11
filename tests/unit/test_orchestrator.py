@@ -19,6 +19,7 @@ from gd_tools.coverage.orchestrator import (
     generate_coverage_report,
     merge_coverage_files,
     run_coverage_test,
+    show_coverage_summary,
 )
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan, LinePlan
 from gd_tools.coverage.reporter import (
@@ -130,6 +131,9 @@ def mock_deps(tmp_path):
         patch(
             "gd_tools.coverage.orchestrator.reporter.generate_report"
         ) as mock_gen_report,
+        patch(
+            "gd_tools.coverage.orchestrator.reporter.compute_summary"
+        ) as mock_compute_summary,
     ):
         mock_find_root.return_value = tmp_path
         mock_gen_plan.return_value = _make_plan()
@@ -137,6 +141,14 @@ def mock_deps(tmp_path):
         mock_read_cov.return_value = _make_coverage_data()
         mock_read_plan.return_value = _make_plan()
         mock_gen_report.return_value = _make_report_result()
+        mock_compute_summary.return_value = CoverageSummary(
+            line_rate=0.8,
+            branch_rate=1.0,
+            covered_lines=4,
+            total_lines=5,
+            covered_branches=0,
+            total_branches=0,
+        )
 
         yield {
             "find_project_root": mock_find_root,
@@ -146,6 +158,7 @@ def mock_deps(tmp_path):
             "read_coverage_json": mock_read_cov,
             "read_plan_json": mock_read_plan,
             "generate_report": mock_gen_report,
+            "compute_summary": mock_compute_summary,
         }
 
 
@@ -424,3 +437,72 @@ def test_merge_coverage_files_empty_list(mock_merge, tmp_path):
     output_file = tmp_path / ".gd-tools" / "coverage" / "coverage.json"
     assert output_file.exists()
     assert result.files == []
+
+
+# --- show_coverage_summary() tests ---
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_reads_plan(mock_deps):
+    """show_coverage_summary() reads plan from <output_dir>/plan.json."""
+    show_coverage_summary(_make_config())
+
+    mock_deps["read_plan_json"].assert_called_once()
+    plan_path = mock_deps["read_plan_json"].call_args[0][0]
+    assert plan_path.endswith("plan.json")
+    assert "coverage" in plan_path
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_reads_coverage_data(mock_deps):
+    """show_coverage_summary() reads coverage data from <output_dir>/coverage.json."""
+    show_coverage_summary(_make_config())
+
+    mock_deps["read_coverage_json"].assert_called_once()
+    cov_path = mock_deps["read_coverage_json"].call_args[0][0]
+    assert str(cov_path).endswith("coverage.json")
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_calls_compute_summary(mock_deps):
+    """show_coverage_summary() calls reporter.compute_summary(plan, data)."""
+    show_coverage_summary(_make_config())
+
+    mock_deps["compute_summary"].assert_called_once()
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_prints_rich_table(mock_deps):
+    """show_coverage_summary() prints a Rich terminal summary table."""
+    with patch("gd_tools.coverage.orchestrator.Console") as mock_console_cls:
+        show_coverage_summary(_make_config())
+
+        mock_console_cls.return_value.print.assert_called_once()
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_threshold_below_raises_error(mock_deps):
+    """--min N threshold raises CoverageThresholdError when below threshold."""
+    # summary.line_rate = 0.8 (80%), min_percent = 90 → should raise
+    with pytest.raises(CoverageThresholdError):
+        show_coverage_summary(_make_config(), min_percent=90)
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_threshold_at_or_above_no_error(mock_deps):
+    """--min N threshold passes when at or above threshold."""
+    # summary.line_rate = 0.8 (80%), min_percent = 80 → should NOT raise
+    result = show_coverage_summary(_make_config(), min_percent=80)
+
+    assert isinstance(result, CoverageSummary)
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_missing_coverage_raises_plan_error(mock_deps):
+    """Missing coverage.json raises CoveragePlanError."""
+    mock_deps["read_coverage_json"].side_effect = CoveragePlanError(
+        "File not found"
+    )
+
+    with pytest.raises(CoveragePlanError):
+        show_coverage_summary(_make_config())

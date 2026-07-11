@@ -122,7 +122,7 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [x] Return merged `CoverageData`
     - [x] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "merge" --no-header -q` passes (GREEN)
 
-- [ ] Task: Write failing unit tests for `show_coverage_summary()`
+- [x] Task: Write failing unit tests for `show_coverage_summary()`
     - [ ] Test that it reads plan + coverage data from `<output_dir>/`
     - [ ] Test that it calls `reporter.compute_summary(plan, data)`
     - [ ] Test that it prints a Rich terminal summary table
@@ -132,7 +132,7 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Mock: `plan_generator.read_plan_json`, `reporter.read_coverage_json`, `reporter.compute_summary`
     - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "show" --no-header -q` fails as expected (RED)
 
-- [ ] Task: Implement `show_coverage_summary()`
+- [x] Task: Implement `show_coverage_summary()`
     - [ ] Signature: `show_coverage_summary(config: GdToolsConfig, min_percent: int | None = None) -> CoverageSummary`
     - [ ] Derive `output_dir = project_root / config.coverage.output_dir`
     - [ ] Read plan via `plan_generator.read_plan_json(str(output_dir / "plan.json"))`
