@@ -1,7 +1,11 @@
+<protect>
 # Implementation Plan: Coverage Hooks (Instrumentation Engine)
 
 ## Phase 1: Project Setup
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
 - [ ] Task: Create pre_run_hook.gd stub
     - [ ] Create `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`
     - [ ] Add `extends GutHookScript` and empty `run()` method
@@ -19,6 +23,9 @@
 
 ## Phase 2: pre_run_hook.gd — Plan Loading (TDD)
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
 - [ ] Task: Write GUT tests for plan loading (Red)
     - [ ] Test: env var `GD_TOOLS_COVERAGE_PLAN` not set -> warning logged, no instrumentation
     - [ ] Test: env var set to valid plan path -> plan parsed correctly, returns Dictionary with expected structure
@@ -37,6 +44,9 @@
 
 ## Phase 3: pre_run_hook.gd — Source Instrumentation (TDD)
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
 - [ ] Task: Write GUT tests for `_extract_indent()` (Red)
     - [ ] Test: line with tab indentation -> returns tab characters
     - [ ] Test: line with space indentation -> returns space characters
@@ -72,6 +82,9 @@
 
 ## Phase 4: post_run_hook.gd — Data Collection and Output (TDD)
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
 - [ ] Task: Write GUT tests for `_get_tracker()` (Red)
     - [ ] Test: `_GDTCoverage` autoload present -> returns tracker Node
     - [ ] Test: `_GDTCoverage` autoload missing -> error logged with Cause/Fix, returns null
@@ -106,6 +119,9 @@
 
 ## Phase 5: Python Integration Tests
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
 - [ ] Task: Write Python integration test for end-to-end flow
     - [ ] Set env vars: `GD_TOOLS_COVERAGE_PLAN`, `GD_TOOLS_COVERAGE_OUTPUT`, `GD_TOOLS_COVERAGE_ACTIVE`
     - [ ] Create fixture plan JSON with tracked lines
@@ -125,6 +141,9 @@
 
 ## Phase 6: Performance and Edge Cases
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
 - [ ] Task: Write performance test for 50-file instrumentation
     - [ ] Create fixture with 50 GDScript files, each with multiple tracked lines
     - [ ] Create plan JSON referencing all 50 files
@@ -136,3 +155,4 @@
     - [ ] Test: script with existing syntax errors -> error logged clearly, file skipped
     - [ ] Test: very long file (1000+ lines) with many tracked lines -> correct injection
 - [ ] Task: Conductor - User Manual Verification 'Phase 6: Performance and Edge Cases' (Protocol in workflow.md)
+</protect>

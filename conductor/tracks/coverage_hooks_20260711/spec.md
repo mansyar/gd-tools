@@ -1,3 +1,4 @@
+<protect>
 # Track 11: Coverage Hooks (Instrumentation Engine)
 
 ## Overview
@@ -94,3 +95,4 @@ This is the core innovation of the gd-tools coverage system: runtime source code
 - Integration with the CLI `coverage` command (separate track).
 - Error recovery that restores previously instrumented files on mid-run failure (skip-and-continue is sufficient).
 - Multi-file dependency ordering (files are independent; plan order is used).
+</protect>
