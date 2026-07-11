@@ -19,13 +19,13 @@
 - [x] Verify: `pytest --strict-markers` runs without marker warnings
 
 ### Task 1.2: Create root conftest.py
-- [ ] Create `conftest.py` at project root
-- [ ] Implement `.env` loading via `os.environ.setdefault`
-- [ ] Implement `GODOT_BIN` environment variable detection
-- [ ] Implement `godot_bin` fixture (returns path or `None`)
-- [ ] Implement CI auto-skip logic for integration/e2e when Godot not found
-- [ ] Verify: `pytest --co` still collects all tests
-- [ ] Verify: Integration tests skip when `GODOT_BIN` not set
+- [x] Create `conftest.py` at project root
+- [x] Implement `.env` loading via `os.environ.setdefault`
+- [x] Implement `GODOT_BIN` environment variable detection
+- [x] Implement `godot_bin` fixture (returns path or `None`)
+- [x] Implement CI auto-skip logic for integration/e2e when Godot not found
+- [x] Verify: `pytest --co` still collects all tests
+- [x] Verify: Integration tests skip when `GODOT_BIN` not set
 
 ### Task 1.3: Create per-tier conftest.py files
 - [ ] Create `tests/unit/conftest.py` with shared mock fixtures (subprocess.run, requests.get, shutil.which mock factories per §8)
