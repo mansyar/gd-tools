@@ -11,8 +11,11 @@ func subtract(a: float, b: float) -> float:
 	return a - b
 
 
+func multiply(a: float, b: float) -> float:
+	return a * b
+
+
 func divide(a: float, b: float) -> Dictionary:
 	if b == 0.0:
 		return {"error": "division by zero"}
-	else:
-		return {"result": a / b}
+	return {"result": a / b}

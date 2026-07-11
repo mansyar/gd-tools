@@ -16,3 +16,7 @@ config/features=PackedStringArray("4.6")
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[autoload]
+
+_GDTCoverage="*res://addons/gd-tools-coverage/tracker.gd"

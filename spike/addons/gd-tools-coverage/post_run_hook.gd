@@ -19,10 +19,11 @@ func run() -> void:
 	if output_path.is_empty():
 		output_path = "user://coverage.json"
 	var hits: Dictionary = tracker.get_hits()
+	var files: Array = _hits_to_files(hits)
 	var data: Dictionary = {
 		"version": 1,
 		"generated_at": Time.get_datetime_string_from_system(true, false) + "Z",
-		"hits": hits
+		"files": files
 	}
 	var file: FileAccess = FileAccess.open(output_path, FileAccess.WRITE)
 	if file == null:
@@ -31,6 +32,27 @@ func run() -> void:
 	file.store_string(JSON.stringify(data, "  "))
 	file.close()
 	print("[gd-tools] Coverage data written to: " + output_path + " (" + str(hits.size()) + " hit points)")
+
+## Convert flat "file_id:line_id" hits to per-file format.
+##
+## The tracker stores hits with composite keys like "0:3" (file_id 0,
+## line_id 3). The reporter expects a "files" array where each entry
+## has "file_id" (int) and "hits" (dict with string line_id keys).
+func _hits_to_files(hits: Dictionary) -> Array:
+	var file_map: Dictionary = {}
+	for key in hits:
+		var parts: PackedStringArray = key.split(":")
+		if parts.size() != 2:
+			continue
+		var file_id: int = parts[0].to_int()
+		var line_id: String = parts[1]
+		if not file_map.has(file_id):
+			file_map[file_id] = {}
+		file_map[file_id][line_id] = hits[key]
+	var files: Array = []
+	for file_id in file_map:
+		files.append({"file_id": file_id, "hits": file_map[file_id]})
+	return files
 
 ## Gets the _GDTCoverage tracker autoload node from the scene tree.
 func _get_tracker() -> Node:
