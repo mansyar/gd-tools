@@ -1,0 +1,12 @@
+Task: Create 6 GDScript fixture files (Phase 2)
+
+Created 6 GDScript test fixtures in tests/fixtures/gdscript/:
+- simple.gd: 3 trackable points (expr_stmt, func_var_assigned, return_stmt)
+- branches.gd: 18 points (if/elif/else, nested if/else with 6 branches + 12 statements)
+- loops.gd: 11 points (while, for, for_typed — all loop_body branches)
+- match_stmt.gd: 9 points (4 match_case branches + 5 statements)
+- nested.gd: 10 points (for→if→if→match with continue)
+- edge_cases.gd: 18 points (break, continue, ternary, pass, signal, enum, empty function)
+
+All fixtures verified as valid GDScript via gdtoolkit parser.
+Total: 69 trackable points across 6 fixtures.
