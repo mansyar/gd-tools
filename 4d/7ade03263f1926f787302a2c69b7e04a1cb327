@@ -1,0 +1,22 @@
+Phase 7 Checkpoint: Terminal Reporter
+
+Verification Results:
+- Terminal reporter tests: 8/8 passing
+- All coverage module tests: 73/73 passing (40 reporter + 8 lcov + 8 cobertura + 9 html + 8 terminal)
+- Ruff lint: All checks passed
+- Black format: 50 files unchanged (clean)
+- terminal_reporter.py coverage: 100% (40/40 statements, 0 missed)
+
+Deliverables:
+- src/gd_tools/coverage/terminal_reporter.py (new)
+  - generate_terminal_report(plan, data) -> str
+  - Rich Table with 7 columns, ASCII box, ANSI color coding
+  - Color thresholds: green >=80%, yellow 50-79%, red <50%
+  - Zero-coverage files included
+  - Overall summary at bottom
+- src/gd_tools/coverage/reporter.py (updated)
+  - generate_report() terminal branch now calls real generate_terminal_report()
+  - Writes output to coverage_report.txt
+- tests/unit/test_terminal_reporter.py (new) - 8 tests
+
+User Approval: Approved Phase (automated verification only, no full test suite)
