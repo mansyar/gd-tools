@@ -125,7 +125,7 @@
     - [ ] Verify tests pass and coverage >80% line / >70% branch
     - [ ] Commit: `feat(coverage): add fixture generation script`
 
-- [ ] Task: Conductor - User Manual Verification 'Fixture Generation Tool' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Fixture Generation Tool' (Protocol in workflow.md) [checkpoint: c08dcea]
 
 ## Phase 6: Performance & Final Quality
 
