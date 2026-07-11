@@ -64,21 +64,21 @@
 
 ## Phase 4: LCOV Reporter
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Write tests for LCOV reporter (Red)
-    - [ ] Test output file contains `TN:` record
-    - [ ] Test output file contains `SF:<res_path>` for each file in plan
-    - [ ] Test output file contains `DA:<line>,<hit_count>` records for all tracked lines
-    - [ ] Test output file contains `BRDA:<line>,<block>,<branch>,<taken>` records for branch lines
-    - [ ] Test output file contains `BRF:`, `BRH:`, `LF:`, `LH:` summary records per file
-    - [ ] Test output file contains `end_of_record` after each file section
-    - [ ] Test zero-coverage files are included (all `DA` entries with hit_count=0)
-    - [ ] Test LCOV output is valid (parseable, correct record ordering)
-- [ ] Task: Implement LCOV reporter (Green)
-    - [ ] Implement `generate_lcov_report(plan: CoveragePlan, data: CoverageData, output_path: Path) -> Path`
-    - [ ] Generate LCOV records: `TN:`, `SF:`, `DA:`, `BRDA:`, `BRF:`, `BRH:`, `LF:`, `LH:`, `end_of_record`
-    - [ ] Resolve file paths from plan via `file_id` cross-reference
-    - [ ] Include zero-coverage files
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Write tests for LCOV reporter (Red)
+    - [x] Test output file contains `TN:` record
+    - [x] Test output file contains `SF:<res_path>` for each file in plan
+    - [x] Test output file contains `DA:<line>,<hit_count>` records for all tracked lines
+    - [x] Test output file contains `BRDA:<line>,<block>,<branch>,<taken>` records for branch lines
+    - [x] Test output file contains `BRF:`, `BRH:`, `LF:`, `LH:` summary records per file
+    - [x] Test output file contains `end_of_record` after each file section
+    - [x] Test zero-coverage files are included (all `DA` entries with hit_count=0)
+    - [x] Test LCOV output is valid (parseable, correct record ordering)
+- [x] Task: Implement LCOV reporter (Green)
+    - [x] Implement `generate_lcov_report(plan: CoveragePlan, data: CoverageData, output_path: Path) -> Path`
+    - [x] Generate LCOV records: `TN:`, `SF:`, `DA:`, `BRDA:`, `BRF:`, `BRH:`, `LF:`, `LH:`, `end_of_record`
+    - [x] Resolve file paths from plan via `file_id` cross-reference
+    - [x] Include zero-coverage files
 - [ ] Task: Conductor - User Manual Verification 'LCOV Reporter' (Protocol in workflow.md)
 
 ## Phase 5: Cobertura Reporter
