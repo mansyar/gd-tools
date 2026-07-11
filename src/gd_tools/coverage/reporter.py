@@ -419,8 +419,9 @@ def generate_report(
         output_path = output_dir / "cobertura.xml"
         generate_cobertura_report(plan, data, output_path)
     else:  # html (format already validated above)
-        output_path = output_dir / "index.html"
-        output_path.write_text("<html></html>\n", encoding="utf-8")
+        from gd_tools.coverage.html_reporter import generate_html_report
+
+        output_path = generate_html_report(plan, data, output_dir)
 
     result = ReportResult(
         output_path=output_path,

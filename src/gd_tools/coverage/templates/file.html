@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ file_summary.path }} - Coverage</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; color: #333; }
+    h1 { margin-bottom: 0.5em; }
+    .file-info { margin-bottom: 1em; color: #666; }
+    .summary-bar {
+      display: flex; gap: 2em; margin-bottom: 2em;
+      padding: 1em; background: #f5f5f5; border-radius: 4px;
+    }
+    .summary-item { text-align: center; }
+    .summary-item .value { font-size: 1.5em; font-weight: bold; }
+    .summary-item .label { font-size: 0.9em; color: #666; }
+    .rate-good { color: #2e7d32; }
+    .rate-medium { color: #f57f17; }
+    .rate-low { color: #c62828; }
+    .source-listing {
+      font-family: monospace; font-size: 0.9em;
+      border: 1px solid #ddd; border-radius: 4px; overflow: hidden;
+    }
+    .source-line {
+      display: flex; padding: 0.2em 0;
+      border-bottom: 1px solid #eee;
+    }
+    .source-line:last-child { border-bottom: none; }
+    .line-number {
+      min-width: 3em; text-align: right;
+      padding: 0 1em; color: #999; user-select: none;
+      border-right: 1px solid #ddd;
+    }
+    .line-content { padding: 0 1em; flex-grow: 1; }
+    .line-hits {
+      min-width: 5em; text-align: right;
+      padding: 0 1em; color: #666; font-size: 0.85em;
+    }
+    .covered { background-color: #c8e6c9; }
+    .uncovered { background-color: #ffcdd2; }
+    .partial { background-color: #fff9c4; }
+    .not-tracked { color: #ccc; }
+    a { color: #1565c0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <p><a href="index.html">&larr; Back to summary</a></p>
+  <h1>{{ file_summary.path }}</h1>
+  <div class="file-info">File ID: {{ file_summary.file_id }}</div>
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="value rate-{{ 'good' if file_summary.line_rate >= 0.8 else ('medium' if file_summary.line_rate >= 0.5 else 'low') }}">{{ (file_summary.line_rate * 100) | round(1) }}%</div>
+      <div class="label">Line Coverage ({{ file_summary.covered_lines }}/{{ file_summary.total_lines }})</div>
+    </div>
+    <div class="summary-item">
+      <div class="value rate-{{ 'good' if file_summary.branch_rate >= 0.8 else ('medium' if file_summary.branch_rate >= 0.5 else 'low') }}">{{ (file_summary.branch_rate * 100) | round(1) }}%</div>
+      <div class="label">Branch Coverage ({{ file_summary.covered_branches }}/{{ file_summary.total_branches }})</div>
+    </div>
+  </div>
+  <div class="source-listing">
+    {% for line in lines %}
+    <div class="source-line {{ line.css_class }}">
+      <span class="line-number">{{ line.number }}</span>
+      <span class="line-content">{{ line.source }}</span>
+      <span class="line-hits">{{ line.hits }}x</span>
+    </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

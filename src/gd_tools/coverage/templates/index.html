@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coverage Report</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; color: #333; }
+    h1 { margin-bottom: 0.5em; }
+    .summary-bar {
+      display: flex; gap: 2em; margin-bottom: 2em;
+      padding: 1em; background: #f5f5f5; border-radius: 4px;
+    }
+    .summary-item { text-align: center; }
+    .summary-item .value { font-size: 1.8em; font-weight: bold; }
+    .summary-item .label { font-size: 0.9em; color: #666; }
+    .rate-good { color: #2e7d32; }
+    .rate-medium { color: #f57f17; }
+    .rate-low { color: #c62828; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 0.5em 1em; text-align: left; }
+    th { background: #f0f0f0; cursor: pointer; user-select: none; }
+    th:hover { background: #e0e0e0; }
+    th.sorted-asc::after { content: " \\25B2"; }
+    th.sorted-desc::after { content: " \\25BC"; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    td.rate { font-family: monospace; }
+    a { color: #1565c0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Coverage Report</h1>
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="value rate-{{ 'good' if summary.line_rate >= 0.8 else ('medium' if summary.line_rate >= 0.5 else 'low') }}">{{ (summary.line_rate * 100) | round(1) }}%</div>
+      <div class="label">Line Coverage ({{ summary.covered_lines }}/{{ summary.total_lines }})</div>
+    </div>
+    <div class="summary-item">
+      <div class="value rate-{{ 'good' if summary.branch_rate >= 0.8 else ('medium' if summary.branch_rate >= 0.5 else 'low') }}">{{ (summary.branch_rate * 100) | round(1) }}%</div>
+      <div class="label">Branch Coverage ({{ summary.covered_branches }}/{{ summary.total_branches }})</div>
+    </div>
+  </div>
+  <table id="file-table">
+    <thead>
+      <tr>
+        <th data-sort="file" onclick="sortTable(0)">File</th>
+        <th data-sort="lines" onclick="sortTable(1)">Lines (found/hit)</th>
+        <th data-sort="line-pct" onclick="sortTable(2)">Line %</th>
+        <th data-sort="branches" onclick="sortTable(3)">Branches (found/hit)</th>
+        <th data-sort="branch-pct" onclick="sortTable(4)">Branch %</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fs in file_summaries %}
+      <tr>
+        <td><a href="file_{{ fs.file_id }}.html">{{ fs.path }}</a></td>
+        <td>{{ fs.total_lines }}/{{ fs.covered_lines }}</td>
+        <td class="rate">{{ (fs.line_rate * 100) | round(1) }}%</td>
+        <td>{{ fs.total_branches }}/{{ fs.covered_branches }}</td>
+        <td class="rate">{{ (fs.branch_rate * 100) | round(1) }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <script>
+    function sortTable(colIndex) {
+      var table = document.getElementById("file-table");
+      var tbody = table.querySelector("tbody");
+      var rows = Array.from(tbody.querySelectorAll("tr"));
+      var ths = table.querySelectorAll("th");
+      var th = ths[colIndex];
+      var ascending = !th.classList.contains("sorted-asc");
+      ths.forEach(function(t) { t.classList.remove("sorted-asc", "sorted-desc"); });
+      th.classList.add(ascending ? "sorted-asc" : "sorted-desc");
+      rows.sort(function(a, b) {
+        var av = a.cells[colIndex].textContent.trim();
+        var bv = b.cells[colIndex].textContent.trim();
+        var an = parseFloat(av);
+        var bn = parseFloat(bv);
+        if (!isNaN(an) && !isNaN(bn)) {
+          return ascending ? an - bn : bn - an;
+        }
+        return ascending ? av.localeCompare(bv) : bv.localeCompare(av);
+      });
+      rows.forEach(function(r) { tbody.appendChild(r); });
+    }
+  </script>
+</body>
+</html>
