@@ -1,0 +1,246 @@
+"""Unit tests for the coverage orchestrator module.
+
+Tests the four orchestration functions that coordinate plan_generator ->
+test_runner -> reporter:
+
+- run_coverage_test(): full coverage flow (plan -> run -> report)
+- generate_coverage_report(): regenerate reports from existing data
+- merge_coverage_files(): merge multiple coverage data files
+- show_coverage_summary(): print terminal summary table
+"""
+
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
+from gd_tools.config import GdToolsConfig
+from gd_tools.coverage.orchestrator import run_coverage_test
+from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan, LinePlan
+from gd_tools.coverage.reporter import (
+    CoverageData,
+    CoverageSummary,
+    FileCoverage,
+    ReportResult,
+)
+from gd_tools.errors import CoverageThresholdError, TestFailureError
+from gd_tools.test_runner import TestResult
+
+# --- Helpers ---
+
+
+def _make_config(output_dir: str = ".gd-tools/coverage") -> GdToolsConfig:
+    """Create a GdToolsConfig with coverage settings."""
+    config = GdToolsConfig()
+    config.coverage.output_dir = output_dir
+    return config
+
+
+def _make_plan() -> CoveragePlan:
+    """Create a minimal CoveragePlan for testing."""
+    return CoveragePlan(
+        version=1,
+        generated_by="gd-tools",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://script.gd",
+                source_hash="sha256:abc123",
+                lines=[
+                    LinePlan(line=1, id=0, type="statement", branch_type=None)
+                ],
+            )
+        ],
+    )
+
+
+def _make_coverage_data() -> CoverageData:
+    """Create minimal CoverageData for testing."""
+    return CoverageData(
+        version=1,
+        generated_at="2025-01-01T00:00:00",
+        files=[FileCoverage(file_id=0, hits={"0": 3})],
+    )
+
+
+def _make_test_result() -> TestResult:
+    """Create a minimal TestResult for testing."""
+    return TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=Path("/fake/coverage.json"),
+        stdout="",
+        stderr="",
+    )
+
+
+def _make_report_result() -> ReportResult:
+    """Create a minimal ReportResult for testing."""
+    return ReportResult(
+        output_path=Path("/fake/report.html"),
+        format="html",
+        summary=CoverageSummary(
+            line_rate=0.8,
+            branch_rate=1.0,
+            covered_lines=1,
+            total_lines=1,
+            covered_branches=0,
+            total_branches=0,
+        ),
+        file_summaries=[],
+        threshold_met=True,
+    )
+
+
+@pytest.fixture
+def mock_deps(tmp_path):
+    """Patch all orchestrator dependencies for testing.
+
+    Yields a dict of mock objects keyed by function name.
+    """
+    with (
+        patch(
+            "gd_tools.coverage.orchestrator.find_project_root"
+        ) as mock_find_root,
+        patch(
+            "gd_tools.coverage.orchestrator.plan_generator.generate_plan"
+        ) as mock_gen_plan,
+        patch(
+            "gd_tools.coverage.orchestrator.plan_generator.write_plan_json"
+        ) as mock_write_plan,
+        patch("gd_tools.coverage.orchestrator.run_tests") as mock_run_tests,
+        patch(
+            "gd_tools.coverage.orchestrator.reporter.read_coverage_json"
+        ) as mock_read_cov,
+        patch(
+            "gd_tools.coverage.orchestrator.plan_generator.read_plan_json"
+        ) as mock_read_plan,
+        patch(
+            "gd_tools.coverage.orchestrator.reporter.generate_report"
+        ) as mock_gen_report,
+    ):
+        mock_find_root.return_value = tmp_path
+        mock_gen_plan.return_value = _make_plan()
+        mock_run_tests.return_value = _make_test_result()
+        mock_read_cov.return_value = _make_coverage_data()
+        mock_read_plan.return_value = _make_plan()
+        mock_gen_report.return_value = _make_report_result()
+
+        yield {
+            "find_project_root": mock_find_root,
+            "generate_plan": mock_gen_plan,
+            "write_plan_json": mock_write_plan,
+            "run_tests": mock_run_tests,
+            "read_coverage_json": mock_read_cov,
+            "read_plan_json": mock_read_plan,
+            "generate_report": mock_gen_report,
+        }
+
+
+# --- run_coverage_test() ---
+
+
+@pytest.mark.unit
+def test_run_coverage_test_generates_plan(mock_deps):
+    """run_coverage_test() generates a plan via plan_generator.generate_plan()."""
+    run_coverage_test(_make_config())
+
+    mock_deps["generate_plan"].assert_called_once()
+
+
+@pytest.mark.unit
+def test_run_coverage_test_writes_plan_json(mock_deps):
+    """run_coverage_test() writes plan to <output_dir>/plan.json."""
+    run_coverage_test(_make_config())
+
+    mock_deps["write_plan_json"].assert_called_once()
+    plan_path = mock_deps["write_plan_json"].call_args[0][1]
+    assert plan_path.endswith("plan.json")
+    assert "coverage" in plan_path
+
+
+@pytest.mark.unit
+def test_run_coverage_test_calls_run_tests_with_coverage(mock_deps):
+    """run_coverage_test() calls run_tests() with coverage=True."""
+    run_coverage_test(_make_config())
+
+    mock_deps["run_tests"].assert_called_once()
+    kwargs = mock_deps["run_tests"].call_args.kwargs
+    assert kwargs.get("coverage") is True
+
+
+@pytest.mark.unit
+def test_run_coverage_test_reads_coverage_data(mock_deps):
+    """run_coverage_test() reads coverage data via reporter.read_coverage_json()."""
+    run_coverage_test(_make_config())
+
+    mock_deps["read_coverage_json"].assert_called_once()
+    cov_path = mock_deps["read_coverage_json"].call_args[0][0]
+    assert str(cov_path).endswith("coverage.json")
+
+
+@pytest.mark.unit
+def test_run_coverage_test_min_percent_converted(mock_deps):
+    """run_coverage_test() converts min_percent (0-100) to min_threshold (0.0-1.0)."""
+    run_coverage_test(_make_config(), min_percent=80)
+
+    mock_deps["generate_report"].assert_called_once()
+    kwargs = mock_deps["generate_report"].call_args.kwargs
+    assert kwargs.get("min_threshold") == 0.8
+
+
+@pytest.mark.unit
+def test_run_coverage_test_error_precedence_test_failure_first(mock_deps):
+    """When both TestFailureError and CoverageThresholdError occur, TestFailureError is re-raised."""
+    mock_deps["run_tests"].side_effect = TestFailureError("Tests failed")
+    mock_deps["generate_report"].side_effect = CoverageThresholdError(
+        "Below threshold"
+    )
+
+    with pytest.raises(TestFailureError):
+        run_coverage_test(_make_config())
+
+
+@pytest.mark.unit
+def test_run_coverage_test_raises_coverage_threshold_error(mock_deps):
+    """When only CoverageThresholdError occurs, it is raised."""
+    mock_deps["generate_report"].side_effect = CoverageThresholdError(
+        "Below threshold"
+    )
+
+    with pytest.raises(CoverageThresholdError):
+        run_coverage_test(_make_config())
+
+
+@pytest.mark.unit
+def test_run_coverage_test_returns_test_result(mock_deps):
+    """When no errors occur, TestResult is returned."""
+    expected = _make_test_result()
+    mock_deps["run_tests"].return_value = expected
+
+    result = run_coverage_test(_make_config())
+
+    assert result == expected
+
+
+@pytest.mark.unit
+def test_run_coverage_test_re_raises_test_failure(mock_deps):
+    """When TestFailureError occurs but coverage is above threshold, TestFailureError is re-raised."""
+    mock_deps["run_tests"].side_effect = TestFailureError("Tests failed")
+
+    with pytest.raises(TestFailureError):
+        run_coverage_test(_make_config())
+
+
+@pytest.mark.unit
+def test_run_coverage_test_no_exit_code_passes_flag(mock_deps):
+    """When no_exit_code=True, the flag is passed to run_tests and reports are still generated."""
+    run_coverage_test(_make_config(), no_exit_code=True)
+
+    kwargs = mock_deps["run_tests"].call_args.kwargs
+    assert kwargs.get("no_exit_code") is True
+    mock_deps["generate_report"].assert_called_once()

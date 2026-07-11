@@ -52,11 +52,11 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 
 **Goal:** Create the orchestration module with 4 functions that coordinate plan_generator → test_runner → reporter.
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
-    - [ ] Review spec.md FR-1 through FR-4, NFR-1 (orchestrator module), NFR-2 (error precedence)
-    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [x] Review spec.md FR-1 through FR-4, NFR-1 (orchestrator module), NFR-2 (error precedence)
+    - [x] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
 
-- [ ] Task: Write failing unit tests for `run_coverage_test()`
+- [x] Task: Write failing unit tests for `run_coverage_test()`
     - [ ] Test that it generates a plan via `plan_generator.generate_plan()` when `coverage=True`
     - [ ] Test that it writes plan to `<output_dir>/plan.json` via `plan_generator.write_plan_json()`
     - [ ] Test that it calls `run_tests()` with `coverage=True` and correct env vars set
@@ -69,7 +69,7 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Mock: `plan_generator`, `test_runner.run_tests`, `reporter.read_coverage_json`, `reporter.read_plan_json`, `reporter.generate_report`
     - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "run_coverage" --no-header -q` fails as expected (RED)
 
-- [ ] Task: Implement `run_coverage_test()`
+- [x] Task: Implement `run_coverage_test()`
     - [ ] Signature: `run_coverage_test(config: GdToolsConfig, suite: str | None = None, test_name: str | None = None, junit_xml: str | None = None, no_exit_code: bool = False, min_percent: int | None = None, timeout: int | None = None) -> TestResult`
     - [ ] Derive `output_dir = project_root / config.coverage.output_dir`
     - [ ] Generate plan via `plan_generator.generate_plan(str(project_root), None, config.coverage.exclude, config.coverage.test_dirs)`
