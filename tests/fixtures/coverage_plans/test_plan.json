@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://player.gd",
+      "source_hash": "sha256:abc123",
+      "lines": [
+        {"line": 5, "id": 0, "type": "statement", "branch_type": null},
+        {"line": 7, "id": 1, "type": "statement", "branch_type": null},
+        {"line": 10, "id": 2, "type": "branch", "branch_type": "if_true"},
+        {"line": 12, "id": 3, "type": "branch", "branch_type": "if_false"},
+        {"line": 15, "id": 4, "type": "statement", "branch_type": null}
+      ]
+    },
+    {
+      "file_id": 1,
+      "path": "res://enemy.gd",
+      "source_hash": "sha256:def456",
+      "lines": [
+        {"line": 3, "id": 0, "type": "statement", "branch_type": null},
+        {"line": 5, "id": 1, "type": "branch", "branch_type": "loop_body"},
+        {"line": 8, "id": 2, "type": "statement", "branch_type": null}
+      ]
+    }
+  ]
+}
