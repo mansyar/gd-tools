@@ -43,41 +43,41 @@
 
 ## Phase 3: pre_run_hook.gd — Source Instrumentation (TDD)
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
-    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
-- [ ] Task: Write GUT tests for `_extract_indent()` (Red)
-    - [ ] Test: line with tab indentation -> returns tab characters
-    - [ ] Test: line with space indentation -> returns space characters
-    - [ ] Test: line with no indentation -> returns empty string
-    - [ ] Test: line with mixed tabs and spaces -> returns all leading whitespace
-- [ ] Task: Implement `_extract_indent()` (Green)
-    - [ ] Implement static method to extract leading whitespace from a line
-- [ ] Task: Write GUT tests for `_inject_trackers()` (Red)
-    - [ ] Test: single line injection -> tracker call inserted before line with matching indent
-    - [ ] Test: multiple lines injected bottom-to-top -> line numbers preserved
-    - [ ] Test: indentation matches surrounding context for each injected line
-    - [ ] Test: empty lines list -> source unchanged
-    - [ ] Test: lines list with duplicate line numbers -> handled correctly
-- [ ] Task: Implement `_inject_trackers()` (Green)
-    - [ ] Implement static method: split source by lines, sort lines descending, insert tracker calls with matching indentation
-- [ ] Task: Write GUT tests for `_instrument_file()` (Red)
-    - [ ] Test: valid script path -> source modified, reload() called
-    - [ ] Test: invalid script path -> error logged, file skipped, other files unaffected
-    - [ ] Test: reload() failure -> error logged with Cause/Fix, file skipped
-    - [ ] Test: file with no tracked lines -> source unchanged, reload() not called
-- [ ] Task: Implement `_instrument_file()` (Green)
-    - [ ] Implement: load script, get source_code, call `_inject_trackers()`, set source_code, call reload()
-    - [ ] Add error handling: push_error on load failure, push_error on reload failure, skip file
-- [ ] Task: Write GUT tests for tracker activation (Red)
-    - [ ] Test: `_GDTCoverage.set_active(true)` called after all files instrumented
-    - [ ] Test: tracker not activated if no files were instrumented
-- [ ] Task: Implement tracker activation in `run()` (Green)
-    - [ ] Call `_GDTCoverage.set_active(true)` after instrumentation loop completes
-- [ ] Task: Refactor source instrumentation (Refactor)
-    - [ ] Review injection logic for edge cases (empty source, single-line files)
-    - [ ] Ensure error messages follow Cause/Fix format
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: pre_run_hook.gd — Source Instrumentation' (Protocol in workflow.md)
+- [x] Task: Read spec.md and workflow.md before starting this phase
+    - [x] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [x] Read `conductor/workflow.md` for TDD methodology and quality gates
+- [x] Task: Write GUT tests for `_extract_indent()` (Red) [eb5a897]
+    - [x] Test: line with tab indentation -> returns tab characters
+    - [x] Test: line with space indentation -> returns space characters
+    - [x] Test: line with no indentation -> returns empty string
+    - [x] Test: line with mixed tabs and spaces -> returns all leading whitespace
+- [x] Task: Implement `_extract_indent()` (Green) [eb5a897]
+    - [x] Implement static method to extract leading whitespace from a line
+- [x] Task: Write GUT tests for `_inject_trackers()` (Red) [eb5a897]
+    - [x] Test: single line injection -> tracker call inserted before line with matching indent
+    - [x] Test: multiple lines injected bottom-to-top -> line numbers preserved
+    - [x] Test: indentation matches surrounding context for each injected line
+    - [x] Test: empty lines list -> source unchanged
+    - [x] Test: lines list with duplicate line numbers -> handled correctly
+- [x] Task: Implement `_inject_trackers()` (Green) [eb5a897]
+    - [x] Implement static method: split source by lines, sort lines descending, insert tracker calls with matching indentation
+- [x] Task: Write GUT tests for `_instrument_file()` (Red) [eb5a897]
+    - [x] Test: valid script path -> source modified, reload() called
+    - [x] Test: invalid script path -> error logged, file skipped, other files unaffected
+    - [x] Test: reload() failure -> error logged with Cause/Fix, file skipped
+    - [x] Test: file with no tracked lines -> source unchanged, reload() not called
+- [x] Task: Implement `_instrument_file()` (Green) [eb5a897]
+    - [x] Implement: load script, get source_code, call `_inject_trackers()`, set source_code, call reload()
+    - [x] Add error handling: push_error on load failure, push_error on reload failure, skip file
+- [x] Task: Write GUT tests for tracker activation (Red) [eb5a897]
+    - [x] Test: `_GDTCoverage.set_active(true)` called after all files instrumented
+    - [x] Test: tracker not activated if no files were instrumented
+- [x] Task: Implement tracker activation in `run()` (Green) [eb5a897]
+    - [x] Call `_GDTCoverage.set_active(true)` after instrumentation loop completes
+- [x] Task: Refactor source instrumentation (Refactor) [eb5a897]
+    - [x] Review injection logic for edge cases (empty source, single-line files)
+    - [x] Ensure error messages follow Cause/Fix format
+- [x] Task: Conductor - User Manual Verification 'Phase 3: pre_run_hook.gd — Source Instrumentation' [eb5a897]
 
 ## Phase 4: post_run_hook.gd — Data Collection and Output (TDD)
 
