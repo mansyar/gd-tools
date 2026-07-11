@@ -348,5 +348,11 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 - Fixed `_run_cli()` to set `PYTHONIOENCODING=utf-8` for Rich table Unicode output on Windows
 - Changed `-s` to `--suite` (Click CLI doesn't have `-s` short option)
 
-- [~] Task: Conductor - User Manual Verification 'Phase 5: Integration & E2E Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Integration & E2E Tests' (Protocol in workflow.md)
+    - Verification: 547/547 unit tests pass (7.8s), 5/5 integration tests pass (32.9s), 7/7 E2E tests pass (19.3s)
+    - Bug fixes: post_run_hook.gd format mismatch (hits → files), missing _GDTCoverage autoload, pre_run_hook else: injection workaround, E2E test fixes
+    - All AC-1 through AC-12 verified
+    - ruff ✅, black ✅
+    - Commits: 6cbc2bb (impl + tests)
+    - User approved: automated tests sufficient
 </protect>
