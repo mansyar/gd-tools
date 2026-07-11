@@ -146,8 +146,19 @@ def read_plan_json(path: str) -> CoveragePlan:
     if "files" not in data:
         raise CoveragePlanError("Missing required field: files")
 
+    files_data = data["files"]
+    if not isinstance(files_data, list):
+        raise CoveragePlanError("Plan 'files' field must be a list")
+
     files: list[FilePlan] = []
-    for fdata in data["files"]:
+    for fdata in files_data:
+        if not isinstance(fdata, dict):
+            raise CoveragePlanError("Each file entry must be a JSON object")
+        for required in ("file_id", "path", "source_hash"):
+            if required not in fdata:
+                raise CoveragePlanError(
+                    f"Missing required field in file entry: {required}"
+                )
         lines = [
             LinePlan(
                 line=lp["line"],

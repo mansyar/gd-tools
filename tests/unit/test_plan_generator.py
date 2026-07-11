@@ -235,6 +235,72 @@ def test_read_plan_json_round_trip(tmp_path):
     )
 
 
+def test_read_plan_json_missing_files_field(tmp_path):
+    """read_plan_json raises CoveragePlanError when 'files' field is missing."""
+    from gd_tools.errors import CoveragePlanError
+
+    json_data = {"version": 1, "generated_by": "gd-tools"}
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps(json_data))
+    with pytest.raises(CoveragePlanError):
+        read_plan_json(str(plan_file))
+
+
+def test_read_plan_json_data_not_dict(tmp_path):
+    """read_plan_json raises CoveragePlanError when JSON root is not an object."""
+    from gd_tools.errors import CoveragePlanError
+
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps([1, 2, 3]))
+    with pytest.raises(CoveragePlanError):
+        read_plan_json(str(plan_file))
+
+
+def test_read_plan_json_files_not_list(tmp_path):
+    """read_plan_json raises CoveragePlanError when 'files' is not a list."""
+    from gd_tools.errors import CoveragePlanError
+
+    json_data = {
+        "version": 1,
+        "generated_by": "gd-tools",
+        "files": "not_a_list",
+    }
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps(json_data))
+    with pytest.raises(CoveragePlanError):
+        read_plan_json(str(plan_file))
+
+
+def test_read_plan_json_file_entry_missing_field(tmp_path):
+    """read_plan_json raises CoveragePlanError when a file entry is missing a required field."""
+    from gd_tools.errors import CoveragePlanError
+
+    json_data = {
+        "version": 1,
+        "generated_by": "gd-tools",
+        "files": [{"file_id": 0, "path": "res://x.gd"}],
+    }
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps(json_data))
+    with pytest.raises(CoveragePlanError):
+        read_plan_json(str(plan_file))
+
+
+def test_read_plan_json_file_entry_not_dict(tmp_path):
+    """read_plan_json raises CoveragePlanError when a file entry is not a dict."""
+    from gd_tools.errors import CoveragePlanError
+
+    json_data = {
+        "version": 1,
+        "generated_by": "gd-tools",
+        "files": ["not_a_dict"],
+    }
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps(json_data))
+    with pytest.raises(CoveragePlanError):
+        read_plan_json(str(plan_file))
+
+
 # --- parse_gdscript ---
 
 
@@ -303,11 +369,8 @@ def test_declarations_not_tracked():
     tree = parse_gdscript(source)
     visitor = CoverageVisitor()
     visitor.visit(tree)
-    # Only the class-level `var health: int = 100` assignment is tracked
-    # (it produces an expr_stmt), and `var x: int` (no assignment) is NOT tracked
-    # Actually class_var_stmt is NOT tracked per spec.
-    # So only class-level var assignment if tracked... let me check spec:
-    # class_var_stmt is NOT tracked. So zero trackable points.
+    # class_var_stmt, const_stmt, signal_stmt, enum_stmt are all
+    # declarative and not tracked. No executable statements present.
     assert len(visitor.points) == 0
 
 
@@ -518,8 +581,8 @@ def test_generate_plan_excludes_addons(tmp_path):
     (tmp_path / "addons" / "plugin.gd").write_text("extends Node\n")
 
     cp = generate_plan(str(tmp_path))
-    paths = [fp.path for fp in cp.files]
-    assert not any("addons" in p for p in paths)
+    assert len(cp.files) == 1
+    assert cp.files[0].path == "res://player.gd"
 
 
 def test_generate_plan_excludes_test_dirs(tmp_path):
@@ -529,8 +592,8 @@ def test_generate_plan_excludes_test_dirs(tmp_path):
     (tmp_path / "test" / "test_player.gd").write_text("extends Node\n")
 
     cp = generate_plan(str(tmp_path))
-    paths = [fp.path for fp in cp.files]
-    assert not any("test" in p for p in paths)
+    assert len(cp.files) == 1
+    assert cp.files[0].path == "res://player.gd"
 
 
 def test_generate_plan_res_prefix(tmp_path):
@@ -539,6 +602,28 @@ def test_generate_plan_res_prefix(tmp_path):
 
     cp = generate_plan(str(tmp_path))
     assert cp.files[0].path.startswith("res://")
+
+
+def test_generate_plan_with_custom_exclude_dirs(tmp_path):
+    """Custom exclude_dirs are respected."""
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    (tmp_path / "custom_excluded").mkdir()
+    (tmp_path / "custom_excluded" / "plugin.gd").write_text("extends Node\n")
+
+    cp = generate_plan(str(tmp_path), exclude_dirs=["custom_excluded"])
+    assert len(cp.files) == 1
+    assert cp.files[0].path == "res://player.gd"
+
+
+def test_generate_plan_with_custom_test_dirs(tmp_path):
+    """Custom test_dirs are respected for exclusion."""
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    (tmp_path / "spec").mkdir()
+    (tmp_path / "spec" / "spec_player.gd").write_text("extends Node\n")
+
+    cp = generate_plan(str(tmp_path), test_dirs=["spec"])
+    assert len(cp.files) == 1
+    assert cp.files[0].path == "res://player.gd"
 
 
 # --- Expected plan fixtures ---
