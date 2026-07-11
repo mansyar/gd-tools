@@ -563,3 +563,38 @@ def test_plan_generation_matches_expected(tmp_path, fixture_name):
     expected = read_plan_json(str(_PLANS_DIR / f"{fixture_name}.expected.json"))
 
     assert generated == expected
+
+
+# --- Performance ---
+
+
+_GD_TEMPLATE = """\
+extends Node
+
+func _ready() -> void:
+    var count = 0
+    for i in range(10):
+        count += i
+    if count > 5:
+        print(count)
+    else:
+        print("low")
+    return count
+"""
+
+
+def test_performance_100_files(tmp_path):
+    """Generating a plan for 100 .gd files completes in <1 second."""
+    for i in range(100):
+        (tmp_path / f"script_{i:03d}.gd").write_text(
+            _GD_TEMPLATE, encoding="utf-8"
+        )
+
+    import time
+
+    start = time.perf_counter()
+    cp = generate_plan(str(tmp_path))
+    elapsed = time.perf_counter() - start
+
+    assert len(cp.files) == 100
+    assert elapsed < 1.0, f"Plan generation took {elapsed:.3f}s (>1s)"
