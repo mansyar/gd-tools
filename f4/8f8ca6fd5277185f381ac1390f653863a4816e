@@ -1,0 +1,20 @@
+Phase 4 LCOV Reporter Implementation:
+
+Created src/gd_tools/coverage/lcov_reporter.py:
+- generate_lcov_report(plan, data, output_path) -> Path
+- _generate_file_records(file_plan, file_data) -> list[str]
+- Generates LCOV .info format: TN:, SF:, DA:, BRDA:, BRF:, BRH:, LF:, LH:, end_of_record
+- Zero-coverage files included with all DA entries showing hit_count=0
+- Correct record ordering: SF, DA, BRDA, BRF, BRH, LF, LH, end_of_record
+
+Updated reporter.py:
+- generate_report() now dispatches to real generate_lcov_report for lcov format
+- Used lazy import to avoid circular dependency (reporter <-> lcov_reporter)
+
+Tests: tests/unit/test_lcov_reporter.py (8 tests, all passing)
+- TN record, SF records, DA records, BRDA records
+- Summary records (BRF, BRH, LF, LH), end_of_record
+- Zero-coverage files, valid format and ordering
+
+Coverage: lcov_reporter.py at 100%
+All 48 reporter+lcov tests pass. Ruff+Black clean.
