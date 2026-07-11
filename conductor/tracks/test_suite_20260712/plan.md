@@ -8,7 +8,7 @@
 - [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
 - [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
-### Task 1.1: Configure pyproject.toml pytest/coverage settings
+### Task 1.1: Configure pyproject.toml pytest/coverage settings [sha: ef95a1d]
 - [x] Read current pyproject.toml to understand existing configuration
 - [x] Register pytest markers: `unit`, `integration`, `e2e`, `slow`
 - [x] Add `--strict-markers`, `--strict-config` to `addopts`
