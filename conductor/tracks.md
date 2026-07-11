@@ -4,6 +4,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Coverage CLI Integration**
-*Link: [./tracks/coverage_cli_20260711/](./tracks/coverage_cli_20260711/)*
-
