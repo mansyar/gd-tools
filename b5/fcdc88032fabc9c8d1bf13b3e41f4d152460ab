@@ -1,0 +1,19 @@
+Phase 3: CLI Wiring — test --coverage Command
+
+Changes:
+- cli.py: Added import of run_coverage_test from coverage.orchestrator
+- cli.py: Changed --min flag from type=float to type=int (aligns with spec min_percent 0-100)
+- cli.py: Added --timeout option (type=int, default=None) to test command
+- cli.py: Added conditional dispatch in test() — when coverage=True, calls orchestrator.run_coverage_test(); when coverage=False, calls run_tests() directly (existing behavior preserved)
+- cli.py: Error handling unchanged — TestFailureError caught first (exit 1), then GdToolsError catches CoverageThresholdError (exit 1) and CoveragePlanError (exit 2) via exit_code attribute
+- test_cli.py: Replaced test_test_coverage_flag with test_test_coverage_calls_orchestrator (patches run_coverage_test instead of run_tests)
+- test_cli.py: Added 6 new tests: min_percent propagation, regression guard (no coverage → run_tests), TestFailureError exit 1, CoverageThresholdError exit 1, CoveragePlanError exit 2, --no-exit-code propagation
+- test_cli.py: Added CoveragePlanError, CoverageThresholdError to imports
+
+Verification:
+- 537/537 unit tests pass (6 new + 531 existing)
+- cli.py coverage: 51% (tested via CLI tests, not unit tested in isolation)
+- ruff: All checks passed
+- black: 2 files unchanged
+
+Commit: b5fcdc8
