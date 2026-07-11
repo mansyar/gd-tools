@@ -10,18 +10,25 @@ from pathlib import Path
 
 import pytest
 
+from gd_tools.coverage.plan_generator import FilePlan, LinePlan, read_plan_json
 from gd_tools.coverage.reporter import (
     CoverageData,
     CoverageSummary,
     FileCoverage,
     FileSummary,
     ReportResult,
+    compute_file_summary,
+    compute_summary,
     merge_coverage_data,
     read_coverage_json,
 )
 from gd_tools.errors import CoveragePlanError
 
 _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+_PLAN_FIXTURE = _FIXTURES_DIR / "coverage_plans" / "test_plan.json"
+_FULL_COV = _FIXTURES_DIR / "coverage_data" / "full_coverage.json"
+_PARTIAL_COV = _FIXTURES_DIR / "coverage_data" / "partial_coverage.json"
+_ZERO_COV = _FIXTURES_DIR / "coverage_data" / "zero_coverage.json"
 
 
 # --- Data structures ---
@@ -290,3 +297,161 @@ def test_merge_coverage_data_single_file(tmp_path):
     assert len(merged.files) == 1
     assert merged.files[0].hits["0"] == 3
     assert merged.files[0].hits["1"] == 2
+
+
+# --- Coverage computation (FR-2) ---
+
+
+def test_compute_file_summary_full_coverage():
+    """compute_file_summary returns 100% rates when all lines are hit."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    fs = compute_file_summary(plan.files[0], data.files[0])
+    assert fs.line_rate == 1.0
+    assert fs.branch_rate == 1.0
+    assert fs.covered_lines == 5
+    assert fs.total_lines == 5
+    assert fs.covered_branches == 2
+    assert fs.total_branches == 2
+    assert fs.uncovered_lines == []
+    assert fs.path == "res://player.gd"
+
+
+def test_compute_file_summary_partial_coverage():
+    """compute_file_summary computes correct rates for partial coverage."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    fs = compute_file_summary(plan.files[0], data.files[0])
+    # File 0: 5 lines total (3 statements + 2 branches)
+    # Partial hits: {0:3, 1:0, 2:1, 3:0, 4:3} -> 3 covered
+    assert fs.covered_lines == 3
+    assert fs.total_lines == 5
+    assert fs.line_rate == pytest.approx(0.6)
+    # Branches: id 2 (hit 1), id 3 (hit 0) -> 1 of 2
+    assert fs.covered_branches == 1
+    assert fs.total_branches == 2
+    assert fs.branch_rate == 0.5
+
+
+def test_compute_file_summary_zero_coverage():
+    """compute_file_summary returns 0% rates when all hits are zero."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_ZERO_COV)
+    fs = compute_file_summary(plan.files[0], data.files[0])
+    assert fs.line_rate == 0.0
+    assert fs.branch_rate == 0.0
+    assert fs.covered_lines == 0
+    assert fs.total_lines == 5
+    assert fs.covered_branches == 0
+    assert fs.total_branches == 2
+
+
+def test_compute_file_summary_uncovered_lines():
+    """compute_file_summary identifies line numbers with zero hits."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    fs = compute_file_summary(plan.files[0], data.files[0])
+    # ids 1 (line 7) and 3 (line 12) have 0 hits
+    assert fs.uncovered_lines == [7, 12]
+
+
+def test_compute_file_summary_if_true_if_false_branches():
+    """compute_file_summary handles if_true/if_false branch types."""
+    file_plan = FilePlan(
+        file_id=0,
+        path="res://test.gd",
+        source_hash="sha256:test",
+        lines=[
+            LinePlan(line=5, id=0, type="statement"),
+            LinePlan(line=8, id=1, type="branch", branch_type="if_true"),
+            LinePlan(line=10, id=2, type="branch", branch_type="if_false"),
+        ],
+    )
+    # Both branches covered
+    full_data = FileCoverage(file_id=0, hits={"0": 1, "1": 2, "2": 1})
+    fs = compute_file_summary(file_plan, full_data)
+    assert fs.branch_rate == 1.0
+    assert fs.covered_branches == 2
+    assert fs.total_branches == 2
+    assert fs.uncovered_lines == []
+
+    # Only if_true covered
+    partial_data = FileCoverage(file_id=0, hits={"0": 1, "1": 2, "2": 0})
+    fs = compute_file_summary(file_plan, partial_data)
+    assert fs.branch_rate == 0.5
+    assert fs.covered_branches == 1
+    assert fs.uncovered_lines == [10]
+
+
+def test_compute_file_summary_elif_loop_match_branches():
+    """compute_file_summary handles elif_true, loop_body, match_case types."""
+    file_plan = FilePlan(
+        file_id=0,
+        path="res://test.gd",
+        source_hash="sha256:test",
+        lines=[
+            LinePlan(line=3, id=0, type="branch", branch_type="elif_true"),
+            LinePlan(line=5, id=1, type="branch", branch_type="loop_body"),
+            LinePlan(line=8, id=2, type="branch", branch_type="match_case"),
+        ],
+    )
+    data = FileCoverage(file_id=0, hits={"0": 1, "1": 0, "2": 3})
+    fs = compute_file_summary(file_plan, data)
+    assert fs.total_branches == 3
+    assert fs.covered_branches == 2  # elif_true and match_case covered
+    assert fs.branch_rate == pytest.approx(2 / 3)
+    # All are branches, so total_lines is also 3
+    assert fs.total_lines == 3
+    assert fs.covered_lines == 2
+    assert fs.uncovered_lines == [5]  # loop_body line
+
+
+def test_compute_summary_aggregates_multiple_files():
+    """compute_summary aggregates coverage across all files."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    summary = compute_summary(plan, data)
+    # File 0: 5 lines, 2 branches; File 1: 3 lines, 1 branch
+    assert summary.total_lines == 8
+    assert summary.covered_lines == 8
+    assert summary.line_rate == 1.0
+    assert summary.total_branches == 3
+    assert summary.covered_branches == 3
+    assert summary.branch_rate == 1.0
+
+
+def test_compute_summary_includes_zero_coverage_files():
+    """compute_summary includes files with zero coverage in totals."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_ZERO_COV)
+    summary = compute_summary(plan, data)
+    # Both files counted even though all hits are 0
+    assert summary.total_lines == 8
+    assert summary.covered_lines == 0
+    assert summary.line_rate == 0.0
+    assert summary.total_branches == 3
+    assert summary.covered_branches == 0
+    assert summary.branch_rate == 0.0
+
+
+def test_compute_summary_missing_file_in_coverage_data():
+    """compute_summary treats files missing from coverage data as 0 hits."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    # Coverage data only has file 0, not file 1
+    data = CoverageData(
+        version=1,
+        generated_at="2025-01-01",
+        files=[
+            FileCoverage(
+                file_id=0, hits={"0": 3, "1": 2, "2": 1, "3": 1, "4": 3}
+            ),
+        ],
+    )
+    summary = compute_summary(plan, data)
+    # File 0: all 5 lines covered; File 1: 3 lines, 0 covered
+    assert summary.total_lines == 8
+    assert summary.covered_lines == 5
+    assert summary.line_rate == pytest.approx(5 / 8)
+    assert summary.total_branches == 3
+    assert summary.covered_branches == 2
+    assert summary.branch_rate == pytest.approx(2 / 3)

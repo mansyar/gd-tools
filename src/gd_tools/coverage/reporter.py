@@ -16,6 +16,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.errors import CoveragePlanError
 
 # --- Data structures (FR-1, FR-2, FR-3) ---
@@ -236,4 +237,106 @@ def merge_coverage_data(files: list[Path]) -> CoverageData:
         version=1,
         generated_at=generated_at,
         files=result_files,
+    )
+
+
+# --- Coverage computation (FR-2) ---
+
+
+def compute_file_summary(
+    file_plan: FilePlan, file_data: FileCoverage
+) -> FileSummary:
+    """Compute per-file coverage metrics.
+
+    Cross-references a file's instrumentation plan with its runtime
+    coverage data to produce coverage rates and uncovered line list.
+
+    Args:
+        file_plan: The file's instrumentation plan.
+        file_data: The file's runtime coverage data.
+
+    Returns:
+        A :class:`FileSummary` with coverage metrics.
+    """
+    covered_lines = 0
+    total_lines = 0
+    covered_branches = 0
+    total_branches = 0
+    uncovered_lines: list[int] = []
+
+    for line in file_plan.lines:
+        total_lines += 1
+        hit_count = file_data.hits.get(str(line.id), 0)
+
+        if hit_count > 0:
+            covered_lines += 1
+        else:
+            uncovered_lines.append(line.line)
+
+        if line.type == "branch":
+            total_branches += 1
+            if hit_count > 0:
+                covered_branches += 1
+
+    line_rate = covered_lines / total_lines if total_lines > 0 else 0.0
+    branch_rate = (
+        covered_branches / total_branches if total_branches > 0 else 0.0
+    )
+
+    return FileSummary(
+        file_id=file_plan.file_id,
+        path=file_plan.path,
+        line_rate=line_rate,
+        branch_rate=branch_rate,
+        covered_lines=covered_lines,
+        total_lines=total_lines,
+        covered_branches=covered_branches,
+        total_branches=total_branches,
+        uncovered_lines=uncovered_lines,
+    )
+
+
+def compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary:
+    """Compute overall coverage metrics across all files.
+
+    Aggregates per-file coverage into an overall summary. Files in the
+    plan but missing from coverage data are treated as 0 hits.
+
+    Args:
+        plan: The full instrumentation plan.
+        data: The runtime coverage data.
+
+    Returns:
+        A :class:`CoverageSummary` with aggregated coverage metrics.
+    """
+    coverage_by_id = {fc.file_id: fc for fc in data.files}
+
+    total_covered_lines = 0
+    total_lines = 0
+    total_covered_branches = 0
+    total_branches = 0
+
+    for file_plan in plan.files:
+        file_data = coverage_by_id.get(
+            file_plan.file_id,
+            FileCoverage(file_id=file_plan.file_id, hits={}),
+        )
+        fs = compute_file_summary(file_plan, file_data)
+        total_covered_lines += fs.covered_lines
+        total_lines += fs.total_lines
+        total_covered_branches += fs.covered_branches
+        total_branches += fs.total_branches
+
+    line_rate = total_covered_lines / total_lines if total_lines > 0 else 0.0
+    branch_rate = (
+        total_covered_branches / total_branches if total_branches > 0 else 0.0
+    )
+
+    return CoverageSummary(
+        line_rate=line_rate,
+        branch_rate=branch_rate,
+        covered_lines=total_covered_lines,
+        total_lines=total_lines,
+        covered_branches=total_covered_branches,
+        total_branches=total_branches,
     )

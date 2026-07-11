@@ -25,7 +25,7 @@
 
 ## Phase 2: Coverage Metrics Computation
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Write tests for coverage computation (Red)
     - [ ] Test `compute_file_summary()` with full coverage (100% line, 100% branch)
     - [ ] Test `compute_file_summary()` with partial coverage (e.g., 15/20 lines = 75% line rate)
