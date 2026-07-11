@@ -42,15 +42,15 @@
     - [x] Run `CI=true pytest --cov=gd_tools.init --cov-branch --cov-report=term-missing`
     - [x] Verify >80% line and >70% branch coverage for new code
 
-- [~] Task: Conductor - User Manual Verification 'Autoload Registration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Autoload Registration' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Finalization
 
-- [ ] Task: Read spec.md and workflow.md to load context for this phase
-    - [ ] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md to load context for this phase
+    - [x] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Update `install_coverage_addon` tests
+- [~] Task: Update `install_coverage_addon` tests
     - [ ] Update existing test to verify deployed `coverage.gd` contains real implementation (not placeholder TODO)
 
 - [ ] Task: Run full test suite and quality gates
