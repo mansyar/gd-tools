@@ -125,7 +125,7 @@
     - [x] Generate per-file pages with source highlighting (read source files for line-by-line display)
     - [x] Apply CSS classes based on coverage status (covered/uncovered/partial-branch)
     - [x] Include zero-coverage files in index
-- [ ] Task: Conductor - User Manual Verification 'HTML Reporter' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'HTML Reporter' (Protocol in workflow.md) [checkpoint: b54fdd4]
 
 ## Phase 7: Terminal Reporter
 
