@@ -1,0 +1,22 @@
+Conductor Checkpoint - Phase 6: Performance and Edge Cases
+
+Track: coverage_hooks_20260711
+Commit: ed65874
+
+Phase 6 Verification Report:
+- GUT tests: 28 pre_run_hook + 13 post_run_hook = 41 total, ALL PASS
+- Python unit tests: 444 pass, 98.57% coverage (no regression)
+- Integration tests: 11 total (8 existing + 3 new), ALL PASS
+- gdformat + gdlint: clean
+- ruff + black: clean
+
+New Tests Added:
+1. test_inject_trackers_very_long_file (GUT) - 1000-line source injection, verifies correct tracker placement at lines 1, 500, 1000
+2. test_hooks_performance_50_files (integration) - 51 files instrumented, total run 15.22s (NFR-2: <5s instrumentation, <60s total)
+3. test_hooks_empty_plan (integration) - empty plan produces output with empty files array
+4. test_hooks_unloadable_script (integration) - non-.gd file (project.godot) skipped, calculator.gd still instrumented
+
+Key Decisions:
+- Used res://project.godot instead of broken .gd file for unloadable script test (Godot debugger hangs on .gd syntax errors in headless mode with -d flag)
+- Performance test includes calculator.gd in plan (file_id=50) to verify hit data is still recorded correctly alongside 50 perf files
+- Very long file test verifies exact index positions after bottom-to-top injection
