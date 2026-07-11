@@ -87,7 +87,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'AST Parsing & Statement Classification' (Protocol in workflow.md)
 
-## Phase 4: File Discovery & Plan Generation
+## Phase 4: File Discovery & Plan Generation [checkpoint: ca81c0e]
 
 - [x] Task: Read spec.md and workflow.md before starting this phase
     - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
@@ -110,7 +110,7 @@
     - [x] Write verified outputs to `tests/fixtures/plans/simple.expected.json`, `branches.expected.json`, `loops.expected.json`, `match_stmt.expected.json`, `nested.expected.json`, `edge_cases.expected.json`
     - [x] Commit: `test(coverage): add expected plan JSON fixtures`
 
-- [~] Task: Conductor - User Manual Verification 'File Discovery & Plan Generation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'File Discovery & Plan Generation' (Protocol in workflow.md)
 
 ## Phase 5: Fixture Generation Tool
 
