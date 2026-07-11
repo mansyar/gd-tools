@@ -1,3 +1,5 @@
+<protect>
+
 # Track 13: Coverage CLI Integration — Implementation Plan
 
 ## Overview
@@ -16,6 +18,10 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 ## Phase 1: test_runner.py — Coverage Env Var Completion
 
 **Goal:** Complete the coverage env var setup in `run_tests()` so hooks can find plan.json and write coverage.json.
+
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [ ] Review spec.md FR-1 (test --coverage flow), NFR-2 (error precedence), NFR-4 (exit codes)
+    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
 
 - [ ] Task: Write failing unit tests for coverage env var setting
     - [ ] Test that `GD_TOOLS_COVERAGE_PLAN` env var is set to the absolute path of `plan.json` when `coverage=True`
@@ -45,6 +51,10 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 ## Phase 2: Orchestrator Module (`coverage/orchestrator.py`)
 
 **Goal:** Create the orchestration module with 4 functions that coordinate plan_generator → test_runner → reporter.
+
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [ ] Review spec.md FR-1 through FR-4, NFR-1 (orchestrator module), NFR-2 (error precedence)
+    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
 
 - [ ] Task: Write failing unit tests for `run_coverage_test()`
     - [ ] Test that it generates a plan via `plan_generator.generate_plan()` when `coverage=True`
@@ -152,6 +162,10 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 
 **Goal:** Wire the `test` command's `--coverage` flag to call `orchestrator.run_coverage_test()` instead of `run_tests()` directly.
 
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [ ] Review spec.md FR-1 (test --coverage flow), NFR-2 (error precedence), NFR-4 (exit codes)
+    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
+
 - [ ] Task: Write failing unit tests for `test --coverage` CLI command
     - [ ] Test that `test --coverage` calls `orchestrator.run_coverage_test()` (not `run_tests()` directly)
     - [ ] Test that `test --coverage --min 80` passes `min_percent=80` to orchestrator
@@ -183,6 +197,10 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 ## Phase 4: CLI Wiring — `coverage report/merge/show` Commands
 
 **Goal:** Replace stub implementations with orchestrator calls for the `coverage` command group.
+
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [ ] Review spec.md FR-2 (coverage report), FR-3 (coverage merge), FR-4 (coverage show)
+    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
 
 - [ ] Task: Write failing unit tests for `coverage report` command
     - [ ] Test that `coverage report` calls `orchestrator.generate_coverage_report()`
@@ -242,6 +260,10 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 
 **Goal:** Write integration and E2E tests that verify the full coverage flow with real Godot on the sample project fixture.
 
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [ ] Review spec.md AC-1 through AC-12 (all acceptance criteria)
+    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
+
 - [ ] Task: Write integration test for `test --coverage` flow
     - [ ] Test: `run_coverage_test()` with real Godot + `tests/fixtures/projects/sample_project/`
     - [ ] Verify: plan.json generated in `.gd-tools/coverage/`
@@ -282,3 +304,4 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Document any deviations in plan.md
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: Integration & E2E Tests' (Protocol in workflow.md)
+</protect>

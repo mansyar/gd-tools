@@ -1,3 +1,5 @@
+<protect>
+
 # Track 13: Coverage CLI Integration
 
 ## Overview
@@ -149,3 +151,4 @@ Resolution order: **CLI flags > config file > hardcoded defaults**.
 - **PRD.md** §5 — CLI command surface specification.
 - **PRD.md** §10 — Coverage architecture overview.
 - **product-guidelines.md** §4 — Error message format (Cause/Fix).
+</protect>
