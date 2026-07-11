@@ -7,7 +7,13 @@ from click.testing import CliRunner
 
 from gd_tools.cli import cli
 from gd_tools.doctor import CheckResult, DoctorResult
-from gd_tools.errors import ConfigError, GUTNotInstalledError, TestFailureError
+from gd_tools.errors import (
+    ConfigError,
+    CoveragePlanError,
+    CoverageThresholdError,
+    GUTNotInstalledError,
+    TestFailureError,
+)
 from gd_tools.format_runner import FormatResult
 from gd_tools.lint_runner import LintIssue, LintResult
 from gd_tools.test_runner import TestResult
@@ -210,8 +216,65 @@ def test_test_name_flag():
     assert kwargs["test_name"] == "MyTest"
 
 
-def test_test_coverage_flag():
-    """Test --coverage passes coverage=True to run_tests."""
+def test_test_coverage_calls_orchestrator():
+    """Test --coverage calls orchestrator.run_coverage_test, not run_tests."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            return_value=mock_result,
+        ) as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test", "--coverage"])
+    assert result.exit_code == 0
+    mock_orch.assert_called_once()
+
+
+def test_test_coverage_min_passed_to_orchestrator():
+    """Test --coverage --min 80 passes min_percent=80 to orchestrator."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            return_value=mock_result,
+        ) as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test", "--coverage", "--min", "80"])
+    assert result.exit_code == 0
+    _, kwargs = mock_orch.call_args
+    assert kwargs["min_percent"] == 80
+
+
+def test_test_no_coverage_calls_run_tests_directly():
+    """Test test without --coverage calls run_tests directly (regression guard)."""
     runner = CliRunner()
     mock_config = MagicMock()
     mock_result = TestResult(
@@ -229,11 +292,86 @@ def test_test_coverage_flag():
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+        patch("gd_tools.cli.run_coverage_test") as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once()
+    mock_orch.assert_not_called()
+
+
+def test_test_coverage_test_failure_exit_1():
+    """Test TestFailureError from orchestrator exits with code 1."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            side_effect=TestFailureError("2 test(s) failed"),
+        ),
     ):
         result = runner.invoke(cli, ["test", "--coverage"])
+    assert result.exit_code == 1
+
+
+def test_test_coverage_threshold_error_exit_1():
+    """Test CoverageThresholdError from orchestrator exits with code 1."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            side_effect=CoverageThresholdError("Coverage below threshold"),
+        ),
+    ):
+        result = runner.invoke(cli, ["test", "--coverage"])
+    assert result.exit_code == 1
+
+
+def test_test_coverage_plan_error_exit_2():
+    """Test CoveragePlanError from orchestrator exits with code 2."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            side_effect=CoveragePlanError("Missing plan"),
+        ),
+    ):
+        result = runner.invoke(cli, ["test", "--coverage"])
+    assert result.exit_code == 2
+
+
+def test_test_coverage_no_exit_code_propagated():
+    """Test --no-exit-code flag is propagated to orchestrator."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            return_value=mock_result,
+        ) as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test", "--coverage", "--no-exit-code"])
     assert result.exit_code == 0
-    _, kwargs = mock_run.call_args
-    assert kwargs["coverage"] is True
+    _, kwargs = mock_orch.call_args
+    assert kwargs["no_exit_code"] is True
 
 
 def test_test_junit_xml_flag():

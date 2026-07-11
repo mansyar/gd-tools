@@ -8,6 +8,7 @@ from rich.syntax import Syntax
 
 from . import __version__
 from .config import load_config
+from .coverage.orchestrator import run_coverage_test
 from .doctor import format_doctor_table, run_doctor
 from .errors import ConfigError, GdToolsError, TestFailureError
 from .format_runner import run_format
@@ -89,7 +90,7 @@ def doctor():
 
 @cli.command()
 @click.option("--coverage", is_flag=True, help="Generate coverage report.")
-@click.option("--min", type=float, help="Minimum coverage threshold.")
+@click.option("--min", type=int, help="Minimum coverage threshold.")
 @click.option("--suite", help="Specify which test suite to run.")
 @click.option("--test", help="Specify which test to run.")
 @click.option("--junit-xml", help="Path to write JUnit XML report.")
@@ -98,7 +99,12 @@ def doctor():
     is_flag=True,
     help="Don't exit with non-zero on test failure.",
 )
-def test(coverage, min, suite, test, junit_xml, no_exit_code):
+@click.option(
+    "--timeout",
+    type=int,
+    help="Timeout in seconds for the test run.",
+)
+def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
     """Run GDScript tests using GUT."""
     try:
         config = load_config()
@@ -108,15 +114,26 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code):
         ctx.exit(2)
 
     try:
-        run_tests(
-            config,
-            coverage=coverage,
-            min_percent=min,
-            suite=suite,
-            test_name=test,
-            junit_xml=junit_xml,
-            no_exit_code=no_exit_code,
-        )
+        if coverage:
+            run_coverage_test(
+                config,
+                suite=suite,
+                test_name=test,
+                junit_xml=junit_xml,
+                no_exit_code=no_exit_code,
+                min_percent=min,
+                timeout=timeout,
+            )
+        else:
+            run_tests(
+                config,
+                coverage=coverage,
+                min_percent=min,
+                suite=suite,
+                test_name=test,
+                junit_xml=junit_xml,
+                no_exit_code=no_exit_code,
+            )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
