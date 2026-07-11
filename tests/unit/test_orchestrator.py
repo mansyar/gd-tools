@@ -17,6 +17,7 @@ import pytest
 from gd_tools.config import GdToolsConfig
 from gd_tools.coverage.orchestrator import (
     generate_coverage_report,
+    merge_coverage_files,
     run_coverage_test,
 )
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan, LinePlan
@@ -329,3 +330,97 @@ def test_generate_coverage_report_missing_plan_raises_plan_error(mock_deps):
 
     with pytest.raises(CoveragePlanError):
         generate_coverage_report(_make_config())
+
+
+# --- merge_coverage_files() tests ---
+
+
+@patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
+def test_merge_coverage_files_calls_merge_coverage_data(mock_merge):
+    """merge_coverage_files delegates to reporter.merge_coverage_data."""
+    mock_merge.return_value = _make_coverage_data()
+    files = [Path("a.json"), Path("b.json")]
+
+    merge_coverage_files(files)
+
+    mock_merge.assert_called_once_with(files)
+
+
+@patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
+def test_merge_coverage_files_writes_json_to_default_output(
+    mock_merge, tmp_path
+):
+    """Merged data is written to .gd-tools/coverage/coverage.json by default."""
+    merged = CoverageData(
+        version=1,
+        generated_at="2025-01-01T00:00:00",
+        files=[FileCoverage(file_id=0, hits={"0": 3, "1": 0})],
+    )
+    mock_merge.return_value = merged
+
+    with patch(
+        "gd_tools.coverage.orchestrator.Path.cwd", return_value=tmp_path
+    ):
+        merge_coverage_files([Path("a.json")])
+
+    output_file = tmp_path / ".gd-tools" / "coverage" / "coverage.json"
+    assert output_file.exists()
+
+    import json
+
+    data = json.loads(output_file.read_text(encoding="utf-8"))
+    assert data["version"] == 1
+    assert data["generated_at"] == "2025-01-01T00:00:00"
+    assert len(data["files"]) == 1
+    assert data["files"][0]["file_id"] == 0
+    assert data["files"][0]["hits"] == {"0": 3, "1": 0}
+
+
+@patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
+def test_merge_coverage_files_writes_json_to_custom_output(
+    mock_merge, tmp_path
+):
+    """Merged data is written to the custom --output path."""
+    mock_merge.return_value = _make_coverage_data()
+    custom_output = tmp_path / "merged" / "result.json"
+
+    merge_coverage_files([Path("a.json")], output=custom_output)
+
+    assert custom_output.exists()
+
+
+@patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
+def test_merge_coverage_files_returns_merged_data(mock_merge):
+    """The merged CoverageData is returned."""
+    merged = _make_coverage_data()
+    mock_merge.return_value = merged
+
+    result = merge_coverage_files([Path("a.json")], output=Path("out.json"))
+
+    assert result is merged
+
+
+@patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
+def test_merge_coverage_files_creates_output_dir(mock_merge, tmp_path):
+    """Parent directories of the output path are created if missing."""
+    mock_merge.return_value = _make_coverage_data()
+    output = tmp_path / "deep" / "nested" / "dir" / "coverage.json"
+
+    merge_coverage_files([Path("a.json")], output=output)
+
+    assert output.exists()
+
+
+@patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
+def test_merge_coverage_files_empty_list(mock_merge, tmp_path):
+    """Empty file list still writes an (empty) output."""
+    mock_merge.return_value = CoverageData(version=1, files=[])
+
+    with patch(
+        "gd_tools.coverage.orchestrator.Path.cwd", return_value=tmp_path
+    ):
+        result = merge_coverage_files([], output=None)
+
+    output_file = tmp_path / ".gd-tools" / "coverage" / "coverage.json"
+    assert output_file.exists()
+    assert result.files == []

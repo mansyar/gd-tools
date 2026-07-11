@@ -8,9 +8,14 @@ business logic directly.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+from rich.console import Console
+
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
-from gd_tools.coverage.reporter import ReportResult
+from gd_tools.coverage.reporter import CoverageData, ReportResult
 from gd_tools.errors import CoverageThresholdError, TestFailureError
 from gd_tools.test_runner import TestResult, run_tests
 
@@ -153,3 +158,45 @@ def generate_coverage_report(
 
     # Generate report.
     return reporter.generate_report(plan, data, output_path, effective_format)
+
+
+def merge_coverage_files(
+    files: list[Path],
+    output: Path | None = None,
+) -> CoverageData:
+    """Merge multiple coverage data files into one.
+
+    Delegates to :func:`reporter.merge_coverage_data` to sum hit
+    counts, then writes the merged result as JSON.
+
+    Args:
+        files: List of paths to coverage data JSON files.
+        output: Path for the merged output file. If ``None``,
+            defaults to ``.gd-tools/coverage/coverage.json``
+            relative to the current working directory.
+
+    Returns:
+        The merged :class:`CoverageData`.
+    """
+    if output is None:
+        output = Path.cwd() / ".gd-tools" / "coverage" / "coverage.json"
+
+    merged = reporter.merge_coverage_data(files)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    data_dict = {
+        "version": merged.version,
+        "generated_at": merged.generated_at,
+        "files": [
+            {"file_id": fc.file_id, "hits": fc.hits} for fc in merged.files
+        ],
+    }
+    output.write_text(json.dumps(data_dict, indent=2), encoding="utf-8")
+
+    console = Console()
+    console.print(
+        f"Merged {len(files)} file(s) → {len(merged.files)} file(s) "
+        f"in output. Written to: {output}"
+    )
+
+    return merged
