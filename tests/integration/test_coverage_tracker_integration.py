@@ -17,7 +17,7 @@ from unittest.mock import patch
 import pytest
 
 from gd_tools.config import GdToolsConfig
-from gd_tools.init import install_coverage_addon
+from gd_tools.init import install_coverage_addon, register_coverage_autoload
 from gd_tools.test_runner import run_tests
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
@@ -69,17 +69,8 @@ def _setup_coverage_project(tmp_path: Path) -> Path:
         FIXTURES_DIR / "gdscript" / "test_coverage_tracker.gd",
         tmp_path / "test" / "test_coverage_tracker.gd",
     )
-    # Register _GDTCoverage autoload in project.godot
-    project_godot = tmp_path / "project.godot"
-    content = project_godot.read_text()
-    if "[autoload]" not in content:
-        if not content.endswith("\n"):
-            content += "\n"
-        content += (
-            "\n[autoload]\n\n"
-            '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"\n'
-        )
-        project_godot.write_text(content)
+    # Register _GDTCoverage autoload using the production function
+    register_coverage_autoload(tmp_path)
     # Import project so GUT class_names are registered
     _import_project(tmp_path)
     return tmp_path

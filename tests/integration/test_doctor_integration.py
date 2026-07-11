@@ -100,12 +100,11 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
 
 
 def test_doctor_after_init(tmp_path, monkeypatch):
-    """Doctor after init reports all checks pass except autoload.
+    """Doctor after init reports all checks pass.
 
     Runs ``gd-tools init`` first (with mocked Godot and download),
-    then runs ``gd-tools doctor`` and verifies that all file-based
-    checks pass. Autoload fails because registration is a Phase 3
-    feature not yet implemented in init.
+    then runs ``gd-tools doctor`` and verifies that all checks pass,
+    including the _GDTCoverage autoload (registered during init).
     """
     _setup_project(tmp_path)
     monkeypatch.chdir(tmp_path)
@@ -133,11 +132,11 @@ def test_doctor_after_init(tmp_path, monkeypatch):
 
     assert isinstance(result, DoctorResult)
     assert len(result.checks) == 9
-    assert not result.all_passed  # Autoload still fails
+    assert result.all_passed  # All checks pass after init
 
     check_map = {c.name: c for c in result.checks}
 
-    # All checks pass except autoload
+    # All checks pass
     assert check_map["Godot Binary"].passed
     assert check_map["Godot Version"].passed
     assert check_map["GUT Installed"].passed
@@ -147,6 +146,6 @@ def test_doctor_after_init(tmp_path, monkeypatch):
     assert check_map["gd-tools.toml"].passed
     assert check_map["GD Toolkit"].passed
 
-    # Autoload fails (Phase 3 feature, not yet in init)
-    assert not check_map["Autoload"].passed
+    # Autoload passes (registered during init)
+    assert check_map["Autoload"].passed
     assert check_map["Autoload"].severity == "critical"

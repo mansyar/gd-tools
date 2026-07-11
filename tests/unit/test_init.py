@@ -406,6 +406,23 @@ def test_register_coverage_autoload_preserves_existing_autoloads(
     )
 
 
+def test_register_coverage_autoload_handles_no_trailing_newline(
+    tmp_path: Path,
+):
+    """Test register_coverage_autoload handles content without trailing
+    newline."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text('config_version=5\n\n[application]\n\nname="Test"')
+
+    register_coverage_autoload(tmp_path)
+
+    content = project_godot.read_text()
+    assert "[autoload]" in content
+    assert (
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"' in content
+    )
+
+
 # --- install_coverage_addon ---
 
 
