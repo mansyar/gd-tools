@@ -114,11 +114,11 @@
 
 ## Phase 5: Fixture Generation Tool
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md before starting this phase
+    - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Implement `tools/generate_expected_plans.py`
+- [x] Task: Implement `tools/generate_expected_plans.py` [1359ec6]
     - [ ] Write test: script runs and regenerates all 6 expected plan JSON fixtures from `.gd` fixtures
     - [ ] Write test: regenerated fixtures match committed fixtures (no drift)
     - [ ] Implement `tools/generate_expected_plans.py` — reads `.gd` fixtures, runs `generate_plan`, writes to `tests/fixtures/plans/`
