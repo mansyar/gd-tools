@@ -1,0 +1,8 @@
+{
+  "track_id": "coverage_cli_20260711",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-11T21:30:28Z",
+  "updated_at": "2026-07-11T21:30:28Z",
+  "description": "Coverage CLI Integration — wire coverage components into CLI (test --coverage, coverage report/merge/show)"
+}
