@@ -1,0 +1,29 @@
+Phase 5: Cobertura Reporter Implementation
+
+Created src/gd_tools/coverage/cobertura_reporter.py:
+- generate_cobertura_report(plan, data, output_path) -> Path: Writes Cobertura XML using xml.etree.ElementTree
+  - Builds <coverage> root with line-rate, branch-rate, lines-covered, lines-valid, branches-covered, branches-valid
+  - Structure: <coverage> -> <packages> -> <package> -> <classes> -> <class> per file -> <lines> -> <line>
+  - Each <line> has: number, hits, branch (true/false)
+  - Branch lines also have condition-coverage attribute (e.g., '100% (1/1)' or '0% (0/1)')
+  - Per-class line-rate and branch-rate attributes
+  - Zero-coverage files included with all hits=0
+  - Uses ET.indent for pretty-printing, xml declaration included
+
+Created tests/unit/test_cobertura_reporter.py (8 tests):
+1. XML well-formed (parseable by ElementTree)
+2. Root <coverage> with line-rate and branch-rate attributes
+3. <class> per file with correct filenames
+4. <line> elements with number, hits, branch attributes
+5. Branch lines have condition-coverage, statement lines do not
+6. Zero-coverage files included with all hits=0
+7. Rates match computed metrics (line-rate=0.625, branch-rate=0.333 for partial)
+8. Per-file hits verified (player.gd and enemy.gd separately)
+
+Updated reporter.py: generate_report() now calls real generate_cobertura_report() for cobertura format (was stub)
+
+Test Results:
+- 56/56 tests passing (8 cobertura + 40 reporter + 8 lcov) in 0.47s
+- Ruff: All checks passed
+- Black: 1 file reformatted (test_cobertura_reporter.py)
+- cobertura_reporter.py coverage: 98% (1 missed line: _format_rate edge case)
