@@ -1,0 +1,39 @@
+Phase 6: HTML Reporter Implementation
+
+Deliverables:
+- src/gd_tools/coverage/html_reporter.py: generate_html_report() function
+  - Loads Jinja2 templates via FileSystemLoader from templates/ directory
+  - Generates index.html with summary table (File, Lines, Line %, Branches, Branch %)
+  - Generates per-file pages (file_<id>.html) with line-by-line coverage
+  - CSS classes: covered (green), uncovered (red), partial (yellow for branch lines)
+  - Zero-coverage files included in index with 0% metrics
+  - res:// paths preserved from plan
+
+- src/gd_tools/coverage/templates/index.html: Jinja2 template
+  - Summary bar with overall line/branch coverage percentages
+  - Sortable table (inline JS, no external dependencies)
+  - Inline CSS with rate-good/medium/low color coding
+
+- src/gd_tools/coverage/templates/file.html: Jinja2 template
+  - Per-file source listing with line numbers and hit counts
+  - CSS classes applied per-line based on coverage status
+  - Back link to index page
+
+- src/gd_tools/coverage/reporter.py: Updated generate_report()
+  - HTML format now dispatches to real generate_html_report() (was stub)
+  - Lazy import to avoid circular dependency
+
+- tests/unit/test_html_reporter.py: 9 tests covering:
+  - Index file creation, per-file page creation
+  - Summary table columns, overall coverage display
+  - Line numbers in per-file pages
+  - CSS classes (covered/uncovered/partial)
+  - Zero-coverage file inclusion
+  - res:// path convention
+  - HTML validity (parseable, no unclosed tags)
+
+Test Results:
+- 65/65 tests passing (40 reporter + 8 lcov + 8 cobertura + 9 html)
+- html_reporter.py: 100% coverage (35 stmts, 0 missed)
+- Ruff: all checks passed
+- Black: 1 file reformatted (html_reporter.py)
