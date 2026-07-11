@@ -102,29 +102,29 @@
 
 ## Phase 6: HTML Reporter
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Create Jinja2 HTML templates
-    - [ ] Create `src/gd_tools/coverage/templates/index.html` -- summary table with sortable columns
-    - [ ] Create `src/gd_tools/coverage/templates/file.html` -- per-file source view with highlighting
-    - [ ] Inline CSS (green/yellow/red classes, table styling, summary bar)
-    - [ ] Inline JS (column sorting, no external dependencies)
-- [ ] Task: Write tests for HTML reporter (Red)
-    - [ ] Test `generate_html_report()` creates `index.html` in output directory
-    - [ ] Test `generate_html_report()` creates one HTML file per source file
-    - [ ] Test index page contains summary table with file, line %, branch % columns
-    - [ ] Test index page shows overall coverage percentages
-    - [ ] Test per-file page contains source code with line numbers
-    - [ ] Test per-file page has CSS classes: `covered` (green), `uncovered` (red), `partial` (yellow)
-    - [ ] Test zero-coverage files appear in index with 0% metrics
-    - [ ] Test file paths use `res://` convention
-    - [ ] Test HTML output is valid (parseable, no unclosed tags)
-- [ ] Task: Implement HTML reporter (Green)
-    - [ ] Implement `generate_html_report(plan: CoveragePlan, data: CoverageData, output_dir: Path) -> Path`
-    - [ ] Load Jinja2 templates from `templates/` directory
-    - [ ] Generate index page with summary table
-    - [ ] Generate per-file pages with source highlighting (read source files for line-by-line display)
-    - [ ] Apply CSS classes based on coverage status (covered/uncovered/partial-branch)
-    - [ ] Include zero-coverage files in index
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Create Jinja2 HTML templates
+    - [x] Create `src/gd_tools/coverage/templates/index.html` -- summary table with sortable columns
+    - [x] Create `src/gd_tools/coverage/templates/file.html` -- per-file source view with highlighting
+    - [x] Inline CSS (green/yellow/red classes, table styling, summary bar)
+    - [x] Inline JS (column sorting, no external dependencies)
+- [x] Task: Write tests for HTML reporter (Red)
+    - [x] Test `generate_html_report()` creates `index.html` in output directory
+    - [x] Test `generate_html_report()` creates one HTML file per source file
+    - [x] Test index page contains summary table with file, line %, branch % columns
+    - [x] Test index page shows overall coverage percentages
+    - [x] Test per-file page contains source code with line numbers
+    - [x] Test per-file page has CSS classes: `covered` (green), `uncovered` (red), `partial` (yellow)
+    - [x] Test zero-coverage files appear in index with 0% metrics
+    - [x] Test file paths use `res://` convention
+    - [x] Test HTML output is valid (parseable, no unclosed tags)
+- [x] Task: Implement HTML reporter (Green)
+    - [x] Implement `generate_html_report(plan: CoveragePlan, data: CoverageData, output_dir: Path) -> Path`
+    - [x] Load Jinja2 templates from `templates/` directory
+    - [x] Generate index page with summary table
+    - [x] Generate per-file pages with source highlighting (read source files for line-by-line display)
+    - [x] Apply CSS classes based on coverage status (covered/uncovered/partial-branch)
+    - [x] Include zero-coverage files in index
 - [ ] Task: Conductor - User Manual Verification 'HTML Reporter' (Protocol in workflow.md)
 
 ## Phase 7: Terminal Reporter
