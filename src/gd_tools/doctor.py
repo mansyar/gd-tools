@@ -5,11 +5,16 @@ and configuration checks and reports pass/fail status with actionable
 fix hints. See TDD \u00a73.6 and PRD \u00a78.
 """
 
-from dataclasses import dataclass
-from pathlib import Path
 import json
 import subprocess
-import tomllib
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover
+    import tomli as tomllib
 
 from rich.table import Table
 
@@ -143,6 +148,7 @@ def check_gdtoolkit() -> CheckResult:
             subprocess.run(
                 [tool, "--version"],
                 capture_output=True,
+                timeout=10,
             )
         except FileNotFoundError:
             missing.append(tool)
@@ -278,7 +284,7 @@ def check_gutconfig(project_root: Path) -> CheckResult:
         )
     try:
         content = json.loads(gutconfig_path.read_text())
-    except (json.JSONDecodeError, ValueError) as exc:
+    except ValueError as exc:
         return CheckResult(
             name="GUT Config",
             passed=False,
@@ -370,7 +376,7 @@ def check_autoload(project_root: Path) -> CheckResult:
         if stripped.startswith("["):
             in_autoload = stripped == "[autoload]"
             continue
-        if in_autoload and stripped.startswith("_GDTCoverage"):
+        if in_autoload and stripped.startswith("_GDTCoverage="):
             return CheckResult(
                 name="Autoload",
                 passed=True,
