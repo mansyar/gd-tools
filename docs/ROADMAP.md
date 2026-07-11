@@ -935,6 +935,10 @@ skip condition bug. Once fixed, four pre-existing bugs in
 (425 unit + 27 integration). 98.65% overall coverage. These were the
 FIRST integration tests to ever actually run.
 
+---
+
+### Track 11: Coverage Hooks (Instrumentation Engine)
+
 | Field | Value |
 |-------|-------|
 | **Phase** | 3 — MVP2 |
