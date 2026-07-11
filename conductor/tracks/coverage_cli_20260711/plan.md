@@ -166,11 +166,11 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 
 **Goal:** Wire the `test` command's `--coverage` flag to call `orchestrator.run_coverage_test()` instead of `run_tests()` directly.
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
-    - [ ] Review spec.md FR-1 (test --coverage flow), NFR-2 (error precedence), NFR-4 (exit codes)
-    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [x] Review spec.md FR-1 (test --coverage flow), NFR-2 (error precedence), NFR-4 (exit codes)
+    - [x] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
 
-- [ ] Task: Write failing unit tests for `test --coverage` CLI command
+- [x] Task: Write failing unit tests for `test --coverage` CLI command
     - [ ] Test that `test --coverage` calls `orchestrator.run_coverage_test()` (not `run_tests()` directly)
     - [ ] Test that `test --coverage --min 80` passes `min_percent=80` to orchestrator
     - [ ] Test that `test` without `--coverage` still calls `run_tests()` directly (regression guard)
@@ -182,17 +182,19 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Use `click.testing.CliRunner` for CLI invocation
     - [ ] Verify: `CI=true pytest tests/unit/test_cli.py -k "test_coverage" --no-header -q` fails as expected (RED)
 
-- [ ] Task: Implement `test --coverage` CLI wiring
-    - [ ] In `cli.py:test()`, when `coverage=True`, call `orchestrator.run_coverage_test(config, suite, test, junit_xml, no_exit_code, min, timeout)` instead of `run_tests()`
-    - [ ] When `coverage=False`, keep existing behavior (call `run_tests()` directly)
-    - [ ] Ensure error handling catches `TestFailureError` (exit 1), `CoverageThresholdError` (exit 1), `CoveragePlanError` (exit 2), `GdToolsError` (exit e.exit_code)
-    - [ ] Verify: `CI=true pytest tests/unit/test_cli.py -k "test_coverage" --no-header -q` passes (GREEN)
+- [x] Task: Implement `test --coverage` CLI wiring (b5fcdc8)
+    - [x] In `cli.py:test()`, when `coverage=True`, call `orchestrator.run_coverage_test(config, suite, test, junit_xml, no_exit_code, min, timeout)` instead of `run_tests()`
+    - [x] When `coverage=False`, keep existing behavior (call `run_tests()` directly)
+    - [x] Ensure error handling catches `TestFailureError` (exit 1), `CoverageThresholdError` (exit 1), `CoveragePlanError` (exit 2), `GdToolsError` (exit e.exit_code)
+    - [x] Verify: `CI=true pytest tests/unit/test_cli.py -k "test_coverage" --no-header -q` passes (GREEN)
 
-- [ ] Task: Refactor and verify
-    - [ ] Run `CI=true pytest tests/unit/test_cli.py --no-header -q` — all tests pass
-    - [ ] Run `ruff check src/gd_tools/cli.py` — no errors
-    - [ ] Run `black --check src/gd_tools/cli.py` — no errors
-    - [ ] Document any deviations in plan.md
+- [x] Task: Refactor and verify (b5fcdc8)
+    - [x] Run `CI=true pytest tests/unit/test_cli.py --no-header -q` — all tests pass (54/54)
+    - [x] Run `ruff check src/gd_tools/cli.py` — no errors
+    - [x] Run `black --check src/gd_tools/cli.py` — no errors
+    - [x] Document any deviations in plan.md
+        - Deviation: Added --timeout option to test command (not explicitly in plan tasks but required by orchestrator signature)
+        - Deviation: Changed --min from type=float to type=int (aligns with spec min_percent 0-100 int)
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: CLI Wiring — test --coverage' (Protocol in workflow.md)
 
