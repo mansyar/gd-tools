@@ -147,12 +147,12 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [x] Re-export `run_coverage_test`, `generate_coverage_report`, `merge_coverage_files`, `show_coverage_summary` from `orchestrator`
     - [x] Verify: `python -c "from gd_tools.coverage import run_coverage_test"` succeeds
 
-- [ ] Task: Refactor and verify coverage
-    - [ ] Run `CI=true pytest tests/unit/test_orchestrator.py --no-header -q` — all tests pass
-    - [ ] Run `ruff check src/gd_tools/coverage/orchestrator.py` — no errors
-    - [ ] Run `black --check src/gd_tools/coverage/orchestrator.py` — no errors
-    - [ ] Run `CI=true pytest --cov=gd_tools.coverage.orchestrator --cov-report=term-missing tests/unit/test_orchestrator.py` — verify ≥80% line coverage
-    - [ ] Document any deviations in plan.md
+- [x] Task: Refactor and verify coverage
+    - [x] Run `CI=true pytest tests/unit/test_orchestrator.py --no-header -q` — all tests pass (30/30)
+    - [x] Run `ruff check src/gd_tools/coverage/orchestrator.py` — no errors
+    - [x] Run `black --check src/gd_tools/coverage/orchestrator.py` — no errors
+    - [x] Run `CI=true pytest --cov=gd_tools.coverage.orchestrator --cov-report=term-missing tests/unit/test_orchestrator.py` — verify ≥80% line coverage (100% achieved)
+    - [x] Document any deviations in plan.md (no deviations)
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Orchestrator Module' (Protocol in workflow.md)
 
