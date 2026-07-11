@@ -3,22 +3,22 @@
 
 ## Phase 1: Coverage Tracker Implementation (GDScript)
 
-- [ ] Task: Read spec.md and workflow.md to load context for this phase
-    - [ ] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md to load context for this phase
+    - [x] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write GUT integration test for tracker behavior
-    - [ ] Create GUT test script testing `hit()`, `get_hits()`, `reset()`, `set_active()`, `is_active()`
-    - [ ] Create Python integration test wrapper marked `@pytest.mark.integration`
+- [x] Task: Write GUT integration test for tracker behavior
+    - [x] Create GUT test script testing `hit()`, `get_hits()`, `reset()`, `set_active()`, `is_active()`
+    - [x] Create Python integration test wrapper marked `@pytest.mark.integration`
 
-- [ ] Task: Implement `coverage.gd` tracker
-    - [ ] Replace 3-line placeholder with full implementation (`extends Node`, `_hits`, `_active`, `_ready()`, `hit()`, `get_hits()`, `reset()`, `set_active()`, `is_active()`)
-    - [ ] Implement `_ready()` with `GD_TOOLS_COVERAGE_ACTIVE` env var validation (true only for `"1"` or `"true"`, case-insensitive)
-    - [ ] Implement `hit()` with single bool check for `_active` (no-op when inactive, minimal overhead)
-    - [ ] Implement `get_hits()` returning raw `_hits` Dictionary with int keys
-    - [ ] Implement `reset()`, `set_active()`, `is_active()`
-    - [ ] Run `gdlint` on `coverage.gd`
-    - [ ] Run `gdformat` on `coverage.gd`
+- [x] Task: Implement `coverage.gd` tracker
+    - [x] Replace 3-line placeholder with full implementation (`extends Node`, `_hits`, `_active`, `_ready()`, `hit()`, `get_hits()`, `reset()`, `set_active()`, `is_active()`)
+    - [x] Implement `_ready()` with `GD_TOOLS_COVERAGE_ACTIVE` env var validation (true only for `"1"` or `"true"`, case-insensitive)
+    - [x] Implement `hit()` with single bool check for `_active` (no-op when inactive, minimal overhead)
+    - [x] Implement `get_hits()` returning raw `_hits` Dictionary with int keys
+    - [x] Implement `reset()`, `set_active()`, `is_active()`
+    - [x] Run `gdlint` on `coverage.gd`
+    - [x] Run `gdformat` on `coverage.gd`
 
 - [ ] Task: Conductor - User Manual Verification 'Coverage Tracker Implementation' (Protocol in workflow.md)
 
