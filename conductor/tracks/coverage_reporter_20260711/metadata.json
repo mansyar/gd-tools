@@ -1,0 +1,8 @@
+{
+  "track_id": "coverage_reporter_20260711",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-11T18:50:00Z",
+  "updated_at": "2026-07-11T18:50:00Z",
+  "description": "Coverage Reporter — read plan + coverage data, compute metrics, generate reports (HTML, LCOV, Cobertura, terminal)"
+}
