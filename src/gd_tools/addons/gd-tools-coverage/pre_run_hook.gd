@@ -4,6 +4,8 @@ extends GutHookScript
 ## Instruments GDScript source files with coverage tracking calls
 ## before tests are executed.
 
+const TRACKER_NAME = "_GDTCoverage"
+
 var _plan: Dictionary = {}
 
 
@@ -26,7 +28,99 @@ func run() -> void:
 		print("[gd-tools] [Warning] Coverage plan has no files to instrument.")
 		return
 
-	# Phase 3: Instrument source files and activate tracker.
+	var instrumented_count: int = _instrument_files()
+	if instrumented_count > 0:
+		_activate_tracker()
+
+
+func _instrument_files() -> int:
+	var files: Array = _plan.get("files", [])
+	var count: int = 0
+	for file_entry in files:
+		if _instrument_file(file_entry):
+			count += 1
+	return count
+
+
+func _instrument_file(file_entry: Dictionary) -> bool:
+	var path: String = file_entry.get("path", "")
+	var file_id: int = int(file_entry.get("file_id", -1))
+	var lines: Array = file_entry.get("lines", [])
+
+	if lines.is_empty():
+		return false
+
+	var script = load(path) as GDScript
+	if script == null:
+		_log_error(
+			"Failed to instrument script.",
+			"Cannot load script: " + path,
+			"Verify the path in the plan exists and compiles."
+		)
+		return false
+
+	var source: String = script.source_code
+	var instrumented: String = _inject_trackers(source, file_id, lines)
+	script.source_code = instrumented
+	var err: int = script.reload()
+	if err != OK:
+		_log_error(
+			"Failed to reload instrumented script.",
+			"reload() failed for: " + path,
+			"Check tracker injection logic for syntax errors."
+		)
+		return false
+
+	return true
+
+
+func _activate_tracker() -> void:
+	var tree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		_log_error(
+			"Failed to activate coverage tracker.",
+			"Cannot access SceneTree.",
+			"Ensure the hook runs in a Godot project context."
+		)
+		return
+
+	var tracker = tree.root.get_node_or_null(TRACKER_NAME)
+	if tracker == null:
+		_log_error(
+			"Failed to activate coverage tracker.",
+			"Autoload '" + TRACKER_NAME + "' not found.",
+			"Ensure the coverage addon is installed and registered as an autoload."
+		)
+		return
+
+	tracker.set_active(true)
+
+
+static func _extract_indent(line: String) -> String:
+	var indent: String = ""
+	for c in line:
+		if c == " " or c == "\t":
+			indent += c
+		else:
+			break
+	return indent
+
+
+static func _inject_trackers(source: String, file_id: int, lines: Array) -> String:
+	var source_lines: PackedStringArray = source.split("\n")
+	var sorted_lines: Array = lines.duplicate(true)
+	sorted_lines.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
+	for entry in sorted_lines:
+		var target_line_num: int = int(entry["line"])
+		var line_id: int = int(entry["id"])
+		var target_index: int = target_line_num - 1
+		if target_index < 0 or target_index >= source_lines.size():
+			continue
+		var target_line: String = source_lines[target_index]
+		var indent: String = _extract_indent(target_line)
+		var tracker_call: String = "%s%s.hit(%d, %d)" % [indent, TRACKER_NAME, file_id, line_id]
+		source_lines.insert(target_index, tracker_call)
+	return "\n".join(source_lines)
 
 
 func _load_plan(path: String) -> Dictionary:

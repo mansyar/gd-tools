@@ -1,16 +1,27 @@
+# gdlint:ignore=max-public-methods
 extends GutTest
 
 ## GUT tests for pre_run_hook.gd.
 ## Phase 2: Tests for plan loading (env var, JSON parsing, validation).
+## Phase 3: Tests for source instrumentation (_extract_indent,
+## _inject_trackers, _instrument_file, tracker activation).
 
 var _hook
+var _calc_original_source: String = ""
+var _calc_modified: bool = false
 
 
 func before_each():
 	_hook = load("res://addons/gd-tools-coverage/pre_run_hook.gd").new()
+	_calc_original_source = ""
+	_calc_modified = false
 
 
 func after_each():
+	if _calc_modified and not _calc_original_source.is_empty():
+		var calc = load("res://scripts/calculator.gd") as GDScript
+		calc.source_code = _calc_original_source
+		calc.reload()
 	_hook = null
 	OS.set_environment("GD_TOOLS_COVERAGE_PLAN", "")
 	_clean_test_files()
@@ -102,8 +113,8 @@ func test_run_no_env_var():
 
 func test_run_valid_env_var():
 	var json = (
-		'{"version": 1, "files": [{"file_id": 0, "path": "res://simple.gd", '
-		+ '"lines": [{"line": 7, "id": 0}]}]}'
+		'{"version": 1, "files": [{"file_id": 0, "path": "res://scripts/calculator.gd", '
+		+ '"lines": []}]}'
 	)
 	_write_file("user://test_plan_run.json", json)
 	OS.set_environment("GD_TOOLS_COVERAGE_PLAN", "user://test_plan_run.json")
@@ -117,6 +128,127 @@ func test_run_empty_files_warning():
 	OS.set_environment("GD_TOOLS_COVERAGE_PLAN", "user://test_plan_empty.json")
 	_hook.run()
 	assert_eq(_hook._plan["files"].size(), 0, "plan should have empty files array")
+
+
+# === _extract_indent() tests ===
+
+
+func test_extract_indent_tab():
+	var result = _hook._extract_indent("\t\thello")
+	assert_eq(result, "\t\t", "should return tab characters")
+
+
+func test_extract_indent_space():
+	var result = _hook._extract_indent("    hello")
+	assert_eq(result, "    ", "should return space characters")
+
+
+func test_extract_indent_none():
+	var result = _hook._extract_indent("hello")
+	assert_eq(result, "", "should return empty string for no indent")
+
+
+func test_extract_indent_mixed():
+	var result = _hook._extract_indent("\t  hello")
+	assert_eq(result, "\t  ", "should return mixed tabs and spaces")
+
+
+# === _inject_trackers() tests ===
+
+
+func test_inject_trackers_single_line():
+	var source = "line1\nline2\nline3\n"
+	var lines = [{"line": 2, "id": 0}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[1], "_GDTCoverage.hit(0, 0)", "tracker call should be before line 2")
+	assert_eq(result_lines[2], "line2", "original line 2 should be preserved")
+
+
+func test_inject_trackers_multiple_lines_bottom_to_top():
+	var source = "line1\nline2\nline3\nline4\n"
+	var lines = [{"line": 2, "id": 0}, {"line": 4, "id": 1}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	# Line 4 tracker should be inserted first (bottom-to-top), then line 2
+	# After both insertions: line1, tracker0, line2, line3, tracker1, line4
+	assert_eq(result_lines[1], "_GDTCoverage.hit(0, 0)", "tracker for line 2 at index 1")
+	assert_eq(result_lines[2], "line2", "original line 2 preserved")
+	assert_eq(result_lines[4], "_GDTCoverage.hit(0, 1)", "tracker for line 4 at index 4")
+	assert_eq(result_lines[5], "line4", "original line 4 preserved")
+
+
+func test_inject_trackers_indentation_matching():
+	var source = "func foo():\n    var x = 5\n    return x\n"
+	var lines = [{"line": 3, "id": 0}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], "    _GDTCoverage.hit(0, 0)", "tracker should match indentation")
+	assert_eq(result_lines[3], "    return x", "original line preserved with indent")
+
+
+func test_inject_trackers_empty_lines():
+	var source = "line1\nline2\n"
+	var result = _hook._inject_trackers(source, 0, [])
+	assert_eq(result, source, "source should be unchanged for empty lines")
+
+
+func test_inject_trackers_duplicate_line_numbers():
+	var source = "line1\nline2\nline3\n"
+	var lines = [{"line": 2, "id": 0}, {"line": 2, "id": 1}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	assert_true("_GDTCoverage.hit(0, 0)" in result, "should contain tracker for id 0")
+	assert_true("_GDTCoverage.hit(0, 1)" in result, "should contain tracker for id 1")
+
+
+# === _instrument_file() tests ===
+
+
+func test_instrument_file_valid_path():
+	# gdlint:ignore=duplicated-load
+	var calc = load("res://scripts/calculator.gd") as GDScript
+	_calc_original_source = calc.source_code
+	_calc_modified = true
+	var file_entry = {
+		"file_id": 0, "path": "res://scripts/calculator.gd", "lines": [{"line": 7, "id": 0}]
+	}
+	var result = _hook._instrument_file(file_entry)
+	assert_true(result, "should return true for valid script")
+	assert_true("_GDTCoverage.hit(0, 0)" in calc.source_code, "source should contain tracker call")
+
+
+func test_instrument_file_invalid_path():
+	var file_entry = {
+		"file_id": 0, "path": "res://nonexistent_script.gd", "lines": [{"line": 1, "id": 0}]
+	}
+	var result = _hook._instrument_file(file_entry)
+	assert_false(result, "should return false for invalid path")
+	assert_push_error("Failed to instrument script")
+	assert_engine_error_count(2, "load() generates engine errors for invalid path")
+
+
+func test_instrument_file_no_tracked_lines():
+	var file_entry = {"file_id": 0, "path": "res://scripts/calculator.gd", "lines": []}
+	var result = _hook._instrument_file(file_entry)
+	assert_false(result, "should return false for no tracked lines")
+
+
+# === Tracker activation tests ===
+
+
+func test_activate_tracker():
+	_GDTCoverage.set_active(false)
+	_hook._activate_tracker()
+	assert_true(_GDTCoverage.is_active(), "tracker should be active after activation")
+
+
+func test_run_does_not_activate_tracker_with_empty_files():
+	_GDTCoverage.set_active(false)
+	var json = '{"version": 1, "files": []}'
+	_write_file("user://test_plan_no_activate.json", json)
+	OS.set_environment("GD_TOOLS_COVERAGE_PLAN", "user://test_plan_no_activate.json")
+	_hook.run()
+	assert_false(_GDTCoverage.is_active(), "tracker should not be activated with empty files")
 
 
 # === Helpers ===
@@ -136,6 +268,7 @@ func _clean_test_files() -> void:
 			"test_plan_malformed.json",
 			"test_plan_run.json",
 			"test_plan_empty.json",
+			"test_plan_no_activate.json",
 		]
 		for filename in files:
 			dir.remove(filename)
