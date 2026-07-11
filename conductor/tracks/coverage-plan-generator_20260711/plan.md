@@ -30,7 +30,7 @@
     - [x] Verify tests pass and coverage >80% line / >70% branch
     - [x] Commit: `feat(coverage): implement read_plan_json with validation`
 
-- [ ] Task: Conductor - User Manual Verification 'Data Structures & JSON I/O' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Data Structures & JSON I/O' (Protocol in workflow.md)
 
 ## Phase 2: GDScript Test Fixtures
 
@@ -85,7 +85,7 @@
     - [x] Verify tests pass and coverage >80% line / >70% branch
     - [x] Commit: `feat(coverage): implement CoverageVisitor branch classification`
 
-- [ ] Task: Conductor - User Manual Verification 'AST Parsing & Statement Classification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'AST Parsing & Statement Classification' (Protocol in workflow.md)
 
 ## Phase 4: File Discovery & Plan Generation
 
