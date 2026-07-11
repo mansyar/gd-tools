@@ -1,0 +1,11 @@
+Task: Update existing test fixtures to Track 11 runtime format
+
+Summary: Created test fixtures for the coverage reporter module. The coverage_data/ directory contains three JSON files matching Track 11's runtime output format (file_id + hits with string keys): full_coverage.json (all lines hit), partial_coverage.json (some lines at 0), zero_coverage.json (all lines at 0). The coverage_plans/ directory contains test_plan.json with a 2-file plan (player.gd with 3 statements + 2 branches, enemy.gd with 2 statements + 1 branch) designed to cross-reference with the coverage data fixtures.
+
+Files created:
+- tests/fixtures/coverage_data/full_coverage.json
+- tests/fixtures/coverage_data/partial_coverage.json
+- tests/fixtures/coverage_data/zero_coverage.json
+- tests/fixtures/coverage_plans/test_plan.json
+
+Why: The reporter module needs consistent, realistic test data to validate JSON I/O, metrics computation, and report generation across all four formats (HTML, LCOV, Cobertura, terminal).
