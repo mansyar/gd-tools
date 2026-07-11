@@ -8,6 +8,7 @@ All tests are marked ``@pytest.mark.integration`` and are automatically
 skipped when the Godot binary is not available on PATH.
 """
 
+import os
 import shutil
 from pathlib import Path
 from unittest.mock import patch
@@ -22,8 +23,8 @@ FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
 skip_if_no_godot = pytest.mark.skipif(
-    shutil.which("godot") is None,
-    reason="Godot binary not found in PATH",
+    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
+    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
 )
 
 

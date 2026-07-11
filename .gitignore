@@ -14,6 +14,9 @@ build/
 .gd-tools/
 .godot/
 
+# Local environment
+.env
+
 # Spike generated artifacts
 spike/coverage.json
 spike/spike_output.log
