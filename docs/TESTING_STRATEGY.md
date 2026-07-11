@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 2 Implementation — Track 5 (Format Wrapper) Complete
+**Status:** Phase 2 Complete — All MVP1 tool wrappers delivered (Tracks 4-8)
 
 ---
 
@@ -573,10 +573,12 @@ def test_init_network_failure(mocker, tmp_path):
 ### 4.8 `doctor.py` — Diagnostics
 
 **What to test:**
-- All checks run and report correct status
+- All 9 checks run and report correct status
 - Each check can pass/fail independently
 - Actionable suggestions for failures
-- Exit code (0 if all pass, 1 if any fail)
+- Exit code (0 if all pass, 1 if any check fails — critical or warning)
+- Severity levels: critical failures vs warnings
+- `run_doctor()` never raises (exceptions converted to failed CheckResults)
 
 ```python
 def test_doctor_all_pass(mocker, tmp_path):
@@ -594,8 +596,8 @@ def test_doctor_gut_version_mismatch(mocker, tmp_path):
 def test_doctor_coverage_addon_missing(mocker, tmp_path):
     """Coverage addon files absent → check fails."""
 
-def test_doctor_gdlintrc_missing(mocker, tmp_path):
-    """gdlintrc absent → check fails, 'run gd-tools init' suggested."""
+def test_doctor_autoload_not_registered(mocker, tmp_path):
+    """_GDTCoverage autoload missing → check fails, 'run gd-tools init' suggested."""
 ```
 
 ---
@@ -1239,7 +1241,6 @@ omit = [
 ### What Can Have Lower Coverage
 
 - `init.py` network operations (hard to test all failure modes)
-- `doctor.py` (mostly integration — unit tests cover individual checks)
 - CLI help text formatting
 
 ---

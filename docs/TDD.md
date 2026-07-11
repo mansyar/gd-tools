@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 Implementation — Track 7 (Init Command) Complete
+**Status:** Phase 2 Complete — All MVP1 tool wrappers delivered (Tracks 4-8)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -500,9 +500,11 @@ When merging with existing config: preserve user's `dirs`, `prefix`, `suffix`,
 ### 3.6 `doctor.py` — Diagnostics
 
 ```python
-def run_doctor() -> None:
+def run_doctor() -> DoctorResult:
     """Main entry point for `gd-tools doctor`.
-    Runs all checks, prints table, exits 0 if all pass, 1 if any fail."""
+    Runs all 9 checks, returns aggregated result.
+    Never raises — all exceptions caught and converted to failed CheckResults.
+    Exit code: 0 if all pass, 1 if any check fails (critical or warning)."""
 
 @dataclass
 class CheckResult:
@@ -510,6 +512,12 @@ class CheckResult:
     passed: bool
     message: str
     fix_hint: str = ""
+    severity: str = "critical"  # "critical" or "warning"
+
+@dataclass
+class DoctorResult:
+    checks: list[CheckResult]
+    all_passed: bool
 
 def check_godot_binary(config: GdToolsConfig) -> CheckResult:
     """Verify Godot binary found and runs."""
@@ -539,7 +547,9 @@ def check_autoload(project_root: Path) -> CheckResult:
     """Verify _GDTCoverage autoload registered in project.godot."""
 ```
 
-Output format: Rich table with ✓/✗ per check, message, and fix hint.
+Output format: `format_doctor_table(result: DoctorResult) -> Table` — Rich table
+with ✓/✗ per check, message, and fix hint. Status color-coded: green ✓ (pass),
+red ✗ (critical fail), yellow ⚠ (warning fail). Caption shows pass count.
 
 ---
 

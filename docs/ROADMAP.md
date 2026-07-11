@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 2 In Progress — Track 7 (Init Command) Complete
+**Status:** Phase 2 Complete — All MVP1 tool wrappers delivered (Tracks 4-8)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -72,7 +72,7 @@ Total estimated effort: ~25-30 days
 |-----------|---------------|-----------------|
 | **M0: Spike Pass** ✅ | Phase 0 | ✅ ACHIEVED — Runtime GDScript instrumentation validated (2026-07-09). All 6 success criteria passed. Architecture C confirmed. |
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
-| **M2: First Usable** | Phase 2 | `gd-tools lint`, `format`, `test`, `init`, `doctor` all work |
+| **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
 | **M3: Coverage Alpha** | Phase 3 | `gd-tools test --coverage` produces line+branch reports |
 | **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80% coverage |
 
@@ -653,7 +653,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ---
 
-### Track 8: Doctor Command
+### Track 8: Doctor Command ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -663,6 +663,9 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | `src/gd_tools/doctor.py` |
 | **Effort** | 1 day |
 | **Risk** | LOW |
+| **Status** | ✅ **COMPLETED** (2026-07-11) — All 8 success criteria passed |
+| **Conductor track** | `doctor_20260711` (archived to `conductor/archive/`) |
+| **Commits** | `e0c5ad3`..`f29253f` (37 commits) + review fix `ffe3124` |
 
 **Scope:**
 - Run all checks from PRD §8:
@@ -674,11 +677,12 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
   6. `.gutconfig.json` valid + has hook paths
   7. `gd-tools.toml` exists and valid
   8. `gdtoolkit` installed (`gdlint --version` succeeds)
+  9. `_GDTCoverage` autoload registered in `project.godot`
 - Output: rich table with ✓/✗ per check + actionable fix suggestions
-- Exit code: 0 = all pass, 1 = warnings, 2 = critical failures
+- Exit code: 0 = all pass, 1 = any check fails (critical or warning)
 
 **Deliverables:**
-- `doctor.py` with `run_doctor() -> DoctorResult`
+- `doctor.py` with `run_doctor() -> DoctorResult` and `format_doctor_table()`
 - Unit tests with mocked environment states
 
 **Success Criteria:**
@@ -692,6 +696,33 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 8. Exit code reflects overall health
 
 **Key TDD references:** §3 (Module: doctor.py), PRD §8
+
+**Track 8 Results (2026-07-11):**
+- ✅ All 8 success criteria PASSED
+- ✅ 388 tests total (55 unit tests in `test_doctor.py`, 4 CLI tests in
+  `test_cli.py`, 2 integration tests in `test_doctor_integration.py`), 7
+  skipped (require Godot), 0 failed
+- ✅ 97.80% overall coverage; `doctor.py` at 100% (line + branch)
+- ✅ ruff check + black --check pass
+- **Review fixes applied:**
+  1. Added `tomllib`/`tomli` compatibility shim for Python 3.10 (matching
+     `config.py` pattern: `sys.version_info >= (3, 11)` check)
+  2. Added `timeout=10` to `check_gdtoolkit` subprocess call
+  3. Simplified `check_gutconfig` exception handling: `(json.JSONDecodeError,
+     ValueError)` → `ValueError` (JSONDecodeError is subclass)
+  4. Changed `check_autoload` autoload match from `startswith("_GDTCoverage")`
+     to `startswith("_GDTCoverage=")` to avoid false positives
+- **Key implementation notes:**
+  - 9 diagnostic checks, each returning `CheckResult` dataclass with
+    `name`, `passed`, `message`, `fix_hint`, `severity` ("critical"/"warning")
+  - `run_doctor()` orchestrates: resolves project root → loads config →
+    detects Godot version → runs all 9 checks → returns `DoctorResult`
+  - `run_doctor()` never raises — all exceptions caught and converted to
+    failed `CheckResult` with severity "critical"
+  - `format_doctor_table()` builds rich `Table` with color-coded status:
+    green ✓ (pass), red ✗ (critical fail), yellow ⚠ (warning fail)
+  - Python 3.10 compatibility: `tomllib`/`tomli` shim, `list[CheckResult]`
+    type hint (requires `from __future__ import annotations` on 3.9)
 
 ---
 

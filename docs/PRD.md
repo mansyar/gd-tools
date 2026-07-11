@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 In Progress — Track 7 (Init Command) Complete
+**Status:** Phase 2 Complete — All MVP1 tool wrappers delivered (Tracks 4-8)
 **Target Godot Version:** 4.5+
 
 ---
@@ -315,6 +315,7 @@ Runs a series of checks and reports status:
 | `.gutconfig.json` valid        | Parseable JSON, has coverage hook paths           |
 | `gd-tools.toml` exists & valid | File present, parseable TOML                      |
 | gdtoolkit installed            | `gdlint --version` and `gdformat --version` succeed |
+| `_GDTCoverage` autoload        | `project.godot` has `_GDTCoverage=` autoload entry |
 
 Output: table with ✓/✗ per check, plus actionable fix suggestions for failures.
 
