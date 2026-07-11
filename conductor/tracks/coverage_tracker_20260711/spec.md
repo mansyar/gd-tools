@@ -1,3 +1,4 @@
+<protect>
 # Track 10: Coverage Tracker Addon (GDScript)
 
 ## Overview
@@ -77,3 +78,4 @@ Add a new function `register_coverage_autoload(project_root: Path) -> None` to `
 - Coverage metrics computation and report generation (Track 12+)
 - Instrumentation plan generation (Track 9 — completed)
 - Python-side `--coverage` flag behavior (Track 6 — completed, currently no-op)
+</protect>

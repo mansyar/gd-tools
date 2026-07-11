@@ -1,6 +1,11 @@
+<protect>
 # Track 10: Coverage Tracker Addon (GDScript) — Implementation Plan
 
 ## Phase 1: Coverage Tracker Implementation (GDScript)
+
+- [ ] Task: Read spec.md and workflow.md to load context for this phase
+    - [ ] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Write GUT integration test for tracker behavior
     - [ ] Create GUT test script testing `hit()`, `get_hits()`, `reset()`, `set_active()`, `is_active()`
@@ -18,6 +23,10 @@
 - [ ] Task: Conductor - User Manual Verification 'Coverage Tracker Implementation' (Protocol in workflow.md)
 
 ## Phase 2: Autoload Registration (Python)
+
+- [ ] Task: Read spec.md and workflow.md to load context for this phase
+    - [ ] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Write failing pytest tests for `register_coverage_autoload`
     - [ ] Test: registers `_GDTCoverage` autoload in `project.godot` `[autoload]` section
@@ -37,6 +46,10 @@
 
 ## Phase 3: Integration & Finalization
 
+- [ ] Task: Read spec.md and workflow.md to load context for this phase
+    - [ ] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Update `install_coverage_addon` tests
     - [ ] Update existing test to verify deployed `coverage.gd` contains real implementation (not placeholder TODO)
 
@@ -47,3 +60,4 @@
     - [ ] Verify no regressions (existing 437+ tests still pass)
 
 - [ ] Task: Conductor - User Manual Verification 'Integration & Finalization' (Protocol in workflow.md)
+</protect>
