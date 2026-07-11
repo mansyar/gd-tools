@@ -3,22 +3,21 @@
 
 ## Phase 1: Project Setup
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
-    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
-- [ ] Task: Create pre_run_hook.gd stub
-    - [ ] Create `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`
-    - [ ] Add `extends GutHookScript` and empty `run()` method
-- [ ] Task: Create post_run_hook.gd stub
-    - [ ] Create `src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd`
-    - [ ] Add `extends GutHookScript` and empty `run()` method
-- [ ] Task: Set up GUT test fixtures for hooks
-    - [ ] Create test directory `src/gd_tools/addons/gd-tools-coverage/tests/`
-    - [ ] Create fixture GDScript files for instrumentation targets
-    - [ ] Create fixture plan JSON files for testing
-- [ ] Task: Set up Python integration test structure
-    - [ ] Create `tests/integration/test_coverage_hooks.py`
-    - [ ] Create fixture Godot project for end-to-end tests
+- [x] Task: Read spec.md and workflow.md before starting this phase
+    - [x] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [x] Read `conductor/workflow.md` for TDD methodology and quality gates
+- [x] Task: Create pre_run_hook.gd stub
+    - [x] Create `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`
+    - [x] Add `extends GutHookScript` and empty `run()` method
+- [x] Task: Create post_run_hook.gd stub
+    - [x] Create `src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd`
+    - [x] Add `extends GutHookScript` and empty `run()` method
+- [x] Task: Set up GUT test fixtures for hooks
+    - [x] Created GUT test stubs in `tests/fixtures/gdscript/test_pre_run_hook.gd` and `test_post_run_hook.gd` (existing `simple.gd` and `simple.expected.json` fixtures reused for instrumentation targets)
+    - [x] Fixture plan JSON files already exist in `tests/fixtures/plans/` (simple.expected.json, etc.)
+- [x] Task: Set up Python integration test structure
+    - [x] Create `tests/integration/test_coverage_hooks.py` (skeleton with 5 test stubs, skip markers, and setup function)
+    - [x] Reuses existing `tests/fixtures/projects/sample_project` fixture for end-to-end tests
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Setup' (Protocol in workflow.md)
 
 ## Phase 2: pre_run_hook.gd — Plan Loading (TDD)
