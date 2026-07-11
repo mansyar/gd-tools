@@ -1,0 +1,28 @@
+Phase 4: CLI Wiring — coverage report/merge/show Commands
+
+Changes:
+- src/gd_tools/cli.py:
+  - Added imports: Path from pathlib, generate_coverage_report/merge_coverage_files/show_coverage_summary from orchestrator, CoverageThresholdError from errors
+  - coverage report: load_config → generate_coverage_report(config, format=format, output_dir=output_dir) → print output path → GdToolsError handler
+  - coverage merge: merge_coverage_files([Path(f) for f in files], Path(output) if output else None) → GdToolsError handler; added required=True to files argument
+  - coverage show: load_config → show_coverage_summary(config, min_percent=min) → CoverageThresholdError (exit 1) + GdToolsError handler; changed --min from type=float to type=int
+
+- tests/unit/test_cli.py:
+  - Added Path import from pathlib
+  - Replaced 3 stub tests with 16 new tests:
+    - coverage report: 5 tests (calls orchestrator, format override, output_dir override, plan error exit 2, success exit 0)
+    - coverage merge: 4 tests (calls orchestrator with Paths, output override, no files exit 2, success exit 0)
+    - coverage show: 4 tests (calls orchestrator, min passed, threshold error exit 1, plan error exit 2)
+
+Deviations:
+- Added required=True to merge files argument (Click enforces at least 1 file)
+- Changed show --min from type=float to type=int (aligns with spec min_percent 0-100)
+- orchestrator.merge_coverage_files already prints Rich summary (no duplicate print in CLI)
+
+Verification:
+- 16/16 new tests pass (GREEN)
+- 64/64 CLI tests pass (no regressions)
+- 546/547 unit tests pass (1 pre-existing flaky timing test)
+- cli.py coverage: 90%
+- ruff: All checks passed
+- black: All files unchanged (after reformatting)
