@@ -22,24 +22,24 @@
 
 ## Phase 2: pre_run_hook.gd — Plan Loading (TDD)
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
-    - [ ] Read `conductor/workflow.md` for TDD methodology and quality gates
-- [ ] Task: Write GUT tests for plan loading (Red)
-    - [ ] Test: env var `GD_TOOLS_COVERAGE_PLAN` not set -> warning logged, no instrumentation
-    - [ ] Test: env var set to valid plan path -> plan parsed correctly, returns Dictionary with expected structure
-    - [ ] Test: env var set to non-existent path -> error logged with Cause/Fix hints
-    - [ ] Test: env var set to malformed JSON -> error logged with Cause/Fix hints
-    - [ ] Test: plan with empty files array -> warning, no instrumentation
-- [ ] Task: Implement plan loading in pre_run_hook.gd (Green)
-    - [ ] Implement `run()` entry point: read env var, call `_load_plan()`
-    - [ ] Implement `_load_plan(path) -> Dictionary`: open file, parse JSON, validate structure
-    - [ ] Implement env var reading with empty/missing checks
-    - [ ] Add error messages with Cause/Fix format per product guidelines
-- [ ] Task: Refactor plan loading (Refactor)
-    - [ ] Review code for clarity and consistency with product guidelines
-    - [ ] Ensure all error messages are ASCII-only with Cause/Fix hints
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: pre_run_hook.gd — Plan Loading' (Protocol in workflow.md)
+- [x] Task: Read spec.md and workflow.md before starting this phase
+    - [x] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
+    - [x] Read `conductor/workflow.md` for TDD methodology and quality gates
+- [x] Task: Write GUT tests for plan loading (Red) [4e5849e]
+    - [x] Test: env var `GD_TOOLS_COVERAGE_PLAN` not set -> warning logged, no instrumentation
+    - [x] Test: env var set to valid plan path -> plan parsed correctly, returns Dictionary with expected structure
+    - [x] Test: env var set to non-existent path -> error logged with Cause/Fix hints
+    - [x] Test: env var set to malformed JSON -> error logged with Cause/Fix hints
+    - [x] Test: plan with empty files array -> warning, no instrumentation
+- [x] Task: Implement plan loading in pre_run_hook.gd (Green) [4e5849e]
+    - [x] Implement `run()` entry point: read env var, call `_load_plan()`
+    - [x] Implement `_load_plan(path) -> Dictionary`: open file, parse JSON, validate structure
+    - [x] Implement env var reading with empty/missing checks
+    - [x] Add error messages with Cause/Fix format per product guidelines
+- [x] Task: Refactor plan loading (Refactor) [4e5849e]
+    - [x] Review code for clarity and consistency with product guidelines
+    - [x] Ensure all error messages are ASCII-only with Cause/Fix hints
+- [x] Task: Conductor - User Manual Verification 'Phase 2: pre_run_hook.gd — Plan Loading' [4e5849e]
 
 ## Phase 3: pre_run_hook.gd — Source Instrumentation (TDD)
 
