@@ -1,0 +1,24 @@
+Conductor Checkpoint - Phase 4: post_run_hook.gd Data Collection and Output
+
+Commit: 5b119ec
+Track: coverage_hooks_20260711
+Phase: 4 - post_run_hook.gd Data Collection and Output (TDD)
+
+Implementation:
+- post_run_hook.gd (113 lines): run(), _get_tracker(), _build_coverage_json(), _write_json(), _log_summary(), _log_error()
+- Retrieves _GDTCoverage autoload via Engine.get_main_loop() as SceneTree
+- Serializes hits to {version, generated_at, files: [{file_id, hits: {line_id: count}}]}
+- Creates parent directories, writes human-readable JSON
+- Logs summary: total files, total lines, output path
+
+Tests:
+- test_post_run_hook.gd: 13 GUT tests (2 _get_tracker, 3 _build_coverage_json, 2 _write_json, 3 summary, 3 run)
+- test_post_run_hook_gut_tests_pass: integration test asserting 13/13 pass
+
+Verification:
+- GUT post_run_hook: 13/13 PASS
+- GUT pre_run_hook: 27/27 PASS (no regression)
+- Python tests: 459 pass, 98.65% coverage
+- gdformat + gdlint: clean
+
+Spec Compliance: FR-4, FR-5, FR-6, NFR-1, NFR-3, NFR-4
