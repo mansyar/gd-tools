@@ -3,8 +3,8 @@
 
 ## Phase 1: Test Fixtures & Data Models
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Update existing test fixtures to Track 11 runtime format
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Update existing test fixtures to Track 11 runtime format [36c648f]
     - [ ] Update `tests/fixtures/coverage_data/full_coverage.json` -- replace `"path"` key with `"file_id"` + `"hits"` (string keys)
     - [ ] Update `tests/fixtures/coverage_data/partial_coverage.json` -- same format change
     - [ ] Update `tests/fixtures/coverage_data/zero_coverage.json` -- same format change
