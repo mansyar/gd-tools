@@ -143,9 +143,9 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Return `CoverageSummary`
     - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "show" --no-header -q` passes (GREEN)
 
-- [ ] Task: Update `coverage/__init__.py` with re-exports
-    - [ ] Re-export `run_coverage_test`, `generate_coverage_report`, `merge_coverage_files`, `show_coverage_summary` from `orchestrator`
-    - [ ] Verify: `python -c "from gd_tools.coverage import run_coverage_test"` succeeds
+- [x] Task: Update `coverage/__init__.py` with re-exports
+    - [x] Re-export `run_coverage_test`, `generate_coverage_report`, `merge_coverage_files`, `show_coverage_summary` from `orchestrator`
+    - [x] Verify: `python -c "from gd_tools.coverage import run_coverage_test"` succeeds
 
 - [ ] Task: Refactor and verify coverage
     - [ ] Run `CI=true pytest tests/unit/test_orchestrator.py --no-header -q` — all tests pass
