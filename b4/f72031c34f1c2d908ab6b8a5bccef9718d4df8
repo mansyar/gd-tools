@@ -1,0 +1,8 @@
+Change Summary:
+- Created src/gd_tools/coverage/orchestrator.py with run_coverage_test() function
+- Created tests/unit/test_orchestrator.py with 10 unit tests
+- run_coverage_test() orchestrates: generate_plan -> write_plan_json -> run_tests -> read_coverage_json -> read_plan_json -> generate_report
+- Error precedence: TestFailureError re-raised before CoverageThresholdError (NFR-2)
+- min_percent (0-100) converted to min_threshold (0.0-1.0)
+- All 10 tests pass, ruff clean, black formatted
+- Commit SHA: b4f7203
