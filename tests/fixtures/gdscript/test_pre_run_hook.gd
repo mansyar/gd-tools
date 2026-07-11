@@ -201,6 +201,38 @@ func test_inject_trackers_duplicate_line_numbers():
 	assert_true("_GDTCoverage.hit(0, 1)" in result, "should contain tracker for id 1")
 
 
+func test_inject_trackers_very_long_file():
+	# Create a 1000-line source string
+	var lines_array = []
+	for i in range(1000):
+		lines_array.append("var v" + str(i) + " = " + str(i))
+	var source = "\n".join(lines_array) + "\n"
+
+	# Track lines at beginning (1), middle (500), and end (1000)
+	var tracked_lines = [
+		{"line": 1, "id": 0},
+		{"line": 500, "id": 1},
+		{"line": 1000, "id": 2},
+	]
+	var result = _hook._inject_trackers(source, 0, tracked_lines)
+	var result_lines = result.split("\n")
+
+	# 1000 original lines + trailing empty + 3 injected = 1004 elements
+	assert_eq(result_lines.size(), 1004, "should have 1004 lines after 3 injections")
+
+	# Tracker for line 1 at index 0
+	assert_eq(result_lines[0], "_GDTCoverage.hit(0, 0)", "tracker before line 1")
+	assert_eq(result_lines[1], "var v0 = 0", "original line 1 preserved")
+
+	# Tracker for line 500 at index 500 (shifted by 1 from line 1 injection)
+	assert_eq(result_lines[500], "_GDTCoverage.hit(0, 1)", "tracker before line 500")
+	assert_eq(result_lines[501], "var v499 = 499", "original line 500 preserved")
+
+	# Tracker for line 1000 at index 1001 (shifted by 2 from line 1 and 500 injections)
+	assert_eq(result_lines[1001], "_GDTCoverage.hit(0, 2)", "tracker before line 1000")
+	assert_eq(result_lines[1002], "var v999 = 999", "original line 1000 preserved")
+
+
 # === _instrument_file() tests ===
 
 
