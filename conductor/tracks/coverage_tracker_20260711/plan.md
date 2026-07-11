@@ -1,0 +1,49 @@
+# Track 10: Coverage Tracker Addon (GDScript) — Implementation Plan
+
+## Phase 1: Coverage Tracker Implementation (GDScript)
+
+- [ ] Task: Write GUT integration test for tracker behavior
+    - [ ] Create GUT test script testing `hit()`, `get_hits()`, `reset()`, `set_active()`, `is_active()`
+    - [ ] Create Python integration test wrapper marked `@pytest.mark.integration`
+
+- [ ] Task: Implement `coverage.gd` tracker
+    - [ ] Replace 3-line placeholder with full implementation (`extends Node`, `_hits`, `_active`, `_ready()`, `hit()`, `get_hits()`, `reset()`, `set_active()`, `is_active()`)
+    - [ ] Implement `_ready()` with `GD_TOOLS_COVERAGE_ACTIVE` env var validation (true only for `"1"` or `"true"`, case-insensitive)
+    - [ ] Implement `hit()` with single bool check for `_active` (no-op when inactive, minimal overhead)
+    - [ ] Implement `get_hits()` returning raw `_hits` Dictionary with int keys
+    - [ ] Implement `reset()`, `set_active()`, `is_active()`
+    - [ ] Run `gdlint` on `coverage.gd`
+    - [ ] Run `gdformat` on `coverage.gd`
+
+- [ ] Task: Conductor - User Manual Verification 'Coverage Tracker Implementation' (Protocol in workflow.md)
+
+## Phase 2: Autoload Registration (Python)
+
+- [ ] Task: Write failing pytest tests for `register_coverage_autoload`
+    - [ ] Test: registers `_GDTCoverage` autoload in `project.godot` `[autoload]` section
+    - [ ] Test: idempotent (does not duplicate on repeat calls)
+    - [ ] Test: creates `[autoload]` section if missing
+
+- [ ] Task: Implement `register_coverage_autoload` in `init.py`
+    - [ ] Implement function: parse `project.godot`, add `_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"` to `[autoload]`
+    - [ ] Wire into `run_init()` after `install_coverage_addon()`
+    - [ ] Run `ruff check` and `black` on `init.py`
+
+- [ ] Task: Verify test coverage for `init.py` changes
+    - [ ] Run `CI=true pytest --cov=gd_tools.init --cov-branch --cov-report=term-missing`
+    - [ ] Verify >80% line and >70% branch coverage for new code
+
+- [ ] Task: Conductor - User Manual Verification 'Autoload Registration' (Protocol in workflow.md)
+
+## Phase 3: Integration & Finalization
+
+- [ ] Task: Update `install_coverage_addon` tests
+    - [ ] Update existing test to verify deployed `coverage.gd` contains real implementation (not placeholder TODO)
+
+- [ ] Task: Run full test suite and quality gates
+    - [ ] Run `CI=true pytest` (all unit tests pass)
+    - [ ] Run `ruff check src/ tests/`
+    - [ ] Run `black --check src/ tests/`
+    - [ ] Verify no regressions (existing 437+ tests still pass)
+
+- [ ] Task: Conductor - User Manual Verification 'Integration & Finalization' (Protocol in workflow.md)
