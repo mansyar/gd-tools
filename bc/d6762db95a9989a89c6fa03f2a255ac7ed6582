@@ -1,0 +1,28 @@
+Checkpoint: merge_coverage_files orchestrator function implemented.
+
+Changes:
+- src/gd_tools/coverage/orchestrator.py: Added merge_coverage_files() function.
+  - Added imports: json, pathlib.Path, rich.console.Console, CoverageData
+  - Function signature: merge_coverage_files(files: list[Path], output: Path | None = None) -> CoverageData
+  - Default output: Path.cwd() / '.gd-tools' / 'coverage' / 'coverage.json'
+  - Calls reporter.merge_coverage_data(files) to sum hit counts
+  - Serializes CoverageData to JSON dict and writes to output path
+  - Creates parent directories with mkdir(parents=True, exist_ok=True)
+  - Prints merge summary via Rich Console
+  - Returns merged CoverageData
+
+- tests/unit/test_orchestrator.py: Added 6 tests for merge_coverage_files:
+  1. test_merge_coverage_files_calls_merge_coverage_data - delegates to reporter
+  2. test_merge_coverage_files_writes_json_to_default_output - default path, JSON content verified
+  3. test_merge_coverage_files_writes_json_to_custom_output - custom --output path
+  4. test_merge_coverage_files_returns_merged_data - returns CoverageData
+  5. test_merge_coverage_files_creates_output_dir - creates parent dirs
+  6. test_merge_coverage_files_empty_list - empty list writes empty output
+
+Test Results: 23/23 pass (10 run_coverage_test + 7 generate_coverage_report + 6 merge_coverage_files)
+orchestrator.py coverage: 100%
+ruff: All checks passed
+black: reformatted both files
+
+Commit: bcd6762
+Plan: 721c9b7
