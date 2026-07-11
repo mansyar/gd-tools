@@ -8,6 +8,7 @@ All tests are marked ``@pytest.mark.integration`` and are automatically
 skipped when the Godot binary is not available on PATH.
 """
 
+import json
 import os
 import shutil
 import subprocess
@@ -69,6 +70,17 @@ def _setup_hooks_project(tmp_path: Path) -> Path:
     return tmp_path
 
 
+def _make_plan(files: list[dict]) -> dict:
+    """Create a coverage plan dictionary with the given file entries."""
+    return {"version": 1, "files": files}
+
+
+def _clear_coverage_env() -> None:
+    """Clear coverage env vars to isolate test scenarios."""
+    os.environ.pop("GD_TOOLS_COVERAGE_PLAN", None)
+    os.environ.pop("GD_TOOLS_COVERAGE_OUTPUT", None)
+
+
 @pytest.mark.integration
 @skip_if_no_godot
 def test_pre_run_hook_gut_tests_pass(tmp_path):
@@ -99,37 +111,291 @@ def test_post_run_hook_gut_tests_pass(tmp_path):
 @skip_if_no_godot
 def test_hooks_end_to_end_flow(tmp_path):
     """Full coverage pipeline: plan loading -> instrumentation -> output."""
-    # Phase 5: Set env vars, create plan JSON, run Godot, verify output.
-    pass
+    project = _setup_hooks_project(tmp_path)
+
+    plan = _make_plan(
+        [
+            {
+                "file_id": 0,
+                "path": "res://scripts/calculator.gd",
+                "lines": [
+                    {"line": 7, "id": 0},
+                    {"line": 11, "id": 1},
+                    {"line": 16, "id": 2},
+                    {"line": 18, "id": 3},
+                ],
+            }
+        ]
+    )
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text(json.dumps(plan))
+
+    output_path = tmp_path / "coverage_output.json"
+    _clear_coverage_env()
+    os.environ["GD_TOOLS_COVERAGE_PLAN"] = str(plan_path)
+    os.environ["GD_TOOLS_COVERAGE_OUTPUT"] = str(output_path)
+
+    try:
+        config = GdToolsConfig()
+        with patch(
+            "gd_tools.test_runner.find_project_root", return_value=project
+        ):
+            result = run_tests(
+                config,
+                coverage=True,
+                suite="test_calculator.gd",
+                no_exit_code=True,
+            )
+
+        # GUT tests should pass
+        assert result.failed == 0
+        assert result.passed == 4
+
+        # Output file should exist
+        assert output_path.exists()
+
+        # Verify output JSON structure
+        data = json.loads(output_path.read_text())
+        assert data["version"] == 1
+        assert "generated_at" in data
+        assert "files" in data
+        assert len(data["files"]) == 1
+
+        # Verify hit data: all 4 lines should have non-zero counts
+        file_entry = data["files"][0]
+        assert file_entry["file_id"] == 0
+        assert len(file_entry["hits"]) == 4
+        for line_id in ["0", "1", "2", "3"]:
+            assert int(file_entry["hits"][line_id]) > 0
+    finally:
+        _clear_coverage_env()
 
 
 @pytest.mark.integration
 @skip_if_no_godot
 def test_hooks_missing_plan_env_var(tmp_path):
     """Missing GD_TOOLS_COVERAGE_PLAN -> no instrumentation, warning logged."""
-    # Phase 5: Run without env var, verify no coverage output.
-    pass
+    project = _setup_hooks_project(tmp_path)
+
+    output_path = tmp_path / "coverage_output.json"
+    _clear_coverage_env()
+    os.environ["GD_TOOLS_COVERAGE_OUTPUT"] = str(output_path)
+
+    try:
+        config = GdToolsConfig()
+        with patch(
+            "gd_tools.test_runner.find_project_root", return_value=project
+        ):
+            result = run_tests(
+                config,
+                coverage=True,
+                suite="test_calculator.gd",
+                no_exit_code=True,
+            )
+
+        # GUT tests should still pass (hooks don't affect test execution)
+        assert result.failed == 0
+        assert result.passed == 4
+
+        # Warning should appear in Godot output
+        combined = result.stdout + result.stderr
+        assert "GD_TOOLS_COVERAGE_PLAN" in combined
+        assert "not set" in combined.lower()
+    finally:
+        _clear_coverage_env()
 
 
 @pytest.mark.integration
 @skip_if_no_godot
 def test_hooks_malformed_plan_json(tmp_path):
     """Malformed plan JSON -> error logged, instrumentation aborted."""
-    # Phase 5: Write bad JSON to env var path, verify error in output.
-    pass
+    project = _setup_hooks_project(tmp_path)
+
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text("{ this is not valid json }")
+
+    output_path = tmp_path / "coverage_output.json"
+    _clear_coverage_env()
+    os.environ["GD_TOOLS_COVERAGE_PLAN"] = str(plan_path)
+    os.environ["GD_TOOLS_COVERAGE_OUTPUT"] = str(output_path)
+
+    try:
+        config = GdToolsConfig()
+        with patch(
+            "gd_tools.test_runner.find_project_root", return_value=project
+        ):
+            result = run_tests(
+                config,
+                coverage=True,
+                suite="test_calculator.gd",
+                no_exit_code=True,
+            )
+
+        # GUT tests should still pass (hook aborts but GUT continues)
+        assert result.failed == 0
+        assert result.passed == 4
+
+        # Error should appear in Godot output
+        combined = result.stdout + result.stderr
+        assert "Failed to parse coverage plan JSON" in combined
+    finally:
+        _clear_coverage_env()
 
 
 @pytest.mark.integration
 @skip_if_no_godot
 def test_hooks_missing_output_env_var(tmp_path):
     """Missing GD_TOOLS_COVERAGE_OUTPUT -> error logged."""
-    # Phase 5: Set plan env var but not output, verify error.
-    pass
+    project = _setup_hooks_project(tmp_path)
+
+    plan = _make_plan(
+        [
+            {
+                "file_id": 0,
+                "path": "res://scripts/calculator.gd",
+                "lines": [
+                    {"line": 7, "id": 0},
+                    {"line": 11, "id": 1},
+                ],
+            }
+        ]
+    )
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text(json.dumps(plan))
+
+    _clear_coverage_env()
+    os.environ["GD_TOOLS_COVERAGE_PLAN"] = str(plan_path)
+
+    try:
+        config = GdToolsConfig()
+        with patch(
+            "gd_tools.test_runner.find_project_root", return_value=project
+        ):
+            result = run_tests(
+                config,
+                coverage=True,
+                suite="test_calculator.gd",
+                no_exit_code=True,
+            )
+
+        # GUT tests should still pass
+        assert result.failed == 0
+        assert result.passed == 4
+
+        # Error should appear in Godot output
+        combined = result.stdout + result.stderr
+        assert "GD_TOOLS_COVERAGE_OUTPUT" in combined
+        assert "not set" in combined.lower()
+    finally:
+        _clear_coverage_env()
+
+
+@pytest.mark.integration
+@skip_if_no_godot
+def test_hooks_nonexistent_script_in_plan(tmp_path):
+    """Plan references non-existent script -> error logged, file skipped."""
+    project = _setup_hooks_project(tmp_path)
+
+    plan = _make_plan(
+        [
+            {
+                "file_id": 0,
+                "path": "res://scripts/nonexistent.gd",
+                "lines": [{"line": 1, "id": 0}],
+            },
+            {
+                "file_id": 1,
+                "path": "res://scripts/calculator.gd",
+                "lines": [
+                    {"line": 7, "id": 0},
+                    {"line": 11, "id": 1},
+                ],
+            },
+        ]
+    )
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text(json.dumps(plan))
+
+    output_path = tmp_path / "coverage_output.json"
+    _clear_coverage_env()
+    os.environ["GD_TOOLS_COVERAGE_PLAN"] = str(plan_path)
+    os.environ["GD_TOOLS_COVERAGE_OUTPUT"] = str(output_path)
+
+    try:
+        config = GdToolsConfig()
+        with patch(
+            "gd_tools.test_runner.find_project_root", return_value=project
+        ):
+            result = run_tests(
+                config,
+                coverage=True,
+                suite="test_calculator.gd",
+                no_exit_code=True,
+            )
+
+        # GUT tests should pass
+        assert result.failed == 0
+        assert result.passed == 4
+
+        # Output should exist with hits from calculator.gd (file_id=1) only
+        assert output_path.exists()
+        data = json.loads(output_path.read_text())
+
+        file_ids = [f["file_id"] for f in data["files"]]
+        assert 1 in file_ids
+        assert 0 not in file_ids
+
+        # Error about nonexistent script should appear in output
+        combined = result.stdout + result.stderr
+        assert "nonexistent.gd" in combined
+    finally:
+        _clear_coverage_env()
 
 
 @pytest.mark.integration
 @skip_if_no_godot
 def test_hooks_headless_mode(tmp_path):
-    """Full flow works with --headless flag and exits cleanly."""
-    # Phase 5: Run with headless flag, verify clean exit.
-    pass
+    """Full flow works with --headless flag and exits cleanly with -gexit."""
+    project = _setup_hooks_project(tmp_path)
+
+    plan = _make_plan(
+        [
+            {
+                "file_id": 0,
+                "path": "res://scripts/calculator.gd",
+                "lines": [
+                    {"line": 7, "id": 0},
+                    {"line": 11, "id": 1},
+                ],
+            }
+        ]
+    )
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text(json.dumps(plan))
+
+    output_path = tmp_path / "coverage_output.json"
+    _clear_coverage_env()
+    os.environ["GD_TOOLS_COVERAGE_PLAN"] = str(plan_path)
+    os.environ["GD_TOOLS_COVERAGE_OUTPUT"] = str(output_path)
+
+    try:
+        config = GdToolsConfig()
+        with patch(
+            "gd_tools.test_runner.find_project_root", return_value=project
+        ):
+            # run_tests uses --headless and -gexit by default
+            result = run_tests(
+                config,
+                coverage=True,
+                suite="test_calculator.gd",
+                no_exit_code=True,
+            )
+
+        # Clean exit: tests ran and returned (no crash/timeout)
+        assert result.passed == 4
+        assert result.failed == 0
+
+        # Output file exists (proves full pipeline ran in headless mode)
+        assert output_path.exists()
+    finally:
+        _clear_coverage_env()
