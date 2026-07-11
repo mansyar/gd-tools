@@ -9,14 +9,14 @@
     - [ ] Update `tests/fixtures/coverage_data/partial_coverage.json` -- same format change
     - [ ] Update `tests/fixtures/coverage_data/zero_coverage.json` -- same format change
     - [ ] Create or verify `tests/fixtures/coverage_plans/` directory with matching plan fixtures (containing `file_id`, `path`, `source_hash`, `lines`)
-- [ ] Task: Write tests for data models and JSON I/O (Red)
+- [x] Task: Write tests for data models and JSON I/O (Red) [9c1fbec]
     - [ ] Test `CoverageData` and `FileCoverage` dataclass construction and field access
     - [ ] Test `read_coverage_json()` with valid fixture files (full, partial, zero)
     - [ ] Test `read_coverage_json()` raises `CoveragePlanError` on version mismatch
     - [ ] Test `read_coverage_json()` handles string keys in `hits` dict correctly
     - [ ] Test `merge_coverage_data()` sums hit counts across multiple files for same `file_id`/`line_id`
     - [ ] Test `merge_coverage_data()` with empty list returns empty `CoverageData`
-- [ ] Task: Implement data models and JSON I/O (Green)
+- [x] Task: Implement data models and JSON I/O (Green) [9c1fbec]
     - [ ] Implement `CoverageData`, `FileCoverage` dataclasses (with `file_id: int`, NOT `path: str`)
     - [ ] Implement `CoverageSummary`, `FileSummary`, `ReportResult` dataclasses
     - [ ] Implement `read_coverage_json(path: Path) -> CoverageData` with version validation
