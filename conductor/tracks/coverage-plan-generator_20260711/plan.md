@@ -1,6 +1,11 @@
+<protect>
 # Track 9: Coverage Plan Generator — Implementation Plan
 
 ## Phase 1: Data Structures & JSON I/O
+
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Define plan data structures
     - [ ] Write tests for `CoveragePlan`, `FilePlan`, `LinePlan` dataclasses (construction, field types, defaults)
@@ -29,6 +34,10 @@
 
 ## Phase 2: GDScript Test Fixtures
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Create 6 GDScript fixture files
     - [ ] Create `tests/fixtures/gdscript/simple.gd` — basic statements (expr_stmt, return_stmt), var/const declarations
     - [ ] Create `tests/fixtures/gdscript/branches.gd` — if/elif/else branches, nested if/else
@@ -42,6 +51,10 @@
 - [ ] Task: Conductor - User Manual Verification 'GDScript Test Fixtures' (Protocol in workflow.md)
 
 ## Phase 3: AST Parsing & Statement Classification
+
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Implement `parse_gdscript` function
     - [ ] Write test for `parse_gdscript` — valid source returns Lark Tree with metadata
@@ -76,6 +89,10 @@
 
 ## Phase 4: File Discovery & Plan Generation
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Implement `generate_plan` function
     - [ ] Write test: `test_multiple_files_in_project` — multiple .gd files produce multiple `FilePlan` entries with sequential `file_id`s
     - [ ] Write test: `test_plan_generation_matches_expected` (parametrized across all 6 fixtures) — generated plan matches expected JSON fixture for each
@@ -97,6 +114,10 @@
 
 ## Phase 5: Fixture Generation Tool
 
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Implement `tools/generate_expected_plans.py`
     - [ ] Write test: script runs and regenerates all 6 expected plan JSON fixtures from `.gd` fixtures
     - [ ] Write test: regenerated fixtures match committed fixtures (no drift)
@@ -107,6 +128,10 @@
 - [ ] Task: Conductor - User Manual Verification 'Fixture Generation Tool' (Protocol in workflow.md)
 
 ## Phase 6: Performance & Final Quality
+
+- [ ] Task: Read spec.md and workflow.md before starting this phase
+    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Performance benchmark
     - [ ] Write test: `test_performance_100_files` — generate plan for 100 .gd files completes in <1 second
@@ -124,3 +149,4 @@
     - [ ] Commit (if any formatting fixes needed): `style(coverage): format plan_generator code`
 
 - [ ] Task: Conductor - User Manual Verification 'Performance & Final Quality' (Protocol in workflow.md)
+</protect>

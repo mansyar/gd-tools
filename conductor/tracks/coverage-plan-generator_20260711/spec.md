@@ -1,3 +1,4 @@
+<protect>
 # Track 9: Coverage Plan Generator
 
 ## Overview
@@ -111,3 +112,4 @@ The generator classifies GDScript AST nodes into three categories:
 - CLI command wiring (`gd-tools coverage` subcommand — Track 13)
 - Actual code instrumentation (modifying .gd files with `hit()` calls — Track 11)
 - Coverage threshold enforcement / CI exit codes (Track 13)
+</protect>
