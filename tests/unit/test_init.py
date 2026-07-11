@@ -25,6 +25,7 @@ from gd_tools.init import (
     install_coverage_addon,
     install_gut,
     print_summary,
+    register_coverage_autoload,
     run_init,
     update_gutconfig,
 )
@@ -344,6 +345,65 @@ def test_enable_gut_plugin_preserves_existing_content(tmp_path: Path):
     assert 'config/icon="res://icon.svg"' in content
     assert "[editor_plugins]" in content
     assert '"res://addons/gut/plugin.gd"' in content
+
+
+# --- register_coverage_autoload ---
+
+
+def test_register_coverage_autoload_creates_section_when_missing(
+    tmp_path: Path,
+):
+    """Test register_coverage_autoload adds [autoload] section to a file
+    without it."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text("config_version=5\n\n[application]\n\n")
+
+    register_coverage_autoload(tmp_path)
+
+    content = project_godot.read_text()
+    assert "[autoload]" in content
+    assert (
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"' in content
+    )
+
+
+def test_register_coverage_autoload_idempotent(tmp_path: Path):
+    """Test register_coverage_autoload doesn't duplicate when already
+    registered."""
+    project_godot = tmp_path / "project.godot"
+    original = (
+        "config_version=5\n\n"
+        "[autoload]\n\n"
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"\n'
+    )
+    project_godot.write_text(original)
+
+    register_coverage_autoload(tmp_path)
+
+    assert project_godot.read_text() == original
+
+
+def test_register_coverage_autoload_preserves_existing_autoloads(
+    tmp_path: Path,
+):
+    """Test register_coverage_autoload preserves existing autoload entries."""
+    project_godot = tmp_path / "project.godot"
+    original = (
+        "config_version=5\n\n"
+        "[autoload]\n\n"
+        'GlobalSignals="*res://autoloads/global_signals.gd"\n'
+        'PlayerData="*res://autoloads/player_data.gd"\n'
+    )
+    project_godot.write_text(original)
+
+    register_coverage_autoload(tmp_path)
+
+    content = project_godot.read_text()
+    assert 'GlobalSignals="*res://autoloads/global_signals.gd"' in content
+    assert 'PlayerData="*res://autoloads/player_data.gd"' in content
+    assert (
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"' in content
+    )
 
 
 # --- install_coverage_addon ---

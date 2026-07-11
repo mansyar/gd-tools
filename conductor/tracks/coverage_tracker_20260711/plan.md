@@ -24,25 +24,25 @@
 
 ## Phase 2: Autoload Registration (Python)
 
-- [ ] Task: Read spec.md and workflow.md to load context for this phase
-    - [ ] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md to load context for this phase
+    - [x] Read `conductor/tracks/coverage_tracker_20260711/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write failing pytest tests for `register_coverage_autoload`
-    - [ ] Test: registers `_GDTCoverage` autoload in `project.godot` `[autoload]` section
-    - [ ] Test: idempotent (does not duplicate on repeat calls)
-    - [ ] Test: creates `[autoload]` section if missing
+- [x] Task: Write failing pytest tests for `register_coverage_autoload`
+    - [x] Test: registers `_GDTCoverage` autoload in `project.godot` `[autoload]` section
+    - [x] Test: idempotent (does not duplicate on repeat calls)
+    - [x] Test: creates `[autoload]` section if missing
 
-- [ ] Task: Implement `register_coverage_autoload` in `init.py`
-    - [ ] Implement function: parse `project.godot`, add `_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"` to `[autoload]`
-    - [ ] Wire into `run_init()` after `install_coverage_addon()`
-    - [ ] Run `ruff check` and `black` on `init.py`
+- [x] Task: Implement `register_coverage_autoload` in `init.py`
+    - [x] Implement function: parse `project.godot`, add `_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"` to `[autoload]`
+    - [x] Wire into `run_init()` after `install_coverage_addon()`
+    - [x] Run `ruff check` and `black` on `init.py`
 
-- [ ] Task: Verify test coverage for `init.py` changes
-    - [ ] Run `CI=true pytest --cov=gd_tools.init --cov-branch --cov-report=term-missing`
-    - [ ] Verify >80% line and >70% branch coverage for new code
+- [x] Task: Verify test coverage for `init.py` changes
+    - [x] Run `CI=true pytest --cov=gd_tools.init --cov-branch --cov-report=term-missing`
+    - [x] Verify >80% line and >70% branch coverage for new code
 
-- [ ] Task: Conductor - User Manual Verification 'Autoload Registration' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Autoload Registration' (Protocol in workflow.md)
 
 ## Phase 3: Integration & Finalization
 

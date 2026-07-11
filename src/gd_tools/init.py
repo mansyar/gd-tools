@@ -61,6 +61,8 @@ COVERAGE_ADDON_FILES = [
     "post_run_hook.gd",
 ]
 
+COVERAGE_AUTOLOAD_PATH = "res://addons/gd-tools-coverage/coverage.gd"
+
 console = Console()
 
 
@@ -339,6 +341,41 @@ def install_coverage_addon(project_root: Path) -> None:
         shutil.copy2(source_dir / gd_file, target_dir / gd_file)
 
 
+def register_coverage_autoload(project_root: Path) -> None:
+    """Register the coverage tracker autoload in ``project.godot``.
+
+    Adds ``_GDTCoverage`` to the ``[autoload]`` section, pointing at
+    ``res://addons/gd-tools-coverage/coverage.gd``. Idempotent: running
+    multiple times produces the same result.
+
+    Args:
+        project_root: Path to the Godot project root.
+    """
+    project_godot = project_root / "project.godot"
+    content = project_godot.read_text()
+
+    autoload_entry = f'_GDTCoverage="*{COVERAGE_AUTOLOAD_PATH}"'
+
+    # Idempotent: if already registered, do nothing.
+    if autoload_entry in content:
+        return
+
+    if "[autoload]" in content:
+        # Section exists, append entry after the section header.
+        lines = content.split("\n")
+        for i, line in enumerate(lines):
+            if line.strip() == "[autoload]":
+                lines.insert(i + 1, f"\n{autoload_entry}")
+                break
+        project_godot.write_text("\n".join(lines))
+    else:
+        # No [autoload] section, append it.
+        if not content.endswith("\n"):
+            content += "\n"
+        content += f"\n[autoload]\n\n{autoload_entry}\n"
+        project_godot.write_text(content)
+
+
 # --- Phase 4: Configuration File Generation ---
 
 # Keys in .gutconfig.json that are always overwritten from the template.
@@ -552,6 +589,9 @@ def run_init(non_interactive: bool = False) -> None:
 
     install_coverage_addon(project_root)
     actions.append("Deployed coverage addon")
+
+    register_coverage_autoload(project_root)
+    actions.append("Registered _GDTCoverage autoload")
 
     update_gutconfig(project_root, config)
     actions.append("Created/updated .gutconfig.json")
