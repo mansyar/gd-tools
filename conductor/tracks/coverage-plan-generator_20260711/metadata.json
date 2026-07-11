@@ -1,0 +1,8 @@
+{
+  "track_id": "coverage-plan-generator_20260711",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-11T10:35:00Z",
+  "updated_at": "2026-07-11T10:35:00Z",
+  "description": "Coverage Plan Generator — Parse GDScript with gdtoolkit/Lark, identify executable lines + branch points, generate instrumentation plan JSON"
+}
