@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 Complete — All MVP1 tool wrappers delivered (Tracks 4-8)
+**Status:** Phase 3 In Progress — Coverage Plan Generator delivered (Track 9)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -866,6 +866,39 @@ def read_plan_json(path: Path) -> CoveragePlan:
 
 **Note:** `func_var_empty` and `func_var_typed` (declarations without
 assignment) are NOT tracked — they're declarations, not executable statements.
+
+**Implementation notes (Track 9, 2026-07-11):**
+
+- `CoveragePlan`, `FilePlan`, `LinePlan` dataclasses with `to_dict()`/
+  `from_dict()` methods for JSON serialization.
+- `CoverageVisitor` is a Lark `Visitor` subclass — Lark calls methods by
+  matching node names (e.g., `expr_stmt()` is called for every `expr_stmt`
+  node in the tree).
+- `if_stmt()` visitor iterates `tree.children` and matches `if_branch`,
+  `elif_branch`, `else_branch` child nodes — each gets its own `LinePlan`
+  with the appropriate `branch_type`.
+- `match_stmt()` visitor iterates `tree.children` and matches `match_branch`
+  nodes — each case gets a `LinePlan` with `branch_type="match_case"`.
+- `parse_gdscript()` uses `gdtoolkit.parser.parse(source,
+  gather_metadata=True)` — the `gather_metadata=True` flag populates
+  `tree.meta.line` with 1-indexed line numbers.
+- `generate_plan()` signature: `(project_root, source_dirs, exclude_dirs,
+  test_dirs)` — reuses `discover_gd_files()` from `file_discovery.py` for
+  file discovery, then filters out test_dirs from coverage targets.
+- Source hash: SHA-256 with `sha256:` prefix (e.g., `sha256:abc123...`).
+- `read_plan_json` validates schema on read: checks `data` is a dict,
+  `version` is present, `files` is a list, each file entry is a dict with
+  required fields (`file_id`, `path`, `source_hash`). All failures raise
+  `CoveragePlanError` (not raw `KeyError`).
+- `tools/generate_expected_plans.py` — CLI script that regenerates all 6
+  expected plan JSON fixtures from GDScript fixture files. Used to verify
+  fixture correctness and detect drift.
+- 6 GDScript fixtures in `tests/fixtures/gdscript/`: `simple.gd`,
+  `branches.gd`, `loops.gd`, `match_stmt.gd`, `nested.gd`, `edge_cases.gd`.
+- 6 expected JSON plans in `tests/fixtures/plans/`: corresponding
+  `.expected.json` files verified correct against fixtures.
+- 49 unit tests in `test_plan_generator.py` + 2 in
+  `test_generate_expected_plans.py`. `plan_generator.py` at 100% coverage.
 
 ---
 

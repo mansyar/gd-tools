@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 2 Complete — All MVP1 tool wrappers delivered (Tracks 4-8)
+**Status:** Phase 3 In Progress — Coverage Plan Generator delivered (Track 9)
 **Target Godot Version:** 4.5+
 
 ---
@@ -452,12 +452,17 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 
 ### Instrumentation Plan Format (JSON)
 
+> **Implemented:** Track 9 (`coverage-plan-generator_20260711`, archived).
+> See `src/gd_tools/coverage/plan_generator.py`. All 12 acceptance criteria
+> passed. `plan_generator.py` at 100% coverage.
+
 ```json
 {
   "version": 1,
   "generated_by": "gd-tools 0.1.0",
   "files": [
     {
+      "file_id": 0,
       "path": "res://scripts/player.gd",
       "source_hash": "sha256:...",
       "lines": [
@@ -508,21 +513,28 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 Using `parser.parse(code, gather_metadata=True)`, the following Lark tree node
 types are identified as **executable** (have line coverage):
 
-| Statement Type   | Lark Node         | Coverage Type    |
-|------------------|-------------------|------------------|
-| Expression       | `expr_stmt`       | statement        |
-| Return           | `return_stmt`     | statement        |
-| Assignment       | `assign_stmt`     | statement        |
-| If/elif/else     | `if_stmt`         | branch (true/false) |
-| While loop       | `while_stmt`      | branch (body entered) |
-| For loop         | `for_stmt`        | branch (body entered) |
-| Match           | `match_stmt`      | branch (per case) |
-| Break           | `break_stmt`      | statement        |
-| Continue         | `continue_stmt`   | statement        |
+| Statement Type   | Lark Node                | Coverage Type           |
+|------------------|--------------------------|-------------------------|
+| Expression       | `expr_stmt`              | statement               |
+| Return           | `return_stmt`            | statement               |
+| Assignment       | `func_var_assigned`       | statement               |
+| Typed assignment | `func_var_typed_assgnd`   | statement               |
+| Inferred assign  | `func_var_inf`            | statement               |
+| If branch        | `if_branch`              | branch (if_true)        |
+| Elif branch      | `elif_branch`            | branch (elif_true)      |
+| Else branch      | `else_branch`            | branch (if_false)       |
+| While loop       | `while_stmt`             | branch (loop_body)      |
+| For loop         | `for_stmt`               | branch (loop_body)      |
+| For loop (typed) | `for_stmt_typed`         | branch (loop_body)      |
+| Match            | `match_branch`           | branch (match_case)     |
+| Break            | `break_stmt`             | statement               |
+| Continue         | `continue_stmt`          | statement               |
 
 **Declarative** (not executable, excluded from coverage):
 `class_var_stmt`, `const_stmt`, `signal_stmt`, `enum_stmt`, `func_def`,
-`static_func_def`, `var_stmt` (at class level).
+`static_func_def`, `extends_stmt`, `classname_stmt`.
+
+**Skipped** (no-op, not tracked): `pass_stmt`, `breakpoint_stmt`.
 
 ### Instrumentation Approach (GDScript side)
 

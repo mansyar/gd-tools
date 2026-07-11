@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 2 Complete — All MVP1 tool wrappers delivered (Tracks 4-8)
+**Status:** Phase 3 In Progress — Coverage Plan Generator delivered (Track 9)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -726,7 +726,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 
 ---
 
-### Track 9: Coverage Plan Generator
+### Track 9: Coverage Plan Generator ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -736,6 +736,9 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Modules** | `src/gd_tools/coverage/plan_generator.py` |
 | **Effort** | 3-4 days |
 | **Risk** | MEDIUM-HIGH — Lark AST traversal, statement classification |
+| **Status** | ✅ **COMPLETED** (2026-07-11) — All 12 acceptance criteria passed |
+| **Conductor track** | `coverage-plan-generator_20260711` (archived to `conductor/archive/`) |
+| **Commits** | `baa3890`..`06978b7` (20 commits) + review fixes `d822a5b`, `a36d966` |
 
 **Scope:**
 - Use `gdtoolkit.parser.parse(code, gather_metadata=True)` to get Lark AST
@@ -771,6 +774,54 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 **Key TDD references:** §3 (Module: coverage/plan_generator.py), §7 (Data Contracts), §10 (Coverage Architecture)
 
 **Reference:** b4 compressed section contains the full Lark grammar research and statement classification details.
+
+**Track 9 Results (2026-07-11):**
+- ✅ All 12 acceptance criteria PASSED
+- ✅ 437 tests total (49 unit tests in `test_plan_generator.py`, 2 in
+  `test_generate_expected_plans.py`), 7 skipped (require Godot), 0 failed
+- ✅ 98.03% overall coverage; `plan_generator.py` at 100% (116 statements,
+  0 missed, 26 branches, 0 partial)
+- ✅ ruff check + black --check pass
+- **Test breakdown:** 49 unit tests in `test_plan_generator.py` (data
+  structures, JSON I/O, parsing, classification, plan generation, fixtures,
+  performance, error handling), 2 tests in `test_generate_expected_plans.py`
+  (regenerates fixtures, checks no drift)
+- **Review fixes applied:**
+  1. Added schema validation to `read_plan_json` — validates `files` is a
+     list, each file entry is a dict, and required fields (`file_id`, `path`,
+     `source_hash`) are present. All failures raise `CoveragePlanError`
+     instead of raw `KeyError`
+  2. Added 7 new tests: `test_read_plan_json_missing_files_field`,
+     `test_read_plan_json_data_not_dict`, `test_read_plan_json_files_not_list`,
+     `test_read_plan_json_file_entry_missing_field`,
+     `test_read_plan_json_file_entry_not_dict`,
+     `test_generate_plan_with_custom_exclude_dirs`,
+     `test_generate_plan_with_custom_test_dirs`
+  3. Fixed imprecise test assertions in
+     `test_generate_plan_excludes_addons` and
+     `test_generate_plan_excludes_test_dirs` — exact path checks instead of
+     substring matching
+  4. Cleaned up stream-of-consciousness comments in
+     `test_declarations_not_tracked`
+  5. Fixed plan.md tracking checkboxes (Phase 2 `[~]`→`[x]`, Phase 5 & 6
+     `[ ]`→`[x]`)
+- **Key implementation notes:**
+  - `CoveragePlan`, `FilePlan`, `LinePlan` dataclasses with `to_dict()`/
+    `from_dict()` serialization methods
+  - `CoverageVisitor` is a Lark `Visitor` subclass — visits nodes by method
+    name matching (e.g., `expr_stmt()`, `if_stmt()`, `match_stmt()`)
+  - `parse_gdscript()` uses `gdtoolkit.parser.parse(source,
+    gather_metadata=True)`
+  - `generate_plan()` reuses `discover_gd_files()` from `file_discovery.py`,
+    filters test_dirs from coverage targets
+  - Source hash: SHA-256 with `sha256:` prefix for staleness detection
+  - JSON I/O: `write_plan_json` / `read_plan_json` with `CoveragePlanError`
+    on invalid input (missing file, invalid JSON, schema mismatch)
+  - `tools/generate_expected_plans.py` — CLI script to regenerate all 6
+    expected plan JSON fixtures from GDScript fixture files
+  - 6 GDScript fixtures: `simple.gd`, `branches.gd`, `loops.gd`,
+    `match_stmt.gd`, `nested.gd`, `edge_cases.gd`
+  - 6 expected JSON plans verified correct against fixtures
 
 ---
 
