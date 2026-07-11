@@ -1,0 +1,14 @@
+Task 1.1: Configure pyproject.toml pytest/coverage settings
+
+Summary: Updated pyproject.toml to add --strict-markers, --strict-config, --cov-branch, and --cov-report=html to pytest addopts. Updated coverage omit patterns to */tests/* and */addons/* glob format. Added show_missing=true to coverage report config. Markers (unit, integration, e2e, slow) were already registered. fail_under=80 was already set.
+
+Files modified:
+- pyproject.toml: addopts expanded with strict markers, branch coverage, HTML report; omit patterns updated to glob format; show_missing added
+- conductor/tracks/test_suite_20260712/plan.md: Task 1.0 and 1.1 marked complete
+
+Verification:
+- pytest --co collects 597 tests with no errors or marker warnings
+- pytest tests/unit/ passes: 547 passed, 96.61% coverage in 12.5s
+- Coverage gate (fail_under=80) passes
+
+Why: TESTING_STRATEGY §3 requires strict markers, branch coverage, and HTML reports for CI-safe, comprehensive test configuration.
