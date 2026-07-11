@@ -40,7 +40,7 @@
     - [x] Implement `compute_file_summary(file_plan: FilePlan, file_data: FileCoverage) -> FileSummary`
     - [x] Implement `compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary`
     - [x] Handle case where file is in plan but not in coverage data (treat as 0 hits)
-- [ ] Task: Conductor - User Manual Verification 'Coverage Metrics Computation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Coverage Metrics Computation' (Protocol in workflow.md) [checkpoint: 502ea00]
 
 ## Phase 3: Report Dispatch & Threshold Check
 
