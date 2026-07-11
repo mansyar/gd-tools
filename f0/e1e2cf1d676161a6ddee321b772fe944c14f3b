@@ -1,0 +1,21 @@
+Phase 7: Terminal Reporter Implementation
+
+Created src/gd_tools/coverage/terminal_reporter.py:
+- generate_terminal_report(plan, data) -> str: Rich table with ANSI color codes
+- _color_for_rate(rate) -> str: green >=80%, yellow 50-79%, red <50%
+- Table columns: File, Lines Found, Lines Hit, Line %, Branches Found, Branches Hit, Branch %
+- Overall summary at bottom (line + branch coverage rates)
+- Uses box.ASCII for ASCII-compatible table borders
+- Uses Console(force_terminal=True) for ANSI color codes in string output
+- Zero-coverage files included (FR-7.5)
+
+Updated reporter.py generate_report():
+- Terminal format now calls real generate_terminal_report() (was stub)
+- Writes result to coverage_report.txt
+
+Tests: 8 new tests in test_terminal_reporter.py
+- Returns string, column headers, overall summary, zero-cov files, all files
+- Color coding: green (full cov), yellow (partial 50-79%), red (zero cov)
+- terminal_reporter.py coverage: 100% (40/40 statements)
+- All 73 coverage tests passing (40 reporter + 8 lcov + 8 cobertura + 9 html + 8 terminal)
+- Ruff: clean, Black: clean
