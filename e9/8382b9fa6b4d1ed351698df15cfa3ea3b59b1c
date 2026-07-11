@@ -1,0 +1,14 @@
+Phase 2: show_coverage_summary() implementation
+
+Changes:
+- src/gd_tools/coverage/orchestrator.py:
+  - Added import: Table from rich.table, CoverageSummary from reporter
+  - Added show_coverage_summary(config, min_percent=None) -> CoverageSummary
+  - Flow: find_project_root() -> read plan.json -> read coverage.json -> compute_summary -> print Rich Table (Lines/Branches found/hit/rate) -> threshold check (raises CoverageThresholdError if line_rate*100 < min_percent) -> return summary
+- tests/unit/test_orchestrator.py:
+  - Added show_coverage_summary to imports
+  - Added compute_summary to mock_deps fixture (returns CoverageSummary with line_rate=0.8)
+  - Added 7 tests: reads_plan, reads_coverage_data, calls_compute_summary, prints_rich_table, threshold_below_raises_error, threshold_at_or_above_no_error, missing_coverage_raises_plan_error
+
+Test results: 30/30 pass, orchestrator.py at 100% coverage
+Quality gates: ruff passed, black passed
