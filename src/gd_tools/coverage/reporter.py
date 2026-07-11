@@ -407,8 +407,10 @@ def generate_report(
         output_path = output_dir / "coverage_report.txt"
         output_path.write_text("Coverage Report\n", encoding="utf-8")
     elif format == "lcov":
+        from gd_tools.coverage.lcov_reporter import generate_lcov_report
+
         output_path = output_dir / "coverage.info"
-        output_path.write_text("TN:gd-tools\n", encoding="utf-8")
+        generate_lcov_report(plan, data, output_path)
     elif format == "cobertura":
         output_path = output_dir / "cobertura.xml"
         output_path.write_text('<?xml version="1.0"?>\n', encoding="utf-8")
