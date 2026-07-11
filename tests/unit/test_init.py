@@ -442,6 +442,24 @@ def test_install_coverage_addon_creates_target_dir(tmp_path: Path):
     assert (tmp_path / "addons" / "gd-tools-coverage").is_dir()
 
 
+def test_install_coverage_addon_deploys_real_implementation(tmp_path: Path):
+    """Test install_coverage_addon deploys real coverage.gd (not placeholder)."""
+    install_coverage_addon(tmp_path)
+
+    coverage_gd = (
+        tmp_path / "addons" / "gd-tools-coverage" / "coverage.gd"
+    ).read_text()
+    # Placeholder had a TODO comment; real implementation must not.
+    assert "TODO" not in coverage_gd
+    # Key markers of the real implementation.
+    assert "var _hits" in coverage_gd
+    assert "func _ready()" in coverage_gd
+    assert "func hit(" in coverage_gd
+    assert "func reset()" in coverage_gd
+    assert "func set_active(" in coverage_gd
+    assert "func is_active()" in coverage_gd
+
+
 # --- update_gutconfig ---
 
 
