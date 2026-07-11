@@ -34,19 +34,19 @@
 
 ## Phase 2: GDScript Test Fixtures
 
-- [ ] Task: Read spec.md and workflow.md before starting this phase
-    - [ ] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [~] Task: Read spec.md and workflow.md before starting this phase
+    - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Create 6 GDScript fixture files
-    - [ ] Create `tests/fixtures/gdscript/simple.gd` — basic statements (expr_stmt, return_stmt), var/const declarations
-    - [ ] Create `tests/fixtures/gdscript/branches.gd` — if/elif/else branches, nested if/else
-    - [ ] Create `tests/fixtures/gdscript/loops.gd` — for, while, for_typed with range
-    - [ ] Create `tests/fixtures/gdscript/match_stmt.gd` — match with 4 cases
-    - [ ] Create `tests/fixtures/gdscript/nested.gd` — deeply nested control flow (for→if→if→match→continue)
-    - [ ] Create `tests/fixtures/gdscript/edge_cases.gd` — pass, break, continue, ternary, signal/enum, empty function
-    - [ ] Verify fixtures are valid GDScript (parse with `gdtoolkit.parser.parse`)
-    - [ ] Commit: `test(coverage): add GDScript fixture files for plan generator`
+- [x] Task: Create 6 GDScript fixture files [18f3c47]
+    - [x] Create `tests/fixtures/gdscript/simple.gd` — basic statements (expr_stmt, return_stmt), var/const declarations
+    - [x] Create `tests/fixtures/gdscript/branches.gd` — if/elif/else branches, nested if/else
+    - [x] Create `tests/fixtures/gdscript/loops.gd` — for, while, for_typed with range
+    - [x] Create `tests/fixtures/gdscript/match_stmt.gd` — match with 4 cases
+    - [x] Create `tests/fixtures/gdscript/nested.gd` — deeply nested control flow (for→if→if→match→continue)
+    - [x] Create `tests/fixtures/gdscript/edge_cases.gd` — pass, break, continue, ternary, signal/enum, empty function
+    - [x] Verify fixtures are valid GDScript (parse with `gdtoolkit.parser.parse`)
+    - [x] Commit: `test(coverage): add GDScript fixture files for plan generator`
 
 - [ ] Task: Conductor - User Manual Verification 'GDScript Test Fixtures' (Protocol in workflow.md)
 
