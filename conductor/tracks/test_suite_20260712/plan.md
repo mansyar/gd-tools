@@ -1,6 +1,12 @@
+<protect>
+
 # Track 14: Test Suite Implementation — Implementation Plan
 
 ## Phase 1: Test Infrastructure Setup
+
+### Task 1.0: Read spec.md and workflow.md
+- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
 ### Task 1.1: Configure pyproject.toml pytest/coverage settings
 - [ ] Read current pyproject.toml to understand existing configuration
@@ -39,6 +45,10 @@
 
 ## Phase 2: Test Marker Annotation
 
+### Task 2.0: Read spec.md and workflow.md
+- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
+
 ### Task 2.1: Annotate unit test files
 - [ ] Add `@pytest.mark.unit` to all 20 files in `tests/unit/` (test_cli.py, test_cobertura_reporter.py, test_config.py, test_doctor.py, test_errors.py, test_file_discovery.py, test_format_runner.py, test_generate_expected_plans.py, test_godot.py, test_html_reporter.py, test_init.py, test_lcov_reporter.py, test_lint_runner.py, test_main.py, test_orchestrator.py, test_package.py, test_plan_generator.py, test_reporter.py, test_terminal_reporter.py, test_test_runner.py)
 - [ ] Verify: `pytest -m unit` runs only unit tests
@@ -56,6 +66,10 @@
 ---
 
 ## Phase 3: Unit Test Audit & Gap-Fill
+
+### Task 3.0: Read spec.md and workflow.md
+- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
 ### Task 3.1: Audit and gap-fill config.py tests (§4.1)
 - [ ] Audit `test_config.py` against §4.1 specs
@@ -123,6 +137,10 @@
 
 ## Phase 4: Integration Test Audit & Gap-Fill
 
+### Task 4.0: Read spec.md and workflow.md
+- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
+
 ### Task 4.1: Audit and gap-fill test runner integration tests (§5.2)
 - [ ] Audit `test_test_runner_integration.py` against §5.2 specs
 - [ ] Write missing test cases: GUT orchestration, JUnit XML, suite/test filters, exit codes, no-exit-code, Godot crashes
@@ -150,6 +168,10 @@
 
 ## Phase 5: E2E Full-Workflow Test
 
+### Task 5.0: Read spec.md and workflow.md
+- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
+
 ### Task 5.1: Create test_full_workflow.py
 - [ ] Write `tests/e2e/test_full_workflow.py` implementing TESTING_STRATEGY §6:
   - Test: doctor before init (baseline check)
@@ -170,6 +192,10 @@
 ---
 
 ## Phase 6: Coverage Gate, Flakiness & Quality Verification
+
+### Task 6.0: Read spec.md and workflow.md
+- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
 ### Task 6.1: Verify coverage gate
 - [ ] Run `pytest --cov=gd_tools --cov-branch --cov-fail-under=80`
@@ -203,3 +229,5 @@
 - [ ] AC-12: Unit test audit complete
 
 ### Task 6.5: Conductor - User Manual Verification 'Phase 6: Coverage Gate, Flakiness & Quality Verification' (Protocol in workflow.md)
+
+</protect>

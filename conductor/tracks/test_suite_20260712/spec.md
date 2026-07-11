@@ -1,3 +1,5 @@
+<protect>
+
 # Track 14: Test Suite Implementation
 
 ## Overview
@@ -96,3 +98,5 @@ Track 14 formalizes and gap-fills the gd-tools test suite to fully comply with `
 - Performance benchmarking beyond timing constraints
 - Setting up CI/CD pipeline configuration (separate track)
 - Godot/GUT version upgrades
+
+</protect>
