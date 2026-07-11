@@ -1,0 +1,23 @@
+Phase 3 Task 3: Implement report dispatch and threshold (Green)
+
+Added generate_report() to src/gd_tools/coverage/reporter.py:
+- Validates format against supported set (html, lcov, cobertura, terminal)
+- Raises CoveragePlanError for unsupported formats
+- Computes summary via compute_summary() and file_summaries via compute_file_summary()
+- Threshold check: sets threshold_met, raises CoverageThresholdError if below
+- Dispatches to format-specific stubs (placeholder files, to be replaced in Phases 4-7)
+
+Added CoverageThresholdError to imports from errors module.
+
+Added 9 tests to tests/unit/test_reporter.py:
+- test_generate_report_terminal_format
+- test_generate_report_lcov_format
+- test_generate_report_cobertura_format
+- test_generate_report_html_format
+- test_generate_report_unsupported_format
+- test_generate_report_threshold_below_raises
+- test_generate_report_threshold_at_minimum_no_raise
+- test_generate_report_no_threshold_never_raises
+- test_generate_report_result_fields
+
+Results: 40/40 tests passing, ruff clean, black formatted.
