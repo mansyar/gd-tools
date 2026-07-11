@@ -32,7 +32,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Data Structures & JSON I/O' (Protocol in workflow.md)
 
-## Phase 2: GDScript Test Fixtures [checkpoint: pending]
+## Phase 2: GDScript Test Fixtures [checkpoint: d6d4a64]
 
 - [~] Task: Read spec.md and workflow.md before starting this phase
     - [x] Read `conductor/tracks/coverage-plan-generator_20260711/spec.md`
