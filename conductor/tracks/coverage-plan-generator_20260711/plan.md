@@ -110,7 +110,7 @@
     - [x] Write verified outputs to `tests/fixtures/plans/simple.expected.json`, `branches.expected.json`, `loops.expected.json`, `match_stmt.expected.json`, `nested.expected.json`, `edge_cases.expected.json`
     - [x] Commit: `test(coverage): add expected plan JSON fixtures`
 
-- [ ] Task: Conductor - User Manual Verification 'File Discovery & Plan Generation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'File Discovery & Plan Generation' (Protocol in workflow.md)
 
 ## Phase 5: Fixture Generation Tool
 
