@@ -84,6 +84,19 @@ def test_pre_run_hook_gut_tests_pass(tmp_path):
 
 @pytest.mark.integration
 @skip_if_no_godot
+def test_post_run_hook_gut_tests_pass(tmp_path):
+    """GUT tests for post_run_hook.gd data collection all pass."""
+    project = _setup_hooks_project(tmp_path)
+    config = GdToolsConfig()
+    with patch("gd_tools.test_runner.find_project_root", return_value=project):
+        result = run_tests(config, suite="test_post_run_hook.gd")
+
+    assert result.failed == 0
+    assert result.passed == 13
+
+
+@pytest.mark.integration
+@skip_if_no_godot
 def test_hooks_end_to_end_flow(tmp_path):
     """Full coverage pipeline: plan loading -> instrumentation -> output."""
     # Phase 5: Set env vars, create plan JSON, run Godot, verify output.
