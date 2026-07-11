@@ -1,0 +1,25 @@
+Conductor Checkpoint - Phase 5: Python Integration Tests
+
+Commit: af3a36c
+Track: coverage_hooks_20260711
+Phase: 5 - Python Integration Tests
+
+Tests Implemented:
+- test_hooks_end_to_end_flow: Full pipeline (plan -> instrumentation -> hits -> JSON output)
+- test_hooks_missing_plan_env_var: Warning logged, no instrumentation, GUT tests still pass
+- test_hooks_malformed_plan_json: Error logged, instrumentation aborted, GUT tests still pass
+- test_hooks_missing_output_env_var: Error logged, GUT tests still pass
+- test_hooks_nonexistent_script_in_plan: Error logged, file skipped, other files instrumented
+- test_hooks_headless_mode: Full flow works with --headless and -gexit
+
+Test Infrastructure:
+- _make_plan(): Helper to create plan JSON dictionaries
+- _clear_coverage_env(): Helper to isolate test scenarios by clearing env vars
+- Uses run_tests(coverage=True, no_exit_code=True) with patched find_project_root
+- Env vars set via os.environ, merged with run_godot()'s env dict
+
+Verification:
+- Integration tests: 8/8 PASS (~85s)
+- Python unit tests: 425 pass, 98.57% coverage
+- gdformat + gdlint: clean
+- ruff + black: clean
