@@ -1,0 +1,9 @@
+Task: Generate expected plan JSON fixtures
+
+- Generated 6 expected plan JSON fixtures from .gd fixture files
+- Fixtures: simple, branches, loops, match_stmt, nested, edge_cases
+- Added parametrized test test_plan_generation_matches_expected
+- All 6 fixtures verified: correct line numbers, branch types, unique IDs
+- Total: 69 trackable points across 6 fixtures
+- Tests: 39 passed (6 new parametrized), 98% coverage on plan_generator.py
+- ruff: clean, black: clean
