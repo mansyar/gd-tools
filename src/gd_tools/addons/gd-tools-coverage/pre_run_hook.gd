@@ -213,8 +213,17 @@ func _validate_file_entry(file_entry: Variant) -> bool:
 		)
 		return false
 
+	for line_entry in file_entry["lines"]:
+		if not (line_entry is Dictionary) or not line_entry.has("line") or not line_entry.has("id"):
+			_log_error(
+				"Invalid coverage plan structure.",
+				"Line entry missing 'line' or 'id' key.",
+				"Ensure each line entry has 'line' and 'id' fields."
+			)
+			return false
+
 	return true
 
 
 func _log_error(what: String, cause: String, fix: String) -> void:
-	push_error("[gd-tools] [Error] " + what + "\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix)
+	push_error("[gd-tools] [Error] " + what + "\n\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix)

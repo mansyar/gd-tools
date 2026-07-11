@@ -110,4 +110,4 @@ func _log_summary(hits: Dictionary, output_path: String) -> String:
 
 
 func _log_error(what: String, cause: String, fix: String) -> void:
-	push_error("[gd-tools] [Error] " + what + "\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix)
+	push_error("[gd-tools] [Error] " + what + "\n\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix)
