@@ -1,0 +1,23 @@
+Phase 2 - generate_coverage_report() implementation
+
+Changed files:
+- src/gd_tools/coverage/orchestrator.py: Added generate_coverage_report() function
+  - Resolves effective output_dir: flag > config.coverage.output_dir > default
+  - Resolves effective format: flag > config.coverage.format > default
+  - Reads existing plan.json and coverage.json via plan_generator/reporter
+  - Calls reporter.generate_report() with resolved parameters
+  - Returns ReportResult
+  - Missing files propagate CoveragePlanError from read_coverage_json/read_plan_json
+- tests/unit/test_orchestrator.py: Added 7 tests for generate_coverage_report()
+  - test_generate_coverage_report_reads_plan
+  - test_generate_coverage_report_reads_coverage_data
+  - test_generate_coverage_report_calls_generate_report
+  - test_generate_coverage_report_format_override
+  - test_generate_coverage_report_output_dir_override
+  - test_generate_coverage_report_missing_coverage_raises_plan_error
+  - test_generate_coverage_report_missing_plan_raises_plan_error
+- conductor/tracks/coverage_cli_20260711/plan.md: Marked tasks complete
+
+Test results: 17/17 passed (10 run_coverage_test + 7 generate_coverage_report)
+orchestrator.py coverage: 100%
+Quality: ruff passed, black passed
