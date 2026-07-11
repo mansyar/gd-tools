@@ -26,20 +26,20 @@
 ## Phase 2: Coverage Metrics Computation
 
 - [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Write tests for coverage computation (Red)
-    - [ ] Test `compute_file_summary()` with full coverage (100% line, 100% branch)
-    - [ ] Test `compute_file_summary()` with partial coverage (e.g., 15/20 lines = 75% line rate)
-    - [ ] Test `compute_file_summary()` with zero coverage (0% line, 0% branch)
-    - [ ] Test `compute_file_summary()` correctly identifies `uncovered_lines` list
-    - [ ] Test `compute_file_summary()` branch coverage for `if_true`/`if_false` pair
-    - [ ] Test `compute_file_summary()` branch coverage for `elif_true`, `loop_body`, `match_case`
-    - [ ] Test `compute_summary()` aggregates across multiple files correctly
-    - [ ] Test `compute_summary()` includes zero-coverage files (not omitted)
-    - [ ] Test `compute_summary()` with file in plan but missing from coverage data (all hits = 0)
-- [ ] Task: Implement coverage computation (Green)
-    - [ ] Implement `compute_file_summary(file_plan: FilePlan, file_data: FileCoverage) -> FileSummary`
-    - [ ] Implement `compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary`
-    - [ ] Handle case where file is in plan but not in coverage data (treat as 0 hits)
+- [x] Task: Write tests for coverage computation (Red)
+    - [x] Test `compute_file_summary()` with full coverage (100% line, 100% branch)
+    - [x] Test `compute_file_summary()` with partial coverage (e.g., 15/20 lines = 75% line rate)
+    - [x] Test `compute_file_summary()` with zero coverage (0% line, 0% branch)
+    - [x] Test `compute_file_summary()` correctly identifies `uncovered_lines` list
+    - [x] Test `compute_file_summary()` branch coverage for `if_true`/`if_false` pair
+    - [x] Test `compute_file_summary()` branch coverage for `elif_true`, `loop_body`, `match_case`
+    - [x] Test `compute_summary()` aggregates across multiple files correctly
+    - [x] Test `compute_summary()` includes zero-coverage files (not omitted)
+    - [x] Test `compute_summary()` with file in plan but missing from coverage data (all hits = 0)
+- [x] Task: Implement coverage computation (Green)
+    - [x] Implement `compute_file_summary(file_plan: FilePlan, file_data: FileCoverage) -> FileSummary`
+    - [x] Implement `compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary`
+    - [x] Handle case where file is in plan but not in coverage data (treat as 0 hits)
 - [ ] Task: Conductor - User Manual Verification 'Coverage Metrics Computation' (Protocol in workflow.md)
 
 ## Phase 3: Report Dispatch & Threshold Check
