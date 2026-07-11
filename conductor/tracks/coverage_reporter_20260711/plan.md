@@ -83,21 +83,21 @@
 
 ## Phase 5: Cobertura Reporter
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Write tests for Cobertura reporter (Red)
-    - [ ] Test output XML is well-formed (parseable by `xml.etree.ElementTree`)
-    - [ ] Test root element is `<coverage>` with `line-rate` and `branch-rate` attributes
-    - [ ] Test `<class>` element exists for each file in plan
-    - [ ] Test `<line>` elements have `number`, `hits`, `branch` attributes
-    - [ ] Test branch lines have `condition-coverage` attribute
-    - [ ] Test zero-coverage files are included (all `hits=0`)
-    - [ ] Test `line-rate` and `branch-rate` values match computed metrics
-- [ ] Task: Implement Cobertura reporter (Green)
-    - [ ] Implement `generate_cobertura_report(plan: CoveragePlan, data: CoverageData, output_path: Path) -> Path`
-    - [ ] Build XML tree: `<coverage>` -> `<packages>` -> `<package>` -> `<classes>` -> `<class>` -> `<lines>` -> `<line>`
-    - [ ] Set `line-rate` and `branch-rate` on root and per-class elements
-    - [ ] Use `xml.etree.ElementTree` (stdlib)
-    - [ ] Include zero-coverage files
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Write tests for Cobertura reporter (Red)
+    - [x] Test output XML is well-formed (parseable by `xml.etree.ElementTree`)
+    - [x] Test root element is `<coverage>` with `line-rate` and `branch-rate` attributes
+    - [x] Test `<class>` element exists for each file in plan
+    - [x] Test `<line>` elements have `number`, `hits`, `branch` attributes
+    - [x] Test branch lines have `condition-coverage` attribute
+    - [x] Test zero-coverage files are included (all `hits=0`)
+    - [x] Test `line-rate` and `branch-rate` values match computed metrics
+- [x] Task: Implement Cobertura reporter (Green)
+    - [x] Implement `generate_cobertura_report(plan: CoveragePlan, data: CoverageData, output_path: Path) -> Path`
+    - [x] Build XML tree: `<coverage>` -> `<packages>` -> `<package>` -> `<classes>` -> `<class>` -> `<lines>` -> `<line>`
+    - [x] Set `line-rate` and `branch-rate` on root and per-class elements
+    - [x] Use `xml.etree.ElementTree` (stdlib)
+    - [x] Include zero-coverage files
 - [ ] Task: Conductor - User Manual Verification 'Cobertura Reporter' (Protocol in workflow.md)
 
 ## Phase 6: HTML Reporter

@@ -412,8 +412,12 @@ def generate_report(
         output_path = output_dir / "coverage.info"
         generate_lcov_report(plan, data, output_path)
     elif format == "cobertura":
+        from gd_tools.coverage.cobertura_reporter import (
+            generate_cobertura_report,
+        )
+
         output_path = output_dir / "cobertura.xml"
-        output_path.write_text('<?xml version="1.0"?>\n', encoding="utf-8")
+        generate_cobertura_report(plan, data, output_path)
     else:  # html (format already validated above)
         output_path = output_dir / "index.html"
         output_path.write_text("<html></html>\n", encoding="utf-8")
