@@ -105,22 +105,22 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
     - [ ] Return `ReportResult`
     - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "generate_report" --no-header -q` passes (GREEN)
 
-- [ ] Task: Write failing unit tests for `merge_coverage_files()`
-    - [ ] Test that it calls `reporter.merge_coverage_data(files)` with list of `Path` objects
-    - [ ] Test that it writes merged data to `--output` path (default: `.gd-tools/coverage/coverage.json`)
-    - [ ] Test that it prints merge summary (file count, total hits)
-    - [ ] Test that empty file list raises `ValueError` or appropriate error
-    - [ ] Mock: `reporter.merge_coverage_data`, `reporter.read_coverage_json`
-    - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "merge" --no-header -q` fails as expected (RED)
+- [x] Task: Write failing unit tests for `merge_coverage_files()` (commit pending)
+    - [x] Test that it calls `reporter.merge_coverage_data(files)` with list of `Path` objects
+    - [x] Test that it writes merged data to `--output` path (default: `.gd-tools/coverage/coverage.json`)
+    - [x] Test that it prints merge summary (file count, total hits)
+    - [x] Test that empty file list writes empty output (merge_coverage_data handles empty list gracefully — returns empty CoverageData, no error raised)
+    - [x] Mock: `reporter.merge_coverage_data`
+    - [x] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "merge" --no-header -q` fails as expected (RED)
 
-- [ ] Task: Implement `merge_coverage_files()`
-    - [ ] Signature: `merge_coverage_files(files: list[Path], output: Path | None = None) -> CoverageData`
-    - [ ] Default output: `Path(".gd-tools/coverage/coverage.json")`
-    - [ ] Call `reporter.merge_coverage_data(files)`
-    - [ ] Write merged JSON to output path
-    - [ ] Print merge summary via Rich console
-    - [ ] Return merged `CoverageData`
-    - [ ] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "merge" --no-header -q` passes (GREEN)
+- [x] Task: Implement `merge_coverage_files()` (commit pending)
+    - [x] Signature: `merge_coverage_files(files: list[Path], output: Path | None = None) -> CoverageData`
+    - [x] Default output: `Path.cwd() / ".gd-tools" / "coverage" / "coverage.json"`
+    - [x] Call `reporter.merge_coverage_data(files)`
+    - [x] Write merged JSON to output path
+    - [x] Print merge summary via Rich console
+    - [x] Return merged `CoverageData`
+    - [x] Verify: `CI=true pytest tests/unit/test_orchestrator.py -k "merge" --no-header -q` passes (GREEN)
 
 - [ ] Task: Write failing unit tests for `show_coverage_summary()`
     - [ ] Test that it reads plan + coverage data from `<output_dir>/`
