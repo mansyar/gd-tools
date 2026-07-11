@@ -19,32 +19,32 @@ This plan implements Track 13: wiring coverage components into the CLI. All depe
 
 **Goal:** Complete the coverage env var setup in `run_tests()` so hooks can find plan.json and write coverage.json.
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
-    - [ ] Review spec.md FR-1 (test --coverage flow), NFR-2 (error precedence), NFR-4 (exit codes)
-    - [ ] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to refresh context before starting this phase
+    - [x] Review spec.md FR-1 (test --coverage flow), NFR-2 (error precedence), NFR-4 (exit codes)
+    - [x] Review workflow.md TDD lifecycle and Phase Completion Verification protocol
 
-- [ ] Task: Write failing unit tests for coverage env var setting
-    - [ ] Test that `GD_TOOLS_COVERAGE_PLAN` env var is set to the absolute path of `plan.json` when `coverage=True`
-    - [ ] Test that `GD_TOOLS_COVERAGE_OUTPUT` env var is set to the absolute path of `coverage.json` when `coverage=True`
-    - [ ] Test that `GD_TOOLS_COVERAGE_ACTIVE` is still set to `"1"` (existing behavior, regression guard)
-    - [ ] Test that env vars are NOT set when `coverage=False`
-    - [ ] Test that `coverage_data_path` uses `config.coverage.output_dir` instead of hardcoded `.gd-tools/coverage`
-    - [ ] Verify: `CI=true pytest tests/unit/test_test_runner.py -k "coverage_env" --no-header -q` fails as expected (RED)
+- [x] Task: Write failing unit tests for coverage env var setting
+    - [x] Test that `GD_TOOLS_COVERAGE_PLAN` env var is set to the absolute path of `plan.json` when `coverage=True`
+    - [x] Test that `GD_TOOLS_COVERAGE_OUTPUT` env var is set to the absolute path of `coverage.json` when `coverage=True`
+    - [x] Test that `GD_TOOLS_COVERAGE_ACTIVE` is still set to `"1"` (existing behavior, regression guard)
+    - [x] Test that env vars are NOT set when `coverage=False`
+    - [x] Test that `coverage_data_path` uses `config.coverage.output_dir` instead of hardcoded `.gd-tools/coverage`
+    - [x] Verify: `CI=true pytest tests/unit/test_test_runner.py -k "coverage_env" --no-header -q` fails as expected (RED)
 
-- [ ] Task: Implement env var completion in `run_tests()`
-    - [ ] Add `GD_TOOLS_COVERAGE_PLAN` env var pointing to `<output_dir>/plan.json` (absolute path) when `coverage=True`
-    - [ ] Add `GD_TOOLS_COVERAGE_OUTPUT` env var pointing to `<output_dir>/coverage.json` (absolute path) when `coverage=True`
-    - [ ] Replace hardcoded `project_root / ".gd-tools" / "coverage"` with `project_root / config.coverage.output_dir` for `coverage_data_path`
-    - [ ] Ensure env vars are added to the `env` dict passed to `run_godot()`
-    - [ ] Verify: `CI=true pytest tests/unit/test_test_runner.py -k "coverage_env" --no-header -q` passes (GREEN)
+- [x] Task: Implement env var completion in `run_tests()`
+    - [x] Add `GD_TOOLS_COVERAGE_PLAN` env var pointing to `<output_dir>/plan.json` (absolute path) when `coverage=True`
+    - [x] Add `GD_TOOLS_COVERAGE_OUTPUT` env var pointing to `<output_dir>/coverage.json` (absolute path) when `coverage=True`
+    - [x] Replace hardcoded `project_root / ".gd-tools" / "coverage"` with `project_root / config.coverage.output_dir` for `coverage_data_path`
+    - [x] Ensure env vars are added to the `env` dict passed to `run_godot()`
+    - [x] Verify: `CI=true pytest tests/unit/test_test_runner.py -k "coverage_env" --no-header -q` passes (GREEN)
 
-- [ ] Task: Refactor and verify coverage
-    - [ ] Run `CI=true pytest tests/unit/test_test_runner.py --no-header -q` — all tests pass
-    - [ ] Run `ruff check src/gd_tools/test_runner.py` — no errors
-    - [ ] Run `black --check src/gd_tools/test_runner.py` — no errors
-    - [ ] Document any deviations in plan.md
+- [x] Task: Refactor and verify coverage
+    - [x] Run `CI=true pytest tests/unit/test_test_runner.py --no-header -q` — all tests pass (53 passed)
+    - [x] Run `ruff check src/gd_tools/test_runner.py` — no errors
+    - [x] Run `black --check src/gd_tools/test_runner.py` — no errors
+    - [x] Document any deviations in plan.md
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: test_runner.py — Coverage Env Var Completion' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: test_runner.py — Coverage Env Var Completion' (Protocol in workflow.md)
 
 ---
 
