@@ -1,7 +1,7 @@
 <protect>
 # Implementation Plan: Coverage Hooks (Instrumentation Engine)
 
-## Phase 1: Project Setup
+## Phase 1: Project Setup [checkpoint: d1d0668]
 
 - [x] Task: Read spec.md and workflow.md before starting this phase
     - [x] Read `conductor/tracks/coverage_hooks_20260711/spec.md` for context
@@ -18,7 +18,7 @@
 - [x] Task: Set up Python integration test structure
     - [x] Create `tests/integration/test_coverage_hooks.py` (skeleton with 5 test stubs, skip markers, and setup function)
     - [x] Reuses existing `tests/fixtures/projects/sample_project` fixture for end-to-end tests
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Setup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Project Setup' (Protocol in workflow.md)
 
 ## Phase 2: pre_run_hook.gd — Plan Loading (TDD)
 
