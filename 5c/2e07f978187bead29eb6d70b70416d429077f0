@@ -1,0 +1,14 @@
+Task 1.2: Create root conftest.py
+
+Summary: Updated root conftest.py to add find_godot_binary() helper function and godot_bin session fixture. The fixture resolves Godot binary from GODOT_BIN env var (with file existence check) or shutil.which('godot'/'godot4'). Returns None when not found. The .env loading was already present and unchanged. The find_godot_binary() helper is shared with per-tier conftests (Task 1.3) for auto-skip behavior.
+
+Files modified:
+- conftest.py: Added shutil import, pytest import, find_godot_binary() function, godot_bin fixture
+- conductor/tracks/test_suite_20260712/plan.md: Task 1.2 marked complete
+
+Verification:
+- pytest --co collects 597 tests without errors
+- Existing skip_if_no_godot markers in integration/e2e tests continue to work
+- doctor integration test passes (2 passed)
+
+Why: TESTING_STRATEGY §3 and spec FR-1.1 require root conftest to provide godot_bin fixture for use by per-tier conftests and unit tests.
