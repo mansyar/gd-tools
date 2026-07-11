@@ -1,0 +1,31 @@
+Phase 1 Implementation Details (Track 10: Coverage Tracker Addon)
+
+Files Created/Modified:
+1. src/gd_tools/addons/gd-tools-coverage/coverage.gd - Full implementation replacing placeholder
+2. tests/fixtures/gdscript/test_coverage_tracker.gd - GUT test with 6 test functions
+3. tests/integration/test_coverage_tracker_integration.py - Python integration test wrapper
+
+Verification Results:
+- gdlint: PASSED (coverage.gd and test_coverage_tracker.gd)
+- gdformat --check: PASSED (both files left unchanged)
+- ruff check: PASSED (test_coverage_tracker_integration.py)
+- black --check: PASSED (test_coverage_tracker_integration.py)
+- pytest --collect-only: PASSED (1 test collected)
+- GUT tests require real Godot runtime to execute (integration test)
+
+coverage.gd Implementation:
+- extends Node, _hits: Dictionary (nested int->int->int), _active: bool
+- _ready(): reads GD_TOOLS_COVERAGE_ACTIVE env var, true only for '1'/'true' case-insensitive
+- hit(file_id, line_id): single bool check for _active, no-op when inactive
+- get_hits(): returns _hits Dictionary
+- reset(): clears _hits
+- set_active(bool): sets _active flag
+- is_active(): returns _active flag
+
+GUT Test Functions:
+- test_hit_records_correctly_when_active
+- test_multiple_hits_increment_counter
+- test_reset_clears_all_data
+- test_hit_noop_when_inactive
+- test_set_active_is_active_toggle
+- test_get_hits_returns_nested_dictionary
