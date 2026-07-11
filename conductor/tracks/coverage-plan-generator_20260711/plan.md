@@ -139,14 +139,14 @@
     - [ ] Verify benchmark passes
     - [ ] Commit: `test(coverage): add performance benchmark`
 
-- [ ] Task: Final quality gate verification
-    - [ ] Run full test suite: `CI=true pytest` — all tests pass
-    - [ ] Verify `plan_generator.py` coverage >80% line / >70% branch
-    - [ ] Run `ruff check src/gd_tools/coverage/plan_generator.py` — passes
-    - [ ] Run `ruff check tests/unit/test_plan_generator.py` — passes
-    - [ ] Run `black --check src/gd_tools/coverage/plan_generator.py` — passes
-    - [ ] Run `black --check tests/unit/test_plan_generator.py` — passes
-    - [ ] Commit (if any formatting fixes needed): `style(coverage): format plan_generator code`
+- [x] Task: Final quality gate verification
+    - [x] Run full test suite: `CI=true pytest` — all tests pass
+    - [x] Verify `plan_generator.py` coverage >80% line / >70% branch
+    - [x] Run `ruff check src/gd_tools/coverage/plan_generator.py` — passes
+    - [x] Run `ruff check tests/unit/test_plan_generator.py` — passes
+    - [x] Run `black --check src/gd_tools/coverage/plan_generator.py` — passes
+    - [x] Run `black --check tests/unit/test_plan_generator.py` — passes
+    - [x] Commit (if any formatting fixes needed): `style(coverage): format plan_generator code`
 
 - [ ] Task: Conductor - User Manual Verification 'Performance & Final Quality' (Protocol in workflow.md)
 </protect>
