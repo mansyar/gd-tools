@@ -1,0 +1,11 @@
+Task: Implement tools/generate_expected_plans.py
+
+- Created tools/generate_expected_plans.py with regenerate_expected_plans() and main() functions
+- Script accepts --fixtures-dir and --output-dir arguments with sensible defaults
+- For each .gd fixture, creates isolated temp dir, runs generate_plan, writes JSON
+- Created tests/unit/test_generate_expected_plans.py with 2 tests:
+  - test_script_regenerates_all_fixtures: verifies 6 JSON files produced
+  - test_regenerated_fixtures_match_committed: verifies no drift vs committed fixtures
+- Tests use subprocess to run the script end-to-end
+- All 429 tests pass, 98.52% coverage
+- ruff: clean, black: clean
