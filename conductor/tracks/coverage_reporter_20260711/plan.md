@@ -148,17 +148,17 @@
 
 ## Phase 8: Final Integration & Coverage Verification
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Wire all reporters into `generate_report()` dispatch
-    - [ ] Replace any stub/placeholder calls in `generate_report()` with actual reporter implementations
-    - [ ] Verify all four formats (html, lcov, cobertura, terminal) work end-to-end via `generate_report()`
-- [ ] Task: Run full test suite and verify coverage thresholds
-    - [ ] Run `ruff check src/ tests/` -- must pass with no errors
-    - [ ] Run `black --check src/ tests/` -- must pass with no changes needed
-    - [ ] Run `CI=true pytest` -- all tests must pass
-    - [ ] Run `CI=true pytest --cov=src/gd_tools/coverage --cov-report=term-missing` -- verify >80% line coverage and >70% branch coverage for all new modules
-    - [ ] Manually verify HTML report renders correctly in a browser (visual spot-check)
-    - [ ] Manually verify LCOV output with `lcov --summary` if available, or validate format manually
-    - [ ] Manually verify Cobertura XML parses with a standard XML parser
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Wire all reporters into `generate_report()` dispatch
+    - [x] Replace any stub/placeholder calls in `generate_report()` with actual reporter implementations
+    - [x] Verify all four formats (html, lcov, cobertura, terminal) work end-to-end via `generate_report()`
+- [x] Task: Run full test suite and verify coverage thresholds
+    - [x] Run `ruff check src/ tests/` -- must pass with no errors
+    - [x] Run `black --check src/ tests/` -- must pass with no changes needed
+    - [x] Run `CI=true pytest` -- all tests must pass
+    - [x] Run `CI=true pytest --cov=src/gd_tools/coverage --cov-report=term-missing` -- verify >80% line coverage and >70% branch coverage for all new modules
+    - [x] Manually verify HTML report renders correctly in a browser (visual spot-check)
+    - [x] Manually verify LCOV output with `lcov --summary` if available, or validate format manually
+    - [x] Manually verify Cobertura XML parses with a standard XML parser
 - [ ] Task: Conductor - User Manual Verification 'Final Integration & Coverage Verification' (Protocol in workflow.md)
 </protect>
