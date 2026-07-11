@@ -404,8 +404,13 @@ def generate_report(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if format == "terminal":
+        from gd_tools.coverage.terminal_reporter import (
+            generate_terminal_report,
+        )
+
         output_path = output_dir / "coverage_report.txt"
-        output_path.write_text("Coverage Report\n", encoding="utf-8")
+        report_text = generate_terminal_report(plan, data)
+        output_path.write_text(report_text, encoding="utf-8")
     elif format == "lcov":
         from gd_tools.coverage.lcov_reporter import generate_lcov_report
 
