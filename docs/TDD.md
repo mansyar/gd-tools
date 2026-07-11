@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Reporter delivered (Track 12)
+**Status:** Phase 3 Complete — Coverage CLI Integration delivered (Track 13)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -43,6 +43,7 @@ src/gd_tools/
 ├── errors.py                 # Exception hierarchy
 ├── coverage/
 │   ├── __init__.py
+│   ├── orchestrator.py        # Coverage CLI orchestration (test --coverage, report, merge, show)
 │   ├── plan_generator.py     # Lark AST → instrumentation plan (JSON)
 │   ├── reporter.py           # Coverage data → report dispatch
 │   ├── html_reporter.py     # Jinja2 HTML report
@@ -69,7 +70,10 @@ cli.py
 ├── doctor.py (→ config, godot)
 ├── test_runner.py (→ config, godot, coverage/plan_generator, coverage/reporter)
 ├── lint_runner.py (→ config)
-└── format_runner.py (→ config)
+├── format_runner.py (→ config)
+└── coverage/
+    ├── orchestrator.py (→ config, test_runner, plan_generator, reporter, errors)
+    └── __init__.py (→ orchestrator: re-exports run_coverage_test, generate_coverage_report, merge_coverage_files, show_coverage_summary)
 
 coverage/plan_generator.py → gdtoolkit (external)
 coverage/reporter.py → coverage/html_reporter, coverage/lcov_reporter, coverage/cobertura_reporter, coverage/terminal_reporter
@@ -1117,6 +1121,103 @@ def generate_terminal_report(
     Prints color-coded table to stdout.
     Returns CoverageSummary."""
 ```
+
+---
+
+### 3.16 `coverage/orchestrator.py` — Coverage CLI Orchestration
+
+> **Implemented:** Track 13 (`coverage_cli_20260711`, archived). See
+> `src/gd_tools/coverage/orchestrator.py` (275 lines). All 12 acceptance
+> criteria passed. CLI commands are thin wrappers that delegate to
+> orchestrator functions (NFR-1). Error precedence: `TestFailureError`
+> reported before `CoverageThresholdError` (NFR-2). 547 unit tests total
+> (25+ in `test_orchestrator.py`). Review fixes (commit `1f69f12`):
+> `format` param renamed to `report_format`, `merge_coverage_files()` accepts
+> optional `config` param for config-aware default output path,
+> `write_coverage_json()` added to `reporter.py`, Cause/Fix error format
+> applied to `show_coverage_summary()` threshold error.
+
+```python
+def run_coverage_test(
+    config: GdToolsConfig,
+    min_percent: int | None = None,
+    suite: str | None = None,
+    test_name: str | None = None,
+    junit_xml: str | None = None,
+    no_exit_code: bool = False,
+    timeout: int | None = None,
+) -> TestResult:
+    """Run tests with coverage instrumentation enabled.
+    1. Generate plan (plan_generator.generate_plan)
+    2. Write plan.json to config.coverage.output_dir
+    3. Set env vars: GD_TOOLS_COVERAGE_ACTIVE=1, GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
+    4. Run tests via test_runner.run_tests(coverage=True)
+    5. Read coverage.json + plan.json
+    6. Generate reports (reporter.generate_report)
+    7. Apply --min threshold (raises CoverageThresholdError if below)
+    Error precedence (NFR-2): TestFailureError reported first, then CoverageThresholdError."""
+
+def generate_coverage_report(
+    config: GdToolsConfig,
+    report_format: str | None = None,
+    output_dir: str | None = None,
+) -> ReportResult:
+    """Regenerate reports from existing coverage data without re-running tests.
+    Reads plan.json + coverage.json from config.coverage.output_dir.
+    Calls reporter.generate_report() with format/output_dir overrides."""
+
+def merge_coverage_files(
+    files: list[Path],
+    output: Path | None = None,
+    config: GdToolsConfig | None = None,
+) -> Path:
+    """Merge multiple coverage data files into one.
+    Uses reporter.merge_coverage_data() to sum hit counts per file_id/line_id.
+    Writes merged JSON via reporter.write_coverage_json().
+    Default output: config.coverage.output_dir / coverage.json (or .gd-tools/coverage/coverage.json)."""
+
+def show_coverage_summary(
+    config: GdToolsConfig,
+    min_percent: int | None = None,
+) -> CoverageSummary:
+    """Print terminal summary table from existing coverage data.
+    Reads plan.json + coverage.json, computes summary via reporter.
+    Prints Rich table (Lines/Branches with Found/Hit/Rate).
+    Raises CoverageThresholdError if line_rate*100 < min_percent (Cause/Fix format)."""
+```
+
+**Implementation notes (Track 13, 2026-07-12):**
+
+- `orchestrator.py` contains all coverage CLI business logic; CLI commands
+  in `cli.py` are thin wrappers that load config and delegate (NFR-1).
+- `run_coverage_test()` error precedence (NFR-2): catches
+  `TestFailureError` from `run_tests()`, stores it, still generates reports,
+  then re-raises: `TestFailureError` first if both occurred (test failures
+  take priority over coverage threshold).
+- `test_runner.py` `run_tests()` accepts `min_percent` but stores it
+  without enforcement ("enforcement deferred to orchestrator" comment) —
+  no double-checking. Threshold enforcement happens in
+  `reporter.generate_report()` via `min_threshold` parameter.
+- `test_runner.py` env vars: `coverage=True` sets
+  `GD_TOOLS_COVERAGE_ACTIVE=1`, `GD_TOOLS_COVERAGE_PLAN` (absolute path to
+  `plan.json`), `GD_TOOLS_COVERAGE_OUTPUT` (absolute path to
+  `coverage.json`). Uses `config.coverage.output_dir`.
+- `post_run_hook.gd` updated: converted flat hits dict
+  (`"file_id:line_id"`) to per-file format
+  (`{files:[{file_id, hits:{line_id:count}}]}`) to match reporter's
+  `CoverageData` model. Added `_hits_to_files()` helper.
+- CLI `test --coverage`: `TestFailureError` → exit 1,
+  `CoverageThresholdError` → exit 1 (via `GdToolsError` handler),
+  `CoveragePlanError` → exit 2 (via `GdToolsError` handler). ✅ NFR-4
+- CLI `coverage merge`: loads config (with `ConfigError` handler → exit 2),
+  passes `config=config` to `merge_coverage_files()`.
+- CLI `coverage show`: `CoverageThresholdError` → exit 1,
+  `GdToolsError` → exit `e.exit_code`.
+- Deviations documented in plan.md: `--timeout` added, `--min` changed
+  `float`→`int` in `test` and `show` commands.
+- Phase 5 bug fixes: `post_run_hook.gd` format mismatch, missing
+  `_GDTCoverage` autoload in fixture project, `pre_run_hook` `else:`
+  injection workaround.
 
 ---
 

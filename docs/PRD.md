@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Reporter delivered (Track 12)
+**Status:** Phase 3 Complete — Coverage CLI Integration delivered (Track 13)
 **Target Godot Version:** 4.5+
 
 ---
@@ -447,6 +447,7 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 │     - Terminal summary table                                 │
 │     ✅ Implemented — Track 12 (see below)                    │
 │ 14. Apply --min threshold (exit 1 if below)                 │
+│     ✅ Implemented — Track 13 (coverage/orchestrator.py)     │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -701,6 +702,7 @@ gd-tools/
 │       ├── format_runner.py     # `gd-tools format` — gdformat wrapper
 │       ├── coverage/
 │       │   ├── __init__.py
+│       │   ├── orchestrator.py    # Coverage CLI orchestration (test --coverage, report, merge, show)
 │       │   ├── plan_generator.py # Parse GDScript, build instrumentation plan
 │       │   ├── reporter.py       # Read coverage data, generate reports
 │       │   ├── html_reporter.py  # Jinja2 HTML report

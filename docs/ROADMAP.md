@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 3 In Progress — Coverage Reporter delivered (Track 12)
+**Status:** Phase 3 Complete — Coverage CLI Integration delivered (Track 13)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -73,7 +73,7 @@ Total estimated effort: ~25-30 days
 | **M0: Spike Pass** ✅ | Phase 0 | ✅ ACHIEVED — Runtime GDScript instrumentation validated (2026-07-09). All 6 success criteria passed. Architecture C confirmed. |
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
 | **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
-| **M3: Coverage Alpha** 🔄 | Phase 3 | `gd-tools test --coverage` produces line+branch reports — Tracks 9, 10, 11 & 12 complete, Track 13 (CLI integration) next |
+| **M3: Coverage Alpha** ✅ | Phase 3 | ✅ ACHIEVED — `gd-tools test --coverage` produces line+branch reports; all Phase 3 tracks (9-13) complete (2026-07-12) |
 | **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80% coverage |
 
 ---
@@ -1127,16 +1127,19 @@ partially met — deferred to future track.
 
 ---
 
-### Track 13: Coverage CLI Integration
+### Track 13: Coverage CLI Integration ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
 | **Phase** | 3 — MVP2 |
 | **Goal** | Wire coverage components into the CLI — `test --coverage`, `coverage report/merge/show` |
 | **Dependencies** | Track 6 (test runner), Track 9 (plan gen), Track 11 (hooks), Track 12 (reporter) |
-| **Modules** | `src/gd_tools/cli.py` (update), `src/gd_tools/coverage/__init__.py` |
+| **Modules** | `src/gd_tools/cli.py` (update), `src/gd_tools/coverage/orchestrator.py` (new), `src/gd_tools/coverage/__init__.py` |
 | **Effort** | 1-2 days |
 | **Risk** | LOW — wiring, no new complex logic |
+| **Status** | ✅ **COMPLETED** (2026-07-12) — All 12 acceptance criteria passed |
+| **Conductor track** | `coverage_cli_20260711` (archived to `conductor/archive/`) |
+| **Commits** | `9317351`..`2266d07` + review fixes `1f69f12` |
 
 **Scope:**
 - `gd-tools test --coverage`:
@@ -1162,8 +1165,11 @@ partially met — deferred to future track.
 
 **Deliverables:**
 - Updated `cli.py` with coverage command wiring
-- `coverage/__init__.py` with orchestration logic
-- E2E test: full `gd-tools test --coverage` on sample project
+- `coverage/orchestrator.py` with orchestration logic (new module)
+- `coverage/__init__.py` re-exporting orchestrator functions
+- Unit tests: `test_orchestrator.py` (25+ tests), updated `test_cli.py`, `test_test_runner.py`
+- Integration tests: `test_coverage_cli_integration.py` (6 tests, skipif no Godot)
+- E2E tests: `test_coverage_e2e.py` (8 tests, skipif no Godot)
 
 **Success Criteria:**
 1. `gd-tools test --coverage` runs tests, collects coverage, generates HTML report
@@ -1175,7 +1181,42 @@ partially met — deferred to future track.
 7. JUnit XML still produced alongside coverage (both available)
 8. Full end-to-end works on Windows, macOS, Linux
 
-**Key TDD references:** §5 (End-to-end flow), §3 (Module: cli.py)
+**Key TDD references:** §5 (End-to-end flow), §3 (Module: cli.py + coverage/orchestrator.py)
+
+**Track 13 Results (2026-07-12):**
+- ✅ All 12 acceptance criteria PASSED
+- ✅ 547 unit tests passed; overall coverage maintained at ~98%
+- ✅ `ruff check` + `black --check` pass
+- **Key implementation:**
+  - `orchestrator.py` (275 lines): 4 functions — `run_coverage_test()`,
+    `generate_coverage_report()`, `merge_coverage_files()`,
+    `show_coverage_summary()`. CLI commands are thin wrappers (NFR-1).
+  - Error precedence (NFR-2): `TestFailureError` reported first, then
+    `CoverageThresholdError`. `run_coverage_test()` catches test errors,
+    still generates reports, then re-raises in correct priority order.
+  - `test_runner.py`: `coverage=True` sets `GD_TOOLS_COVERAGE_ACTIVE=1`,
+    `GD_TOOLS_COVERAGE_PLAN`, `GD_TOOLS_COVERAGE_OUTPUT` env vars.
+    `min_percent` accepted but enforcement deferred to orchestrator
+    (no double-checking).
+  - `post_run_hook.gd`: Converted flat hits dict to per-file format
+    (`{files:[{file_id, hits:{line_id:count}}]}`) to match reporter's
+    `CoverageData` model. Added `_hits_to_files()` helper.
+  - Deviations documented in plan.md: `--timeout` added, `--min` changed
+    `float`→`int`, added `_GDTCoverage` autoload to fixture project.
+  - Phase 5 bug fixes: `post_run_hook.gd` format mismatch, missing
+    `_GDTCoverage` autoload, `pre_run_hook` `else:` injection workaround.
+- **Review fixes (commit `1f69f12`):**
+  1. MEDIUM — Fixed docstring format name mismatch: `"terminal"` → `"text"`
+     in `orchestrator.py` and `reporter.py` docstrings
+  2. MEDIUM — `merge_coverage_files()` now accepts optional `config` param;
+     default output path respects `config.coverage.output_dir` instead of
+     hardcoded `Path.cwd()`
+  3. LOW — Added `write_coverage_json()` to `reporter.py`;
+     `merge_coverage_files()` uses it instead of manual JSON dict construction
+  4. LOW — Renamed `format` → `report_format` parameter in
+     `generate_coverage_report()` (shadows builtin)
+  5. LOW — `CoverageThresholdError` message in `show_coverage_summary()`
+     updated to Cause/Fix format per product-guidelines §4
 
 ---
 

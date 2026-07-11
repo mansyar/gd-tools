@@ -14,6 +14,7 @@ build/
 # gd-tools runtime
 .gd-tools/
 .godot/
+out.json
 
 # Local environment
 .env
