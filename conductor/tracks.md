@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Coverage Reporter**
+- [~] **Track: Coverage Reporter**
 *Link: [./tracks/coverage_reporter_20260711/](./tracks/coverage_reporter_20260711/)*
 
 
