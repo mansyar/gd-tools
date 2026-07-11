@@ -1,7 +1,9 @@
+<protect>
 # Track 12: Coverage Reporter -- Implementation Plan
 
 ## Phase 1: Test Fixtures & Data Models
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Update existing test fixtures to Track 11 runtime format
     - [ ] Update `tests/fixtures/coverage_data/full_coverage.json` -- replace `"path"` key with `"file_id"` + `"hits"` (string keys)
     - [ ] Update `tests/fixtures/coverage_data/partial_coverage.json` -- same format change
@@ -23,6 +25,7 @@
 
 ## Phase 2: Coverage Metrics Computation
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Write tests for coverage computation (Red)
     - [ ] Test `compute_file_summary()` with full coverage (100% line, 100% branch)
     - [ ] Test `compute_file_summary()` with partial coverage (e.g., 15/20 lines = 75% line rate)
@@ -41,6 +44,7 @@
 
 ## Phase 3: Report Dispatch & Threshold Check
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Write tests for report dispatch and threshold (Red)
     - [ ] Test `generate_report()` with `format="terminal"` returns `ReportResult` with correct format
     - [ ] Test `generate_report()` with `format="lcov"` dispatches to LCOV reporter
@@ -60,6 +64,7 @@
 
 ## Phase 4: LCOV Reporter
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Write tests for LCOV reporter (Red)
     - [ ] Test output file contains `TN:` record
     - [ ] Test output file contains `SF:<res_path>` for each file in plan
@@ -78,6 +83,7 @@
 
 ## Phase 5: Cobertura Reporter
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Write tests for Cobertura reporter (Red)
     - [ ] Test output XML is well-formed (parseable by `xml.etree.ElementTree`)
     - [ ] Test root element is `<coverage>` with `line-rate` and `branch-rate` attributes
@@ -96,6 +102,7 @@
 
 ## Phase 6: HTML Reporter
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Create Jinja2 HTML templates
     - [ ] Create `src/gd_tools/coverage/templates/index.html` -- summary table with sortable columns
     - [ ] Create `src/gd_tools/coverage/templates/file.html` -- per-file source view with highlighting
@@ -122,6 +129,7 @@
 
 ## Phase 7: Terminal Reporter
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Write tests for terminal reporter (Red)
     - [ ] Test `generate_terminal_report()` returns a string (not None)
     - [ ] Test output contains Rich table with columns: File, Lines Found, Lines Hit, Line %, Branches Found, Branches Hit, Branch %
@@ -140,6 +148,7 @@
 
 ## Phase 8: Final Integration & Coverage Verification
 
+- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
 - [ ] Task: Wire all reporters into `generate_report()` dispatch
     - [ ] Replace any stub/placeholder calls in `generate_report()` with actual reporter implementations
     - [ ] Verify all four formats (html, lcov, cobertura, terminal) work end-to-end via `generate_report()`
@@ -152,3 +161,4 @@
     - [ ] Manually verify LCOV output with `lcov --summary` if available, or validate format manually
     - [ ] Manually verify Cobertura XML parses with a standard XML parser
 - [ ] Task: Conductor - User Manual Verification 'Final Integration & Coverage Verification' (Protocol in workflow.md)
+</protect>

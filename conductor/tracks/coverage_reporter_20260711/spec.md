@@ -1,3 +1,4 @@
+<protect>
 # Track 12: Coverage Reporter
 
 ## Overview
@@ -107,3 +108,4 @@ This module is the final reporting layer of the hybrid coverage system (Architec
 - Diff coverage (only changed lines) -- future enhancement.
 - Custom report themes or templates -- future enhancement.
 - Integration with external CI services beyond standard format compliance (no direct API uploads to codecov.io/coveralls; just generating compatible files).
+</protect>
