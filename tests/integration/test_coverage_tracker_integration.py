@@ -8,7 +8,9 @@ All tests are marked ``@pytest.mark.integration`` and are automatically
 skipped when the Godot binary is not available on PATH.
 """
 
+import os
 import shutil
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -25,6 +27,25 @@ skip_if_no_godot = pytest.mark.skipif(
     shutil.which("godot") is None,
     reason="Godot binary not found in PATH",
 )
+
+
+def _find_godot_binary() -> str:
+    """Find the Godot binary path (GODOT_BIN env var or PATH lookup)."""
+    return os.environ.get("GODOT_BIN") or shutil.which("godot") or ""
+
+
+def _import_project(project_path: Path) -> None:
+    """Run ``godot --headless --import`` to register GUT class names.
+
+    GUT requires its class_names to be registered before it can run.
+    This step must be done once per project before invoking GUT.
+    """
+    binary = _find_godot_binary()
+    subprocess.run(
+        [binary, "--headless", "--path", str(project_path), "--import"],
+        capture_output=True,
+        timeout=60,
+    )
 
 
 def _setup_coverage_project(tmp_path: Path) -> Path:
@@ -59,6 +80,8 @@ def _setup_coverage_project(tmp_path: Path) -> Path:
             '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"\n'
         )
         project_godot.write_text(content)
+    # Import project so GUT class_names are registered
+    _import_project(tmp_path)
     return tmp_path
 
 
@@ -69,7 +92,7 @@ def test_coverage_tracker_gut_tests_pass(tmp_path):
     project = _setup_coverage_project(tmp_path)
     config = GdToolsConfig()
     with patch("gd_tools.test_runner.find_project_root", return_value=project):
-        result = run_tests(config, suite="res://test/test_coverage_tracker.gd")
+        result = run_tests(config, suite="test_coverage_tracker.gd")
 
     assert result.failed == 0
     assert result.passed == 6
