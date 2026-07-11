@@ -129,21 +129,21 @@
 
 ## Phase 7: Terminal Reporter
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting this phase
-- [ ] Task: Write tests for terminal reporter (Red)
-    - [ ] Test `generate_terminal_report()` returns a string (not None)
-    - [ ] Test output contains Rich table with columns: File, Lines Found, Lines Hit, Line %, Branches Found, Branches Hit, Branch %
-    - [ ] Test output contains overall summary at bottom
-    - [ ] Test zero-coverage files appear in table with 0% metrics
-    - [ ] Test output includes all files from plan
-    - [ ] Test color coding logic (green >=80%, yellow 50-79%, red <50%) -- verify color markers present
-- [ ] Task: Implement terminal reporter (Green)
-    - [ ] Implement `generate_terminal_report(plan: CoveragePlan, data: CoverageData) -> str`
-    - [ ] Build Rich `Table` with coverage columns
-    - [ ] Add per-file rows with color-coded percentages
-    - [ ] Add overall summary row
-    - [ ] Use `rich.console.Console` to render table to string
-    - [ ] Include zero-coverage files
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting this phase
+- [x] Task: Write tests for terminal reporter (Red)
+    - [x] Test `generate_terminal_report()` returns a string (not None)
+    - [x] Test output contains Rich table with columns: File, Lines Found, Lines Hit, Line %, Branches Found, Branches Hit, Branch %
+    - [x] Test output contains overall summary at bottom
+    - [x] Test zero-coverage files appear in table with 0% metrics
+    - [x] Test output includes all files from plan
+    - [x] Test color coding logic (green >=80%, yellow 50-79%, red <50%) -- verify color markers present
+- [x] Task: Implement terminal reporter (Green)
+    - [x] Implement `generate_terminal_report(plan: CoveragePlan, data: CoverageData) -> str`
+    - [x] Build Rich `Table` with coverage columns
+    - [x] Add per-file rows with color-coded percentages
+    - [x] Add overall summary row
+    - [x] Use `rich.console.Console` to render table to string
+    - [x] Include zero-coverage files
 - [ ] Task: Conductor - User Manual Verification 'Terminal Reporter' (Protocol in workflow.md)
 
 ## Phase 8: Final Integration & Coverage Verification
