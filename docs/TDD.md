@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Tracker Addon delivered (Track 10)
+**Status:** Phase 3 In Progress — Coverage Hooks delivered (Track 11)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -1127,6 +1127,17 @@ func is_active() -> bool:
 > **Spike-validated:** GUT hooks must `extends GutHookScript` (not `RefCounted`)
 > and use `run()` method (not `_init()`). GUT instantiates the hook script and
 > calls `run()`. The `_inject_trackers` method is `static` for testability.
+>
+> **Implemented:** Track 11 (`coverage_hooks_20260711`, archived). See
+> `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (228 lines). All 12
+> acceptance criteria passed. Key deviations from spec below:
+> - `_validate_plan()` and `_validate_file_entry()` validate plan schema
+>   (version, files, file_id, path, lines, and each line entry's `line`/`id`)
+> - `_log_error(what, cause, fix)` uses Cause/Fix format (product-guidelines)
+> - `_activate_tracker()` finds `_GDTCoverage` autoload via `SceneTree.root`
+> - `_instrument_file()` returns `bool`; `TRACKER_NAME` constant added
+> - 28 GUT tests in `test_pre_run_hook.gd`, 11 integration tests in
+>   `test_coverage_hooks.py`. Overall coverage 98.65%.
 
 ```gdscript
 extends GutHookScript
@@ -1225,6 +1236,18 @@ line numbers), set `source_code`, call `reload()`.
 
 > **Spike-validated:** GUT hooks must `extends GutHookScript` (not `RefCounted`)
 > and use `run()` method (not `_init()`).
+>
+> **Implemented:** Track 11 (`coverage_hooks_20260711`, archived). See
+> `src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd` (113 lines). All 12
+> acceptance criteria passed. Key deviations from spec below:
+> - `run()` checks `tracker.is_active()` before collecting data (no output if
+>   tracker was never activated)
+> - `_log_error()` uses Cause/Fix format (product-guidelines)
+> - `_log_summary(hits, output_path)` prints file/line counts + output path,
+>   also returns summary string
+> - `_write_json()` returns `bool`; `TRACKER_NAME` constant added
+> - 13 GUT tests in `test_post_run_hook.gd`, 11 integration tests in
+>   `test_coverage_hooks.py`. Overall coverage 98.65%.
 
 ```gdscript
 extends GutHookScript

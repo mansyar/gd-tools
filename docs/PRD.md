@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Tracker Addon delivered (Track 10)
+**Status:** Phase 3 In Progress — Coverage Hooks delivered (Track 11)
 **Target Godot Version:** 4.5+
 
 ---
@@ -460,6 +460,14 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 > See `src/gd_tools/addons/gd-tools-coverage/coverage.gd`. All 7 success
 > criteria passed. Tracker deployed via `register_coverage_autoload()` in
 > `init.py`. 6 GUT tests in `test_coverage_tracker.gd`.
+>
+> **Hooks implemented:** Track 11 (`coverage_hooks_20260711`, archived). See
+> `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (228 lines) and
+> `post_run_hook.gd` (113 lines). All 12 acceptance criteria passed. Key
+> deviations from spec: added plan schema validation (`_validate_plan`,
+> `_validate_file_entry`), Cause/Fix error format (`_log_error`), tracker
+> activation guard (`is_active` check in post-run). 28+13 GUT tests + 11
+> integration tests in `test_coverage_hooks.py`.
 
 ```json
 {

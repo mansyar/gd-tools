@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 3 In Progress — Coverage Tracker Addon delivered (Track 10)
+**Status:** Phase 3 In Progress — Coverage Hooks delivered (Track 11)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -73,7 +73,7 @@ Total estimated effort: ~25-30 days
 | **M0: Spike Pass** ✅ | Phase 0 | ✅ ACHIEVED — Runtime GDScript instrumentation validated (2026-07-09). All 6 success criteria passed. Architecture C confirmed. |
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
 | **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
-| **M3: Coverage Alpha** 🔄 | Phase 3 | `gd-tools test --coverage` produces line+branch reports — Tracks 9 & 10 complete, Track 11 (hooks) next |
+| **M3: Coverage Alpha** 🔄 | Phase 3 | `gd-tools test --coverage` produces line+branch reports — Tracks 9, 10 & 11 complete, Track 12 (reporter) next |
 | **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80% coverage |
 
 ---
@@ -937,7 +937,7 @@ FIRST integration tests to ever actually run.
 
 ---
 
-### Track 11: Coverage Hooks (Instrumentation Engine)
+### Track 11: Coverage Hooks (Instrumentation Engine) ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
@@ -947,6 +947,9 @@ FIRST integration tests to ever actually run.
 | **Modules** | `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`, `post_run_hook.gd` |
 | **Effort** | 3-4 days |
 | **Risk** | HIGH — core innovation, source injection + reload |
+| **Status** | ✅ **COMPLETED** (2026-07-11) — All 12 acceptance criteria passed |
+| **Conductor track** | `coverage_hooks_20260711` (archived to `conductor/archive/`) |
+| **Commits** | `d1d0668`..`ed65874` (11 commits) + review fixes `47ed18a`, `431eafd`, `a4f139b` |
 
 **Scope:**
 - **`pre_run_hook.gd`:**
@@ -987,6 +990,49 @@ FIRST integration tests to ever actually run.
 **Key TDD references:** §6 (GDScript Addon: hooks), §5 (End-to-end flow)
 
 **Reference:** SPIKE_coverage_instrumentation.md contains the POC implementation. This track productionizes it.
+
+**Track 11 Results (2026-07-11):**
+- ✅ All 12 acceptance criteria PASSED
+- ✅ 452 unit tests passed (98.65% overall coverage), 11 integration tests
+  passed (all GUT suites pass inside them), 0 failed
+- ✅ ruff check + black --check pass
+- ✅ gdlint + gdformat pass on GDScript files
+- **Test breakdown:** 28 GUT tests in `test_pre_run_hook.gd` (plan loading,
+  validation, instrumentation, indentation, tracker activation), 13 GUT tests
+  in `test_post_run_hook.gd` (tracker retrieval, JSON building, file writing,
+  summary logging, run flow), 11 integration tests in
+  `test_coverage_hooks.py` (GUT suite pass-through, end-to-end flow, missing
+  env vars, malformed plan, nonexistent script, headless mode, performance
+  50 files <60s, empty plan, unloadable script)
+- **Review fixes applied:**
+  1. Added line entry validation in `_validate_file_entry` — each line_entry
+     must be a Dictionary with `line` and `id` keys (prevents unhandled
+     runtime crash on malformed plans)
+  2. Fixed `_log_error` in both hooks — changed `\n` to `\n\n` before
+     Cause/Fix section per product-guidelines (blank line between error
+     description and Cause/Fix)
+- **Key implementation notes (pre_run_hook.gd, 228 lines):**
+  - `run()` reads `GD_TOOLS_COVERAGE_PLAN` env var, calls `_load_plan()`,
+    `_validate_plan()`, `_instrument_files()`, `_activate_tracker()`
+  - `_validate_plan()` validates version, files list; `_validate_file_entry()`
+    validates file_id, path, lines, and each line entry's `line`/`id` keys
+  - `_instrument_file()` loads script via `load()`, gets `source_code`, calls
+    `_inject_trackers()`, sets `source_code`, calls `reload()`
+  - `_inject_trackers()` is `static`, sorts lines descending (bottom-to-top),
+    inserts `_GDTCoverage.hit(file_id, line_id)` before each tracked line
+    with matching indentation via `_extract_indent()`
+  - `_activate_tracker()` finds `_GDTCoverage` autoload via `SceneTree.root`,
+    calls `set_active(true)`
+  - `_log_error(what, cause, fix)` uses Cause/Fix format per product-guidelines
+  - `TRACKER_NAME` constant = `"_GDTCoverage"`
+- **Key implementation notes (post_run_hook.gd, 113 lines):**
+  - `run()` gets tracker, checks `is_active()`, collects `get_hits()`,
+    builds JSON, writes to `GD_TOOLS_COVERAGE_OUTPUT` env var path
+  - `is_active()` guard prevents output if tracker was never activated
+  - `_build_coverage_json()` produces `{version:1, generated_at, files:[{file_id, hits:{line_id:count}}]}`
+  - `_write_json()` creates parent dirs, writes with 2-space indent
+  - `_log_summary()` prints file count, line count, output path; returns
+    summary string
 
 ---
 
