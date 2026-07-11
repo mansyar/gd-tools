@@ -1,5 +1,6 @@
 """Unit tests for the gd_tools CLI skeleton."""
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import click
@@ -819,22 +820,209 @@ def test_cli_doctor_exits_one_when_any_fails():
     assert result.exit_code == 1
 
 
-def test_coverage_report_stub_exit_code_2():
-    """Test invoking coverage report raises error with exit code 2."""
+def test_coverage_report_calls_orchestrator():
+    """Test coverage report calls generate_coverage_report."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["coverage", "report"])
+    mock_config = MagicMock()
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ) as mock_report,
+    ):
+        result = runner.invoke(cli, ["coverage", "report"])
+    assert result.exit_code == 0
+    mock_report.assert_called_once()
+
+
+def test_coverage_report_format_override():
+    """Test --format lcov passes format to orchestrator."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ) as mock_report,
+    ):
+        result = runner.invoke(cli, ["coverage", "report", "--format", "lcov"])
+    assert result.exit_code == 0
+    _, kwargs = mock_report.call_args
+    assert kwargs["format"] == "lcov"
+
+
+def test_coverage_report_output_dir_override():
+    """Test --output-dir passes output_dir to orchestrator."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ) as mock_report,
+    ):
+        result = runner.invoke(
+            cli, ["coverage", "report", "--output-dir", "/tmp/reports"]
+        )
+    assert result.exit_code == 0
+    _, kwargs = mock_report.call_args
+    assert kwargs["output_dir"] == "/tmp/reports"
+
+
+def test_coverage_report_plan_error_exit_2():
+    """Test coverage report exits 2 when CoveragePlanError is raised."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            side_effect=CoveragePlanError("missing"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "report"])
     assert result.exit_code == 2
 
 
-def test_coverage_merge_stub_exit_code_2():
-    """Test invoking coverage merge raises error with exit code 2."""
+def test_coverage_report_success_exit_0():
+    """Test coverage report exits 0 on success and prints output path."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["coverage", "merge", "file1.json"])
+    mock_config = MagicMock()
+    mock_result = MagicMock()
+    mock_result.output_path = Path("/tmp/reports/report.html")
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "report"])
+    assert result.exit_code == 0
+    assert "report.html" in result.output
+
+
+def test_coverage_merge_calls_orchestrator():
+    """Test coverage merge calls merge_coverage_files with list of Paths."""
+    runner = CliRunner()
+    mock_result = MagicMock()
+    with patch(
+        "gd_tools.cli.merge_coverage_files",
+        return_value=mock_result,
+    ) as mock_merge:
+        result = runner.invoke(
+            cli, ["coverage", "merge", "file1.json", "file2.json"]
+        )
+    assert result.exit_code == 0
+    mock_merge.assert_called_once()
+    args, _ = mock_merge.call_args
+    files_arg = args[0]
+    assert len(files_arg) == 2
+    assert all(isinstance(f, Path) for f in files_arg)
+
+
+def test_coverage_merge_output_override():
+    """Test --output passes output path to orchestrator."""
+    runner = CliRunner()
+    mock_result = MagicMock()
+    with patch(
+        "gd_tools.cli.merge_coverage_files",
+        return_value=mock_result,
+    ) as mock_merge:
+        result = runner.invoke(
+            cli, ["coverage", "merge", "file1.json", "--output", "merged.json"]
+        )
+    assert result.exit_code == 0
+    args, kwargs = mock_merge.call_args
+    output_arg = args[1] if len(args) > 1 else kwargs.get("output")
+    assert output_arg == Path("merged.json")
+
+
+def test_coverage_merge_no_files_exit_2():
+    """Test coverage merge exits 2 when no files provided."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "merge"])
     assert result.exit_code == 2
 
 
-def test_coverage_show_stub_exit_code_2():
-    """Test invoking coverage show raises error with exit code 2."""
+def test_coverage_merge_success_exit_0():
+    """Test coverage merge exits 0 on success."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["coverage", "show"])
+    mock_result = MagicMock()
+    with patch(
+        "gd_tools.cli.merge_coverage_files",
+        return_value=mock_result,
+    ):
+        result = runner.invoke(cli, ["coverage", "merge", "file1.json"])
+    assert result.exit_code == 0
+
+
+def test_coverage_show_calls_orchestrator():
+    """Test coverage show calls show_coverage_summary."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_summary = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.show_coverage_summary",
+            return_value=mock_summary,
+        ) as mock_show,
+    ):
+        result = runner.invoke(cli, ["coverage", "show"])
+    assert result.exit_code == 0
+    mock_show.assert_called_once()
+
+
+def test_coverage_show_min_passed_to_orchestrator():
+    """Test --min 80 passes min_percent=80 to orchestrator."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_summary = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.show_coverage_summary",
+            return_value=mock_summary,
+        ) as mock_show,
+    ):
+        result = runner.invoke(cli, ["coverage", "show", "--min", "80"])
+    assert result.exit_code == 0
+    _, kwargs = mock_show.call_args
+    assert kwargs["min_percent"] == 80
+
+
+def test_coverage_show_threshold_error_exit_1():
+    """Test coverage show exits 1 when CoverageThresholdError is raised."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.show_coverage_summary",
+            side_effect=CoverageThresholdError("below threshold"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "show", "--min", "90"])
+    assert result.exit_code == 1
+
+
+def test_coverage_show_plan_error_exit_2():
+    """Test coverage show exits 2 when CoveragePlanError is raised."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.show_coverage_summary",
+            side_effect=CoveragePlanError("missing"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "show"])
     assert result.exit_code == 2

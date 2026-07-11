@@ -1,5 +1,6 @@
 """CLI entry point for gd-tools."""
 
+from pathlib import Path
 from typing import Any
 
 import click
@@ -8,9 +9,19 @@ from rich.syntax import Syntax
 
 from . import __version__
 from .config import load_config
-from .coverage.orchestrator import run_coverage_test
+from .coverage.orchestrator import (
+    generate_coverage_report,
+    merge_coverage_files,
+    run_coverage_test,
+    show_coverage_summary,
+)
 from .doctor import format_doctor_table, run_doctor
-from .errors import ConfigError, GdToolsError, TestFailureError
+from .errors import (
+    ConfigError,
+    CoverageThresholdError,
+    GdToolsError,
+    TestFailureError,
+)
 from .format_runner import run_format
 from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
@@ -253,19 +264,58 @@ def coverage():
 @click.option("--output-dir", help="Directory to write the report to.")
 def report(format, output_dir):
     """Generate a coverage report."""
-    raise NotImplementedError
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        result = generate_coverage_report(
+            config, format=format, output_dir=output_dir
+        )
+        click.echo(f"Report written to: {result.output_path}")
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
 
 
 @coverage.command()
-@click.argument("files", nargs=-1)
+@click.argument("files", nargs=-1, required=True)
 @click.option("--output", help="Path for the merged output file.")
 def merge(files, output):
     """Merge multiple coverage files."""
-    raise NotImplementedError
+    try:
+        merge_coverage_files(
+            [Path(f) for f in files],
+            Path(output) if output else None,
+        )
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
 
 
 @coverage.command()
-@click.option("--min", type=float, help="Minimum coverage threshold.")
+@click.option("--min", type=int, help="Minimum coverage threshold.")
 def show(min):
     """Show coverage summary."""
-    raise NotImplementedError
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        show_coverage_summary(config, min_percent=min)
+    except CoverageThresholdError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
