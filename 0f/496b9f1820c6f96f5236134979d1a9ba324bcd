@@ -1,0 +1,22 @@
+Phase 1 Task 4 - Manual Verification (COMPLETED)
+
+Verification Results:
+- coverage.gd implementation: gdlint PASS, gdformat PASS
+- GUT integration test: 6/6 tests PASS with real Godot 4.6.2
+  * test_hit_records_correctly_when_active PASS
+  * test_multiple_hits_increment_counter PASS
+  * test_reset_clears_all_data PASS
+  * test_hit_noop_when_inactive PASS
+  * test_set_active_is_active_toggle PASS
+  * test_get_hits_returns_nested_dictionary PASS
+
+Fix applied:
+- GUT -gselect expects filename (test_coverage_tracker.gd), not res:// path
+- Added _import_project() step: godot --headless --import required by GUT 9.6.0
+  to register class_names before running tests
+- Added _find_godot_binary() helper: checks GODOT_BIN env var first
+
+Quality gates:
+- ruff check: PASS
+- black --check: PASS
+- pytest: 1 passed (integration test, coverage threshold N/A for single test)
