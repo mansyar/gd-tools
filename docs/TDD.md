@@ -50,7 +50,7 @@ src/gd_tools/
 │   └── cobertura_reporter.py # Cobertura XML
 └── addons/
     └── gd-tools-coverage/
-        ├── tracker.gd        # Autoload singleton — hit tracking
+        ├── coverage.gd       # Autoload singleton — hit tracking
         ├── pre_run_hook.gd   # GUT pre-run hook — instruments scripts
         └── post_run_hook.gd  # GUT post-run hook — saves coverage JSON
 ```
@@ -453,7 +453,7 @@ enabled=PackedStringArray("res://addons/gut/plugin.gd")
 
 # Autoload registration (coverage tracker)
 [autoload]
-_GDTCoverage="*res://addons/gd-tools-coverage/tracker.gd"
+_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"
 ```
 
 Both are idempotent — `init` checks for existing entries before adding.
@@ -1054,7 +1054,7 @@ def generate_cobertura_report(
 
 ## 4. GDScript Addon Specifications
 
-### 4.1 `tracker.gd` — Autoload Coverage Tracker
+### 4.1 `coverage.gd` — Autoload Coverage Tracker
 
 > **Spike-validated:** The spike (`spike_coverage_20260709`) confirmed this design
 > works. Key changes from original spec: added `set_active()` method for
@@ -1368,7 +1368,7 @@ Line IDs with 0 hits mean the line was never executed (uncovered).
 
 | Variable                       | Set By  | Read By    | Purpose                          |
 |--------------------------------|---------|------------|----------------------------------|
-| `GD_TOOLS_COVERAGE_ACTIVE`     | Python  | tracker.gd | Enable/disable tracker (0 or 1)  |
+| `GD_TOOLS_COVERAGE_ACTIVE`     | Python  | coverage.gd | Enable/disable tracker (0 or 1)  |
 | `GD_TOOLS_COVERAGE_PLAN`       | Python  | pre_run_hook.gd | Path to plan.json           |
 | `GD_TOOLS_COVERAGE_OUTPUT`     | Python  | post_run_hook.gd | Path to coverage.json        |
 
@@ -1393,7 +1393,7 @@ Managed by `gd-tools init`. Coverage hook paths are always set.
 
 ```ini
 [autoload]
-_GDTCoverage="*res://addons/gd-tools-coverage/tracker.gd"
+_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"
 ```
 
 The `*` prefix means the autoload is a singleton (always available as

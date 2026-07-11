@@ -851,7 +851,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 - Thread-safe (GUT tests may use coroutines/await)
 
 **Deliverables:**
-- `tracker.gd` (final version, replaces placeholder from Track 7)
+- `coverage.gd` (final version, replaces placeholder from Track 7)
 - Updated `init.py` to deploy the real file
 - Manual test: load in Godot editor, verify autoload works
 
@@ -864,7 +864,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 6. When active flag is false, overhead is minimal (single bool check)
 7. Works with coroutines (no threading issues with `await`)
 
-**Key TDD references:** §6 (GDScript Addon: tracker.gd)
+**Key TDD references:** §4.1 (GDScript Addon: coverage.gd)
 
 **Track 10 Results (2026-07-11):**
 - ✅ All 7 success criteria PASSED
