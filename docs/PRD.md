@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Hooks delivered (Track 11)
+**Status:** Phase 3 In Progress — Coverage Reporter delivered (Track 12)
 **Target Godot Version:** 4.5+
 
 ---
@@ -445,6 +445,7 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 │     - LCOV (for CI integration, codecov.io, coveralls)       │
 │     - Cobertura (Jenkins, GitLab CI)                        │
 │     - Terminal summary table                                 │
+│     ✅ Implemented — Track 12 (see below)                    │
 │ 14. Apply --min threshold (exit 1 if below)                 │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
@@ -468,6 +469,20 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 > `_validate_file_entry`), Cause/Fix error format (`_log_error`), tracker
 > activation guard (`is_active` check in post-run). 28+13 GUT tests + 11
 > integration tests in `test_coverage_hooks.py`.
+>
+> **Reporter implemented:** Track 12 (`coverage_reporter_20260711`,
+> archived). See `src/gd_tools/coverage/reporter.py` (~510 lines,
+> orchestrator), `html_reporter.py`, `lcov_reporter.py`,
+> `cobertura_reporter.py`, `terminal_reporter.py`. All 8 success criteria
+> passed. Generates reports in 4 formats: HTML (Jinja2 templates),
+> LCOV, Cobertura XML, Terminal (Rich table). 73 unit tests across 5
+> test files; coverage modules at 96-100%. Key functions:
+> `read_coverage_json()`, `merge_coverage_data()`, `compute_summary()`,
+> `generate_report(plan, data, output_dir, format, min_threshold)`.
+> Review fixes (commit `e9457ec`): error messages updated to Cause/Fix
+> format, HTML templates added to package-data, dead code removed.
+> Known limitation: HTML source view not populated (spec FR-4.3
+> partially met — deferred).
 
 ```json
 {
@@ -690,7 +705,11 @@ gd-tools/
 │       │   ├── reporter.py       # Read coverage data, generate reports
 │       │   ├── html_reporter.py  # Jinja2 HTML report
 │       │   ├── lcov_reporter.py  # LCOV format
-│       │   └── cobertura_reporter.py  # Cobertura XML
+│       │   ├── cobertura_reporter.py  # Cobertura XML
+│       │   ├── terminal_reporter.py   # Rich terminal table
+│       │   └── templates/
+│       │       ├── index.html    # HTML report index page
+│       │       └── file.html     # HTML per-file page
 │       └── addons/
 │           └── gd-tools-coverage/
 │               ├── coverage.gd          # Core instrumentation + tracker

@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 3 In Progress — Coverage Hooks delivered (Track 11)
+**Status:** Phase 3 In Progress — Coverage Reporter delivered (Track 12)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -73,7 +73,7 @@ Total estimated effort: ~25-30 days
 | **M0: Spike Pass** ✅ | Phase 0 | ✅ ACHIEVED — Runtime GDScript instrumentation validated (2026-07-09). All 6 success criteria passed. Architecture C confirmed. |
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
 | **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
-| **M3: Coverage Alpha** 🔄 | Phase 3 | `gd-tools test --coverage` produces line+branch reports — Tracks 9, 10 & 11 complete, Track 12 (reporter) next |
+| **M3: Coverage Alpha** 🔄 | Phase 3 | `gd-tools test --coverage` produces line+branch reports — Tracks 9, 10, 11 & 12 complete, Track 13 (CLI integration) next |
 | **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80% coverage |
 
 ---
@@ -1036,14 +1036,18 @@ FIRST integration tests to ever actually run.
 
 ---
 
-### Track 12: Coverage Reporter
+### Track 12: Coverage Reporter ✅
+
+**Status:** ✅ COMPLETED (2026-07-11)
+**Conductor track:** `coverage_reporter_20260711` (archived to `conductor/archive/`)
+**Commits:** `36c648f`..`6aff1d0` (33 commits) + review fixes `e9457ec`
 
 | Field | Value |
 |-------|-------|
 | **Phase** | 3 — MVP2 |
 | **Goal** | Read coverage data + plan, compute metrics, generate reports (HTML, LCOV, Cobertura, terminal) |
 | **Dependencies** | Track 9 (plan format for cross-reference) |
-| **Modules** | `src/gd_tools/coverage/reporter.py`, `html_reporter.py`, `lcov_reporter.py`, `cobertura_reporter.py` |
+| **Modules** | `src/gd_tools/coverage/reporter.py`, `html_reporter.py`, `lcov_reporter.py`, `cobertura_reporter.py`, `terminal_reporter.py` |
 | **Effort** | 2-3 days |
 | **Risk** | LOW |
 
@@ -1086,6 +1090,40 @@ FIRST integration tests to ever actually run.
 8. Branch coverage computed correctly (true/false, loop body, match cases)
 
 **Key TDD references:** §3 (Modules: coverage/reporter.py + sub-reporters), §10 (Coverage metrics)
+
+**Results:**
+- All 8 success criteria passed.
+- `reporter.py` (~510 lines): orchestrator with `read_coverage_json()`,
+  `merge_coverage_data()`, `compute_file_summary()`, `compute_summary()`,
+  `generate_report(plan, data, output_dir, format, min_threshold)`.
+- 4 format reporters: `html_reporter.py` (Jinja2, index + per-file pages),
+  `lcov_reporter.py` (TN/SF/DA/BRDA/BRF/BRH/LF/LH records),
+  `cobertura_reporter.py` (XML with line-rate/branch-rate),
+  `terminal_reporter.py` (Rich table, color-coded: green >=80%, yellow 50-79%,
+  red <50%).
+- HTML templates: `templates/index.html`, `templates/file.html`.
+- 73 unit tests across 5 test files. Coverage: reporter 96%, cobertura 98%,
+  html/lcov/terminal 100%.
+- `generate_report()` writes report THEN raises `CoverageThresholdError` if
+  below threshold — by design (report exists even on failure).
+- `read_coverage_json()` normalizes hits keys to strings, validates version==1.
+- `merge_coverage_data()` sums hit counts per file_id/line_id across shards.
+- Errors use Cause/Fix format. `CoveragePlanError` (exit_code=2),
+  `CoverageThresholdError` (exit_code=1).
+
+**Review fixes (commit `e9457ec`):**
+1. HIGH — `pyproject.toml`: Added `"gd_tools.coverage" = ["templates/*.html"]`
+   to package-data (templates weren't shipping with pip install).
+2. HIGH — `reporter.py`: All 12 error messages updated to Cause/Fix format
+   per product-guidelines §4.
+3. MEDIUM — `html_reporter.py`: Added TODO for deferred source code display
+   (spec FR-4.3 partially met — line numbers shown, source not populated).
+4. LOW — `cobertura_reporter.py`: Removed dead `or "0"` from `_format_rate()`.
+5. LOW — `plan.md`: Checked all Phase 1 sub-task checkboxes.
+
+**Known limitation:** HTML reporter does not display source code content
+(line numbers shown but `source` field is empty string). Spec FR-4.3
+partially met — deferred to future track.
 
 ---
 

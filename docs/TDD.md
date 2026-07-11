@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 3 In Progress — Coverage Hooks delivered (Track 11)
+**Status:** Phase 3 In Progress — Coverage Reporter delivered (Track 12)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -47,7 +47,11 @@ src/gd_tools/
 │   ├── reporter.py           # Coverage data → report dispatch
 │   ├── html_reporter.py     # Jinja2 HTML report
 │   ├── lcov_reporter.py      # LCOV format
-│   └── cobertura_reporter.py # Cobertura XML
+│   ├── cobertura_reporter.py # Cobertura XML
+│   ├── terminal_reporter.py  # Rich terminal table
+│   └── templates/
+│       ├── index.html        # HTML report index page (Jinja2)
+│       └── file.html         # HTML per-file page (Jinja2)
 └── addons/
     └── gd-tools-coverage/
         ├── coverage.gd       # Autoload singleton — hit tracking
@@ -68,7 +72,7 @@ cli.py
 └── format_runner.py (→ config)
 
 coverage/plan_generator.py → gdtoolkit (external)
-coverage/reporter.py → coverage/html_reporter, coverage/lcov_reporter, coverage/cobertura_reporter
+coverage/reporter.py → coverage/html_reporter, coverage/lcov_reporter, coverage/cobertura_reporter, coverage/terminal_reporter
 ```
 
 No circular dependencies. `config.py` and `godot.py` are leaf modules with no
@@ -922,16 +926,28 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 
 ### 3.11 `coverage/reporter.py` — Report Generation
 
+> **Implemented:** Track 12 (`coverage_reporter_20260711`, archived). See
+> `src/gd_tools/coverage/reporter.py` (~510 lines). All 8 success criteria
+> passed. Key changes from spec: `FileCoverage` uses `file_id: int` (not
+> `path: str`) to match Track 11's coverage data format; `hits` keys are
+> `dict[str, int]` (string line IDs, normalized in `read_coverage_json`);
+> `generate_report` takes `min_threshold` param and returns `ReportResult`;
+> `merge_coverage_data` takes `list[CoverageData]` (not `list[Path]`).
+> Errors use Cause/Fix format. 73 unit tests; reporter at 96% coverage.
+
 ```python
 def generate_report(
     plan: CoveragePlan,
-    coverage_data: CoverageData,
+    data: CoverageData,
     output_dir: Path,
     format: str = "html",
-) -> Path:
+    min_threshold: float = 0.0,
+) -> ReportResult:
     """Generate coverage report in specified format.
-    Dispatches to format-specific reporter.
-    Returns path to generated report."""
+    Dispatches to format-specific reporter via lazy imports.
+    Writes report file, then raises CoverageThresholdError if
+    threshold not met (report IS written before exception — by design).
+    Returns ReportResult with output path and summary."""
 
 @dataclass
 class CoverageData:
@@ -941,8 +957,8 @@ class CoverageData:
 
 @dataclass
 class FileCoverage:
-    path: str  # res:// path
-    hits: dict[int, int]  # line_id → hit_count
+    file_id: int  # matches plan FilePlan.file_id
+    hits: dict[str, int]  # line_id (str) → hit_count
 
 @dataclass
 class CoverageSummary:
@@ -953,17 +969,9 @@ class CoverageSummary:
     covered_branches: int
     branch_rate: float  # 0.0 - 1.0
 
-def compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary:
-    """Cross-reference plan + data to compute coverage percentages."""
-
-def compute_file_summary(
-    file_plan: FilePlan,
-    file_data: FileCoverage,
-) -> FileSummary:
-    """Per-file coverage breakdown."""
-
 @dataclass
 class FileSummary:
+    file_id: int
     path: str
     total_lines: int
     covered_lines: int
@@ -973,17 +981,44 @@ class FileSummary:
     branch_rate: float
     uncovered_lines: list[int]
 
-def read_coverage_json(path: Path) -> CoverageData:
-    """Read and validate coverage JSON from GDScript addon output."""
+@dataclass
+class ReportResult:
+    output_path: Path
+    summary: CoverageSummary
 
-def merge_coverage_data(files: list[Path]) -> CoverageData:
-    """Merge multiple coverage data files (for parallel CI shards).
-    Sums hit counts per line_id."""
+def compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary:
+    """Cross-reference plan + data to compute coverage percentages.
+    Missing files in coverage data get empty FileCoverage (0 hits)."""
+
+def compute_file_summary(
+    file_plan: FilePlan,
+    file_data: FileCoverage,
+) -> FileSummary:
+    """Per-file coverage breakdown. Uses line.type == 'branch'
+    for branch detection. Tracks uncovered_lines."""
+
+def read_coverage_json(path: Path) -> CoverageData:
+    """Read and validate coverage JSON from GDScript addon output.
+    Validates version==1, checks for 'files' list, 'file_id' and
+    'hits' dict per entry. Normalizes hits keys to strings."""
+
+def merge_coverage_data(files: list[CoverageData]) -> CoverageData:
+    """Merge multiple coverage data objects (for parallel CI shards).
+    Sums hit counts per file_id/line_id. Empty list returns
+    empty CoverageData(version=1)."""
 ```
 
 ---
 
 ### 3.12 `coverage/html_reporter.py` — HTML Report
+
+> **Implemented:** Track 12. See `src/gd_tools/coverage/html_reporter.py`
+> (92 lines). Uses Jinja2 `FileSystemLoader` from `templates/` directory.
+> Creates `index.html` + `file_<id>.html` per file. CSS classes: covered
+> (green), uncovered (red), partial (yellow for hit branches). Known
+> limitation: source code content not populated (`source` field is empty
+> string) — spec FR-4.3 partially met, deferred to future track. 100%
+> test coverage.
 
 ```python
 def generate_html_report(
@@ -993,21 +1028,26 @@ def generate_html_report(
 ) -> Path:
     """Generate HTML coverage report using Jinja2.
     - index.html: summary table (file → line %, branch %)
-    - per-file pages: syntax-highlighted source with covered/uncovered lines
+    - per-file pages: source listing with line numbers + covered/uncovered
     Returns path to index.html."""
 ```
 
 HTML report features:
 - Index page: table of all files with line/branch coverage percentages
-- Per-file pages: source code with green (covered) / red (uncovered) /
+- Per-file pages: line numbers with green (covered) / red (uncovered) /
   yellow (partial branch) highlighting
 - Summary bar at top of each page
-- Sortable columns on index page
-- CSS/JS bundled (no external dependencies)
+- CSS bundled (no external dependencies)
+- Templates: `templates/index.html`, `templates/file.html`
 
 ---
 
 ### 3.13 `coverage/lcov_reporter.py` — LCOV Format
+
+> **Implemented:** Track 12. See `src/gd_tools/coverage/lcov_reporter.py`
+> (90 lines). Generates standard LCOV records. `BRDA` hardcodes block=0,
+> branch=0 (acceptable for MVP — each branch on separate line). 100%
+> test coverage.
 
 ```python
 def generate_lcov_report(
@@ -1040,6 +1080,13 @@ end_of_record
 
 ### 3.14 `coverage/cobertura_reporter.py` — Cobertura XML
 
+> **Implemented:** Track 12. See
+> `src/gd_tools/coverage/cobertura_reporter.py` (136 lines). Builds XML
+> tree with `xml.etree.ElementTree`. `<coverage>` root with `line-rate`/
+> `branch-rate` attributes, `<class>` per file, `<line>` elements with
+> `number`/`hits`/`branch`/`condition-coverage` attributes. `_format_rate()`
+> returns decimal string. 98% test coverage.
+
 ```python
 def generate_cobertura_report(
     plan: CoveragePlan,
@@ -1048,6 +1095,27 @@ def generate_cobertura_report(
 ) -> Path:
     """Generate Cobertura XML report.
     Compatible with Jenkins, GitLab CI coverage visualization."""
+```
+
+---
+
+### 3.15 `coverage/terminal_reporter.py` — Terminal Summary
+
+> **Implemented:** Track 12. See
+> `src/gd_tools/coverage/terminal_reporter.py` (107 lines). Uses Rich
+> `Table` with columns: File, Lines Found/Hit, Line %, Branches Found/Hit,
+> Branch %. Color coding: green >=80%, yellow 50-79%, red <50%.
+> `force_terminal=True` for ANSI codes. ASCII box style. 100% test
+> coverage.
+
+```python
+def generate_terminal_report(
+    plan: CoveragePlan,
+    data: CoverageData,
+) -> CoverageSummary:
+    """Generate terminal summary table using Rich.
+    Prints color-coded table to stdout.
+    Returns CoverageSummary."""
 ```
 
 ---
@@ -1485,10 +1553,11 @@ Python (test_runner.py)
 │      ├─ Line coverage = covered_lines / total_lines
 │      └─ Branch coverage = covered_branches / total_branches
 │
-├─ 13. Generate report (coverage/reporter.py)
+├─ 13. Generate report (coverage/reporter.py) ✅ Track 12
 │      ├─ HTML: Jinja2 template → .gd-tools/coverage/html/index.html
 │      ├─ LCOV: .gd-tools/coverage/lcov.info
-│      └─ Cobertura: .gd-tools/coverage/cobertura.xml
+│      ├─ Cobertura: .gd-tools/coverage/cobertura.xml
+│      └─ Terminal: Rich table → stdout
 │
 ├─ 14. Check threshold: if overall_coverage < 80% → CoverageThresholdError
 │

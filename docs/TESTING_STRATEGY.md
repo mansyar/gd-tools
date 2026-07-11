@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 3 In Progress — Coverage Hooks delivered (Track 11)
+**Status:** Phase 3 In Progress — Coverage Reporter delivered (Track 12)
 
 ---
 
@@ -80,6 +80,7 @@ tests/
 │   ├── test_html_reporter.py
 │   ├── test_lcov_reporter.py
 │   ├── test_cobertura_reporter.py
+│   ├── test_terminal_reporter.py
 │   ├── test_lint_runner.py
 │   ├── test_format_runner.py
 │   ├── test_init.py
@@ -395,6 +396,12 @@ func check_value(x: int) -> String:
 
 ### 4.4 `coverage/reporter.py` — Coverage Computation
 
+> **Implemented:** Track 12. 73 tests across 5 test files. Reporter at 96%
+> coverage. Tests cover full/partial/zero coverage scenarios, threshold
+> pass/fail, merge, and error handling. Fixtures in
+> `tests/fixtures/coverage_data/` (full, partial, zero) +
+> `tests/fixtures/coverage_plans/test_plan.json`.
+
 **What to test:**
 - Line coverage % (hits / total executable lines)
 - Branch coverage % (branches hit / total branches)
@@ -434,7 +441,13 @@ def test_source_hash_mismatch_warning():
 
 ---
 
-### 4.5 Coverage Reporters (HTML, LCOV, Cobertura)
+### 4.5 Coverage Reporters (HTML, LCOV, Cobertura, Terminal)
+
+> **Implemented:** Track 12. All reporter tests pass with 98-100% coverage.
+> HTML reporter tests verify index/file page generation and CSS classes.
+> LCOV tests verify format compliance and branch data. Cobertura tests
+> verify valid XML and rate attributes. Terminal tests verify table
+> structure and color thresholds.
 
 **What to test:**
 
@@ -475,6 +488,19 @@ def test_cobertura_valid_xml():
 
 def test_cobertura_line_rate_attribute():
     """<coverage> element has correct line-rate value."""
+
+**Terminal (`terminal_reporter.py`):**
+- Rich table output with correct columns
+- Color coding: green >=80%, yellow 50-79%, red <50%
+- Overall summary row
+
+```python
+def test_terminal_report_table_structure():
+    """Table has columns: File, Lines, Line %, Branches, Branch %."""
+
+def test_terminal_report_color_thresholds():
+    """Green >=80%, yellow 50-79%, red <50%."""
+```
 ```
 
 ---
