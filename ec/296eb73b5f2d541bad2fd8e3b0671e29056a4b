@@ -1,0 +1,30 @@
+Phase 2: Coverage Metrics Computation - Tests + Implementation
+
+Tests written (Red phase):
+- 9 new tests in test_reporter.py for compute_file_summary() and compute_summary()
+- Test full coverage (100% line, 100% branch)
+- Test partial coverage (3/5 lines = 60%, 1/2 branches = 50%)
+- Test zero coverage (0% all)
+- Test uncovered_lines list identification
+- Test if_true/if_false branch pair
+- Test elif_true, loop_body, match_case branch types
+- Test multi-file aggregation
+- Test zero-coverage files included in summary
+- Test missing file in coverage data treated as 0 hits
+
+Implementation (Green phase):
+- compute_file_summary(file_plan, file_data) -> FileSummary
+  - Counts all lines as total_lines (both statement and branch)
+  - Counts branch-type lines as total_branches
+  - hit_count > 0 means covered
+  - uncovered_lines = line numbers with 0 hits
+  - Handles division by zero (empty file)
+- compute_summary(plan, data) -> CoverageSummary
+  - Builds file_id -> FileCoverage lookup
+  - Missing files get empty FileCoverage (0 hits)
+  - Aggregates covered/total counts across all files
+
+Results:
+- 31/31 reporter tests passing
+- Ruff: all checks passed
+- Black: 1 file reformatted (reporter.py)
