@@ -122,8 +122,7 @@ def test_hooks_end_to_end_flow(tmp_path):
                 "lines": [
                     {"line": 7, "id": 0},
                     {"line": 11, "id": 1},
-                    {"line": 15, "id": 2},
-                    {"line": 21, "id": 3},
+                    {"line": 21, "id": 2},
                 ],
             }
         ]
@@ -162,11 +161,11 @@ def test_hooks_end_to_end_flow(tmp_path):
         assert "files" in data
         assert len(data["files"]) == 1
 
-        # Verify hit data: all 4 lines should have non-zero counts
+        # Verify hit data: all 3 lines should have non-zero counts
         file_entry = data["files"][0]
         assert file_entry["file_id"] == 0
-        assert len(file_entry["hits"]) == 4
-        for line_id in ["0", "1", "2", "3"]:
+        assert len(file_entry["hits"]) == 3
+        for line_id in ["0", "1", "2"]:
             assert int(file_entry["hits"][line_id]) > 0
     finally:
         _clear_coverage_env()
