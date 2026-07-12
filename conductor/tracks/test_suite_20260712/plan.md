@@ -177,8 +177,8 @@
 ## Phase 5: E2E Full-Workflow Test
 
 ### Task 5.0: Read spec.md and workflow.md
-- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
-- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
+- [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
 ### Task 5.1: Create test_full_workflow.py
 - [ ] Write `tests/e2e/test_full_workflow.py` implementing TESTING_STRATEGY §6:
