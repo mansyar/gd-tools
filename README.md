@@ -13,10 +13,10 @@ A modern development workflow CLI for GDScript projects in Godot 4.5+.
 
 ## 1. Overview
 
-`gd-tools` brings professional development tooling to GDScript — test, lint,
+`gd-tools` brings professional development tooling to GDScript -- test, lint,
 format, and code coverage in a single CLI. It wraps mature, community-trusted
 tools (GUT for testing, gdtoolkit for linting and formatting) and fills the
-remaining gap with a custom hybrid coverage system — production-quality line
+remaining gap with a custom hybrid coverage system -- production-quality line
 and branch coverage for GDScript that no existing tool provides.
 
 One install, one config, one mental model.
@@ -26,8 +26,8 @@ One install, one config, one mental model.
 | Feature | Description |
 |---------|-------------|
 | **Unified workflow** | One install, one config (`gd-tools.toml`), one mental model for test, lint, format, and coverage. |
-| **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute — GUT installed, coverage addon deployed, configs generated. |
-| **Coverage gap-filling** | Production-quality line and branch coverage for GDScript — HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. |
+| **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute -- GUT installed, coverage addon deployed, configs generated. |
+| **Coverage gap-filling** | Production-quality line and branch coverage for GDScript -- HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. |
 | **CI/CD friendly** | Exit codes, `--check` flags, machine-readable output (JSON, JUnit XML, LCOV, Cobertura), no interactive prompts in CI mode. |
 | **Standalone compatibility** | gdlint, gdformat, and GUT continue to work if invoked directly. `gd-tools` is a layer on top, not a lock-in. |
 
@@ -60,18 +60,18 @@ gd-tools test --coverage --min 80
 
 `gd-tools init` installs GUT, deploys the coverage addon, generates
 `gd-tools.toml`, and creates per-tool config files (`.gutconfig.json`,
-`gdlintrc`, `gdformatrc`). The command is idempotent — safe to re-run.
+`gdlintrc`, `gdformatrc`). The command is idempotent -- safe to re-run.
 
 ## 5. CLI Command Summary
 
 | Command | Description |
 |---------|-------------|
-| `gd-tools init` | Bootstrap a Godot project — install GUT, deploy coverage addon, generate configs. |
-| `gd-tools doctor` | Diagnose the development environment — Godot, GUT, coverage addon, tooling. |
+| `gd-tools init` | Bootstrap a Godot project -- install GUT, deploy coverage addon, generate configs. |
+| `gd-tools doctor` | Diagnose the development environment -- Godot, GUT, coverage addon, tooling. |
 | `gd-tools test` | Run GUT tests with optional coverage, thresholds, JUnit XML output. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. |
-| `gd-tools coverage` | Coverage subcommands — `report`, `merge`, `show`. |
+| `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
 
 See the [User Guide](./docs/USER_GUIDE.md) for full command reference,
 flags, examples, and exit codes.
@@ -84,7 +84,7 @@ defaults.
 
 ```toml
 [godot]
-binary = ""  # Optional — auto-detected if unset
+binary = ""  # Optional -- auto-detected if unset
 
 [test]
 test_dirs = ["test", "tests"]
@@ -114,10 +114,10 @@ with all keys, defaults, and examples.
 
 | Document | Description |
 |----------|-------------|
-| [User Guide](./docs/USER_GUIDE.md) | Complete CLI reference — all commands, flags, examples, and troubleshooting. |
+| [User Guide](./docs/USER_GUIDE.md) | Complete CLI reference -- all commands, flags, examples, and troubleshooting. |
 | [Contributing Guide](./docs/CONTRIBUTING.md) | Development setup, code style, testing requirements, and PR process. |
-| [Architecture](./docs/ARCHITECTURE.md) | Coverage system architecture — hybrid instrumentation design and data flows. |
-| [Product Requirements](./docs/PRD.md) | Full product specification — features, design decisions, technical detail. |
+| [Architecture](./docs/ARCHITECTURE.md) | Coverage system architecture -- hybrid instrumentation design and data flows. |
+| [Product Requirements](./docs/PRD.md) | Full product specification -- features, design decisions, technical detail. |
 | [Roadmap](./docs/ROADMAP.md) | Release phases and milestones. |
 | [Testing Strategy](./docs/TESTING_STRATEGY.md) | Test pyramid, coverage targets, and CI integration. |
 
@@ -133,7 +133,7 @@ pip install -e ".[dev]"
 ### Running Tests
 
 Unit tests run without Godot. Integration tests require a Godot 4.5+
-binary — configure via `.env` (see `.env.example`):
+binary -- configure via `.env` (see `.env.example`):
 
 ```bash
 cp .env.example .env
