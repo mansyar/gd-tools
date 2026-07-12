@@ -11,31 +11,31 @@
 
 ## Phase 1: CI Workflow Foundation (ci.yml)
 
-- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
+- [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
-- [ ] Task: Create `.github/workflows/` directory and `ci.yml` file skeleton
-    - [ ] Create `.github/workflows/` directory
-    - [ ] Create `ci.yml` with workflow name, trigger definitions (push to `main`, pull requests)
-    - [ ] Add `concurrency` group to cancel superseded runs on same branch/PR
+- [x] Task: Create `.github/workflows/` directory and `ci.yml` file skeleton [7c486f7]
+    - [x] Create `.github/workflows/` directory
+    - [x] Create `ci.yml` with workflow name, trigger definitions (push to `main`, pull requests)
+    - [x] Add `concurrency` group to cancel superseded runs on same branch/PR
 
-- [ ] Task: Implement Stage 1 — `lint-format-unit` job
-    - [ ] Define job `lint-format-unit` on `ubuntu-latest` with Python 3.12
-    - [ ] Add `actions/checkout@v4` step
-    - [ ] Add `actions/setup-python@v5` step with `cache: pip`
-    - [ ] Add `pip install -e ".[dev]"` step (install project + dev dependencies)
-    - [ ] Add `ruff check src/ tests/` step
-    - [ ] Add `black --check src/ tests/` step
-    - [ ] Add `CI=true pytest tests/unit/ -m unit --cov=gd_tools --cov-report=xml --cov-report=html` step
-    - [ ] Add `codecov/codecov-action@v4` upload step with `CODECOV_TOKEN` secret
-    - [ ] Add `actions/upload-artifact@v4` step for coverage XML/HTML reports
-    - [ ] Set job timeout to 5 minutes
+- [x] Task: Implement Stage 1 — `lint-format-unit` job [7c486f7]
+    - [x] Define job `lint-format-unit` on `ubuntu-latest` with Python 3.12
+    - [x] Add `actions/checkout@v4` step
+    - [x] Add `actions/setup-python@v5` step with `cache: pip`
+    - [x] Add `pip install -e ".[dev]"` step (install project + dev dependencies)
+    - [x] Add `ruff check src/ tests/` step
+    - [x] Add `black --check src/ tests/` step
+    - [x] Add `CI=true pytest tests/unit/ -m unit --cov=gd_tools --cov-report=xml --cov-report=html` step
+    - [x] Add `codecov/codecov-action@v4` upload step with `CODECOV_TOKEN` secret
+    - [x] Add `actions/upload-artifact@v4` step for coverage XML/HTML reports
+    - [x] Set job timeout to 5 minutes
 
-- [ ] Task: Implement cross-platform matrix job
-    - [ ] Define job `matrix-unit` with `needs: lint-format-unit`
-    - [ ] Set strategy matrix: OS `[ubuntu-latest, windows-latest]` × Python `[3.10, 3.11, 3.12]`
-    - [ ] Add checkout, setup-python (with cache), pip install steps
-    - [ ] Add `CI=true pytest tests/unit/ -m unit` step (no coverage in matrix)
-    - [ ] Set job timeout to 5 minutes
+- [x] Task: Implement cross-platform matrix job [7c486f7]
+    - [x] Define job `matrix-unit` with `needs: lint-format-unit`
+    - [x] Set strategy matrix: OS `[ubuntu-latest, windows-latest]` × Python `[3.10, 3.11, 3.12]`
+    - [x] Add checkout, setup-python (with cache), pip install steps
+    - [x] Add `CI=true pytest tests/unit/ -m unit` step (no coverage in matrix)
+    - [x] Set job timeout to 5 minutes
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
