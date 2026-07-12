@@ -107,5 +107,5 @@
 | **codecov.io** | Coverage upload (via `coverage.xml`, `codecov-action@v4`) |
 | **build** | Package building (`python -m build` → sdist + wheel) |
 | **twine** | Package upload to TestPyPI/PyPI |
-| **PyPI** | Package distribution (`pip install gd-tools`) |
+| **PyPI** | Package distribution (`pip install gd-tools-cli`) |
 | **TestPyPI** | Pre-release testing |

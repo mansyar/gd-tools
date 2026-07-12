@@ -83,7 +83,7 @@ This positioning avoids leading with the riskiest, most complex feature and inst
 
 A successful v1.0 release is defined by:
 
-- **PyPI publish.** The package is published to PyPI and installable via `pip install gd-tools`. This is the primary release gate — the product is not "released" until it is on PyPI and a clean-environment install produces a working `gd-tools --version`.
+- **PyPI publish.** The package is published to PyPI and installable via `pip install gd-tools-cli`. This is the primary release gate — the product is not "released" until it is on PyPI and a clean-environment install produces a working `gd-tools --version`.
 
 Supporting success metrics (measured but not gating):
 - All CLI commands (test, lint, format, coverage, init, doctor) functional end-to-end.
