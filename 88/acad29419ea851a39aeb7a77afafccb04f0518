@@ -1,0 +1,35 @@
+Phase 5 Checkpoint Verification Report - Production PyPI Publication
+
+Previous checkpoint: 34a9af9 (Phase 4)
+Checkpoint: 88acad2 (Phase 5)
+
+Files changed since last checkpoint:
+- README.md (install command updated to 'pip install gd-tools-cli')
+- pyproject.toml (package name changed from 'gd-tools' to 'gd-tools-cli')
+- conductor/tracks/pypi-release_20260712/plan.md (task updates)
+
+Python/GDScript source files changed: NONE
+Tests required for changed files: N/A (config/doc files only)
+
+Quality Gates:
+- Automated tests: 631 passed in 450.94s
+- Coverage: 99.15% (line), branch coverage maintained
+- ruff check: All checks passed
+- black --check: 60 files unchanged
+
+Phase 5 Requirements Verified:
+- FR-6.1: Package uploaded to production PyPI (https://pypi.org/project/gd-tools-cli/0.1.0/)
+- FR-6.2: Installation from PyPI verified in clean venv (pip install gd-tools-cli)
+- FR-6.3: gd-tools --version prints 'gd-tools 0.1.0'
+- FR-6.4: gd-tools --help shows all 6 command groups (coverage, doctor, format, init, lint, test)
+- Package metadata on PyPI verified (name, version, summary, license, classifiers, URLs)
+- README rendering verified via twine check (PASSED)
+
+Additional Notes:
+- Package renamed from 'gd-tools' to 'gd-tools-cli' due to PyPI name conflict
+  with existing 'gdtools' project (GeneDock CLI by Wu Yarong)
+- Console script command remains 'gd-tools' (unchanged)
+- PyPI normalizes hyphens/underscores, so gd-tools/gd_tools/gdtools are treated
+  as the same name
+
+User confirmed manual verification: YES
