@@ -1,0 +1,26 @@
+Tasks 2.0-2.3: Test Marker Annotation
+
+Added pytest markers to all test files:
+
+Unit tests (20 files):
+- 16 files: Added 'pytestmark = pytest.mark.unit' at module level
+  (also added 'import pytest' where missing)
+- 4 files already had per-function @pytest.mark.unit: test_doctor.py,
+  test_godot.py, test_orchestrator.py, test_test_runner.py
+- 6 test_merge_coverage_files_* functions in test_orchestrator.py
+  were missing @pytest.mark.unit — added per-function markers
+
+Integration tests (8 files):
+- 4 files: Added 'pytestmark = pytest.mark.integration' at module level
+  (also added 'import pytest' where missing)
+- 4 files already had per-function @pytest.mark.integration
+
+E2E tests (1 file):
+- test_coverage_e2e.py already had @pytest.mark.e2e on all functions
+
+Verification:
+- pytest -m unit: 547 tests (50 deselected)
+- pytest -m integration: 43 tests (554 deselected)
+- pytest -m e2e: 7 tests (590 deselected)
+- 0 unmarked tests (597 total, all marked)
+- Unit suite: 547 passed, 96.61% coverage
