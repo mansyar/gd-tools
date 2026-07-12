@@ -83,11 +83,11 @@
 - [x] Run tests: `pytest tests/unit/test_godot.py -v` — all pass
 - [x] Verify coverage for `godot.py` module ≥80%
 
-### Task 3.3: Audit and gap-fill plan_generator.py tests (§4.3)
-- [ ] Audit `test_plan_generator.py` against §4.3 specs
-- [ ] Write missing test cases: each GDScript construct, line numbers, branch types, declarations excluded, multiple files, empty file, nested structures
-- [ ] Run tests: `pytest tests/unit/test_plan_generator.py -v` — all pass
-- [ ] Verify coverage for `plan_generator.py` module ≥80%
+### Task 3.3: Audit and gap-fill plan_generator.py tests (§4.3) [sha: n/a — no gaps]
+- [x] Audit `test_plan_generator.py` against §4.3 specs
+- [x] Write missing test cases: each GDScript construct, line numbers, branch types, declarations excluded, multiple files, empty file, nested structures
+- [x] Run tests: `pytest tests/unit/test_plan_generator.py -v` — all pass
+- [x] Verify coverage for `plan_generator.py` module ≥80%
 
 ### Task 3.4: Audit and gap-fill reporter.py tests (§4.4)
 - [ ] Audit `test_reporter.py` against §4.4 specs
