@@ -191,14 +191,13 @@ def test_test_result_holds_multiple_details():
 
 @pytest.mark.unit
 def test_build_gut_args_base_command():
-    """Test base command args: --headless, -s, -d, -gexit present."""
+    """Test base command args: --headless, -s, -gexit present."""
     config = TestConfig()
     args = build_gut_args(config, Path("/fake/project"))
     assert "--headless" in args
     assert "-s" in args
     idx = args.index("-s")
     assert args[idx + 1] == "addons/gut/gut_cmdln.gd"
-    assert "-d" in args
     assert "-gexit" in args
 
 

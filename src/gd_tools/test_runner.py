@@ -109,7 +109,6 @@ def build_gut_args(
         "--headless",
         "-s",
         "addons/gut/gut_cmdln.gd",
-        "-d",
         "-gexit",
     ]
 
@@ -306,7 +305,7 @@ def run_tests(
     test_name: str | None = None,
     junit_xml: str | None = None,
     no_exit_code: bool = False,
-    timeout: int | None = None,
+    timeout: int | None = 300,
 ) -> TestResult:
     """Run GUT tests via the Godot CLI.
 
@@ -330,6 +329,7 @@ def run_tests(
             fail (for CI pipelines). If False, raises
             :class:`TestFailureError` on test failures.
         timeout: Optional timeout in seconds for the Godot subprocess.
+            Defaults to 300 (5 minutes). Pass ``None`` to disable.
 
     Returns:
         :class:`TestResult` with totals, per-test details, and
@@ -425,9 +425,23 @@ def run_tests(
         junit_path = (project_root / ".gd-tools" / "results.xml").resolve()
 
     # Parse JUnit XML output.
-    total, passed, failed, skipped, duration, test_details = parse_junit_xml(
-        junit_path
-    )
+    try:
+        total, passed, failed, skipped, duration, test_details = (
+            parse_junit_xml(junit_path)
+        )
+    except GdToolsError:
+        if not junit_path.exists():
+            # JUnit XML wasn't created — GUT likely crashed before
+            # completing. Include Godot output for diagnostics.
+            stdout_tail = result.stdout[-2000:] if result.stdout else ""
+            stderr_full = result.stderr if result.stderr else ""
+            raise GdToolsError(
+                f"JUnit XML file not found: {junit_path}\n"
+                f"Godot exit code: {result.returncode}\n"
+                f"Godot stdout (last 2000 chars):\n{stdout_tail}\n"
+                f"Godot stderr:\n{stderr_full}"
+            ) from None
+        raise
 
     # Determine coverage data path.
     coverage_data_path: Path | None = None
