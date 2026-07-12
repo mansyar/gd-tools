@@ -71,11 +71,11 @@
 - [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
 - [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
-### Task 3.1: Audit and gap-fill config.py tests (§4.1)
-- [ ] Audit `test_config.py` against §4.1 specs
-- [ ] Write missing test cases: load valid config, defaults, CLI overrides, invalid TOML, negative min_percent, project root detection, exclude replace semantics
-- [ ] Run tests: `pytest tests/unit/test_config.py -v` — all pass
-- [ ] Verify coverage for `config.py` module ≥80%
+### Task 3.1: Audit and gap-fill config.py tests (§4.1) [sha: n/a — no gaps]
+- [x] Audit `test_config.py` against §4.1 specs
+- [x] Write missing test cases: load valid config, defaults, CLI overrides, invalid TOML, negative min_percent, project root detection, exclude replace semantics
+- [x] Run tests: `pytest tests/unit/test_config.py -v` — all pass
+- [x] Verify coverage for `config.py` module ≥80%
 
 ### Task 3.2: Audit and gap-fill godot.py tests (§4.2)
 - [ ] Audit `test_godot.py` against §4.2 specs
