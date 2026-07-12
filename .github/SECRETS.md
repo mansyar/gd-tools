@@ -44,12 +44,34 @@ pipeline workflows defined in `.github/workflows/`.
   4. Value: paste the TestPyPI API token.
   5. Click **Add secret**.
 
+### `PYPI_API_TOKEN`
+
+- **Used by:** `.github/workflows/release.yml` — `publish-pypi` job
+- **Purpose:** Authenticates package uploads to
+  [PyPI](https://pypi.org) for production releases.
+- **Required for:** Yes — the release workflow cannot publish to production
+  PyPI without it.
+- **How to obtain:**
+  1. Create an account on [pypi.org](https://pypi.org/account/register/).
+  2. Go to Account Settings -> **API tokens**.
+  3. Click **Add API token**.
+  4. Scope: **Entire account** (or limit to the project once created).
+  5. Copy the token (starts with `pypi-`).
+- **How to add:**
+  1. Go to the GitHub repository -> **Settings** -> **Secrets and variables** ->
+     **Actions**.
+  2. Click **New repository secret**.
+  3. Name: `PYPI_API_TOKEN`
+  4. Value: paste the PyPI API token.
+  5. Click **Add secret**.
+
 ## Notes
 
 - `CODECOV_TOKEN` is **optional for public repositories** — codecov-action
   can work without it on public repos, but setting it ensures reliable
   uploads and avoids rate limits. It is **recommended** for all repositories.
 - `TEST_PYPI_API_TOKEN` is **required** for the release workflow. Without it,
-  tag pushes (`v*`) will fail at the upload step.
-- Production PyPI publishing is deferred to Track 17 (PyPI Release) and will
-  require an additional `PYPI_API_TOKEN` secret at that time.
+  tag pushes (`v*`) will fail at the TestPyPI upload step.
+- `PYPI_API_TOKEN` is **required** for the production PyPI publish job
+  (`publish-pypi`). Without it, the `publish-pypi` job will fail at the
+  upload step.
