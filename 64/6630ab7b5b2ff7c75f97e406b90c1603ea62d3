@@ -1,0 +1,26 @@
+Task 1.3: Create per-tier conftest.py files
+
+Created three per-tier conftest.py files:
+
+1. tests/unit/conftest.py:
+   - FIXTURES_DIR constant pointing to tests/fixtures/
+   - read_fixture() and read_json_fixture() helpers (per TESTING_STRATEGY §11)
+   - mock_subprocess_run() factory fixture (per TESTING_STRATEGY §8)
+   - mock_requests_get() factory fixture (per TESTING_STRATEGY §8)
+   - mock_godot_on_path() context manager fixture (per TESTING_STRATEGY §8)
+
+2. tests/integration/conftest.py:
+   - godot_bin fixture (session scope, auto-skips when Godot not found)
+   - sample_project_path fixture (session scope)
+   - Imports find_godot_binary from root conftest
+
+3. tests/e2e/conftest.py:
+   - godot_bin fixture (session scope, auto-skips when Godot not found)
+   - sample_project_path fixture (session scope)
+   - Imports find_godot_binary from root conftest
+
+Verification:
+- 547 unit tests pass (96.61% coverage)
+- 43 integration tests collect without errors
+- find_godot_binary() returns None when GODOT_BIN points to non-existent path
+- Pre-existing e2e test failure (project.godot not found) unrelated to conftest changes
