@@ -78,13 +78,13 @@
 
 ## Phase 6: Final Verification
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
-- [ ] Task: Cross-document verification and polish
-    - [ ] Verify all internal links resolve correctly — no broken links between docs (AC-6)
-    - [ ] Verify all CLI commands and flags match the implemented CLI — cross-check against source code (AC-7)
-    - [ ] Verify prose style compliance with Product Guidelines §1 — technical, direct, active voice (AC-5)
-    - [ ] Verify ASCII-only — no emoji in any documentation file (NFR-4)
-    - [ ] Verify no existing documentation files were modified — `git diff --name-only` check (AC-8)
-    - [ ] Run existing test suite (`CI=true pytest`) to ensure no regressions from documentation changes
+- [x] Task: Read `spec.md` and `workflow.md` before starting phase implementation
+- [x] Task: Cross-document verification and polish
+    - [x] Verify all internal links resolve correctly -- no broken links between docs (AC-6)
+    - [x] Verify all CLI commands and flags match the implemented CLI -- cross-check against source code (AC-7)
+    - [x] Verify prose style compliance with Product Guidelines section 1 -- technical, direct, active voice (AC-5)
+    - [x] Verify ASCII-only -- no emoji in any documentation file (NFR-4)
+    - [x] Verify no existing documentation files were modified -- `git diff --name-only` check (AC-8)
+    - [x] Run existing test suite (`CI=true pytest`) to ensure no regressions from documentation changes
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
 </protect>
