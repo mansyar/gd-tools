@@ -77,11 +77,11 @@
 - [x] Run tests: `pytest tests/unit/test_config.py -v` — all pass
 - [x] Verify coverage for `config.py` module ≥80%
 
-### Task 3.2: Audit and gap-fill godot.py tests (§4.2)
-- [ ] Audit `test_godot.py` against §4.2 specs
-- [ ] Write missing test cases: binary detection chain, version parsing, version comparison, run_godot args, timeout, not found
-- [ ] Run tests: `pytest tests/unit/test_godot.py -v` — all pass
-- [ ] Verify coverage for `godot.py` module ≥80%
+### Task 3.2: Audit and gap-fill godot.py tests (§4.2) [sha: pending]
+- [x] Audit `test_godot.py` against §4.2 specs
+- [x] Write missing test cases: binary detection chain, version parsing, version comparison, run_godot args, timeout, not found
+- [x] Run tests: `pytest tests/unit/test_godot.py -v` — all pass
+- [x] Verify coverage for `godot.py` module ≥80%
 
 ### Task 3.3: Audit and gap-fill plan_generator.py tests (§4.3)
 - [ ] Audit `test_plan_generator.py` against §4.3 specs

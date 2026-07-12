@@ -15,6 +15,7 @@ from gd_tools.errors import ConfigError, GodotNotFoundError
 from gd_tools.godot import (
     GUT_VERSION_MAP,
     GodotInfo,
+    _is_executable,
     check_version_compatible,
     find_godot,
     get_godot_version,
@@ -610,3 +611,29 @@ def test_run_godot_returns_completed_process():
             args=[],
         )
     assert result is expected
+
+
+# --- _is_executable ---
+
+
+@pytest.mark.unit
+def test_is_executable_nonexistent_path():
+    """_is_executable returns False for a path that does not exist."""
+    assert _is_executable("/nonexistent/path/to/godot") is False
+
+
+@pytest.mark.unit
+def test_is_executable_existing_file(tmp_path):
+    """_is_executable returns True for an existing file."""
+    fake_bin = tmp_path / "godot"
+    fake_bin.write_text("fake")
+    assert _is_executable(str(fake_bin)) is True
+
+
+@pytest.mark.unit
+def test_is_executable_not_executable(tmp_path):
+    """_is_executable returns False when os.access denies execute permission."""
+    fake_bin = tmp_path / "godot"
+    fake_bin.write_text("fake")
+    with patch("gd_tools.godot.os.access", return_value=False):
+        assert _is_executable(str(fake_bin)) is False
