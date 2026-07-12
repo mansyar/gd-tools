@@ -27,7 +27,7 @@
 - [x] Verify: `pytest --co` still collects all tests
 - [x] Verify: Integration tests skip when `GODOT_BIN` not set
 
-### Task 1.3: Create per-tier conftest.py files [sha: pending]
+### Task 1.3: Create per-tier conftest.py files [sha: 646630a]
 - [x] Create `tests/unit/conftest.py` with shared mock fixtures (subprocess.run, requests.get, shutil.which mock factories per §8)
 - [x] Create `tests/integration/conftest.py` with `godot_bin` fixture (auto-skip), sample project path fixture
 - [x] Create `tests/e2e/conftest.py` with `godot_bin` fixture (auto-skip), sample project fixture, E2E setup
