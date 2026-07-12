@@ -76,7 +76,7 @@
     - [x] Update plan.md: mark task `[x]` with commit SHA
 - [x] Task: Conductor - User Manual Verification 'Production PyPI Publication' (Protocol in workflow.md)
 
-## Phase 6: Git Tag and GitHub Release
+## Phase 6: Git Tag and GitHub Release [checkpoint: cc5423d]
 
 - [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [x] Task: Create git tag and GitHub release [0947c0b]
@@ -86,5 +86,5 @@
     - [x] Commit: `chore(release): Tag v0.1.0 and create GitHub release`
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
-- [ ] Task: Conductor - User Manual Verification 'Git Tag and GitHub Release' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Git Tag and GitHub Release' (Protocol in workflow.md)
 </protect>
