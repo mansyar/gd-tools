@@ -228,6 +228,59 @@ def test_read_coverage_json_missing_version(tmp_path):
         read_coverage_json(f)
 
 
+def test_read_coverage_json_data_not_dict(tmp_path):
+    """read_coverage_json raises CoveragePlanError when top-level is not a dict."""
+    f = tmp_path / "list.json"
+    f.write_text(json.dumps([1, 2, 3]))
+    with pytest.raises(CoveragePlanError, match="JSON object"):
+        read_coverage_json(f)
+
+
+def test_read_coverage_json_files_not_list(tmp_path):
+    """read_coverage_json raises CoveragePlanError when 'files' is not a list."""
+    data = {"version": 1, "files": "not_a_list"}
+    f = tmp_path / "files_not_list.json"
+    f.write_text(json.dumps(data))
+    with pytest.raises(CoveragePlanError, match="must be a list"):
+        read_coverage_json(f)
+
+
+def test_read_coverage_json_file_entry_not_dict(tmp_path):
+    """read_coverage_json raises CoveragePlanError when a file entry is not a dict."""
+    data = {"version": 1, "files": ["not_a_dict"]}
+    f = tmp_path / "entry_not_dict.json"
+    f.write_text(json.dumps(data))
+    with pytest.raises(CoveragePlanError, match="Invalid coverage file entry"):
+        read_coverage_json(f)
+
+
+def test_read_coverage_json_missing_file_id(tmp_path):
+    """read_coverage_json raises CoveragePlanError when file_id is missing."""
+    data = {"version": 1, "files": [{"hits": {"0": 1}}]}
+    f = tmp_path / "no_file_id.json"
+    f.write_text(json.dumps(data))
+    with pytest.raises(CoveragePlanError, match="file_id"):
+        read_coverage_json(f)
+
+
+def test_read_coverage_json_missing_hits(tmp_path):
+    """read_coverage_json raises CoveragePlanError when hits is missing."""
+    data = {"version": 1, "files": [{"file_id": 0}]}
+    f = tmp_path / "no_hits.json"
+    f.write_text(json.dumps(data))
+    with pytest.raises(CoveragePlanError, match="hits"):
+        read_coverage_json(f)
+
+
+def test_read_coverage_json_hits_not_dict(tmp_path):
+    """read_coverage_json raises CoveragePlanError when hits is not a dict."""
+    data = {"version": 1, "files": [{"file_id": 0, "hits": "not_a_dict"}]}
+    f = tmp_path / "hits_not_dict.json"
+    f.write_text(json.dumps(data))
+    with pytest.raises(CoveragePlanError, match="must be a dict"):
+        read_coverage_json(f)
+
+
 def test_read_coverage_json_generated_at_optional(tmp_path):
     """read_coverage_json does not require 'generated_at' field."""
     data = {
