@@ -14,7 +14,7 @@
     - [x] Update plan.md: mark task `[x]` with commit SHA
 - [x] Task: Conductor - User Manual Verification 'Package Metadata Finalization' (Protocol in workflow.md)
 
-## Phase 2: Release Workflow and Secrets Documentation
+## Phase 2: Release Workflow and Secrets Documentation [checkpoint: 59cc2db]
 
 - [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [x] Task: Extend `.github/workflows/release.yml` for production PyPI [6ee4b81]
@@ -31,7 +31,7 @@
     - [x] Commit: `docs(secrets): Document PYPI_API_TOKEN secret for production PyPI`
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
-- [ ] Task: Conductor - User Manual Verification 'Release Workflow and Secrets Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Release Workflow and Secrets Documentation' (Protocol in workflow.md)
 
 ## Phase 3: Package Build and Local Validation
 
