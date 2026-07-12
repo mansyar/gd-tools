@@ -41,28 +41,28 @@
 
 ## Phase 2: Godot Integration & Stages 2-3 (ci.yml)
 
-- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
+- [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
-- [ ] Task: Implement Stage 2 — `integration` job
-    - [ ] Define job `integration` with `needs: lint-format-unit` (Stage 1)
-    - [ ] Run on `ubuntu-latest` with Python 3.12
-    - [ ] Add checkout, setup-python (with cache), pip install steps
-    - [ ] Add Godot installation step (download latest stable from GitHub releases)
-    - [ ] Add `chmod +x` and move binary to PATH as `godot`
-    - [ ] Set `GODOT_BIN` environment variable to absolute path of binary
-    - [ ] Add `godot --version` verification step
-    - [ ] Add `CI=true pytest tests/integration/ -m integration` step
-    - [ ] Set job timeout to 10 minutes
+- [x] Task: Implement Stage 2 — `integration` job [bff9221]
+    - [x] Define job `integration` with `needs: lint-format-unit` (Stage 1)
+    - [x] Run on `ubuntu-latest` with Python 3.12
+    - [x] Add checkout, setup-python (with cache), pip install steps
+    - [x] Add Godot installation step (download latest stable from GitHub releases)
+    - [x] Add `chmod +x` and move binary to PATH as `godot`
+    - [x] Set `GODOT_BIN` environment variable to absolute path of binary
+    - [x] Add `godot --version` verification step
+    - [x] Add `CI=true pytest tests/integration/ -m integration` step
+    - [x] Set job timeout to 10 minutes
 
-- [ ] Task: Implement Stage 3 — `e2e` job
-    - [ ] Define job `e2e` with `needs: integration` (Stage 2)
-    - [ ] Run on `ubuntu-latest` with Python 3.12
-    - [ ] Add checkout, setup-python (with cache), pip install steps
-    - [ ] Add Godot installation step (reuse same installation logic as Stage 2)
-    - [ ] Set `GODOT_BIN` environment variable to absolute path
-    - [ ] Add `godot --version` verification step
-    - [ ] Add `CI=true pytest tests/e2e/ -m e2e` step
-    - [ ] Set job timeout to 10 minutes
+- [x] Task: Implement Stage 3 — `e2e` job [bff9221]
+    - [x] Define job `e2e` with `needs: integration` (Stage 2)
+    - [x] Run on `ubuntu-latest` with Python 3.12
+    - [x] Add checkout, setup-python (with cache), pip install steps
+    - [x] Add Godot installation step (reuse same installation logic as Stage 2)
+    - [x] Set `GODOT_BIN` environment variable to absolute path
+    - [x] Add `godot --version` verification step
+    - [x] Add `CI=true pytest tests/e2e/ -m e2e` step
+    - [x] Set job timeout to 10 minutes
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
