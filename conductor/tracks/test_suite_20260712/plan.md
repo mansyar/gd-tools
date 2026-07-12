@@ -61,7 +61,7 @@
 - [x] Add `@pytest.mark.e2e` to `test_coverage_e2e.py` (and `test_full_workflow.py` when created in Phase 5)
 - [x] Verify: `pytest -m e2e` runs only e2e tests
 
-### Task 2.4: Conductor - User Manual Verification 'Phase 2: Test Marker Annotation' (Protocol in workflow.md)
+### Task 2.4: Conductor - User Manual Verification 'Phase 2: Test Marker Annotation' (Protocol in workflow.md) [checkpoint: pending]
 
 ---
 
