@@ -9,7 +9,7 @@
 
 ---
 
-## Phase 1: CI Workflow Foundation (ci.yml)
+## Phase 1: CI Workflow Foundation (ci.yml) [checkpoint: 3038ec1]
 
 - [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
@@ -37,7 +37,7 @@
     - [x] Add `CI=true pytest tests/unit/ -m unit` step (no coverage in matrix)
     - [x] Set job timeout to 5 minutes
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Godot Integration & Stages 2-3 (ci.yml)
 
