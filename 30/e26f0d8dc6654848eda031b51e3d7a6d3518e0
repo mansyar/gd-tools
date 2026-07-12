@@ -1,0 +1,13 @@
+Task 3.5: Audit and gap-fill reporter format tests (§4.5)
+
+Audit results:
+- html_reporter.py: 100% coverage, 9 tests — no gaps
+- lcov_reporter.py: 100% coverage, 8 tests — no gaps
+- terminal_reporter.py: 100% coverage, 8 tests — no gaps
+- cobertura_reporter.py: 97% -> 100% coverage, 8 -> 9 tests
+
+Gap filled:
+- _format_rate() zero-total guard (line 135): Added test_format_rate_zero_total
+  that calls _format_rate(0, 0) and asserts result == '0.0'
+
+All 34 reporter format tests pass.
