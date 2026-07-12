@@ -113,11 +113,11 @@
 - [x] Run tests: `pytest tests/unit/test_init.py -v` — all pass
 - [x] Verify coverage for `init.py` module ≥80%
 
-### Task 3.8: Audit and gap-fill doctor.py tests (§4.8)
-- [ ] Audit `test_doctor.py` against §4.8 specs
-- [ ] Write missing test cases: 9 checks pass/fail independently, suggestions, exit codes, severity levels, run_doctor never raises
-- [ ] Run tests: `pytest tests/unit/test_doctor.py -v` — all pass
-- [ ] Verify coverage for `doctor.py` module ≥80%
+### Task 3.8: Audit and gap-fill doctor.py tests (§4.8) [sha: n/a — no gaps]
+- [x] Audit `test_doctor.py` against §4.8 specs
+- [x] Write missing test cases: 9 checks pass/fail independently, suggestions, exit codes, severity levels, run_doctor never raises
+- [x] Run tests: `pytest tests/unit/test_doctor.py -v` — all pass
+- [x] Verify coverage for `doctor.py` module ≥80%
 
 ### Task 3.9: Audit and gap-fill cli.py tests (§4.9)
 - [ ] Audit `test_cli.py` against §4.9 specs
