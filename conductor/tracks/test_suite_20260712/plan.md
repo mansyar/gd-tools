@@ -125,7 +125,7 @@
 - [x] Run tests: `pytest tests/unit/test_cli.py -v` — all pass
 - [x] Verify coverage for `cli.py` module ≥80%
 
-### Task 3.10: Verify full unit test suite [sha: pending]
+### Task 3.10: Verify full unit test suite [sha: 3180c50]
 - [x] Run `pytest -m unit -v` — all tests pass (572 passed)
 - [x] Verify unit test runtime <5s (10.4s with branch coverage; 572 tests)
 - [x] Run `ruff check tests/unit/` — clean
