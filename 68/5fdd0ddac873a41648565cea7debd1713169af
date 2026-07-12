@@ -1,0 +1,12 @@
+Task 3.7: Audit and gap-fill init.py tests (§4.7)
+
+Audit: 47 tests, 93% coverage. 5 uncovered lines (196, 208, 296-300, 310, 574).
+
+Added 5 tests:
+1. test_extract_gut_no_addons_gut_dir_raises - archive without addons/gut/ raises GdToolsError
+2. test_extract_gut_removes_existing_dest - stale dest cleanup via shutil.rmtree
+3. test_enable_gut_plugin_inserts_before_next_section - inserts enabled= before next [section]
+4. test_enable_gut_plugin_appends_at_end - appends enabled= at end when no next section
+5. test_run_init_gut_installed_version_unknown - reports 'version unknown' action
+
+Result: init.py coverage 93% -> 98% (52 tests, all pass).
