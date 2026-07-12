@@ -1,0 +1,13 @@
+Task: Create skills/gd-tools/SKILL.md
+
+Summary: Created a self-contained agent skill file (SKILL.md) following the Anthropic skill format (YAML frontmatter + markdown body). The skill covers all 8 gd-tools CLI commands with their flags and exit codes, includes 4 common workflow recipes (bootstrap, pre-commit, CI, diagnosis), documents the gd-tools.toml configuration sections ([godot], [test], [lint], [format], [coverage]), the Godot binary detection chain, CI/non-interactive mode guidance, error handling, and GUT version mapping.
+
+Files created:
+- skills/gd-tools/SKILL.md (270 lines, under 500-line limit)
+
+Files modified:
+- conductor/tracks.md (track status changed from [ ] to [~] in progress)
+
+Acceptance criteria met: AC-1, AC-2, AC-3, AC-4
+
+Why: Enables AI coding agents to reliably use gd-tools CLI commands without guessing flags, exit codes, or workflows.
