@@ -39,7 +39,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
-## Phase 2: Godot Integration & Stages 2-3 (ci.yml)
+## Phase 2: Godot Integration & Stages 2-3 (ci.yml) [checkpoint: be67452]
 
 - [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
@@ -64,7 +64,7 @@
     - [x] Add `CI=true pytest tests/e2e/ -m e2e` step
     - [x] Set job timeout to 10 minutes
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
 ## Phase 3: Release Workflow Skeleton (release.yml)
 
