@@ -81,27 +81,27 @@
     - [x] Add `twine upload --repository testpypi dist/*` step with `TEST_PYPI_API_TOKEN` secret
     - [x] Set job timeout to 10 minutes
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
 
 ## Phase 4: Validation & Documentation
 
-- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
+- [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
-- [ ] Task: Validate workflow YAML files
-    - [ ] Verify YAML syntax and structure of `ci.yml` and `release.yml`
-    - [ ] Verify `needs:` dependency chain: `lint-format-unit` → `integration` → `e2e`
-    - [ ] Verify all `actions/*` version references are current
-    - [ ] Verify env var `CI=true` is set in all test steps
-    - [ ] Verify `GODOT_BIN` is set in Stages 2 and 3
+- [x] Task: Validate workflow YAML files
+    - [x] Verify YAML syntax and structure of `ci.yml` and `release.yml`
+    - [x] Verify `needs:` dependency chain: `lint-format-unit` → `integration` → `e2e`
+    - [x] Verify all `actions/*` version references are current
+    - [x] Verify env var `CI=true` is set in all test steps
+    - [x] Verify `GODOT_BIN` is set in Stages 2 and 3
 
-- [ ] Task: Document required GitHub secrets
-    - [ ] Create documentation listing required secrets: `CODECOV_TOKEN`, `TEST_PYPI_API_TOKEN`
-    - [ ] Add setup instructions for each secret in GitHub repository settings
-    - [ ] Add note that `CODECOV_TOKEN` is optional for public repos but recommended
+- [x] Task: Document required GitHub secrets
+    - [x] Create documentation listing required secrets: `CODECOV_TOKEN`, `TEST_PYPI_API_TOKEN`
+    - [x] Add setup instructions for each secret in GitHub repository settings
+    - [x] Add note that `CODECOV_TOKEN` is optional for public repos but recommended
 
-- [ ] Task: Final commit and verification
-    - [ ] Stage all workflow files and documentation
-    - [ ] Commit with message: `feat(ci): Add CI/CD pipeline with staged gating and release skeleton`
+- [x] Task: Final commit and verification [1f0fe69]
+    - [x] Stage all workflow files and documentation
+    - [x] Commit with message: `feat(ci): Add CI/CD pipeline with staged gating and release skeleton`
     - [ ] Verify pipeline triggers on next push/PR
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
