@@ -65,15 +65,15 @@
 
 ## Phase 5: Architecture Documentation (FR-4)
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
-- [ ] Task: Create `docs/ARCHITECTURE.md` — standalone coverage system architecture document
-    - [ ] Write Overview section (why GDScript coverage is needed, unique to `gd-tools`)
-    - [ ] Write Architecture C (Hybrid) section (three-phase approach, comparison with Architecture A/B, why C was chosen)
-    - [ ] Write Full Flow section (end-to-end ASCII diagram of `gd-tools test --coverage`, 80-column width)
-    - [ ] Write Data Formats section (instrumentation plan JSON schema, coverage data JSON schema, field descriptions)
-    - [ ] Write Component Details section (plan_generator.py, coverage.gd, pre_run_hook.gd, post_run_hook.gd, reporter.py)
-    - [ ] Write Design Decisions section (bottom-to-top injection, env var activation, source restoration approach)
-- [ ] Task: Conductor - User Manual Verification 'Architecture Documentation' (Protocol in workflow.md)
+- [x] Task: Read `spec.md` and `workflow.md` before starting phase implementation
+- [x] Task: Create `docs/ARCHITECTURE.md` — standalone coverage system architecture document (c7324b9)
+    - [x] Write Overview section (why GDScript coverage is needed, unique to `gd-tools`)
+    - [x] Write Architecture C (Hybrid) section (three-phase approach, comparison with Architecture A/B, why C was chosen)
+    - [x] Write Full Flow section (end-to-end ASCII diagram of `gd-tools test --coverage`, 80-column width)
+    - [x] Write Data Formats section (instrumentation plan JSON schema, coverage data JSON schema, field descriptions)
+    - [x] Write Component Details section (plan_generator.py, coverage.gd, pre_run_hook.gd, post_run_hook.gd, reporter.py)
+    - [x] Write Design Decisions section (bottom-to-top injection, env var activation, source restoration approach)
+- [~] Task: Conductor - User Manual Verification 'Architecture Documentation' (Protocol in workflow.md)
 
 ## Phase 6: Final Verification
 
