@@ -122,8 +122,8 @@ def test_hooks_end_to_end_flow(tmp_path):
                 "lines": [
                     {"line": 7, "id": 0},
                     {"line": 11, "id": 1},
-                    {"line": 16, "id": 2},
-                    {"line": 18, "id": 3},
+                    {"line": 15, "id": 2},
+                    {"line": 21, "id": 3},
                 ],
             }
         ]
@@ -180,6 +180,7 @@ def test_hooks_missing_plan_env_var(tmp_path):
 
     output_path = tmp_path / "coverage_output.json"
     _clear_coverage_env()
+    os.environ["GD_TOOLS_COVERAGE_PLAN"] = ""
     os.environ["GD_TOOLS_COVERAGE_OUTPUT"] = str(output_path)
 
     try:
@@ -266,6 +267,7 @@ def test_hooks_missing_output_env_var(tmp_path):
 
     _clear_coverage_env()
     os.environ["GD_TOOLS_COVERAGE_PLAN"] = str(plan_path)
+    os.environ["GD_TOOLS_COVERAGE_OUTPUT"] = ""
 
     try:
         config = GdToolsConfig()

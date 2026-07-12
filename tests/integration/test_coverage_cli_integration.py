@@ -20,6 +20,7 @@ import pytest
 from gd_tools.config import GdToolsConfig
 from gd_tools.coverage.orchestrator import run_coverage_test
 from gd_tools.errors import CoverageThresholdError
+from gd_tools.init import install_coverage_addon
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
@@ -43,11 +44,7 @@ def _setup_project(tmp_path: Path) -> Path:
         tmp_path / "addons" / "gut",
         dirs_exist_ok=True,
     )
-    shutil.copytree(
-        SPIKE_DIR / "addons" / "gd-tools-coverage",
-        tmp_path / "addons" / "gd-tools-coverage",
-        dirs_exist_ok=True,
-    )
+    install_coverage_addon(tmp_path)
     return tmp_path
 
 
