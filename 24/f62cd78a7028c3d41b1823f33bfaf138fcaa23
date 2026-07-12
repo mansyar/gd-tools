@@ -1,0 +1,22 @@
+Task: Create docs/CONTRIBUTING.md - Contributor Onboarding Guide
+
+Summary:
+Created docs/CONTRIBUTING.md (469 lines) covering all FR-3 required sections:
+1. Development Setup - Prerequisites table, clone/install instructions, Godot binary configuration (5-level detection chain documented)
+2. Code Style - ruff/black tooling (80-char line length), full naming conventions table from Product Guidelines section 3, Google Python Style Guide summary, pre-commit check chain
+3. Testing Requirements - pytest with CI=true, 3-tier test structure (unit/integration/e2e), coverage thresholds (>80% line, >70% branch), test file naming conventions, mocking guidelines (Godot subprocess, network, filesystem, env vars), test fixtures reference table
+4. PR Process - branch naming conventions, Conventional Commits format from workflow.md, review checklist (5 categories), CI checks pipeline
+5. Project Structure - full ASCII directory tree, module overview table mapping each source file to its responsibility
+6. Debugging Tips - 5 common issues: Godot not found, test timeouts, coverage instrumentation failures, import errors, ruff/black conflicts
+7. Additional Resources - 11-row reference table linking to all project docs
+
+Files Created:
+- docs/CONTRIBUTING.md (new, 469 lines)
+
+Constraints Met:
+- ASCII-only per Product Guidelines section 7 (no emoji)
+- Prose style per Product Guidelines section 1 (technical, direct, active voice, em-dash asides, numbered sections, tables for structured data)
+- References (not duplicates) workflow.md, TESTING_STRATEGY.md, code_styleguides/python.md
+- References ARCHITECTURE.md for coverage system contributors
+- All internal links use relative paths (NFR-3)
+- All code examples use language tags (NFR-2)
