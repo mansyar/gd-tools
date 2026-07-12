@@ -47,7 +47,8 @@
     - [x] Write Command Reference: `gd-tools coverage` (subcommands: `report`, `merge`, `show`; flags, examples, exit codes)
     - [x] Write Examples section (first test run, CI/CD pipeline setup, coverage threshold enforcement, lint+format in CI)
     - [x] Write Troubleshooting section (Godot not found, GUT not installed, version mismatch, coverage not generating)
-- [~] Task: Conductor - User Manual Verification 'User Guide' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'User Guide' (Protocol in workflow.md)
+    - Checkpoint SHA: 96444b4
 
 ## Phase 4: Contributing Guide (FR-3)
 
