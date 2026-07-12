@@ -180,8 +180,8 @@
 - [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
 - [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
-### Task 5.1: Create test_full_workflow.py
-- [ ] Write `tests/e2e/test_full_workflow.py` implementing TESTING_STRATEGY §6:
+### Task 5.1: Create test_full_workflow.py [sha: pending]
+- [x] Write `tests/e2e/test_full_workflow.py` implementing TESTING_STRATEGY §6:
   - Test: doctor before init (baseline check)
   - Test: init command on sample project
   - Test: doctor after init (should show green)
@@ -191,9 +191,9 @@
   - Test: coverage show command
   - Test: coverage report command
   - Test: full workflow sequence (init → lint → format → test --coverage → coverage show → coverage report)
-- [ ] Run tests: `pytest tests/e2e/test_full_workflow.py -v` (when Godot available) — all pass
-- [ ] Annotate with `@pytest.mark.e2e`
-- [ ] Verify E2E test runtime <120s
+- [x] Run tests: `pytest tests/e2e/test_full_workflow.py -v` (when Godot available) — all pass
+- [x] Annotate with `@pytest.mark.e2e`
+- [x] Verify E2E test runtime <120s
 
 ### Task 5.2: Conductor - User Manual Verification 'Phase 5: E2E Full-Workflow Test' (Protocol in workflow.md)
 
