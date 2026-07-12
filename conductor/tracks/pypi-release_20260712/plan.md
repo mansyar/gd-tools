@@ -3,15 +3,15 @@
 
 ## Phase 1: Package Metadata Finalization
 
-- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
-- [ ] Task: Update `pyproject.toml` metadata
-    - [ ] Change Development Status classifier from `"Development Status :: 3 - Alpha"` to `"Development Status :: 4 - Beta"`
-    - [ ] Add `[project.urls]` section with Homepage, Repository, Documentation, and Bug Tracker URLs
-    - [ ] Verify `readme = "README.md"` is present and correct
-    - [ ] Run `ruff check` and `black --check` to ensure no style violations introduced
-    - [ ] Commit: `chore(pyproject): Update package metadata for PyPI release`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
+- [x] Task: Update `pyproject.toml` metadata [6ce43dc]
+    - [x] Change Development Status classifier from `"Development Status :: 3 - Alpha"` to `"Development Status :: 4 - Beta"`
+    - [x] Add `[project.urls]` section with Homepage, Repository, Documentation, and Bug Tracker URLs
+    - [x] Verify `readme = "README.md"` is present and correct
+    - [x] Run `ruff check` and `black --check` to ensure no style violations introduced
+    - [x] Commit: `chore(pyproject): Update package metadata for PyPI release`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Package Metadata Finalization' (Protocol in workflow.md)
 
 ## Phase 2: Release Workflow and Secrets Documentation
