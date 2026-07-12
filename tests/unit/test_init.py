@@ -385,6 +385,28 @@ def test_register_coverage_autoload_idempotent(tmp_path: Path):
     assert project_godot.read_text() == original
 
 
+def test_register_coverage_autoload_replaces_wrong_path(tmp_path: Path):
+    """Test register_coverage_autoload replaces an existing entry with a
+    different path instead of creating a duplicate."""
+    project_godot = tmp_path / "project.godot"
+    original = (
+        "config_version=5\n\n"
+        "[autoload]\n\n"
+        '_GDTCoverage="*res://addons/gd-tools-coverage/tracker.gd"\n'
+    )
+    project_godot.write_text(original)
+
+    register_coverage_autoload(tmp_path)
+
+    content = project_godot.read_text()
+    assert (
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"' in content
+    )
+    assert "tracker.gd" not in content
+    # Ensure no duplicate _GDTCoverage entries.
+    assert content.count("_GDTCoverage=") == 1
+
+
 def test_register_coverage_autoload_preserves_existing_autoloads(
     tmp_path: Path,
 ):

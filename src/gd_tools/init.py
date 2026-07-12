@@ -346,7 +346,9 @@ def register_coverage_autoload(project_root: Path) -> None:
 
     Adds ``_GDTCoverage`` to the ``[autoload]`` section, pointing at
     ``res://addons/gd-tools-coverage/coverage.gd``. Idempotent: running
-    multiple times produces the same result.
+    multiple times produces the same result. If ``_GDTCoverage`` is
+    already registered with a different path, the entry is replaced
+    to avoid duplicate autoload keys.
 
     Args:
         project_root: Path to the Godot project root.
@@ -356,13 +358,22 @@ def register_coverage_autoload(project_root: Path) -> None:
 
     autoload_entry = f'_GDTCoverage="*{COVERAGE_AUTOLOAD_PATH}"'
 
-    # Idempotent: if already registered, do nothing.
+    # Idempotent: if already registered with correct path, do nothing.
     if autoload_entry in content:
         return
 
+    lines = content.split("\n")
+
+    # If _GDTCoverage is already registered with a different path,
+    # replace the existing entry to avoid duplicate autoload keys.
+    for i, line in enumerate(lines):
+        if line.strip().startswith("_GDTCoverage="):
+            lines[i] = autoload_entry
+            project_godot.write_text("\n".join(lines))
+            return
+
     if "[autoload]" in content:
         # Section exists, append entry after the section header.
-        lines = content.split("\n")
         for i, line in enumerate(lines):
             if line.strip() == "[autoload]":
                 lines.insert(i + 1, f"\n{autoload_entry}")
