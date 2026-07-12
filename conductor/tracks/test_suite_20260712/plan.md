@@ -119,7 +119,7 @@
 - [x] Run tests: `pytest tests/unit/test_doctor.py -v` — all pass
 - [x] Verify coverage for `doctor.py` module ≥80%
 
-### Task 3.9: Audit and gap-fill cli.py tests (§4.9) [sha: pending]
+### Task 3.9: Audit and gap-fill cli.py tests (§4.9) [sha: d6a81e7]
 - [x] Audit `test_cli.py` against §4.9 specs
 - [x] Write missing test cases: commands exist, help text, exit codes propagate, --version, --help, non-interactive mode (Click CliRunner)
 - [x] Run tests: `pytest tests/unit/test_cli.py -v` — all pass
