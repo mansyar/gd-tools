@@ -68,18 +68,18 @@
 
 ## Phase 3: Release Workflow Skeleton (release.yml)
 
-- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
+- [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
-- [ ] Task: Create `.github/workflows/release.yml` file
-    - [ ] Define workflow with trigger on tag push matching `v*` (e.g., `v0.1.0`)
-    - [ ] Define job `build-and-publish` on `ubuntu-latest` with Python 3.12
-    - [ ] Add `actions/checkout@v4` step
-    - [ ] Add `actions/setup-python@v5` step with `cache: pip`
-    - [ ] Install `build` and `twine` packages
-    - [ ] Add `python -m build` step (produces sdist + wheel in `dist/`)
-    - [ ] Add `twine check dist/*` step (verify package metadata)
-    - [ ] Add `twine upload --repository testpypi dist/*` step with `TEST_PYPI_API_TOKEN` secret
-    - [ ] Set job timeout to 10 minutes
+- [x] Task: Create `.github/workflows/release.yml` file [406fa6c]
+    - [x] Define workflow with trigger on tag push matching `v*` (e.g., `v0.1.0`)
+    - [x] Define job `build-and-publish` on `ubuntu-latest` with Python 3.12
+    - [x] Add `actions/checkout@v4` step
+    - [x] Add `actions/setup-python@v5` step with `cache: pip`
+    - [x] Install `build` and `twine` packages
+    - [x] Add `python -m build` step (produces sdist + wheel in `dist/`)
+    - [x] Add `twine check dist/*` step (verify package metadata)
+    - [x] Add `twine upload --repository testpypi dist/*` step with `TEST_PYPI_API_TOKEN` secret
+    - [x] Set job timeout to 10 minutes
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
 
