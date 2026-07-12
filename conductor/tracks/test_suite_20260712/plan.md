@@ -27,12 +27,12 @@
 - [x] Verify: `pytest --co` still collects all tests
 - [x] Verify: Integration tests skip when `GODOT_BIN` not set
 
-### Task 1.3: Create per-tier conftest.py files
-- [ ] Create `tests/unit/conftest.py` with shared mock fixtures (subprocess.run, requests.get, shutil.which mock factories per §8)
-- [ ] Create `tests/integration/conftest.py` with `godot_bin` fixture (auto-skip), sample project path fixture
-- [ ] Create `tests/e2e/conftest.py` with `godot_bin` fixture (auto-skip), sample project fixture, E2E setup
-- [ ] Verify: Unit tests still pass with new conftest
-- [ ] Verify: Integration/e2e auto-skip works without Godot
+### Task 1.3: Create per-tier conftest.py files [sha: pending]
+- [x] Create `tests/unit/conftest.py` with shared mock fixtures (subprocess.run, requests.get, shutil.which mock factories per §8)
+- [x] Create `tests/integration/conftest.py` with `godot_bin` fixture (auto-skip), sample project path fixture
+- [x] Create `tests/e2e/conftest.py` with `godot_bin` fixture (auto-skip), sample project fixture, E2E setup
+- [x] Verify: Unit tests still pass with new conftest
+- [x] Verify: Integration/e2e auto-skip works without Godot
 
 ### Task 1.4: Create .env.example and update .gitignore
 - [ ] Create `.env.example` with `GODOT_BIN` placeholder
