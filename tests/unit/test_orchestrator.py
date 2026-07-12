@@ -445,6 +445,24 @@ def test_merge_coverage_files_empty_list(mock_merge, tmp_path):
     assert result.files == []
 
 
+@pytest.mark.unit
+@patch("gd_tools.coverage.orchestrator.find_project_root")
+@patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
+def test_merge_coverage_files_with_config_no_output(
+    mock_merge, mock_find_root, tmp_path
+):
+    """When output is None but config is provided, output path uses config.coverage.output_dir."""
+    mock_merge.return_value = _make_coverage_data()
+    mock_find_root.return_value = tmp_path
+    config = _make_config(output_dir="custom_cov")
+
+    merge_coverage_files([Path("a.json")], output=None, config=config)
+
+    output_file = tmp_path / "custom_cov" / "coverage.json"
+    assert output_file.exists()
+    mock_find_root.assert_called_once()
+
+
 # --- show_coverage_summary() tests ---
 
 

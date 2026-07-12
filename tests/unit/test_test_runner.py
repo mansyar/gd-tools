@@ -227,6 +227,14 @@ def test_build_gut_args_multiple_test_dirs():
 
 
 @pytest.mark.unit
+def test_build_gut_args_empty_test_dirs():
+    """build_gut_args omits -gdir when test_dirs is empty."""
+    config = TestConfig(test_dirs=[])
+    args = build_gut_args(config, Path("/fake/project"))
+    assert not any(a.startswith("-gdir=") for a in args)
+
+
+@pytest.mark.unit
 def test_build_gut_args_prefix_suffix():
     """Test prefix and suffix args."""
     config = TestConfig(prefix="test_", suffix=".gd")
@@ -766,6 +774,58 @@ def test_run_tests_sets_junit_xml_path(
     result = run_tests(GdToolsConfig())
     expected_path = (gut_project / ".gd-tools" / "results.xml").resolve()
     assert result.junit_xml_path == expected_path
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_gut_timeout_raises_gdtools_error(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests raises GdToolsError when the GUT test run times out (not the import)."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    # First call (headless import) succeeds; second call (GUT test) times out.
+    mock_run_godot.side_effect = [
+        _make_completed_process(stdout="", stderr=""),
+        subprocess.TimeoutExpired(cmd=["godot"], timeout=30),
+    ]
+
+    with pytest.raises(GdToolsError) as exc_info:
+        run_tests(GdToolsConfig(), timeout=30)
+    assert exc_info.value.exit_code == 2
+    assert "timed out" in str(exc_info.value).lower()
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_custom_junit_xml_path(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """run_tests uses the custom junit_xml path when provided."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    custom_xml = str(gut_project / "custom_results.xml")
+    result = run_tests(GdToolsConfig(), junit_xml=custom_xml)
+    expected_path = Path(custom_xml).resolve()
+    assert result.junit_xml_path == expected_path
+    mock_parse.assert_called_once_with(expected_path)
 
 
 # --- coverage flag infrastructure ---
