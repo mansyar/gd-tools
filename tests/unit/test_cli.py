@@ -12,6 +12,7 @@ from gd_tools.errors import (
     ConfigError,
     CoveragePlanError,
     CoverageThresholdError,
+    GdToolsError,
     GUTNotInstalledError,
     TestFailureError,
 )
@@ -1038,6 +1039,73 @@ def test_coverage_show_plan_error_exit_2():
             "gd_tools.cli.show_coverage_summary",
             side_effect=CoveragePlanError("missing"),
         ),
+    ):
+        result = runner.invoke(cli, ["coverage", "show"])
+    assert result.exit_code == 2
+
+
+def test_cli_group_not_implemented_error_exit_2():
+    """Test GdToolsGroup catches NotImplementedError and exits 2."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_init", side_effect=NotImplementedError()):
+        result = runner.invoke(cli, ["init"])
+    assert result.exit_code == 2
+
+
+def test_cli_init_gdtools_error_exit_code():
+    """Test init exits with GdToolsError.exit_code when run_init raises."""
+    runner = CliRunner()
+    with patch(
+        "gd_tools.cli.run_init",
+        side_effect=GdToolsError("init failed", exit_code=3),
+    ):
+        result = runner.invoke(cli, ["init"])
+    assert result.exit_code == 3
+
+
+def test_coverage_report_config_error_exit_2():
+    """Test coverage report exits 2 when load_config raises ConfigError."""
+    runner = CliRunner()
+    with patch(
+        "gd_tools.cli.load_config",
+        side_effect=ConfigError("project.godot not found"),
+    ):
+        result = runner.invoke(cli, ["coverage", "report"])
+    assert result.exit_code == 2
+
+
+def test_coverage_merge_config_error_exit_2():
+    """Test coverage merge exits 2 when load_config raises ConfigError."""
+    runner = CliRunner()
+    with patch(
+        "gd_tools.cli.load_config",
+        side_effect=ConfigError("project.godot not found"),
+    ):
+        result = runner.invoke(cli, ["coverage", "merge", "file1.json"])
+    assert result.exit_code == 2
+
+
+def test_coverage_merge_gdtools_error_exit_code():
+    """Test coverage merge exits with GdToolsError.exit_code when merge fails."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.merge_coverage_files",
+            side_effect=GdToolsError("merge failed", exit_code=3),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "merge", "file1.json"])
+    assert result.exit_code == 3
+
+
+def test_coverage_show_config_error_exit_2():
+    """Test coverage show exits 2 when load_config raises ConfigError."""
+    runner = CliRunner()
+    with patch(
+        "gd_tools.cli.load_config",
+        side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["coverage", "show"])
     assert result.exit_code == 2
