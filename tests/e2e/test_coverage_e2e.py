@@ -16,6 +16,8 @@ from pathlib import Path
 
 import pytest
 
+from gd_tools.init import install_coverage_addon
+
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
@@ -48,11 +50,7 @@ def _setup_project_with_godot(tmp_path: Path) -> Path:
         tmp_path / "addons" / "gut",
         dirs_exist_ok=True,
     )
-    shutil.copytree(
-        SPIKE_DIR / "addons" / "gd-tools-coverage",
-        tmp_path / "addons" / "gd-tools-coverage",
-        dirs_exist_ok=True,
-    )
+    install_coverage_addon(tmp_path)
     return tmp_path
 
 
@@ -173,6 +171,9 @@ def test_e2e_coverage_report_lcov_format(tmp_path):
 @pytest.mark.e2e
 def test_e2e_coverage_merge_combines_files(tmp_path):
     """gd-tools coverage merge combines two coverage JSON files."""
+    (tmp_path / "project.godot").write_text(
+        '[application]\nname="Test"\n', encoding="utf-8"
+    )
     file1 = FIXTURES_DIR / "coverage_data" / "full_coverage.json"
     file2 = FIXTURES_DIR / "coverage_data" / "partial_coverage.json"
     output = tmp_path / "merged.json"

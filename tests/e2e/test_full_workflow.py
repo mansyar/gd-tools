@@ -12,6 +12,7 @@ the spike directory) to exercise the post-init workflow.
 All tests are marked ``@pytest.mark.e2e``.
 """
 
+import json
 import os
 import shutil
 import subprocess
@@ -21,6 +22,7 @@ from pathlib import Path
 import pytest
 
 from conftest import find_godot_binary
+from gd_tools.init import install_coverage_addon
 
 pytestmark = pytest.mark.e2e
 
@@ -55,11 +57,17 @@ def _setup_project_with_godot(tmp_path: Path) -> Path:
         tmp_path / "addons" / "gut",
         dirs_exist_ok=True,
     )
-    shutil.copytree(
-        SPIKE_DIR / "addons" / "gd-tools-coverage",
-        tmp_path / "addons" / "gd-tools-coverage",
-        dirs_exist_ok=True,
+    install_coverage_addon(tmp_path)
+    (tmp_path / ".gutconfig.json").write_text(
+        json.dumps(
+            {
+                "pre_run_script": "res://addons/gd-tools-coverage/pre_run_hook.gd",
+                "post_run_script": "res://addons/gd-tools-coverage/post_run_hook.gd",
+            }
+        ),
+        encoding="utf-8",
     )
+    (tmp_path / "gd-tools.toml").write_text("", encoding="utf-8")
     return tmp_path
 
 
