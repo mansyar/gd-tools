@@ -14,21 +14,22 @@
     - [x] Read `src/gd_tools/coverage/orchestrator.py` for actual coverage subcommands and flags
     - [x] Read `src/gd_tools/config.py` to verify config model sections and keys
     - [x] Document any discrepancies between PRD §5/§6 and actual implementation
-- [~] Task: Conductor - User Manual Verification 'CLI Implementation Research' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'CLI Implementation Research' (Protocol in workflow.md)
+    - Checkpoint SHA: 6dc7ae1
 
 ## Phase 2: README.md Expansion (FR-1)
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
-- [ ] Task: Expand README.md from 33-line placeholder to full project README
-    - [ ] Write project title, one-line tagline, and feature overview
-    - [ ] Add badges section (CI status, code coverage, PyPI version, Python versions, Godot version)
-    - [ ] Write installation instructions (`pip install gd-tools`)
-    - [ ] Write quick start guide (install → `gd-tools init` → `gd-tools test` → `gd-tools test --coverage`)
-    - [ ] Add CLI command summary table (6 commands with one-line descriptions)
-    - [ ] Add configuration overview (`gd-tools.toml` single source of truth, link to user guide)
-    - [ ] Add links to detailed documentation (User Guide, Contributing Guide, Architecture, PRD, Roadmap)
-    - [ ] Add license section
-    - [ ] Verify `pyproject.toml` `long_description` configuration points to README.md
+- [x] Task: Read `spec.md` and `workflow.md` before starting phase implementation
+- [x] Task: Expand README.md from 33-line placeholder to full project README
+    - [x] Write project title, one-line tagline, and feature overview
+    - [x] Add badges section (CI status, code coverage, PyPI version, Python versions, Godot version)
+    - [x] Write installation instructions (`pip install gd-tools`)
+    - [x] Write quick start guide (install → `gd-tools init` → `gd-tools test` → `gd-tools test --coverage`)
+    - [x] Add CLI command summary table (6 commands with one-line descriptions)
+    - [x] Add configuration overview (`gd-tools.toml` single source of truth, link to user guide)
+    - [x] Add links to detailed documentation (User Guide, Contributing Guide, Architecture, PRD, Roadmap)
+    - [x] Add license section
+    - [x] Verify `pyproject.toml` `long_description` configuration points to README.md
 - [ ] Task: Conductor - User Manual Verification 'README.md Expansion' (Protocol in workflow.md)
 
 ## Phase 3: User Guide (FR-2)
