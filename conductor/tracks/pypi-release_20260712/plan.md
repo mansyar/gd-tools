@@ -1,7 +1,7 @@
 <protect>
 # Track 17: PyPI Release - Implementation Plan
 
-## Phase 1: Package Metadata Finalization
+## Phase 1: Package Metadata Finalization [checkpoint: 98a3ca1]
 
 - [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [x] Task: Update `pyproject.toml` metadata [6ce43dc]
@@ -12,7 +12,7 @@
     - [x] Commit: `chore(pyproject): Update package metadata for PyPI release`
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
-- [ ] Task: Conductor - User Manual Verification 'Package Metadata Finalization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Package Metadata Finalization' (Protocol in workflow.md)
 
 ## Phase 2: Release Workflow and Secrets Documentation
 
