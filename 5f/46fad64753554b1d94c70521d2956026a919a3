@@ -1,0 +1,14 @@
+Task 3.4: Audit and gap-fill reporter.py tests
+
+Audit: test_reporter.py had 40 tests covering most §4.4 spec requirements.
+6 uncovered lines in read_coverage_json validation paths (lines 162,189,199,207,215,224).
+
+Gap-fill: Added 6 tests for malformed coverage data validation:
+1. test_read_coverage_json_data_not_dict - top-level JSON is not an object
+2. test_read_coverage_json_files_not_list - files field is not a list
+3. test_read_coverage_json_file_entry_not_dict - file entry is not a dict
+4. test_read_coverage_json_missing_file_id - file entry missing file_id
+5. test_read_coverage_json_missing_hits - file entry missing hits
+6. test_read_coverage_json_hits_not_dict - hits field is not a dict
+
+Result: reporter.py coverage 94% -> 98% (46 tests, all pass)
