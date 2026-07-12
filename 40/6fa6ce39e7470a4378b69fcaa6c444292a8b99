@@ -1,0 +1,28 @@
+Task: Create .github/workflows/release.yml
+
+Summary:
+Created the release workflow skeleton that triggers on tag pushes matching v* pattern.
+
+Changes:
+- Created .github/workflows/release.yml with:
+  - Trigger: push to tags matching v* (e.g., v0.1.0)
+  - Job: build-and-publish on ubuntu-latest with Python 3.12, 10min timeout
+  - Steps: checkout, setup-python (with pip cache), install build+twine, python -m build, twine check dist/*, twine upload to TestPyPI
+  - TestPyPI auth via TWINE_USERNAME=__token__, TWINE_PASSWORD=TEST_PYPI_API_TOKEN secret, TWINE_REPOSITORY_URL=https://test.pypi.org/legacy/
+  - CI=true env var set at workflow level (NFR-2 compliance)
+
+Files created:
+- .github/workflows/release.yml
+
+Why:
+Provides the release pipeline skeleton per spec FR-4. Production PyPI publish is deferred to Track 17; this skeleton publishes to TestPyPI only.
+
+Spec requirements satisfied:
+- FR-4.1: Triggers on tag push v*
+- FR-4.2: python -m build (sdist + wheel)
+- FR-4.3: twine check dist/*
+- FR-4.4: twine upload to TestPyPI with TEST_PYPI_API_TOKEN secret
+- FR-4.5: Skeleton only, production PyPI deferred to Track 17
+- FR-5.1: pip cache via actions/setup-python@v5
+- NFR-2: CI=true set
+- NFR-4: TEST_PYPI_API_TOKEN secret referenced
