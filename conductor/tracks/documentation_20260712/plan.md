@@ -52,14 +52,14 @@
 
 ## Phase 4: Contributing Guide (FR-3)
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
-- [ ] Task: Create `docs/CONTRIBUTING.md` — contributor onboarding guide
-    - [ ] Write Development Setup section (clone, `pip install -e ".[dev]"`, `.env` configuration for Godot binary)
-    - [ ] Write Code Style section (`ruff` lint, `black` format, naming conventions table from Product Guidelines §3, pre-commit checks)
-    - [ ] Write Testing Requirements section (`pytest` with `CI=true`, coverage thresholds >80% line / >70% branch, test file naming, mocking guidelines)
-    - [ ] Write PR Process section (branch naming, commit message format from workflow.md, review checklist, CI checks)
-    - [ ] Write Project Structure section (`src/gd_tools/` module overview, `tests/`, `docs/`, `conductor/`)
-    - [ ] Write Debugging Tips section (common development issues and resolutions)
+- [x] Task: Read `spec.md` and `workflow.md` before starting phase implementation
+- [x] Task: Create `docs/CONTRIBUTING.md` — contributor onboarding guide (24f62cd)
+    - [x] Write Development Setup section (clone, `pip install -e ".[dev]"`, `.env` configuration for Godot binary)
+    - [x] Write Code Style section (`ruff` lint, `black` format, naming conventions table from Product Guidelines §3, pre-commit checks)
+    - [x] Write Testing Requirements section (`pytest` with `CI=true`, coverage thresholds >80% line / >70% branch, test file naming, mocking guidelines)
+    - [x] Write PR Process section (branch naming, commit message format from workflow.md, review checklist, CI checks)
+    - [x] Write Project Structure section (`src/gd_tools/` module overview, `tests/`, `docs/`, `conductor/`)
+    - [x] Write Debugging Tips section (common development issues and resolutions)
 - [ ] Task: Conductor - User Manual Verification 'Contributing Guide' (Protocol in workflow.md)
 
 ## Phase 5: Architecture Documentation (FR-4)
