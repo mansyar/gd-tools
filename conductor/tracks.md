@@ -4,6 +4,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: CI/CD Pipeline**
-*Link: [./tracks/cicd_pipeline_20260712/](./tracks/cicd_pipeline_20260712/)*
-
