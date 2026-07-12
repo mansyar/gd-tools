@@ -68,8 +68,8 @@
 ## Phase 3: Unit Test Audit & Gap-Fill
 
 ### Task 3.0: Read spec.md and workflow.md
-- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
-- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
+- [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
 ### Task 3.1: Audit and gap-fill config.py tests (§4.1)
 - [ ] Audit `test_config.py` against §4.1 specs
