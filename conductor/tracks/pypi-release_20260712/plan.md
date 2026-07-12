@@ -16,15 +16,15 @@
 
 ## Phase 2: Release Workflow and Secrets Documentation
 
-- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
-- [ ] Task: Extend `.github/workflows/release.yml` for production PyPI
-    - [ ] Add a `publish-pypi` job that depends on the existing `build-and-publish` (TestPyPI) job
-    - [ ] Configure the PyPI upload step with `TWINE_USERNAME: __token__` and `TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}`
-    - [ ] Ensure the TestPyPI upload step remains as a pre-production safety net
-    - [ ] Update job/step names to reflect both TestPyPI and PyPI publishing
-    - [ ] Commit: `ci(release): Add production PyPI upload to release workflow`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
+- [x] Task: Extend `.github/workflows/release.yml` for production PyPI [6ee4b81]
+    - [x] Add a `publish-pypi` job that depends on the existing `build-and-publish` (TestPyPI) job
+    - [x] Configure the PyPI upload step with `TWINE_USERNAME: __token__` and `TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}`
+    - [x] Ensure the TestPyPI upload step remains as a pre-production safety net
+    - [x] Update job/step names to reflect both TestPyPI and PyPI publishing
+    - [x] Commit: `ci(release): Add production PyPI upload to release workflow`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 - [ ] Task: Update `.github/SECRETS.md`
     - [ ] Add `PYPI_API_TOKEN` secret documentation (Used by, Purpose, Required for, How to obtain, How to add)
     - [ ] Remove the "Production PyPI publishing is deferred to Track 17" note from the notes section
