@@ -131,7 +131,7 @@
 - [x] Run `ruff check tests/unit/` — clean
 - [x] Run `black --check tests/unit/` — 10 pre-existing failures (not introduced by track changes)
 
-### Task 3.11: Conductor - User Manual Verification 'Phase 3: Unit Test Audit & Gap-Fill' (Protocol in workflow.md) [checkpoint: pending]
+### Task 3.11: Conductor - User Manual Verification 'Phase 3: Unit Test Audit & Gap-Fill' (Protocol in workflow.md) [checkpoint: a4a28da]
 
 ---
 
