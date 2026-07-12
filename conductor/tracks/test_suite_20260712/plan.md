@@ -222,19 +222,19 @@
 - [x] Run `black --check tests/` — clean (14 files reformatted, was pre-existing pytestmark formatting issue)
 - [x] Fix any style issues found — fixed all 14 files via `black tests/`
 
-### Task 6.4: Final acceptance criteria verification
-- [ ] AC-1: `pytest -m unit` passes <5s
-- [ ] AC-2: `pytest -m integration` passes <60s (when Godot available)
-- [ ] AC-3: `pytest -m e2e` passes <120s (when Godot available)
-- [ ] AC-4: `pytest --cov=gd_tools --cov-branch --cov-fail-under=80` passes
-- [ ] AC-5: 10× runs all pass
-- [ ] AC-6: All conftest.py files exist and function
-- [ ] AC-7: All test files annotated with markers
-- [ ] AC-8: Auto-skip works without Godot
-- [ ] AC-9: `.env.example` exists, `.env` gitignored
-- [ ] AC-10: `test_full_workflow.py` exists and passes
-- [ ] AC-11: ruff and black clean on `tests/`
-- [ ] AC-12: Unit test audit complete
+### Task 6.4: Final acceptance criteria verification [sha: n/a — verification only]
+- [~] AC-1: `pytest -m unit` passes <5s — EXCEEDS TARGET (9.09s with cov, 6.50s without; 572 tests with branch coverage)
+- [ ] AC-2: `pytest -m integration` passes <60s (when Godot available) — N/A, requires Godot
+- [ ] AC-3: `pytest -m e2e` passes <120s (when Godot available) — N/A, requires Godot
+- [x] AC-4: `pytest --cov=gd_tools --cov-branch --cov-fail-under=80` passes — 99.49% line, 98% branch
+- [x] AC-5: 10× runs all pass — 10/10 pass, 0 failures, avg 10.2s
+- [x] AC-6: All conftest.py files exist and function — 4/4 (root + unit + integration + e2e)
+- [x] AC-7: All test files annotated with markers — 630/630 tests marked, 0 unmarked
+- [x] AC-8: Auto-skip works without Godot — verified (find_godot_binary returns None)
+- [x] AC-9: `.env.example` exists, `.env` gitignored — both verified
+- [x] AC-10: `test_full_workflow.py` exists and passes — 8 tests, 2 non-Godot tests pass
+- [x] AC-11: ruff and black clean on `tests/` — both clean
+- [x] AC-12: Unit test audit complete — 12 modules audited, gaps filled
 
 ### Task 6.5: Conductor - User Manual Verification 'Phase 6: Coverage Gate, Flakiness & Quality Verification' (Protocol in workflow.md)
 
