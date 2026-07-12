@@ -1,0 +1,19 @@
+Task 3.10: Verify full unit test suite + remaining gap-fills
+
+Gap-fill tests added:
+1. test_test_runner.py (3 tests):
+   - test_run_tests_gut_timeout_raises_gdtools_error: Import succeeds, GUT test times out (lines 405-406)
+   - test_run_tests_custom_junit_xml_path: Custom junit_xml path used (line 418)
+   - test_build_gut_args_empty_test_dirs: Empty test_dirs omits -gdir (branch 116->121)
+
+2. test_orchestrator.py (1 test):
+   - test_merge_coverage_files_with_config_no_output: Config provided, output=None, path resolved via find_project_root + config.coverage.output_dir (lines 195-196)
+
+Verification:
+- 572 unit tests pass (was 547)
+- 99.49% total coverage (was ~97%)
+- test_runner.py: 97% -> 100%
+- orchestrator.py: 96% -> 100%
+- ruff check tests/unit/: All checks passed
+- black --check tests/unit/: 10 pre-existing failures (not introduced by track changes)
+- Runtime: 10.4s (572 tests with branch coverage)
