@@ -1,0 +1,13 @@
+Task: Update .github/SECRETS.md for PYPI_API_TOKEN
+
+Summary:
+- Added PYPI_API_TOKEN secret documentation section following same format as existing entries
+- Documented: Used by (publish-pypi job), Purpose, Required for, How to obtain, How to add
+- Removed 'Production PyPI publishing is deferred to Track 17' note from Notes section
+- Added note that PYPI_API_TOKEN is required for the publish-pypi job
+- Updated TEST_PYPI_API_TOKEN note to specify 'TestPyPI upload step' for clarity
+
+Files modified:
+- .github/SECRETS.md (55 -> 77 lines)
+
+Requirements met: FR-3.1, FR-3.2
