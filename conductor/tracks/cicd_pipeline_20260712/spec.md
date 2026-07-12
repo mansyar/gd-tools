@@ -1,3 +1,4 @@
+<protect>
 # Track: CI/CD Pipeline
 
 **Track ID:** cicd_pipeline_20260712
@@ -136,3 +137,4 @@ The CI workflow uses `concurrency` groups to cancel superseded runs on the same 
 - `conductor/tech-stack.md` §8 (CI/CD Stack)
 - `conductor/product.md` §8 (Success Criteria — CI pipeline <10 min)
 - `conductor/workflow.md` (Phase Completion Verification Protocol)
+</protect>

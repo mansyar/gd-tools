@@ -1,3 +1,4 @@
+<protect>
 # Implementation Plan: CI/CD Pipeline
 
 **Track ID:** cicd_pipeline_20260712
@@ -9,6 +10,8 @@
 ---
 
 ## Phase 1: CI Workflow Foundation (ci.yml)
+
+- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
 - [ ] Task: Create `.github/workflows/` directory and `ci.yml` file skeleton
     - [ ] Create `.github/workflows/` directory
@@ -38,6 +41,8 @@
 
 ## Phase 2: Godot Integration & Stages 2-3 (ci.yml)
 
+- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
+
 - [ ] Task: Implement Stage 2 — `integration` job
     - [ ] Define job `integration` with `needs: lint-format-unit` (Stage 1)
     - [ ] Run on `ubuntu-latest` with Python 3.12
@@ -63,6 +68,8 @@
 
 ## Phase 3: Release Workflow Skeleton (release.yml)
 
+- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
+
 - [ ] Task: Create `.github/workflows/release.yml` file
     - [ ] Define workflow with trigger on tag push matching `v*` (e.g., `v0.1.0`)
     - [ ] Define job `build-and-publish` on `ubuntu-latest` with Python 3.12
@@ -77,6 +84,8 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
 
 ## Phase 4: Validation & Documentation
+
+- [ ] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
 - [ ] Task: Validate workflow YAML files
     - [ ] Verify YAML syntax and structure of `ci.yml` and `release.yml`
@@ -96,3 +105,4 @@
     - [ ] Verify pipeline triggers on next push/PR
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
+</protect>
