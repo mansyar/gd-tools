@@ -30,23 +30,24 @@
     - [x] Add links to detailed documentation (User Guide, Contributing Guide, Architecture, PRD, Roadmap)
     - [x] Add license section
     - [x] Verify `pyproject.toml` `long_description` configuration points to README.md
-- [ ] Task: Conductor - User Manual Verification 'README.md Expansion' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'README.md Expansion' (Protocol in workflow.md)
+    - Checkpoint SHA: fde2d5c
 
 ## Phase 3: User Guide (FR-2)
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
-- [ ] Task: Create `docs/USER_GUIDE.md` — unified user guide with CLI reference
-    - [ ] Write Getting Started section (prerequisites: Python 3.10+, Godot 4.5+; installation; `gd-tools init` walkthrough)
-    - [ ] Write Configuration reference section (`gd-tools.toml` — all sections: `[godot]`, `[test]`, `[lint]`, `[format]`, `[coverage]`; all keys, defaults, examples)
-    - [ ] Write Command Reference: `gd-tools init` (description, usage, flags, examples, exit codes)
-    - [ ] Write Command Reference: `gd-tools doctor` (description, usage, checks table, examples, exit codes)
-    - [ ] Write Command Reference: `gd-tools test` (description, usage, flags table, `--coverage` workflow, examples, exit codes)
-    - [ ] Write Command Reference: `gd-tools lint` (description, usage, flags, `--report-format`, examples, exit codes)
-    - [ ] Write Command Reference: `gd-tools format` (description, usage, `--check`, `--diff`, examples, exit codes)
-    - [ ] Write Command Reference: `gd-tools coverage` (subcommands: `report`, `merge`, `show`; flags, examples, exit codes)
-    - [ ] Write Examples section (first test run, CI/CD pipeline setup, coverage threshold enforcement, lint+format in CI)
-    - [ ] Write Troubleshooting section (Godot not found, GUT not installed, version mismatch, coverage not generating)
-- [ ] Task: Conductor - User Manual Verification 'User Guide' (Protocol in workflow.md)
+- [x] Task: Read `spec.md` and `workflow.md` before starting phase implementation
+- [x] Task: Create `docs/USER_GUIDE.md` — unified user guide with CLI reference (abda758)
+    - [x] Write Getting Started section (prerequisites: Python 3.10+, Godot 4.5+; installation; `gd-tools init` walkthrough)
+    - [x] Write Configuration reference section (`gd-tools.toml` — all sections: `[godot]`, `[test]`, `[lint]`, `[format]`, `[coverage]`; all keys, defaults, examples)
+    - [x] Write Command Reference: `gd-tools init` (description, usage, flags, examples, exit codes)
+    - [x] Write Command Reference: `gd-tools doctor` (description, usage, checks table, examples, exit codes)
+    - [x] Write Command Reference: `gd-tools test` (description, usage, flags table, `--coverage` workflow, examples, exit codes)
+    - [x] Write Command Reference: `gd-tools lint` (description, usage, flags, `--report-format`, examples, exit codes)
+    - [x] Write Command Reference: `gd-tools format` (description, usage, `--check`, `--diff`, examples, exit codes)
+    - [x] Write Command Reference: `gd-tools coverage` (subcommands: `report`, `merge`, `show`; flags, examples, exit codes)
+    - [x] Write Examples section (first test run, CI/CD pipeline setup, coverage threshold enforcement, lint+format in CI)
+    - [x] Write Troubleshooting section (Godot not found, GUT not installed, version mismatch, coverage not generating)
+- [~] Task: Conductor - User Manual Verification 'User Guide' (Protocol in workflow.md)
 
 ## Phase 4: Contributing Guide (FR-3)
 
