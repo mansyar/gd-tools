@@ -1,0 +1,41 @@
+Phase 5 Verification Report - Architecture Documentation
+
+Phase: Phase 5 - Architecture Documentation (FR-4)
+Track: Track 16 - Documentation
+Checkpoint SHA: 68e3594
+
+=== Files Created ===
+- docs/ARCHITECTURE.md (603 lines) - Standalone coverage system architecture document
+
+=== Document Structure ===
+1. Overview - Why GDScript coverage is needed, unique to gd-tools
+2. Architecture C (Hybrid) - Three-phase approach table, A/B/C comparison with advantages/disadvantages, why C was chosen (spike validated all 6 success criteria)
+3. Full Flow - End-to-end ASCII diagram of 'gd-tools test --coverage' within 80 columns, step-by-step description (8 steps)
+4. Data Formats - plan.json schema with field table, coverage.json schema with field table, tracked statement types table (7 AST nodes), tracked branch types table (7 AST nodes with branch_type values)
+5. Component Details - plan_generator.py (CoverageVisitor, generate_plan, write/read_plan_json), coverage.gd (autoload singleton, hit/get_hits/set_active), pre_run_hook.gd (GutHookScript, run(), injection algorithm bottom-to-top), post_run_hook.gd (GutHookScript, run(), JSON construction), reporter.py (read/merge/write coverage data, compute summaries, generate_report dispatch)
+6. Design Decisions - Bottom-to-top injection rationale, env var activation (3 vars), source restoration approach (in-memory only, never modifies disk), error precedence (TestFailureError before CoverageThresholdError), GutHookScript base class, value-check activation
+7. Cross-References table linking to PRD, SPIKE, USER_GUIDE, CONTRIBUTING
+
+=== Source Files Verified ===
+- src/gd_tools/coverage/orchestrator.py (282 lines) - run_coverage_test, generate_coverage_report, merge_coverage_files, show_coverage_summary
+- src/gd_tools/coverage/plan_generator.py (377 lines) - CoveragePlan/FilePlan/LinePlan dataclasses, CoverageVisitor (Lark Visitor), generate_plan, write/read_plan_json
+- src/gd_tools/coverage/reporter.py (518 lines) - CoverageData/FileCoverage/CoverageSummary/FileSummary/ReportResult dataclasses, read_coverage_json, merge_coverage_data, compute_summary, generate_report
+- src/gd_tools/addons/gd-tools-coverage/coverage.gd (43 lines) - tracker autoload, hit(), get_hits(), set_active(), is_active()
+- src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (229 lines) - GutHookScript, run(), _instrument_file(), _inject_trackers() bottom-to-top, _load_plan(), _validate_plan()
+- src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd (113 lines) - GutHookScript, run(), _get_tracker(), _build_coverage_json(), _write_json()
+- src/gd_tools/test_runner.py (run_tests function) - coverage env var setup (GD_TOOLS_COVERAGE_ACTIVE, GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT), build_gut_args with -gpre_run_script/-gpost_run_script
+- docs/SPIKE_coverage_instrumentation.md (627 lines) - Architecture A/B/C comparison, spike results, known limitations
+
+=== Automated Tests ===
+Command: \='true'; pytest -m unit -x -q
+Result: 573 passed, 58 deselected, 99.10% coverage
+No regressions detected.
+
+=== Manual Verification ===
+User confirmed approval. Document verified for:
+- FR-4 compliance: all 6 required sections present
+- ASCII diagram within 80-column width
+- Cross-references use relative paths to PRD, SPIKE, USER_GUIDE, CONTRIBUTING
+- Prose style follows Product Guidelines Section 1
+- ASCII-only (no emoji)
+- No existing documentation files modified (additive only)
