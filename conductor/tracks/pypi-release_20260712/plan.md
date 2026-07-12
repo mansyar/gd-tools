@@ -60,7 +60,7 @@
     - [x] Update plan.md: mark task `[x]` with commit SHA
 - [x] Task: Conductor - User Manual Verification 'TestPyPI Publication and Validation' (Protocol in workflow.md)
 
-## Phase 5: Production PyPI Publication
+## Phase 5: Production PyPI Publication [checkpoint: 88acad2]
 
 - [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [x] Task: Publish to production PyPI and verify installation [cb82521]
