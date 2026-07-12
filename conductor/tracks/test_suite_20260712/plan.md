@@ -49,15 +49,15 @@
 - [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
 - [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
-### Task 2.1: Annotate unit test files [sha: pending]
+### Task 2.1: Annotate unit test files [sha: 4488e4c]
 - [x] Add `@pytest.mark.unit` to all 20 files in `tests/unit/` (test_cli.py, test_cobertura_reporter.py, test_config.py, test_doctor.py, test_errors.py, test_file_discovery.py, test_format_runner.py, test_generate_expected_plans.py, test_godot.py, test_html_reporter.py, test_init.py, test_lcov_reporter.py, test_lint_runner.py, test_main.py, test_orchestrator.py, test_package.py, test_plan_generator.py, test_reporter.py, test_terminal_reporter.py, test_test_runner.py)
 - [x] Verify: `pytest -m unit` runs only unit tests
 
-### Task 2.2: Annotate integration test files [sha: pending]
+### Task 2.2: Annotate integration test files [sha: 4488e4c]
 - [x] Add `@pytest.mark.integration` to all 8 files in `tests/integration/` (test_coverage_cli_integration.py, test_coverage_hooks.py, test_coverage_tracker_integration.py, test_doctor_integration.py, test_format_integration.py, test_init_integration.py, test_lint_integration.py, test_test_runner_integration.py)
 - [x] Verify: `pytest -m integration` runs only integration tests
 
-### Task 2.3: Annotate e2e test files [sha: pending]
+### Task 2.3: Annotate e2e test files [sha: 4488e4c]
 - [x] Add `@pytest.mark.e2e` to `test_coverage_e2e.py` (and `test_full_workflow.py` when created in Phase 5)
 - [x] Verify: `pytest -m e2e` runs only e2e tests
 
