@@ -1,0 +1,36 @@
+Phase 2 Verification Report: Release Workflow and Secrets Documentation
+
+Phase: 2 - Release Workflow and Secrets Documentation
+Checkpoint SHA: 59cc2db
+
+Tasks Completed:
+1. Read spec.md and workflow.md to review requirements
+2. Extended .github/workflows/release.yml for production PyPI (commit 6ee4b81)
+3. Updated .github/SECRETS.md with PYPI_API_TOKEN documentation (commit 99a1f9d)
+
+Files Changed (since Phase 1 checkpoint 98a3ca1):
+- .github/workflows/release.yml (45 -> 80 lines)
+- .github/SECRETS.md (55 -> 77 lines)
+- conductor/tracks/pypi-release_20260712/plan.md
+
+Automated Test Results:
+- Command: $env:CI='true'; pytest
+- Result: 631 passed in 246.31s (0:04:06)
+- Coverage: 99.15% (required: >80% line, >70% branch)
+- ruff check: All checks passed
+- black --check: All files unchanged (58 files)
+- YAML syntax validation: Valid
+
+Requirements Met:
+- FR-2.1: Production PyPI upload step added after TestPyPI upload succeeds (via needs: build-and-publish)
+- FR-2.2: PYPI_API_TOKEN secret used with TWINE_USERNAME: __token__ and TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+- FR-2.3: TestPyPI upload step remains as pre-production safety net (unchanged)
+- FR-2.4: Split into two jobs: build-and-publish (TestPyPI) and publish-pypi (PyPI)
+- FR-3.1: PYPI_API_TOKEN documented with same format as existing entries
+- FR-3.2: Deferred to Track 17 note removed, replaced with active note
+- NFR-4: Production PyPI only publishes if TestPyPI upload and twine check pass
+- NFR-5: ASCII-only in new content added to modified files
+
+Manual Verification:
+- User confirmed manual verification steps on 2026-07-12
+- Steps included: review release.yml workflow structure, review SECRETS.md documentation, confirm NFR-4 workflow logic
