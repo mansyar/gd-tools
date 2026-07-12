@@ -195,7 +195,7 @@
 - [x] Annotate with `@pytest.mark.e2e`
 - [x] Verify E2E test runtime <120s
 
-### Task 5.2: Conductor - User Manual Verification 'Phase 5: E2E Full-Workflow Test' (Protocol in workflow.md)
+### Task 5.2: Conductor - User Manual Verification 'Phase 5: E2E Full-Workflow Test' (Protocol in workflow.md) [checkpoint: pending]
 
 ---
 
