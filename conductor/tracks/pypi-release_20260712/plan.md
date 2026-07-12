@@ -3,6 +3,7 @@
 
 ## Phase 1: Package Metadata Finalization
 
+- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [ ] Task: Update `pyproject.toml` metadata
     - [ ] Change Development Status classifier from `"Development Status :: 3 - Alpha"` to `"Development Status :: 4 - Beta"`
     - [ ] Add `[project.urls]` section with Homepage, Repository, Documentation, and Bug Tracker URLs
@@ -15,6 +16,7 @@
 
 ## Phase 2: Release Workflow and Secrets Documentation
 
+- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [ ] Task: Extend `.github/workflows/release.yml` for production PyPI
     - [ ] Add a `publish-pypi` job that depends on the existing `build-and-publish` (TestPyPI) job
     - [ ] Configure the PyPI upload step with `TWINE_USERNAME: __token__` and `TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}`
@@ -33,6 +35,7 @@
 
 ## Phase 3: Package Build and Local Validation
 
+- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [ ] Task: Build and validate package locally
     - [ ] Run `python -m build` to produce sdist (`.tar.gz`) and wheel (`.whl`) in `dist/`
     - [ ] Run `twine check dist/*` to validate package metadata and README rendering
@@ -45,6 +48,7 @@
 
 ## Phase 4: TestPyPI Publication and Validation
 
+- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [ ] Task: Publish to TestPyPI and verify installation
     - [ ] Upload built package to TestPyPI: `twine upload --repository testpypi dist/*`
     - [ ] Create a clean virtual environment
@@ -58,6 +62,7 @@
 
 ## Phase 5: Production PyPI Publication
 
+- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [ ] Task: Publish to production PyPI and verify installation
     - [ ] Upload built package to PyPI: `twine upload dist/*`
     - [ ] Create a clean virtual environment
@@ -73,6 +78,7 @@
 
 ## Phase 6: Git Tag and GitHub Release
 
+- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [ ] Task: Create git tag and GitHub release
     - [ ] Create git tag `v0.1.0` on the release commit
     - [ ] Push tag to remote: `git push origin v0.1.0`
