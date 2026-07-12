@@ -66,7 +66,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
 
-## Phase 3: Release Workflow Skeleton (release.yml)
+## Phase 3: Release Workflow Skeleton (release.yml) [checkpoint: 94bc573]
 
 - [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
