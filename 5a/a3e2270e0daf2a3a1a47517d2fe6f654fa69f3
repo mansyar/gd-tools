@@ -1,0 +1,37 @@
+Phase 1 Checkpoint: Test Infrastructure Setup
+
+=== Automated Test Results ===
+Command: CI=true pytest tests/unit/ -q
+Result: 547 passed in 10.67s
+Coverage: 96.61% line, 97% total (line+branch)
+Coverage gate: 80% required - PASSED
+HTML report: htmlcov/index.html
+
+Command: CI=true pytest tests/integration/ tests/e2e/ --co -q
+Result: 50 tests collected, no import errors
+
+=== Phase Changes ===
+Files changed (from 79c77fe to HEAD):
+- pyproject.toml: Added --strict-markers, --strict-config, --cov-branch, --cov-report=html; glob omit patterns; show_missing=true
+- conftest.py (root): Added find_godot_binary() helper and godot_bin session fixture
+- tests/unit/conftest.py: Created with read_fixture, read_json_fixture, mock_subprocess_run, mock_requests_get, mock_godot_on_path fixtures
+- tests/integration/conftest.py: Created with godot_bin auto-skip fixture and sample_project_path fixture
+- tests/e2e/conftest.py: Created with godot_bin auto-skip fixture and sample_project_path fixture
+- .env.example: Pre-existing, verified (GODOT_BIN placeholder)
+- .gitignore: Pre-existing, verified (.env is gitignored)
+
+=== Manual Verification Plan ===
+1. Verify pytest config in pyproject.toml (strict markers, branch coverage, HTML reports)
+2. Verify conftest structure (root + per-tier)
+3. Verify HTML coverage report at htmlcov/index.html
+4. Verify integration test auto-skip when Godot not found
+
+=== User Confirmation ===
+User confirmed: 'Yes, proceed' on 2026-07-12
+
+=== Phase Tasks Completed ===
+- Task 1.0: Read spec.md and workflow.md [sha: n/a]
+- Task 1.1: Configure pyproject.toml pytest/coverage settings [sha: ef95a1d]
+- Task 1.2: Create root conftest.py [sha: 5c2e07f]
+- Task 1.3: Create per-tier conftest.py files [sha: 646630a]
+- Task 1.4: Create .env.example and update .gitignore [sha: n/a - pre-existing]
