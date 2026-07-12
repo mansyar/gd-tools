@@ -1,0 +1,12 @@
+Task 3.2: Audit and gap-fill godot.py tests
+
+Audit: test_godot.py already had 42 tests covering all §4.2 spec requirements.
+All tests mock _is_executable rather than calling it directly, leaving line 151
+uncovered.
+
+Gap-fill: Added 3 tests calling _is_executable directly:
+1. test_is_executable_nonexistent_path - returns False for missing path
+2. test_is_executable_existing_file - returns True for real file
+3. test_is_executable_not_executable - returns False when os.access denies
+
+Result: godot.py coverage 99% -> 100% (55 tests, all pass)
