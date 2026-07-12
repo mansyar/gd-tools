@@ -73,7 +73,8 @@
     - [x] Write Data Formats section (instrumentation plan JSON schema, coverage data JSON schema, field descriptions)
     - [x] Write Component Details section (plan_generator.py, coverage.gd, pre_run_hook.gd, post_run_hook.gd, reporter.py)
     - [x] Write Design Decisions section (bottom-to-top injection, env var activation, source restoration approach)
-- [~] Task: Conductor - User Manual Verification 'Architecture Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Architecture Documentation' (Protocol in workflow.md)
+    - Checkpoint SHA: 68e3594
 
 ## Phase 6: Final Verification
 
