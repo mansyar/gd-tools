@@ -1,3 +1,4 @@
+<protect>
 # Track Specification: Agent Skill & Automated Versioning
 
 ## Overview
@@ -106,3 +107,4 @@ This track delivers two related improvements to the `gd-tools` project:
 - Custom changelog templates — using commitizen's default conventional commits template.
 - Agent skill evaluation/testing infrastructure (evals, benchmark viewer) as described in the Anthropic skill-creator reference.
 - Bundled resources (`scripts/`, `references/`, `assets/`) in the skill directory — SKILL.md is self-contained.
+</protect>
