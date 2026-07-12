@@ -170,7 +170,7 @@
 - [x] Run tests: `pytest -m integration --co -q` — 43 tests collected, no import errors
 - [x] Verify integration test runtime <60s — requires Godot; collection verified
 
-### Task 4.5: Conductor - User Manual Verification 'Phase 4: Integration Test Audit & Gap-Fill' (Protocol in workflow.md)
+### Task 4.5: Conductor - User Manual Verification 'Phase 4: Integration Test Audit & Gap-Fill' (Protocol in workflow.md) [checkpoint: pending]
 
 ---
 
