@@ -180,7 +180,7 @@
 - [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
 - [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
-### Task 5.1: Create test_full_workflow.py [sha: pending]
+### Task 5.1: Create test_full_workflow.py [sha: 3d8014f]
 - [x] Write `tests/e2e/test_full_workflow.py` implementing TESTING_STRATEGY §6:
   - Test: doctor before init (baseline check)
   - Test: init command on sample project
