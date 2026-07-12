@@ -202,8 +202,8 @@
 ## Phase 6: Coverage Gate, Flakiness & Quality Verification
 
 ### Task 6.0: Read spec.md and workflow.md
-- [ ] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
-- [ ] Read `conductor/workflow.md` to review TDD methodology and task workflow
+- [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
+- [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
 ### Task 6.1: Verify coverage gate
 - [ ] Run `pytest --cov=gd_tools --cov-branch --cov-fail-under=80`
