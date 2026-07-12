@@ -1,0 +1,44 @@
+Phase 3 Verification Report: Release Workflow Skeleton
+
+Phase: 3 — Release Workflow Skeleton (release.yml)
+Checkpoint SHA: 94bc573ec51bb5ab3c7bc59f7e4e7fcd6078f0bf
+
+Implementation Commit: 406fa6c — feat(ci): Add release.yml skeleton with TestPyPI publish on tag push
+
+Files Changed (since Phase 2 checkpoint be67452):
+- .github/workflows/release.yml (NEW)
+- conductor/tracks/cicd_pipeline_20260712/plan.md (updated)
+
+Test Coverage Verification:
+- No .py or .gd files changed in this phase
+- YAML config files do not require TDD tests (per workflow.md)
+
+Automated Tests:
+- Command: CI=true pytest tests/unit/ -m unit --no-cov
+- Result: 572 passed in 6.47s
+- Status: ALL PASS
+
+YAML Validation:
+- YAML syntax: VALID
+- Workflow name: Release
+- Trigger: tags matching v*
+- Job: build-and-publish (ubuntu-latest, Python 3.12, 10min timeout)
+- Steps: checkout, setup-python, install build tools, build package, check metadata, upload to TestPyPI
+- CI=true env var set at workflow level
+
+Spec Requirements Satisfied:
+- FR-4.1: Triggers on tag push v*
+- FR-4.2: python -m build (sdist + wheel)
+- FR-4.3: twine check dist/*
+- FR-4.4: twine upload to TestPyPI with TEST_PYPI_API_TOKEN secret
+- FR-4.5: Skeleton only, production PyPI deferred to Track 17
+- FR-5.1: pip cache via actions/setup-python@v5
+- NFR-2: CI=true set
+- NFR-4: TEST_PYPI_API_TOKEN secret referenced
+
+Manual Verification Plan:
+1. Review release.yml for correct trigger, job, steps, and secret references
+2. Confirm skeleton scope (TestPyPI only, not production PyPI)
+3. Optional: Run python -m build && twine check dist/* locally
+
+User Confirmation: User confirmed 'Yes, proceed' — Phase 3 verified.
