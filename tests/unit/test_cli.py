@@ -22,7 +22,9 @@ from gd_tools.test_runner import TestResult
 
 
 import pytest
+
 pytestmark = pytest.mark.unit
+
 
 def test_cli_is_group():
     """Test that cli is a Click group."""

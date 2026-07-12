@@ -939,10 +939,7 @@ def test_enable_gut_plugin_inserts_before_next_section(tmp_path: Path):
 def test_enable_gut_plugin_appends_at_end(tmp_path: Path):
     """enable_gut_plugin appends enabled= at end when no next section."""
     project_godot = tmp_path / "project.godot"
-    project_godot.write_text(
-        "config_version=5\n\n"
-        "[editor_plugins]\n"
-    )
+    project_godot.write_text("config_version=5\n\n" "[editor_plugins]\n")
 
     enable_gut_plugin(tmp_path)
 
@@ -976,6 +973,8 @@ def test_run_init_gut_installed_version_unknown(tmp_path: Path):
         run_init()
 
     call_args = mock_summary.call_args
-    actions = call_args.args[1] if call_args.args else call_args.kwargs.get("actions")
+    actions = (
+        call_args.args[1] if call_args.args else call_args.kwargs.get("actions")
+    )
     assert isinstance(actions, list)
     assert any("version unknown" in a for a in actions)

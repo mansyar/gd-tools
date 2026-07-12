@@ -8,8 +8,8 @@ import pytest
 from gd_tools.__main__ import main
 from gd_tools.errors import ConfigError
 
-
 pytestmark = pytest.mark.unit
+
 
 class TestSubprocess:
     """Subprocess tests for python -m gd_tools."""

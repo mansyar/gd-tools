@@ -16,7 +16,9 @@ from gd_tools.init import run_init
 
 
 import pytest
+
 pytestmark = pytest.mark.integration
+
 
 def _create_fake_gut_zip(version: str = "9.5.0") -> bytes:
     """Create a fake GUT archive zip in memory.
