@@ -1,0 +1,28 @@
+Task 5.1: Create test_full_workflow.py
+
+Created tests/e2e/test_full_workflow.py with 8 E2E tests implementing TESTING_STRATEGY §6:
+
+1. test_doctor_on_fresh_project — Doctor before init, reports missing GUT/coverage (exit 1)
+2. test_doctor_after_init — Doctor after init, all checks pass (exit 0)
+3. test_lint_command — gd-tools lint on sample project (exit 0)
+4. test_format_command — gd-tools format --check on sample project (exit 0)
+5. test_test_coverage_command — gd-tools test --coverage generates plan.json + coverage.json
+6. test_coverage_show_command — gd-tools coverage show prints summary (no Godot needed)
+7. test_coverage_report_command — gd-tools coverage report --format lcov generates LCOV file (no Godot needed)
+8. test_full_workflow_sequence — Complete journey: doctor → lint → format → test --coverage → coverage show → coverage report
+
+Design decisions:
+- Init command NOT tested via subprocess E2E (downloads 30MB from GitHub, fragile)
+  Instead, _setup_project_with_godot() copies GUT+coverage addon from spike directory
+  Init is covered by integration tests (test_init_integration.py) with mocked network
+- 6 tests require Godot (@skip_if_no_godot), 2 tests don't need Godot (coverage show/report)
+- test_full_workflow_sequence also marked @pytest.mark.slow
+- Helper functions duplicated from test_coverage_e2e.py (same package pattern)
+
+Verification:
+- 8 tests collected, no import errors
+- 2 non-Godot tests pass (1.49s)
+- 572 unit tests unaffected (no regressions)
+- ruff check: All checks passed
+- black --check: 1 file would be left unchanged
+- Total e2e tests: 15 (7 existing + 8 new)
