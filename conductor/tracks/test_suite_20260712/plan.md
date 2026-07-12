@@ -95,7 +95,7 @@
 - [x] Run tests: `pytest tests/unit/test_reporter.py -v` — all pass
 - [x] Verify coverage for `reporter.py` module ≥80%
 
-### Task 3.5: Audit and gap-fill reporter format tests (§4.5) [sha: pending]
+### Task 3.5: Audit and gap-fill reporter format tests (§4.5) [sha: 30e26f0]
 - [x] Audit `test_html_reporter.py`, `test_lcov_reporter.py`, `test_cobertura_reporter.py`, `test_terminal_reporter.py` against §4.5 specs
 - [x] Write missing test cases: format compliance, valid XML, CSS classes, color thresholds
 - [x] Run tests: `pytest tests/unit/test_html_reporter.py tests/unit/test_lcov_reporter.py tests/unit/test_cobertura_reporter.py tests/unit/test_terminal_reporter.py -v` — all pass
