@@ -101,11 +101,11 @@
 - [x] Run tests: `pytest tests/unit/test_html_reporter.py tests/unit/test_lcov_reporter.py tests/unit/test_cobertura_reporter.py tests/unit/test_terminal_reporter.py -v` — all pass
 - [x] Verify coverage for reporter modules ≥80%
 
-### Task 3.6: Audit and gap-fill lint_runner.py & format_runner.py tests (§4.6)
-- [ ] Audit `test_lint_runner.py` and `test_format_runner.py` against §4.6 specs
-- [ ] Write missing test cases: subprocess invocation, excludes, --check, exit codes, stderr, no files found
-- [ ] Run tests: `pytest tests/unit/test_lint_runner.py tests/unit/test_format_runner.py -v` — all pass
-- [ ] Verify coverage for `lint_runner.py` and `format_runner.py` ≥80%
+### Task 3.6: Audit and gap-fill lint_runner.py & format_runner.py tests (§4.6) [sha: n/a — no gaps]
+- [x] Audit `test_lint_runner.py` and `test_format_runner.py` against §4.6 specs
+- [x] Write missing test cases: subprocess invocation, excludes, --check, exit codes, stderr, no files found
+- [x] Run tests: `pytest tests/unit/test_lint_runner.py tests/unit/test_format_runner.py -v` — all pass
+- [x] Verify coverage for `lint_runner.py` and `format_runner.py` ≥80%
 
 ### Task 3.7: Audit and gap-fill init.py tests (§4.7)
 - [ ] Audit `test_init.py` against §4.7 specs
