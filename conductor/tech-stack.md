@@ -104,6 +104,8 @@
 |------|---------|
 | **GitHub Actions** | CI/CD pipeline (lint, format, test, coverage) |
 | **pytest + pytest-cov** | Test runner + coverage for gd-tools |
-| **codecov.io** | Coverage upload (via LCOV) |
+| **codecov.io** | Coverage upload (via `coverage.xml`, `codecov-action@v4`) |
+| **build** | Package building (`python -m build` → sdist + wheel) |
+| **twine** | Package upload to TestPyPI/PyPI |
 | **PyPI** | Package distribution (`pip install gd-tools`) |
 | **TestPyPI** | Pre-release testing |
