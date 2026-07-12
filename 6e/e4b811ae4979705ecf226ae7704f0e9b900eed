@@ -1,0 +1,14 @@
+Task: Extend .github/workflows/release.yml for production PyPI
+
+Summary:
+- Added 'publish-pypi' job that depends on 'build-and-publish' (TestPyPI) job
+- Configured PyPI upload with TWINE_USERNAME: __token__ and TWINE_PASSWORD: \$\{\{ secrets.PYPI_API_TOKEN \}\}
+- TestPyPI upload step remains unchanged as pre-production safety net
+- Split into two jobs: build-and-publish (TestPyPI) and publish-pypi (PyPI)
+- Added artifact upload/download between jobs (actions/upload-artifact@v4, actions/download-artifact@v4)
+- NFR-4 satisfied: publish-pypi only runs if build-and-publish (including twine check and TestPyPI upload) succeeds
+
+Files modified:
+- .github/workflows/release.yml (45 -> 80 lines)
+
+Requirements met: FR-2.1, FR-2.2, FR-2.3, FR-2.4, NFR-4
