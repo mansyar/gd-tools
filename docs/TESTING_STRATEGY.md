@@ -1264,8 +1264,8 @@ jobs:
 
 A separate release workflow (`.github/workflows/release.yml`) triggers on
 tag push (`v*`), builds the package with `python -m build`, verifies with
-`twine check`, and uploads to TestPyPI. Production PyPI publishing is
-deferred to Track 17. Required secrets are documented in
+`twine check`, uploads to TestPyPI, then publishes to production PyPI
+(requires `PYPI_API_TOKEN` secret). Required secrets are documented in
 `.github/SECRETS.md`.
 
 ### Test Stage Gating

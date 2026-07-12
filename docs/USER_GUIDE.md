@@ -31,7 +31,7 @@ a dependency of `gd-tools` -- no separate installation is needed.
 ### 1.2 Installation
 
 ```bash
-pip install gd-tools
+pip install gd-tools-cli
 ```
 
 Verify the installation:
@@ -600,7 +600,7 @@ jobs:
           sudo mv godot /usr/local/bin/
 
       - name: Install gd-tools
-        run: pip install gd-tools
+        run: pip install gd-tools-cli
 
       - name: Initialize
         run: gd-tools init --non-interactive

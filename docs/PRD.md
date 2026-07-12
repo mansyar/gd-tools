@@ -772,7 +772,7 @@ Generated/managed by `gd-tools init`. Contains GUT config + coverage hook paths:
 
 ```yaml
 - name: Install gd-tools
-  run: pip install gd-tools
+  run: pip install gd-tools-cli
 
 - name: Bootstrap
   run: gd-tools init --non-interactive
@@ -815,8 +815,8 @@ gd-tools' own CI/CD pipeline is implemented in `.github/workflows/`:
   `e2e`, plus a cross-platform matrix (Ubuntu + Windows, Python
   3.10/3.11/3.12). Coverage uploaded to codecov.io. JUnit XML results
   uploaded as artifacts.
-- **`release.yml`** — Tag push (`v*`) triggers build + TestPyPI upload
-  (production PyPI deferred to Track 17).
+- **`release.yml`** — Tag push (`v*`) triggers build + TestPyPI upload,
+  then production PyPI upload (requires `PYPI_API_TOKEN` secret).
 - **`.github/SECRETS.md`** — Required GitHub secrets documentation.
 
 ---

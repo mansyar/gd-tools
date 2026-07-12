@@ -60,7 +60,7 @@ Phase 4: Polish & Release              ──┐
   Track 14: Test Suite ✅                  │  ~ongoing + 3 days
   Track 15: CI/CD Pipeline ✅              │  Risk: LOW
   Track 16: Documentation ✅               │
-  Track 17: PyPI Release                  │
+  Track 17: PyPI Release ✅               │
 ──────────────────────────────────────────┘
 
 Total estimated effort: ~25-30 days
@@ -74,7 +74,7 @@ Total estimated effort: ~25-30 days
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
 | **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
 | **M3: Coverage Alpha** ✅ | Phase 3 | ✅ ACHIEVED — `gd-tools test --coverage` produces line+branch reports; all Phase 3 tracks (9-13) complete (2026-07-12) |
-| **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80%+ coverage (Track 14 ✅: 99.49% line, 98% branch; Track 15 ✅: CI/CD pipeline with staged gating; Track 16 ✅: README, User Guide, Contributing Guide, Architecture doc) |
+| **M4: v1.0 Release** ✅ | Phase 4 | ✅ ACHIEVED — All Phase 4 tracks complete (2026-07-12). Track 14 ✅: 99.49% line, 98% branch; Track 15 ✅: CI/CD pipeline with staged gating; Track 16 ✅: README, User Guide, Contributing Guide, Architecture doc; Track 17 ✅: Published `gd-tools-cli` v0.1.0 to PyPI, tagged v0.1.0, GitHub Release created. |
 
 ---
 
@@ -1330,9 +1330,9 @@ partially met — deferred to future track.
 - CI workflow (`.github/workflows/ci.yml`) implements 3-stage gating:
   `lint-format-unit` → `integration` → `e2e`, plus a cross-platform
   matrix (Ubuntu + Windows, Python 3.10/3.11/3.12).
-- Release skeleton (`.github/workflows/release.yml`) triggers on tag
-  push (`v*`), builds package, uploads to TestPyPI (production PyPI
-  deferred to Track 17).
+- Release workflow (`.github/workflows/release.yml`) triggers on tag
+  push (`v*`), builds package, uploads to TestPyPI, then publishes to
+  production PyPI (requires `PYPI_API_TOKEN` secret).
 - Godot 4.6.1 installed in CI for integration and E2E stages.
 - Coverage uploaded to codecov.io via `codecov-action@v4`.
 - JUnit XML results uploaded as GitHub Actions artifacts.
@@ -1419,7 +1419,7 @@ partially met — deferred to future track.
 | Field | Value |
 |-------|-------|
 | **Phase** | 4 — Polish |
-| **Goal** | Package and publish gd-tools to PyPI |
+| **Goal** | Package and publish gd-tools-cli to PyPI |
 | **Dependencies** | Track 14 (tests), Track 15 (CI/CD), Track 16 (docs) |
 | **Modules** | `pyproject.toml` (finalize), release workflow |
 | **Effort** | 0.5 day |
@@ -1441,11 +1441,22 @@ partially met — deferred to future track.
 - GitHub release
 
 **Success Criteria:**
-1. `pip install gd-tools` works on clean environment
+1. `pip install gd-tools-cli` works on clean environment
 2. `gd-tools --version` prints `0.1.0`
 3. All commands work after pip install (not just editable install)
 4. Package metadata correct on PyPI
 5. README renders correctly on PyPI
+
+**Implementation Notes:**
+- Package renamed from `gd-tools` to `gd-tools-cli` on PyPI due to a name
+  conflict with the existing `gdtools` package (GeneDock CLI). The CLI
+  command remains `gd-tools`.
+- Published to TestPyPI first for validation, then to production PyPI.
+- Release workflow (`.github/workflows/release.yml`) extended with a
+  `publish-pypi` job that runs after the TestPyPI job.
+- Git tag `v0.1.0` created and pushed; GitHub Release published with
+  release notes summarizing all 17 tracks.
+- PyPI URL: https://pypi.org/project/gd-tools-cli/0.1.0/
 
 ---
 
