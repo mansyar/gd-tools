@@ -1,0 +1,23 @@
+Task: Publish to production PyPI and verify installation
+
+Changes:
+- Renamed package from 'gd-tools' to 'gd-tools-cli' in pyproject.toml (PyPI name conflict with existing 'gdtools' project by Wu Yarong)
+- Updated README.md install commands from 'pip install gd-tools' to 'pip install gd-tools-cli' (2 occurrences)
+- Console script entry point remains 'gd-tools' (command name unchanged)
+
+Build:
+- Rebuilt package with new name: gd_tools_cli-0.1.0.tar.gz (48.56 KB) + gd_tools_cli-0.1.0-py3-none-any.whl (56.24 KB)
+- twine check: PASSED for both artifacts
+
+PyPI Upload:
+- Uploaded to production PyPI: https://pypi.org/project/gd-tools-cli/0.1.0/
+- Both artifacts uploaded successfully
+
+Verification (clean venv):
+- pip install gd-tools-cli: SUCCESS (all 29 dependencies resolved)
+- gd-tools --version: prints 'gd-tools 0.1.0' (FR-6.3 PASS)
+- gd-tools --help: shows all 6 command groups - coverage, doctor, format, init, lint, test (FR-6.4 PASS)
+- PyPI metadata verified: name=gd-tools-cli, version=0.1.0, summary, license=MIT, classifiers, project URLs all correct
+- README rendering verified via twine check (PASSED)
+
+Requirements satisfied: FR-6.1, FR-6.2, FR-6.3, FR-6.4
