@@ -7,7 +7,7 @@ condition-coverage, zero-coverage file inclusion, and rate accuracy.
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from gd_tools.coverage.cobertura_reporter import generate_cobertura_report
+from gd_tools.coverage.cobertura_reporter import _format_rate, generate_cobertura_report
 from gd_tools.coverage.plan_generator import read_plan_json
 from gd_tools.coverage.reporter import read_coverage_json
 
@@ -185,3 +185,8 @@ def test_cobertura_line_hits_correct(tmp_path):
     assert enemy_hits[3] == 2
     assert enemy_hits[5] == 5
     assert enemy_hits[8] == 2
+
+
+def test_format_rate_zero_total():
+    """_format_rate returns '0.0' when total is zero (zero-division guard)."""
+    assert _format_rate(0, 0) == "0.0"
