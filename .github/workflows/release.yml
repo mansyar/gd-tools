@@ -8,6 +8,9 @@ on:
 env:
   CI: 'true'
 
+permissions:
+  contents: read
+
 jobs:
   # ──────────────────────────────────────────────────────────────────
   # Build & Publish to TestPyPI

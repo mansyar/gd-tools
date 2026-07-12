@@ -11,7 +11,10 @@ concurrency:
 
 env:
   CI: 'true'
-  GODOT_VERSION: '4.6'
+  GODOT_VERSION: '4.6.1'
+
+permissions:
+  contents: read
 
 jobs:
   # ──────────────────────────────────────────────────────────────────
