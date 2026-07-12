@@ -205,12 +205,12 @@
 - [x] Read `conductor/tracks/test_suite_20260712/spec.md` to review requirements
 - [x] Read `conductor/workflow.md` to review TDD methodology and task workflow
 
-### Task 6.1: Verify coverage gate
-- [ ] Run `pytest --cov=gd_tools --cov-branch --cov-fail-under=80`
-- [ ] Verify exit code 0
-- [ ] Verify ≥80% line coverage
-- [ ] Verify ≥70% branch coverage
-- [ ] If coverage insufficient, add tests to cover missing lines/branches
+### Task 6.1: Verify coverage gate [sha: n/a — verification only]
+- [x] Run `pytest --cov=gd_tools --cov-branch --cov-fail-under=80`
+- [x] Verify exit code 0
+- [x] Verify ≥80% line coverage (99.49% ✓)
+- [x] Verify ≥70% branch coverage (98% ✓, 402 branches, 8 missing)
+- [x] If coverage insufficient, add tests to cover missing lines/branches — not needed
 
 ### Task 6.2: Flakiness verification (10× runs)
 - [ ] Run full test suite 10× consecutively
