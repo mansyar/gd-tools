@@ -212,10 +212,10 @@
 - [x] Verify ≥70% branch coverage (98% ✓, 402 branches, 8 missing)
 - [x] If coverage insufficient, add tests to cover missing lines/branches — not needed
 
-### Task 6.2: Flakiness verification (10× runs)
-- [ ] Run full test suite 10× consecutively
-- [ ] Verify all 10 runs pass with zero failures
-- [ ] Document results
+### Task 6.2: Flakiness verification (10× runs) [sha: n/a — verification only]
+- [x] Run full test suite 10× consecutively
+- [x] Verify all 10 runs pass with zero failures
+- [x] Document results: 10/10 pass, 0 failures, avg 10.2s/run
 
 ### Task 6.3: Code quality verification
 - [ ] Run `ruff check tests/` — clean
