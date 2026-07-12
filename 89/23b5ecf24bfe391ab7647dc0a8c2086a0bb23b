@@ -1,0 +1,28 @@
+Phase 2 Checkpoint Verification Report: Test Marker Annotation
+
+=== Automated Test Results ===
+Command: CI=true pytest -m unit -q
+Result: 547 passed, 50 deselected, 96.61% coverage, 11.34s
+Coverage gate: PASSED (80% required, 96.61% achieved)
+
+Marker filtering verification:
+- pytest -m unit --co: 547 tests (50 deselected)
+- pytest -m integration --co: 43 tests (554 deselected)
+- pytest -m e2e --co: 7 tests (590 deselected)
+- pytest -m 'not unit and not integration and not e2e and not slow' --co: 0 tests (all marked)
+Total: 547 + 43 + 7 = 597 tests — all marked
+
+=== Phase Changes ===
+Files changed since Phase 1 checkpoint (5aa3e22):
+- 20 test files modified (16 unit, 4 integration) — added pytestmark or @pytest.mark decorators
+- plan.md updated with task completions and SHA tracking
+No source code files (src/gd_tools/) were modified. All changes were to test files only.
+
+=== Manual Verification Plan ===
+1. Verify all test files have markers: pytest -m 'not unit and not integration and not e2e and not slow' --co → 0 tests
+2. Verify marker counts: pytest --co -q → 597 total tests
+3. Verify strict markers: no warnings with --strict-markers
+4. Verify unit tests pass: pytest -m unit -q → 547 passed, 96.61% coverage
+
+=== User Confirmation ===
+User confirmed: 'yes' — manual verification plan accepted.
