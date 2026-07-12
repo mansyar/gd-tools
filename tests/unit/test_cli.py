@@ -20,6 +20,9 @@ from gd_tools.lint_runner import LintIssue, LintResult
 from gd_tools.test_runner import TestResult
 
 
+import pytest
+pytestmark = pytest.mark.unit
+
 def test_cli_is_group():
     """Test that cli is a Click group."""
     assert isinstance(cli, click.Group)

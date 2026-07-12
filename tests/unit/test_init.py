@@ -30,6 +30,8 @@ from gd_tools.init import (
     update_gutconfig,
 )
 
+pytestmark = pytest.mark.unit
+
 # --- detect_godot_version ---
 
 

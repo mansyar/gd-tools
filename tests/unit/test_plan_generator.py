@@ -20,6 +20,8 @@ from gd_tools.coverage.plan_generator import (
     write_plan_json,
 )
 
+pytestmark = pytest.mark.unit
+
 # --- Data structures ---
 
 

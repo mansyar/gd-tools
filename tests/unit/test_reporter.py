@@ -30,6 +30,8 @@ from gd_tools.coverage.reporter import (
 )
 from gd_tools.errors import CoveragePlanError, CoverageThresholdError
 
+pytestmark = pytest.mark.unit
+
 _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 _PLAN_FIXTURE = _FIXTURES_DIR / "coverage_plans" / "test_plan.json"
 _FULL_COV = _FIXTURES_DIR / "coverage_data" / "full_coverage.json"

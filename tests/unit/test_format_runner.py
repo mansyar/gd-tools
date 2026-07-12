@@ -9,6 +9,9 @@ from gd_tools.config import GdToolsConfig
 from gd_tools.errors import FormatError
 from gd_tools.format_runner import FormatResult, run_format
 
+import pytest
+pytestmark = pytest.mark.unit
+
 # --- FormatResult dataclass ---
 
 

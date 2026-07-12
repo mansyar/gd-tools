@@ -14,6 +14,8 @@ from gd_tools.errors import (
     TestFailureError,
 )
 
+pytestmark = pytest.mark.unit
+
 
 def test_gd_tools_error_is_exception():
     """Test that GdToolsError is a subclass of Exception."""

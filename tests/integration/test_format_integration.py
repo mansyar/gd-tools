@@ -17,6 +17,9 @@ from click.testing import CliRunner
 from gd_tools.cli import cli
 from gd_tools.config import DEFAULT_EXCLUDES, GdToolsConfig, generate_gdformatrc
 
+import pytest
+pytestmark = pytest.mark.integration
+
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 

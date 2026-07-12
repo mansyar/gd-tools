@@ -348,6 +348,7 @@ def test_generate_coverage_report_missing_plan_raises_plan_error(mock_deps):
 # --- merge_coverage_files() tests ---
 
 
+@pytest.mark.unit
 @patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
 def test_merge_coverage_files_calls_merge_coverage_data(mock_merge):
     """merge_coverage_files delegates to reporter.merge_coverage_data."""
@@ -359,6 +360,7 @@ def test_merge_coverage_files_calls_merge_coverage_data(mock_merge):
     mock_merge.assert_called_once_with(files)
 
 
+@pytest.mark.unit
 @patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
 def test_merge_coverage_files_writes_json_to_default_output(
     mock_merge, tmp_path
@@ -389,6 +391,7 @@ def test_merge_coverage_files_writes_json_to_default_output(
     assert data["files"][0]["hits"] == {"0": 3, "1": 0}
 
 
+@pytest.mark.unit
 @patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
 def test_merge_coverage_files_writes_json_to_custom_output(
     mock_merge, tmp_path
@@ -402,6 +405,7 @@ def test_merge_coverage_files_writes_json_to_custom_output(
     assert custom_output.exists()
 
 
+@pytest.mark.unit
 @patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
 def test_merge_coverage_files_returns_merged_data(mock_merge):
     """The merged CoverageData is returned."""
@@ -413,6 +417,7 @@ def test_merge_coverage_files_returns_merged_data(mock_merge):
     assert result is merged
 
 
+@pytest.mark.unit
 @patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
 def test_merge_coverage_files_creates_output_dir(mock_merge, tmp_path):
     """Parent directories of the output path are created if missing."""
@@ -424,6 +429,7 @@ def test_merge_coverage_files_creates_output_dir(mock_merge, tmp_path):
     assert output.exists()
 
 
+@pytest.mark.unit
 @patch("gd_tools.coverage.orchestrator.reporter.merge_coverage_data")
 def test_merge_coverage_files_empty_list(mock_merge, tmp_path):
     """Empty file list still writes an (empty) output."""

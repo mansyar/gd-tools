@@ -11,6 +11,9 @@ from gd_tools.coverage.cobertura_reporter import generate_cobertura_report
 from gd_tools.coverage.plan_generator import read_plan_json
 from gd_tools.coverage.reporter import read_coverage_json
 
+import pytest
+pytestmark = pytest.mark.unit
+
 _FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 _PLAN_FIXTURE = _FIXTURES_DIR / "coverage_plans" / "test_plan.json"
 _FULL_COV = _FIXTURES_DIR / "coverage_data" / "full_coverage.json"

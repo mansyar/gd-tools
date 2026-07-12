@@ -24,6 +24,8 @@ from gd_tools.config import (
 )
 from gd_tools.errors import ConfigError
 
+pytestmark = pytest.mark.unit
+
 # --- DEFAULT_EXCLUDES constant ---
 
 

@@ -6,6 +6,8 @@ via gdtoolkit, output formatting, and syntax error handling.
 
 import json
 
+import pytest
+
 from gd_tools.config import GdToolsConfig
 from gd_tools.lint_runner import (
     LintIssue,
@@ -14,6 +16,8 @@ from gd_tools.lint_runner import (
     format_lint_text,
     run_lint,
 )
+
+pytestmark = pytest.mark.unit
 
 # --- LintIssue dataclass ---
 
