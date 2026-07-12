@@ -1,0 +1,8 @@
+{
+  "track_id": "agent_skill_versioning_20260712",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-12T23:23:50Z",
+  "updated_at": "2026-07-12T23:23:50Z",
+  "description": "Making an agent skill for this CLI tools so coding agents can use them reliably. Address: Automated version bumping and changelog generation not included."
+}
