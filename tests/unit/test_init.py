@@ -883,3 +883,99 @@ def test_run_init_exits_when_user_declines_gut(tmp_path: Path):
     assert exc_info.value.code == 0
     mock_enable.assert_not_called()
     mock_summary.assert_not_called()
+
+
+def test_extract_gut_no_addons_gut_dir_raises(tmp_path: Path):
+    """extract_gut raises GdToolsError when archive has no addons/gut/."""
+    zip_path = tmp_path / "gut.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("Gut-9.5.0/README.md", "no addons here")
+
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+
+    with pytest.raises(GdToolsError, match="addons/gut/ directory not found"):
+        extract_gut(zip_path, project_root)
+
+
+def test_extract_gut_removes_existing_dest(tmp_path: Path):
+    """extract_gut removes existing addons/gut/ before copying (stale cleanup)."""
+    zip_path = tmp_path / "gut.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("Gut-9.5.0/addons/gut/gut.gd", "extends Node")
+
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    stale_gut = project_root / "addons" / "gut"
+    stale_gut.mkdir(parents=True)
+    (stale_gut / "old_file.gd").write_text("extends Node")
+
+    extract_gut(zip_path, project_root)
+
+    assert not (stale_gut / "old_file.gd").exists()
+    assert (stale_gut / "gut.gd").exists()
+
+
+def test_enable_gut_plugin_inserts_before_next_section(tmp_path: Path):
+    """enable_gut_plugin inserts enabled= before next section header."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "config_version=5\n\n"
+        "[editor_plugins]\n\n"
+        "[application]\n\n"
+        'config/name="MyGame"\n'
+    )
+
+    enable_gut_plugin(tmp_path)
+
+    content = project_godot.read_text()
+    assert '"res://addons/gut/plugin.gd"' in content
+    # enabled= should appear before [application]
+    enabled_idx = content.index("enabled=PackedStringArray")
+    app_idx = content.index("[application]")
+    assert enabled_idx < app_idx
+
+
+def test_enable_gut_plugin_appends_at_end(tmp_path: Path):
+    """enable_gut_plugin appends enabled= at end when no next section."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "config_version=5\n\n"
+        "[editor_plugins]\n"
+    )
+
+    enable_gut_plugin(tmp_path)
+
+    content = project_godot.read_text()
+    assert '"res://addons/gut/plugin.gd"' in content
+    assert "enabled=PackedStringArray" in content
+
+
+def test_run_init_gut_installed_version_unknown(tmp_path: Path):
+    """run_init reports 'version unknown' when GUT installed but version is None."""
+    (tmp_path / "project.godot").write_text("config_version=5\n")
+
+    config = GdToolsConfig()
+    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.load_config", return_value=config),
+        patch("gd_tools.init.find_godot", return_value=mock_info),
+        patch("gd_tools.init.check_gut_installed", return_value=True),
+        patch("gd_tools.init.get_installed_gut_version", return_value=None),
+        patch("gd_tools.init.install_gut"),
+        patch("gd_tools.init.enable_gut_plugin"),
+        patch("gd_tools.init.install_coverage_addon"),
+        patch("gd_tools.init.update_gutconfig"),
+        patch("gd_tools.init.create_config_file"),
+        patch("gd_tools.init.generate_lint_format_rcs"),
+        patch("gd_tools.init.create_data_dir"),
+        patch("gd_tools.init.print_summary") as mock_summary,
+    ):
+        run_init()
+
+    call_args = mock_summary.call_args
+    actions = call_args.args[1] if call_args.args else call_args.kwargs.get("actions")
+    assert isinstance(actions, list)
+    assert any("version unknown" in a for a in actions)

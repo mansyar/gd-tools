@@ -107,11 +107,11 @@
 - [x] Run tests: `pytest tests/unit/test_lint_runner.py tests/unit/test_format_runner.py -v` — all pass
 - [x] Verify coverage for `lint_runner.py` and `format_runner.py` ≥80%
 
-### Task 3.7: Audit and gap-fill init.py tests (§4.7)
-- [ ] Audit `test_init.py` against §4.7 specs
-- [ ] Write missing test cases: GUT install/already-present, coverage addon copy, plugin enabling idempotent, gutconfig create/merge, toml create/preserve, .gd-tools dir + gitignore, network failure
-- [ ] Run tests: `pytest tests/unit/test_init.py -v` — all pass
-- [ ] Verify coverage for `init.py` module ≥80%
+### Task 3.7: Audit and gap-fill init.py tests (§4.7) [sha: pending]
+- [x] Audit `test_init.py` against §4.7 specs
+- [x] Write missing test cases: GUT install/already-present, coverage addon copy, plugin enabling idempotent, gutconfig create/merge, toml create/preserve, .gd-tools dir + gitignore, network failure
+- [x] Run tests: `pytest tests/unit/test_init.py -v` — all pass
+- [x] Verify coverage for `init.py` module ≥80%
 
 ### Task 3.8: Audit and gap-fill doctor.py tests (§4.8)
 - [ ] Audit `test_doctor.py` against §4.8 specs
