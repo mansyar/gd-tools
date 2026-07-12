@@ -83,7 +83,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
 
-## Phase 4: Validation & Documentation
+## Phase 4: Validation & Documentation [checkpoint: 924786e]
 
 - [x] Task: Read [spec.md](./spec.md) and [workflow.md](../../workflow.md) to review requirements and TDD protocol before starting this phase
 
@@ -104,5 +104,5 @@
     - [x] Commit with message: `feat(ci): Add CI/CD pipeline with staged gating and release skeleton`
     - [ ] Verify pipeline triggers on next push/PR
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
 </protect>
