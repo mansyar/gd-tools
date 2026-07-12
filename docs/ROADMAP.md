@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 4 In Progress — Test Suite Implementation delivered (Track 14)
+**Status:** Phase 4 In Progress — CI/CD Pipeline delivered (Track 15)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -58,7 +58,7 @@ Phase 3: MVP2 — Coverage System       ──┐
                                      
 Phase 4: Polish & Release              ──┐
   Track 14: Test Suite ✅                  │  ~ongoing + 3 days
-  Track 15: CI/CD Pipeline                │  Risk: LOW
+  Track 15: CI/CD Pipeline ✅              │  Risk: LOW
   Track 16: Documentation                 │
   Track 17: PyPI Release                  │
 ──────────────────────────────────────────┘
@@ -74,7 +74,7 @@ Total estimated effort: ~25-30 days
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
 | **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
 | **M3: Coverage Alpha** ✅ | Phase 3 | ✅ ACHIEVED — `gd-tools test --coverage` produces line+branch reports; all Phase 3 tracks (9-13) complete (2026-07-12) |
-| **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80%+ coverage (Track 14 ✅: 99.49% line, 98% branch) |
+| **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80%+ coverage (Track 14 ✅: 99.49% line, 98% branch; Track 15 ✅: CI/CD pipeline with staged gating) |
 
 ---
 
@@ -1289,7 +1289,10 @@ partially met — deferred to future track.
 
 ---
 
-### Track 15: CI/CD Pipeline
+### Track 15: CI/CD Pipeline ✅
+
+> **Status: ✅ Complete** (2026-07-12). See `.github/workflows/ci.yml` and
+> `.github/workflows/release.yml` for the implementation.
 
 | Field | Value |
 |-------|-------|
@@ -1322,6 +1325,20 @@ partially met — deferred to future track.
 4. Coverage report uploaded to codecov.io
 5. Tag push triggers PyPI publish
 6. Pipeline completes in <10 minutes total
+
+**Implementation Notes:**
+- CI workflow (`.github/workflows/ci.yml`) implements 3-stage gating:
+  `lint-format-unit` → `integration` → `e2e`, plus a cross-platform
+  matrix (Ubuntu + Windows, Python 3.10/3.11/3.12).
+- Release skeleton (`.github/workflows/release.yml`) triggers on tag
+  push (`v*`), builds package, uploads to TestPyPI (production PyPI
+  deferred to Track 17).
+- Godot 4.6.1 installed in CI for integration and E2E stages.
+- Coverage uploaded to codecov.io via `codecov-action@v4`.
+- JUnit XML results uploaded as GitHub Actions artifacts.
+- Secrets documented in `.github/SECRETS.md`.
+- Review fixes applied: `permissions: contents: read` added to both
+  workflows for least-privilege security.
 
 ---
 

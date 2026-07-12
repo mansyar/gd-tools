@@ -1163,58 +1163,110 @@ monkeypatch.delenv("GODOT_BIN", raising=False)
 
 ### GitHub Actions
 
-```yaml
-name: Tests
+> **Status: ✅ Implemented** (2026-07-12). The full pipeline lives in
+> `.github/workflows/ci.yml`. The example below is a condensed reference;
+> see the actual workflow file for the authoritative implementation.
 
-on: [push, pull_request]
+The CI pipeline uses staged gating with three sequential jobs plus a
+cross-platform matrix:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CI: 'true'
+  GODOT_VERSION: '4.6.1'
+
+permissions:
+  contents: read
 
 jobs:
-  unit-tests:
+  # Stage 1: Lint, format, unit tests (fast, no Godot)
+  lint-format-unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
+          cache: pip
       - run: pip install -e ".[dev]"
-      - run: pytest tests/unit/ -m unit --cov=gd_tools --cov-report=xml
+      - run: ruff check src/ tests/
+      - run: black --check src/ tests/
+      - run: pytest tests/unit/ -m unit --cov=gd_tools --cov-report=xml --junitxml=junit-unit.xml
       - uses: codecov/codecov-action@v4
         with:
-          file: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
 
-  integration-tests:
-    runs-on: ubuntu-latest
-    needs: unit-tests
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install Godot
-        run: |
-          wget https://github.com/godotengine/godot/releases/download/4.5-stable/Godot_v4.5-stable_linux.x86_64.zip
-          unzip Godot_v4.5-stable_linux.x86_64.zip
-          sudo mv Godot_v4.5-stable_linux.x86_64 /usr/local/bin/godot
-          sudo chmod +x /usr/local/bin/godot
-      - run: pip install -e ".[dev]"
-      - run: pytest tests/integration/ -m integration
-      - run: pytest tests/e2e/ -m e2e
-
-  matrix:
+  # Cross-platform matrix (Ubuntu + Windows, Python 3.10/3.11/3.12)
+  matrix-unit:
+    needs: lint-format-unit
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.11', '3.12']
     runs-on: ${{ matrix.os }}
-    needs: unit-tests
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
       - run: pip install -e ".[dev]"
-      - run: pytest tests/unit/ -m unit
+      - run: pytest tests/unit/ -m unit --no-cov
+
+  # Stage 2: Integration tests (requires Godot)
+  integration:
+    needs: lint-format-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GODOT_BIN: /usr/local/bin/godot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - name: Install Godot
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
+          sudo mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 /usr/local/bin/godot
+      - run: pytest tests/integration/ -m integration --no-cov --junitxml=junit-integration.xml
+
+  # Stage 3: E2E tests (requires Godot + sample project)
+  e2e:
+    needs: integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GODOT_BIN: /usr/local/bin/godot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -e ".[dev]"
+      # Install Godot (same steps as integration job)
+      - run: pytest tests/e2e/ -m e2e --no-cov --junitxml=junit-e2e.xml
 ```
+
+A separate release workflow (`.github/workflows/release.yml`) triggers on
+tag push (`v*`), builds the package with `python -m build`, verifies with
+`twine check`, and uploads to TestPyPI. Production PyPI publishing is
+deferred to Track 17. Required secrets are documented in
+`.github/SECRETS.md`.
 
 ### Test Stage Gating
 

@@ -800,6 +800,18 @@ Generated/managed by `gd-tools init`. Contains GUT config + coverage hook paths:
 | 1    | Test/lint/format failure or coverage below threshold |
 | 2    | Environment/config error |
 
+### Project CI/CD Pipeline
+
+gd-tools' own CI/CD pipeline is implemented in `.github/workflows/`:
+
+- **`ci.yml`** — Staged gating: `lint-format-unit` → `integration` →
+  `e2e`, plus a cross-platform matrix (Ubuntu + Windows, Python
+  3.10/3.11/3.12). Coverage uploaded to codecov.io. JUnit XML results
+  uploaded as artifacts.
+- **`release.yml`** — Tag push (`v*`) triggers build + TestPyPI upload
+  (production PyPI deferred to Track 17).
+- **`.github/SECRETS.md`** — Required GitHub secrets documentation.
+
 ---
 
 ## 16. Open Questions (Deferred to Implementation)
