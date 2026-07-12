@@ -1,0 +1,8 @@
+{
+  "track_id": "cicd_pipeline_20260712",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-12T14:55:16Z",
+  "updated_at": "2026-07-12T14:55:16Z",
+  "description": "CI/CD Pipeline - GitHub Actions CI with staged gating (lint/format/unit → integration → e2e) and release workflow skeleton (TestPyPI)"
+}

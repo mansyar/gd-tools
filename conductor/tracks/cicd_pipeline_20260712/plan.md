@@ -1,0 +1,98 @@
+# Implementation Plan: CI/CD Pipeline
+
+**Track ID:** cicd_pipeline_20260712
+**Spec:** [./spec.md](./spec.md)
+**Created:** 2026-07-12
+
+> **Note:** This track creates configuration files (`.github/workflows/*.yml`). Per `workflow.md`, config files do NOT require TDD tests. Verification is done via YAML validation and GitHub Actions execution.
+
+---
+
+## Phase 1: CI Workflow Foundation (ci.yml)
+
+- [ ] Task: Create `.github/workflows/` directory and `ci.yml` file skeleton
+    - [ ] Create `.github/workflows/` directory
+    - [ ] Create `ci.yml` with workflow name, trigger definitions (push to `main`, pull requests)
+    - [ ] Add `concurrency` group to cancel superseded runs on same branch/PR
+
+- [ ] Task: Implement Stage 1 — `lint-format-unit` job
+    - [ ] Define job `lint-format-unit` on `ubuntu-latest` with Python 3.12
+    - [ ] Add `actions/checkout@v4` step
+    - [ ] Add `actions/setup-python@v5` step with `cache: pip`
+    - [ ] Add `pip install -e ".[dev]"` step (install project + dev dependencies)
+    - [ ] Add `ruff check src/ tests/` step
+    - [ ] Add `black --check src/ tests/` step
+    - [ ] Add `CI=true pytest tests/unit/ -m unit --cov=gd_tools --cov-report=xml --cov-report=html` step
+    - [ ] Add `codecov/codecov-action@v4` upload step with `CODECOV_TOKEN` secret
+    - [ ] Add `actions/upload-artifact@v4` step for coverage XML/HTML reports
+    - [ ] Set job timeout to 5 minutes
+
+- [ ] Task: Implement cross-platform matrix job
+    - [ ] Define job `matrix-unit` with `needs: lint-format-unit`
+    - [ ] Set strategy matrix: OS `[ubuntu-latest, windows-latest]` × Python `[3.10, 3.11, 3.12]`
+    - [ ] Add checkout, setup-python (with cache), pip install steps
+    - [ ] Add `CI=true pytest tests/unit/ -m unit` step (no coverage in matrix)
+    - [ ] Set job timeout to 5 minutes
+
+- [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
+
+## Phase 2: Godot Integration & Stages 2-3 (ci.yml)
+
+- [ ] Task: Implement Stage 2 — `integration` job
+    - [ ] Define job `integration` with `needs: lint-format-unit` (Stage 1)
+    - [ ] Run on `ubuntu-latest` with Python 3.12
+    - [ ] Add checkout, setup-python (with cache), pip install steps
+    - [ ] Add Godot installation step (download latest stable from GitHub releases)
+    - [ ] Add `chmod +x` and move binary to PATH as `godot`
+    - [ ] Set `GODOT_BIN` environment variable to absolute path of binary
+    - [ ] Add `godot --version` verification step
+    - [ ] Add `CI=true pytest tests/integration/ -m integration` step
+    - [ ] Set job timeout to 10 minutes
+
+- [ ] Task: Implement Stage 3 — `e2e` job
+    - [ ] Define job `e2e` with `needs: integration` (Stage 2)
+    - [ ] Run on `ubuntu-latest` with Python 3.12
+    - [ ] Add checkout, setup-python (with cache), pip install steps
+    - [ ] Add Godot installation step (reuse same installation logic as Stage 2)
+    - [ ] Set `GODOT_BIN` environment variable to absolute path
+    - [ ] Add `godot --version` verification step
+    - [ ] Add `CI=true pytest tests/e2e/ -m e2e` step
+    - [ ] Set job timeout to 10 minutes
+
+- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+
+## Phase 3: Release Workflow Skeleton (release.yml)
+
+- [ ] Task: Create `.github/workflows/release.yml` file
+    - [ ] Define workflow with trigger on tag push matching `v*` (e.g., `v0.1.0`)
+    - [ ] Define job `build-and-publish` on `ubuntu-latest` with Python 3.12
+    - [ ] Add `actions/checkout@v4` step
+    - [ ] Add `actions/setup-python@v5` step with `cache: pip`
+    - [ ] Install `build` and `twine` packages
+    - [ ] Add `python -m build` step (produces sdist + wheel in `dist/`)
+    - [ ] Add `twine check dist/*` step (verify package metadata)
+    - [ ] Add `twine upload --repository testpypi dist/*` step with `TEST_PYPI_API_TOKEN` secret
+    - [ ] Set job timeout to 10 minutes
+
+- [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
+
+## Phase 4: Validation & Documentation
+
+- [ ] Task: Validate workflow YAML files
+    - [ ] Verify YAML syntax and structure of `ci.yml` and `release.yml`
+    - [ ] Verify `needs:` dependency chain: `lint-format-unit` → `integration` → `e2e`
+    - [ ] Verify all `actions/*` version references are current
+    - [ ] Verify env var `CI=true` is set in all test steps
+    - [ ] Verify `GODOT_BIN` is set in Stages 2 and 3
+
+- [ ] Task: Document required GitHub secrets
+    - [ ] Create documentation listing required secrets: `CODECOV_TOKEN`, `TEST_PYPI_API_TOKEN`
+    - [ ] Add setup instructions for each secret in GitHub repository settings
+    - [ ] Add note that `CODECOV_TOKEN` is optional for public repos but recommended
+
+- [ ] Task: Final commit and verification
+    - [ ] Stage all workflow files and documentation
+    - [ ] Commit with message: `feat(ci): Add CI/CD pipeline with staged gating and release skeleton`
+    - [ ] Verify pipeline triggers on next push/PR
+
+- [ ] Task: Conductor - User Manual Verification 'Phase 4' (Protocol in workflow.md)
