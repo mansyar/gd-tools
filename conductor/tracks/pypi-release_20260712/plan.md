@@ -33,7 +33,7 @@
     - [x] Update plan.md: mark task `[x]` with commit SHA
 - [x] Task: Conductor - User Manual Verification 'Release Workflow and Secrets Documentation' (Protocol in workflow.md)
 
-## Phase 3: Package Build and Local Validation
+## Phase 3: Package Build and Local Validation [checkpoint: f80e4a3]
 
 - [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
 - [x] Task: Build and validate package locally [af832af]
@@ -44,7 +44,7 @@
     - [x] Commit: `chore(build): Verify package build and twine check pass`
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
-- [ ] Task: Conductor - User Manual Verification 'Package Build and Local Validation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Package Build and Local Validation' (Protocol in workflow.md)
 
 ## Phase 4: TestPyPI Publication and Validation
 
