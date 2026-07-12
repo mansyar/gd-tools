@@ -6,11 +6,11 @@ zero-coverage file inclusion, and compatibility with LCOV parsers.
 
 from pathlib import Path
 
+import pytest
+
 from gd_tools.coverage.lcov_reporter import generate_lcov_report
 from gd_tools.coverage.plan_generator import read_plan_json
 from gd_tools.coverage.reporter import read_coverage_json
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

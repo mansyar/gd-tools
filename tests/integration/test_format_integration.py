@@ -12,12 +12,11 @@ import shutil
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
 
 from gd_tools.cli import cli
 from gd_tools.config import DEFAULT_EXCLUDES, GdToolsConfig, generate_gdformatrc
-
-import pytest
 
 pytestmark = pytest.mark.integration
 

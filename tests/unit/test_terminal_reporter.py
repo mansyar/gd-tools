@@ -2,11 +2,11 @@
 
 from pathlib import Path
 
+import pytest
+
 from gd_tools.coverage.plan_generator import read_plan_json
 from gd_tools.coverage.reporter import read_coverage_json
 from gd_tools.coverage.terminal_reporter import generate_terminal_report
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

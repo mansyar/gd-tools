@@ -7,14 +7,14 @@ condition-coverage, zero-coverage file inclusion, and rate accuracy.
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
+
 from gd_tools.coverage.cobertura_reporter import (
     _format_rate,
     generate_cobertura_report,
 )
 from gd_tools.coverage.plan_generator import read_plan_json
 from gd_tools.coverage.reporter import read_coverage_json
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

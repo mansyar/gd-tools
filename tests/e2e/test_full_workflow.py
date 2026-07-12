@@ -20,13 +20,15 @@ from pathlib import Path
 
 import pytest
 
+from conftest import find_godot_binary
+
 pytestmark = pytest.mark.e2e
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
 skip_if_no_godot = pytest.mark.skipif(
-    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
+    find_godot_binary() is None,
     reason="Godot binary not found (set GODOT_BIN or add to PATH)",
 )
 

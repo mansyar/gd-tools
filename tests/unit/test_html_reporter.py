@@ -8,10 +8,10 @@ source listing pages, CSS coverage classes, zero-coverage file inclusion,
 from html.parser import HTMLParser
 from pathlib import Path
 
+import pytest
+
 from gd_tools.coverage.plan_generator import read_plan_json
 from gd_tools.coverage.reporter import read_coverage_json
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

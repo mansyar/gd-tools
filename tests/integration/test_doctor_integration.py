@@ -11,12 +11,11 @@ import zipfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 from gd_tools.doctor import DoctorResult, run_doctor
 from gd_tools.godot import GodotInfo
 from gd_tools.init import run_init
-
-
-import pytest
 
 pytestmark = pytest.mark.integration
 

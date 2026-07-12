@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import click
+import pytest
 from click.testing import CliRunner
 
 from gd_tools.cli import cli
@@ -19,9 +20,6 @@ from gd_tools.errors import (
 from gd_tools.format_runner import FormatResult
 from gd_tools.lint_runner import LintIssue, LintResult
 from gd_tools.test_runner import TestResult
-
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

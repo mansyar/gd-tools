@@ -95,7 +95,6 @@ def mock_requests_get():
     return _mock
 
 
-@contextmanager
 @pytest.fixture
 def mock_godot_on_path():
     """Context manager that patches ``shutil.which`` to find a fake Godot.
