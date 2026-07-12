@@ -5,15 +5,15 @@
 
 ## Phase 1: Agent Skill Creation
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
-- [ ] Task: Create `skills/gd-tools/SKILL.md`
-    - [ ] Create directory structure: `skills/gd-tools/`
-    - [ ] Write YAML frontmatter with `name: gd-tools` and `description` (trigger conditions, pushy tone to prevent undertriggering)
-    - [ ] Write CLI command reference — all 8 commands (init, doctor, test, lint, format, coverage report, coverage merge, coverage show) with flags and exit codes
-    - [ ] Write common workflow recipes (bootstrap, pre-commit, CI, diagnosis)
-    - [ ] Write configuration reference (`gd-tools.toml` key sections: `[godot]`, `[test]`, `[lint]`, `[format]`, `[coverage]`)
-    - [ ] Write environment & detection guide (Godot binary detection chain, CI mode, `--non-interactive`)
-    - [ ] Verify SKILL.md is under 500 lines and content is self-contained (AC-1, AC-2, AC-3, AC-4)
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
+- [x] Task: Create `skills/gd-tools/SKILL.md` [f92664e]
+    - [x] Create directory structure: `skills/gd-tools/`
+    - [x] Write YAML frontmatter with `name: gd-tools` and `description` (trigger conditions, pushy tone to prevent undertriggering)
+    - [x] Write CLI command reference — all 8 commands (init, doctor, test, lint, format, coverage report, coverage merge, coverage show) with flags and exit codes
+    - [x] Write common workflow recipes (bootstrap, pre-commit, CI, diagnosis)
+    - [x] Write configuration reference (`gd-tools.toml` key sections: `[godot]`, `[test]`, `[lint]`, `[format]`, `[coverage]`)
+    - [x] Write environment & detection guide (Godot binary detection chain, CI mode, `--non-interactive`)
+    - [x] Verify SKILL.md is under 500 lines and content is self-contained (AC-1, AC-2, AC-3, AC-4)
 - [ ] Task: Conductor - User Manual Verification 'Agent Skill Creation' (Protocol in workflow.md)
 
 ## Phase 2: Commitizen Integration
