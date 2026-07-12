@@ -217,10 +217,10 @@
 - [x] Verify all 10 runs pass with zero failures
 - [x] Document results: 10/10 pass, 0 failures, avg 10.2s/run
 
-### Task 6.3: Code quality verification
-- [ ] Run `ruff check tests/` — clean
-- [ ] Run `black --check tests/` — clean
-- [ ] Fix any style issues found
+### Task 6.3: Code quality verification [sha: 2f366af]
+- [x] Run `ruff check tests/` — clean
+- [x] Run `black --check tests/` — clean (14 files reformatted, was pre-existing pytestmark formatting issue)
+- [x] Fix any style issues found — fixed all 14 files via `black tests/`
 
 ### Task 6.4: Final acceptance criteria verification
 - [ ] AC-1: `pytest -m unit` passes <5s
