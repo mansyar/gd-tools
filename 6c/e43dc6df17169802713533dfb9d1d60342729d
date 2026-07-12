@@ -1,0 +1,17 @@
+Task: Update pyproject.toml metadata for PyPI release
+
+Summary: Finalized package metadata for PyPI publication.
+
+Changes:
+- Changed Development Status classifier from '3 - Alpha' to '4 - Beta' (FR-1.1)
+- Added [project.urls] section with Homepage, Repository, Documentation, and Bug Tracker URLs (FR-1.2)
+- Verified readme = 'README.md' is present for PyPI long description rendering (FR-1.3)
+
+Files modified:
+- pyproject.toml
+
+Verification:
+- ruff check src/ tests/ : All checks passed
+- black --check src/ tests/ : 58 files unchanged
+
+Why: Package metadata must be complete and accurate before publishing to PyPI.
