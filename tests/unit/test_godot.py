@@ -627,6 +627,7 @@ def test_is_executable_existing_file(tmp_path):
     """_is_executable returns True for an existing file."""
     fake_bin = tmp_path / "godot"
     fake_bin.write_text("fake")
+    fake_bin.chmod(0o755)
     assert _is_executable(str(fake_bin)) is True
 
 
