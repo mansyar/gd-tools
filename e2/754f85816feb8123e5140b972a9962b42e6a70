@@ -1,0 +1,30 @@
+Task: Publish to TestPyPI and verify installation
+
+Actions performed:
+- Uploaded gd-tools 0.1.0 to TestPyPI (both sdist and wheel)
+  - twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+  - Wheel: gd_tools-0.1.0-py3-none-any.whl (56 KB)
+  - Sdist: gd_tools-0.1.0.tar.gz (48 KB)
+  - URL: https://test.pypi.org/project/gd-tools/0.1.0/
+
+- Created clean virtual environment for installation testing
+- Installed from TestPyPI: pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ gd-tools
+  - All dependencies resolved successfully
+  - gd-tools 0.1.0 installed along with 29 dependencies
+
+- Verified gd-tools --version: prints 'gd-tools 0.1.0' (FR-5.3 PASS)
+- Verified gd-tools --help: shows all 6 command groups (FR-5.4 PASS)
+  - coverage: Coverage reporting commands
+  - doctor: Check the environment for required tools
+  - format: Format GDScript files
+  - init: Initialize a new gd-tools configuration
+  - lint: Lint GDScript files
+  - test: Run GDScript tests using GUT
+
+- Cleaned up test virtual environment
+
+Requirements satisfied:
+- FR-5.1: Package uploaded to TestPyPI
+- FR-5.2: Installation from TestPyPI in clean venv verified
+- FR-5.3: gd-tools --version prints 0.1.0
+- FR-5.4: gd-tools --help shows all command groups (test, lint, format, coverage, init, doctor)
