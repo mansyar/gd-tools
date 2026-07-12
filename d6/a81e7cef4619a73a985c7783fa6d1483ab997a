@@ -1,0 +1,13 @@
+Task 3.9: Audit and gap-fill cli.py tests (§4.9)
+
+Audit: 64 tests, 89% coverage. 22 uncovered lines across 6 error handlers.
+
+Added 6 tests:
+1. test_cli_group_not_implemented_error_exit_2 - GdToolsGroup.invoke catches NotImplementedError
+2. test_cli_init_gdtools_error_exit_code - init catches GdToolsError, propagates exit_code
+3. test_coverage_report_config_error_exit_2 - coverage report catches ConfigError from load_config
+4. test_coverage_merge_config_error_exit_2 - coverage merge catches ConfigError from load_config
+5. test_coverage_merge_gdtools_error_exit_code - coverage merge catches GdToolsError, propagates exit_code
+6. test_coverage_show_config_error_exit_2 - coverage show catches ConfigError from load_config
+
+Result: cli.py coverage 89% -> 100% (70 tests, all pass).
