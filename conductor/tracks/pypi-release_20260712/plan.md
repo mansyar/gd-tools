@@ -35,15 +35,15 @@
 
 ## Phase 3: Package Build and Local Validation
 
-- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
-- [ ] Task: Build and validate package locally
-    - [ ] Run `python -m build` to produce sdist (`.tar.gz`) and wheel (`.whl`) in `dist/`
-    - [ ] Run `twine check dist/*` to validate package metadata and README rendering
-    - [ ] Verify combined package size (sdist + wheel) is under 500KB
-    - [ ] Inspect `dist/` contents to confirm both artifacts present
-    - [ ] Commit: `chore(build): Verify package build and twine check pass`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
+- [x] Task: Build and validate package locally [af832af]
+    - [x] Run `python -m build` to produce sdist (`.tar.gz`) and wheel (`.whl`) in `dist/`
+    - [x] Run `twine check dist/*` to validate package metadata and README rendering
+    - [x] Verify combined package size (sdist + wheel) is under 500KB
+    - [x] Inspect `dist/` contents to confirm both artifacts present
+    - [x] Commit: `chore(build): Verify package build and twine check pass`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Package Build and Local Validation' (Protocol in workflow.md)
 
 ## Phase 4: TestPyPI Publication and Validation
