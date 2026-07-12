@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: PyPI Release**
+- [~] **Track: PyPI Release**
 *Link: [./tracks/pypi-release_20260712/](./tracks/pypi-release_20260712/)*
