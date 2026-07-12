@@ -1,0 +1,27 @@
+Task Summary - Phase 2: Godot Integration & Stages 2-3
+
+Tasks Completed:
+1. Read spec.md and workflow.md (already done in Phase 1)
+2. Implemented Stage 2 - integration job
+3. Implemented Stage 3 - e2e job
+
+Changes:
+- Updated .github/workflows/ci.yml with:
+  - GODOT_VERSION: '4.6' added to workflow-level env
+  - Stage 2 (integration): needs lint-format-unit, installs Godot 4.6 from
+    GitHub releases, sets GODOT_BIN=/usr/local/bin/godot, verifies with
+    godot --version, runs pytest tests/integration/ -m integration --no-cov,
+    10min timeout, JUnit XML artifact upload
+  - Stage 3 (e2e): needs integration, same Godot installation, runs
+    pytest tests/e2e/ -m e2e --no-cov, 10min timeout, JUnit XML artifact upload
+  - Godot installation: wget from GitHub releases, unzip, chmod +x, mv to
+    /usr/local/bin/godot (FR-2.1-2.5)
+  - --no-cov used for integration/e2e to avoid fail_under threshold issues
+    when running test subsets
+  --junitxml added for JUnit XML test result artifacts (FR-1.9)
+
+Files Modified:
+- .github/workflows/ci.yml (+89 lines)
+
+Why: Completes the 3-stage CI pipeline with Godot integration. Stages are
+gated via needs: dependency chain (lint-format-unit -> integration -> e2e).
