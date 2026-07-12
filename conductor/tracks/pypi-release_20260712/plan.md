@@ -25,12 +25,12 @@
     - [x] Commit: `ci(release): Add production PyPI upload to release workflow`
     - [x] Attach git note with task summary
     - [x] Update plan.md: mark task `[x]` with commit SHA
-- [ ] Task: Update `.github/SECRETS.md`
-    - [ ] Add `PYPI_API_TOKEN` secret documentation (Used by, Purpose, Required for, How to obtain, How to add)
-    - [ ] Remove the "Production PyPI publishing is deferred to Track 17" note from the notes section
-    - [ ] Commit: `docs(secrets): Document PYPI_API_TOKEN secret for production PyPI`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Update `.github/SECRETS.md` [99a1f9d]
+    - [x] Add `PYPI_API_TOKEN` secret documentation (Used by, Purpose, Required for, How to obtain, How to add)
+    - [x] Remove the "Production PyPI publishing is deferred to Track 17" note from the notes section
+    - [x] Commit: `docs(secrets): Document PYPI_API_TOKEN secret for production PyPI`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Release Workflow and Secrets Documentation' (Protocol in workflow.md)
 
 ## Phase 3: Package Build and Local Validation
