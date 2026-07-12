@@ -39,7 +39,7 @@
 - [x] Ensure `.env` is in `.gitignore` (add if missing)
 - [x] Verify: `.env.example` exists, `.env` is gitignored
 
-### Task 1.5: Conductor - User Manual Verification 'Phase 1: Test Infrastructure Setup' (Protocol in workflow.md)
+### Task 1.5: Conductor - User Manual Verification 'Phase 1: Test Infrastructure Setup' (Protocol in workflow.md) [checkpoint: 5aa3e22]
 
 ---
 
