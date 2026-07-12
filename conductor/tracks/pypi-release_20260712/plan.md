@@ -48,16 +48,16 @@
 
 ## Phase 4: TestPyPI Publication and Validation
 
-- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
-- [ ] Task: Publish to TestPyPI and verify installation
-    - [ ] Upload built package to TestPyPI: `twine upload --repository testpypi dist/*`
-    - [ ] Create a clean virtual environment
-    - [ ] Install from TestPyPI: `pip install -i https://test.pypi.org/simple/ gd-tools`
-    - [ ] Verify `gd-tools --version` prints `0.1.0`
-    - [ ] Verify `gd-tools --help` shows all command groups (test, lint, format, coverage, init, doctor)
-    - [ ] Commit: `chore(release): Verify TestPyPI publication and installation`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
+- [x] Task: Publish to TestPyPI and verify installation [e2754f8]
+    - [x] Upload built package to TestPyPI: `twine upload --repository testpypi dist/*`
+    - [x] Create a clean virtual environment
+    - [x] Install from TestPyPI: `pip install -i https://test.pypi.org/simple/ gd-tools`
+    - [x] Verify `gd-tools --version` prints `0.1.0`
+    - [x] Verify `gd-tools --help` shows all command groups (test, lint, format, coverage, init, doctor)
+    - [x] Commit: `chore(release): Verify TestPyPI publication and installation`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'TestPyPI Publication and Validation' (Protocol in workflow.md)
 
 ## Phase 5: Production PyPI Publication
