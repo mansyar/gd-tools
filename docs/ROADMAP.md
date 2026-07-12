@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 4 In Progress — CI/CD Pipeline delivered (Track 15)
+**Status:** Phase 4 In Progress — Documentation delivered (Track 16)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -59,7 +59,7 @@ Phase 3: MVP2 — Coverage System       ──┐
 Phase 4: Polish & Release              ──┐
   Track 14: Test Suite ✅                  │  ~ongoing + 3 days
   Track 15: CI/CD Pipeline ✅              │  Risk: LOW
-  Track 16: Documentation                 │
+  Track 16: Documentation ✅               │
   Track 17: PyPI Release                  │
 ──────────────────────────────────────────┘
 
@@ -74,7 +74,7 @@ Total estimated effort: ~25-30 days
 | **M1: Foundation** ✅ | Phase 1 | ✅ ACHIEVED — Config loads, Godot binary detected, CLI skeleton runs (2026-07-10). Tracks 1-3 all complete. |
 | **M2: First Usable** ✅ | Phase 2 | ✅ ACHIEVED — `gd-tools lint`, `format`, `test`, `init`, `doctor` all work (2026-07-11). Tracks 4-8 all complete. |
 | **M3: Coverage Alpha** ✅ | Phase 3 | ✅ ACHIEVED — `gd-tools test --coverage` produces line+branch reports; all Phase 3 tracks (9-13) complete (2026-07-12) |
-| **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80%+ coverage (Track 14 ✅: 99.49% line, 98% branch; Track 15 ✅: CI/CD pipeline with staged gating) |
+| **M4: v1.0 Release** | Phase 4 | PyPI package, CI/CD, docs, test suite at 80%+ coverage (Track 14 ✅: 99.49% line, 98% branch; Track 15 ✅: CI/CD pipeline with staged gating; Track 16 ✅: README, User Guide, Contributing Guide, Architecture doc) |
 
 ---
 
@@ -1342,42 +1342,54 @@ partially met — deferred to future track.
 
 ---
 
-### Track 16: Documentation
+### Track 16: Documentation ✅ COMPLETED
 
 | Field | Value |
 |-------|-------|
 | **Phase** | 4 — Polish |
-| **Goal** | Write user-facing documentation: README, user guide, contributing guide |
+| **Goal** | Write user-facing documentation: README, user guide, contributing guide, architecture doc |
 | **Dependencies** | All tracks (document the final product) |
-| **Modules** | `README.md`, `docs/USAGE.md`, `docs/CONTRIBUTING.md` |
+| **Modules** | `README.md`, `docs/USER_GUIDE.md`, `docs/CONTRIBUTING.md`, `docs/ARCHITECTURE.md` |
 | **Effort** | 1-2 days |
 | **Risk** | LOW |
+| **Status** | ✅ **COMPLETED** (2026-07-12) — All 8 acceptance criteria passed |
+| **Conductor track** | `documentation_20260712` (archived to `conductor/archive/`) |
+| **Commits** | `10200e7`..`11b7d09` (15 commits) |
 
 **Scope:**
-- **README.md:**
-  - What is gd-tools (elevator pitch)
-  - Quick start (install, init, first run)
-  - Feature overview with examples
-  - Requirements (Python 3.10+, Godot 4.5+)
-  - Installation (`pip install gd-tools`)
-  - Links to detailed docs
-- **USAGE.md:**
-  - Full command reference
-  - Configuration guide (`gd-tools.toml` all sections)
-  - Coverage guide (how to read reports, set thresholds)
-  - CI/CD integration guide (GitHub Actions, GitLab CI examples)
-  - Troubleshooting / FAQ
-- **CONTRIBUTING.md:**
-  - Development setup
-  - Code style (ruff, black)
-  - Testing requirements
-  - PR process
-  - Architecture overview (link to TDD)
+- **README.md** (expanded from 33-line placeholder to 152 lines):
+  - Project title, tagline, badges (CI, coverage, PyPI, Python, Godot, MIT)
+  - Feature overview table (5 features from product.md)
+  - Installation, quick start (4-step guide)
+  - CLI command summary table (6 commands)
+  - Configuration overview (full gd-tools.toml example)
+  - Documentation links table (6 docs)
+  - Development section, license
+- **docs/USER_GUIDE.md** (760 lines):
+  - Getting Started (prerequisites, installation, init walkthrough, doctor)
+  - Configuration reference (all 5 sections of gd-tools.toml)
+  - Command Reference (all 6 commands + 3 coverage subcommands with flags, examples, exit codes)
+  - Examples (first test run, CI/CD pipeline, coverage threshold, lint+format in CI)
+  - Troubleshooting (Godot not found, GUT not installed, version mismatch, coverage not generating)
+- **docs/CONTRIBUTING.md** (469 lines):
+  - Development setup (clone, pip install -e ".[dev]", Godot binary config)
+  - Code style (ruff, black, naming conventions table, Google Python Style Guide)
+  - Testing requirements (3-tier structure, CI=true, coverage thresholds, mocking)
+  - PR process (branch naming, conventional commits, review checklist, CI checks)
+  - Project structure (full directory tree, module overview table)
+  - Debugging tips (5 common issues)
+- **docs/ARCHITECTURE.md** (603 lines):
+  - Architecture C (Hybrid) overview and comparison with A/B
+  - Full flow diagram (end-to-end ASCII of `gd-tools test --coverage`)
+  - Data formats (plan.json schema, coverage data schema, tracked statement/branch types)
+  - Component details (plan_generator.py, coverage.gd, pre_run_hook.gd, post_run_hook.gd, reporter.py)
+  - Design decisions (bottom-to-top injection, env var activation, source restoration, error precedence)
 
 **Deliverables:**
-- `README.md` (complete, replaces placeholder from Track 1)
-- `docs/USAGE.md`
+- `README.md` (expanded, replaces placeholder from Track 1)
+- `docs/USER_GUIDE.md`
 - `docs/CONTRIBUTING.md`
+- `docs/ARCHITECTURE.md`
 
 **Success Criteria:**
 1. New user can install and use gd-tools following README alone
@@ -1385,6 +1397,20 @@ partially met — deferred to future track.
 3. Configuration options fully documented
 4. CI/CD examples work when copied
 5. Contributor can set up dev environment following CONTRIBUTING.md
+6. All internal links resolve correctly (no broken links)
+7. All CLI commands and flags match the implemented CLI
+8. No existing documentation files were modified (additive only)
+
+**Track 16 Results (2026-07-12):**
+- ✅ All 8 acceptance criteria PASSED
+- ✅ 573 unit tests passed, 99.10% coverage — no regressions
+- ✅ ASCII-only (NFR-4): 0 non-ASCII characters across all 4 docs
+- ✅ Prose style compliant with Product Guidelines section 1
+- ✅ All internal links verified (8 files, 3 anchor links)
+- ✅ All CLI commands verified against source code
+- ✅ No existing docs modified (only README.md + 3 new docs + conductor/ files)
+- **Additional fix:** Replaced 13 Unicode em-dashes in README.md with ASCII
+  double-hyphens for strict NFR-4 compliance (commit `f4a23ac`)
 
 ---
 

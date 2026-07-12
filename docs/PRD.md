@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 4 In Progress — Test Suite Implementation delivered (Track 14)
+**Status:** Phase 4 In Progress — Documentation delivered (Track 16)
 **Target Godot Version:** 4.5+
 
 ---
@@ -687,7 +687,14 @@ Test files are still linted and formatted (they are user code).
 ```
 gd-tools/
 ├── docs/
-│   └── PRD.md                    # This document
+│   ├── PRD.md                    # This document
+│   ├── USER_GUIDE.md             # Complete CLI reference and user guide
+│   ├── CONTRIBUTING.md           # Contributor onboarding guide
+│   ├── ARCHITECTURE.md           # Coverage system architecture document
+│   ├── ROADMAP.md                # Development roadmap and track status
+│   ├── TDD.md                    # Technical design document
+│   ├── TESTING_STRATEGY.md       # Test pyramid and coverage targets
+│   └── SPIKE_coverage_instrumentation.md  # Coverage spike results
 ├── src/
 │   └── gd_tools/
 │       ├── __init__.py
