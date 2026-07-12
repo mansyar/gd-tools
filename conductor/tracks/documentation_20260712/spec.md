@@ -1,3 +1,4 @@
+<protect>
 # Specification: Track 16 — Documentation
 
 ## Overview
@@ -131,3 +132,4 @@ Create a new standalone architecture document focused on the coverage system (Ar
 - Modifying existing docs (PRD.md, ROADMAP.md, TESTING_STRATEGY.md, TDD.md, SPIKE_*.md).
 - CHANGELOG.md — can be added in Track 17 (PyPI Release).
 - pyproject.toml `long_description` configuration changes — verify only, do not restructure.
+</protect>

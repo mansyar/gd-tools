@@ -1,7 +1,9 @@
+<protect>
 # Implementation Plan: Track 16 — Documentation
 
 ## Phase 1: CLI Implementation Research
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
 - [ ] Task: Audit actual CLI implementation against PRD
     - [ ] Read `src/gd_tools/cli.py` to extract command structure and all flags
     - [ ] Read `src/gd_tools/init.py` for actual init behavior and flags
@@ -16,6 +18,7 @@
 
 ## Phase 2: README.md Expansion (FR-1)
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
 - [ ] Task: Expand README.md from 33-line placeholder to full project README
     - [ ] Write project title, one-line tagline, and feature overview
     - [ ] Add badges section (CI status, code coverage, PyPI version, Python versions, Godot version)
@@ -30,6 +33,7 @@
 
 ## Phase 3: User Guide (FR-2)
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
 - [ ] Task: Create `docs/USER_GUIDE.md` — unified user guide with CLI reference
     - [ ] Write Getting Started section (prerequisites: Python 3.10+, Godot 4.5+; installation; `gd-tools init` walkthrough)
     - [ ] Write Configuration reference section (`gd-tools.toml` — all sections: `[godot]`, `[test]`, `[lint]`, `[format]`, `[coverage]`; all keys, defaults, examples)
@@ -45,6 +49,7 @@
 
 ## Phase 4: Contributing Guide (FR-3)
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
 - [ ] Task: Create `docs/CONTRIBUTING.md` — contributor onboarding guide
     - [ ] Write Development Setup section (clone, `pip install -e ".[dev]"`, `.env` configuration for Godot binary)
     - [ ] Write Code Style section (`ruff` lint, `black` format, naming conventions table from Product Guidelines §3, pre-commit checks)
@@ -56,6 +61,7 @@
 
 ## Phase 5: Architecture Documentation (FR-4)
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
 - [ ] Task: Create `docs/ARCHITECTURE.md` — standalone coverage system architecture document
     - [ ] Write Overview section (why GDScript coverage is needed, unique to `gd-tools`)
     - [ ] Write Architecture C (Hybrid) section (three-phase approach, comparison with Architecture A/B, why C was chosen)
@@ -67,6 +73,7 @@
 
 ## Phase 6: Final Verification
 
+- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
 - [ ] Task: Cross-document verification and polish
     - [ ] Verify all internal links resolve correctly — no broken links between docs (AC-6)
     - [ ] Verify all CLI commands and flags match the implemented CLI — cross-check against source code (AC-7)
@@ -75,3 +82,4 @@
     - [ ] Verify no existing documentation files were modified — `git diff --name-only` check (AC-8)
     - [ ] Run existing test suite (`CI=true pytest`) to ensure no regressions from documentation changes
 - [ ] Task: Conductor - User Manual Verification 'Final Verification' (Protocol in workflow.md)
+</protect>
