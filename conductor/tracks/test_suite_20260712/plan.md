@@ -89,7 +89,7 @@
 - [x] Run tests: `pytest tests/unit/test_plan_generator.py -v` — all pass
 - [x] Verify coverage for `plan_generator.py` module ≥80%
 
-### Task 3.4: Audit and gap-fill reporter.py tests (§4.4) [sha: pending]
+### Task 3.4: Audit and gap-fill reporter.py tests (§4.4) [sha: 5f46fad]
 - [x] Audit `test_reporter.py` against §4.4 specs
 - [x] Write missing test cases: line/branch coverage %, per-file aggregation, threshold pass/fail, source hash mismatch, zero/full coverage
 - [x] Run tests: `pytest tests/unit/test_reporter.py -v` — all pass
