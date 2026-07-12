@@ -593,7 +593,7 @@ def build_gut_args(
     junit_xml: str | None,
 ) -> list[str]:
     """Build GUT CLI args list.
-    Base: ['-s', 'addons/gut/gut_cmdln.gd', '-d', '--path', str(project_root), '-gexit']
+    Base: ['--headless', '-s', 'addons/gut/gut_cmdln.gd', '-gexit']  (--path added by run_godot)
     Add: ['-gdir=<test_dirs>'], ['-gselect=<suite>'], ['-gunit_test_name=<test_name>']
     Add: ['-gjunit_xml_file=<path>']"""
 
@@ -622,7 +622,7 @@ def check_coverage_threshold(
 #### GUT CLI Invocation
 
 ```
-godot -s addons/gut/gut_cmdln.gd -d --path <project_root> -gexit \
+godot --headless -s addons/gut/gut_cmdln.gd --path <project_root> -gexit \
   [-gdir=res://test/] \
   [-gselect=<suite>] \
   [-gunit_test_name=<test_name>] \
@@ -652,6 +652,22 @@ still present but inactive (checks `GD_TOOLS_COVERAGE_ACTIVE` env var).
   details and raises `TestFailureError`. Exit code > 1 indicates a crash.
 - Integration test skip condition: `not (os.environ.get("GODOT_BIN") or
   shutil.which("godot"))` — checks both env var and PATH.
+
+**CI fixes (Track 15, 2026-07-12):**
+
+- Removed `-d` (debug) flag from `build_gut_args()` — debug mode caused
+  Godot to abort on `GDScript.reload()` errors during coverage
+  instrumentation, preventing GUT's `_end_run()` from writing JUnit XML.
+- `run_tests()` default `timeout` changed from `None` to `300` (5 min)
+  to prevent infinite hangs in CI/local dev.
+- Coverage env vars (`GD_TOOLS_COVERAGE_PLAN`, `GD_TOOLS_COVERAGE_OUTPUT`)
+  now use `os.environ.get()` — respects existing env vars set by callers
+  (e.g., tests) instead of always overriding with default paths.
+- `format_test_results()` prints Godot stdout/stderr with `markup=False` —
+  Godot output contains `[/path/to/file]` which Rich interprets as closing
+  markup tags, causing `MarkupError` on Linux.
+- When JUnit XML is not found, error message now includes Godot exit code,
+  stdout (last 2000 chars), and stderr for diagnostics.
 
 ---
 
@@ -1145,7 +1161,7 @@ def run_coverage_test(
     test_name: str | None = None,
     junit_xml: str | None = None,
     no_exit_code: bool = False,
-    timeout: int | None = None,
+    timeout: int | None = 300,
 ) -> TestResult:
     """Run tests with coverage instrumentation enabled.
     1. Generate plan (plan_generator.generate_plan)
@@ -1617,7 +1633,7 @@ Python (test_runner.py)
 │     GD_TOOLS_COVERAGE_OUTPUT=<abs_path>/coverage.json
 │
 ├─ 5. Run Godot with GUT:
-│     godot -s addons/gut/gut_cmdln.gd -d --path <project> -gexit
+│     godot --headless -s addons/gut/gut_cmdln.gd --path <project> -gexit
 │       -gpre_run_script=res://addons/gd-tools-coverage/pre_run_hook.gd
 │       -gpost_run_script=res://addons/gd-tools-coverage/post_run_hook.gd
 │       -gjunit_xml_file=.gd-tools/results.xml

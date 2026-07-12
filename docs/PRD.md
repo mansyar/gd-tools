@@ -398,7 +398,7 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 │     GD_TOOLS_COVERAGE_OUTPUT=res://path/to/output.json       │
 │                                                              │
 │  5. Invoke Godot with GUT CLI:                              │
-│     godot -s addons/gut/gut_cmdln.gd -d --path "$PWD" \     │
+│     godot --headless -s addons/gut/gut_cmdln.gd --path . \  │
 │       -gpre_run_script=res://addons/gd-tools-coverage/...   │
 │       -gpost_run_script=res://addons/gd-tools-coverage/...   │
 │       -gexit                                                │

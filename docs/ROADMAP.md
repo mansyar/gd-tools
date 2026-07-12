@@ -501,7 +501,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
 | **Commits** | `5987228`..`a094ba0` (26 commits) + review fix `e487b9a` |
 
 **Scope:**
-- Build GUT command line: `godot -s addons/gut/gut_cmdln.gd -d --path "$PWD" -gexit`
+- Build GUT command line: `godot --headless -s addons/gut/gut_cmdln.gd --path "$PWD" -gexit`
 - Pass test dirs, prefix, suffix from config
 - Support `--suite` and `--test` filter flags
 - Set JUnit XML output path (absolute, not `user://`)
