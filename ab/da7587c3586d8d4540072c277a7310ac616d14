@@ -1,0 +1,32 @@
+Task: Create docs/USER_GUIDE.md - unified user guide with CLI reference
+
+Summary:
+Created a comprehensive user guide covering all 6 gd-tools CLI commands with
+narrative flow. The document includes:
+
+1. Getting Started - prerequisites (Python 3.10+, Godot 4.5+), installation,
+   and a 10-step init walkthrough.
+2. Configuration - full gd-tools.toml reference covering all 5 sections
+   ([godot], [test], [lint], [format], [coverage]) with all keys, defaults,
+   valid values, and examples.
+3. Command Reference - one section per command (init, doctor, test, lint,
+   format, coverage) each with description, usage syntax, flags table,
+   examples, and exit codes. Includes the --timeout flag on test (exists in
+   implementation but not in spec FR-2). Coverage subcommands: report, merge,
+   show each fully documented.
+4. Examples - 4 common workflows: first test run, CI/CD pipeline (GitHub
+   Actions YAML), coverage threshold enforcement, lint+format in CI.
+5. Troubleshooting - 4 common issues: Godot not found, GUT not installed,
+   version mismatch (with GUT version map table), coverage not generating.
+
+Files created:
+- docs/USER_GUIDE.md (760 lines)
+
+Constraints followed:
+- ASCII-only (no emoji) per Product Guidelines S7
+- Prose style per Product Guidelines S1 (technical, direct, active voice)
+- All code examples use language tags (bash, toml, json, yaml)
+- All CLI commands and flags match actual implementation (verified against
+  src/gd_tools/cli.py)
+- Exit code convention documented (0=success, 1=failure, 2=config error)
+- Links to PRD S5 for deep technical details
