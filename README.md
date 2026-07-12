@@ -34,7 +34,7 @@ One install, one config, one mental model.
 ## 3. Installation
 
 ```bash
-pip install gd-tools
+pip install gd-tools-cli
 ```
 
 `gd-tools` requires Python 3.10+ and a Godot 4.5+ binary on your system.
@@ -45,7 +45,7 @@ The Godot binary is auto-detected from configuration, environment variables
 
 ```bash
 # 1. Install
-pip install gd-tools
+pip install gd-tools-cli
 
 # 2. Bootstrap your Godot project
 cd your-godot-project
