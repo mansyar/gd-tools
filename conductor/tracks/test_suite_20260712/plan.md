@@ -34,10 +34,10 @@
 - [x] Verify: Unit tests still pass with new conftest
 - [x] Verify: Integration/e2e auto-skip works without Godot
 
-### Task 1.4: Create .env.example and update .gitignore
-- [ ] Create `.env.example` with `GODOT_BIN` placeholder
-- [ ] Ensure `.env` is in `.gitignore` (add if missing)
-- [ ] Verify: `.env.example` exists, `.env` is gitignored
+### Task 1.4: Create .env.example and update .gitignore [sha: n/a — pre-existing]
+- [x] Create `.env.example` with `GODOT_BIN` placeholder
+- [x] Ensure `.env` is in `.gitignore` (add if missing)
+- [x] Verify: `.env.example` exists, `.env` is gitignored
 
 ### Task 1.5: Conductor - User Manual Verification 'Phase 1: Test Infrastructure Setup' (Protocol in workflow.md)
 
