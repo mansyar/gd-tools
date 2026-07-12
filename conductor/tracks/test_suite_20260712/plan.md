@@ -236,6 +236,6 @@
 - [x] AC-11: ruff and black clean on `tests/` — both clean
 - [x] AC-12: Unit test audit complete — 12 modules audited, gaps filled
 
-### Task 6.5: Conductor - User Manual Verification 'Phase 6: Coverage Gate, Flakiness & Quality Verification' (Protocol in workflow.md)
+### Task 6.5: Conductor - User Manual Verification 'Phase 6: Coverage Gate, Flakiness & Quality Verification' (Protocol in workflow.md) [checkpoint: 2f666a2]
 
 </protect>
