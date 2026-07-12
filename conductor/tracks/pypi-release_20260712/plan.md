@@ -62,18 +62,18 @@
 
 ## Phase 5: Production PyPI Publication
 
-- [ ] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
-- [ ] Task: Publish to production PyPI and verify installation
-    - [ ] Upload built package to PyPI: `twine upload dist/*`
-    - [ ] Create a clean virtual environment
-    - [ ] Install from PyPI: `pip install gd-tools`
-    - [ ] Verify `gd-tools --version` prints `0.1.0`
-    - [ ] Verify all CLI commands appear in `--help` output (test, lint, format, coverage, init, doctor)
-    - [ ] Verify package metadata on PyPI project page (name, version, description, author, license, classifiers, URLs)
-    - [ ] Verify README renders correctly on the PyPI project page
-    - [ ] Commit: `chore(release): Publish gd-tools 0.1.0 to PyPI`
-    - [ ] Attach git note with task summary
-    - [ ] Update plan.md: mark task `[x]` with commit SHA
+- [x] Task: Read `spec.md` and `../workflow.md` to review requirements and workflow protocols for this phase
+- [x] Task: Publish to production PyPI and verify installation [cb82521]
+    - [x] Upload built package to PyPI: `twine upload dist/*`
+    - [x] Create a clean virtual environment
+    - [x] Install from PyPI: `pip install gd-tools-cli` (renamed from gd-tools due to PyPI name conflict with existing 'gdtools' project)
+    - [x] Verify `gd-tools --version` prints `0.1.0`
+    - [x] Verify all CLI commands appear in `--help` output (test, lint, format, coverage, init, doctor)
+    - [x] Verify package metadata on PyPI project page (name, version, description, author, license, classifiers, URLs)
+    - [x] Verify README renders correctly on the PyPI project page
+    - [x] Commit: `chore(release): Rename to gd-tools-cli and publish 0.1.0 to PyPI`
+    - [x] Attach git note with task summary
+    - [x] Update plan.md: mark task `[x]` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Production PyPI Publication' (Protocol in workflow.md)
 
 ## Phase 6: Git Tag and GitHub Release
