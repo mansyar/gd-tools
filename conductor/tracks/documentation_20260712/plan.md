@@ -3,18 +3,18 @@
 
 ## Phase 1: CLI Implementation Research
 
-- [ ] Task: Read `spec.md` and `workflow.md` before starting phase implementation
-- [ ] Task: Audit actual CLI implementation against PRD
-    - [ ] Read `src/gd_tools/cli.py` to extract command structure and all flags
-    - [ ] Read `src/gd_tools/init.py` for actual init behavior and flags
-    - [ ] Read `src/gd_tools/doctor.py` for actual doctor checks and output
-    - [ ] Read `src/gd_tools/test_runner.py` for actual test command flags and behavior
-    - [ ] Read `src/gd_tools/lint_runner.py` for actual lint command flags and behavior
-    - [ ] Read `src/gd_tools/format_runner.py` for actual format command flags and behavior
-    - [ ] Read `src/gd_tools/coverage/orchestrator.py` for actual coverage subcommands and flags
-    - [ ] Read `src/gd_tools/config.py` to verify config model sections and keys
-    - [ ] Document any discrepancies between PRD §5/§6 and actual implementation
-- [ ] Task: Conductor - User Manual Verification 'CLI Implementation Research' (Protocol in workflow.md)
+- [x] Task: Read `spec.md` and `workflow.md` before starting phase implementation
+- [x] Task: Audit actual CLI implementation against PRD
+    - [x] Read `src/gd_tools/cli.py` to extract command structure and all flags
+    - [x] Read `src/gd_tools/init.py` for actual init behavior and flags
+    - [x] Read `src/gd_tools/doctor.py` for actual doctor checks and output
+    - [x] Read `src/gd_tools/test_runner.py` for actual test command flags and behavior
+    - [x] Read `src/gd_tools/lint_runner.py` for actual lint command flags and behavior
+    - [x] Read `src/gd_tools/format_runner.py` for actual format command flags and behavior
+    - [x] Read `src/gd_tools/coverage/orchestrator.py` for actual coverage subcommands and flags
+    - [x] Read `src/gd_tools/config.py` to verify config model sections and keys
+    - [x] Document any discrepancies between PRD §5/§6 and actual implementation
+- [~] Task: Conductor - User Manual Verification 'CLI Implementation Research' (Protocol in workflow.md)
 
 ## Phase 2: README.md Expansion (FR-1)
 
