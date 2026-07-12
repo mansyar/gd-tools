@@ -11,6 +11,7 @@ concurrency:
 
 env:
   CI: 'true'
+  GODOT_VERSION: '4.6'
 
 jobs:
   # ──────────────────────────────────────────────────────────────────
@@ -98,4 +99,92 @@ jobs:
         with:
           name: junit-results-${{ matrix.os }}-${{ matrix.python-version }}
           path: junit-matrix.xml
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────
+  # Stage 2: Integration Tests (requires Godot binary)
+  # ──────────────────────────────────────────────────────────────────
+  integration:
+    name: Stage 2 - Integration Tests
+    needs: lint-format-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GODOT_BIN: /usr/local/bin/godot
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Install Godot
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
+          sudo mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 /usr/local/bin/godot
+          rm -f Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+
+      - name: Verify Godot installation
+        run: godot --version
+
+      - name: Run integration tests
+        run: pytest tests/integration/ -m integration --no-cov --junitxml=junit-integration.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-results-integration
+          path: junit-integration.xml
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────────
+  # Stage 3: E2E Tests (requires Godot + sample project)
+  # ──────────────────────────────────────────────────────────────────
+  e2e:
+    name: Stage 3 - E2E Tests
+    needs: integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GODOT_BIN: /usr/local/bin/godot
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Install Godot
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          unzip -q Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+          chmod +x Godot_v${GODOT_VERSION}-stable_linux.x86_64
+          sudo mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 /usr/local/bin/godot
+          rm -f Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip
+
+      - name: Verify Godot installation
+        run: godot --version
+
+      - name: Run E2E tests
+        run: pytest tests/e2e/ -m e2e --no-cov --junitxml=junit-e2e.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: junit-results-e2e
+          path: junit-e2e.xml
           retention-days: 7
