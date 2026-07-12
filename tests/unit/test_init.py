@@ -610,7 +610,10 @@ def test_create_config_file_creates_defaults_if_missing(tmp_path: Path):
     config_file = tmp_path / "gd-tools.toml"
     assert config_file.exists()
     # Verify it's valid TOML with expected structure
-    import tomllib
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        import tomli as tomllib
 
     with open(config_file, "rb") as f:
         data = tomllib.load(f)

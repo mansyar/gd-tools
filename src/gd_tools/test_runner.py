@@ -6,6 +6,7 @@ stdout/stderr, parses JUnit XML output into structured results, and
 returns a :class:`TestResult`.
 """
 
+import os
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -288,13 +289,13 @@ def format_test_results(
             stdout_text = result.stdout
             if len(stdout_text) > 5000:
                 stdout_text = stdout_text[:5000] + "\n... (truncated)"
-            console.print(stdout_text)
+            console.print(stdout_text, markup=False)
         if result.stderr:
             console.print("\n--- GUT stderr ---")
             stderr_text = result.stderr
             if len(stderr_text) > 5000:
                 stderr_text = stderr_text[:5000] + "\n... (truncated)"
-            console.print(stderr_text)
+            console.print(stderr_text, markup=False)
 
 
 def run_tests(
@@ -389,8 +390,12 @@ def run_tests(
         output_path = (coverage_dir / "coverage.json").resolve()
         env = {
             "GD_TOOLS_COVERAGE_ACTIVE": "1",
-            "GD_TOOLS_COVERAGE_PLAN": str(plan_path),
-            "GD_TOOLS_COVERAGE_OUTPUT": str(output_path),
+            "GD_TOOLS_COVERAGE_PLAN": os.environ.get(
+                "GD_TOOLS_COVERAGE_PLAN", str(plan_path)
+            ),
+            "GD_TOOLS_COVERAGE_OUTPUT": os.environ.get(
+                "GD_TOOLS_COVERAGE_OUTPUT", str(output_path)
+            ),
         }
 
     # Run Godot with GUT.
