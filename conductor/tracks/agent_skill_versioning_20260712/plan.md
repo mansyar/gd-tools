@@ -29,12 +29,12 @@
 - [x] Task: Generate initial `CHANGELOG.md` from existing commit history [e9d89c3]
     - [x] Run `cz changelog` to generate from git history
     - [x] Review generated `CHANGELOG.md` for accuracy (AC-7)
-- [ ] Task: Verify commitizen bump workflow
-    - [ ] Run `cz bump --dry-run` and verify version bump preview (AC-6)
-    - [ ] Verify changelog diff is generated correctly
-    - [ ] Confirm no files are modified in dry-run mode
-    - [ ] Verify existing test suite passes unchanged: `CI=true pytest` (AC-9)
-    - [ ] Verify `ruff check src/ tests/` and `black --check src/ tests/` pass (AC-10)
+- [x] Task: Verify commitizen bump workflow
+    - [x] Run `cz bump --dry-run` and verify version bump preview (AC-6)
+    - [x] Verify changelog diff is generated correctly
+    - [x] Confirm no files are modified in dry-run mode
+    - [x] Verify existing test suite passes unchanged: `CI=true pytest` (AC-9)
+    - [x] Verify `ruff check src/ tests/` and `black --check src/ tests/` pass (AC-10)
 - [ ] Task: Conductor - User Manual Verification 'Commitizen Integration' (Protocol in workflow.md)
 
 ## Phase 3: Conventional Commit CI Check
