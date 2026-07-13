@@ -1,3 +1,12 @@
+## v0.1.2 (2026-07-14)
+
+### Fix
+
+- reconfigure stdout/stderr to UTF-8 on Windows to prevent Rich crash
+- revert L2 _log_summary return type and update format integration test
+- remove source_dirs argument from generate_plan call in orchestrator
+- remove unused is_gut_installed import in test_test_runner.py
+
 ## v0.1.1 (2026-07-13)
 
 ### Fix
