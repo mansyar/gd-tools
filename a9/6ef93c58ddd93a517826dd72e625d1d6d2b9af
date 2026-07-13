@@ -1,0 +1,25 @@
+Task: Create .github/workflows/commit-check.yml
+
+=== IMPLEMENTATION ===
+Created .github/workflows/commit-check.yml with:
+- name: Commit Check
+- Trigger: pull_request (opened, edited, reopened, synchronize)
+- Job: commit-check on ubuntu-latest
+- Steps:
+  1. actions/checkout@v4 with fetch-depth: 0
+  2. actions/setup-python@v5 with python-version: 3.12
+  3. pip install commitizen
+  4. cz check --rev-range origin/${{ github.base_ref }}..HEAD
+
+=== VERIFICATION ===
+- YAML syntax validated via PyYAML: VALID
+- FR-3.1: triggers on pull_request (opened, edited, reopened, synchronize) - PASS
+- FR-3.2: actions/checkout@v4 with fetch-depth: 0 - PASS
+- FR-3.3: actions/setup-python@v5 (3.12), install commitizen, cz check --rev-range - PASS
+- AC-8: workflow reviewed against FR-3.1-3.3 - PASS
+- Test suite: 573 passed, 99.10% coverage - PASS
+
+=== DEVIATION ===
+Plan referenced matching conventions from existing ci.yml and release.yml.
+Neither file exists in the repository. Workflow created based solely on
+spec.md FR-3 requirements using standard GitHub Actions conventions.
