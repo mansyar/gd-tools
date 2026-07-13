@@ -1,0 +1,19 @@
+Task: Implement PyPI update notification module (Phase 1, Tasks 3-8)
+
+Summary:
+- Created src/gd_tools/update_check.py with check_for_update() function
+- Created tests/unit/test_update_check.py with 14 unit tests
+- All functional requirements implemented:
+  - FR1: PyPI JSON API query, version comparison via packaging lib, dev install skip
+  - FR2: 24h TTL caching in ~/.gd-tools/update-check.json, cache dir creation
+  - FR3: Silent failure on RequestException, ValueError, KeyError; corrupt cache as miss
+  - FR4: GD_TOOLS_NO_UPDATE_CHECK=1 env var disables check entirely
+
+Files created:
+- src/gd_tools/update_check.py
+- tests/unit/test_update_check.py
+
+Test results: 14 passed, 95% line coverage for update_check.py
+
+Why: Provides non-intrusive update notifications to gd-tools users when a newer
+version is available on PyPI, with caching to minimize network impact.
