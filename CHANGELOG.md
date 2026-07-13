@@ -1,3 +1,9 @@
+## v0.1.4 (2026-07-14)
+
+### Fix
+
+- update version tests to assert against dynamic __version__
+
 ## v0.1.3 (2026-07-14)
 
 ### Fix
