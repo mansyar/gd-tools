@@ -14,7 +14,7 @@
     - [x] Write configuration reference (`gd-tools.toml` key sections: `[godot]`, `[test]`, `[lint]`, `[format]`, `[coverage]`)
     - [x] Write environment & detection guide (Godot binary detection chain, CI mode, `--non-interactive`)
     - [x] Verify SKILL.md is under 500 lines and content is self-contained (AC-1, AC-2, AC-3, AC-4)
-- [ ] Task: Conductor - User Manual Verification 'Agent Skill Creation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Agent Skill Creation' (Protocol in workflow.md)
 
 ## Phase 2: Commitizen Integration
 
