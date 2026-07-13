@@ -48,5 +48,5 @@
     - [x] Validate YAML syntax
     - [x] Review workflow against FR-3.1 through FR-3.3 (AC-8)
     - [x] Note: commitizen tags (`v*`) will naturally feed into existing `release.yml` workflow — no changes needed to `release.yml` — DEVIATION: no existing release.yml found; note is moot
-- [ ] Task: Conductor - User Manual Verification 'Conventional Commit CI Check' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Conventional Commit CI Check' (Protocol in workflow.md)
 </protect>
