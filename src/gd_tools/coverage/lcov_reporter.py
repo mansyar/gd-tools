@@ -61,7 +61,7 @@ def _generate_file_records(
     # Convert res:// path to relative filesystem path for genhtml compat
     sf_path = file_plan.path
     if sf_path.startswith("res://"):
-        sf_path = sf_path[len("res://"):]
+        sf_path = sf_path[len("res://") :]
 
     records: list[str] = [f"SF:{sf_path}"]
 

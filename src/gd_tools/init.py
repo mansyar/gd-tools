@@ -274,7 +274,7 @@ def enable_gut_plugin(project_root: Path) -> None:
     # Use regex to match only within enabled=PackedStringArray(...),
     # not in comments or other contexts.
     if re.search(
-        rf'enabled=PackedStringArray\([^\)]*{re.escape(gut_entry)}',
+        rf"enabled=PackedStringArray\([^\)]*{re.escape(gut_entry)}",
         content,
     ):
         return
@@ -358,7 +358,7 @@ def register_coverage_autoload(project_root: Path) -> None:
     # Use regex to match only at start of line (after optional
     # whitespace), not in comments.
     if re.search(
-        rf'^\s*{re.escape(autoload_entry)}',
+        rf"^\s*{re.escape(autoload_entry)}",
         content,
         re.MULTILINE,
     ):

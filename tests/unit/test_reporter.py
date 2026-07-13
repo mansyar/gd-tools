@@ -571,9 +571,7 @@ def test_generate_report_threshold_below_raises(tmp_path):
     data = read_coverage_json(_PARTIAL_COV)
     # partial_coverage: line_rate = 5/8 = 0.625, below 0.80
     with pytest.raises(CoverageThresholdError):
-        generate_report(
-            plan, data, tmp_path, format="text", min_threshold=0.80
-        )
+        generate_report(plan, data, tmp_path, format="text", min_threshold=0.80)
 
 
 def test_generate_report_threshold_at_minimum_no_raise(tmp_path):

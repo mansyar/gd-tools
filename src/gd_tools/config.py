@@ -267,9 +267,7 @@ def generate_gdlintrc(
         project_root: Path to the project root directory.
     """
     rc_file = project_root / "gdlintrc"
-    rc_file.write_text(
-        gdlintrc_content(config), encoding="utf-8"
-    )
+    rc_file.write_text(gdlintrc_content(config), encoding="utf-8")
 
 
 def gdlintrc_content(config: GdToolsConfig) -> str:
@@ -300,9 +298,7 @@ def generate_gdformatrc(
         project_root: Path to the project root directory.
     """
     rc_file = project_root / "gdformatrc"
-    rc_file.write_text(
-        gdformatrc_content(config), encoding="utf-8"
-    )
+    rc_file.write_text(gdformatrc_content(config), encoding="utf-8")
 
 
 def gdformatrc_content(config: GdToolsConfig) -> str:

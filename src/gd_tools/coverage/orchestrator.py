@@ -105,12 +105,8 @@ def run_coverage_test(
     # instead of the CoveragePlanError — the test failure is the root
     # cause and the missing file is just a side effect.
     try:
-        data = reporter.read_coverage_json(
-            output_dir / "coverage.json"
-        )
-        plan = plan_generator.read_plan_json(
-            str(output_dir / "plan.json")
-        )
+        data = reporter.read_coverage_json(output_dir / "coverage.json")
+        plan = plan_generator.read_plan_json(str(output_dir / "plan.json"))
     except CoveragePlanError:
         if test_error is not None:
             raise test_error

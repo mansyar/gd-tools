@@ -38,7 +38,7 @@ def _read_source_lines(res_path: str) -> list[str]:
         or an empty list if the file is not accessible.
     """
     if res_path.startswith("res://"):
-        res_path = res_path[len("res://"):]
+        res_path = res_path[len("res://") :]
     fs_path = Path(res_path)
     if not fs_path.exists():
         return []
