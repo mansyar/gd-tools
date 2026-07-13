@@ -22,7 +22,7 @@
 - [x] Task: Update `tech-stack.md` to document commitizen (before implementation — workflow.md §Guiding Principles #2) [a736e12]
     - [ ] Add `commitizen` to Development Dependencies table (§3)
     - [ ] Add dated note about the automated version bumping and changelog workflow
-- [ ] Task: Add commitizen to dev dependencies and configure in `pyproject.toml`
+- [x] Task: Add commitizen to dev dependencies and configure in `pyproject.toml` [eec7f43]
     - [ ] Add `"commitizen"` to `[project.optional-dependencies] dev` list
     - [ ] Add `[tool.commitizen]` section: `name`, `version`, `version_files`, `changelog_file`, `tag_format`, `update_changelog_on_bump = true`
     - [ ] Run `pip install -e ".[dev]"` to install commitizen
