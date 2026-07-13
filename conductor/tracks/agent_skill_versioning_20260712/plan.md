@@ -37,7 +37,7 @@
     - [x] Verify `ruff check src/ tests/` and `black --check src/ tests/` pass (AC-10)
 - [x] Task: Conductor - User Manual Verification 'Commitizen Integration' (Protocol in workflow.md)
 
-## Phase 3: Conventional Commit CI Check
+## Phase 3: Conventional Commit CI Check [checkpoint: 64e8031]
 
 - [x] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
 - [x] Task: Create `.github/workflows/commit-check.yml` [a96ef93]
