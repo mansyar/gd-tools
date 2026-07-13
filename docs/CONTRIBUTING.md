@@ -32,7 +32,7 @@ pip install -e ".[dev]"
 ```
 
 The `.[dev]` extra installs all development dependencies: `pytest`,
-`pytest-cov`, `ruff`, `black`, and `build`.
+`pytest-cov`, `ruff`, `black`, `build`, and `commitizen`.
 
 ### 1.3 Godot Binary Configuration
 
@@ -250,6 +250,10 @@ Follow the Conventional Commits format defined in `conductor/workflow.md`:
 [optional footer]
 ```
 
+Conventional commits are enforced via CI. The `commit-check.yml` workflow
+runs `cz check` on all pull requests to validate commit messages against
+the Conventional Commits specification.
+
 **Types:**
 
 | Type | Use |
@@ -306,9 +310,10 @@ Before requesting review, verify:
 
 All pull requests must pass CI. The CI pipeline runs:
 
-1. `ruff check src/ tests/` --- lint
-2. `black --check src/ tests/` --- format verification
-3. `CI=true pytest` --- full test suite with coverage
+1. `cz check` --- conventional commit message validation (commit-check.yml)
+2. `ruff check src/ tests/` --- lint
+3. `black --check src/ tests/` --- format verification
+4. `CI=true pytest` --- full test suite with coverage
 
 Coverage must remain above 80% line and 70% branch. If coverage drops, add
 tests for the uncovered code paths.

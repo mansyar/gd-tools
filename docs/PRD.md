@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 4 In Progress — Documentation delivered (Track 16)
+**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18)
 **Target Godot Version:** 4.5+
 
 ---
@@ -661,11 +661,12 @@ Test files are still linted and formatted (they are user code).
 
 ### Python (dev)
 
-| Package   | Purpose                          |
-|-----------|----------------------------------|
-| `pytest`  | Test gd-tools itself             |
-| `ruff`    | Lint gd-tools Python code       |
-| `black`   | Format gd-tools Python code      |
+| Package      | Purpose                          |
+|--------------|----------------------------------|
+| `pytest`     | Test gd-tools itself             |
+| `ruff`       | Lint gd-tools Python code        |
+| `black`      | Format gd-tools Python code       |
+| `commitizen` | Conventional commit enforcement, automated semantic versioning, changelog generation |
 
 ### GDScript (bundled, not a pip dependency)
 
@@ -815,6 +816,8 @@ gd-tools' own CI/CD pipeline is implemented in `.github/workflows/`:
   `e2e`, plus a cross-platform matrix (Ubuntu + Windows, Python
   3.10/3.11/3.12). Coverage uploaded to codecov.io. JUnit XML results
   uploaded as artifacts.
+- **`commit-check.yml`** — Conventional commit message validation on
+  pull requests via `cz check` (commitizen).
 - **`release.yml`** — Tag push (`v*`) triggers build + TestPyPI upload,
   then production PyPI upload (requires `PYPI_API_TOKEN` secret).
 - **`.github/SECRETS.md`** — Required GitHub secrets documentation.

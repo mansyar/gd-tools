@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Phase 4 In Progress — Documentation delivered (Track 16)
+**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -61,7 +61,12 @@ Phase 4: Polish & Release              ──┐
   Track 15: CI/CD Pipeline ✅              │  Risk: LOW
   Track 16: Documentation ✅               │
   Track 17: PyPI Release ✅               │
-──────────────────────────────────────────┘
+  ──────────────────────────────────────────┘
+                                     
+Phase 5: Post-Release                  ──┐
+  Track 18: Agent Skill & Versioning ✅    │  ~1 day
+                                           │  Risk: LOW
+  ──────────────────────────────────────────┘
 
 Total estimated effort: ~25-30 days
 ```
@@ -1460,7 +1465,53 @@ partially met — deferred to future track.
 
 ---
 
-## 5. Risk Summary
+### Track 18: Agent Skill & Automated Versioning ✅ COMPLETED
+
+| Field | Value |
+|-------|-------|
+| **Phase** | Post-v1.0 |
+| **Goal** | Create an AI agent skill file for gd-tools CLI, integrate commitizen for automated versioning, and add a CI workflow to enforce conventional commits on pull requests |
+| **Dependencies** | Track 16 (Documentation), Track 17 (PyPI Release) |
+| **Modules** | `skills/gd-tools/SKILL.md`, `pyproject.toml` (commitizen config), `CHANGELOG.md`, `.github/workflows/commit-check.yml` |
+| **Effort** | 1 day |
+| **Risk** | LOW — purely additive, no source code changes |
+| **Status** | ✅ **COMPLETED** (2026-07-13) — All acceptance criteria passed |
+| **Conductor track** | `agent_skill_versioning_20260712` (archived to `conductor/archive/`) |
+| **Commits** | `f92664e`..`fac6b9e` (3 phases, checkpoints at `524f788`, `910cf42`, `64e8031`) |
+
+**Scope:**
+- Create `skills/gd-tools/SKILL.md` — an Anthropic-format agent skill file that enables AI coding agents to use gd-tools CLI commands effectively. Includes all 8 CLI commands with flags and exit codes, 4 workflow recipes (bootstrap, pre-commit, CI, diagnosis), configuration reference, Godot detection chain, and error handling guide.
+- Integrate commitizen as a dev dependency for automated semantic versioning and changelog generation. Configure `[tool.commitizen]` in `pyproject.toml` with conventional commits, version file sync, changelog file, and tag format.
+- Generate initial `CHANGELOG.md` from existing commit history.
+- Create `.github/workflows/commit-check.yml` — a CI workflow that validates conventional commit messages on pull requests using `cz check`.
+
+**Deliverables:**
+- `skills/gd-tools/SKILL.md` (270 lines) — agent skill file with YAML frontmatter, all 8 CLI commands, 4 workflow recipes, config reference, Godot detection chain, error handling, GUT version mapping
+- `pyproject.toml` — commitizen added to dev dependencies, `[tool.commitizen]` section configured
+- `CHANGELOG.md` (139 lines) — generated from commit history, all feat/fix/refactor commits categorized
+- `conductor/tech-stack.md` — commitizen documented in dev deps (section 3) and CI/CD (section 8)
+- `.github/workflows/commit-check.yml` — CI workflow for conventional commit validation on PRs
+
+**Success Criteria:**
+1. SKILL.md is under 500 lines, self-contained, and covers all 8 CLI commands (AC-1 through AC-4)
+2. commitizen added to dev dependencies and configured in pyproject.toml (AC-5)
+3. `cz bump --dry-run` produces correct version bump preview (AC-6)
+4. CHANGELOG.md generated and reviewed for accuracy (AC-7)
+5. commit-check.yml workflow validates conventional commits on PRs (AC-8)
+6. No regressions: existing test suite passes unchanged (AC-9)
+7. ruff and black checks pass (AC-10)
+
+**Track 18 Results (2026-07-13):**
+- ✅ All acceptance criteria PASSED
+- ✅ 573 unit tests passed, 99.10% coverage — no regressions
+- ✅ ruff check + black --check pass
+- ✅ `cz bump --dry-run`: correct behavior (no eligible commits to bump since v0.1.0)
+- ✅ `cz changelog`: 139-line CHANGELOG.md with all feat/fix/refactor commits categorized
+- **Phase 1 (Agent Skill):** Created `skills/gd-tools/SKILL.md` with YAML frontmatter, all 8 CLI commands (init, doctor, test, lint, format, coverage report/merge/show), 4 workflow recipes, config reference, Godot detection chain, error handling, GUT version mapping. Checkpoint: `524f788`.
+- **Phase 2 (Commitizen Integration):** Added commitizen to dev deps, configured `[tool.commitizen]` (name=cz_conventional_commits, version=0.1.0, version_files, changelog_file, tag_format, update_changelog_on_bump), generated CHANGELOG.md, updated tech-stack.md. Checkpoint: `910cf42`.
+- **Phase 3 (CI Commit Check):** Created `.github/workflows/commit-check.yml` (trigger on pull_request, checkout@v4 with fetch-depth: 0, setup-python@v5 with Python 3.12, install commitizen, run `cz check --rev-range`). Checkpoint: `64e8031`.
+
+---
 
 | Risk | Track(s) | Mitigation |
 |------|----------|------------|
