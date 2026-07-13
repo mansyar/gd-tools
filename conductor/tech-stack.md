@@ -34,6 +34,9 @@
 | `pytest-cov` | Coverage measurement for gd-tools's own code |
 | `ruff` | Linter for gd-tools Python code |
 | `black` | Formatter for gd-tools Python code |
+| `commitizen` | Conventional commit enforcement, automated semantic versioning, and changelog generation |
+
+> **Note (2026-07-13):** `commitizen` was added to enforce [Conventional Commits](https://www.conventionalcommits.org/) across the project. It provides automated version bumping via `cz bump` (driven by `v$version` tags) and changelog generation via `cz changelog`. Configuration lives in `pyproject.toml` under `[tool.commitizen]`. The CI pipeline validates commit messages on pull requests (see §8).
 
 ---
 
@@ -104,6 +107,7 @@
 |------|---------|
 | **GitHub Actions** | CI/CD pipeline (lint, format, test, coverage) |
 | **pytest + pytest-cov** | Test runner + coverage for gd-tools |
+| **commitizen** | Conventional commit message validation on pull requests |
 | **codecov.io** | Coverage upload (via `coverage.xml`, `codecov-action@v4`) |
 | **build** | Package building (`python -m build` → sdist + wheel) |
 | **twine** | Package upload to TestPyPI/PyPI |
