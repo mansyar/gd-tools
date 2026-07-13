@@ -58,7 +58,12 @@ def _generate_file_records(
     Returns:
         A list of LCOV record strings for this file section.
     """
-    records: list[str] = [f"SF:{file_plan.path}"]
+    # Convert res:// path to relative filesystem path for genhtml compat
+    sf_path = file_plan.path
+    if sf_path.startswith("res://"):
+        sf_path = sf_path[len("res://"):]
+
+    records: list[str] = [f"SF:{sf_path}"]
 
     total_lines = 0
     hit_lines = 0
@@ -66,19 +71,37 @@ def _generate_file_records(
     hit_branches = 0
     brda_records: list[str] = []
 
+    # Aggregate by line number to avoid duplicate DA: records
+    # when multiple tracking points (e.g. if_branch + else_branch)
+    # share the same source line.
+    line_to_hit: dict[int, int] = {}
+    line_to_branch: dict[int, bool] = {}
+
     for line_plan in file_plan.lines:
         hit_count = file_data.hits.get(str(line_plan.id), 0)
-        records.append(f"DA:{line_plan.line},{hit_count}")
+        ln = line_plan.line
+        if ln in line_to_hit:
+            line_to_hit[ln] = max(line_to_hit[ln], hit_count)
+            line_to_branch[ln] = line_to_branch[ln] or (
+                line_plan.type == "branch"
+            )
+        else:
+            line_to_hit[ln] = hit_count
+            line_to_branch[ln] = line_plan.type == "branch"
+
+    for ln in sorted(line_to_hit):
+        hit_count = line_to_hit[ln]
+        records.append(f"DA:{ln},{hit_count}")
 
         total_lines += 1
         if hit_count > 0:
             hit_lines += 1
 
-        if line_plan.type == "branch":
+        if line_to_branch[ln]:
             total_branches += 1
             if hit_count > 0:
                 hit_branches += 1
-            brda_records.append(f"BRDA:{line_plan.line},0,0,{hit_count}")
+            brda_records.append(f"BRDA:{ln},0,0,{hit_count}")
 
     records.extend(brda_records)
     records.append(f"BRF:{total_branches}")

@@ -233,8 +233,9 @@ def test_run_format_syntax_error_continues(tmp_path, capsys):
     result = run_format(config, str(tmp_path))
 
     # Valid file should still be formatted
-    assert result.files_checked == 2
+    assert result.files_checked == 1
     assert result.files_formatted == 1
+    assert result.files_skipped == 1
     # Syntax error should be reported to stderr with file path
     captured = capsys.readouterr()
     assert "broken.gd" in captured.err
@@ -251,7 +252,8 @@ def test_run_format_syntax_error_in_check_mode(tmp_path):
 
     result = run_format(config, str(tmp_path), check=True)
 
-    assert result.files_checked == 2
+    assert result.files_checked == 1
+    assert result.files_skipped == 1
     assert result.files_needing_format == 1
     assert len(result.files_needing_format_paths) == 1
     assert "valid.gd" in result.files_needing_format_paths[0]

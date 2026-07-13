@@ -12,8 +12,8 @@ import requests
 from gd_tools.config import GdToolsConfig
 from gd_tools.errors import GdToolsError, GodotNotFoundError
 from gd_tools.godot import GodotInfo
+from gd_tools.test_runner import is_gut_installed
 from gd_tools.init import (
-    check_gut_installed,
     create_config_file,
     create_data_dir,
     detect_godot_version,
@@ -76,16 +76,16 @@ def test_detect_godot_version_warns_if_invalid_version():
 
 
 def test_check_gut_installed_returns_true_when_present(tmp_path: Path):
-    """Test check_gut_installed returns True when gut.gd exists."""
+    """Test is_gut_installed returns True when gut.gd exists."""
     gut_dir = tmp_path / "addons" / "gut"
     gut_dir.mkdir(parents=True)
     (gut_dir / "gut.gd").touch()
-    assert check_gut_installed(tmp_path) is True
+    assert is_gut_installed(tmp_path) is True
 
 
 def test_check_gut_installed_returns_false_when_absent(tmp_path: Path):
-    """Test check_gut_installed returns False when gut.gd does not exist."""
-    assert check_gut_installed(tmp_path) is False
+    """Test is_gut_installed returns False when gut.gd does not exist."""
+    assert is_gut_installed(tmp_path) is False
 
 
 # --- get_installed_gut_version ---
@@ -202,7 +202,7 @@ def test_extract_gut_cleans_up_temp_dir(tmp_path: Path):
 def test_install_gut_prompts_interactive_yes(tmp_path: Path):
     """Test install_gut prompts in interactive mode and installs on yes."""
     with (
-        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.is_gut_installed", return_value=False),
         patch("gd_tools.init.click.confirm", return_value=True),
         patch("gd_tools.init.download_gut") as mock_download,
         patch("gd_tools.init.extract_gut") as mock_extract,
@@ -220,7 +220,7 @@ def test_install_gut_prompts_interactive_yes(tmp_path: Path):
 def test_install_gut_non_interactive_assumes_yes(tmp_path: Path):
     """Test install_gut installs without prompting in non-interactive mode."""
     with (
-        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.is_gut_installed", return_value=False),
         patch("gd_tools.init.click.confirm") as mock_confirm,
         patch("gd_tools.init.download_gut") as mock_download,
         patch("gd_tools.init.extract_gut") as mock_extract,
@@ -241,7 +241,7 @@ def test_install_gut_user_declines_prints_manual_instructions(
 ):
     """Test install_gut prints manual instructions when user declines."""
     with (
-        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.is_gut_installed", return_value=False),
         patch("gd_tools.init.click.confirm", return_value=False),
         patch("gd_tools.init.download_gut") as mock_download,
         patch("gd_tools.init.extract_gut") as mock_extract,
@@ -259,7 +259,7 @@ def test_install_gut_user_declines_prints_manual_instructions(
 def test_install_gut_version_mismatch_warning(tmp_path: Path):
     """Test install_gut warns when installed GUT version doesn't match."""
     with (
-        patch("gd_tools.init.check_gut_installed", return_value=True),
+        patch("gd_tools.init.is_gut_installed", return_value=True),
         patch(
             "gd_tools.init.get_installed_gut_version",
             return_value="9.4.0",
@@ -799,7 +799,7 @@ def test_run_init_full_flow_with_mocks(tmp_path: Path):
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.check_gut_installed", return_value=True),
+        patch("gd_tools.init.is_gut_installed", return_value=True),
         patch("gd_tools.init.get_installed_gut_version", return_value="9.5.0"),
         patch("gd_tools.init.install_gut") as mock_install,
         patch("gd_tools.init.enable_gut_plugin") as mock_enable,
@@ -834,7 +834,7 @@ def test_run_init_non_interactive_skips_prompts(tmp_path: Path):
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.is_gut_installed", return_value=False),
         patch("gd_tools.init.install_gut") as mock_install,
         patch("gd_tools.init.enable_gut_plugin"),
         patch("gd_tools.init.install_coverage_addon"),
@@ -865,7 +865,7 @@ def test_run_init_collects_actions_list(tmp_path: Path):
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.is_gut_installed", return_value=False),
         patch("gd_tools.init.install_gut"),
         patch("gd_tools.init.enable_gut_plugin"),
         patch("gd_tools.init.install_coverage_addon"),
@@ -897,7 +897,7 @@ def test_run_init_exits_when_user_declines_gut(tmp_path: Path):
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.check_gut_installed", return_value=False),
+        patch("gd_tools.init.is_gut_installed", return_value=False),
         patch("gd_tools.init.install_gut", return_value=False),
         patch("gd_tools.init.enable_gut_plugin") as mock_enable,
         patch("gd_tools.init.print_summary") as mock_summary,
@@ -905,7 +905,7 @@ def test_run_init_exits_when_user_declines_gut(tmp_path: Path):
         with pytest.raises(SystemExit) as exc_info:
             run_init()
 
-    assert exc_info.value.code == 0
+    assert exc_info.value.code == 1
     mock_enable.assert_not_called()
     mock_summary.assert_not_called()
 
@@ -984,7 +984,7 @@ def test_run_init_gut_installed_version_unknown(tmp_path: Path):
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.check_gut_installed", return_value=True),
+        patch("gd_tools.init.is_gut_installed", return_value=True),
         patch("gd_tools.init.get_installed_gut_version", return_value=None),
         patch("gd_tools.init.install_gut"),
         patch("gd_tools.init.enable_gut_plugin"),

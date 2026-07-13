@@ -412,7 +412,7 @@ def compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary:
 
 # --- Report dispatch and threshold (FR-3) ---
 
-_SUPPORTED_FORMATS = {"html", "lcov", "cobertura", "terminal"}
+_SUPPORTED_FORMATS = {"html", "lcov", "cobertura", "text"}
 
 
 def generate_report(
@@ -434,7 +434,7 @@ def generate_report(
         data: The runtime coverage data.
         output_dir: Directory where the report file is written.
         format: Report format — one of ``"html"``, ``"lcov"``,
-            ``"cobertura"``, ``"terminal"``.
+            ``"cobertura"``, ``"text"``.
         min_threshold: Minimum line coverage rate (0.0-1.0).  If
             ``None``, no threshold check is performed.
 
@@ -473,7 +473,7 @@ def generate_report(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    if format == "terminal":
+    if format == "text":
         from gd_tools.coverage.terminal_reporter import (
             generate_terminal_report,
         )

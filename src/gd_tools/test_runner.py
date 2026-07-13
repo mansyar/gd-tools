@@ -156,10 +156,25 @@ def build_gut_args(
     return args
 
 
+def is_gut_installed(project_root: Path) -> bool:
+    """Check if GUT is installed in the project.
+
+    Checks for the existence of ``addons/gut/gut.gd`` relative to
+    the project root.
+
+    Args:
+        project_root: Path to the Godot project root directory.
+
+    Returns:
+        True if GUT is installed, False otherwise.
+    """
+    return (project_root / "addons" / "gut" / "gut.gd").exists()
+
+
 def check_gut_installed(project_root: Path) -> None:
     """Verify that GUT is installed in the project.
 
-    Checks for the existence of ``addons/gut/gut_cmdln.gd`` relative to
+    Checks for the existence of ``addons/gut/gut.gd`` relative to
     the project root. This runs before any subprocess invocation for
     fast, clear failure feedback.
 
@@ -169,8 +184,7 @@ def check_gut_installed(project_root: Path) -> None:
     Raises:
         GUTNotInstalledError: If GUT is not installed (exit code 2).
     """
-    gut_script = project_root / "addons" / "gut" / "gut_cmdln.gd"
-    if not gut_script.exists():
+    if not is_gut_installed(project_root):
         raise GUTNotInstalledError(
             "GUT is not installed. Run `gd-tools init` to install it."
         )

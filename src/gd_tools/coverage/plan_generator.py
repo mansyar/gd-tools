@@ -18,7 +18,9 @@ from pathlib import Path, PurePath
 
 from gdtoolkit.parser import parser as gd_parser
 from lark import Tree
+from lark.exceptions import LarkError
 from lark.visitors import Visitor
+from rich.console import Console
 
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
@@ -306,7 +308,6 @@ class CoverageVisitor(Visitor):
 
 def generate_plan(
     project_root: str,
-    source_dirs: list[str] | None = None,
     exclude_dirs: list[str] | None = None,
     test_dirs: list[str] | None = None,
 ) -> CoveragePlan:
@@ -318,8 +319,6 @@ def generate_plan(
 
     Args:
         project_root: Root directory of the Godot project.
-        source_dirs: Optional list of source directories (unused,
-            all discovered files are included).
         exclude_dirs: Directories to exclude from discovery.
             Defaults to :data:`~gd_tools.config.DEFAULT_EXCLUDES`.
         test_dirs: Directories whose files should be excluded from
@@ -347,15 +346,23 @@ def generate_plan(
     ]
 
     file_plans: list[FilePlan] = []
+    console = Console()
     for file_id, gd_file in enumerate(gd_files):
         source = Path(gd_file).read_text(encoding="utf-8")
         source_hash = (
             "sha256:" + hashlib.sha256(source.encode("utf-8")).hexdigest()
         )
 
-        tree = parse_gdscript(source)
-        visitor = CoverageVisitor()
-        visitor.visit(tree)
+        try:
+            tree = parse_gdscript(source)
+            visitor = CoverageVisitor()
+            visitor.visit(tree)
+        except LarkError:
+            console.print(
+                f"[yellow]Warning: Skipping '{gd_file}' — "
+                "syntax error prevents coverage parsing.[/yellow]"
+            )
+            continue
 
         # Build res:// path
         rel_path = Path(gd_file).relative_to(project_root)

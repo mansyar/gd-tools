@@ -27,6 +27,7 @@ from .godot import (
     get_gut_version_for_godot,
 )
 from .init import COVERAGE_ADDON_FILES, get_installed_gut_version
+from .test_runner import is_gut_installed
 
 
 @dataclass
@@ -180,8 +181,8 @@ def check_gut_installed(project_root: Path) -> CheckResult:
     Returns:
         CheckResult indicating whether GUT is installed.
     """
-    gut_path = project_root / "addons" / "gut" / "gut.gd"
-    if gut_path.exists():
+    gut_installed = is_gut_installed(project_root)
+    if gut_installed:
         return CheckResult(
             name="GUT Installed",
             passed=True,

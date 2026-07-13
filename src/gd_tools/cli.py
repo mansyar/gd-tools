@@ -124,6 +124,13 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
         ctx = click.get_current_context()
         ctx.exit(2)
 
+    if min is not None and not coverage:
+        console = Console()
+        console.print(
+            "[yellow]Warning: --min is only valid with --coverage; "
+            "ignoring.[/yellow]"
+        )
+
     try:
         if coverage:
             run_coverage_test(
@@ -144,6 +151,7 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
                 test_name=test,
                 junit_xml=junit_xml,
                 no_exit_code=no_exit_code,
+                timeout=timeout,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)

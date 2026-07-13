@@ -78,11 +78,13 @@ class FormatConfig(BaseModel):
 
     Attributes:
         exclude: List of directories excluded from formatting.
+        max_line_length: Maximum line length for formatted output.
     """
 
     model_config = ConfigDict(extra="forbid")
 
     exclude: list[str] = Field(default_factory=lambda: DEFAULT_EXCLUDES.copy())
+    max_line_length: int = 100
 
 
 class CoverageConfig(BaseModel):
@@ -265,9 +267,22 @@ def generate_gdlintrc(
         project_root: Path to the project root directory.
     """
     rc_file = project_root / "gdlintrc"
+    rc_file.write_text(
+        gdlintrc_content(config), encoding="utf-8"
+    )
+
+
+def gdlintrc_content(config: GdToolsConfig) -> str:
+    """Return the expected gdlintrc file content for a config.
+
+    Args:
+        config: The configuration to read excludes from.
+
+    Returns:
+        YAML string with the ``excluded_directories`` set.
+    """
     data = {"excluded_directories": set(config.lint.exclude)}
-    content = yaml.dump(data, default_flow_style=False, sort_keys=True)
-    rc_file.write_text(content, encoding="utf-8")
+    return yaml.dump(data, default_flow_style=False, sort_keys=True)
 
 
 def generate_gdformatrc(
@@ -285,5 +300,18 @@ def generate_gdformatrc(
         project_root: Path to the project root directory.
     """
     rc_file = project_root / "gdformatrc"
-    content = "\n".join(config.format.exclude) + "\n"
-    rc_file.write_text(content, encoding="utf-8")
+    rc_file.write_text(
+        gdformatrc_content(config), encoding="utf-8"
+    )
+
+
+def gdformatrc_content(config: GdToolsConfig) -> str:
+    """Return the expected gdformatrc file content for a config.
+
+    Args:
+        config: The configuration to read excludes from.
+
+    Returns:
+        One exclude path per line, newline-terminated.
+    """
+    return "\n".join(config.format.exclude) + "\n"

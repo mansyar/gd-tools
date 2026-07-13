@@ -56,7 +56,13 @@ def get_godot_version(binary: str) -> str:
             [binary, "--version"],
             capture_output=True,
             text=True,
+            timeout=10,
         )
+    except subprocess.TimeoutExpired:
+        raise GodotNotFoundError(
+            f"Godot binary at {binary} did not respond to --version "
+            "within 10 seconds"
+        ) from None
     except (OSError, subprocess.SubprocessError) as exc:
         raise GodotNotFoundError(
             f"Failed to execute Godot binary at {binary}: {exc}"

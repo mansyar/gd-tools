@@ -192,5 +192,5 @@ def test_cobertura_line_hits_correct(tmp_path):
 
 
 def test_format_rate_zero_total():
-    """_format_rate returns '0.0' when total is zero (zero-division guard)."""
-    assert _format_rate(0, 0) == "0.0"
+    """_format_rate returns '0.0000' when total is zero (zero-division guard)."""
+    assert _format_rate(0, 0) == "0.0000"

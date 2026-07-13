@@ -81,10 +81,20 @@ def run_lint(
 
     errors: list[LintIssue] = []
     warnings: list[LintIssue] = []
+    files_skipped = 0
+
+    console = Console()
 
     for file_path in gd_files:
-        with open(file_path, "r", encoding="utf-8") as f:
-            code = f.read()
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                code = f.read()
+        except (OSError, UnicodeDecodeError) as e:
+            console.print(
+                f"[yellow]Warning: Skipping {file_path}: {e}[/yellow]"
+            )
+            files_skipped += 1
+            continue
         try:
             problems = lint_code(code)
         except LarkError as e:
@@ -113,7 +123,7 @@ def run_lint(
             )
 
     return LintResult(
-        files_checked=len(gd_files),
+        files_checked=len(gd_files) - files_skipped,
         errors=errors,
         warnings=warnings,
     )

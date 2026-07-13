@@ -92,17 +92,35 @@ def _build_class_element(
     total_branches = 0
     hit_branches = 0
 
+    # Aggregate by line number to avoid duplicate <line> elements
+    # when multiple tracking points (e.g. if_branch + else_branch)
+    # share the same source line.
+    line_to_hit: dict[int, int] = {}
+    line_to_branch: dict[int, bool] = {}
+
     for line_plan in file_plan.lines:
         hit_count = file_data.hits.get(str(line_plan.id), 0)
+        ln = line_plan.line
+        if ln in line_to_hit:
+            line_to_hit[ln] = max(line_to_hit[ln], hit_count)
+            line_to_branch[ln] = line_to_branch[ln] or (
+                line_plan.type == "branch"
+            )
+        else:
+            line_to_hit[ln] = hit_count
+            line_to_branch[ln] = line_plan.type == "branch"
+
+    for ln in sorted(line_to_hit):
+        hit_count = line_to_hit[ln]
         line_elem = ET.SubElement(lines_elem, "line")
-        line_elem.set("number", str(line_plan.line))
+        line_elem.set("number", str(ln))
         line_elem.set("hits", str(hit_count))
 
         total_lines += 1
         if hit_count > 0:
             hit_lines += 1
 
-        if line_plan.type == "branch":
+        if line_to_branch[ln]:
             line_elem.set("branch", "true")
             total_branches += 1
             if hit_count > 0:
@@ -129,8 +147,8 @@ def _format_rate(total: int, hit: int) -> str:
         hit: Count of covered items.
 
     Returns:
-        A string like ``"0.625"`` or ``"0.0"``.
+        A string like ``"0.6250"`` or ``"0.0000"``.
     """
     if total == 0:
-        return "0.0"
-    return f"{hit / total:.4f}".rstrip("0").rstrip(".")
+        return "0.0000"
+    return f"{hit / total:.4f}"

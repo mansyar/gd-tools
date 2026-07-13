@@ -521,12 +521,12 @@ def test_compute_summary_missing_file_in_coverage_data():
 # --- Report dispatch and threshold (FR-3) ---
 
 
-def test_generate_report_terminal_format(tmp_path):
-    """generate_report with format=terminal returns ReportResult with correct format."""
+def test_generate_report_text_format(tmp_path):
+    """generate_report with format=text returns ReportResult with correct format."""
     plan = read_plan_json(_PLAN_FIXTURE)
     data = read_coverage_json(_FULL_COV)
-    result = generate_report(plan, data, tmp_path, format="terminal")
-    assert result.format == "terminal"
+    result = generate_report(plan, data, tmp_path, format="text")
+    assert result.format == "text"
     assert result.output_path.exists()
 
 
@@ -572,7 +572,7 @@ def test_generate_report_threshold_below_raises(tmp_path):
     # partial_coverage: line_rate = 5/8 = 0.625, below 0.80
     with pytest.raises(CoverageThresholdError):
         generate_report(
-            plan, data, tmp_path, format="terminal", min_threshold=0.80
+            plan, data, tmp_path, format="text", min_threshold=0.80
         )
 
 
@@ -606,7 +606,7 @@ def test_generate_report_threshold_at_minimum_no_raise(tmp_path):
         ],
     )
     result = generate_report(
-        plan, data, tmp_path, format="terminal", min_threshold=0.80
+        plan, data, tmp_path, format="text", min_threshold=0.80
     )
     assert result.threshold_met is True
 
@@ -616,7 +616,7 @@ def test_generate_report_no_threshold_never_raises(tmp_path):
     plan = read_plan_json(_PLAN_FIXTURE)
     data = read_coverage_json(_ZERO_COV)
     # zero_coverage: line_rate = 0.0, but no threshold -> no raise
-    result = generate_report(plan, data, tmp_path, format="terminal")
+    result = generate_report(plan, data, tmp_path, format="text")
     assert result.threshold_met is True
 
 
@@ -624,7 +624,7 @@ def test_generate_report_result_fields(tmp_path):
     """generate_report returns ReportResult with correct summary, file_summaries, and threshold_met."""
     plan = read_plan_json(_PLAN_FIXTURE)
     data = read_coverage_json(_FULL_COV)
-    result = generate_report(plan, data, tmp_path, format="terminal")
+    result = generate_report(plan, data, tmp_path, format="text")
 
     assert isinstance(result.summary, CoverageSummary)
     assert result.summary.line_rate == 1.0

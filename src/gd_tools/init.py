@@ -16,6 +16,7 @@ same end state without duplicating entries.
 
 import configparser
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -24,17 +25,19 @@ from pathlib import Path
 
 import click
 import requests
-import yaml
 from rich.console import Console
 
 from .config import (
     GdToolsConfig,
     find_project_root,
+    gdformatrc_content,
+    gdlintrc_content,
     load_config,
     save_config,
 )
 from .errors import GdToolsError
 from .godot import find_godot, get_gut_version_for_godot
+from .test_runner import is_gut_installed
 
 # --- Constants ---
 
@@ -97,18 +100,6 @@ def detect_godot_version(config: GdToolsConfig) -> str:
 
 
 # --- Phase 2: GUT Installation ---
-
-
-def check_gut_installed(project_root: Path) -> bool:
-    """Check if GUT is installed in the project.
-
-    Args:
-        project_root: Path to the Godot project root.
-
-    Returns:
-        True if ``addons/gut/gut.gd`` exists, False otherwise.
-    """
-    return (project_root / "addons" / "gut" / "gut.gd").exists()
 
 
 def get_installed_gut_version(project_root: Path) -> str | None:
@@ -230,7 +221,7 @@ def install_gut(
         True if GUT is installed (or was already present),
         False if the user declined installation.
     """
-    if check_gut_installed(project_root):
+    if is_gut_installed(project_root):
         installed_version = get_installed_gut_version(project_root)
         expected_version = get_gut_version_for_godot(godot_version)
         if installed_version != expected_version:
@@ -275,12 +266,17 @@ def enable_gut_plugin(project_root: Path) -> None:
         project_root: Path to the Godot project root.
     """
     project_godot = project_root / "project.godot"
-    content = project_godot.read_text()
+    content = project_godot.read_text(encoding="utf-8")
 
     gut_entry = f'"{GUT_PLUGIN_PATH}"'
 
-    # Idempotent: if GUT is already in the file, do nothing
-    if gut_entry in content:
+    # Idempotent: if GUT is already enabled, do nothing.
+    # Use regex to match only within enabled=PackedStringArray(...),
+    # not in comments or other contexts.
+    if re.search(
+        rf'enabled=PackedStringArray\([^\)]*{re.escape(gut_entry)}',
+        content,
+    ):
         return
 
     if "[editor_plugins]" in content:
@@ -309,7 +305,7 @@ def enable_gut_plugin(project_root: Path) -> None:
                     # No enabled= and no next section, append at end
                     lines.append(f"enabled=PackedStringArray({gut_entry})")
                 break
-        project_godot.write_text("\n".join(lines))
+        project_godot.write_text("\n".join(lines), encoding="utf-8")
     else:
         # No [editor_plugins] section, append it
         if not content.endswith("\n"):
@@ -318,7 +314,7 @@ def enable_gut_plugin(project_root: Path) -> None:
             f"\n[editor_plugins]\n\n"
             f"enabled=PackedStringArray({gut_entry})\n"
         )
-        project_godot.write_text(content)
+        project_godot.write_text(content, encoding="utf-8")
 
 
 # --- Phase 3: Coverage Addon Deployment ---
@@ -354,12 +350,18 @@ def register_coverage_autoload(project_root: Path) -> None:
         project_root: Path to the Godot project root.
     """
     project_godot = project_root / "project.godot"
-    content = project_godot.read_text()
+    content = project_godot.read_text(encoding="utf-8")
 
     autoload_entry = f'_GDTCoverage="*{COVERAGE_AUTOLOAD_PATH}"'
 
     # Idempotent: if already registered with correct path, do nothing.
-    if autoload_entry in content:
+    # Use regex to match only at start of line (after optional
+    # whitespace), not in comments.
+    if re.search(
+        rf'^\s*{re.escape(autoload_entry)}',
+        content,
+        re.MULTILINE,
+    ):
         return
 
     lines = content.split("\n")
@@ -369,7 +371,7 @@ def register_coverage_autoload(project_root: Path) -> None:
     for i, line in enumerate(lines):
         if line.strip().startswith("_GDTCoverage="):
             lines[i] = autoload_entry
-            project_godot.write_text("\n".join(lines))
+            project_godot.write_text("\n".join(lines), encoding="utf-8")
             return
 
     if "[autoload]" in content:
@@ -378,13 +380,13 @@ def register_coverage_autoload(project_root: Path) -> None:
             if line.strip() == "[autoload]":
                 lines.insert(i + 1, f"\n{autoload_entry}")
                 break
-        project_godot.write_text("\n".join(lines))
+        project_godot.write_text("\n".join(lines), encoding="utf-8")
     else:
         # No [autoload] section, append it.
         if not content.endswith("\n"):
             content += "\n"
         content += f"\n[autoload]\n\n{autoload_entry}\n"
-        project_godot.write_text(content)
+        project_godot.write_text(content, encoding="utf-8")
 
 
 # --- Phase 4: Configuration File Generation ---
@@ -467,12 +469,8 @@ def generate_lint_format_rcs(project_root: Path, config: GdToolsConfig) -> None:
         project_root: Path to the Godot project root.
         config: The configuration to read exclude lists from.
     """
-    # gdlintrc — YAML set format (same as config.generate_gdlintrc)
-    expected_lint = yaml.dump(
-        {"excluded_directories": set(config.lint.exclude)},
-        default_flow_style=False,
-        sort_keys=True,
-    )
+    # gdlintrc — YAML set format (via shared helper)
+    expected_lint = gdlintrc_content(config)
     lint_file = project_root / "gdlintrc"
     if not lint_file.exists():
         lint_file.write_text(expected_lint, encoding="utf-8")
@@ -483,8 +481,8 @@ def generate_lint_format_rcs(project_root: Path, config: GdToolsConfig) -> None:
             "regenerate.[/yellow]"
         )
 
-    # gdformatrc — one exclude per line (same as config.generate_gdformatrc)
-    expected_format = "\n".join(config.format.exclude) + "\n"
+    # gdformatrc — one exclude per line (via shared helper)
+    expected_format = gdformatrc_content(config)
     format_file = project_root / "gdformatrc"
     if not format_file.exists():
         format_file.write_text(expected_format, encoding="utf-8")
@@ -576,7 +574,7 @@ def run_init(non_interactive: bool = False) -> None:
     godot_version = detect_godot_version(config)
     gut_version = get_gut_version_for_godot(godot_version)
 
-    is_installed = check_gut_installed(project_root)
+    is_installed = is_gut_installed(project_root)
     if is_installed:
         installed = get_installed_gut_version(project_root)
         if installed:
@@ -593,7 +591,7 @@ def run_init(non_interactive: bool = False) -> None:
             "\n[yellow]Init aborted: GUT was not installed.[/yellow]\n"
             "Install GUT manually, then re-run 'gd-tools init'."
         )
-        sys.exit(0)
+        sys.exit(1)
 
     enable_gut_plugin(project_root)
     actions.append("Enabled GUT plugin in project.godot")

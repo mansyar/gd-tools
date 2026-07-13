@@ -456,6 +456,17 @@ def test_get_godot_version_oserror_raises(mock_run):
         get_godot_version("/usr/bin/godot")
 
 
+@pytest.mark.unit
+@patch(
+    "gd_tools.godot.subprocess.run",
+    side_effect=subprocess.TimeoutExpired(cmd="godot", timeout=10),
+)
+def test_get_godot_version_timeout_raises(mock_run):
+    """Test GodotNotFoundError raised when --version times out."""
+    with pytest.raises(GodotNotFoundError, match="did not respond"):
+        get_godot_version("/usr/bin/godot")
+
+
 # --- check_version_compatible ---
 
 

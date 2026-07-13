@@ -28,6 +28,7 @@ from gd_tools.test_runner import (
     build_gut_args,
     check_gut_installed,
     format_test_results,
+    is_gut_installed,
     parse_junit_xml,
     run_tests,
 )
@@ -319,7 +320,7 @@ def test_build_gut_args_default_junit_xml_path(tmp_path):
 @pytest.mark.unit
 def test_check_gut_installed_present(tmp_path):
     """Test that no error is raised when GUT is installed."""
-    gut_path = tmp_path / "addons" / "gut" / "gut_cmdln.gd"
+    gut_path = tmp_path / "addons" / "gut" / "gut.gd"
     gut_path.parent.mkdir(parents=True)
     gut_path.touch()
     result = check_gut_installed(tmp_path)
@@ -447,8 +448,8 @@ def _make_godot_info():
 
 @pytest.fixture
 def gut_project(tmp_path):
-    """Fixture: tmp_path with GUT installed (addons/gut/gut_cmdln.gd)."""
-    gut_path = tmp_path / "addons" / "gut" / "gut_cmdln.gd"
+    """Fixture: tmp_path with GUT installed (addons/gut/gut.gd)."""
+    gut_path = tmp_path / "addons" / "gut" / "gut.gd"
     gut_path.parent.mkdir(parents=True)
     gut_path.touch()
     return tmp_path

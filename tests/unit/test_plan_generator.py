@@ -628,6 +628,16 @@ def test_generate_plan_with_custom_test_dirs(tmp_path):
     assert cp.files[0].path == "res://player.gd"
 
 
+def test_generate_plan_skips_files_with_syntax_errors(tmp_path):
+    """Files with syntax errors are skipped, valid files are still included."""
+    (tmp_path / "valid.gd").write_text("extends Node\n")
+    (tmp_path / "broken.gd").write_text("func ((\n")
+
+    cp = generate_plan(str(tmp_path))
+    assert len(cp.files) == 1
+    assert cp.files[0].path == "res://valid.gd"
+
+
 # --- Expected plan fixtures ---
 
 

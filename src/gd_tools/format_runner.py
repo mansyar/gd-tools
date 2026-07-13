@@ -6,9 +6,9 @@ invokes the formatter programmatically, and returns structured results.
 """
 
 import difflib
-import sys
 from dataclasses import dataclass, field
 
+import click
 from gdtoolkit.formatter import format_code
 from lark.exceptions import LarkError
 
@@ -30,6 +30,8 @@ class FormatResult:
             and --diff modes.
         files_needing_format_paths: List of file paths that need
             formatting. Only populated in --check mode.
+        files_skipped: Number of files skipped due to I/O or
+            syntax errors.
         diffs: List of unified diff strings for files that differ.
             Only populated in --diff mode.
     """
@@ -38,6 +40,7 @@ class FormatResult:
     files_formatted: int = 0
     files_needing_format: int = 0
     files_needing_format_paths: list[str] = field(default_factory=list)
+    files_skipped: int = 0
     diffs: list[str] = field(default_factory=list)
 
 
@@ -77,6 +80,7 @@ def run_format(
     files_formatted = 0
     files_needing_format = 0
     files_needing_format_paths: list[str] = []
+    files_skipped = 0
     diffs_list: list[str] = []
 
     for file_path in gd_files:
@@ -84,7 +88,10 @@ def run_format(
             with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
-            formatted_code = format_code(original_code, max_line_length=100)
+            formatted_code = format_code(
+                original_code,
+                max_line_length=config.format.max_line_length,
+            )
 
             if formatted_code != original_code:
                 if check:
@@ -106,13 +113,19 @@ def run_format(
                     files_formatted += 1
         except LarkError as e:
             # Syntax error: report file path and description, then skip
-            print(f"Warning: Skipping {file_path}: {e}", file=sys.stderr)
+            click.echo(f"Warning: Skipping {file_path}: {e}", err=True)
+            files_skipped += 1
+            continue
+        except (OSError, UnicodeDecodeError) as e:
+            click.echo(f"Warning: Skipping {file_path}: {e}", err=True)
+            files_skipped += 1
             continue
 
     return FormatResult(
-        files_checked=files_checked,
+        files_checked=files_checked - files_skipped,
         files_formatted=files_formatted,
         files_needing_format=files_needing_format,
         files_needing_format_paths=files_needing_format_paths,
+        files_skipped=files_skipped,
         diffs=diffs_list,
     )

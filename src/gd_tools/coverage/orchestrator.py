@@ -20,7 +20,11 @@ from gd_tools.coverage.reporter import (
     CoverageSummary,
     ReportResult,
 )
-from gd_tools.errors import CoverageThresholdError, TestFailureError
+from gd_tools.errors import (
+    CoveragePlanError,
+    CoverageThresholdError,
+    TestFailureError,
+)
 from gd_tools.test_runner import TestResult, run_tests
 
 
@@ -96,8 +100,21 @@ def run_coverage_test(
         test_error = exc
 
     # Read coverage data and generate reports (even if tests failed).
-    data = reporter.read_coverage_json(output_dir / "coverage.json")
-    plan = plan_generator.read_plan_json(str(output_dir / "plan.json"))
+    # If tests failed AND coverage data is missing (e.g., GUT crashed
+    # before writing coverage.json), re-raise the TestFailureError
+    # instead of the CoveragePlanError — the test failure is the root
+    # cause and the missing file is just a side effect.
+    try:
+        data = reporter.read_coverage_json(
+            output_dir / "coverage.json"
+        )
+        plan = plan_generator.read_plan_json(
+            str(output_dir / "plan.json")
+        )
+    except CoveragePlanError:
+        if test_error is not None:
+            raise test_error
+        raise
 
     min_threshold = min_percent / 100 if min_percent is not None else None
     try:
@@ -116,7 +133,12 @@ def run_coverage_test(
     if test_error is not None:
         raise test_error
 
-    assert result is not None  # test_error is None implies run_tests succeeded
+    if result is None:
+        raise CoveragePlanError(
+            "Coverage generation returned no result — "
+            "run_tests() returned None without raising TestFailureError. "
+            "This should not happen; please report as a bug."
+        )
     return result
 
 

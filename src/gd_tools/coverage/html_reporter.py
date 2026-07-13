@@ -22,6 +22,32 @@ _env = Environment(
 )
 
 
+def _read_source_lines(res_path: str) -> list[str]:
+    """Read source lines from a ``res://`` path for HTML display.
+
+    Strips the ``res://`` prefix and resolves the path relative
+    to the current working directory (typically the project root
+    when running gd-tools). Returns an empty list if the file
+    cannot be read.
+
+    Args:
+        res_path: A ``res://`` path (e.g., ``res://scripts/player.gd``).
+
+    Returns:
+        List of source code lines (without trailing newlines),
+        or an empty list if the file is not accessible.
+    """
+    if res_path.startswith("res://"):
+        res_path = res_path[len("res://"):]
+    fs_path = Path(res_path)
+    if not fs_path.exists():
+        return []
+    try:
+        return fs_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+
+
 def generate_html_report(
     plan: CoveragePlan,
     data: CoverageData,
@@ -68,6 +94,10 @@ def generate_html_report(
             file_plan.file_id,
             FileCoverage(file_id=file_plan.file_id, hits={}),
         )
+
+        # Resolve res:// path to filesystem path for source display
+        source_lines = _read_source_lines(file_plan.path)
+
         lines = []
         for line_plan in file_plan.lines:
             hit_count = file_data.hits.get(str(line_plan.id), 0)
@@ -77,14 +107,15 @@ def generate_html_report(
                 css_class = "covered"
             else:
                 css_class = "uncovered"
+            line_num = line_plan.line
+            source_text = ""
+            if source_lines and 1 <= line_num <= len(source_lines):
+                source_text = source_lines[line_num - 1]
             lines.append(
                 {
-                    "number": line_plan.line,
+                    "number": line_num,
                     "hits": hit_count,
-                    # TODO: Source code display deferred — requires reading
-                    # .gd files from disk. Spec FR-4.3 partially met: line
-                    # numbers shown, source content not yet populated.
-                    "source": "",
+                    "source": source_text,
                     "css_class": css_class,
                 }
             )

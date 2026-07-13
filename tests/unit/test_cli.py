@@ -166,6 +166,7 @@ def test_test_calls_run_tests_with_correct_args():
         test_name=None,
         junit_xml=None,
         no_exit_code=False,
+        timeout=None,
     )
 
 
@@ -247,6 +248,34 @@ def test_test_coverage_calls_orchestrator():
         result = runner.invoke(cli, ["test", "--coverage"])
     assert result.exit_code == 0
     mock_orch.assert_called_once()
+
+
+def test_test_min_without_coverage_warns():
+    """Test --min without --coverage prints warning and proceeds normally."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+        patch("gd_tools.cli.run_coverage_test") as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test", "--min", "80"])
+    assert result.exit_code == 0
+    assert "--min is only valid with --coverage" in result.output
+    mock_run.assert_called_once()
+    mock_orch.assert_not_called()
 
 
 def test_test_coverage_min_passed_to_orchestrator():

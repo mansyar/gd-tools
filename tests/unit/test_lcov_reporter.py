@@ -32,7 +32,7 @@ def test_lcov_contains_test_name_record(tmp_path):
 
 
 def test_lcov_contains_source_file_records(tmp_path):
-    """LCOV output contains SF:<res_path> for each file in the plan."""
+    """LCOV output contains SF:<relative_path> for each file in the plan."""
     plan = read_plan_json(_PLAN_FIXTURE)
     data = read_coverage_json(_FULL_COV)
     output = generate_lcov_report(plan, data, tmp_path / "coverage.info")
@@ -41,8 +41,8 @@ def test_lcov_contains_source_file_records(tmp_path):
     lines = content.splitlines()
     sf_lines = [ln for ln in lines if ln.startswith("SF:")]
     assert len(sf_lines) == 2
-    assert "SF:res://player.gd" in sf_lines
-    assert "SF:res://enemy.gd" in sf_lines
+    assert "SF:player.gd" in sf_lines
+    assert "SF:enemy.gd" in sf_lines
 
 
 def test_lcov_contains_line_data_records(tmp_path):
