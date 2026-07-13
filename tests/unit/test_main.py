@@ -15,14 +15,16 @@ class TestSubprocess:
     """Subprocess tests for python -m gd_tools."""
 
     def test_python_m_version(self):
-        """Test python -m gd_tools --version outputs gd-tools 0.1.0."""
+        """Test python -m gd_tools --version outputs the correct version."""
+        from gd_tools import __version__
+
         result = subprocess.run(
             [sys.executable, "-m", "gd_tools", "--version"],
             capture_output=True,
             text=True,
         )
         assert result.returncode == 0
-        assert "gd-tools 0.1.0" in result.stdout
+        assert f"gd-tools {__version__}" in result.stdout
 
     def test_python_m_help(self):
         """Test python -m gd_tools --help exits with code 0."""

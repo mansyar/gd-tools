@@ -30,11 +30,13 @@ def test_cli_is_group():
 
 
 def test_version():
-    """Test --version outputs gd-tools 0.1.0."""
+    """Test --version outputs the correct version."""
+    from gd_tools import __version__
+
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
-    assert "gd-tools 0.1.0" in result.output
+    assert f"gd-tools {__version__}" in result.output
 
 
 def test_help_shows_all_commands():
