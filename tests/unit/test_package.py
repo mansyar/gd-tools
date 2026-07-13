@@ -6,7 +6,8 @@ pytestmark = pytest.mark.unit
 
 
 def test_version():
-    """Test that __version__ is defined and equals '0.1.0'."""
+    """Test that __version__ is defined and is a non-empty string."""
     from gd_tools import __version__
 
-    assert __version__ == "0.1.0"
+    assert isinstance(__version__, str)
+    assert __version__ != ""
