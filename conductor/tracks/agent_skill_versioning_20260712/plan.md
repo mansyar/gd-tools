@@ -26,9 +26,9 @@
     - [ ] Add `"commitizen"` to `[project.optional-dependencies] dev` list
     - [ ] Add `[tool.commitizen]` section: `name`, `version`, `version_files`, `changelog_file`, `tag_format`, `update_changelog_on_bump = true`
     - [ ] Run `pip install -e ".[dev]"` to install commitizen
-- [ ] Task: Generate initial `CHANGELOG.md` from existing commit history
-    - [ ] Run `cz changelog` to generate from git history
-    - [ ] Review generated `CHANGELOG.md` for accuracy (AC-7)
+- [x] Task: Generate initial `CHANGELOG.md` from existing commit history [e9d89c3]
+    - [x] Run `cz changelog` to generate from git history
+    - [x] Review generated `CHANGELOG.md` for accuracy (AC-7)
 - [ ] Task: Verify commitizen bump workflow
     - [ ] Run `cz bump --dry-run` and verify version bump preview (AC-6)
     - [ ] Verify changelog diff is generated correctly
