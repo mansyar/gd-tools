@@ -1,3 +1,9 @@
+## v0.1.3 (2026-07-14)
+
+### Fix
+
+- read __version__ dynamically from package metadata
+
 ## v0.1.2 (2026-07-14)
 
 ### Fix
