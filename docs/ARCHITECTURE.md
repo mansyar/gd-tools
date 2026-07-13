@@ -49,7 +49,7 @@ reporting) and GDScript (runtime instrumentation).
 |-------|----------|-----------|----------------|
 | 1. Plan generation | Python | `coverage/plan_generator.py` | Parse GDScript via Lark AST, identify trackable lines and branches, emit `plan.json` |
 | 2. Runtime instrumentation | GDScript | `pre_run_hook.gd`, `coverage.gd`, `post_run_hook.gd` | Inject tracker calls into source at runtime, execute tests, collect hit data, write `coverage.json` |
-| 3. Report generation | Python | `coverage/reporter.py` | Cross-reference plan with hit data, compute metrics, emit reports (HTML, LCOV, Cobertura, terminal) |
+| 3. Report generation | Python | `coverage/reporter.py` | Cross-reference plan with hit data, compute metrics, emit reports (HTML, LCOV, Cobertura, text) |
 
 ### Comparison with Alternatives
 
@@ -364,7 +364,7 @@ and branch points, and emits an instrumentation plan.
 
 **Key functions:**
 
-- `generate_plan(project_root, source_dirs, exclude_dirs, test_dirs)`
+- `generate_plan(project_root, exclude_dirs, test_dirs)`
   --- discovers `.gd` files, filters test directories, parses each
   file, runs `CoverageVisitor`, assembles a `CoveragePlan`.
 - `write_plan_json(plan, output_path)` --- serializes a plan to JSON.
@@ -508,7 +508,7 @@ metrics, and dispatches to format-specific reporters.
 | `html` | `index.html` (in output dir) | `html_reporter.py` |
 | `lcov` | `coverage.info` | `lcov_reporter.py` |
 | `cobertura` | `cobertura.xml` | `cobertura_reporter.py` |
-| `terminal` | `coverage_report.txt` | `terminal_reporter.py` |
+| `text` | `coverage_report.txt` | `terminal_reporter.py` |
 
 **Threshold enforcement:** If `min_threshold` is set (0.0--1.0) and
 `line_rate < min_threshold`, the report file is still written, then

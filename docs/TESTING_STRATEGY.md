@@ -441,12 +441,12 @@ def test_source_hash_mismatch_warning():
 
 ---
 
-### 4.5 Coverage Reporters (HTML, LCOV, Cobertura, Terminal)
+### 4.5 Coverage Reporters (HTML, LCOV, Cobertura, Text)
 
 > **Implemented:** Track 12. All reporter tests pass with 98-100% coverage.
 > HTML reporter tests verify index/file page generation and CSS classes.
 > LCOV tests verify format compliance and branch data. Cobertura tests
-> verify valid XML and rate attributes. Terminal tests verify table
+> verify valid XML and rate attributes. Text reporter tests verify table
 > structure and color thresholds.
 
 **What to test:**
@@ -489,7 +489,7 @@ def test_cobertura_valid_xml():
 def test_cobertura_line_rate_attribute():
     """<coverage> element has correct line-rate value."""
 
-**Terminal (`terminal_reporter.py`):**
+**Text (`terminal_reporter.py`):**
 - Rich table output with correct columns
 - Color coding: green >=80%, yellow 50-79%, red <50%
 - Overall summary row

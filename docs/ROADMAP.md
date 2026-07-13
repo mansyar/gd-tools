@@ -1050,7 +1050,7 @@ FIRST integration tests to ever actually run.
 | Field | Value |
 |-------|-------|
 | **Phase** | 3 — MVP2 |
-| **Goal** | Read coverage data + plan, compute metrics, generate reports (HTML, LCOV, Cobertura, terminal) |
+| **Goal** | Read coverage data + plan, compute metrics, generate reports (HTML, LCOV, Cobertura, text) |
 | **Dependencies** | Track 9 (plan format for cross-reference) |
 | **Modules** | `src/gd_tools/coverage/reporter.py`, `html_reporter.py`, `lcov_reporter.py`, `cobertura_reporter.py`, `terminal_reporter.py` |
 | **Effort** | 2-3 days |
@@ -1108,7 +1108,7 @@ FIRST integration tests to ever actually run.
   red <50%).
 - HTML templates: `templates/index.html`, `templates/file.html`.
 - 73 unit tests across 5 test files. Coverage: reporter 96%, cobertura 98%,
-  html/lcov/terminal 100%.
+  html/lcov/text 100%.
 - `generate_report()` writes report THEN raises `CoverageThresholdError` if
   below threshold — by design (report exists even on failure).
 - `read_coverage_json()` normalizes hits keys to strings, validates version==1.

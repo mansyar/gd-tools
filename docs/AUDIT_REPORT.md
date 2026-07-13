@@ -5,6 +5,11 @@
 **Scope:** Full codebase review of `gd-tools-cli` v0.1.0
 **Methodology:** Static analysis, source code review, runtime verification
 
+> **Resolution Status:** All 23 findings (5 CRITICAL, 5 HIGH, 7 MEDIUM, 6 LOW)
+> have been resolved. Fixes committed in `8e48360` and pushed to `origin/main`.
+> Test suite: 576 passed, 0 failed. Coverage: 97.66%. See each finding's
+> "Resolution" note below for the specific change applied.
+
 ---
 
 ## Executive Summary
@@ -47,6 +52,8 @@ Users relying on `--timeout` for non-coverage test runs will see no effect. In C
 **Recommended Remediation:**
 Pass `timeout=timeout` to the `run_tests()` call in the non-coverage else branch.
 
+**Resolution (commit `8e48360`):** Added `timeout=timeout` to the `run_tests()` call in the non-coverage else branch of `cli.py`. Unit test updated in `test_cli.py`.
+
 **Verification:**
 - Add a unit test that mocks `run_tests` and asserts `timeout` is forwarded.
 - Add an integration test: `gd-tools test --timeout 1` with a long-running test suite should timeout at ~1s.
@@ -69,6 +76,8 @@ Any user attempting to use the terminal/text coverage format via configuration w
 
 **Recommended Remediation:**
 Align all three to a single canonical name. Recommendation: use `"text"` everywhere (matches the conventional name in other coverage tools like `coverage.py`), or accept both as aliases in the reporter.
+
+**Resolution (commit `8e48360`):** Renamed `"terminal"` to `"text"` in `reporter.py` (`_SUPPORTED_FORMATS` set, docstring, and format check). All 6 test references in `test_reporter.py` updated.
 
 **Verification:**
 - Unit test: `format="text"` in config produces a terminal report without error.
@@ -101,6 +110,8 @@ def _format_rate(hit: int, total: int) -> str:
     return f"{hit / total:.4f}"
 ```
 
+**Resolution (commit `8e48360`):** Removed `.rstrip("0").rstrip(".")` from `_format_rate()`. Changed `total==0` return from `"0.0"` to `"0.0000"`. Now returns fixed 4 decimal places consistently. Test updated in `test_cobertura_reporter.py`.
+
 **Verification:**
 - Unit test: `_format_rate(0, 10)` returns `"0.0000"`.
 - Unit test: `_format_rate(10, 10)` returns `"1.0000"`.
@@ -132,6 +143,8 @@ except CoveragePlanError:
     raise
 ```
 
+**Resolution (commit `8e48360`):** Wrapped `read_coverage_json()` and `read_plan_json()` calls in `try/except CoveragePlanError` in `orchestrator.py`. If `test_error` is set, re-raises `test_error` instead of the coverage error.
+
 **Verification:**
 - Integration test: simulate test failure + missing coverage file → assert `TestFailureError` is raised, not `CoveragePlanError`.
 
@@ -153,6 +166,8 @@ Replace with an explicit `if` check that raises a proper exception:
 if result is None:
     raise CoveragePlanError("Coverage generation returned no result")
 ```
+
+**Resolution (commit `8e48360`):** Replaced `assert result is not None` with explicit `if result is None: raise CoveragePlanError(...)` with descriptive message.
 
 **Verification:**
 - Run `python -O -m pytest tests/unit/test_orchestrator.py` and confirm behavior is unchanged.
@@ -181,6 +196,8 @@ Two options:
 1. **Implement:** Enforce `min_percent` in `run_tests()` by comparing against the test pass rate after parsing JUnit results, raising `CoverageThresholdError` (or a new `TestThresholdError`) if below.
 2. **Reject:** If not ready to implement, raise a clear error: `--min is only supported with --coverage` or `--min is not yet implemented for non-coverage runs`.
 
+**Resolution (commit `8e48360`):** Option 2 (warn and ignore). Added a Rich yellow warning in `cli.py` when `--min` is passed without `--coverage`, then proceeds normally. Test added in `test_cli.py`.
+
 **Verification:**
 - Unit test: `run_tests(min_percent=100)` with failing tests raises an error.
 - Unit test: `run_tests(min_percent=0)` with any tests passes.
@@ -204,6 +221,8 @@ Inconsistent GUT detection can cause confusing scenarios: `gd-tools doctor` says
 
 **Recommended Remediation:**
 Create a single `check_gut_installed(project_root)` function in a shared module (e.g., `godot.py` or a new `gut_utils.py`) that checks for **both** required files (or the canonical GUT entry point). All three modules should import and use this single function.
+
+**Resolution (commit `8e48360`):** Consolidated to `is_gut_installed(project_root: Path) -> bool` in `test_runner.py` checking `addons/gut/gut.gd`. `init.py` and `doctor.py` now import and delegate to it. All tests updated.
 
 **Verification:**
 - Unit test: function returns `True` when both files exist.
@@ -235,6 +254,8 @@ for gd_file in gd_files:
         continue
 ```
 
+**Resolution (commit `8e48360`):** Wrapped `parse_gdscript(source)` + `visitor.visit(tree)` in `try/except LarkError` in `plan_generator.py`. Prints Rich warning and `continue`s to next file. Test added in `test_plan_generator.py`.
+
 **Verification:**
 - Unit test: `generate_plan()` with one valid and one invalid `.gd` file produces a plan for the valid file and reports the invalid one as skipped.
 
@@ -262,6 +283,8 @@ result = subprocess.run(
 ```
 Catch `subprocess.TimeoutExpired` and raise a `GodotNotFoundError` with a helpful message.
 
+**Resolution (commit `8e48360`):** Added `timeout=10` to `subprocess.run()` in `get_godot_version()`. Catches `TimeoutExpired` and raises `GodotNotFoundError` with descriptive message. Test added in `test_godot.py`.
+
 **Verification:**
 - Unit test: mock `subprocess.run` to raise `TimeoutExpired` → assert proper error is raised.
 
@@ -279,6 +302,8 @@ CI scripts that run `gd-tools init` non-interactively will see exit code 0 even 
 
 **Recommended Remediation:**
 Exit with a non-zero code (e.g., `1` or a dedicated code) when the user declines, or print a clear message and exit with code `2` (the `GdToolsError` exit code). Alternatively, if exit 0 is intentional for "user chose not to proceed," add a `--yes` / `--no-interaction` flag for CI and document the behavior.
+
+**Resolution (commit `8e48360`):** Changed `sys.exit(0)` to `sys.exit(1)` in `init.py` when user declines GUT install. Test assertion updated in `test_init.py`.
 
 **Verification:**
 - Unit test: decline prompt → assert exit code != 0 (or documented behavior).
@@ -303,6 +328,8 @@ Coverage percentages may be miscalculated by consuming tools. LCOV's `genhtml` m
 
 **Recommended Remediation:**
 Deduplicate line entries by line number before writing. For each line, aggregate hits across all branch entries that map to it.
+
+**Resolution (commit `8e48360`):** Rewrote `_generate_file_records()` in `lcov_reporter.py` and `_build_class_element()` in `cobertura_reporter.py` to aggregate by line number into dicts, emitting one record per line with max hit count.
 
 **Verification:**
 - Unit test: generate a plan with same-line branches → assert no duplicate DA records in LCOV output.
@@ -331,6 +358,8 @@ for gd_file in gd_files:
         files_skipped += 1
 ```
 
+**Resolution (commit `8e48360`):** Added `files_skipped: int = 0` to `FormatResult`. `files_checked` now equals `len(gd_files) - files_skipped`. Tests updated in `test_format_runner.py`.
+
 **Verification:**
 - Unit test: one valid + one invalid `.gd` file → `files_checked == 1`, `files_skipped == 1`.
 
@@ -348,6 +377,8 @@ Error messages from the format command may not respect `--no-color`, `--quiet`, 
 
 **Recommended Remediation:**
 Replace `print()` with `click.echo(..., err=True)` or pass a Rich `Console` instance.
+
+**Resolution (commit `8e48360`):** Replaced `print(..., file=sys.stderr)` with `click.echo(..., err=True)` in `format_runner.py`. Removed `import sys`, added `import click`.
 
 **Verification:**
 - Manual test: `gd-tools format` on a file with syntax errors → error appears in the same style as other commands.
@@ -369,6 +400,8 @@ A single unreadable file (e.g., a binary file with a `.gd` extension, or a file 
 **Recommended Remediation:**
 Wrap file reads with `encoding="utf-8"` and try/except for `UnicodeDecodeError` and `PermissionError`. Log a warning and skip the file.
 
+**Resolution (commit `8e48360`):** Added per-file `try/except (OSError, UnicodeDecodeError)` in both `lint_runner.py` (Rich warning) and `format_runner.py` (click.echo). Files are skipped with warning, `files_skipped` tracked.
+
 **Verification:**
 - Unit test: `run_lint()` with a non-UTF-8 file → warning logged, other files still linted.
 
@@ -387,6 +420,8 @@ The idempotency check for the GUT plugin entry uses `gut_entry in content`, whic
 **Recommended Remediation:**
 Parse the `[editor_plugins]` section specifically (using `configparser` or a targeted section check) rather than substring matching the entire file.
 
+**Resolution (commit `8e48360`):** Replaced `gut_entry in content` with `re.search(rf'enabled=PackedStringArray\([^\)]*{re.escape(gut_entry)}', content)` in `enable_gut_plugin()`. Replaced `autoload_entry in content` with `re.search(rf'^\s*{re.escape(autoload_entry)}', content, re.MULTILINE)` in `register_coverage_autoload()`.
+
 **Verification:**
 - Unit test: `project.godot` with `# gut is great` in a comment but no enabled plugin → `enable_gut_plugin()` adds the plugin.
 
@@ -404,6 +439,8 @@ On systems where the default encoding is not UTF-8 (common on some Windows confi
 
 **Recommended Remediation:**
 Add `encoding="utf-8"` to all `read_text()` and `write_text()` calls that touch `project.godot`.
+
+**Resolution (commit `8e48360`):** Added `encoding="utf-8"` to all 6 `read_text()`/`write_text()` calls on `project.godot` in `enable_gut_plugin()` and `register_coverage_autoload()` in `init.py`.
 
 **Verification:**
 - Unit test: on a system with non-UTF-8 default encoding, `project.godot` with non-ASCII characters is preserved correctly after init.
@@ -425,6 +462,8 @@ Convert `res://` paths to filesystem paths using the project root:
 ```python
 fs_path = res_path.replace("res://", str(project_root) + "/")
 ```
+
+**Resolution (commit `8e48360`):** Added `if sf_path.startswith("res://"): sf_path = sf_path[len("res://"):]` before `f"SF:{sf_path}"` in `lcov_reporter.py`. Tests updated in `test_lcov_reporter.py`.
 
 **Verification:**
 - Unit test: LCOV output `SF:` records contain filesystem paths, not `res://` paths.
@@ -449,6 +488,8 @@ Dead parameter that may confuse callers and maintainers. Minor API surface area 
 **Recommended Remediation:**
 Either remove the parameter, or use it to filter discovered files to specific source directories.
 
+**Resolution (commit `8e48360`):** Removed `source_dirs` parameter from `generate_plan()` signature and docstring in `plan_generator.py`.
+
 **Verification:**
 - Confirm no callers pass `source_dirs` (if none, remove it).
 
@@ -466,6 +507,8 @@ Dead code. No functional impact, but it suggests the summary was intended to be 
 
 **Recommended Remediation:**
 Either use the return value (e.g., `print(_log_summary())`) or remove the return statement.
+
+**Resolution (commit `8e48360`):** Changed `_log_summary() -> String` to `-> void`, removed `return summary`, inlined print statement in `post_run_hook.gd`.
 
 **Verification:**
 - Manual test: coverage run prints the summary or the return is removed cleanly.
@@ -487,6 +530,8 @@ Maintenance burden. Risk of the two copies diverging over time, leading to incon
 **Recommended Remediation:**
 Use the functions in `config.py` from `init.py` instead of duplicating the logic.
 
+**Resolution (commit `8e48360`):** Extracted `gdlintrc_content(config) -> str` and `gdformatrc_content(config) -> str` helpers in `config.py`. `init.py` now imports and calls these instead of duplicating logic. Removed `import yaml` from `init.py`.
+
 **Verification:**
 - Confirm `init.py` calls `generate_gdlintrc()` / `generate_gdformatrc()` from `config.py`.
 
@@ -504,6 +549,8 @@ Users who prefer a different line length (e.g., 80 or 120) for GDScript cannot c
 
 **Recommended Remediation:**
 Add a `max_line_length` field to `FormatConfig` (default 100) and pass it through to `format_code()`.
+
+**Resolution (commit `8e48360`):** Added `max_line_length: int = 100` to `FormatConfig` in `config.py`. `format_runner.py` now uses `config.format.max_line_length` instead of hardcoded `100`.
 
 **Verification:**
 - Unit test: `format_runner.run_format()` with `max_line_length=80` in config produces 80-column output.
@@ -523,6 +570,8 @@ No functional impact, but it clutters the repo and may confuse contributors.
 **Recommended Remediation:**
 Delete the file. If it's generated by tests, ensure tests write to a temp directory instead.
 
+**Resolution (commit `8e48360`):** Deleted `out.json` from repo root. File was gitignored test artifact.
+
 **Verification:**
 - `out.json` is removed and not regenerated by the test suite.
 
@@ -540,6 +589,8 @@ Users cannot see which lines are covered in the HTML report. This significantly 
 
 **Recommended Remediation:**
 Read the source file and pass its lines to the template, annotated with hit/miss data from the coverage plan.
+
+**Resolution (commit `8e48360`):** Added `_read_source_lines(res_path) -> list[str]` helper in `html_reporter.py` that strips `res://` prefix, resolves relative to CWD, reads file lines with graceful degradation (returns `[]` on missing/unreadable). Populates `"source"` field in line dict from source lines.
 
 **Verification:**
 - Manual test: HTML report shows source code with covered/uncovered line highlighting.

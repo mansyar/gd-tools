@@ -162,6 +162,7 @@ class LintConfig(BaseModel):
 class FormatConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
     exclude: list[str] = Field(default_factory=lambda: DEFAULT_EXCLUDES.copy())
+    max_line_length: int = 100
 
 class CoverageConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -408,7 +409,7 @@ def find_project_root(start: Path | None = None) -> Path:
 def detect_godot_version(config: GdToolsConfig) -> str:
     """Find Godot binary, run --version. Raises GodotNotFoundError."""
 
-def check_gut_installed(project_root: Path) -> bool:
+def is_gut_installed(project_root: Path) -> bool:
     """Check if addons/gut/gut.gd exists."""
 
 def install_gut(project_root: Path, godot_version: str,
@@ -488,8 +489,9 @@ When merging with existing config: preserve user's `dirs`, `prefix`, `suffix`,
 **Implementation notes (Track 7, 2026-07-11):**
 
 - `install_gut()` returns `bool`: `True` when GUT installed or already
-  present, `False` when user declines. `run_init()` calls `sys.exit(0)` when
-  `install_gut()` returns `False` (spec FR-3: user decline = exit 0) —
+  present, `False` when user declines. `run_init()` calls `sys.exit(1)` when
+  `install_gut()` returns `False` (user decline = non-zero exit so CI
+  detects it) —
   prevents enabling a non-existent plugin downstream.
 - 14 functions in `init.py` (561 lines). Added `generate_lint_format_rcs()`
   helper (not in original spec) for `gdlintrc`/`gdformatrc` generation with
@@ -731,7 +733,8 @@ class FormatResult:
 **Implementation notes (Track 5, 2026-07-10):**
 
 - `run_format()` uses `gdtoolkit.formatter.format_code()` Python API (not
-  subprocess) with `max_line_length=100`.
+  subprocess) with `max_line_length` from `config.format.max_line_length`
+  (default: 100, configurable via `[format]` section in `gd-tools.toml`).
 - `files_needing_format_paths` (not in original spec) lists specific file
   paths that need formatting in `--check` mode.
 - `--check` mode returns data; the CLI layer decides exit code (0 or 1),
@@ -761,7 +764,6 @@ from gdtoolkit.parser import parser
 
 def generate_plan(
     project_root: Path,
-    source_dirs: list[str],
     exclude_dirs: list[str],
     test_dirs: list[str],
 ) -> CoveragePlan:
@@ -924,7 +926,7 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 - `parse_gdscript()` uses `gdtoolkit.parser.parse(source,
   gather_metadata=True)` — the `gather_metadata=True` flag populates
   `tree.meta.line` with 1-indexed line numbers.
-- `generate_plan()` signature: `(project_root, source_dirs, exclude_dirs,
+- `generate_plan()` signature: `(project_root, exclude_dirs,
   test_dirs)` — reuses `discover_gd_files()` from `file_discovery.py` for
   file discovery, then filters out test_dirs from coverage targets.
 - Source hash: SHA-256 with `sha256:` prefix (e.g., `sha256:abc123...`).
@@ -1032,13 +1034,13 @@ def merge_coverage_data(files: list[CoverageData]) -> CoverageData:
 
 ### 3.12 `coverage/html_reporter.py` — HTML Report
 
-> **Implemented:** Track 12. See `src/gd_tools/coverage/html_reporter.py`
-> (92 lines). Uses Jinja2 `FileSystemLoader` from `templates/` directory.
+> **Implemented:** Track 12. See `src/gd_tools/coverage/html_reporter.py`.
+> Uses Jinja2 `FileSystemLoader` from `templates/` directory.
 > Creates `index.html` + `file_<id>.html` per file. CSS classes: covered
-> (green), uncovered (red), partial (yellow for hit branches). Known
-> limitation: source code content not populated (`source` field is empty
-> string) — spec FR-4.3 partially met, deferred to future track. 100%
-> test coverage.
+> (green), uncovered (red), partial (yellow for hit branches). Source
+> code is now populated via `_read_source_lines()` helper which reads
+> the original `.gd` file and displays it alongside coverage data
+> (resolved commit `8e48360`). 100% test coverage.
 
 ```python
 def generate_html_report(
@@ -1083,7 +1085,7 @@ def generate_lcov_report(
 LCOV format example:
 ```
 TN:
-SF:res://scripts/player.gd
+SF:scripts/player.gd
 DA:5,15
 DA:8,12
 DA:10,0

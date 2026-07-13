@@ -355,7 +355,7 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
   scripts via Godot's Script API, tracks execution, writes **coverage data**
   (JSON).
 - **Python side** (reporter): Reads coverage data, generates reports (HTML,
-  LCOV, Cobertura, terminal).
+  LCOV, Cobertura, text).
 
 ### Why Hybrid?
 
@@ -476,14 +476,15 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 > orchestrator), `html_reporter.py`, `lcov_reporter.py`,
 > `cobertura_reporter.py`, `terminal_reporter.py`. All 8 success criteria
 > passed. Generates reports in 4 formats: HTML (Jinja2 templates),
-> LCOV, Cobertura XML, Terminal (Rich table). 73 unit tests across 5
+> LCOV, Cobertura XML, Text (Rich table). 73 unit tests across 5
 > test files; coverage modules at 96-100%. Key functions:
 > `read_coverage_json()`, `merge_coverage_data()`, `compute_summary()`,
 > `generate_report(plan, data, output_dir, format, min_threshold)`.
 > Review fixes (commit `e9457ec`): error messages updated to Cause/Fix
 > format, HTML templates added to package-data, dead code removed.
 > Known limitation: HTML source view not populated (spec FR-4.3
-> partially met — deferred).
+> partially met — deferred). **Resolved** (commit `8e48360`): HTML
+> report now reads and displays source code lines.
 
 ```json
 {

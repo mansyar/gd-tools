@@ -170,8 +170,9 @@ exclude = ["addons", ".godot", ".gd-tools", ".git", "vendor"]
 | Key | Type | Default | Description |
 |---|---|---|---|
 | `exclude` | list of strings | `["addons", ".godot", ".gd-tools", ".git"]` | Directories excluded from formatting. |
+| `max_line_length` | integer | `100` | Maximum line length for the formatter. |
 
-The `exclude` list is written to `gdformatrc` during `init`.
+The `exclude` list and `max_line_length` are written to `gdformatrc` during `init`.
 
 Example:
 
@@ -245,6 +246,7 @@ gd-tools init --non-interactive
 | Code | Condition |
 |---|---|
 | 0 | Initialization completed successfully. |
+| 1 | User declined GUT installation when prompted. |
 | 2 | Configuration or environment error (e.g., Godot not found). |
 
 ### 3.3 gd-tools doctor
@@ -300,7 +302,7 @@ gd-tools test [OPTIONS]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--coverage` | flag | `false` | Generate a coverage report during the test run. |
-| `--min` | integer | None | Minimum coverage percentage threshold. Fails if coverage is below this value. |
+| `--min` | integer | None | Minimum coverage percentage threshold. Fails if coverage is below this value. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
 | `--suite` | string | None | Run only the specified test suite. |
 | `--test` | string | None | Run only the specified test. |
 | `--junit-xml` | string | None | Path to write a JUnit XML report. |
