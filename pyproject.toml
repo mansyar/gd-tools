@@ -50,6 +50,7 @@ dev = [
     "pytest-cov",
     "ruff",
     "black",
+    "commitizen",
 ]
 
 [project.scripts]
@@ -94,3 +95,11 @@ target-version = "py310"
 [tool.black]
 line-length = 80
 target-version = ["py310"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+version_files = ["pyproject.toml:version"]
+changelog_file = "CHANGELOG.md"
+tag_format = "v$version"
+update_changelog_on_bump = true
