@@ -76,7 +76,6 @@ def run_coverage_test(
     # Generate and write instrumentation plan.
     plan = plan_generator.generate_plan(
         str(project_root),
-        None,
         config.coverage.exclude,
         config.coverage.test_dirs,
     )
