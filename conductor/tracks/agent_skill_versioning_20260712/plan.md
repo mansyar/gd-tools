@@ -3,7 +3,7 @@
 
 > **Note:** All deliverables in this track are non-code files (`.md`, `.toml`, `.yml`). Per workflow.md §Testing Requirements, TDD (Red/Green phases) is not applicable — tests are only required for source code files (`.py`, `.gd`). Tasks focus on creation, configuration, and verification.
 
-## Phase 1: Agent Skill Creation
+## Phase 1: Agent Skill Creation [checkpoint: 524f788]
 
 - [x] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
 - [x] Task: Create `skills/gd-tools/SKILL.md` [f92664e]
