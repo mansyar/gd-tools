@@ -39,14 +39,14 @@
 
 ## Phase 3: Conventional Commit CI Check
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
-- [ ] Task: Create `.github/workflows/commit-check.yml`
-    - [ ] Write workflow YAML: trigger on `pull_request` (opened, edited, reopened, synchronize)
-    - [ ] Configure job: `actions/checkout@v4` with `fetch-depth: 0`, `actions/setup-python@v5` (Python 3.12), install commitizen, run `cz check --rev-range origin/${{ github.base_ref }}..HEAD`
-    - [ ] Match conventions from existing `ci.yml` (action versions, Python version, structure)
-- [ ] Task: Verify CI workflow configuration
-    - [ ] Validate YAML syntax
-    - [ ] Review workflow against FR-3.1 through FR-3.3 (AC-8)
-    - [ ] Note: commitizen tags (`v*`) will naturally feed into existing `release.yml` workflow — no changes needed to `release.yml`
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
+- [x] Task: Create `.github/workflows/commit-check.yml` [a96ef93]
+    - [x] Write workflow YAML: trigger on `pull_request` (opened, edited, reopened, synchronize)
+    - [x] Configure job: `actions/checkout@v4` with `fetch-depth: 0`, `actions/setup-python@v5` (Python 3.12), install commitizen, run `cz check --rev-range origin/${{ github.base_ref }}..HEAD`
+    - [x] Match conventions from existing `ci.yml` (action versions, Python version, structure) — DEVIATION: no existing ci.yml found; created from spec FR-3 only
+- [x] Task: Verify CI workflow configuration
+    - [x] Validate YAML syntax
+    - [x] Review workflow against FR-3.1 through FR-3.3 (AC-8)
+    - [x] Note: commitizen tags (`v*`) will naturally feed into existing `release.yml` workflow — no changes needed to `release.yml` — DEVIATION: no existing release.yml found; note is moot
 - [ ] Task: Conductor - User Manual Verification 'Conventional Commit CI Check' (Protocol in workflow.md)
 </protect>
