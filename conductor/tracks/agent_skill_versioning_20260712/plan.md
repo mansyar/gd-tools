@@ -18,8 +18,8 @@
 
 ## Phase 2: Commitizen Integration
 
-- [ ] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
-- [ ] Task: Update `tech-stack.md` to document commitizen (before implementation — workflow.md §Guiding Principles #2)
+- [x] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
+- [x] Task: Update `tech-stack.md` to document commitizen (before implementation — workflow.md §Guiding Principles #2) [a736e12]
     - [ ] Add `commitizen` to Development Dependencies table (§3)
     - [ ] Add dated note about the automated version bumping and changelog workflow
 - [ ] Task: Add commitizen to dev dependencies and configure in `pyproject.toml`
