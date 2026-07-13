@@ -96,15 +96,17 @@ func _write_json(path: String, data: Dictionary) -> bool:
 	return true
 
 
-func _log_summary(hits: Dictionary, output_path: String) -> void:
+func _log_summary(hits: Dictionary, output_path: String) -> String:
 	var total_files: int = hits.size()
 	var total_lines: int = 0
 	for file_id in hits:
 		total_lines += hits[file_id].size()
-	print(
+	var summary = (
 		"[gd-tools] Coverage summary: %d files, %d lines tracked, output: %s"
 		% [total_files, total_lines, output_path]
 	)
+	print(summary)
+	return summary
 
 
 func _log_error(what: String, cause: String, fix: String) -> void:

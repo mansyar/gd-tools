@@ -163,8 +163,8 @@ def test_format_syntax_error_skipped(tmp_path):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0
-    # 2 files checked, 1 formatted (broken.gd skipped)
-    assert "Formatted 1 of 2 file(s)" in result.output
+    # 1 file checked (1 skipped), 1 formatted
+    assert "Formatted 1 of 1 file(s)" in result.output
     # Syntax error reported with file path
     assert "broken.gd" in result.output
     assert "Warning" in result.output
