@@ -1,4 +1,8 @@
-## Unreleased
+## v0.1.1 (2026-07-13)
+
+### Fix
+
+- resolve 23 audit findings across all severity tiers
 
 ## v0.1.0 (2026-07-12)
 
