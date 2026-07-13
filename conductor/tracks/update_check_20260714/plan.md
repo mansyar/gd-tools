@@ -1,6 +1,11 @@
+<protect>
 # Implementation Plan: PyPI Update Notification
 
 ## Phase 1: Update Check Module
+
+- [ ] Task: Read spec.md and workflow.md before starting Phase 1
+    - [ ] Read the track's `spec.md` to review all functional requirements
+    - [ ] Read `conductor/workflow.md` to review the TDD workflow and quality gates
 
 - [ ] Task: Add `packaging` dependency
     - [ ] Add `packaging` to the `dependencies` list in `pyproject.toml`
@@ -53,6 +58,10 @@
 
 ## Phase 2: CLI Integration
 
+- [ ] Task: Read spec.md and workflow.md before starting Phase 2
+    - [ ] Read the track's `spec.md` to review all functional requirements
+    - [ ] Read `conductor/workflow.md` to review the TDD workflow and quality gates
+
 - [ ] Task: Write tests for CLI integration
     - [ ] Test notification message is printed to stderr when an update is available
     - [ ] Test no notification is printed when no update is available
@@ -72,3 +81,4 @@
     - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
 - [ ] Task: Conductor - User Manual Verification 'CLI Integration'
+</protect>

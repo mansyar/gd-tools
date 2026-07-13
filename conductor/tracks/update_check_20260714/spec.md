@@ -1,3 +1,4 @@
+<protect>
 # Specification: PyPI Update Notification
 
 ## Overview
@@ -67,3 +68,4 @@ When a user runs any `gd-tools` command, the CLI checks PyPI for a newer version
 - No pre-release filtering (all versions from PyPI are considered).
 - No update installation or auto-update functionality.
 - No changelog or release notes display.
+</protect>
