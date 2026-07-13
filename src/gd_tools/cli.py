@@ -1,5 +1,6 @@
 """CLI entry point for gd-tools."""
 
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,28 @@ from .format_runner import run_format
 from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .test_runner import run_tests
+
+
+def _configure_windows_utf8() -> None:
+    """Reconfigure stdout/stderr to UTF-8 on Windows.
+
+    Windows defaults to the system codepage (e.g. cp1252) for console
+    output, which cannot encode Unicode characters used by Rich (✓, ✗,
+    ⚠). This reconfigures the standard streams to UTF-8, matching the
+    effect of setting PYTHONUTF8=1.
+    """
+    if sys.platform != "win32":
+        return
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            try:
+                reconfigure(encoding="utf-8")
+            except (ValueError, OSError):
+                pass
+
+
+_configure_windows_utf8()
 
 
 class GdToolsGroup(click.Group):
