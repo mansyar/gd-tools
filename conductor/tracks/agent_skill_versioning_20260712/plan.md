@@ -16,7 +16,7 @@
     - [x] Verify SKILL.md is under 500 lines and content is self-contained (AC-1, AC-2, AC-3, AC-4)
 - [x] Task: Conductor - User Manual Verification 'Agent Skill Creation' (Protocol in workflow.md)
 
-## Phase 2: Commitizen Integration
+## Phase 2: Commitizen Integration [checkpoint: 910cf42]
 
 - [x] Task: Read `spec.md` and `workflow.md` for context before starting phase tasks
 - [x] Task: Update `tech-stack.md` to document commitizen (before implementation — workflow.md §Guiding Principles #2) [a736e12]
