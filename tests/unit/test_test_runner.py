@@ -28,7 +28,6 @@ from gd_tools.test_runner import (
     build_gut_args,
     check_gut_installed,
     format_test_results,
-    is_gut_installed,
     parse_junit_xml,
     run_tests,
 )
