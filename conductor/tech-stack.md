@@ -23,6 +23,7 @@
 | `pydantic` | Config model validation (Pydantic v2) | Validates `gd-tools.toml` structure; `extra='forbid'` catches typo'd keys |
 | `pyyaml` | YAML config file generation | Used by `gd-tools init` and config to generate `gdlintrc` (YAML set format) |
 | `requests` | Download GUT releases from GitHub | Used by `gd-tools init` |
+| `packaging` | Version comparison for PyPI update check | Used by `gd-tools` update notification feature |
 
 ---
 
