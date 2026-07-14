@@ -31,7 +31,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ---
 
-## Phase 2: Stale Addon Detection Module
+## Phase 2: Stale Addon Detection Module [checkpoint: b44caba]
 
 - [x] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
 - [x] Task: Write unit tests for addon_check.py [bec267b]
@@ -51,7 +51,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
     - [x] Implement stderr warning output via `click.echo(..., err=True)` for missing, stale, and unparseable cases
 - [x] Task: Integrate check into cli.py [bec267b]
     - [x] Import and call `check_addon_version()` from `GdToolsGroup.invoke()` alongside the existing `check_for_update()` call
-- [ ] Task: Conductor - User Manual Verification 'Stale Addon Detection Module' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Stale Addon Detection Module' (Protocol in workflow.md)
 
 ---
 
