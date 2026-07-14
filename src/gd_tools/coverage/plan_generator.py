@@ -306,6 +306,53 @@ class CoverageVisitor(Visitor):
 # --- Plan Generation (FR-4, FR-6) ---
 
 
+def resolve_autoload_paths(project_root: str) -> list[str]:
+    """Read ``project.godot`` and resolve autoload script paths.
+
+    Parses the ``[autoload]`` section of ``project.godot`` and returns
+    a list of script paths relative to ``project_root`` (using forward
+    slashes, matching Godot's ``res://`` convention).
+
+    Args:
+        project_root: Root directory of the Godot project.
+
+    Returns:
+        List of relative paths for autoload scripts. Returns an empty
+        list if ``project.godot`` doesn't exist or has no ``[autoload]``
+        section.
+    """
+    project_file = Path(project_root) / "project.godot"
+    if not project_file.exists():
+        return []
+
+    lines = project_file.read_text(encoding="utf-8").splitlines()
+
+    in_autoload = False
+    paths: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_autoload = stripped == "[autoload]"
+            continue
+        if not in_autoload:
+            continue
+        if not stripped or stripped.startswith(";") or stripped.startswith("#"):
+            continue
+        if "=" not in stripped:
+            continue
+        # Parse key="value"
+        _, _, value = stripped.partition("=")
+        value = value.strip().strip('"').strip("'")
+        if value.startswith("*"):
+            value = value[1:]
+        if value.startswith("res://"):
+            value = value[len("res://") :]
+        if value:
+            paths.append(value.replace("\\", "/"))
+
+    return paths
+
+
 def generate_plan(
     project_root: str,
     exclude_dirs: list[str] | None = None,
@@ -344,6 +391,18 @@ def generate_plan(
         for f in gd_files
         if not any(td in PurePath(f).parts for td in test_dirs)
     ]
+
+    # Filter out autoload scripts — they have active instances and
+    # cannot be safely instrumented (FR-2)
+    autoload_paths = resolve_autoload_paths(project_root)
+    if autoload_paths:
+        autoload_set = {ap.replace("\\", "/") for ap in autoload_paths}
+        gd_files = [
+            f
+            for f in gd_files
+            if str(Path(f).relative_to(project_root)).replace("\\", "/")
+            not in autoload_set
+        ]
 
     file_plans: list[FilePlan] = []
     console = Console()

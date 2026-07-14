@@ -17,6 +17,7 @@ from gd_tools.coverage.plan_generator import (
     generate_plan,
     parse_gdscript,
     read_plan_json,
+    resolve_autoload_paths,
     write_plan_json,
 )
 
@@ -695,3 +696,107 @@ def test_performance_100_files(tmp_path):
 
     assert len(cp.files) == 100
     assert elapsed < 1.0, f"Plan generation took {elapsed:.3f}s (>1s)"
+
+
+# --- Autoload auto-exclusion (FR-2) ---
+
+
+def test_resolve_autoload_paths_parses_autoload_section(tmp_path):
+    """resolve_autoload_paths reads [autoload] entries from project.godot."""
+    project_file = tmp_path / "project.godot"
+    project_file.write_text(
+        "config_version=5\n\n"
+        "[application]\n\n"
+        'config/name="My Game"\n\n'
+        "[autoload]\n\n"
+        'GlobalManager="*res://autoload/global_manager.gd"\n'
+        'SceneManager="*res://autoload/scene_manager.gd"\n',
+        encoding="utf-8",
+    )
+
+    paths = resolve_autoload_paths(str(tmp_path))
+    assert "autoload/global_manager.gd" in paths
+    assert "autoload/scene_manager.gd" in paths
+    assert len(paths) == 2
+
+
+def test_resolve_autoload_paths_strips_star_and_res_prefix(tmp_path):
+    """resolve_autoload_paths strips leading * and res:// prefix."""
+    project_file = tmp_path / "project.godot"
+    project_file.write_text(
+        "[autoload]\n\n"
+        'EnabledAutoload="*res://autoload/enabled.gd"\n'
+        'DisabledAutoload="res://autoload/disabled.gd"\n',
+        encoding="utf-8",
+    )
+
+    paths = resolve_autoload_paths(str(tmp_path))
+    assert "autoload/enabled.gd" in paths
+    assert "autoload/disabled.gd" in paths
+
+
+def test_resolve_autoload_paths_no_project_godot(tmp_path):
+    """resolve_autoload_paths returns empty list when project.godot is missing."""
+    paths = resolve_autoload_paths(str(tmp_path))
+    assert paths == []
+
+
+def test_resolve_autoload_paths_no_autoload_section(tmp_path):
+    """resolve_autoload_paths returns empty list when [autoload] section is absent."""
+    project_file = tmp_path / "project.godot"
+    project_file.write_text(
+        'config_version=5\n\n[application]\n\nconfig/name="My Game"\n',
+        encoding="utf-8",
+    )
+
+    paths = resolve_autoload_paths(str(tmp_path))
+    assert paths == []
+
+
+def test_resolve_autoload_paths_empty_autoload_section(tmp_path):
+    """resolve_autoload_paths returns empty list when [autoload] section is empty."""
+    project_file = tmp_path / "project.godot"
+    project_file.write_text(
+        '[autoload]\n\n[application]\n\nconfig/name="My Game"\n',
+        encoding="utf-8",
+    )
+
+    paths = resolve_autoload_paths(str(tmp_path))
+    assert paths == []
+
+
+def test_generate_plan_excludes_autoload_scripts(tmp_path):
+    """Autoload scripts declared in project.godot are excluded from the coverage plan."""
+    project_file = tmp_path / "project.godot"
+    project_file.write_text(
+        "[autoload]\n\n" 'GlobalManager="*res://autoload/global_manager.gd"\n',
+        encoding="utf-8",
+    )
+
+    (tmp_path / "autoload").mkdir()
+    (tmp_path / "autoload" / "global_manager.gd").write_text(
+        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+    )
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+    )
+
+    cp = generate_plan(str(tmp_path))
+    paths = [f.path for f in cp.files]
+    assert "res://player.gd" in paths
+    assert "res://autoload/global_manager.gd" not in paths
+
+
+def test_generate_plan_no_autoload_section_all_files_included(tmp_path):
+    """When project.godot has no [autoload] section, all discovered files are included."""
+    project_file = tmp_path / "project.godot"
+    project_file.write_text(
+        'config_version=5\n\n[application]\n\nconfig/name="My Game"\n',
+        encoding="utf-8",
+    )
+
+    (tmp_path / "player.gd").write_text("extends Node\n", encoding="utf-8")
+    (tmp_path / "enemy.gd").write_text("extends Node\n", encoding="utf-8")
+
+    cp = generate_plan(str(tmp_path))
+    assert len(cp.files) == 2
