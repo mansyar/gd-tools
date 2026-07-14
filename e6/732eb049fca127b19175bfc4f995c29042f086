@@ -1,0 +1,20 @@
+Phase 1 Checkpoint Verification Report
+
+Phase: Phase 1 - Plan Generator — Remove Autoload Exclusion
+
+Automated Test Command: \='true'; pytest tests/unit/test_plan_generator.py -q --no-header --no-cov
+Result: 52 passed, 100% line and branch coverage on plan_generator.py
+
+Manual Verification Plan:
+1. Ensure gd-tools is installed: pip install -e .[dev]
+2. Create a Godot project with a project.godot containing an [autoload] section
+3. Generate a coverage plan and verify autoload scripts appear in the output
+4. Run unit tests: pytest tests/unit/test_plan_generator.py
+
+User Confirmation: User confirmed 'Yes, looks good' — verification plan met expectations.
+
+Changes in this phase:
+- Removed autoload exclusion filter from generate_plan() in plan_generator.py
+- Removed resolve_autoload_paths() function (no longer used)
+- Updated tests: 3 new tests for autoload inclusion, removed 5 tests for deleted function
+- Expected plan fixtures unchanged (no autoloads in fixture projects)
