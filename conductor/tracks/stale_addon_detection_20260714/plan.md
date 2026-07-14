@@ -57,15 +57,15 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ## Phase 3: Doctor Integration
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
-- [ ] Task: Write tests for doctor addon version reporting
-    - [ ] Test: `check_coverage_addon()` reports deployed version when addon files and version file are present
-    - [ ] Test: `check_coverage_addon()` warns when addon files are present but version file is missing
-    - [ ] Test: `check_coverage_addon()` warns with both versions when addon version is stale (addon < package)
-- [ ] Task: Implement doctor version status in check_coverage_addon()
-    - [ ] Read `_version.txt` from the coverage addon directory
-    - [ ] Include deployed version in the `CheckResult.message` when version file exists (e.g., "Coverage addon installed (v0.3.0)")
-    - [ ] Set `severity="warning"` and update `fix_hint` when version file is missing
-    - [ ] Set `severity="warning"` and report both versions when addon version is stale
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
+- [x] Task: Write tests for doctor addon version reporting [da97aec]
+    - [x] Test: `check_coverage_addon()` reports deployed version when addon files and version file are present
+    - [x] Test: `check_coverage_addon()` warns when addon files are present but version file is missing
+    - [x] Test: `check_coverage_addon()` warns with both versions when addon version is stale (addon < package)
+- [x] Task: Implement doctor version status in check_coverage_addon() [da97aec]
+    - [x] Read `_version.txt` from the coverage addon directory
+    - [x] Include deployed version in the `CheckResult.message` when version file exists (e.g., "Coverage addon installed (v0.3.0)")
+    - [x] Set `severity="warning"` and update `fix_hint` when version file is missing
+    - [x] Set `severity="warning"` and report both versions when addon version is stale
 - [ ] Task: Conductor - User Manual Verification 'Doctor Integration' (Protocol in workflow.md)
 </protect>
