@@ -16,7 +16,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ---
 
-## Phase 1: Version File Creation During Init
+## Phase 1: Version File Creation During Init [checkpoint: 1b3e312]
 
 - [x] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
 - [x] Task: Write tests for version file creation during init
