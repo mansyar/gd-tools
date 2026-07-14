@@ -1,0 +1,23 @@
+Phase 4 Checkpoint Verification Report
+
+Phase: Remove GD_TOOLS_COVERAGE_ACTIVE env var from test_runner.py
+Status: VERIFIED
+
+Implementation:
+- Commit aa23ca7: fix(coverage): Remove GD_TOOLS_COVERAGE_ACTIVE env var from test_runner
+  - Removed 'GD_TOOLS_COVERAGE_ACTIVE': '1' from env dict in test_runner.py
+  - Replaced test_run_tests_coverage_sets_env_var with test_run_tests_coverage_no_active_env_var
+  - Added test_run_tests_coverage_has_pre_run_script_arg (regression guard)
+  - Existing tests for GD_TOOLS_COVERAGE_PLAN and GD_TOOLS_COVERAGE_OUTPUT already present
+
+Test Results:
+- 649 unit tests: ALL PASS
+- ruff check: All checks passed
+- black --check: 2 files unchanged
+- Coverage on test_runner.py: 96% line, 100% branch
+
+Manual Verification:
+- User confirmed 'Yes, looks good' via question tool
+- Env dict now contains only GD_TOOLS_COVERAGE_PLAN and GD_TOOLS_COVERAGE_OUTPUT
+- pre_run_hook.gd calls set_active(true) to activate tracker (Phase 3)
+- GD_TOOLS_COVERAGE_ACTIVE no longer set anywhere in source code
