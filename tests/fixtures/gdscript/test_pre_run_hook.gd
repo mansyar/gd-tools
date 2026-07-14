@@ -233,6 +233,172 @@ func test_inject_trackers_very_long_file():
 	assert_eq(result_lines[1002], "var v999 = 999", "original line 1000 preserved")
 
 
+# === _inject_trackers() match_case tests ===
+
+
+func test_inject_trackers_match_case_literal_pattern():
+	# Match case with literal pattern: tracker goes AFTER pattern line
+	var source = 'func foo(state):\n\tmatch state:\n\t\t0:\n\t\t\tprint("zero")\n'
+	var lines = [{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[1], "\tmatch state:", "match line directly before pattern")
+	assert_eq(result_lines[2], "\t\t0:", "pattern line should be unchanged")
+	assert_eq(
+		result_lines[3], "\t\t\t_GDTCoverage.hit(0, 0)", "tracker after pattern with body indent"
+	)
+	assert_eq(result_lines[4], '\t\t\tprint("zero")', "body line should be preserved")
+
+
+func test_inject_trackers_match_case_wildcard_pattern():
+	var source = 'func foo(state):\n\tmatch state:\n\t\t_:\n\t\t\tprint("default")\n'
+	var lines = [{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], "\t\t_:", "wildcard pattern unchanged")
+	assert_eq(
+		result_lines[3], "\t\t\t_GDTCoverage.hit(0, 0)", "tracker after wildcard with body indent"
+	)
+
+
+func test_inject_trackers_match_case_var_binding():
+	var source = "func foo(arr):\n\tmatch arr:\n\t\tvar x:\n\t\t\tprint(x)\n"
+	var lines = [{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], "\t\tvar x:", "var binding pattern unchanged")
+	assert_eq(
+		result_lines[3],
+		"\t\t\t_GDTCoverage.hit(0, 0)",
+		"tracker after var binding with body indent"
+	)
+
+
+func test_inject_trackers_match_case_array_pattern():
+	var source = 'func foo(arr):\n\tmatch arr:\n\t\t[0, 1]:\n\t\t\tprint("match")\n'
+	var lines = [{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], "\t\t[0, 1]:", "array pattern unchanged")
+	assert_eq(
+		result_lines[3],
+		"\t\t\t_GDTCoverage.hit(0, 0)",
+		"tracker after array pattern with body indent"
+	)
+
+
+func test_inject_trackers_match_case_dict_pattern():
+	var source = 'func foo(d):\n\tmatch d:\n\t\t{"key": 1}:\n\t\t\tprint("match")\n'
+	var lines = [{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], '\t\t{"key": 1}:', "dict pattern unchanged")
+	assert_eq(
+		result_lines[3],
+		"\t\t\t_GDTCoverage.hit(0, 0)",
+		"tracker after dict pattern with body indent"
+	)
+
+
+func test_inject_trackers_match_case_multiple_patterns():
+	var source = 'func foo(state):\n\tmatch state:\n\t\t0, 1, 2:\n\t\t\tprint("low")\n'
+	var lines = [{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], "\t\t0, 1, 2:", "multiple pattern unchanged")
+	assert_eq(
+		result_lines[3],
+		"\t\t\t_GDTCoverage.hit(0, 0)",
+		"tracker after multiple pattern with body indent"
+	)
+
+
+func test_inject_trackers_match_case_guarded_pattern():
+	var source = 'func foo(state):\n\tmatch state:\n\t\t0 when state > 5:\n\t\t\tprint("guarded")\n'
+	var lines = [{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], "\t\t0 when state > 5:", "guarded pattern unchanged")
+	assert_eq(
+		result_lines[3],
+		"\t\t\t_GDTCoverage.hit(0, 0)",
+		"tracker after guarded pattern with body indent"
+	)
+
+
+func test_inject_trackers_match_case_full_statement():
+	# Full match with multiple cases — no tracker between match expr and first pattern
+	var source = (
+		"func handle(state):\n"
+		+ "\tmatch state:\n"
+		+ "\t\t0:\n"
+		+ '\t\t\tprint("zero")\n'
+		+ "\t\t1:\n"
+		+ '\t\t\tprint("one")\n'
+		+ "\t\t_:\n"
+		+ '\t\t\tprint("default")\n'
+	)
+	var lines = [
+		{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"},
+		{"line": 5, "id": 1, "type": "branch", "branch_type": "match_case"},
+		{"line": 7, "id": 2, "type": "branch", "branch_type": "match_case"},
+	]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	# No tracker between match and first pattern
+	assert_eq(result_lines[1], "\tmatch state:", "match line unchanged")
+	assert_eq(result_lines[2], "\t\t0:", "first pattern directly after match (no tracker between)")
+	# Tracker for case 0 after first pattern
+	assert_eq(
+		result_lines[3], "\t\t\t_GDTCoverage.hit(0, 0)", "tracker for case 0 after first pattern"
+	)
+	assert_eq(result_lines[4], '\t\t\tprint("zero")', "body of case 0 preserved")
+	# Second case
+	assert_eq(result_lines[5], "\t\t1:", "second pattern preserved")
+	assert_eq(
+		result_lines[6], "\t\t\t_GDTCoverage.hit(0, 1)", "tracker for case 1 after second pattern"
+	)
+	assert_eq(result_lines[7], '\t\t\tprint("one")', "body of case 1 preserved")
+	# Wildcard case
+	assert_eq(result_lines[8], "\t\t_:", "wildcard pattern preserved")
+	assert_eq(
+		result_lines[9], "\t\t\t_GDTCoverage.hit(0, 2)", "tracker for wildcard case after pattern"
+	)
+
+
+func test_inject_trackers_non_match_case_still_injects_before():
+	# Regression: non-match_case entries should still inject BEFORE the tracked line
+	var source = "func foo():\n\tvar x = 5\n\treturn x\n"
+	var lines = [{"line": 3, "id": 0, "type": "statement"}]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	assert_eq(result_lines[2], "\t_GDTCoverage.hit(0, 0)", "tracker should be before line 3")
+	assert_eq(result_lines[3], "\treturn x", "original line 3 preserved")
+
+
+func test_inject_trackers_mixed_match_and_non_match():
+	# Mixed: one match_case entry and one regular entry
+	var source = (
+		"func handle(state):\n"
+		+ "\tmatch state:\n"
+		+ "\t\t0:\n"
+		+ '\t\t\tprint("zero")\n'
+		+ "\treturn\n"
+	)
+	var lines = [
+		{"line": 3, "id": 0, "type": "branch", "branch_type": "match_case"},
+		{"line": 5, "id": 1, "type": "statement"},
+	]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	# match_case tracker AFTER pattern, regular tracker BEFORE return
+	assert_eq(result_lines[2], "\t\t0:", "pattern preserved")
+	assert_eq(result_lines[3], "\t\t\t_GDTCoverage.hit(0, 0)", "match_case tracker after pattern")
+	assert_eq(result_lines[4], '\t\t\tprint("zero")', "body preserved")
+	assert_eq(result_lines[5], "\t_GDTCoverage.hit(0, 1)", "regular tracker before return")
+	assert_eq(result_lines[6], "\treturn", "return line preserved")
+
+
 # === _instrument_file() tests ===
 
 
@@ -296,9 +462,7 @@ func test_instrument_file_source_restored_after_instance_skip():
 	var original = calc.source_code
 	_hook._instrument_file(file_entry)
 	assert_eq(
-		calc.source_code,
-		original,
-		"source_code should be restored to original after instance skip"
+		calc.source_code, original, "source_code should be restored to original after instance skip"
 	)
 	assert_engine_error_count(1, "reload() returns ERR_ALREADY_IN_USE when instances exist")
 

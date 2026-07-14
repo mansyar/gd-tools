@@ -92,7 +92,7 @@ def test_pre_run_hook_gut_tests_pass(tmp_path):
         result = run_tests(config, suite="test_pre_run_hook.gd")
 
     assert result.failed == 0
-    assert result.passed == 31
+    assert result.passed == 41
 
 
 @pytest.mark.integration

@@ -112,6 +112,19 @@ static func _extract_indent(line: String) -> String:
 	return indent
 
 
+static func _detect_body_indent(source_lines: PackedStringArray, pattern_index: int) -> String:
+	# Scan lines after the pattern line to find the next non-empty line
+	# and use its indentation as the body indent.
+	var i: int = pattern_index + 1
+	while i < source_lines.size():
+		var line: String = source_lines[i]
+		if not line.strip_edges().is_empty():
+			return _extract_indent(line)
+		i += 1
+	# Fallback: if no non-empty line found, use the pattern indent plus one tab.
+	return _extract_indent(source_lines[pattern_index]) + "\t"
+
+
 static func _inject_trackers(source: String, file_id: int, lines: Array) -> String:
 	var source_lines: PackedStringArray = source.split("\n")
 	var sorted_lines: Array = lines.duplicate(true)
@@ -123,9 +136,19 @@ static func _inject_trackers(source: String, file_id: int, lines: Array) -> Stri
 		if target_index < 0 or target_index >= source_lines.size():
 			continue
 		var target_line: String = source_lines[target_index]
-		var indent: String = _extract_indent(target_line)
+		var branch_type: String = entry.get("branch_type", "")
+		var insert_index: int
+		var indent: String
+		if branch_type == "match_case":
+			# Inject AFTER the pattern line (inside the match case body)
+			insert_index = target_index + 1
+			indent = _detect_body_indent(source_lines, target_index)
+		else:
+			# Inject BEFORE the tracked line (existing behavior)
+			insert_index = target_index
+			indent = _extract_indent(target_line)
 		var tracker_call: String = "%s%s.hit(%d, %d)" % [indent, TRACKER_NAME, file_id, line_id]
-		source_lines.insert(target_index, tracker_call)
+		source_lines.insert(insert_index, tracker_call)
 	return "\n".join(source_lines)
 
 
@@ -232,4 +255,6 @@ func _validate_file_entry(file_entry: Variant) -> bool:
 
 
 func _log_error(what: String, cause: String, fix: String) -> void:
-	push_error("[gd-tools] [Error] " + what + "\n\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix)
+	push_error(
+		"[gd-tools] [Error] " + what + "\n\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix
+	)
