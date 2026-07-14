@@ -1,0 +1,8 @@
+{
+  "track_id": "coverage_success_display_20260714",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-07-14T16:35:34Z",
+  "updated_at": "2026-07-14T16:35:34Z",
+  "description": "gd-tools test --coverage --min 80 does not show coverage percentage on success. It only shows on error. Show it on success as well."
+}
