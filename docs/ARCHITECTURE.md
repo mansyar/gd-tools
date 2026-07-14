@@ -48,7 +48,7 @@ reporting) and GDScript (runtime instrumentation).
 | Phase | Language | Component | Responsibility |
 |-------|----------|-----------|----------------|
 | 1. Plan generation | Python | `coverage/plan_generator.py` | Parse GDScript via Lark AST, identify trackable lines and branches, emit `plan.json` |
-| 2. Runtime instrumentation | GDScript | `pre_run_hook.gd`, `coverage.gd`, `post_run_hook.gd` | Inject tracker calls into source at runtime, execute tests, collect hit data, write `coverage.json` |
+| 2. Runtime instrumentation | GDScript | `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` | Inject tracker calls into source at runtime (via `coverage.gd._ready()`), activate tracker (via `pre_run_hook.gd`), execute tests, collect hit data, write `coverage.json` |
 | 3. Report generation | Python | `coverage/reporter.py` | Cross-reference plan with hit data, compute metrics, emit reports (HTML, LCOV, Cobertura, text) |
 
 ### Comparison with Alternatives
@@ -143,18 +143,21 @@ User runs: gd-tools test --coverage --min 80
 | test_runner.py            |     | Godot subprocess      |
 |  run_tests(coverage=True) |---->|  (headless)           |
 |                           |     |                       |
-|  Sets env vars:           |     |  GUT gut_cmdln.gd     |
-|   GD_TOOLS_COVERAGE_      |     |   |                   |
-|     ACTIVE=1              |     |   v                   |
-|   GD_TOOLS_COVERAGE_      |     |  pre_run_hook.gd      |
+|  Sets env vars:           |     |  _GDTCoverage._ready()|
+|   GD_TOOLS_COVERAGE_      |     |   (first autoload)    |
 |     PLAN=<plan.json>      |     |   load plan.json      |
 |   GD_TOOLS_COVERAGE_      |     |   inject trackers     |
 |     OUTPUT=<coverage.json>|     |   reload scripts      |
-|                           |     |   |                   |
-|  Builds GUT args with:   |     |   v                   |
-|   -gpre_run_script=...   |     |  GUT runs tests       |
-|   -gpost_run_script=...   |     |   (instrumented code  |
-+---------------------------+     |    fires tracker.hit) |
+|                           |     |   (_active = false)   |
+|  Builds GUT args with:   |     |   |                   |
+|   -gpre_run_script=...   |     |   v                   |
+|   -gpost_run_script=...   |     |  pre_run_hook.gd      |
++---------------------------+     |   set_active(true)    |
+                                |   |                   |
+                                |   v                   |
+                                |  GUT runs tests       |
+                                |   (instrumented code  |
+                                |    fires tracker.hit) |
                                 |   |                   |
                                 |   v                   |
                                 |  post_run_hook.gd     |
@@ -203,20 +206,27 @@ User runs: gd-tools test --coverage --min 80
 
 4. **Test execution with coverage:** `test_runner.run_tests()` is
    called with `coverage=True`. This:
-   - Sets three environment variables on the Godot subprocess.
+   - Sets two environment variables on the Godot subprocess.
    - Adds `-gpre_run_script` and `-gpost_run_script` GUT arguments
      pointing to the coverage addon hooks.
    - Launches Godot in headless mode with GUT.
 
-5. **Pre-run instrumentation (GDScript):** GUT calls
-   `pre_run_hook.gd.run()`. The hook:
+5. **Autoload instrumentation (GDScript):** When Godot starts,
+   `_GDTCoverage._ready()` runs as the first autoload (position 0),
+   before any other autoload initializes. It:
    - Reads `plan.json` (path from `GD_TOOLS_COVERAGE_PLAN`).
    - Validates the plan structure.
    - For each file in the plan: loads the `GDScript` resource,
      injects `_GDTCoverage.hit(file_id, line_id)` calls before each
      trackable line, sets `script.source_code`, and calls
      `script.reload()`.
-   - Activates the `_GDTCoverage` tracker via `set_active(true)`.
+   - Leaves `_active = false` (tracker activation deferred to
+     `pre_run_hook.gd`).
+
+5b. **Tracker activation (GDScript):** GUT calls
+   `pre_run_hook.gd.run()`, which calls `_GDTCoverage.set_active(true)`.
+   This ensures hits are only recorded during test execution, not during
+   autoload initialization.
 
 6. **Test execution (instrumented):** GUT runs the tests. The
    instrumented code fires `_GDTCoverage.hit()` calls, which the
@@ -387,13 +397,23 @@ sequential `id`, and appends a `LinePlan` to `self.points`.
 **Location:** `src/gd_tools/addons/gd-tools-coverage/coverage.gd`
 
 **Responsibility:** Autoload singleton registered as `_GDTCoverage`
-in `project.godot`. Records line hit counts during GUT test execution.
+in `project.godot` (first autoload, position 0). Instruments GDScript
+files with coverage tracking calls in `_ready()`, then records line
+hit counts during GUT test execution.
 
-**Activation:** The tracker checks the `GD_TOOLS_COVERAGE_ACTIVE`
-environment variable in `_ready()`. It activates only when the value
-is `"1"` or `"true"` (case-insensitive). When inactive, the `hit()`
-method returns immediately --- a single boolean check for minimal
-overhead.
+**Instrumentation:** In `_ready()`, the autoload checks the
+`GD_TOOLS_COVERAGE_PLAN` environment variable. If set, it loads and
+validates the plan JSON, then instruments each file by modifying
+`script.source_code` and calling `script.reload()`. Because
+`_GDTCoverage` is the first autoload, instrumentation happens before
+any other autoload's `_ready()` creates instances --- eliminating
+`ERR_ALREADY_IN_USE` errors.
+
+**Activation:** After instrumentation, `_active` remains `false`. The
+tracker is activated later by `pre_run_hook.gd.run()` calling
+`set_active(true)`, ensuring hits are only recorded during test
+execution. When inactive, the `hit()` method returns immediately ---
+a single boolean check for minimal overhead.
 
 **Data structure:** Hits are stored as a nested dictionary:
 `_hits[file_id][line_id] = count`. The `hit(file_id, line_id)` method
@@ -407,45 +427,40 @@ increments the count for the given pair.
 - `set_active(active)` --- programmatically activates/deactivates
   the tracker (used by `pre_run_hook.gd`).
 - `is_active()` --- returns the current activation state.
+- `_instrument_files(plan)` --- instruments all files in the plan
+  (moved from `pre_run_hook.gd` in Track 24.5).
+- `_instrument_file(file_entry)` --- instruments a single file via
+  `load()` -> modify `source_code` -> `reload()`.
+- `_inject_trackers(source, file_id, lines)` --- injects tracker calls
+  bottom-to-top to preserve line numbers.
 
 ### 5.3 pre_run_hook.gd
 
 **Location:** `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`
 
-**Responsibility:** GUT pre-run hook. Instruments GDScript source
-files with coverage tracking calls before tests are executed.
+**Responsibility:** GUT pre-run hook. Activates the `_GDTCoverage`
+tracker before tests are executed. Instrumentation was moved to
+`coverage.gd._ready()` in Track 24.5.
 
 **Base class:** `extends GutHookScript` (required by GUT 9.x). GUT
 calls the `run()` method --- not `_init()` --- to execute the hook.
 
 **Flow:**
 
-1. Read the plan path from `GD_TOOLS_COVERAGE_PLAN`.
-2. Load and validate the plan JSON.
-3. For each file in the plan:
-   - Load the `GDScript` resource via `load(path)`.
-   - Inject tracker calls using `_inject_trackers()`.
-   - Set `script.source_code = instrumented_source`.
-   - Call `script.reload()` to recompile.
-4. Activate the tracker via `set_active(true)`.
+1. Call `_GDTCoverage.set_active(true)` to activate the tracker.
 
-**Injection algorithm (`_inject_trackers`):**
+By the time `pre_run_hook.gd.run()` is called, all autoloads
+(including `_GDTCoverage`) have already initialized. The
+instrumentation was performed in `_GDTCoverage._ready()`, so the
+scripts are already instrumented. The pre-run hook only activates
+hit recording, ensuring hits are captured only during test execution
+--- not during autoload initialization.
 
-The method receives the original source, a `file_id`, and an array
-of line entries. It:
-
-1. Splits the source into lines.
-2. Sorts the line entries **descending** by line number (bottom-to-
-   top).
-3. For each entry, extracts the indentation of the target line and
-   inserts a tracker call before it:
-   ```
-   <indent>_GDTCoverage.hit(<file_id>, <line_id>)
-   ```
-
-Bottom-to-top ordering is critical: inserting a line at index N
-shifts all subsequent lines down by one. Processing from the bottom
-ensures line numbers of not-yet-processed entries remain valid.
+**Note (Track 24.5):** All instrumentation logic (`_load_plan`,
+`_validate_plan`, `_instrument_files`, `_instrument_file`,
+`_inject_trackers`, `_extract_indent`, `_detect_body_indent`,
+`_log_error`) was moved from `pre_run_hook.gd` to `coverage.gd`.
+See Section 5.2 for details on the injection algorithm.
 
 ### 5.4 post_run_hook.gd
 
@@ -535,19 +550,19 @@ processed.
 
 ### 6.2 Environment Variable Activation
 
-Three environment variables control the coverage system:
+Two environment variables control the coverage system:
 
 | Variable | Purpose |
 |----------|---------|
-| `GD_TOOLS_COVERAGE_ACTIVE` | Activates the tracker autoload (`"1"` or `"true"`) |
-| `GD_TOOLS_COVERAGE_PLAN` | Path to `plan.json` for the pre-run hook |
+| `GD_TOOLS_COVERAGE_PLAN` | Path to `plan.json` for `coverage.gd._ready()` instrumentation |
 | `GD_TOOLS_COVERAGE_OUTPUT` | Path for `coverage.json` output |
 
 These are set by `test_runner.run_tests()` when `coverage=True` is
 passed. The same Godot/GUT project can run with or without coverage ---
-no project configuration change is needed. The tracker is also a
-no-op when the env var is absent, so deploying the addon does not
-affect normal test runs.
+no project configuration change is needed. When the plan env var is
+absent, `_GDTCoverage._ready()` skips instrumentation and the tracker
+remains inactive, so deploying the addon does not affect normal test
+runs.
 
 ### 6.3 Source Restoration Approach
 
@@ -594,13 +609,14 @@ inherit from `GutHookScript` and calls `run()` to execute them. See
 [Spike Results, Key Deviation
 1](./SPIKE_coverage_instrumentation.md#13-spike-results-2026-07-09).
 
-### 6.6 Tracker Activation: Value Check, Not Existence
+### 6.6 Tracker Activation: Deferred to Pre-Run Hook (Track 24.5)
 
-The tracker checks the **value** of `GD_TOOLS_COVERAGE_ACTIVE`, not
-just its existence. Only `"1"` and `"true"` (case-insensitive)
-activate the tracker. This prevents accidental activation from empty
-strings or `"0"` values. See [Spike Results, Review Fix
-5](./SPIKE_coverage_instrumentation.md#13-spike-results-2026-07-09).
+Instrumentation happens in `_GDTCoverage._ready()` (triggered by the
+`GD_TOOLS_COVERAGE_PLAN` env var), but hit recording is activated
+separately by `pre_run_hook.gd.run()` calling `set_active(true)`. This
+separation ensures that hits are only recorded during test execution,
+not during autoload initialization. When no plan env var is set,
+instrumentation is skipped and the tracker stays inactive.
 
 ---
 

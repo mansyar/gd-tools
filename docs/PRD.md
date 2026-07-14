@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Branch Injection Fix delivered (Track 21)
+**Status:** Post-v1.0 — Autoload-Based Coverage Instrumentation delivered (Track 24.5)
 **Target Godot Version:** 4.5+
 
 ---
@@ -363,7 +363,7 @@ gd_tools/
   addons/
     gd-tools-coverage/
       coverage.gd           # Core instrumentation + tracking
-      pre_run_hook.gd       # GUT pre-run hook — reads plan, instruments
+      pre_run_hook.gd       # GUT pre-run hook — activates coverage tracker
       post_run_hook.gd      # GUT post-run hook — saves coverage JSON
 ```
 
@@ -697,13 +697,14 @@ key exists with a null value. An explicit null check prevents assigning
 `null` to a `String`-typed variable, which would crash instrumentation for
 all files.
 
-**Autoload safety (Track 20):** `pre_run_hook.gd` captures the original source
-before mutation. If `reload()` returns `ERR_ALREADY_IN_USE` (the script is an
-already-loaded autoload singleton), the hook restores the original source and
-skips instrumentation for that file. GDScript provides no public API for
-pre-mutation instance checking, so detection is reactive. Autoload scripts are
-also auto-excluded from the coverage plan at plan generation time (see
-`resolve_autoload_paths()` in `plan_generator.py`).
+**Autoload-based instrumentation (Track 24.5):** Coverage instrumentation now
+happens in `_GDTCoverage._ready()`, which runs as the first autoload (position
+0) before any other autoload's `_ready()`. This eliminates `ERR_ALREADY_IN_USE`
+errors: by instrumenting before autoloads create instances, all subsequent
+`load()` calls return the instrumented source. The `_GDTCoverage` autoload is
+prepended to the `[autoload]` section by `register_coverage_autoload()` in
+`init.py`, with an auto-fix that moves it to position 0 if needed. Autoload
+scripts (including scripts they instantiate) are now included in coverage.
 
 ---
 
@@ -737,18 +738,15 @@ Exclude entries support both bare names and path prefixes:
   excluding specific subdirectories while keeping same-named directories
   elsewhere (e.g., `"src/vendor/addons"` excludes only that specific path).
 
-### Autoload Auto-Exclusion (Coverage)
+### Autoload Inclusion in Coverage (Track 24.5)
 
-During coverage plan generation, autoload scripts registered in
-`project.godot`'s `[autoload]` section are automatically excluded from
-instrumentation. This prevents coverage corruption caused by instrumenting
-already-loaded autoload singletons (whose `reload()` would fail with
-`ERR_ALREADY_IN_USE`).
-
-The `resolve_autoload_paths()` function in `plan_generator.py` reads
-`project.godot`, parses the `[autoload]` section, strips the `*` prefix
-and `res://` scheme, and returns a list of relative paths. These paths
-are filtered from the coverage plan's file list.
+Autoload scripts are now **included** in coverage instrumentation. The
+`_GDTCoverage` autoload (registered as the first autoload, position 0)
+instruments all files in its `_ready()` before any other autoload
+initializes. This ensures that when autoloads create instances of other
+scripts during their `_ready()`, those instances use the instrumented
+source. The previous `resolve_autoload_paths()` exclusion was removed ---
+autoloads and the scripts they instantiate are fully covered.
 
 ### gdtoolkit Config Generation
 

@@ -246,7 +246,7 @@ reports and environment diagnostics.
 | **Modules** | `src/gd_tools/addons/gd-tools-coverage/coverage.gd`, `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`, `src/gd_tools/init.py`, `src/gd_tools/coverage/plan_generator.py`, `src/gd_tools/test_runner.py` |
 | **Effort** | 1-2 days |
 | **Risk** | MEDIUM -- Godot `reload()` in-place behavior needs empirical verification |
-| **Status** | Planned |
+| **Status** | Delivered |
 
 **Problem:**
 

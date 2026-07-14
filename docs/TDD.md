@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Coverage Autoload Fix & Multi-Path CLI delivered (Track 20)
+**Status:** Post-v1.0 — Autoload-Based Coverage Instrumentation delivered (Track 24.5)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -48,7 +48,7 @@ src/gd_tools/
 ├── coverage/
 │   ├── __init__.py
 │   ├── orchestrator.py        # Coverage CLI orchestration (test --coverage, report, merge, show)
-│   ├── plan_generator.py     # Lark AST → instrumentation plan (JSON) + autoload exclusion
+│   ├── plan_generator.py     # Lark AST → instrumentation plan (JSON)
 │   ├── reporter.py           # Coverage data → report dispatch
 │   ├── html_reporter.py     # Jinja2 HTML report
 │   ├── lcov_reporter.py      # LCOV format
@@ -59,8 +59,8 @@ src/gd_tools/
 │       └── file.html         # HTML per-file page (Jinja2)
 └── addons/
     └── gd-tools-coverage/
-        ├── coverage.gd       # Autoload singleton — hit tracking
-        ├── pre_run_hook.gd   # GUT pre-run hook — instruments scripts (autoload-safe)
+        ├── coverage.gd       # Autoload singleton — instrumentation + hit tracking
+        ├── pre_run_hook.gd   # GUT pre-run hook — activates coverage tracker
         └── post_run_hook.gd  # GUT post-run hook — saves coverage JSON
 ```
 
@@ -636,7 +636,7 @@ def run_gut_with_coverage(
     """Generate coverage plan, set env vars, run Godot+GUT.
     1. Call coverage/plan_generator.generate_plan()
     2. Write plan to .gd-tools/coverage/plan.json
-    3. Set env: GD_TOOLS_COVERAGE_ACTIVE=1, GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
+    3. Set env: GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
     4. Run Godot with GUT args
     5. After completion, call coverage/reporter.generate_report()"""
 
@@ -664,7 +664,8 @@ godot --headless -s addons/gut/gut_cmdln.gd --path <project_root> -gexit \
 
 When `--coverage` is NOT specified, the pre/post run hooks are omitted from
 args (GUT runs normally without instrumentation). The autoload tracker is
-still present but inactive (checks `GD_TOOLS_COVERAGE_ACTIVE` env var).
+still present but inactive (no plan path set, so `_ready()` skips
+instrumentation and `_active` stays `false`).
 
 **Implementation notes (Track 6 + post-Track 10 fixes, 2026-07-11):**
 
@@ -824,18 +825,9 @@ def generate_plan(
 ) -> CoveragePlan:
     """Walk project, parse each .gd file, generate instrumentation plan.
     1. Find all .gd files in source_dirs, excluding exclude_dirs and test_dirs
-    2. Resolve autoload paths from project.godot and exclude them (Track 20)
-    3. For each file: parse with gdtoolkit, walk AST, extract trackable points
-    4. Assign unique IDs to each point
-    5. Return CoveragePlan"""
-
-def resolve_autoload_paths(project_root: Path) -> list[str]:
-    """Read project.godot [autoload] section and return relative paths.
-    Strips the '*' prefix and 'res://' scheme from each autoload entry.
-    Returns forward-slash paths. Returns empty list if project.godot
-    is missing or has no [autoload] section.
-    (Track 20 — prevents coverage corruption from instrumenting
-    already-loaded autoload singletons.)"""
+    2. For each file: parse with gdtoolkit, walk AST, extract trackable points
+    3. Assign unique IDs to each point
+    4. Return CoveragePlan"""
 
 @dataclass
 class CoveragePlan:
@@ -1008,19 +1000,15 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 - 49 unit tests in `test_plan_generator.py` + 2 in
   `test_generate_expected_plans.py`. `plan_generator.py` at 100% coverage.
 
-**Autoload exclusion (Track 20, 2026-07-14):**
+**Autoload inclusion (Track 24.5, 2026-07-15):**
 
-- `resolve_autoload_paths(project_root)` reads `project.godot`, parses the
-  `[autoload]` section manually (line-by-line), strips the `*` prefix and
-  `res://` scheme, and returns a list of relative paths with forward slashes.
-- `generate_plan()` calls `resolve_autoload_paths()` and filters autoload
-  paths from the discovered file list before generating the plan.
-- Handles missing `project.godot`, empty/missing `[autoload]` section
-  gracefully (returns empty list).
-- Prevents coverage corruption: instrumenting an already-loaded autoload
-  singleton causes `Script.reload()` to fail with `ERR_ALREADY_IN_USE`.
-- 7 new tests in `test_plan_generator.py` for autoload resolution edge cases.
-- `plan_generator.py` at 98% coverage after Track 20 changes.
+- `resolve_autoload_paths()` was removed. Autoload scripts are no longer
+  excluded from the coverage plan.
+- Autoloads are now included in instrumentation because `_GDTCoverage._ready()`
+  (first autoload, position 0) instruments all files before any other
+  autoload's `_ready()` creates instances. This eliminates `ERR_ALREADY_IN_USE`
+  errors.
+- `plan_generator.py` at 100% coverage after Track 24.5 changes.
 
 ---
 
@@ -1249,7 +1237,7 @@ def run_coverage_test(
     """Run tests with coverage instrumentation enabled.
     1. Generate plan (plan_generator.generate_plan)
     2. Write plan.json to config.coverage.output_dir
-    3. Set env vars: GD_TOOLS_COVERAGE_ACTIVE=1, GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
+    3. Set env vars: GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
     4. Run tests via test_runner.run_tests(coverage=True, paths=paths)
     5. Read coverage.json + plan.json
     6. Generate reports (reporter.generate_report)
@@ -1303,9 +1291,9 @@ def show_coverage_summary(
   no double-checking. Threshold enforcement happens in
   `reporter.generate_report()` via `min_threshold` parameter.
 - `test_runner.py` env vars: `coverage=True` sets
-  `GD_TOOLS_COVERAGE_ACTIVE=1`, `GD_TOOLS_COVERAGE_PLAN` (absolute path to
-  `plan.json`), `GD_TOOLS_COVERAGE_OUTPUT` (absolute path to
-  `coverage.json`). Uses `config.coverage.output_dir`.
+  `GD_TOOLS_COVERAGE_PLAN` (absolute path to `plan.json`),
+  `GD_TOOLS_COVERAGE_OUTPUT` (absolute path to `coverage.json`). Uses
+  `config.coverage.output_dir`.
 - `post_run_hook.gd` updated: converted flat hits dict
   (`"file_id:line_id"`) to per-file format
   (`{files:[{file_id, hits:{line_id:count}}]}`) to match reporter's
@@ -1494,26 +1482,28 @@ test the warning, suppression, and version-comparison paths.
 ```gdscript
 extends Node
 ## Coverage tracker autoload singleton.
-## Registered as _GDTCoverage in project.godot.
-## No-op when GD_TOOLS_COVERAGE_ACTIVE env var is not set or is "0"/"false".
+## Registered as _GDTCoverage in project.godot (first autoload, position 0).
+## Instruments files in _ready() when GD_TOOLS_COVERAGE_PLAN is set.
+
+const TRACKER_NAME = "_GDTCoverage"
 
 var _active: bool = false
 var _hits: Dictionary = {}  # file_id → {line_id → hit_count}
 
 func _ready() -> void:
-    var env_val := OS.get_environment("GD_TOOLS_COVERAGE_ACTIVE")
-    _active = env_val != "" and env_val != "0" and env_val.to_lower() != "false"
-    if not _active:
+    var plan_path := OS.get_environment("GD_TOOLS_COVERAGE_PLAN")
+    if plan_path.is_empty():
         return
-    _hits.clear()
+    var plan := _load_plan(plan_path)
+    if plan.is_empty():
+        return
+    if not _validate_plan(plan):
+        return
+    _instrument_files(plan)
+    # _active stays false — activated later by pre_run_hook.gd
 
 func set_active(active: bool) -> void:
-    ## Enable/disable tracking. Used by tests and pre_run_hook.
     _active = active
-    if active and _hits.is_empty():
-        pass  # Ready to track
-    elif not active:
-        pass  # No-op when inactive
 
 func hit(file_id: int, line_id: int) -> void:
     if not _active:
@@ -1534,15 +1524,30 @@ func reset() -> void:
 
 func is_active() -> bool:
     return _active
+
+# Instrumentation methods (moved from pre_run_hook.gd in Track 24.5):
+# _load_plan(path), _validate_plan(plan), _validate_file_entry(entry),
+# _instrument_files(plan), _instrument_file(file_entry),
+# _inject_trackers(source, file_id, lines), _extract_indent(line),
+# _detect_body_indent(source_lines, pattern_index), _log_error(what, cause, fix)
 ```
 
 **Key design points:**
-- Registered as autoload `_GDTCoverage` in `project.godot` during `gd-tools init`
-- Checks `GD_TOOLS_COVERAGE_ACTIVE` env var in `_ready()` — no-op when not set
+- Registered as first autoload `_GDTCoverage` (position 0) in `project.godot`
+  during `gd-tools init` — ensures `_ready()` runs before any other autoload
+- Checks `GD_TOOLS_COVERAGE_PLAN` env var in `_ready()` — if set, loads plan,
+  validates, and instruments all files. If not set, skips instrumentation
+  (no-op)
+- After instrumentation, `_active` stays `false` — activated later by
+  `pre_run_hook.gd` calling `set_active(true)`, ensuring hits are only
+  recorded during test execution
 - Injected code calls `_GDTCoverage.hit(file_id, line_id)` — minimal overhead
   (one bool check + dictionary lookup when active, one bool check when inactive)
 - `file_id` and `line_id` are integers from the instrumentation plan (compact,
   fast lookup vs. string keys)
+- All instrumentation logic moved from `pre_run_hook.gd` to `coverage.gd` in
+  Track 24.5 (eliminates `ERR_ALREADY_IN_USE` by instrumenting before autoloads
+  create instances)
 
 ---
 
@@ -1550,153 +1555,33 @@ func is_active() -> bool:
 
 > **Spike-validated:** GUT hooks must `extends GutHookScript` (not `RefCounted`)
 > and use `run()` method (not `_init()`). GUT instantiates the hook script and
-> calls `run()`. The `_inject_trackers` method is `static` for testability.
+> calls `run()`.
 >
 > **Implemented:** Track 11 (`coverage_hooks_20260711`, archived). See
-> `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (228 lines). All 12
-> acceptance criteria passed. Key deviations from spec below:
-> - `_validate_plan()` and `_validate_file_entry()` validate plan schema
->   (version, files, file_id, path, lines, and each line entry's `line`/`id`)
-> - `_log_error(what, cause, fix)` uses Cause/Fix format (product-guidelines)
-> - `_activate_tracker()` finds `_GDTCoverage` autoload via `SceneTree.root`
-> - `_instrument_file()` returns `bool`; `TRACKER_NAME` constant added
-> - 28 GUT tests in `test_pre_run_hook.gd`, 11 integration tests in
->   `test_coverage_hooks.py`. Overall coverage 98.65%.
+> `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`. All 12 acceptance
+> criteria passed.
+>
+> **Track 24.5 update (2026-07-15):** Simplified to just
+> `_GDTCoverage.set_active(true)`. All instrumentation logic (`_load_plan`,
+> `_validate_plan`, `_instrument_files`, `_instrument_file`,
+> `_inject_trackers`, `_extract_indent`, `_detect_body_indent`, `_log_error`)
+> moved to `coverage.gd._ready()`. 38 GUT tests moved to
+> `test_coverage_instrumentation.gd`. `pre_run_hook.gd` now has 2 GUT tests.
 
 ```gdscript
 extends GutHookScript
-## GUT pre-run hook. Reads instrumentation plan, instruments scripts.
-## Invoked by GUT before tests run.
+## GUT pre-run hook. Activates the coverage tracker before tests run.
+## Track 24.5: Instrumentation moved to coverage.gd._ready().
 
 func run() -> void:
-    ## Main entry point called by GUT.
-    var plan_path := OS.get_environment("GD_TOOLS_COVERAGE_PLAN")
-    if plan_path.is_empty():
-        push_warning("gd-tools: GD_TOOLS_COVERAGE_PLAN not set, skipping instrumentation")
-        return
-
-    var plan := _load_plan(plan_path)
-    if plan.is_empty():
-        push_error("gd-tools: Failed to load coverage plan")
-        return
-
-    for file_entry in plan["files"]:
-        _instrument_file(file_entry)
-
-func _load_plan(path: String) -> Dictionary:
-    ## Load plan JSON from file path.
-    var file := FileAccess.open(path, FileAccess.READ)
-    if not file:
-        push_error("gd-tools: Cannot open plan file: %s" % path)
-        return {}
-    var json_text := file.get_as_text()
-    file.close()
-    var parsed = JSON.parse_string(json_text)
-    if parsed == null or not parsed is Dictionary:
-        push_error("gd-tools: Invalid plan JSON")
-        return {}
-    return parsed
-
-static func _inject_trackers(source: String, file_id: int, lines: Array) -> String:
-    ## Inject tracker calls into source code.
-    ## Works bottom-to-top so line numbers don't shift.
-    ## Returns the instrumented source string.
-    var source_lines: PackedStringArray = source.split("\n")
-    var sorted_lines: Array = lines.duplicate(true)
-    sorted_lines.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
-
-    for entry in sorted_lines:
-        var target_line_num: int = int(entry["line"])
-        var line_id: int = int(entry["id"])
-        var target_index: int = target_line_num - 1
-
-        if target_index < 0 or target_index >= source_lines.size():
-            continue
-
-        var target_line: String = source_lines[target_index]
-        var branch_type = entry.get("branch_type", "")
-        if branch_type == null:
-            branch_type = ""
-
-        var insert_index: int
-        var indent: String
-        if branch_type in ["match_case", "if_false", "elif_true"]:
-            # Inject AFTER the branch line (inside the body).
-            # match_case patterns, else: and elif: lines must have trackers
-            # placed inside their body — injecting before these lines would
-            # insert a statement between the if/elif/else keywords, breaking
-            # the GDScript block structure (orphaned else/elif = syntax error).
-            insert_index = target_index + 1
-            indent = _detect_body_indent(source_lines, target_index)
-        else:
-            # Inject BEFORE the tracked line (existing behavior)
-            insert_index = target_index
-            indent = _extract_indent(target_line)
-
-        var tracker_call := "%s_GDTCoverage.hit(%d, %d)" % [indent, file_id, line_id]
-        source_lines.insert(insert_index, tracker_call)
-
-    return "\n".join(source_lines)
-
-static func _extract_indent(line: String) -> String:
-    ## Extract leading whitespace from a line.
-    var indent := ""
-    for ch in line:
-        if ch == " " or ch == "\t":
-            indent += ch
-        else:
-            break
-    return indent
-
-static func _detect_body_indent(source_lines: PackedStringArray, pattern_index: int) -> String:
-    ## Detect the body indentation for a match case or branch body.
-    ## Scans forward from the pattern/keyword line to find the first
-    ## non-empty body line and returns its indentation.
-    var pattern_indent := _extract_indent(source_lines[pattern_index])
-    for i in range(pattern_index + 1, source_lines.size()):
-        var line := source_lines[i]
-        if line.strip_edges() == "":
-            continue
-        var line_indent := _extract_indent(line)
-        if line_indent.length() > pattern_indent.length():
-            return line_indent
-        break
-    return pattern_indent + "\t"
-
-func _instrument_file(file_entry: Dictionary) -> bool:
-    ## Instrument a single script file. Returns true on success.
-    var res_path: String = file_entry["path"]
-    var file_id: int = int(file_entry.get("file_id", 0))
-    var lines: Array = file_entry["lines"]
-
-    var script := load(res_path)
-    if script == null:
-        push_warning("gd-tools: Cannot load script: %s" % res_path)
-        return false
-
-    var original_source := script.source_code  # Capture before mutation (Track 20)
-    var instrumented_source := _inject_trackers(original_source, file_id, lines)
-
-    script.source_code = instrumented_source
-    var err := script.reload()
-    if err == ERR_ALREADY_IN_USE:
-        # Script is an already-loaded autoload singleton (Track 20)
-        script.source_code = original_source  # Restore original
-        push_warning("gd-tools: Skipping autoload script (already in use): %s" % res_path)
-        return false
-    if err != OK:
-        # Other reload failure — restore and attempt best-effort reload (Track 20)
-        script.source_code = original_source
-        push_error("gd-tools: Failed to reload instrumented script: %s (error %d)" % [res_path, err])
-        script.reload()  # Best-effort restore
-        return false
-    return true
+    _GDTCoverage.set_active(true)
 ```
 
-**Instrumentation approach:** String manipulation — split source into lines,
-insert tracker calls (bottom-to-top to preserve line numbers), set
-`source_code`, call `reload()`. Two injection strategies depending on branch
-type:
+**Instrumentation approach (Track 24.5):** All instrumentation logic now lives
+in `coverage.gd._ready()` (see Section 4.1). The approach is the same string
+manipulation — split source into lines, insert tracker calls (bottom-to-top
+to preserve line numbers), set `source_code`, call `reload()`. Two injection
+strategies depending on branch type:
 
 - **Before the line** (statements, `if_true`, `loop_body`): tracker is
   injected at the same indentation as the target line, before it.
@@ -1716,23 +1601,26 @@ absent. An explicit `if branch_type == null: branch_type = ""` check
 prevents assigning `null` to a `String`-typed variable, which would crash
 `_inject_trackers` for all files.
 
-**Autoload safety hardening (Track 20, 2026-07-14):**
+**Autoload-based instrumentation (Track 24.5, 2026-07-15):**
 
-- `_instrument_file()` now returns `bool` (was `void`). Returns `false` when
-  the script cannot be loaded or instrumented.
-- Original source is captured **before** mutation. On `reload()` returning
-  `ERR_ALREADY_IN_USE` (the script is an already-loaded autoload singleton),
-  the original source is restored and the file is skipped with a warning.
+- `_GDTCoverage` is registered as the **first** autoload (position 0) via
+  `register_coverage_autoload()` in `init.py`, which uses PREPEND instead of
+  APPEND. This ensures `_ready()` runs before any other autoload creates
+  instances, so instrumentation completes before autoload scripts are loaded
+  by user code.
+- If `_GDTCoverage` already exists but is not at position 0, `init.py`
+  auto-fixes by moving it to position 0 with a stderr warning.
+- `_instrument_file()` in `coverage.gd` captures original source **before**
+  mutation. On `reload()` returning `ERR_ALREADY_IN_USE`, the original source
+  is restored and the file is skipped with a warning.
 - On other `reload()` failures, the original source is restored and a
   best-effort `reload()` is attempted to get back to the original state.
-- GDScript provides no public API for checking whether a script is an active
-  singleton instance *before* mutation, so detection is reactive (after
-  `reload()` fails). This is mitigated by `resolve_autoload_paths()` in
-  `plan_generator.py`, which auto-excludes autoload scripts from the coverage
-  plan at plan generation time (Track 20, FR-2).
-- 3 new GUT tests in `test_pre_run_hook.gd` (active instance skip, source
-  restored after skip, source restored on reload failure). Expected GUT test
-  count updated from 28 to 31 in `test_coverage_hooks.py`.
+- Autoloads are now **included** in the coverage plan (Track 24.5 removed the
+  old `resolve_autoload_paths()` exclusion from `plan_generator.py`).
+  Because instrumentation runs in `_ready()` before autoloads create
+  instances, the `ERR_ALREADY_IN_USE` issue is eliminated.
+- 38 GUT tests moved from `test_pre_run_hook.gd` to
+  `test_coverage_instrumentation.gd`. `pre_run_hook.gd` now has 2 GUT tests.
 
 **Branch injection fix (Track 21, 2026-07-14):**
 
@@ -1919,8 +1807,7 @@ Line IDs with 0 hits mean the line was never executed (uncovered).
 
 | Variable                       | Set By  | Read By    | Purpose                          |
 |--------------------------------|---------|------------|----------------------------------|
-| `GD_TOOLS_COVERAGE_ACTIVE`     | Python  | coverage.gd | Enable/disable tracker (0 or 1)  |
-| `GD_TOOLS_COVERAGE_PLAN`       | Python  | pre_run_hook.gd | Path to plan.json           |
+| `GD_TOOLS_COVERAGE_PLAN`       | Python  | coverage.gd | Path to plan.json (triggers instrumentation in `_ready()`) |
 | `GD_TOOLS_COVERAGE_OUTPUT`     | Python  | post_run_hook.gd | Path to coverage.json        |
 
 ### 5.4 GUT Configuration (`.gutconfig.json`)
@@ -1971,7 +1858,6 @@ Python (test_runner.py)
 │     └─ Write plan to .gd-tools/coverage/plan.json
 │
 ├─ 4. Set environment variables:
-│     GD_TOOLS_COVERAGE_ACTIVE=1
 │     GD_TOOLS_COVERAGE_PLAN=<abs_path>/plan.json
 │     GD_TOOLS_COVERAGE_OUTPUT=<abs_path>/coverage.json
 │
@@ -1984,16 +1870,19 @@ Python (test_runner.py)
 │  ┌─────────────────────────────────────────────────────────┐
 │  │ Godot + GUT                                             │
 │  │                                                         │
-│  │  6. GUT loads, calls pre_run_hook.run()                │
-│  │     ├─ Read plan.json from GD_TOOLS_COVERAGE_PLAN       │
-│  │     ├─ For each file in plan:                           │
-│  │     │   ├─ load(res_path) → GDScript object            │
-│  │     │   ├─ Split source_code into lines                 │
-│  │     │   ├─ Insert _GDTCoverage.hit(file_id, line_id)   │
-│  │     │   │   before each instrumented line (bottom-up)   │
-│  │     │   ├─ Set script.source_code = instrumented        │
-│  │     │   └─ script.reload()                              │
-│  │     └─ Tracker is now active (env var set)             │
+│  │  6. Godot loads autoloads (Track 24.5)                 │
+│  │     └─ _GDTCoverage._ready() runs first (position 0)   │
+│  │        ├─ Read plan.json from GD_TOOLS_COVERAGE_PLAN   │
+│  │        ├─ For each file in plan:                       │
+│  │        │   ├─ load(res_path) → GDScript object        │
+│  │        │   ├─ Insert _GDTCoverage.hit(file_id, line_id)│
+│  │        │   │   before each instrumented line (bottom-up)│
+│  │        │   ├─ Set script.source_code = instrumented    │
+│  │        │   └─ script.reload()                          │
+│  │        └─ _active stays false (tracker not yet active) │
+│  │                                                         │
+│  │  6b. GUT loads, calls pre_run_hook.run()               │
+│  │      └─ _GDTCoverage.set_active(true)                  │
 │  │                                                         │
 │  │  7. GUT runs tests                                      │
 │  │     └─ Instrumented code fires _GDTCoverage.hit() calls │

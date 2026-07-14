@@ -345,8 +345,8 @@ gd-tools/
 |   |   |-- terminal_reporter.py   # Rich terminal table output
 |   |   `-- templates/         # HTML report templates
 |   `-- addons/gd-tools-coverage/  # GDScript coverage addon
-|       |-- coverage.gd        # Tracker autoload singleton
-|       |-- pre_run_hook.gd    # Source instrumentation and reload
+|       |-- coverage.gd        # Instrumentation + tracker autoload
+|       |-- pre_run_hook.gd    # Activates coverage tracker
 |       `-- post_run_hook.gd   # Coverage data serialization
 |-- tests/                     # Test suite
 |   |-- unit/                  # Unit tests (mocked dependencies)
