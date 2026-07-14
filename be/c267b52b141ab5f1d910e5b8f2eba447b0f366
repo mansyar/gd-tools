@@ -1,0 +1,14 @@
+Task: Stale Addon Detection Module (Phase 2)
+
+Summary: Created new addon_check.py module with check_addon_version() function and integrated it into the CLI invoke flow. This enables stale addon detection - warning users when deployed GDScript addon files are outdated relative to the installed gd-tools-cli package version.
+
+Files Created:
+- src/gd_tools/addon_check.py: New module implementing check_addon_version(). Checks GD_TOOLS_NO_UPDATE_CHECK env var (FR3), finds project root, reads _version.txt, compares versions using packaging.version.parse (FR4), prints warnings to stderr via click.echo(err=True) (FR2), fails silently on unexpected errors (FR2.8).
+- tests/unit/test_addon_check.py: 7 unit tests covering all FR2 scenarios (match, stale, missing, newer, unparseable, env var suppression, silent failure).
+
+Files Modified:
+- src/gd_tools/cli.py: Added import of check_addon_version and call in GdToolsGroup.invoke() after update check, before super().invoke(ctx).
+
+Why: When users upgrade gd-tools-cli via pip, deployed GDScript addon files drift from the package version. This module detects that drift and warns users, prompting them to run 'gd-tools init' to update the addon files. Non-blocking - exit code unchanged.
+
+Test Results: 634/634 tests passed. addon_check.py: 100% coverage. cli.py: 98% coverage.
