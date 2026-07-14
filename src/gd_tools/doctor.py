@@ -16,8 +16,10 @@ if sys.version_info >= (3, 11):
 else:  # pragma: no cover
     import tomli as tomllib
 
+from packaging.version import parse as parse_version
 from rich.table import Table
 
+from . import __version__
 from .config import GdToolsConfig, find_project_root, load_config
 from .errors import ConfigError
 from .godot import (
@@ -256,10 +258,41 @@ def check_coverage_addon(project_root: Path) -> CheckResult:
             fix_hint="Run `gd-tools init` to install the coverage addon.",
             severity="warning",
         )
+    # All addon files present — check version file for staleness.
+    version_file = cov_dir / "_version.txt"
+    if not version_file.exists():
+        return CheckResult(
+            name="Coverage Addon",
+            passed=True,
+            message="Coverage addon installed (version file missing)",
+            fix_hint="Run `gd-tools init` to create the version file.",
+            severity="warning",
+        )
+
+    addon_version = version_file.read_text(encoding="utf-8").strip()
+
+    is_stale = True
+    try:
+        addon_parsed = parse_version(addon_version)
+        package_parsed = parse_version(__version__)
+        is_stale = addon_parsed < package_parsed
+    except (TypeError, ValueError):
+        # Unparseable version — treated as stale (raw string shown).
+        pass
+
+    if is_stale:
+        return CheckResult(
+            name="Coverage Addon",
+            passed=True,
+            message=f"Coverage addon is outdated (v{addon_version} deployed, v{__version__} available)",
+            fix_hint="Run `gd-tools init` to update.",
+            severity="warning",
+        )
+
     return CheckResult(
         name="Coverage Addon",
         passed=True,
-        message="Coverage addon is installed",
+        message=f"Coverage addon installed (v{addon_version})",
     )
 
 

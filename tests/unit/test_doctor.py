@@ -349,16 +349,19 @@ def test_check_gut_version_passes_when_version_unknown(
 
 
 @pytest.mark.unit
+@patch("gd_tools.doctor.__version__", "0.3.0")
 def test_check_coverage_addon_passes_when_all_files_present(tmp_path):
     """Test check_coverage_addon passes when all coverage files exist."""
     cov_dir = tmp_path / "addons" / "gd-tools-coverage"
     cov_dir.mkdir(parents=True)
     for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
         (cov_dir / fname).touch()
+    (cov_dir / "_version.txt").write_text("0.3.0\n")
     result = check_coverage_addon(tmp_path)
     assert result.passed is True
     assert result.name == "Coverage Addon"
     assert "installed" in result.message.lower()
+    assert "0.3.0" in result.message
 
 
 @pytest.mark.unit
@@ -379,6 +382,55 @@ def test_check_coverage_addon_warning_severity(tmp_path):
     """Test check_coverage_addon has warning severity on failure."""
     result = check_coverage_addon(tmp_path)
     assert result.severity == "warning"
+    assert "gd-tools init" in result.fix_hint
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.__version__", "0.3.0")
+def test_check_coverage_addon_warns_when_version_file_missing(tmp_path):
+    """Test check_coverage_addon warns when addon files present but version file missing."""
+    cov_dir = tmp_path / "addons" / "gd-tools-coverage"
+    cov_dir.mkdir(parents=True)
+    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+        (cov_dir / fname).touch()
+    result = check_coverage_addon(tmp_path)
+    assert result.passed is True
+    assert result.severity == "warning"
+    assert "version file missing" in result.message.lower()
+    assert "gd-tools init" in result.fix_hint
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.__version__", "0.3.0")
+def test_check_coverage_addon_warns_when_stale(tmp_path):
+    """Test check_coverage_addon warns with both versions when addon is stale."""
+    cov_dir = tmp_path / "addons" / "gd-tools-coverage"
+    cov_dir.mkdir(parents=True)
+    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+        (cov_dir / fname).touch()
+    (cov_dir / "_version.txt").write_text("0.2.0\n")
+    result = check_coverage_addon(tmp_path)
+    assert result.passed is True
+    assert result.severity == "warning"
+    assert "0.2.0" in result.message
+    assert "0.3.0" in result.message
+    assert "gd-tools init" in result.fix_hint
+
+
+@pytest.mark.unit
+@patch("gd_tools.doctor.__version__", "0.3.0")
+def test_check_coverage_addon_warns_when_unparseable_version(tmp_path):
+    """Test check_coverage_addon warns when addon version is unparseable."""
+    cov_dir = tmp_path / "addons" / "gd-tools-coverage"
+    cov_dir.mkdir(parents=True)
+    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+        (cov_dir / fname).touch()
+    (cov_dir / "_version.txt").write_text("not-a-version\n")
+    result = check_coverage_addon(tmp_path)
+    assert result.passed is True
+    assert result.severity == "warning"
+    assert "not-a-version" in result.message
+    assert "0.3.0" in result.message
     assert "gd-tools init" in result.fix_hint
 
 
