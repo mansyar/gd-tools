@@ -284,7 +284,10 @@ def check_coverage_addon(project_root: Path) -> CheckResult:
         return CheckResult(
             name="Coverage Addon",
             passed=True,
-            message=f"Coverage addon is outdated (v{addon_version} deployed, v{__version__} available)",
+            message=(
+                f"Coverage addon is outdated (v{addon_version} "
+                f"deployed, v{__version__} available)"
+            ),
             fix_hint="Run `gd-tools init` to update.",
             severity="warning",
         )

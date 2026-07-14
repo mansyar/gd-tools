@@ -50,6 +50,11 @@ def check_addon_version() -> None:
             return
 
         addon_version = version_file.read_text(encoding="utf-8").strip()
+        stale_msg = (
+            f"WARNING: Coverage addon is outdated (v{addon_version} "
+            f"deployed, v{__version__} available). "
+            f"Run `gd-tools init` to update."
+        )
 
         # FR4.1: Compare versions using packaging.version.parse().
         try:
@@ -57,22 +62,12 @@ def check_addon_version() -> None:
             package_parsed = parse_version(__version__)
         except (TypeError, ValueError):
             # FR4.2: Unparseable version = treated as stale.
-            click.echo(
-                f"WARNING: Coverage addon is outdated (v{addon_version} "
-                f"deployed, v{__version__} available). "
-                f"Run `gd-tools init` to update.",
-                err=True,
-            )
+            click.echo(stale_msg, err=True)
             return
 
         # FR2.4: Stale (addon < package)
         if addon_parsed < package_parsed:
-            click.echo(
-                f"WARNING: Coverage addon is outdated (v{addon_version} "
-                f"deployed, v{__version__} available). "
-                f"Run `gd-tools init` to update.",
-                err=True,
-            )
+            click.echo(stale_msg, err=True)
         # FR2.5: Match = no warning
         # FR2.6: Newer addon (downgrade) = no warning
     except Exception:
