@@ -1497,22 +1497,40 @@ static func _inject_trackers(source: String, file_id: int, lines: Array) -> Stri
     ## Inject tracker calls into source code.
     ## Works bottom-to-top so line numbers don't shift.
     ## Returns the instrumented source string.
-    var source_lines := source.split("\n")
-    var sorted_lines := lines.duplicate()
+    var source_lines: PackedStringArray = source.split("\n")
+    var sorted_lines: Array = lines.duplicate(true)
     sorted_lines.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
 
-    for line_entry in sorted_lines:
-        var line_num: int = int(line_entry["line"])
-        var line_id: int = int(line_entry["id"])
-        var idx: int = line_num - 1
+    for entry in sorted_lines:
+        var target_line_num: int = int(entry["line"])
+        var line_id: int = int(entry["id"])
+        var target_index: int = target_line_num - 1
 
-        if idx < 0 or idx >= source_lines.size():
+        if target_index < 0 or target_index >= source_lines.size():
             continue
 
-        var original_line := source_lines[idx]
-        var indent := _extract_indent(original_line)
+        var target_line: String = source_lines[target_index]
+        var branch_type = entry.get("branch_type", "")
+        if branch_type == null:
+            branch_type = ""
+
+        var insert_index: int
+        var indent: String
+        if branch_type in ["match_case", "if_false", "elif_true"]:
+            # Inject AFTER the branch line (inside the body).
+            # match_case patterns, else: and elif: lines must have trackers
+            # placed inside their body — injecting before these lines would
+            # insert a statement between the if/elif/else keywords, breaking
+            # the GDScript block structure (orphaned else/elif = syntax error).
+            insert_index = target_index + 1
+            indent = _detect_body_indent(source_lines, target_index)
+        else:
+            # Inject BEFORE the tracked line (existing behavior)
+            insert_index = target_index
+            indent = _extract_indent(target_line)
+
         var tracker_call := "%s_GDTCoverage.hit(%d, %d)" % [indent, file_id, line_id]
-        source_lines.insert(idx, tracker_call)
+        source_lines.insert(insert_index, tracker_call)
 
     return "\n".join(source_lines)
 
@@ -1525,6 +1543,21 @@ static func _extract_indent(line: String) -> String:
         else:
             break
     return indent
+
+static func _detect_body_indent(source_lines: PackedStringArray, pattern_index: int) -> String:
+    ## Detect the body indentation for a match case or branch body.
+    ## Scans forward from the pattern/keyword line to find the first
+    ## non-empty body line and returns its indentation.
+    var pattern_indent := _extract_indent(source_lines[pattern_index])
+    for i in range(pattern_index + 1, source_lines.size()):
+        var line := source_lines[i]
+        if line.strip_edges() == "":
+            continue
+        var line_indent := _extract_indent(line)
+        if line_indent.length() > pattern_indent.length():
+            return line_indent
+        break
+    return pattern_indent + "\t"
 
 func _instrument_file(file_entry: Dictionary) -> bool:
     ## Instrument a single script file. Returns true on success.
@@ -1557,8 +1590,27 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 ```
 
 **Instrumentation approach:** String manipulation — split source into lines,
-insert tracker calls before each instrumented line (bottom-to-top to preserve
-line numbers), set `source_code`, call `reload()`.
+insert tracker calls (bottom-to-top to preserve line numbers), set
+`source_code`, call `reload()`. Two injection strategies depending on branch
+type:
+
+- **Before the line** (statements, `if_true`, `loop_body`): tracker is
+  injected at the same indentation as the target line, before it.
+- **After the keyword line, inside the body** (`match_case`, `if_false`,
+  `elif_true`): tracker is injected on the line after `pattern:`, `else:`,
+  or `elif:` at the body indentation level. Injecting before these keyword
+  lines would insert a statement between the `if`/`elif`/`else` keywords,
+  breaking the GDScript block structure (orphaned `else`/`elif` = syntax
+  error). The `_detect_body_indent()` helper scans forward from the
+  keyword line to find the first non-empty body line and returns its
+  indentation.
+
+**`branch_type` null handling:** The plan JSON uses `null` for non-branch
+entries. GDScript's `Dictionary.get(key, default)` returns `null` when the
+key exists with a null value — only returns the default when the key is
+absent. An explicit `if branch_type == null: branch_type = ""` check
+prevents assigning `null` to a `String`-typed variable, which would crash
+`_inject_trackers` for all files.
 
 **Autoload safety hardening (Track 20, 2026-07-14):**
 
@@ -1577,6 +1629,30 @@ line numbers), set `source_code`, call `reload()`.
 - 3 new GUT tests in `test_pre_run_hook.gd` (active instance skip, source
   restored after skip, source restored on reload failure). Expected GUT test
   count updated from 28 to 31 in `test_coverage_hooks.py`.
+
+**Branch injection fix (Track 21, 2026-07-14):**
+
+- `_inject_trackers` updated to inject `if_false` (`else:`) and `elif_true`
+  (`elif:`) trackers **after** the keyword line (inside the body) rather
+  than before it. Previously, injecting before `else:` or `elif:` inserted
+  a statement between the `if` body and the keyword, producing an orphaned
+  `else`/`elif` — a GDScript syntax error. `reload()` silently failed
+  (error routed to stderr via `push_error()`), and the error handler
+  restored the original source, so tests ran against uninstrumented code
+  with 0 coverage hits.
+- `match_case` injection (Track 19) was already correct. The fix extends
+  the same after-keyword-line strategy to `if_false` and `elif_true`.
+- Null guard for `branch_type` added: `Dictionary.get("branch_type", "")`
+  returns `null` when the key exists with a null value (plan JSON uses
+  `null` for non-branch entries). Explicit `if branch_type == null` check
+  prevents a `String`-typed variable from receiving `null`.
+- `_detect_body_indent()` helper added (Track 19): scans forward from the
+  keyword/pattern line to find the first non-empty body line and returns
+  its indentation.
+- 2 new GUT tests in `test_pre_run_hook.gd`
+  (`test_inject_trackers_if_false_injects_after_else`,
+  `test_inject_trackers_elif_true_injects_after_elif`). Expected GUT test
+  count updated from 41 to 43 in `test_coverage_hooks.py`.
 
 ---
 

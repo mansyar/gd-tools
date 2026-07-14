@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Coverage Autoload Fix & Multi-Path CLI delivered (Track 20)
+**Status:** Post-v1.0 — Branch Injection Fix delivered (Track 21)
 **Target Godot Version:** 4.5+
 
 ---
@@ -627,6 +627,25 @@ func take_damage(amount: int) -> void:
 manipulation vs. Script API bytecode injection) is an implementation detail to
 be resolved during development. The plan JSON provides line numbers and IDs;
 the GDScript addon decides how to inject trackers.
+
+**Branch injection strategy (Track 21):** Two injection strategies are used
+depending on branch type:
+
+- **Before the line** (statements, `if_true`, `loop_body`): tracker injected
+  at the target line's indentation, before it.
+- **After the keyword line, inside the body** (`match_case`, `if_false`,
+  `elif_true`): tracker injected on the line after `pattern:`, `else:`, or
+  `elif:` at the body indentation level. Injecting before these keyword
+  lines would insert a statement between the `if`/`elif`/`else` keywords,
+  breaking the GDScript block structure (orphaned `else`/`elif` = syntax
+  error). The `_detect_body_indent()` helper scans forward from the
+  keyword line to find the body indentation.
+
+**Null guard (Track 20/21):** The plan JSON uses `null` for non-branch
+entries. GDScript's `Dictionary.get(key, default)` returns `null` when the
+key exists with a null value. An explicit null check prevents assigning
+`null` to a `String`-typed variable, which would crash instrumentation for
+all files.
 
 **Autoload safety (Track 20):** `pre_run_hook.gd` captures the original source
 before mutation. If `reload()` returns `ERR_ALREADY_IN_USE` (the script is an

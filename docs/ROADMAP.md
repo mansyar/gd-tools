@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Post-v1.0 — Coverage Autoload Fix & Multi-Path CLI delivered (Track 20)
+**Status:** Post-v1.0 — Branch Injection Fix delivered (Track 21)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -67,6 +67,7 @@ Phase 5: Post-Release                  ──┐
   Track 18: Agent Skill & Versioning ✅    │  ~1 day
   Track 19: PyPI Update Notification ✅   │  ~0.5 day
   Track 20: Coverage Autoload Fix ✅       │  ~1 day
+  Track 21: Branch Injection Fix ✅        │  ~0.5 day
                                            │  Risk: LOW-MEDIUM
    ──────────────────────────────────────────┘
 
@@ -1655,6 +1656,61 @@ partially met — deferred to future track.
   instance check, which is not possible with GDScript's public API).
 - **Docs updated:** README.md command table and USER_GUIDE.md updated for
   multi-path support
+
+---
+
+### Track 21: Branch Injection Fix ✅ COMPLETED
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 5 — Post-Release |
+| **Goal** | Fix coverage instrumentation for `if_false` (`else:`) and `elif_true` (`elif:`) branch types that produced invalid GDScript |
+| **Dependencies** | Track 11 (hooks), Track 19 (match_case injection), Track 20 (null guard) |
+| **Modules** | `addons/gd-tools-coverage/pre_run_hook.gd`, `tests/fixtures/gdscript/test_pre_run_hook.gd`, `tests/integration/test_coverage_hooks.py` |
+| **Effort** | 0.5 day |
+| **Risk** | LOW |
+| **Status** | ✅ **COMPLETED** (2026-07-14) — All acceptance criteria passed |
+| **Conductor track** | `fix-match-instr_20260714` (archived to `conductor/archive/`) |
+| **Commits** | `994feff`..`4ea5236` (3 phases: match_case fix, null guard, if_false/elif_true fix) |
+
+**Problem:**
+
+Track 19 fixed `match_case` injection (inject after pattern line) but left
+`if_false` and `elif_true` using the default "inject before" strategy.
+Injecting a tracker before `else:` or `elif:` inserts a statement between
+the `if` body and the keyword, severing the if-elif-else block structure.
+GDScript treats this as an orphaned `else`/`elif` — a syntax error.
+`reload()` silently failed (error routed to stderr via `push_error()`),
+the error handler restored the original source, and tests ran against
+uninstrumented code showing **0 coverage hits**.
+
+This was masked by the `branch_type` null crash (Track 20) which prevented
+ALL instrumentation. After the null fix, files without if-else worked, but
+files with if-else produced invalid GDScript.
+
+**FR-1: Fix `if_false` injection** — `_inject_trackers` now injects the
+tracker **after** the `else:` line (inside the else body) using
+`_detect_body_indent()`, preserving the if-else structure.
+
+**FR-2: Fix `elif_true` injection** — Same treatment for `elif:` lines.
+Injecting before `elif:` would break the if-elif chain identically.
+
+**FR-3: Null guard** — Explicit `if branch_type == null: branch_type = ""`
+check prevents assigning `null` to a `String`-typed variable when the plan
+JSON has `"branch_type": null` for non-branch entries.
+
+**Acceptance criteria:**
+- ✅ Files with if-else statements produce valid instrumented GDScript
+- ✅ Files with elif chains produce valid instrumented GDScript
+- ✅ `reload()` succeeds for all instrumented files
+- ✅ Coverage hits recorded for else/elif branches
+- ✅ 2 new GUT tests pass (43 total)
+- ✅ All 618 Python tests pass, 97.12% coverage maintained
+- ✅ All 7 e2e tests pass
+
+**Verification (game project):**
+- `chimera_data.gd`: 0/75 → **67/75** coverage hits
+- All 30 game tests pass
 
 ---
 
