@@ -2,7 +2,7 @@
 
 # Implementation Plan — coverage_autoload_fix
 
-## Phase 1: Hybrid Exclude Matching (FR-1)
+## Phase 1: Hybrid Exclude Matching (FR-1) [checkpoint: 06f391e]
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [x] Task: Write failing tests for hybrid exclude matching in `discover_gd_files` (Red) [5f0bcfe]
@@ -14,7 +14,7 @@
     - [x] Keep existing basename matching for bare entries
     - [x] Refactor and rerun tests to green
 - [x] Task: Verify coverage for `file_discovery.py` (>80% line, >70% branch) [5f0bcfe]
-- [ ] Task: Conductor - User Manual Verification 'Phase 1 - Hybrid Exclude Matching' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1 - Hybrid Exclude Matching' (Protocol in workflow.md) [06f391e]
 
 ## Phase 2: Autoload Auto-Exclusion (FR-2)
 
