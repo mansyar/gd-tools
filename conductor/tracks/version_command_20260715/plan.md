@@ -1,7 +1,9 @@
+<protect>
 # Implementation Plan: Track 24 — Version Command
 
 ## Phase 1: Version Detection Module (`version.py`)
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
 - [ ] Task: Write unit tests for `collect_versions()` function
     - [ ] Test all 5 components found (happy path) — gd-tools, Godot, GUT, gdtoolkit, Python all return version strings
     - [ ] Test Godot not found — `find_godot()` raises `GodotNotFoundError`, result has `godot: None`
@@ -19,6 +21,7 @@
 
 ## Phase 2: CLI Command Integration (`cli.py`)
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
 - [ ] Task: Write unit tests for `version` Click command
     - [ ] Test default table output — Rich table rendered with 5 component rows
     - [ ] Test `--json` flag output — valid JSON, flat object keyed by component name, `null` for missing
@@ -33,6 +36,7 @@
 
 ## Phase 3: Documentation & Final Verification
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
 - [ ] Task: Update documentation
     - [ ] Add `version` command to README command list (if a command list exists)
     - [ ] Add `version` command section to USER_GUIDE (if it exists)
@@ -41,3 +45,4 @@
     - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/` — no errors
     - [ ] Run `pytest --cov=gd_tools --cov-branch --cov-report=term-missing` — verify >80% line, >70% branch for `version.py`
 - [ ] Task: Conductor - User Manual Verification 'Documentation & Final Verification' (Protocol in workflow.md)
+</protect>

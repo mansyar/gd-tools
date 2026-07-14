@@ -1,3 +1,4 @@
+<protect>
 # Track 24: Version Command
 
 ## Overview
@@ -84,3 +85,4 @@ Add a `gd-tools version` subcommand that prints all component versions (gd-tools
 - Checking pip/package manager versions
 - Network-based version checks
 - Checking Godot project configuration validity
+</protect>
