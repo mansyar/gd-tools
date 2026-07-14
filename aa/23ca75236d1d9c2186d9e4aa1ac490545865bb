@@ -1,0 +1,10 @@
+Phase 4: Remove GD_TOOLS_COVERAGE_ACTIVE env var from test_runner.py
+
+Changes:
+- Removed 'GD_TOOLS_COVERAGE_ACTIVE': '1' from env dict in test_runner.py (line 413)
+- Replaced test_run_tests_coverage_sets_env_var with test_run_tests_coverage_no_active_env_var (asserts ACTIVE NOT in env)
+- Added test_run_tests_coverage_has_pre_run_script_arg (regression guard for GUT args)
+- Existing tests for GD_TOOLS_COVERAGE_PLAN and GD_TOOLS_COVERAGE_OUTPUT already present
+
+Test results: 649 unit tests pass, ruff clean, black clean
+Coverage on test_runner.py: 96% line, 100% branch
