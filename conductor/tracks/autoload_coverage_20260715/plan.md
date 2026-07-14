@@ -92,7 +92,7 @@
     - [x] Run tests to confirm env var is no longer set
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Test Runner Changes' (Protocol in workflow.md)
 
-## Phase 5: E2E Fixture & Integration Test
+## Phase 5: E2E Fixture & Integration Test [checkpoint: 04b9b49]
 
 **Goal:** Create a minimal fixture Godot project that simulates the autoload-creates-instances pattern, and write an E2E test verifying autoload-instantiated scripts get coverage.
 
@@ -108,5 +108,5 @@
     - [x] Write test: running coverage on the fixture produces non-zero coverage for `chimera_data.gd`
     - [x] Write test: autoload initialization code (`game_state.gd._ready()`) is NOT recorded as coverage
     - [x] Write test: existing non-autoload coverage still works (regression check)
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: E2E Fixture & Integration Test' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5: E2E Fixture & Integration Test' (Protocol in workflow.md)
 </protect>
