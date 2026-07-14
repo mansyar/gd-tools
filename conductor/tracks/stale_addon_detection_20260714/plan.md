@@ -55,7 +55,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ---
 
-## Phase 3: Doctor Integration
+## Phase 3: Doctor Integration [checkpoint: c4ad875]
 
 - [x] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
 - [x] Task: Write tests for doctor addon version reporting [da97aec]
@@ -67,5 +67,5 @@ This plan implements the stale addon detection feature (Track 23) following the 
     - [x] Include deployed version in the `CheckResult.message` when version file exists (e.g., "Coverage addon installed (v0.3.0)")
     - [x] Set `severity="warning"` and update `fix_hint` when version file is missing
     - [x] Set `severity="warning"` and report both versions when addon version is stale
-- [ ] Task: Conductor - User Manual Verification 'Doctor Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Doctor Integration' (Protocol in workflow.md)
 </protect>
