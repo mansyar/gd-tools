@@ -42,7 +42,8 @@ src/gd_tools/
 ├── file_discovery.py         # Shared .gd file discovery (hybrid exclude matching)
 ├── test_runner.py            # `gd-tools test` — GUT orchestration
 ├── lint_runner.py            # `gd-tools lint` — gdlint wrapper
-├── format_runner.py          # `gd-tools format` — gdformat wrapper
+├── format_runner.py            # `gd-tools format` — gdformat wrapper
+├── version.py                 # `gd-tools version` — component version detection
 ├── errors.py                 # Exception hierarchy
 ├── coverage/
 │   ├── __init__.py
@@ -76,6 +77,7 @@ cli.py
 ├── test_runner.py (→ config, godot, coverage/plan_generator, coverage/reporter)
 ├── lint_runner.py (→ config)
 ├── format_runner.py (→ config)
+├── version.py (→ config, godot, init)
 └── coverage/
     ├── orchestrator.py (→ config, test_runner, plan_generator, reporter, errors)
     └── __init__.py (→ orchestrator: re-exports run_coverage_test, generate_coverage_report, merge_coverage_files, show_coverage_summary)

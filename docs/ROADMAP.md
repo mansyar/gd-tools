@@ -199,10 +199,10 @@ can drift, causing subtle coverage instrumentation failures.
 | **Phase** | 6 -- Quick Wins |
 | **Goal** | Add `gd-tools version` command that prints all component versions in a table |
 | **Dependencies** | Track 1 (CLI skeleton), Track 3 (Godot detection) |
-| **Modules** | `src/gd_tools/cli.py` |
+| **Modules** | `src/gd_tools/cli.py`, `src/gd_tools/version.py` |
 | **Effort** | 0.5 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Done |
 
 **Problem:**
 

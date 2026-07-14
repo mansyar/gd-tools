@@ -639,6 +639,8 @@ def test_doctor_autoload_not_registered(mocker, tmp_path):
 - `--help` works for all commands and subcommands
 - Config file loading from various locations
 - Non-interactive mode (`--non-interactive`) doesn't prompt
+- `version` subcommand prints all component versions (table and `--json`)
+- `version` exits 0 even when components are missing
 
 **Using Click's test runner:**
 ```python
@@ -661,6 +663,18 @@ def test_test_command_help(runner):
 
 def test_doctor_non_interactive(runner, mocker):
     """--non-interactive flag prevents prompts."""
+
+def test_version_command(runner):
+    """version command lists all component versions."""
+    result = runner.invoke(cli, ['version'])
+    assert result.exit_code == 0
+
+def test_version_json(runner):
+    """--json flag outputs valid JSON keyed by component."""
+    result = runner.invoke(cli, ['version', '--json'])
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert 'gd-tools' in data
 ```
 
 ---

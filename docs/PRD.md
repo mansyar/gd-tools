@@ -124,6 +124,7 @@ gd-tools format [options] [paths]...  Format GDScript files via gdformat
 gd-tools coverage report          Generate report from last coverage run
 gd-tools coverage merge           Merge multiple coverage data files
 gd-tools coverage show            Print coverage summary to terminal
+gd-tools version                 Print all component versions (gd-tools, Godot, GUT, gdtoolkit, Python)
 ```
 
 ### `gd-tools test`
@@ -185,6 +186,24 @@ gd-tools coverage show [--min N]
 - `merge` — combine multiple coverage data files (e.g., from parallel CI
   shards or multiple test runs).
 - `show` — print a terminal summary table (file -> line %, branch %).
+
+### `gd-tools version`
+
+```
+gd-tools version [--json]
+```
+
+Prints version information for all gd-tools components in a Rich table.
+Useful for environment diagnostics and bug reports.
+
+- **Components**: gd-tools (`__version__`), Godot (`find_godot()`), GUT
+  (`addons/gut/plugin.cfg`), gdtoolkit (`importlib.metadata`), Python
+  (`sys.version`).
+- **Missing components**: Godot shows "not detected"; GUT and gdtoolkit show
+  "not installed". In `--json` output, missing components are `null`.
+- **`--json`**: Flat JSON object keyed by component name (machine-readable).
+- **Exit code**: Always 0 — version detection never fails.
+- **No network calls**: All detection is local.
 
 ### Update Notification
 
@@ -825,6 +844,7 @@ gd-tools/
 │       ├── test_runner.py        # `gd-tools test` — GUT orchestration
 │       ├── lint_runner.py       # `gd-tools lint` — gdlint wrapper
 │       ├── format_runner.py     # `gd-tools format` — gdformat wrapper
+│       ├── version.py           # `gd-tools version` — component version detection
 │       ├── coverage/
 │       │   ├── __init__.py
 │       │   ├── orchestrator.py    # Coverage CLI orchestration (test --coverage, report, merge, show)
