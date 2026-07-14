@@ -26,21 +26,21 @@
 
 **Files:** `src/gd_tools/init.py`, `tests/unit/test_init.py`
 
-- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
-- [ ] Task: Write tests for prepend behavior
-    - [ ] Write test: `register_coverage_autoload()` inserts `_GDTCoverage` as the FIRST entry in `[autoload]` (before existing autoloads)
-    - [ ] Write test: when no `[autoload]` section exists, creates one with `_GDTCoverage` as the only entry
-    - [ ] Write test: idempotent — calling twice doesn't create duplicate entries
-    - [ ] Write test: when `_GDTCoverage` is already first, no change (idempotent)
-- [ ] Task: Write tests for auto-fix ordering
-    - [ ] Write test: when `_GDTCoverage` is registered but not in position 0, it gets moved to position 0
-    - [ ] Write test: a warning is printed to stderr when auto-fixing: `Moved _GDTCoverage to first autoload position for coverage to work correctly.`
-    - [ ] Write test: no warning when already in position 0
-- [ ] Task: Implement prepend + auto-fix in register_coverage_autoload()
-    - [ ] Change the insertion logic from APPEND (insert after `[autoload]` header) to PREPEND (insert as first entry under `[autoload]`)
-    - [ ] Add detection: if `_GDTCoverage` exists but is not the first autoload entry, move it to position 0
-    - [ ] Print warning to stderr when auto-fixing
-    - [ ] Run tests to confirm prepend and auto-fix behavior
+- [x] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
+- [x] Task: Write tests for prepend behavior [8a2b766]
+    - [x] Write test: `register_coverage_autoload()` inserts `_GDTCoverage` as the FIRST entry in `[autoload]` (before existing autoloads)
+    - [x] Write test: when no `[autoload]` section exists, creates one with `_GDTCoverage` as the only entry
+    - [x] Write test: idempotent — calling twice doesn't create duplicate entries
+    - [x] Write test: when `_GDTCoverage` is already first, no change (idempotent)
+- [x] Task: Write tests for auto-fix ordering [8a2b766]
+    - [x] Write test: when `_GDTCoverage` is registered but not in position 0, it gets moved to position 0
+    - [x] Write test: a warning is printed to stderr when auto-fixing: `Moved _GDTCoverage to first autoload position for coverage to work correctly.`
+    - [x] Write test: no warning when already in position 0
+- [x] Task: Implement prepend + auto-fix in register_coverage_autoload() [8a2b766]
+    - [x] Change the insertion logic from APPEND (insert after `[autoload]` header) to PREPEND (insert as first entry under `[autoload]`)
+    - [x] Add detection: if `_GDTCoverage` exists but is not the first autoload entry, move it to position 0
+    - [x] Print warning to stderr when auto-fixing
+    - [x] Run tests to confirm prepend and auto-fix behavior
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Init — Autoload Registration' (Protocol in workflow.md)
 
 ## Phase 3: Coverage Addon — Move Instrumentation to _ready() + Simplify Pre-run Hook
