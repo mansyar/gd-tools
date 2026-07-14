@@ -1,0 +1,32 @@
+Task: Implement match_case body injection in _inject_trackers
+
+Summary:
+Fixed the match statement instrumentation bug where _GDTCoverage.hit() was
+injected BEFORE match pattern lines (e.g., '0:', '_:'), causing GDScript
+parse errors. The fix detects branch_type == 'match_case' entries and
+injects the tracker AFTER the pattern line, inside the match body, using
+the body's indentation level.
+
+Changes:
+- Added _detect_body_indent() static function that scans lines after the
+  pattern to find the next non-empty line and returns its indentation
+- Modified _inject_trackers() to check entry.get('branch_type', ''):
+  - match_case: insert at target_index + 1 (after pattern), use body indent
+  - other: insert at target_index (before line), use line indent (unchanged)
+
+Files modified:
+- src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (the fix)
+- tests/fixtures/gdscript/test_pre_run_hook.gd (10 new GUT tests)
+- tests/integration/test_coverage_hooks.py (updated GUT count 31->41)
+- tests/unit/test_match_coverage.py (new, 2 Python unit tests)
+
+Why:
+Match patterns are declarative labels that must directly follow 'match <expr>:'.
+Injecting a function call between the match expression and the first pattern
+causes a parse error, making reload() fail and cascading 25 test failures.
+
+Verification:
+- Python unit tests: 618 passed, 97.12% coverage
+- gdlint: no problems
+- gdformat: passes --check
+- GUT tests: cannot run (no Godot binary), verified via manual trace
