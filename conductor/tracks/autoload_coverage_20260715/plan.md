@@ -18,7 +18,7 @@
     - [x] Check if `resolve_autoload_paths()` is still used elsewhere; if not, remove it and its import
     - [x] Run `tools/generate_expected_plans.py` to regenerate expected plan JSON fixtures if any fixture project has autoloads
     - [x] Run tests to confirm autoload scripts now appear in plan
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Plan Generator' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Plan Generator' (Protocol in workflow.md)
 
 ## Phase 2: Init — Autoload Registration (Prepend + Auto-fix)
 
