@@ -136,7 +136,9 @@ static func _inject_trackers(source: String, file_id: int, lines: Array) -> Stri
 		if target_index < 0 or target_index >= source_lines.size():
 			continue
 		var target_line: String = source_lines[target_index]
-		var branch_type: String = entry.get("branch_type", "")
+		var branch_type = entry.get("branch_type", "")
+		if branch_type == null:
+			branch_type = ""
 		var insert_index: int
 		var indent: String
 		if branch_type == "match_case":
