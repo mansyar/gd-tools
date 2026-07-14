@@ -1,0 +1,7 @@
+Task: Update documentation (README command list + USER_GUIDE section 3.8)
+
+Changes:
+- README.md: Added 'gd-tools version' row to CLI Command Summary table
+- docs/USER_GUIDE.md: Added section 3.8 'gd-tools version' with usage, flags, components table, examples, and exit codes
+
+Commit: b868e50
