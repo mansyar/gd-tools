@@ -1,0 +1,46 @@
+Task: Phase 5 - E2E Fixture & Integration Test
+
+Summary:
+Created a minimal fixture Godot project and E2E tests for autoload-based
+coverage instrumentation. This is the final phase verifying the complete
+bug fix end-to-end.
+
+Changes:
+- Created tests/fixtures/autoload_coverage/project.godot with GameState
+  autoload (no _GDTCoverage — added by register_coverage_autoload() at
+  test setup time, testing Phase 2 prepend behavior)
+- Created tests/fixtures/autoload_coverage/scripts/game_state.gd — autoload
+  that instantiates ChimeraData in _ready(), simulating the bug scenario
+- Created tests/fixtures/autoload_coverage/scripts/chimera_data.gd —
+  non-autoload script instantiated by the autoload (previously 0% coverage)
+- Created tests/fixtures/autoload_coverage/tests/test_chimera_data.gd —
+  4 GUT tests exercising ChimeraData methods
+- Created tests/e2e/test_autoload_coverage_e2e.py — 3 E2E tests:
+  1. test_autoload_instantiated_script_gets_coverage: verifies chimera_data.gd
+     gets non-zero hits (core bug fix)
+  2. test_autoload_init_code_not_recorded: verifies game_state.gd has 0 hits
+     (autoload init runs before tracker activation)
+  3. test_coverage_system_regression: verifies plan includes both scripts,
+     tests pass, coverage.json has valid structure
+
+Files created:
+- tests/fixtures/autoload_coverage/project.godot
+- tests/fixtures/autoload_coverage/scripts/game_state.gd
+- tests/fixtures/autoload_coverage/scripts/chimera_data.gd
+- tests/fixtures/autoload_coverage/tests/test_chimera_data.gd
+- tests/e2e/test_autoload_coverage_e2e.py
+
+Why:
+The E2E tests verify the complete autoload-based coverage instrumentation
+pipeline: _GDTCoverage._ready() runs first (instruments all files before
+instances exist), GameState._ready() runs second (creates instances from
+instrumented code), pre_run_hook activates tracker, GUT tests exercise
+instrumented code, post_run_hook collects hits. This is the full bug fix
+scenario that previously caused ERR_ALREADY_IN_USE and 0% coverage for
+autoload-instantiated scripts.
+
+Test results:
+- 649 unit tests: all pass
+- ruff check: All checks passed
+- black --check: clean
+- E2E tests: collected successfully (skipped without Godot binary)
