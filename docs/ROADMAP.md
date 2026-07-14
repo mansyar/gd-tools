@@ -151,7 +151,7 @@ Phase 9: Robustness (all independent)
 | **Modules** | `src/gd_tools/init.py`, `src/gd_tools/addons/gd-tools-coverage/` (version file), `src/gd_tools/cli.py` |
 | **Effort** | 0.5 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Delivered — archived `stale_addon_detection_20260714` |
 
 **Problem:**
 

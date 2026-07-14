@@ -206,7 +206,29 @@ Features:
 - **Skips dev installs**: No check is performed when running from an
   editable/development install (`__version__ == "0.0.0"`).
 - **Disabling**: Set the `GD_TOOLS_NO_UPDATE_CHECK=1` environment
-  variable to disable the check entirely.
+  variable to disable the check entirely. This also disables the addon
+  version staleness check (see below).
+
+### Addon Version Staleness Check
+
+On every CLI invocation, `gd-tools` also checks whether the deployed
+coverage addon files are up-to-date with the installed package version.
+A `_version.txt` file in `addons/gd-tools-coverage/` records the version
+at deploy time (written by `gd-tools init`). If the addon version is
+older than the package version (or the version file is missing), a
+warning is printed to **stderr** (does not interfere with command
+execution):
+
+```
+WARNING: Coverage addon is outdated (v0.2.0 deployed, v0.3.0 available).
+Run `gd-tools init` to update.
+```
+
+- **Non-blocking**: The warning never prevents command execution.
+- **Suppressed by `GD_TOOLS_NO_UPDATE_CHECK=1`**: The same environment
+  variable that disables the PyPI update check also disables this check.
+- **Doctor integration**: The `gd-tools doctor` command reports addon
+  staleness in the Coverage Addon check.
 
 ---
 
@@ -277,6 +299,8 @@ test_dirs = ["test", "tests"]
      - **n** → print manual install instructions (Asset Library link + zip URL).
 4. **Install coverage addon** — copy bundled GDScript files to
    `addons/gd-tools-coverage/` (always, idempotent — overwrites if stale).
+   Writes a `_version.txt` file recording the package version for
+   staleness detection.
 5. **Create/update `.gutconfig.json`** — add coverage hook paths
    (`pre_run_script`, `post_run_script`). Merge with existing config if present.
 6. **Create `gd-tools.toml`** — generate with defaults, preserving existing
@@ -326,6 +350,10 @@ gd_tools/
 
 - On `gd-tools init`, these are copied to the project's `addons/gd-tools-coverage/`.
 - Always version-matched with the CLI — no separate download.
+- A `_version.txt` file is written alongside the addon files, recording
+  the gd-tools package version at deploy time. This enables stale-addon
+  detection on subsequent CLI invocations (see §5 Addon Version
+  Staleness Check).
 - After upgrading `gd-tools` via pip, re-run `init` to refresh addon files.
 
 ---
@@ -340,7 +368,7 @@ Runs a series of checks and reports status:
 | Godot version                   | 4.5 or higher                                     |
 | GUT installed                   | `addons/gut/gut.gd` exists                        |
 | GUT version compatible          | Matches Godot version per mapping table           |
-| Coverage addon files present   | `addons/gd-tools-coverage/*.gd` all exist         |
+| Coverage addon files present   | `addons/gd-tools-coverage/*.gd` all exist; version not stale  |
 | `.gutconfig.json` valid        | Parseable JSON, has coverage hook paths           |
 | `gd-tools.toml` exists & valid | File present, parseable TOML                      |
 | gdtoolkit installed            | `gdlint --version` and `gdformat --version` succeed |
@@ -789,6 +817,7 @@ gd-tools/
 │       ├── __main__.py           # Entry point: python -m gd_tools
 │       ├── cli.py                # Click/Typer CLI definitions
 │       ├── update_check.py       # PyPI update notification on CLI invocation
+│       ├── addon_check.py        # Stale addon version detection on CLI invocation
 │       ├── config.py             # gd-tools.toml loading & validation
 │       ├── godot.py              # Godot binary detection + invocation
 │       ├── init.py               # `gd-tools init` logic

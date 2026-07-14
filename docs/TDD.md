@@ -34,6 +34,7 @@ src/gd_tools/
 ├── __main__.py               # Entry: python -m gd_tools
 ├── cli.py                    # Click CLI definitions
 ├── update_check.py           # PyPI update notification
+├── addon_check.py            # Stale addon version detection
 ├── config.py                 # Pydantic models for gd-tools.toml
 ├── godot.py                  # Godot binary detection + invocation
 ├── init.py                   # `gd-tools init` bootstrap flow
@@ -68,6 +69,7 @@ src/gd_tools/
 cli.py
 ├── config.py
 ├── update_check.py (-> packaging, requests)
+├── addon_check.py (-> packaging, config)
 ├── godot.py
 ├── init.py (→ config, godot)
 ├── doctor.py (→ config, godot)
@@ -440,7 +442,8 @@ def enable_gut_plugin(project_root: Path) -> None:
 
 def install_coverage_addon(project_root: Path) -> None:
     """Copy bundled GDScript files from package data to
-    addons/gd-tools-coverage/. Overwrites if stale."""
+    addons/gd-tools-coverage/. Overwrites if stale. Also writes
+    _version.txt with the current package version."""
 
 def update_gutconfig(project_root: Path, config: GdToolsConfig) -> None:
     """Create or update .gutconfig.json with coverage hook paths.
@@ -514,6 +517,15 @@ When merging with existing config: preserve user's `dirs`, `prefix`, `suffix`,
 - CLI `init` command catches `GdToolsError` and calls `ctx.exit(e.exit_code)`
   (consistent with test/lint/format commands).
 
+**Stale addon detection (Track 23, 2026-07-15):**
+
+- `install_coverage_addon()` now writes a `_version.txt` file to
+  `addons/gd-tools-coverage/` containing the current package version
+  (`__version__`). This file is read by `check_addon_version()` in
+  `addon_check.py` on CLI invocation and by `check_coverage_addon()`
+  in `doctor.py` to detect version skew between the deployed addon and
+  the installed package.
+
 ---
 
 ### 3.6 `doctor.py` — Diagnostics
@@ -551,7 +563,8 @@ def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
     """Verify GUT version matches Godot version."""
 
 def check_coverage_addon(project_root: Path) -> CheckResult:
-    """Verify addons/gd-tools-coverage/*.gd all exist."""
+    """Verify addons/gd-tools-coverage/*.gd all exist and version
+    is not stale."""
 
 def check_gutconfig(project_root: Path) -> CheckResult:
     """Verify .gutconfig.json is valid JSON and has hook paths."""
@@ -1380,12 +1393,22 @@ class GdToolsGroup(click.Group):
                 f"Run `pip install --upgrade gd-tools-cli` to update.",
                 err=True,
             )
+        check_addon_version()
         try:
             return super().invoke(ctx)
         except NotImplementedError:
             click.echo("Error: This command is not yet implemented.", err=True)
             ctx.exit(2)
 ```
+
+> **Addon version check (Track 23, `stale_addon_detection_20260714`,
+> archived):** `check_addon_version()` (in `addon_check.py`) is called
+> after the PyPI update check and before dispatching to the subcommand.
+> It compares the version in `addons/gd-tools-coverage/_version.txt`
+> against the installed package version using `packaging.version.parse()`.
+> If the addon is stale or the version file is missing, a warning is
+> printed to stderr. Suppressed by `GD_TOOLS_NO_UPDATE_CHECK=1`. Fails
+> silently on any unexpected error. See §3.18.
 
 #### Testing
 
@@ -1394,6 +1417,60 @@ An autouse fixture in `tests/unit/conftest.py` patches
 original function) so all unit tests avoid network calls. Explicit
 update-check tests unpatch this fixture when testing the notification
 behavior.
+
+---
+
+### 3.18 `addon_check.py` — Stale Addon Version Detection
+
+> **Implemented:** Track 23 (`stale_addon_detection_20260714`, archived).
+> See `src/gd_tools/addon_check.py` (75 lines). All 6 success criteria
+> passed. 9 unit tests in `test_addon_check.py`. `addon_check.py` at
+> 100% coverage.
+
+```python
+ADDON_VERSION_FILENAME = "_version.txt"
+
+def check_addon_version() -> None:
+    """Check if the deployed coverage addon version is stale.
+
+    Compares the version in _version.txt against the installed package
+    version. Prints a warning to stderr if the addon is missing or stale.
+    Fails silently on any unexpected error.
+
+    Disabling: Set GD_TOOLS_NO_UPDATE_CHECK=1 to skip the check."""
+```
+
+#### CLI Integration
+
+The addon version check is integrated into the CLI via
+`GdToolsGroup.invoke()` in `cli.py`. After the PyPI update check and
+before dispatching to the subcommand, `check_addon_version()` is called.
+If the addon is stale or the version file is missing, a warning is
+printed to **stderr** (via `click.echo(..., err=True)`) and execution
+continues normally -- the check never blocks or fails the command.
+
+#### Version Comparison
+
+Versions are compared using `packaging.version.parse()`. If either
+version string is unparseable, the addon is treated as stale (a warning
+is printed showing both versions). An addon version newer than the
+package version (downgrade scenario) produces no warning.
+
+#### Doctor Integration
+
+`check_coverage_addon()` in `doctor.py` also reads `_version.txt` and
+reports staleness in its `CheckResult` message. A stale addon passes
+the check (files are present) but shows a warning with both versions and
+a fix hint to run `gd-tools init`.
+
+#### Testing
+
+`check_addon_version()` catches all exceptions silently (`except
+Exception: pass`), so it is safe to call from `GdToolsGroup.invoke()`
+during any CLI test without patching. Unit tests in
+`test_addon_check.py` call `check_addon_version()` directly with mocked
+`find_project_root()`, `__version__`, and environment variables to
+test the warning, suppression, and version-comparison paths.
 
 ---
 

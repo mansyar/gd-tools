@@ -58,7 +58,8 @@ The `init` command performs the following steps:
    release.
 3. Downloads and installs GUT into `addons/gut/`.
 4. Enables the GUT plugin in `project.godot`.
-5. Deploys the `gd-tools-coverage` addon into `addons/gd-tools-coverage/`.
+5. Deploys the `gd-tools-coverage` addon into `addons/gd-tools-coverage/`
+   (including a `_version.txt` file for staleness detection).
 6. Registers the `_GDTCoverage` autoload in `project.godot`.
 7. Creates or updates `.gutconfig.json` with pre- and post-run hook scripts.
 8. Creates `gd-tools.toml` with default configuration if absent.
@@ -97,6 +98,20 @@ environment variable to `1`:
 ```bash
 export GD_TOOLS_NO_UPDATE_CHECK=1
 ```
+
+In addition to the PyPI version check, `gd-tools` checks whether the
+deployed coverage addon files are up-to-date with the installed package
+version. If the addon is outdated (or the version file is missing), a
+warning is printed to stderr:
+
+```
+WARNING: Coverage addon is outdated (v0.2.0 deployed, v0.3.0 available).
+Run `gd-tools init` to update.
+```
+
+This check is also suppressed by `GD_TOOLS_NO_UPDATE_CHECK=1`. The
+`gd-tools doctor` command reports addon staleness as part of the
+Coverage Addon check.
 
 
 ## 2. Configuration
@@ -291,7 +306,7 @@ gd-tools doctor
 | 2 | Godot Version | critical | Godot version is >= 4.5.0. |
 | 3 | GUT Installed | critical | GUT is present in `addons/gut/`. |
 | 4 | GUT Version | warning | Installed GUT version matches the expected version for the detected Godot. |
-| 5 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present. |
+| 5 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present and not stale. |
 | 6 | GUT Config | warning | `.gutconfig.json` exists, is valid JSON, and contains hook script keys. |
 | 7 | gd-tools.toml | critical | `gd-tools.toml` exists and is valid TOML. |
 | 8 | GD Toolkit | critical | `gdlint` and `gdformat` CLI tools are installed. |
