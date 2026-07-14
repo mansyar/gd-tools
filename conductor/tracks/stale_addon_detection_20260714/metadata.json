@@ -1,0 +1,8 @@
+{
+  "track_id": "stale_addon_detection_20260714",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-14T19:58:41Z",
+  "updated_at": "2026-07-14T19:58:41Z",
+  "description": "Stale Addon Detection - Detect when deployed coverage addon files are older than the installed gd-tools package version, and warn the user to re-run gd-tools init"
+}
