@@ -49,30 +49,30 @@
 
 **Files:** `src/gd_tools/addons/gd-tools-coverage/coverage.gd`, `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`, `tests/integration/test_coverage_hooks.py`
 
-- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
-- [ ] Task: Write tests for instrumentation in _ready()
-    - [ ] Write integration test: `_ready()` reads `GD_TOOLS_COVERAGE_PLAN` env var (not `GD_TOOLS_COVERAGE_ACTIVE`)
-    - [ ] Write integration test: when `GD_TOOLS_COVERAGE_PLAN` is set, all files in the plan are instrumented
-    - [ ] Write integration test: `_active` remains `false` after instrumentation in `_ready()`
-    - [ ] Write integration test: when `GD_TOOLS_COVERAGE_PLAN` is not set, no instrumentation occurs
-    - [ ] Write integration test: `reload()` failure (`ERR_ALREADY_IN_USE`) is handled gracefully (skip file with warning)
-- [ ] Task: Move instrumentation logic to coverage.gd._ready()
-    - [ ] Move `_load_plan()`, `_validate_plan()`, `_validate_file_entry()`, `_instrument_files()`, `_instrument_file()`, `_inject_trackers()`, `_extract_indent()`, `_detect_body_indent()`, `_log_error()` from `pre_run_hook.gd` to `coverage.gd`
-    - [ ] Rewrite `_ready()`: read `GD_TOOLS_COVERAGE_PLAN` env var, load plan, instrument all files, leave `_active = false`
-    - [ ] Add defensive `ERR_ALREADY_IN_USE` handling in `_instrument_file()` (skip with warning, already exists but ensure it's preserved)
-    - [ ] Update file header comment to reflect new behavior
-- [ ] Task: Write test for simplified pre_run_hook.gd
-    - [ ] Write integration test: `pre_run_hook.gd` calls `_GDTCoverage.set_active(true)` only
-    - [ ] Write integration test: `pre_run_hook.gd` no longer contains instrumentation logic (no `_load_plan`, `_instrument_files`, etc.)
-- [ ] Task: Simplify pre_run_hook.gd
-    - [ ] Replace entire `run()` function body with: `_GDTCoverage.set_active(true)`
-    - [ ] Remove all instrumentation helper functions (moved to coverage.gd)
-    - [ ] Keep `_log_error()` only if still needed for error reporting in the simplified hook
-    - [ ] Update file header comment
-- [ ] Task: Update existing integration tests
-    - [ ] Review `tests/integration/test_coverage_hooks.py` for assumptions about pre_run_hook instrumentation
-    - [ ] Update tests that assumed instrumentation happens in pre-run hook
-    - [ ] Run full test suite to check for regressions
+- [x] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
+- [x] Task: Write tests for instrumentation in _ready()
+    - [x] Write integration test: `_ready()` reads `GD_TOOLS_COVERAGE_PLAN` env var (not `GD_TOOLS_COVERAGE_ACTIVE`)
+    - [x] Write integration test: when `GD_TOOLS_COVERAGE_PLAN` is set, all files in the plan are instrumented
+    - [x] Write integration test: `_active` remains `false` after instrumentation in `_ready()` (deferred to Phase 5 E2E — requires autoload with _ready() code)
+    - [x] Write integration test: when `GD_TOOLS_COVERAGE_PLAN` is not set, no instrumentation occurs
+    - [x] Write integration test: `reload()` failure (`ERR_ALREADY_IN_USE`) is handled gracefully (skip file with warning)
+- [x] Task: Move instrumentation logic to coverage.gd._ready()
+    - [x] Move `_load_plan()`, `_validate_plan()`, `_validate_file_entry()`, `_instrument_files()`, `_instrument_file()`, `_inject_trackers()`, `_extract_indent()`, `_detect_body_indent()`, `_log_error()` from `pre_run_hook.gd` to `coverage.gd`
+    - [x] Rewrite `_ready()`: read `GD_TOOLS_COVERAGE_PLAN` env var, load plan, instrument all files, leave `_active = false`
+    - [x] Add defensive `ERR_ALREADY_IN_USE` handling in `_instrument_file()` (skip with warning, already exists but ensure it's preserved)
+    - [x] Update file header comment to reflect new behavior
+- [x] Task: Write test for simplified pre_run_hook.gd
+    - [x] Write integration test: `pre_run_hook.gd` calls `_GDTCoverage.set_active(true)` only
+    - [x] Write integration test: `pre_run_hook.gd` no longer contains instrumentation logic (no `_load_plan`, `_instrument_files`, etc.)
+- [x] Task: Simplify pre_run_hook.gd
+    - [x] Replace entire `run()` function body with: `_GDTCoverage.set_active(true)`
+    - [x] Remove all instrumentation helper functions (moved to coverage.gd)
+    - [x] Keep `_log_error()` only if still needed for error reporting in the simplified hook (not needed — removed)
+    - [x] Update file header comment
+- [x] Task: Update existing integration tests
+    - [x] Review `tests/integration/test_coverage_hooks.py` for assumptions about pre_run_hook instrumentation
+    - [x] Update tests that assumed instrumentation happens in pre-run hook
+    - [x] Run full test suite to check for regressions
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Coverage Addon Changes' (Protocol in workflow.md)
 
 ## Phase 4: Test Runner — Remove GD_TOOLS_COVERAGE_ACTIVE env var
