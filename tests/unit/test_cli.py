@@ -1140,3 +1140,66 @@ def test_coverage_show_config_error_exit_2():
     ):
         result = runner.invoke(cli, ["coverage", "show"])
     assert result.exit_code == 2
+
+
+# ---------------------------------------------------------------------------
+# Update notification tests
+# ---------------------------------------------------------------------------
+
+
+def test_update_notification_printed_when_update_available():
+    """Notification appears on stderr when a newer PyPI version exists."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.check_for_update", return_value="1.0.0"),
+        patch("gd_tools.cli.__version__", "0.1.0"),
+        patch("gd_tools.cli.run_doctor") as mock_run,
+    ):
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 0
+    assert (
+        "A new version of gd-tools is available: 1.0.0 (you have 0.1.0)"
+        in result.output
+    )
+    assert "pip install --upgrade gd-tools-cli" in result.output
+
+
+def test_no_notification_when_no_update_available():
+    """No notification when check_for_update returns None."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 0
+    assert "A new version of gd-tools" not in result.output
+
+
+def test_notification_does_not_affect_exit_code():
+    """Update notification does not affect the exit code."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.check_for_update", return_value="1.0.0"),
+        patch("gd_tools.cli.run_doctor") as mock_run,
+    ):
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 0
+
+
+def test_env_var_disables_notification_in_cli(mock_requests_get, monkeypatch):
+    """GD_TOOLS_NO_UPDATE_CHECK=1 disables the update check entirely."""
+    from gd_tools.update_check import check_for_update as real_check_for_update
+
+    monkeypatch.setenv("GD_TOOLS_NO_UPDATE_CHECK", "1")
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.check_for_update", new=real_check_for_update),
+        mock_requests_get(json_data={"info": {"version": "1.0.0"}}) as mock_get,
+        patch("gd_tools.cli.run_doctor") as mock_run,
+    ):
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 0
+    assert "A new version of gd-tools" not in result.output
+    mock_get.assert_not_called()

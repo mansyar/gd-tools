@@ -112,3 +112,17 @@ def mock_godot_on_path():
             yield godot_path
 
     return _ctx
+
+
+@pytest.fixture(autouse=True)
+def _mock_cli_update_check():
+    """Prevent update check network calls in all unit tests.
+
+    Patches ``gd_tools.cli.check_for_update`` (the reference in cli.py),
+    NOT ``gd_tools.update_check.check_for_update`` (the original), so
+    tests in test_update_check.py that call the original directly are
+    unaffected. Tests that need to control update behaviour override
+    this with their own patch on the same target.
+    """
+    with patch("gd_tools.cli.check_for_update", return_value=None):
+        yield

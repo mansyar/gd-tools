@@ -27,6 +27,7 @@ from .format_runner import run_format
 from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .test_runner import run_tests
+from .update_check import check_for_update
 
 
 def _configure_windows_utf8() -> None:
@@ -63,6 +64,10 @@ class GdToolsGroup(click.Group):
     def invoke(self, ctx) -> Any:
         """Invoke the group, catching NotImplementedError as exit code 2.
 
+        Performs an update check before dispatching to the subcommand.
+        If a newer version is available, a notification is printed to
+        stderr. The check fails silently and never blocks execution.
+
         Args:
             ctx: The Click context for this invocation.
 
@@ -73,6 +78,14 @@ class GdToolsGroup(click.Group):
             SystemExit: With code 2 if a command raises
                 NotImplementedError.
         """
+        latest = check_for_update()
+        if latest is not None:
+            click.echo(
+                f"A new version of gd-tools is available: {latest} "
+                f"(you have {__version__}).\n"
+                f"Run `pip install --upgrade gd-tools-cli` to update.",
+                err=True,
+            )
         try:
             return super().invoke(ctx)
         except NotImplementedError:
