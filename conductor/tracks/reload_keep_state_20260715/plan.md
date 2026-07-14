@@ -6,4 +6,4 @@
 - [x] Task: Update fixture script comments
 
 ## Phase: Verify
-- [~] Task: Run full test suite and verify coverage
+- [x] Task: Run full test suite and verify coverage (fde6157)
