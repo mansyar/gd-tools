@@ -81,15 +81,15 @@
 
 **Files:** `src/gd_tools/test_runner.py`, `tests/unit/test_test_runner.py`
 
-- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
-- [ ] Task: Write tests for env var removal
-    - [ ] Write test: `GD_TOOLS_COVERAGE_ACTIVE` is NOT in the env dict when `coverage=True`
-    - [ ] Write test: `GD_TOOLS_COVERAGE_PLAN` is still set when `coverage=True`
-    - [ ] Write test: `GD_TOOLS_COVERAGE_OUTPUT` is still set when `coverage=True`
-    - [ ] Write test: `-gpre_run_script` is still in GUT args when `coverage=True`
-- [ ] Task: Remove GD_TOOLS_COVERAGE_ACTIVE from test_runner.py
-    - [ ] Remove the `"GD_TOOLS_COVERAGE_ACTIVE": "1",` line from the env dict (line ~413)
-    - [ ] Run tests to confirm env var is no longer set
+- [x] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
+- [x] Task: Write tests for env var removal
+    - [x] Write test: `GD_TOOLS_COVERAGE_ACTIVE` is NOT in the env dict when `coverage=True` [aa23ca7]
+    - [x] Write test: `GD_TOOLS_COVERAGE_PLAN` is still set when `coverage=True` [aa23ca7]
+    - [x] Write test: `GD_TOOLS_COVERAGE_OUTPUT` is still set when `coverage=True` [aa23ca7]
+    - [x] Write test: `-gpre_run_script` is still in GUT args when `coverage=True` [aa23ca7]
+- [x] Task: Remove GD_TOOLS_COVERAGE_ACTIVE from test_runner.py [aa23ca7]
+    - [x] Remove the `"GD_TOOLS_COVERAGE_ACTIVE": "1",` line from the env dict (line ~413)
+    - [x] Run tests to confirm env var is no longer set
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Test Runner Changes' (Protocol in workflow.md)
 
 ## Phase 5: E2E Fixture & Integration Test
