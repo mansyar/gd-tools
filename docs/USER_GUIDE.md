@@ -318,8 +318,14 @@ Run GDScript tests using GUT (Godot Unit Test).
 **Usage:**
 
 ```bash
-gd-tools test [OPTIONS]
+gd-tools test [PATHS]... [OPTIONS]
 ```
+
+**Arguments:**
+
+| Argument | Required | Default | Description |
+|---|---|---|---|
+| `paths` | no | Config `[test].test_dirs` | One or more directories to scan for test files. Overrides `test_dirs` from config for this invocation only. |
 
 **Flags:**
 
@@ -336,7 +342,7 @@ gd-tools test [OPTIONS]
 **Examples:**
 
 ```bash
-# Run all tests
+# Run all tests (uses config test_dirs)
 gd-tools test
 
 # Run tests with coverage
@@ -353,6 +359,12 @@ gd-tools test --test test_movement --junit-xml report.xml
 
 # Run tests without exit code (useful in CI pre-steps)
 gd-tools test --no-exit-code
+
+# Run tests from a specific directory (overrides config test_dirs)
+gd-tools test tests/unit
+
+# Run tests from multiple directories
+gd-tools test tests/unit tests/integration
 ```
 
 **Exit Codes:**
@@ -370,14 +382,14 @@ Lint GDScript files using `gdlint` from the `gdtoolkit` package.
 **Usage:**
 
 ```bash
-gd-tools lint [PATH] [OPTIONS]
+gd-tools lint [PATHS]... [OPTIONS]
 ```
 
 **Arguments:**
 
 | Argument | Required | Default | Description |
 |---|---|---|---|
-| `path` | no | `.` | File or directory to lint. |
+| `paths` | no | `.` | One or more files or directories to lint. Files are deduplicated across paths. |
 
 **Flags:**
 
@@ -394,6 +406,9 @@ gd-tools lint
 
 # Lint a specific file
 gd-tools lint src/player.gd
+
+# Lint multiple files or directories
+gd-tools lint src/player.gd src/enemy.gd scripts/
 
 # Output JSON for CI integration
 gd-tools lint --report-format json
@@ -417,14 +432,14 @@ Format GDScript files using `gdformat` from the `gdtoolkit` package.
 **Usage:**
 
 ```bash
-gd-tools format [PATH] [OPTIONS]
+gd-tools format [PATHS]... [OPTIONS]
 ```
 
 **Arguments:**
 
 | Argument | Required | Default | Description |
 |---|---|---|---|
-| `path` | no | `.` | File or directory to format. |
+| `paths` | no | `.` | One or more files or directories to format. Files are deduplicated across paths. |
 
 **Flags:**
 
@@ -450,6 +465,9 @@ gd-tools format --diff
 
 # Format a specific file
 gd-tools format src/player.gd
+
+# Format multiple files or directories
+gd-tools format src/player.gd src/enemy.gd scripts/
 ```
 
 **Exit Codes:**

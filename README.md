@@ -68,9 +68,9 @@ gd-tools test --coverage --min 80
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- install GUT, deploy coverage addon, generate configs. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, GUT, coverage addon, tooling. |
-| `gd-tools test` | Run GUT tests with optional coverage, thresholds, JUnit XML output. |
-| `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. |
-| `gd-tools format` | Format GDScript files using gdformat with check and diff modes. |
+| `gd-tools test` | Run GUT tests with optional coverage, thresholds, JUnit XML output. Accepts optional path arguments to override configured test directories. |
+| `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
+| `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
 
 See the [User Guide](./docs/USER_GUIDE.md) for full command reference,
