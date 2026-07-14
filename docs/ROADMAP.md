@@ -394,6 +394,147 @@ registration via file path), #55615 (preload returns cached resource).
 
 ---
 
+### Track 24.6: Lint Output Clipping Fix
+
+| Field | Value |
+|-------|-------|
+| **Phase** | Hotfix -- UX Bug Fix |
+| **Goal** | Replace the Rich Table in `format_lint_text` with a flat line-based format to eliminate file path and rule name truncation |
+| **Dependencies** | Track 4 (lint) |
+| **Modules** | `src/gd_tools/lint_runner.py`, `tests/unit/test_lint_runner.py`, `tests/integration/test_lint_integration.py` |
+| **Effort** | 0.5 day |
+| **Risk** | LOW |
+| **Status** | Planned |
+
+**Problem:**
+
+The `format_lint_text` function renders lint results as a Rich `Table`
+with 6 columns (File, Line, Column, Rule, Severity, Message). The
+`Console(force_terminal=True)` call defaults to a width of 79 characters
+when terminal width cannot be detected (piped output, CI, non-interactive
+contexts). With 6 columns competing for 79 characters, the "File" column
+receives only ~16 characters of usable width.
+
+When file paths or rule names exceed the column width and cannot be
+wrapped (no spaces to break on), Rich truncates them with an ellipsis
+(`…`), causing **silent data loss**. The user cannot see the full file
+path or rule name, making it difficult to locate and fix lint issues.
+
+Quantified clipping at default width 79:
+
+- File path `src/very/deeply/nested/module/subsystem/components/PlayerCharacterController.gd`
+  (76 chars) → truncated to `src/very/deeply/nested…` (~20 chars visible)
+- Rule name `class-name-underscore-prefix-violation-detailed-check`
+  (52 chars) → truncated to `class-name-underscore-prefix-vi…` (~30 chars visible)
+
+The integration test at `tests/integration/test_lint_integration.py:53`
+already acknowledges this with a comment:
+`# Rich table may truncate long messages, so check a short fragment`.
+
+Even at width 120, the long file path above is still truncated. Only at
+width 200+ does the full path appear. By contrast, the coverage reporter
+(`terminal_reporter.py:56`) explicitly sets `width=120` and uses
+`box.ASCII` -- the lint reporter sets neither.
+
+**Root Cause:**
+
+Tables are fundamentally unsuited for variable-length data like file
+paths and lint messages. No amount of column tuning (wider width,
+`overflow="fold"`, `ratio` weights, `no_wrap` settings) fully solves
+this -- it only shifts where truncation occurs. A 76-character file path
+folded into a 16-character column produces 5 unreadable lines. Setting
+`width=200` renders a 200-char table on an 80-char terminal, causing the
+terminal itself to wrap.
+
+**Solution: Flat Line-Based Format**
+
+Replace the Rich `Table` with a flat `file:line:col: rule message
+[SEVERITY]` format, matching the convention used by ESLint, Ruff,
+flake8, pylint, mypy, rust-clippy, golangci-lint, GCC, and Clang.
+
+Example output:
+
+```
+src/player/PlayerCharacterController.gd:10:1: function-name: Function name BadFunctionName is not valid  [ERROR]
+src/enemy.gd:5:3: some-rule: Warning message  [WARN]
+
+1 errors, 1 warnings, 2 files checked
+```
+
+Benefits:
+
+- **Zero data loss** at any terminal width -- content wraps naturally at
+  the terminal boundary, never truncated
+- **Editor/IDE clickable** -- `file:line:col:` format is recognized by
+  VS Code, JetBrains, Vim/Emacs, and GitHub Actions annotations
+- **Simpler code** -- no Rich `Table`, `Console` width detection, or
+  `console.capture()` block needed
+- **Colors preserved** -- severity tag colored red/yellow via Rich
+  markup or `click.style()`
+
+**Scope:**
+
+1. **`format_lint_text` in `lint_runner.py`:** Replace the Rich `Table` +
+   `Console(force_terminal=True)` + `console.capture()` block (lines
+   160-191) with flat string formatting. Each issue rendered as a single
+   line: `{file}:{line}:{col}: {rule}: {message}  [{SEVERITY}]`. Errors
+   styled red, warnings styled yellow. Summary line appended below
+   (unchanged format). Use `Console()` for color rendering only -- no
+   table, no width dependency.
+
+2. **`format_lint_json` in `lint_runner.py`:** No changes -- JSON output
+   is unaffected.
+
+3. **CLI (`cli.py`):** No changes -- the `lint` command already calls
+   `format_lint_text(result)`, so the new format flows through
+   automatically.
+
+4. **Unit tests (`test_lint_runner.py`):** Update
+   `test_format_lint_text_with_violations` to assert on the new flat
+   format instead of table column headers (e.g., assert `src/player.gd:10:1`
+   prefix is present, not just `"File"` header). Update
+   `test_format_lint_text_color_coding` to verify ANSI codes are present
+   on the severity tag. `test_format_lint_text_summary` and the clean/no-
+   files tests need minimal changes. Add a new test case:
+   `test_format_lint_text_long_paths_not_truncated` -- verify that a
+   76-character file path and a 52-character rule name appear in full in
+   the output (no `…` character).
+
+5. **Integration test (`test_lint_integration.py`):** Update
+   `test_lint_full_run_text_output` to remove the truncation workaround
+   comment and assert on full content (e.g., assert the complete rule
+   name and a longer message fragment are present).
+
+**Deliverables:**
+- Updated `format_lint_text` with flat line-based output and color
+- Updated unit tests for the new format
+- New test case verifying long paths/rules are not truncated
+- Updated integration test removing the truncation workaround
+
+**Success Criteria:**
+1. File paths of any length appear in full in text output (no `…` truncation)
+2. Rule names of any length appear in full in text output
+3. Messages of any length appear in full (may wrap at terminal boundary,
+   but content is never truncated)
+4. Error severity is colored red, warning severity is colored yellow
+5. Summary line format is unchanged (`N errors, N warnings, N files checked`)
+6. `format_lint_json` output is unchanged
+7. `file:line:col:` prefix format is present for IDE/editor click-to-navigate
+8. All existing tests pass (after updating assertions for new format)
+9. Exit code behavior is unchanged (1 on errors, 0 on clean)
+
+**Risks:**
+- **Breaking change to output format:** Users or scripts parsing the
+  table output will need to adapt. Mitigation: `--report-format json`
+  provides stable machine-readable output. The text format was never
+  contractually guaranteed stable.
+- **Loss of table visual alignment:** Some users may prefer the table
+  look. Mitigation: the flat format is the industry standard for linters
+  and provides better utility (clickable paths, no truncation). The
+  visual trade-off is intentional.
+
+---
+
 ### Track 25: Config Show/Validate
 
 | Field | Value |
