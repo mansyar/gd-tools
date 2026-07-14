@@ -4,8 +4,8 @@ A modern development workflow CLI for GDScript projects in Godot 4.5+.
 
 [![CI](https://github.com/mansyar/gd-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/mansyar/gd-tools/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/mansyar/gd-tools/branch/main/graph/badge.svg)](https://codecov.io/gh/mansyar/gd-tools)
-[![PyPI version](https://img.shields.io/pypi/v/gd-tools.svg)](https://pypi.org/project/gd-tools/)
-[![Python versions](https://img.shields.io/pypi/pyversions/gd-tools.svg)](https://pypi.org/project/gd-tools/)
+[![PyPI version](https://img.shields.io/pypi/v/gd-tools.svg)](https://pypi.org/project/gd-tools-cli/)
+[![Python versions](https://img.shields.io/pypi/pyversions/gd-tools.svg)](https://pypi.org/project/gd-tools-cli/)
 [![Godot version](https://img.shields.io/badge/Godot-4.5%2B-blue.svg)](https://godotengine.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
