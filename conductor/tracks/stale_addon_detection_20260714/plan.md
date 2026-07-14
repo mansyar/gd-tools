@@ -33,24 +33,24 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ## Phase 2: Stale Addon Detection Module
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
-- [ ] Task: Write unit tests for addon_check.py
-    - [ ] Test: no warning when addon version == package version (versions match)
-    - [ ] Test: stale warning printed to stderr when addon version < package version
-    - [ ] Test: missing file warning printed when version file is absent
-    - [ ] Test: no warning when addon version > package version (downgrade scenario)
-    - [ ] Test: stale warning printed when version string is unparseable (raw string shown)
-    - [ ] Test: check is fully suppressed when `GD_TOOLS_NO_UPDATE_CHECK=1`
-    - [ ] Test: check fails silently (no exception, no crash) on unexpected file system errors
-- [ ] Task: Implement addon_check.py module
-    - [ ] Create `src/gd_tools/addon_check.py` with `check_addon_version()` function
-    - [ ] Implement `GD_TOOLS_NO_UPDATE_CHECK=1` env var suppression (return early)
-    - [ ] Implement project root resolution (reuse `find_project_root()` from `config.py`, catch `ConfigError` to skip silently)
-    - [ ] Implement `_version.txt` file read and version string parsing
-    - [ ] Implement version comparison using `packaging.version.parse()`
-    - [ ] Implement stderr warning output via `click.echo(..., err=True)` for missing, stale, and unparseable cases
-- [ ] Task: Integrate check into cli.py
-    - [ ] Import and call `check_addon_version()` from `GdToolsGroup.invoke()` alongside the existing `check_for_update()` call
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
+- [x] Task: Write unit tests for addon_check.py [bec267b]
+    - [x] Test: no warning when addon version == package version (versions match)
+    - [x] Test: stale warning printed to stderr when addon version < package version
+    - [x] Test: missing file warning printed when version file is absent
+    - [x] Test: no warning when addon version > package version (downgrade scenario)
+    - [x] Test: stale warning printed when version string is unparseable (raw string shown)
+    - [x] Test: check is fully suppressed when `GD_TOOLS_NO_UPDATE_CHECK=1`
+    - [x] Test: check fails silently (no exception, no crash) on unexpected file system errors
+- [x] Task: Implement addon_check.py module [bec267b]
+    - [x] Create `src/gd_tools/addon_check.py` with `check_addon_version()` function
+    - [x] Implement `GD_TOOLS_NO_UPDATE_CHECK=1` env var suppression (return early)
+    - [x] Implement project root resolution (reuse `find_project_root()` from `config.py`, catch `ConfigError` to skip silently)
+    - [x] Implement `_version.txt` file read and version string parsing
+    - [x] Implement version comparison using `packaging.version.parse()`
+    - [x] Implement stderr warning output via `click.echo(..., err=True)` for missing, stale, and unparseable cases
+- [x] Task: Integrate check into cli.py [bec267b]
+    - [x] Import and call `check_addon_version()` from `GdToolsGroup.invoke()` alongside the existing `check_for_update()` call
 - [ ] Task: Conductor - User Manual Verification 'Stale Addon Detection Module' (Protocol in workflow.md)
 
 ---
