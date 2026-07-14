@@ -1,0 +1,32 @@
+Phase 2 Checkpoint Verification Report - Stale Addon Detection Module
+
+== Phase Scope ==
+Changed files since Phase 1 checkpoint (1b3e312):
+- src/gd_tools/addon_check.py (NEW - stale addon detection module)
+- src/gd_tools/cli.py (MODIFIED - integrated check_addon_version() into invoke())
+- tests/unit/test_addon_check.py (NEW - 7 unit tests)
+- conductor/tracks/stale_addon_detection_20260714/plan.md (updated)
+
+== Automated Tests ==
+Command: CI=true pytest tests/unit/ --cov=gd_tools --cov-branch --cov-report=term-missing
+Result: 634/634 tests passed in 10.36s
+Coverage: 97.35% overall (exceeds 80% threshold)
+- addon_check.py: 100% coverage
+- cli.py: 98% coverage (uncovered lines are pre-existing _configure_windows_utf8)
+- init.py: 98% coverage
+- doctor.py: 100% coverage
+
+== Manual Verification Plan ==
+1. Ensure gd-tools installed: pip install -e .
+2. In a Godot project with gd-tools init run, verify no stale warning when versions match
+3. Edit _version.txt to older version, verify stale warning with both versions shown
+4. Delete _version.txt, verify missing file warning
+5. Set GD_TOOLS_NO_UPDATE_CHECK=1, verify no warning printed
+6. Verify exit code unchanged (0) in all scenarios
+7. Verify gd-tools init writes version file and includes summary entry
+
+== User Confirmation ==
+User confirmed manual verification plan meets expectations.
+
+== Phase Status ==
+All Phase 2 tasks complete. Checkpoint created for Phase 3 reference.
