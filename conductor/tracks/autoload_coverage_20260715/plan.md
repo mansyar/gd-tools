@@ -7,17 +7,17 @@
 
 **Files:** `src/gd_tools/coverage/plan_generator.py`, `tests/unit/test_plan_generator.py`
 
-- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
-- [ ] Task: Write tests for autoload inclusion in plan
-    - [ ] Write test: autoload scripts appear in `generate_plan()` output when `project.godot` has `[autoload]` section
-    - [ ] Write test: autoload scripts get instrumented lines (file_id, lines array) in the plan
-    - [ ] Write test: non-autoload scripts are still included (regression check)
-    - [ ] Write test: project with no `[autoload]` section still works (no crash, all scripts included)
-- [ ] Task: Remove autoload exclusion from plan_generator.py
-    - [ ] Remove the autoload filter block (lines ~395-405: `autoload_paths = resolve_autoload_paths(...)`, the `autoload_set` construction, and the list comprehension filtering `gd_files`)
-    - [ ] Check if `resolve_autoload_paths()` is still used elsewhere; if not, remove it and its import
-    - [ ] Run `tools/generate_expected_plans.py` to regenerate expected plan JSON fixtures if any fixture project has autoloads
-    - [ ] Run tests to confirm autoload scripts now appear in plan
+- [x] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
+- [x] Task: Write tests for autoload inclusion in plan [1878b0d]
+    - [x] Write test: autoload scripts appear in `generate_plan()` output when `project.godot` has `[autoload]` section
+    - [x] Write test: autoload scripts get instrumented lines (file_id, lines array) in the plan
+    - [x] Write test: non-autoload scripts are still included (regression check)
+    - [x] Write test: project with no `[autoload]` section still works (no crash, all scripts included)
+- [x] Task: Remove autoload exclusion from plan_generator.py [1878b0d]
+    - [x] Remove the autoload filter block (lines ~395-405: `autoload_paths = resolve_autoload_paths(...)`, the `autoload_set` construction, and the list comprehension filtering `gd_files`)
+    - [x] Check if `resolve_autoload_paths()` is still used elsewhere; if not, remove it and its import
+    - [x] Run `tools/generate_expected_plans.py` to regenerate expected plan JSON fixtures if any fixture project has autoloads
+    - [x] Run tests to confirm autoload scripts now appear in plan
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Plan Generator' (Protocol in workflow.md)
 
 ## Phase 2: Init — Autoload Registration (Prepend + Auto-fix)
