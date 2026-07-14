@@ -27,7 +27,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
 - [x] Task: Implement version file writing in init.py [2ee000a]
     - [x] Extend `install_coverage_addon()` to write `_version.txt` with `__version__` after copying `.gd` files
     - [x] Add action summary entry in `run_init()` for the version file write
-- [ ] Task: Conductor - User Manual Verification 'Version File Creation During Init' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Version File Creation During Init' (Protocol in workflow.md)
 
 ---
 
