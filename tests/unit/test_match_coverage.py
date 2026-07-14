@@ -18,13 +18,13 @@ _MATCH_SOURCE = (
     "func handle_state(state: int) -> void:\n"
     "\tmatch state:\n"
     "\t\t0:\n"
-    "\t\t\tprint(\"idle\")\n"
+    '\t\t\tprint("idle")\n'
     "\t\t1:\n"
-    "\t\t\tprint(\"running\")\n"
+    '\t\t\tprint("running")\n'
     "\t\t2:\n"
-    "\t\t\tprint(\"paused\")\n"
+    '\t\t\tprint("paused")\n'
     "\t\t_:\n"
-    "\t\t\tprint(\"unknown\")\n"
+    '\t\t\tprint("unknown")\n'
 )
 
 
@@ -36,8 +36,12 @@ def test_match_coverage_all_branches_hit(tmp_path):
     assert len(plan.files) == 1
     file_plan = plan.files[0]
 
-    match_branches = [lp for lp in file_plan.lines if lp.branch_type == "match_case"]
-    assert len(match_branches) == 4, "should have 4 match_case branches (0, 1, 2, _)"
+    match_branches = [
+        lp for lp in file_plan.lines if lp.branch_type == "match_case"
+    ]
+    assert (
+        len(match_branches) == 4
+    ), "should have 4 match_case branches (0, 1, 2, _)"
 
     # Simulate hits for all match_case branches
     hits = {str(lp.id): 1 for lp in match_branches}
@@ -45,7 +49,9 @@ def test_match_coverage_all_branches_hit(tmp_path):
 
     summary = compute_file_summary(file_plan, file_coverage)
     assert summary.total_branches == 4, "should have 4 total branches"
-    assert summary.covered_branches == 4, "all 4 match_case branches should be covered"
+    assert (
+        summary.covered_branches == 4
+    ), "all 4 match_case branches should be covered"
 
 
 def test_match_coverage_partial_branches_hit(tmp_path):
@@ -55,7 +61,9 @@ def test_match_coverage_partial_branches_hit(tmp_path):
     plan = generate_plan(str(tmp_path))
     file_plan = plan.files[0]
 
-    match_branches = [lp for lp in file_plan.lines if lp.branch_type == "match_case"]
+    match_branches = [
+        lp for lp in file_plan.lines if lp.branch_type == "match_case"
+    ]
     assert len(match_branches) == 4
 
     # Hit only the first 2 match_case branches
@@ -64,5 +72,7 @@ def test_match_coverage_partial_branches_hit(tmp_path):
 
     summary = compute_file_summary(file_plan, file_coverage)
     assert summary.total_branches == 4, "should have 4 total branches"
-    assert summary.covered_branches == 2, "only 2 match_case branches should be covered"
+    assert (
+        summary.covered_branches == 2
+    ), "only 2 match_case branches should be covered"
     assert summary.branch_rate == 0.5, "branch rate should be 50%"
