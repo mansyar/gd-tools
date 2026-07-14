@@ -98,15 +98,15 @@
 
 **Files:** `tests/fixtures/autoload_coverage/` (new), `tests/e2e/test_autoload_coverage_e2e.py` (new)
 
-- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
-- [ ] Task: Create minimal fixture Godot project
-    - [ ] Create `tests/fixtures/autoload_coverage/project.godot` with `_GDTCoverage` as first autoload + a second autoload (`GameState`)
-    - [ ] Create `tests/fixtures/autoload_coverage/scripts/game_state.gd` — autoload that instantiates `ChimeraData` in `_ready()`
-    - [ ] Create `tests/fixtures/autoload_coverage/scripts/chimera_data.gd` — script instantiated by the autoload (the one that was previously showing 0% coverage)
-    - [ ] Create `tests/fixtures/autoload_coverage/tests/test_chimera_data.gd` — GUT test that exercises `ChimeraData` methods
-- [ ] Task: Write E2E test
-    - [ ] Write test: running coverage on the fixture produces non-zero coverage for `chimera_data.gd`
-    - [ ] Write test: autoload initialization code (`game_state.gd._ready()`) is NOT recorded as coverage
-    - [ ] Write test: existing non-autoload coverage still works (regression check)
+- [x] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase [2bd1994]
+- [x] Task: Create minimal fixture Godot project [2bd1994]
+    - [x] Create `tests/fixtures/autoload_coverage/project.godot` with `_GDTCoverage` as first autoload + a second autoload (`GameState`)
+    - [x] Create `tests/fixtures/autoload_coverage/scripts/game_state.gd` — autoload that instantiates `ChimeraData` in `_ready()`
+    - [x] Create `tests/fixtures/autoload_coverage/scripts/chimera_data.gd` — script instantiated by the autoload (the one that was previously showing 0% coverage)
+    - [x] Create `tests/fixtures/autoload_coverage/tests/test_chimera_data.gd` — GUT test that exercises `ChimeraData` methods
+- [x] Task: Write E2E test [2bd1994]
+    - [x] Write test: running coverage on the fixture produces non-zero coverage for `chimera_data.gd`
+    - [x] Write test: autoload initialization code (`game_state.gd._ready()`) is NOT recorded as coverage
+    - [x] Write test: existing non-autoload coverage still works (regression check)
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: E2E Fixture & Integration Test' (Protocol in workflow.md)
 </protect>
