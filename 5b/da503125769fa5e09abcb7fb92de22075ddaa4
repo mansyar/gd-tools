@@ -1,0 +1,27 @@
+Phase 2 Checkpoint Verification Report
+
+Phase: Phase 2 - Init Autoload Registration (Prepend + Auto-fix)
+Checkpoint Commit: 5bda503125769fa5e09abcb7fb92de22075ddaa4
+
+Automated Tests:
+- Command: CI=true pytest tests/unit/test_init.py --cov=gd_tools.init --cov-report=term-missing --cov-branch -q
+- Result: 61 passed
+- Coverage on init.py: 98% line, 95% branch (target: >80% line, >70% branch)
+- 9 register_coverage_autoload tests pass (4 new tests added)
+
+Manual Verification Steps (confirmed by user):
+1. pip install -e .
+2. Create a test Godot project with existing autoloads (GlobalSignals, PlayerData)
+3. Run gd-tools init
+4. Verify _GDTCoverage is the FIRST entry in [autoload]
+5. Move _GDTCoverage to last position, re-run gd-tools init
+6. Confirm it moves back to position 0 with stderr warning
+
+User Confirmation: Yes, looks good
+
+Changes in this phase:
+- Rewrote register_coverage_autoload() in src/gd_tools/init.py to prepend
+  _GDTCoverage as first autoload entry (instead of appending)
+- Added auto-fix: detects when _GDTCoverage is not first, moves it to
+  position 0, prints warning to stderr
+- Added 4 new unit tests in tests/unit/test_init.py
