@@ -1,0 +1,19 @@
+Task: Phase 1 - Plan Generator: Remove Autoload Exclusion
+
+Summary: Removed the autoload exclusion filter from generate_plan() so autoload scripts are included in the coverage plan. This is the first step of the autoload-based coverage instrumentation fix.
+
+Changes:
+- Removed autoload filter block (lines 395-405) from generate_plan() in plan_generator.py
+- Removed resolve_autoload_paths() function (no longer used anywhere in source code)
+- Removed resolve_autoload_paths import from test_plan_generator.py
+- Replaced test_generate_plan_excludes_autoload_scripts with test_generate_plan_includes_autoload_scripts (assertion flipped)
+- Added test_generate_plan_autoload_scripts_have_instrumented_lines (verifies file_id, source_hash, lines array)
+- Added test_generate_plan_includes_both_autoload_and_non_autoload (regression check)
+- Removed 5 resolve_autoload_paths unit tests (function deleted)
+- Ran tools/generate_expected_plans.py - no fixture changes (fixtures have no autoloads)
+
+Files modified:
+- src/gd_tools/coverage/plan_generator.py
+- tests/unit/test_plan_generator.py
+
+Why: Autoload scripts can now be instrumented because _GDTCoverage runs as the first autoload (before any other autoload creates instances), so reload() succeeds. The exclusion was a workaround that is no longer needed.
