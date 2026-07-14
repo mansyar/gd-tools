@@ -1,0 +1,24 @@
+Phase 1 Verification Report: Version File Creation During Init
+
+Automated Test Command: CI=true pytest tests/unit/test_init.py --no-cov
+Result: 57 passed (4 new tests, 53 existing)
+
+New Tests:
+- test_install_coverage_addon_writes_version_file: verifies _version.txt is created
+- test_install_coverage_addon_version_file_content: verifies content matches __version__ + newline
+- test_install_coverage_addon_overwrites_existing_version_file: verifies idempotent overwrite
+- test_run_init_action_summary_includes_version_file_entry: verifies action summary entry
+
+Changed Files:
+- src/gd_tools/init.py: Added __version__ import, extended install_coverage_addon() to write _version.txt, added action summary entry in run_init()
+- tests/unit/test_init.py: Added 4 new tests for version file functionality
+
+Manual Verification Plan:
+1. pip install -e .
+2. Navigate to a Godot project
+3. Run gd-tools init
+4. Confirm action summary includes 'Wrote addon version file (v0.3.0)'
+5. Verify addons/gd-tools-coverage/_version.txt exists
+6. Check file content is version string + trailing newline
+
+User Confirmation: Yes, proceed
