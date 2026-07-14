@@ -54,7 +54,11 @@ def check_for_update() -> Optional[str]:
         return None
 
     # FR1.4: Compare versions using packaging.version.parse().
-    if parse_version(latest_version) > parse_version(__version__):
+    try:
+        is_newer = parse_version(latest_version) > parse_version(__version__)
+    except (TypeError, ValueError):
+        return None
+    if is_newer:
         return latest_version
     return None
 
