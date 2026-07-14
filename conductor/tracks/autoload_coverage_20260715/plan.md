@@ -43,7 +43,7 @@
     - [x] Run tests to confirm prepend and auto-fix behavior
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Init — Autoload Registration' (Protocol in workflow.md)
 
-## Phase 3: Coverage Addon — Move Instrumentation to _ready() + Simplify Pre-run Hook
+## Phase 3: Coverage Addon — Move Instrumentation to _ready() + Simplify Pre-run Hook [checkpoint: 755c511]
 
 **Goal:** Move all instrumentation logic from `pre_run_hook.gd` into `coverage.gd._ready()`, and simplify `pre_run_hook.gd` to a single `set_active(true)` call.
 
