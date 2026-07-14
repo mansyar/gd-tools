@@ -56,7 +56,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Update Check Module'
 
-## Phase 2: CLI Integration
+## Phase 2: CLI Integration [checkpoint: 6306397]
 
 - [x] Task: Read spec.md and workflow.md before starting Phase 2
     - [x] Read the track's `spec.md` to review all functional requirements
@@ -80,5 +80,5 @@
     - [x] Confirm >80% line coverage and >70% branch coverage overall
     - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
-- [ ] Task: Conductor - User Manual Verification 'CLI Integration'
+- [x] Task: Conductor - User Manual Verification 'CLI Integration'
 </protect>
