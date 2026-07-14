@@ -58,27 +58,27 @@
 
 ## Phase 2: CLI Integration
 
-- [ ] Task: Read spec.md and workflow.md before starting Phase 2
-    - [ ] Read the track's `spec.md` to review all functional requirements
-    - [ ] Read `conductor/workflow.md` to review the TDD workflow and quality gates
+- [x] Task: Read spec.md and workflow.md before starting Phase 2
+    - [x] Read the track's `spec.md` to review all functional requirements
+    - [x] Read `conductor/workflow.md` to review the TDD workflow and quality gates
 
-- [ ] Task: Write tests for CLI integration
-    - [ ] Test notification message is printed to stderr when an update is available
-    - [ ] Test no notification is printed when no update is available
-    - [ ] Test notification does not affect the exit code of the command
-    - [ ] Test `GD_TOOLS_NO_UPDATE_CHECK=1` disables notification in CLI context
-    - [ ] Confirm all tests fail as expected (Red phase)
+- [x] Task: Write tests for CLI integration (b740e34)
+    - [x] Test notification message is printed to stderr when an update is available
+    - [x] Test no notification is printed when no update is available
+    - [x] Test notification does not affect the exit code of the command
+    - [x] Test `GD_TOOLS_NO_UPDATE_CHECK=1` disables notification in CLI context
+    - [x] Confirm all tests fail as expected (Red phase)
 
-- [ ] Task: Implement CLI hook in `GdToolsGroup.invoke()`
-    - [ ] Import `check_for_update` from `.update_check` in `cli.py`
-    - [ ] Call `check_for_update()` in `GdToolsGroup.invoke()` before `super().invoke()`
-    - [ ] Print notification to stderr via `click.echo(..., err=True)` when a new version is found
-    - [ ] Run tests and confirm all pass (Green phase)
+- [x] Task: Implement CLI hook in `GdToolsGroup.invoke()` (b740e34)
+    - [x] Import `check_for_update` from `.update_check` in `cli.py`
+    - [x] Call `check_for_update()` in `GdToolsGroup.invoke()` before `super().invoke()`
+    - [x] Print notification to stderr via `click.echo(..., err=True)` when a new version is found
+    - [x] Run tests and confirm all pass (Green phase)
 
-- [ ] Task: Verify coverage for Phase 2
-    - [ ] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
-    - [ ] Confirm >80% line coverage and >70% branch coverage overall
-    - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`
+- [x] Task: Verify coverage for Phase 2
+    - [x] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
+    - [x] Confirm >80% line coverage and >70% branch coverage overall
+    - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
 
 - [ ] Task: Conductor - User Manual Verification 'CLI Integration'
 </protect>
