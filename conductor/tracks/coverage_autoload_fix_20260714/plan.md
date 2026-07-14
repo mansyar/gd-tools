@@ -44,7 +44,7 @@
 - [x] Task: Sync the spike copy (`spike/addons/gd-tools-coverage/pre_run_hook.gd`) if needed for integration testing [10a4d2e]
 - [x] Task: Conductor - User Manual Verification 'Phase 3 - Harden pre_run_hook.gd' (Protocol in workflow.md) [0e5e86f]
 
-## Phase 4: Multi-Path CLI (FR-4, FR-5, FR-6)
+## Phase 4: Multi-Path CLI (FR-4, FR-5, FR-6) [checkpoint: 5323308]
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [x] Task: Write failing tests for multi-path `lint` (Red) [0950afb]
@@ -66,7 +66,7 @@
     - [x] Add optional `paths` positional argument to the `test` command
     - [x] Wire paths through to GUT selection args when provided
 - [x] Task: Verify coverage for changed CLI/runner modules (>80% line, >70% branch) [0950afb]
-- [~] Task: Conductor - User Manual Verification 'Phase 4 - Multi-Path CLI' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4 - Multi-Path CLI' (Protocol in workflow.md) [5323308]
 
 ## Phase 5: Documentation & Final Verification
 
