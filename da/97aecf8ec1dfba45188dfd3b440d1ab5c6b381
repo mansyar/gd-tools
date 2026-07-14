@@ -1,0 +1,17 @@
+Task Summary: Doctor Integration (Phase 3, Tasks 2-3)
+
+What was done:
+- Enhanced check_coverage_addon() in doctor.py to report addon version status
+- Added 3 new unit tests + updated 1 existing test in test_doctor.py
+
+Files changed:
+- src/gd_tools/doctor.py: Added imports (from . import __version__, from packaging.version import parse as parse_version). Extended check_coverage_addon() to read _version.txt and report:
+  * Version match/newer: 'Coverage addon installed (vX.Y.Z)' (passed=True)
+  * Version file missing: 'Coverage addon installed (version file missing)' (passed=True, severity=warning)
+  * Stale (addon < package): 'Coverage addon is outdated (vX deployed, vY available)' (passed=True, severity=warning)
+  * Unparseable version: treated as stale, raw string shown
+- tests/unit/test_doctor.py: Updated test_check_coverage_addon_passes_when_all_files_present to include _version.txt. Added 3 new tests: warns_when_version_file_missing, warns_when_stale, warns_when_unparseable_version.
+
+Test results: 637/637 passed
+Coverage: 97.37% overall, doctor.py 100%
+Deviations: Added 4th test (unparseable version) beyond 3 in plan for FR4 coverage. Used is_stale flag pattern to avoid code duplication.
