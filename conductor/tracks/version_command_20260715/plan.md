@@ -3,20 +3,21 @@
 
 ## Phase 1: Version Detection Module (`version.py`)
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
-- [ ] Task: Write unit tests for `collect_versions()` function
-    - [ ] Test all 5 components found (happy path) — gd-tools, Godot, GUT, gdtoolkit, Python all return version strings
-    - [ ] Test Godot not found — `find_godot()` raises `GodotNotFoundError`, result has `godot: None`
-    - [ ] Test GUT not installed — no project root found or no `addons/gut/plugin.cfg`, result has `gut: None`
-    - [ ] Test gdtoolkit not installed — `importlib.metadata.PackageNotFoundError` raised, result has `gdtoolkit: None`
-    - [ ] Test return structure — dict with exactly 5 keys: `gd-tools`, `godot`, `gut`, `gdtoolkit`, `python`; missing components are `None`
-- [ ] Task: Implement `collect_versions()` in `src/gd_tools/version.py`
-    - [ ] Implement gd-tools version detection — return `__version__` from `gd_tools`
-    - [ ] Implement Godot version detection — call `find_godot()` with default `GodotConfig(binary=None)`, catch `GodotNotFoundError` and return `None`
-    - [ ] Implement GUT version detection — call `find_project_root()`, then `get_installed_gut_version(project_root)`, catch exceptions and return `None`
-    - [ ] Implement gdtoolkit version detection — use `importlib.metadata.version("gdtoolkit")`, catch `PackageNotFoundError` and return `None`
-    - [ ] Implement Python version detection — return `sys.version`
-    - [ ] Return `dict[str, str | None]` with all 5 keys
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
+- [x] Task: Write unit tests for `collect_versions()` function
+    - [x] Test all 5 components found (happy path) — gd-tools, Godot, GUT, gdtoolkit, Python all return version strings
+    - [x] Test Godot not found — `find_godot()` raises `GodotNotFoundError`, result has `godot: None`
+    - [x] Test GUT not installed — no project root found or no `addons/gut/plugin.cfg`, result has `gut: None`
+    - [x] Test gdtoolkit not installed — `importlib.metadata.PackageNotFoundError` raised, result has `gdtoolkit: None`
+    - [x] Test return structure — dict with exactly 5 keys: `gd-tools`, `godot`, `gut`, `gdtoolkit`, `python`; missing components are `None`
+- [x] Task: Implement `collect_versions()` in `src/gd_tools/version.py`
+    - [x] Implement gd-tools version detection — return `__version__` from `gd_tools`
+    - [x] Implement Godot version detection — call `find_godot()` with default `GodotConfig(binary=None)`, catch `GodotNotFoundError` and return `None`
+    - [x] Implement GUT version detection — call `find_project_root()`, then `get_installed_gut_version(project_root)`, catch exceptions and return `None`
+    - [x] Implement gdtoolkit version detection — use `importlib.metadata.version("gdtoolkit")`, catch `PackageNotFoundError` and return `None`
+    - [x] Implement Python version detection — return `sys.version`
+    - [x] Return `dict[str, str | None]` with all 5 keys
+    - Commit: `6f8803e`
 - [ ] Task: Conductor - User Manual Verification 'Version Detection Module' (Protocol in workflow.md)
 
 ## Phase 2: CLI Command Integration (`cli.py`)
