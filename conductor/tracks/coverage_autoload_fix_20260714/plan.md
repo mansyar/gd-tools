@@ -46,27 +46,27 @@
 
 ## Phase 4: Multi-Path CLI (FR-4, FR-5, FR-6)
 
-- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
-- [ ] Task: Write failing tests for multi-path `lint` (Red)
-    - [ ] Test combined discovery across multiple paths into one deduplicated set
-    - [ ] Test default to `.` with no path args
-- [ ] Task: Implement multi-path `lint` (cli.py argument + `run_lint`) (Green)
-    - [ ] Change `lint` argument to accept zero or more paths (`nargs=-1`)
-    - [ ] `run_lint` / `discover_gd_files` accept multiple roots and deduplicate
-- [ ] Task: Write failing tests for multi-path `format` (Red)
-    - [ ] Test combined discovery across multiple paths, deduplicated
-    - [ ] Test default to `.` with no path args
-- [ ] Task: Implement multi-path `format` (cli.py argument + `run_format`) (Green)
-    - [ ] Change `format` argument to accept zero or more paths (`nargs=-1`)
-    - [ ] `run_format` accepts multiple roots and deduplicates
-- [ ] Task: Write failing tests for `test` paths filter (Red)
-    - [ ] Test `paths` arg overrides `config.test.test_dirs` for that invocation
-    - [ ] Test omitted `paths` uses config (unchanged behavior)
-- [ ] Task: Implement `test` paths filter (cli.py argument + `run_tests`/`build_gut_args`) (Green)
-    - [ ] Add optional `paths` positional argument to the `test` command
-    - [ ] Wire paths through to GUT selection args when provided
-- [ ] Task: Verify coverage for changed CLI/runner modules (>80% line, >70% branch)
-- [ ] Task: Conductor - User Manual Verification 'Phase 4 - Multi-Path CLI' (Protocol in workflow.md)
+- [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
+- [x] Task: Write failing tests for multi-path `lint` (Red) [0950afb]
+    - [x] Test combined discovery across multiple paths into one deduplicated set
+    - [x] Test default to `.` with no path args
+- [x] Task: Implement multi-path `lint` (cli.py argument + `run_lint`) (Green) [0950afb]
+    - [x] Change `lint` argument to accept zero or more paths (`nargs=-1`)
+    - [x] `run_lint` / `discover_gd_files` accept multiple roots and deduplicate
+- [x] Task: Write failing tests for multi-path `format` (Red) [0950afb]
+    - [x] Test combined discovery across multiple paths, deduplicated
+    - [x] Test default to `.` with no path args
+- [x] Task: Implement multi-path `format` (cli.py argument + `run_format`) (Green) [0950afb]
+    - [x] Change `format` argument to accept zero or more paths (`nargs=-1`)
+    - [x] `run_format` accepts multiple roots and deduplicates
+- [x] Task: Write failing tests for `test` paths filter (Red) [0950afb]
+    - [x] Test `paths` arg overrides `config.test.test_dirs` for that invocation
+    - [x] Test omitted `paths` uses config (unchanged behavior)
+- [x] Task: Implement `test` paths filter (cli.py argument + `run_tests`/`build_gut_args`) (Green) [0950afb]
+    - [x] Add optional `paths` positional argument to the `test` command
+    - [x] Wire paths through to GUT selection args when provided
+- [x] Task: Verify coverage for changed CLI/runner modules (>80% line, >70% branch) [0950afb]
+- [~] Task: Conductor - User Manual Verification 'Phase 4 - Multi-Path CLI' (Protocol in workflow.md)
 
 ## Phase 5: Documentation & Final Verification
 
