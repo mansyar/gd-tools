@@ -28,6 +28,7 @@ from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .test_runner import run_tests
 from .update_check import check_for_update
+from .addon_check import check_addon_version
 
 
 def _configure_windows_utf8() -> None:
@@ -86,6 +87,7 @@ class GdToolsGroup(click.Group):
                 f"Run `pip install --upgrade gd-tools-cli` to update.",
                 err=True,
             )
+        check_addon_version()
         try:
             return super().invoke(ctx)
         except NotImplementedError:
