@@ -19,15 +19,15 @@
 ## Phase 2: Autoload Auto-Exclusion (FR-2)
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
-- [x] Task: Write failing tests for `project.godot` `[autoload]` parsing & exclusion (Red)
+- [x] Task: Write failing tests for `project.godot` `[autoload]` parsing & exclusion (Red) [d4c3215]
     - [x] Test parsing `[autoload]` entries from a fixture `project.godot`
     - [x] Test resolving autoload paths (strip leading `*`, normalize `res://` → relative path)
     - [x] Test autoload scripts are excluded from the generated `CoveragePlan`
     - [x] Test missing/empty `[autoload]` section handled gracefully (no crash)
-- [x] Task: Implement autoload auto-exclusion in `src/gd_tools/coverage/plan_generator.py` (Green)
+- [x] Task: Implement autoload auto-exclusion in `src/gd_tools/coverage/plan_generator.py` (Green) [d4c3215]
     - [x] Add a helper to read `project.godot` and resolve autoload script paths
     - [x] Filter discovered files against resolved autoload paths before building `FilePlan`s
-- [x] Task: Verify coverage for `plan_generator.py` (>80% line, >70% branch)
+- [x] Task: Verify coverage for `plan_generator.py` (>80% line, >70% branch) [d4c3215]
 - [~] Task: Conductor - User Manual Verification 'Phase 2 - Autoload Auto-Exclusion' (Protocol in workflow.md)
 
 ## Phase 3: Harden pre_run_hook.gd (FR-3)
