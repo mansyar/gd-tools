@@ -477,6 +477,9 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 │     ✅ Implemented — Track 12 (see below)                    │
 │ 14. Apply --min threshold (exit 1 if below)                 │
 │     ✅ Implemented — Track 13 (coverage/orchestrator.py)     │
+│ 15. Print coverage summary table on success AND before      │
+│     threshold error (Lines/Branches: Found/Hit/Rate)       │
+│     ✅ Track: coverage_success_display_20260714             │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```

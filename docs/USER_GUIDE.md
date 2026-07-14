@@ -668,6 +668,10 @@ To enforce a minimum coverage percentage in CI:
 gd-tools test --coverage --min 80
 ```
 
+A coverage summary table (Lines/Branches: Found/Hit/Rate) is printed
+to stdout in all cases --- on success, and before the threshold error
+when below the minimum.
+
 You can also check coverage independently after a test run:
 
 ```bash

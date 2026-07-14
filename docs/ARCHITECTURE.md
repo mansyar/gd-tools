@@ -235,7 +235,11 @@ User runs: gd-tools test --coverage --min 80
    `file_id`, computes line and branch coverage metrics, and
    dispatches to the format-specific reporter. If a `min_threshold`
    is set and not met, `CoverageThresholdError` is raised after the
-   report file is written.
+   report file is written (the exception carries the `ReportResult`
+   so the caller can display the coverage summary table without
+   recomputation). `run_coverage_test()` prints the coverage summary
+   table (Rich) to stdout on success, and before re-raising the
+   threshold error.
 
 ---
 
@@ -512,7 +516,9 @@ metrics, and dispatches to format-specific reporters.
 
 **Threshold enforcement:** If `min_threshold` is set (0.0--1.0) and
 `line_rate < min_threshold`, the report file is still written, then
-`CoverageThresholdError` is raised.
+`CoverageThresholdError` is raised (carrying the `ReportResult` so
+the caller can display the coverage summary table before the error
+propagates).
 
 ---
 
@@ -572,6 +578,12 @@ ensures that CI pipelines report test failures as the primary issue
 failing. The coverage report is still generated (written to disk)
 before either error is raised, so the report is available for
 inspection regardless of the error.
+
+In all cases (success, threshold failure, or test failure), the
+coverage summary table (Rich, Lines/Branches: Found/Hit/Rate) is
+printed to stdout before any error propagates. The table is rendered
+by `_print_coverage_table()`, a shared helper extracted from
+`show_coverage_summary()`.
 
 ### 6.5 Hook Base Class: GutHookScript
 

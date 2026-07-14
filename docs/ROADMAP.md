@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Post-v1.0 — Branch Injection Fix delivered (Track 21)
+**Status:** Post-v1.0 — Coverage Summary Display delivered (Track 22)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -68,6 +68,7 @@ Phase 5: Post-Release                  ──┐
   Track 19: PyPI Update Notification ✅   │  ~0.5 day
   Track 20: Coverage Autoload Fix ✅       │  ~1 day
   Track 21: Branch Injection Fix ✅        │  ~0.5 day
+  Track 22: Coverage Summary Display ✅    │  ~0.5 day
                                            │  Risk: LOW-MEDIUM
    ──────────────────────────────────────────┘
 
@@ -1711,6 +1712,61 @@ JSON has `"branch_type": null` for non-branch entries.
 **Verification (game project):**
 - `chimera_data.gd`: 0/75 → **67/75** coverage hits
 - All 30 game tests pass
+
+---
+
+### Track 22: Coverage Summary Display on Success ✅ COMPLETED
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 5 — Post-Release |
+| **Goal** | Display coverage summary table on `test --coverage` success and before threshold error |
+| **Dependencies** | Track 13 (coverage CLI integration) |
+| **Modules** | `coverage/orchestrator.py`, `coverage/reporter.py`, `errors.py` |
+| **Effort** | 0.5 day |
+| **Risk** | LOW |
+| **Status** | ✅ **COMPLETED** (2026-07-14) — All acceptance criteria passed |
+| **Conductor track** | `coverage_success_display_20260714` (archived to `conductor/archive/`) |
+| **Commits** | `768a8bf`..`c263527` (implementation + review fixes) |
+
+**Problem:**
+
+Previously, the coverage summary table was only displayed when
+coverage fell below the `--min` threshold. On success, no coverage
+summary was shown to the user --- requiring a separate
+`gd-tools coverage show` command to see the numbers.
+
+**Changes:**
+
+- **FR-1**: Display coverage summary table (Lines/Branches: Found/Hit/Rate)
+  on stdout when tests pass and coverage data is available.
+- **FR-2**: Display the table on stdout BEFORE raising
+  `CoverageThresholdError` when below threshold.
+- **FR-3**: Reuse existing table-rendering logic --- extracted
+  `_print_coverage_table()` helper from `show_coverage_summary()`.
+- **FR-4**: No change to exit codes (0=pass, 1=fail/below threshold,
+  2=config error).
+
+**Implementation:**
+
+- `errors.py`: `CoverageThresholdError.__init__()` now accepts optional
+  `report_result: ReportResult | None` (defaults to None). Uses
+  `TYPE_CHECKING` guard to avoid circular import with `reporter.py`.
+- `reporter.py`: `generate_report()` passes `report_result=result` to
+  `CoverageThresholdError` when threshold not met.
+- `orchestrator.py`: Extracted `_print_coverage_table()` from
+  `show_coverage_summary()`. `run_coverage_test()` calls it on success
+  (after `generate_report()` returns) and on threshold failure (before
+  re-raising `CoverageThresholdError`).
+
+**Acceptance criteria:**
+- ✅ Coverage summary table displayed on `test --coverage` success
+- ✅ Table displayed before `CoverageThresholdError` when below threshold
+- ✅ No redundant recomputation --- reuses already-computed summary
+- ✅ Table goes to stdout; errors to stderr
+- ✅ No change to exit codes
+- ✅ 5 new tests in `test_orchestrator.py`; 623 unit tests total,
+  97.31% coverage maintained
 
 ---
 

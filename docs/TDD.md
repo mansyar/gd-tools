@@ -114,7 +114,12 @@ class CoveragePlanError(GdToolsError):
     """Failed to generate or parse instrumentation plan."""
 
 class CoverageThresholdError(GdToolsError):
-    """Coverage below minimum threshold."""
+    """Coverage below minimum threshold.
+
+    Carries an optional ``report_result`` so the caller can access the
+    already-computed CoverageSummary (avoids recomputation when
+    printing the coverage table before re-raising).
+    """
     exit_code: int = 1
 
 class TestFailureError(GdToolsError):
@@ -1027,7 +1032,9 @@ def generate_report(
     Dispatches to format-specific reporter via lazy imports.
     Writes report file, then raises CoverageThresholdError if
     threshold not met (report IS written before exception — by design).
-    Returns ReportResult with output path and summary."""
+    The exception carries ``report_result`` so callers can access the
+    summary without recomputation. Returns ReportResult with output
+    path and summary."""
 
 @dataclass
 class CoverageData:
@@ -1232,7 +1239,12 @@ def run_coverage_test(
     5. Read coverage.json + plan.json
     6. Generate reports (reporter.generate_report)
     7. Apply --min threshold (raises CoverageThresholdError if below)
-    Error precedence (NFR-2): TestFailureError reported first, then CoverageThresholdError."""
+    8. Print coverage summary table (Lines/Branches: Found/Hit/Rate)
+       — on success: after generate_report() returns
+       — on threshold failure: BEFORE re-raising CoverageThresholdError
+    Error precedence (NFR-2): TestFailureError reported first, then
+    CoverageThresholdError. Coverage summary table is printed in both
+    cases before any error propagates."""
 
 def generate_coverage_report(
     config: GdToolsConfig,
@@ -1295,6 +1307,19 @@ def show_coverage_summary(
 - Phase 5 bug fixes: `post_run_hook.gd` format mismatch, missing
   `_GDTCoverage` autoload in fixture project, `pre_run_hook` `else:`
   injection workaround.
+
+**Coverage summary display (Track: coverage_success_display_20260714,
+2026-07-14):** Extracted `_print_coverage_table()` helper from
+`show_coverage_summary()` (shared by both `show_coverage_summary()` and
+`run_coverage_test()`). On success, `run_coverage_test()` now prints
+the coverage summary table to stdout after `generate_report()` returns.
+On threshold failure, the table is printed BEFORE re-raising
+`CoverageThresholdError`. `CoverageThresholdError` now carries an
+optional `report_result: ReportResult | None` so the caller can access
+the already-computed summary without recomputation. `generate_report()`
+passes `report_result=result` when raising. Uses `TYPE_CHECKING` guard
+to avoid circular import with `reporter.py`. 5 new tests in
+`test_orchestrator.py`; 623 unit tests total, 97.31% coverage.
 
 ---
 
@@ -1915,9 +1940,15 @@ Python (test_runner.py)
 │      ├─ Cobertura: .gd-tools/coverage/cobertura.xml
 │      └─ Terminal: Rich table → stdout
 │
-├─ 14. Check threshold: if overall_coverage < 80% → CoverageThresholdError
+├─ 14. Apply --min threshold (inside generate_report)
+│      if overall_coverage < 80% → CoverageThresholdError (with ReportResult)
 │
-└─ 15. Print summary (Rich table): test results + coverage summary
+├─ 15. Print coverage summary table (Rich): Lines/Branches Found/Hit/Rate
+│      ✅ Track: coverage_success_display_20260714
+│      (on success: after generate_report() returns;
+│       on threshold failure: BEFORE re-raising CoverageThresholdError)
+│
+└─ 16. Return TestResult (or re-raise TestFailureError first if both occurred)
 ```
 
 ---
