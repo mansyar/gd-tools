@@ -35,7 +35,8 @@
     - [x] Output JSON via `click.echo(json.dumps(...))` when `--json` flag is set
     - [x] Ensure exit code 0 always (no `ctx.exit(1)` paths)
     - Commit: `fc05d2e`
-- [ ] Task: Conductor - User Manual Verification 'CLI Command Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'CLI Command Integration' (Protocol in workflow.md)
+    - [checkpoint: d53b16f]
 
 ## Phase 3: Documentation & Final Verification
 
