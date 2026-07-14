@@ -16,7 +16,7 @@
 - [x] Task: Verify coverage for `file_discovery.py` (>80% line, >70% branch) [5f0bcfe]
 - [x] Task: Conductor - User Manual Verification 'Phase 1 - Hybrid Exclude Matching' (Protocol in workflow.md) [06f391e]
 
-## Phase 2: Autoload Auto-Exclusion (FR-2)
+## Phase 2: Autoload Auto-Exclusion (FR-2) [checkpoint: 5676d09]
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [x] Task: Write failing tests for `project.godot` `[autoload]` parsing & exclusion (Red) [d4c3215]
@@ -28,7 +28,7 @@
     - [x] Add a helper to read `project.godot` and resolve autoload script paths
     - [x] Filter discovered files against resolved autoload paths before building `FilePlan`s
 - [x] Task: Verify coverage for `plan_generator.py` (>80% line, >70% branch) [d4c3215]
-- [~] Task: Conductor - User Manual Verification 'Phase 2 - Autoload Auto-Exclusion' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2 - Autoload Auto-Exclusion' (Protocol in workflow.md) [5676d09]
 
 ## Phase 3: Harden pre_run_hook.gd (FR-3)
 
