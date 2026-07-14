@@ -75,7 +75,7 @@
     - [x] Run full test suite to check for regressions
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Coverage Addon Changes' (Protocol in workflow.md)
 
-## Phase 4: Test Runner — Remove GD_TOOLS_COVERAGE_ACTIVE env var
+## Phase 4: Test Runner — Remove GD_TOOLS_COVERAGE_ACTIVE env var [checkpoint: 9c6e1c6]
 
 **Goal:** Stop setting `GD_TOOLS_COVERAGE_ACTIVE` env var in `test_runner.py`.
 
