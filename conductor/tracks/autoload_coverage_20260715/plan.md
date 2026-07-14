@@ -1,7 +1,7 @@
 <protect>
 # Track 24.5: Autoload-Based Coverage Instrumentation — Implementation Plan
 
-## Phase 1: Plan Generator — Remove Autoload Exclusion
+## Phase 1: Plan Generator — Remove Autoload Exclusion [checkpoint: e6732eb]
 
 **Goal:** Remove the autoload exclusion filter in `plan_generator.py` so autoload scripts are included in the coverage plan.
 
