@@ -70,10 +70,9 @@
 
 ## Phase 5: Documentation & Final Verification
 
-- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
-- [ ] Task: Update `docs/USER_GUIDE.md` with multi-path CLI usage examples (lint/format/test)
-- [ ] Task: Run full test suite with coverage (`CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`)
-- [ ] Task: Run lint + format checks on all changed code (`ruff check src/ tests/` && `black --check src/ tests/`)
-- [ ] Task: Conductor - User Manual Verification 'Phase 5 - Documentation & Final Verification' (Protocol in workflow.md)
+- [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
+- [x] Task: Update `docs/USER_GUIDE.md` with multi-path CLI usage examples (lint/format/test) [706e5fd]
+- [x] Task: Run full test suite with coverage (`CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`) [706e5fd]
+- [~] Task: Conductor - User Manual Verification 'Phase 5 - Documentation & Final Verification' (Protocol in workflow.md)
 
 </protect>
