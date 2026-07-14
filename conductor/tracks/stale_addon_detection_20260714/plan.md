@@ -1,3 +1,4 @@
+<protect>
 # Track 23: Stale Addon Detection — Implementation Plan
 
 ## Overview
@@ -17,6 +18,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ## Phase 1: Version File Creation During Init
 
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
 - [ ] Task: Write tests for version file creation during init
     - [ ] Test that `install_coverage_addon()` writes a `_version.txt` file to `addons/gd-tools-coverage/`
     - [ ] Test that the file content matches `gd_tools.__version__` (with trailing newline)
@@ -31,6 +33,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ## Phase 2: Stale Addon Detection Module
 
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
 - [ ] Task: Write unit tests for addon_check.py
     - [ ] Test: no warning when addon version == package version (versions match)
     - [ ] Test: stale warning printed to stderr when addon version < package version
@@ -54,6 +57,7 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ## Phase 3: Doctor Integration
 
+- [ ] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
 - [ ] Task: Write tests for doctor addon version reporting
     - [ ] Test: `check_coverage_addon()` reports deployed version when addon files and version file are present
     - [ ] Test: `check_coverage_addon()` warns when addon files are present but version file is missing
@@ -64,3 +68,4 @@ This plan implements the stale addon detection feature (Track 23) following the 
     - [ ] Set `severity="warning"` and update `fix_hint` when version file is missing
     - [ ] Set `severity="warning"` and report both versions when addon version is stale
 - [ ] Task: Conductor - User Manual Verification 'Doctor Integration' (Protocol in workflow.md)
+</protect>

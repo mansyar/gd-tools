@@ -1,3 +1,4 @@
+<protect>
 # Track 23: Stale Addon Detection
 
 ## Overview
@@ -85,3 +86,4 @@ This track adds a version-stamping mechanism and a stale-detection check that wa
 - Network-based version checks (this is a local file comparison only; PyPI checks are handled by `update_check.py`).
 - Any changes to the GDScript addon files themselves.
 - Shell completion, verbose/quiet flags, or other Phase 6 tracks.
+</protect>
