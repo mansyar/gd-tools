@@ -23,17 +23,18 @@
 
 ## Phase 2: CLI Command Integration (`cli.py`)
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
-- [ ] Task: Write unit tests for `version` Click command
-    - [ ] Test default table output — Rich table rendered with 5 component rows
-    - [ ] Test `--json` flag output — valid JSON, flat object keyed by component name, `null` for missing
-    - [ ] Test exit code is always 0 — even when components are missing
-    - [ ] Test missing components display — "not detected" for Godot, "not installed" for GUT/gdtoolkit
-- [ ] Task: Implement `version` command in `src/gd_tools/cli.py`
-    - [ ] Add `@cli.command()` for `version` with `--json` flag option
-    - [ ] Call `collect_versions()` and render Rich table by default (Component, Version columns)
-    - [ ] Output JSON via `click.echo(json.dumps(...))` when `--json` flag is set
-    - [ ] Ensure exit code 0 always (no `ctx.exit(1)` paths)
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
+- [x] Task: Write unit tests for `version` Click command
+    - [x] Test default table output — Rich table rendered with 5 component rows
+    - [x] Test `--json` flag output — valid JSON, flat object keyed by component name, `null` for missing
+    - [x] Test exit code is always 0 — even when components are missing
+    - [x] Test missing components display — "not detected" for Godot, "not installed" for GUT/gdtoolkit
+- [x] Task: Implement `version` command in `src/gd_tools/cli.py`
+    - [x] Add `@cli.command()` for `version` with `--json` flag option
+    - [x] Call `collect_versions()` and render Rich table by default (Component, Version columns)
+    - [x] Output JSON via `click.echo(json.dumps(...))` when `--json` flag is set
+    - [x] Ensure exit code 0 always (no `ctx.exit(1)` paths)
+    - Commit: `fc05d2e`
 - [ ] Task: Conductor - User Manual Verification 'CLI Command Integration' (Protocol in workflow.md)
 
 ## Phase 3: Documentation & Final Verification
