@@ -33,16 +33,16 @@
 ## Phase 3: Harden pre_run_hook.gd (FR-3)
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
-- [x] Task: Write failing tests for `_instrument_file` hardening (Red)
+- [x] Task: Write failing tests for `_instrument_file` hardening (Red) [10a4d2e]
     - [x] Test a script with active instances is skipped and a warning is logged (no `reload()` call)
     - [x] Test `source_code` is never mutated when the instance pre-check fails
     - [x] Test original `source_code` is restored on a `reload()` failure
-- [x] Task: Implement hardening in the canonical `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (Green)
+- [x] Task: Implement hardening in the canonical `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (Green) [10a4d2e]
     - [x] Capture original `source_code` before any mutation
     - [x] Add an active-instance pre-check; skip + warn when instances exist
     - [x] Restore `script.source_code = original` in the `reload()` error path before returning
-- [x] Task: Sync the spike copy (`spike/addons/gd-tools-coverage/pre_run_hook.gd`) if needed for integration testing
-- [ ] Task: Conductor - User Manual Verification 'Phase 3 - Harden pre_run_hook.gd' (Protocol in workflow.md)
+- [x] Task: Sync the spike copy (`spike/addons/gd-tools-coverage/pre_run_hook.gd`) if needed for integration testing [10a4d2e]
+- [~] Task: Conductor - User Manual Verification 'Phase 3 - Harden pre_run_hook.gd' (Protocol in workflow.md)
 
 ## Phase 4: Multi-Path CLI (FR-4, FR-5, FR-6)
 
