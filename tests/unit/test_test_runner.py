@@ -893,14 +893,14 @@ def test_build_gut_args_no_coverage_no_hook_scripts():
 @patch("gd_tools.test_runner.run_godot")
 @patch("gd_tools.test_runner.find_godot")
 @patch("gd_tools.test_runner.find_project_root")
-def test_run_tests_coverage_sets_env_var(
+def test_run_tests_coverage_no_active_env_var(
     mock_find_root,
     mock_find_godot,
     mock_run_godot,
     mock_parse,
     gut_project,
 ):
-    """coverage=True sets GD_TOOLS_COVERAGE_ACTIVE=1 in subprocess env."""
+    """coverage=True does NOT set GD_TOOLS_COVERAGE_ACTIVE in subprocess env."""
     mock_find_root.return_value = gut_project
     mock_find_godot.return_value = _make_godot_info()
     mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
@@ -911,7 +911,32 @@ def test_run_tests_coverage_sets_env_var(
     call_args = mock_run_godot.call_args
     env = call_args.kwargs.get("env")
     assert env is not None
-    assert env.get("GD_TOOLS_COVERAGE_ACTIVE") == "1"
+    assert "GD_TOOLS_COVERAGE_ACTIVE" not in env
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_coverage_has_pre_run_script_arg(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+):
+    """coverage=True adds -gpre_run_script to GUT args."""
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (0, 0, 0, 0, 0.0, [])
+
+    run_tests(GdToolsConfig(), coverage=True)
+
+    call_args = mock_run_godot.call_args
+    args = call_args.args[2]
+    assert any(a.startswith("-gpre_run_script=") for a in args)
 
 
 @pytest.mark.unit

@@ -410,7 +410,6 @@ def run_tests(
         plan_path = (coverage_dir / "plan.json").resolve()
         output_path = (coverage_dir / "coverage.json").resolve()
         env = {
-            "GD_TOOLS_COVERAGE_ACTIVE": "1",
             "GD_TOOLS_COVERAGE_PLAN": os.environ.get(
                 "GD_TOOLS_COVERAGE_PLAN", str(plan_path)
             ),
