@@ -68,11 +68,11 @@
 - [x] Task: Verify coverage for changed CLI/runner modules (>80% line, >70% branch) [0950afb]
 - [x] Task: Conductor - User Manual Verification 'Phase 4 - Multi-Path CLI' (Protocol in workflow.md) [5323308]
 
-## Phase 5: Documentation & Final Verification
+## Phase 5: Documentation & Final Verification [checkpoint: f95200c]
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [x] Task: Update `docs/USER_GUIDE.md` with multi-path CLI usage examples (lint/format/test) [706e5fd]
 - [x] Task: Run full test suite with coverage (`CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`) [706e5fd]
-- [~] Task: Conductor - User Manual Verification 'Phase 5 - Documentation & Final Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 5 - Documentation & Final Verification' (Protocol in workflow.md) [f95200c]
 
 </protect>

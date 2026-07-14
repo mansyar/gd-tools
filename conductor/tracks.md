@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Fix coverage autoload corruption & multi-path CLI**
+- [x] **Track: Fix coverage autoload corruption & multi-path CLI**
 *Link: [./tracks/coverage_autoload_fix_20260714/](./tracks/coverage_autoload_fix_20260714/)*
