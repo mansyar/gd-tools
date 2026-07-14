@@ -1,0 +1,21 @@
+Task: Phase 2 - Init Autoload Registration (Prepend + Auto-fix)
+
+Summary: Rewrote register_coverage_autoload() to prepend _GDTCoverage as
+the first entry in [autoload] instead of appending. Added auto-fix logic
+that detects when _GDTCoverage exists but is not in position 0, moves it
+to position 0, and prints a warning to stderr. This ensures
+_GDTCoverage._ready() runs before any other autoload creates script
+instances, so instrumentation via reload() succeeds.
+
+Files modified:
+- src/gd_tools/init.py: Rewrote register_coverage_autoload() (lines 345-435)
+- tests/unit/test_init.py: Added 4 new tests (prepend, move-to-first,
+  warns-when-moving, no-warning-when-already-first)
+
+Test results: 9 register_coverage_autoload tests pass, 648 total unit
+tests pass. Coverage on init.py: 98% line, 95% branch.
+
+Why: Autoload ordering is critical. _GDTCoverage must be first so its
+_ready() can instrument scripts before any other autoload creates
+instances. reload() fails with ERR_ALREADY_IN_USE when active instances
+exist.
