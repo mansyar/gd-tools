@@ -570,8 +570,13 @@ def test_generate_report_threshold_below_raises(tmp_path):
     plan = read_plan_json(_PLAN_FIXTURE)
     data = read_coverage_json(_PARTIAL_COV)
     # partial_coverage: line_rate = 5/8 = 0.625, below 0.80
-    with pytest.raises(CoverageThresholdError):
+    with pytest.raises(CoverageThresholdError) as exc_info:
         generate_report(plan, data, tmp_path, format="text", min_threshold=0.80)
+
+    # Verify report_result is attached so callers can display coverage
+    # without recomputation (FR-2 / NFR-2).
+    assert exc_info.value.report_result is not None
+    assert exc_info.value.report_result.summary is not None
 
 
 def test_generate_report_threshold_at_minimum_no_raise(tmp_path):

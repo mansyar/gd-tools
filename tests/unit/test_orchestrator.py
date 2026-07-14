@@ -560,8 +560,9 @@ def test_run_coverage_test_coverage_summary_before_threshold_error(
     mock_deps,
 ):
     """run_coverage_test() prints coverage table before raising CoverageThresholdError."""
-    err = CoverageThresholdError("Below threshold")
-    err.report_result = _make_report_result()
+    err = CoverageThresholdError(
+        "Below threshold", report_result=_make_report_result()
+    )
     mock_deps["generate_report"].side_effect = err
 
     with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
