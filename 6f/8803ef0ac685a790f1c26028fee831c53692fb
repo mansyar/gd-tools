@@ -1,0 +1,26 @@
+Task: Implement collect_versions() in src/gd_tools/version.py
+
+Phase 1 of Track 24: Version Command
+
+Changes:
+- Created src/gd_tools/version.py with collect_versions() function
+- collect_versions() returns dict[str, str | None] with 5 keys:
+  gd-tools, godot, gut, gdtoolkit, python
+- Missing components return None (GodotNotFoundError, ConfigError,
+  PackageNotFoundError all caught)
+- Created tests/unit/test_version.py with 6 unit tests:
+  1. test_collect_versions_all_found (happy path)
+  2. test_collect_versions_godot_not_found
+  3. test_collect_versions_gut_not_installed
+  4. test_collect_versions_gut_no_project_root
+  5. test_collect_versions_gdtoolkit_not_installed
+  6. test_collect_versions_return_structure
+
+Verification:
+- All 6 tests pass
+- version.py: 100% coverage (26 stmts, 0 miss)
+- ruff check: passed
+- black --check: passed
+
+TDD: Red phase (tests written, confirmed failing) -> Green phase
+(implementation written, tests pass)
