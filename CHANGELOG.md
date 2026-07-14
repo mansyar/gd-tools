@@ -1,3 +1,20 @@
+## v0.2.0 (2026-07-14)
+
+### Feat
+
+- **cli**: Multi-path support for lint/format/test commands (FR-4, FR-5, FR-6)
+- **coverage**: auto-exclude autoload scripts from coverage plan (FR-2)
+- **update-check**: Integrate update notification into CLI invoke
+- **update-check**: Implement PyPI update notification module
+- **deps**: Add packaging dependency for version comparison
+
+### Fix
+
+- **conductor**: Apply review suggestions for track 'coverage_autoload_fix_20260714'
+- **coverage**: Harden _instrument_file against autoload corruption (FR-3)
+- **file_discovery**: Implement hybrid path-aware exclude matching
+- **conductor**: Apply review suggestions for track 'PyPI update notification when running gd-tools commands'
+
 ## v0.1.4 (2026-07-14)
 
 ### Fix
