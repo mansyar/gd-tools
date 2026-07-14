@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18)
+**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18); PyPI Update Notification delivered (Track 19)
 **Target Godot Version:** 4.5+
 
 ---
@@ -177,7 +177,29 @@ gd-tools coverage show [--min N]
   without re-running tests.
 - `merge` — combine multiple coverage data files (e.g., from parallel CI
   shards or multiple test runs).
-- `show` — print a terminal summary table (file → line %, branch %).
+- `show` — print a terminal summary table (file -> line %, branch %).
+
+### Update Notification
+
+On every CLI invocation, `gd-tools` checks PyPI for a newer version of
+`gd-tools-cli`. If an update is available, a notification is printed to
+**stderr** (does not interfere with stdout output or scripts):
+
+```
+A new version of gd-tools is available: 0.2.0 (you have 0.1.0).
+Run `pip install --upgrade gd-tools-cli` to update.
+```
+
+Features:
+- **Cached**: The PyPI check is cached for 24 hours in
+  `~/.gd-tools/update-check.json` to avoid network delays on every run.
+- **Non-blocking**: The check fails silently on any error (network
+  issues, PyPI downtime, parse errors). It never prevents command
+  execution.
+- **Skips dev installs**: No check is performed when running from an
+  editable/development install (`__version__ == "0.0.0"`).
+- **Disabling**: Set the `GD_TOOLS_NO_UPDATE_CHECK=1` environment
+  variable to disable the check entirely.
 
 ---
 
@@ -659,6 +681,7 @@ Test files are still linted and formatted (they are user code).
 | `tomli`        | TOML config parsing (Python < 3.11 backport) |
 | `requests`     | Download GUT releases from GitHub            |
 | `click`        | CLI framework (or `typer` — TBD)             |
+| `packaging`    | Version comparison for PyPI update notification |
 
 ### Python (dev)
 
@@ -702,6 +725,7 @@ gd-tools/
 │       ├── __init__.py
 │       ├── __main__.py           # Entry point: python -m gd_tools
 │       ├── cli.py                # Click/Typer CLI definitions
+│       ├── update_check.py       # PyPI update notification on CLI invocation
 │       ├── config.py             # gd-tools.toml loading & validation
 │       ├── godot.py              # Godot binary detection + invocation
 │       ├── init.py               # `gd-tools init` logic

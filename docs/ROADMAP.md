@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18)
+**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18); PyPI Update Notification delivered (Track 19)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -65,6 +65,7 @@ Phase 4: Polish & Release              ──┐
                                      
 Phase 5: Post-Release                  ──┐
   Track 18: Agent Skill & Versioning ✅    │  ~1 day
+  Track 19: PyPI Update Notification ✅   │  ~0.5 day
                                            │  Risk: LOW
   ──────────────────────────────────────────┘
 
@@ -1510,6 +1511,79 @@ partially met — deferred to future track.
 - **Phase 1 (Agent Skill):** Created `skills/gd-tools/SKILL.md` with YAML frontmatter, all 8 CLI commands (init, doctor, test, lint, format, coverage report/merge/show), 4 workflow recipes, config reference, Godot detection chain, error handling, GUT version mapping. Checkpoint: `524f788`.
 - **Phase 2 (Commitizen Integration):** Added commitizen to dev deps, configured `[tool.commitizen]` (name=cz_conventional_commits, version=0.1.0, version_files, changelog_file, tag_format, update_changelog_on_bump), generated CHANGELOG.md, updated tech-stack.md. Checkpoint: `910cf42`.
 - **Phase 3 (CI Commit Check):** Created `.github/workflows/commit-check.yml` (trigger on pull_request, checkout@v4 with fetch-depth: 0, setup-python@v5 with Python 3.12, install commitizen, run `cz check --rev-range`). Checkpoint: `64e8031`.
+
+---
+
+### Track 19: PyPI Update Notification ✅ COMPLETED
+
+| Field | Value |
+|-------|-------|
+| **Phase** | Post-v1.0 |
+| **Goal** | Notify users when a newer version of `gd-tools-cli` is available on PyPI |
+| **Dependencies** | Track 1 (CLI skeleton), Track 17 (PyPI release) |
+| **Modules** | `src/gd_tools/update_check.py` (new), `src/gd_tools/cli.py` (update) |
+| **Effort** | 0.5 day |
+| **Risk** | LOW -- purely additive, non-blocking |
+| **Status** | ✅ **COMPLETED** (2026-07-14) -- All 5 acceptance criteria passed |
+| **Conductor track** | `update_check_20260714` (archived to `conductor/archive/`) |
+| **Commits** | `32fe75a`..`b740e34` (3 commits) + review fix `5709ab1` |
+
+**Scope:**
+- `check_for_update()` queries the PyPI JSON API
+  (`https://pypi.org/pypi/gd-tools-cli/json`) for the latest version
+- Results cached in `~/.gd-tools/update-check.json` with 24-hour TTL
+- Version comparison via `packaging.version.parse()`
+- Notification printed to stderr (via `click.echo(..., err=True)`) in
+  `GdToolsGroup.invoke()` before dispatching to the subcommand
+- Fails silently on any error (network timeout, PyPI downtime, corrupt
+  cache, parse errors) -- never blocks command execution
+- Disabling: `GD_TOOLS_NO_UPDATE_CHECK=1` environment variable
+- Dev installs skipped (`__version__ == "0.0.0"`)
+
+**Deliverables:**
+- `update_check.py` (113 lines) with `check_for_update()`,
+  `_read_cached_version()`, `_fetch_latest_version()`, `_write_cache()`
+- Updated `cli.py` with update check in `GdToolsGroup.invoke()`
+- `packaging` added to `pyproject.toml` runtime dependencies
+- Autouse fixture in `tests/unit/conftest.py` patching
+  `gd_tools.cli.check_for_update` for all unit tests
+- `tests/unit/test_update_check.py` (14 tests, 218 lines)
+- `tests/unit/test_cli.py` (4 new CLI integration tests)
+
+**Success Criteria:**
+1. Running `gd-tools --version` triggers a silent PyPI check (cached)
+2. If a newer version exists, notification is printed to stderr
+3. If PyPI is unreachable, the check fails silently (no error output)
+4. `GD_TOOLS_NO_UPDATE_CHECK=1` disables the check entirely
+5. Cache file prevents redundant network requests within 24-hour window
+
+**Track 19 Results (2026-07-14):**
+- ✅ All 5 acceptance criteria PASSED
+- ✅ 594 unit tests passed; `update_check.py` at 95% coverage, `cli.py`
+  at 98%, total 97.27%
+- ✅ ruff check + black --check pass
+- **Review fix applied (commit `5709ab1`):**
+  1. LOW -- Wrapped `parse_version()` calls in `check_for_update()` with
+     `try/except (TypeError, ValueError): return None`. A corrupted cache
+     file with a non-string `latest_version` could raise unhandled
+     `TypeError`, crashing the CLI (violates FR3.3 -- corrupt cache
+     should be treated as a cache miss).
+- **Key implementation notes:**
+  - Constants: `PYPI_URL`, `REQUEST_TIMEOUT=3`, `CACHE_TTL_HOURS=24`,
+    `CACHE_DIR=Path.home()/".gd-tools"`, `CACHE_FILENAME="update-check.json"`
+  - `_fetch_latest_version()` uses `requests.get()` with 3-second timeout,
+    catches `RequestException`, `ValueError`, `KeyError`
+  - `_read_cached_version()` validates cache file: checks existence,
+    JSON validity, `latest_version` key, and 24-hour TTL via `timestamp`
+  - `_write_cache()` creates cache directory if needed, writes JSON with
+    `latest_version` and `timestamp` keys
+  - CLI notification format: `"A new version of gd-tools is available:
+    {latest} (you have {__version__}).\nRun \`pip install --upgrade
+    gd-tools-cli\` to update."`
+  - Autouse fixture in `conftest.py` patches `gd_tools.cli.check_for_update`
+    (the imported reference in `cli.py`, not the original function) so all
+    unit tests avoid network calls. Update-check tests explicitly override
+    this fixture.
 
 ---
 

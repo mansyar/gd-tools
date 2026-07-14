@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Phase 4 In Progress — Documentation delivered (Track 16)
+**Status:** Post-v1.0 — Documentation delivered (Track 16); Update Notification delivered (Track 19)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -33,6 +33,7 @@ src/gd_tools/
 ├── __init__.py
 ├── __main__.py               # Entry: python -m gd_tools
 ├── cli.py                    # Click CLI definitions
+├── update_check.py           # PyPI update notification
 ├── config.py                 # Pydantic models for gd-tools.toml
 ├── godot.py                  # Godot binary detection + invocation
 ├── init.py                   # `gd-tools init` bootstrap flow
@@ -65,6 +66,7 @@ src/gd_tools/
 ```
 cli.py
 ├── config.py
+├── update_check.py (-> packaging, requests)
 ├── godot.py
 ├── init.py (→ config, godot)
 ├── doctor.py (→ config, godot)
@@ -1236,6 +1238,80 @@ def show_coverage_summary(
 - Phase 5 bug fixes: `post_run_hook.gd` format mismatch, missing
   `_GDTCoverage` autoload in fixture project, `pre_run_hook` `else:`
   injection workaround.
+
+---
+
+### 3.17 `update_check.py` — PyPI Update Notification
+
+> **Implemented:** Track 19 (`update_check_20260714`, archived). See
+> `src/gd_tools/update_check.py` (113 lines). All 5 acceptance criteria
+> passed. 14 unit tests in `test_update_check.py`, 4 CLI integration
+> tests in `test_cli.py`. `update_check.py` at 95% coverage.
+
+```python
+PYPI_URL = "https://pypi.org/pypi/gd-tools-cli/json"
+REQUEST_TIMEOUT = 3  # seconds
+CACHE_TTL_HOURS = 24
+CACHE_DIR = Path.home() / ".gd-tools"
+CACHE_FILENAME = "update-check.json"
+
+def check_for_update() -> Optional[str]:
+    """Check PyPI for a newer version of gd-tools-cli.
+    Returns the latest version string if an update is available,
+    or None otherwise. The check is cached for 24 hours and
+    fails silently on any error.
+
+    Disabling: Set GD_TOOLS_NO_UPDATE_CHECK=1 to skip the check.
+    Dev installs: Skipped when __version__ == "0.0.0"."""
+
+def _read_cached_version() -> Optional[str]:
+    """Read cached latest version from ~/.gd-tools/update-check.json.
+    Returns None if cache is missing, expired (>24h), corrupt, or
+    missing the 'latest_version' key."""
+
+def _fetch_latest_version() -> Optional[str]:
+    """Fetch latest version from PyPI JSON API.
+    Returns None on any network or parsing error (timeout,
+    RequestException, ValueError, KeyError)."""
+
+def _write_cache(version: str) -> None:
+    """Write latest version + timestamp to cache file.
+    Creates cache directory if it does not exist."""
+```
+
+#### CLI Integration
+
+The update check is integrated into the CLI via `GdToolsGroup.invoke()`
+in `cli.py`. Before dispatching to the subcommand, `check_for_update()` is
+called. If a newer version is found, a notification is printed to
+**stderr** (via `click.echo(..., err=True)`) and execution continues
+normally -- the check never blocks or fails the command.
+
+```python
+class GdToolsGroup(click.Group):
+    def invoke(self, ctx) -> Any:
+        latest = check_for_update()
+        if latest is not None:
+            click.echo(
+                f"A new version of gd-tools is available: {latest} "
+                f"(you have {__version__}).\n"
+                f"Run `pip install --upgrade gd-tools-cli` to update.",
+                err=True,
+            )
+        try:
+            return super().invoke(ctx)
+        except NotImplementedError:
+            click.echo("Error: This command is not yet implemented.", err=True)
+            ctx.exit(2)
+```
+
+#### Testing
+
+An autouse fixture in `tests/unit/conftest.py` patches
+`gd_tools.cli.check_for_update` (the imported reference, not the
+original function) so all unit tests avoid network calls. Explicit
+update-check tests unpatch this fixture when testing the notification
+behavior.
 
 ---
 

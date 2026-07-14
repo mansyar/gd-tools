@@ -75,6 +75,30 @@ gd-tools doctor
 ```
 
 
+### 1.4 Update Notifications
+
+When you run any `gd-tools` command, the CLI silently checks PyPI for a
+newer version of `gd-tools-cli`. If an update is available, a message is
+printed to **stderr** (it does not interfere with command output or
+scripts):
+
+```
+A new version of gd-tools is available: 0.2.0 (you have 0.1.0).
+Run `pip install --upgrade gd-tools-cli` to update.
+```
+
+The check is cached for 24 hours to avoid network delays on every run.
+It fails silently on any error (network issues, PyPI downtime) and never
+prevents command execution.
+
+To disable the update check entirely, set the `GD_TOOLS_NO_UPDATE_CHECK`
+environment variable to `1`:
+
+```bash
+export GD_TOOLS_NO_UPDATE_CHECK=1
+```
+
+
 ## 2. Configuration
 
 All configuration lives in a single `gd-tools.toml` file in the project
