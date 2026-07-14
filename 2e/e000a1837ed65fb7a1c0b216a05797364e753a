@@ -1,0 +1,14 @@
+Task Summary: Phase 1 - Version File Creation During Init
+
+Tests written (4 new):
+- test_install_coverage_addon_writes_version_file: verifies _version.txt is created
+- test_install_coverage_addon_version_file_content: verifies content matches __version__ + newline
+- test_install_coverage_addon_overwrites_existing_version_file: verifies idempotent overwrite
+- test_run_init_action_summary_includes_version_file_entry: verifies action summary entry
+
+Implementation:
+- Added 'from . import __version__' import to init.py
+- Extended install_coverage_addon() to write _version.txt with __version__ after copying .gd files
+- Added action summary entry 'Wrote addon version file (v{__version__})' in run_init()
+
+All 57 tests pass. No regressions. New code fully covered.
