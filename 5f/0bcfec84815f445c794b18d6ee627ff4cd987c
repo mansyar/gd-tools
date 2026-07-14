@@ -1,0 +1,11 @@
+Task: Write failing tests + Implement hybrid exclude matching (Phase 1, FR-1)
+
+Summary: Implemented hybrid path-aware exclude matching in discover_gd_files. Exclude entries without a path separator continue to match directory basenames at any depth (backward compatible). Exclude entries containing / or \\ are treated as path prefixes relative to the search root, excluding any file whose relative path starts with the prefix.
+
+Files modified:
+- src/gd_tools/file_discovery.py: Split excludes into bare_excludes (set) and path_excludes (list). Bare excludes prune dirs during os.walk as before. Path-prefix excludes filter collected .gd files by comparing normalized relative paths.
+- tests/unit/test_file_discovery.py: Added 3 new tests: test_discover_gd_files_bare_exclude_multiple_depths, test_discover_gd_files_exclude_by_path_prefix, test_discover_gd_files_exclude_path_prefix_cross_platform.
+
+Why: The old code matched exclude entries only against bare directory names (d not in excludes), so a config value like exclude=['scripts/autoload'] was silently ignored. This caused autoload scripts to appear in the coverage plan, triggering the reload-failure bug.
+
+Coverage: file_discovery.py at 100% line and branch coverage. All 597 unit tests pass, no regressions.
