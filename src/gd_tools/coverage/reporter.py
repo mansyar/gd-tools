@@ -512,7 +512,8 @@ def generate_report(
             f"  Cause: Line coverage {summary.line_rate:.2%} is "
             f"below minimum {min_threshold:.2%}.\n"
             f"  Fix: Increase test coverage or lower the minimum "
-            "threshold."
+            "threshold.",
+            report_result=result,
         )
 
     return result

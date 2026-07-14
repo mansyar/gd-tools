@@ -115,20 +115,25 @@ def run_coverage_test(
 
     min_threshold = min_percent / 100 if min_percent is not None else None
     try:
-        reporter.generate_report(
+        report_result = reporter.generate_report(
             plan,
             data,
             output_dir,
             config.coverage.format,
             min_threshold=min_threshold,
         )
-    except CoverageThresholdError:
+    except CoverageThresholdError as exc:
+        if exc.report_result is not None:
+            _print_coverage_table(exc.report_result.summary)
         if test_error is not None:
             raise test_error
         raise
 
     if test_error is not None:
         raise test_error
+
+    # Print coverage summary table on success.
+    _print_coverage_table(report_result.summary)
 
     if result is None:
         raise CoveragePlanError(
@@ -229,6 +234,39 @@ def merge_coverage_files(
     return merged
 
 
+def _print_coverage_table(summary: CoverageSummary) -> None:
+    """Print a Rich coverage summary table to stdout.
+
+    Renders a table with Lines and Branches rows, showing Found,
+    Hit, and Rate columns.  Used by both :func:`show_coverage_summary`
+    and :func:`run_coverage_test` to ensure a consistent table format.
+
+    Args:
+        summary: The coverage summary to display.
+    """
+    console = Console()
+    table = Table(title="Coverage Summary")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Found", justify="right")
+    table.add_column("Hit", justify="right")
+    table.add_column("Rate", justify="right", style="green")
+
+    table.add_row(
+        "Lines",
+        str(summary.total_lines),
+        str(summary.covered_lines),
+        f"{summary.line_rate * 100:.1f}%",
+    )
+    table.add_row(
+        "Branches",
+        str(summary.total_branches),
+        str(summary.covered_branches),
+        f"{summary.branch_rate * 100:.1f}%",
+    )
+
+    console.print(table)
+
+
 def show_coverage_summary(
     config: GdToolsConfig,
     min_percent: int | None = None,
@@ -265,27 +303,7 @@ def show_coverage_summary(
     summary = reporter.compute_summary(plan, data)
 
     # Print Rich terminal table.
-    console = Console()
-    table = Table(title="Coverage Summary")
-    table.add_column("Metric", style="cyan")
-    table.add_column("Found", justify="right")
-    table.add_column("Hit", justify="right")
-    table.add_column("Rate", justify="right", style="green")
-
-    table.add_row(
-        "Lines",
-        str(summary.total_lines),
-        str(summary.covered_lines),
-        f"{summary.line_rate * 100:.1f}%",
-    )
-    table.add_row(
-        "Branches",
-        str(summary.total_branches),
-        str(summary.covered_branches),
-        f"{summary.branch_rate * 100:.1f}%",
-    )
-
-    console.print(table)
+    _print_coverage_table(summary)
 
     # Threshold check.
     if min_percent is not None and summary.line_rate * 100 < min_percent:

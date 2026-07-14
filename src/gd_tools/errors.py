@@ -12,6 +12,13 @@ Exit-code convention:
       threshold).  These are "your code has a problem" errors.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gd_tools.coverage.reporter import ReportResult
+
 
 class GdToolsError(Exception):
     """Base exception for all gd-tools errors.
@@ -55,9 +62,35 @@ class CoveragePlanError(GdToolsError):
 
 
 class CoverageThresholdError(GdToolsError):
-    """Raised when coverage falls below the required threshold."""
+    """Raised when coverage falls below the required threshold.
+
+    Attributes:
+        exit_code: Process exit code (1 for threshold failures).
+        report_result: The :class:`ReportResult` computed before the
+            threshold check failed, if available.  Callers can use
+            this to display coverage information without recomputation.
+    """
 
     exit_code: int = 1
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        exit_code: int | None = None,
+        report_result: ReportResult | None = None,
+    ) -> None:
+        """Initialize the error.
+
+        Args:
+            message: The error message.
+            exit_code: Override the class default exit code. If None,
+                the class-level ``exit_code`` is used.
+            report_result: The :class:`ReportResult` containing the
+                coverage summary computed before the threshold check.
+        """
+        super().__init__(message, exit_code=exit_code)
+        self.report_result = report_result
 
 
 class TestFailureError(GdToolsError):

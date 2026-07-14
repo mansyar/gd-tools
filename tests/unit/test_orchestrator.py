@@ -530,3 +530,68 @@ def test_show_coverage_summary_missing_coverage_raises_plan_error(mock_deps):
 
     with pytest.raises(CoveragePlanError):
         show_coverage_summary(_make_config())
+
+
+# --- Coverage summary display in run_coverage_test() ---
+
+
+@pytest.mark.unit
+def test_run_coverage_test_coverage_summary_on_success(mock_deps):
+    """run_coverage_test() prints coverage summary table on success (no --min)."""
+    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
+        run_coverage_test(_make_config())
+
+        mock_console.return_value.print.assert_called_once()
+        table = mock_console.return_value.print.call_args[0][0]
+        assert table.title == "Coverage Summary"
+
+
+@pytest.mark.unit
+def test_run_coverage_test_coverage_summary_threshold_met(mock_deps):
+    """run_coverage_test() prints coverage summary table when --min threshold is met."""
+    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
+        run_coverage_test(_make_config(), min_percent=80)
+
+        mock_console.return_value.print.assert_called_once()
+
+
+@pytest.mark.unit
+def test_run_coverage_test_coverage_summary_before_threshold_error(
+    mock_deps,
+):
+    """run_coverage_test() prints coverage table before raising CoverageThresholdError."""
+    err = CoverageThresholdError("Below threshold")
+    err.report_result = _make_report_result()
+    mock_deps["generate_report"].side_effect = err
+
+    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
+        with pytest.raises(CoverageThresholdError):
+            run_coverage_test(_make_config(), min_percent=90)
+
+        mock_console.return_value.print.assert_called_once()
+
+
+@pytest.mark.unit
+def test_run_coverage_test_no_coverage_summary_on_plan_error(mock_deps):
+    """run_coverage_test() does NOT print coverage table when coverage data is unavailable."""
+    mock_deps["read_coverage_json"].side_effect = CoveragePlanError(
+        "File not found"
+    )
+
+    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
+        with pytest.raises(CoveragePlanError):
+            run_coverage_test(_make_config())
+
+        mock_console.return_value.print.assert_not_called()
+
+
+@pytest.mark.unit
+def test_coverage_summary_table_format_matches_show_summary(mock_deps):
+    """Coverage summary table has same columns as show_coverage_summary: Metric, Found, Hit, Rate."""
+    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
+        run_coverage_test(_make_config())
+
+        table = mock_console.return_value.print.call_args[0][0]
+        assert table.title == "Coverage Summary"
+        column_names = [col.header for col in table.columns]
+        assert column_names == ["Metric", "Found", "Hit", "Rate"]
