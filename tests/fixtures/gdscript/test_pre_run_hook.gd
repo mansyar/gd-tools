@@ -265,6 +265,68 @@ func test_instrument_file_no_tracked_lines():
 	assert_false(result, "should return false for no tracked lines")
 
 
+func test_instrument_file_skips_script_with_active_instances():
+	# gdlint:ignore=duplicated-load
+	var calc = load("res://scripts/calculator.gd") as GDScript
+	_calc_original_source = calc.source_code
+	_calc_modified = true
+	# Create an instance to prevent reload (ERR_ALREADY_IN_USE)
+	var instance = calc.new()
+	var file_entry = {
+		"file_id": 0, "path": "res://scripts/calculator.gd", "lines": [{"line": 7, "id": 0}]
+	}
+	var result = _hook._instrument_file(file_entry)
+	assert_false(result, "should return false when script has active instances")
+	assert_false(
+		"_GDTCoverage.hit" in calc.source_code,
+		"source should not contain tracker calls when skipped"
+	)
+	assert_engine_error_count(1, "reload() returns ERR_ALREADY_IN_USE when instances exist")
+
+
+func test_instrument_file_source_restored_after_instance_skip():
+	# gdlint:ignore=duplicated-load
+	var calc = load("res://scripts/calculator.gd") as GDScript
+	_calc_original_source = calc.source_code
+	_calc_modified = true
+	var instance = calc.new()
+	var file_entry = {
+		"file_id": 0, "path": "res://scripts/calculator.gd", "lines": [{"line": 7, "id": 0}]
+	}
+	var original = calc.source_code
+	_hook._instrument_file(file_entry)
+	assert_eq(
+		calc.source_code,
+		original,
+		"source_code should be restored to original after instance skip"
+	)
+	assert_engine_error_count(1, "reload() returns ERR_ALREADY_IN_USE when instances exist")
+
+
+func test_instrument_file_restores_source_on_reload_failure():
+	# gdlint:ignore=duplicated-load
+	var calc = load("res://scripts/calculator.gd") as GDScript
+	_calc_original_source = calc.source_code
+	_calc_modified = true
+	# Set invalid source so reload() fails with a parse error (not ERR_ALREADY_IN_USE)
+	var broken_source = "func broken(:\n"
+	calc.source_code = broken_source
+	var file_entry = {
+		"file_id": 0, "path": "res://scripts/calculator.gd", "lines": [{"line": 1, "id": 0}]
+	}
+	var result = _hook._instrument_file(file_entry)
+	assert_false(result, "should return false when reload fails")
+	assert_eq(
+		calc.source_code,
+		broken_source,
+		"source_code should be restored to original on reload failure"
+	)
+	assert_push_error("Failed to reload instrumented script")
+	assert_engine_error_count(
+		2, "instrumented source and restored broken source both fail to parse"
+	)
+
+
 # === Tracker activation tests ===
 
 

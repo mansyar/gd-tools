@@ -59,16 +59,22 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 		)
 		return false
 
-	var source: String = script.source_code
-	var instrumented: String = _inject_trackers(source, file_id, lines)
+	var original_source: String = script.source_code
+	var instrumented: String = _inject_trackers(original_source, file_id, lines)
 	script.source_code = instrumented
 	var err: int = script.reload()
+	if err == ERR_ALREADY_IN_USE:
+		print("[gd-tools] [Warning] Skipping instrumented script with active instances: " + path)
+		script.source_code = original_source
+		return false
 	if err != OK:
 		_log_error(
 			"Failed to reload instrumented script.",
 			"reload() failed for: " + path,
 			"Check tracker injection logic for syntax errors."
 		)
+		script.source_code = original_source
+		script.reload()
 		return false
 
 	return true

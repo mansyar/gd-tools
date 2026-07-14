@@ -32,16 +32,16 @@
 
 ## Phase 3: Harden pre_run_hook.gd (FR-3)
 
-- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
-- [ ] Task: Write failing tests for `_instrument_file` hardening (Red)
-    - [ ] Test a script with active instances is skipped and a warning is logged (no `reload()` call)
-    - [ ] Test `source_code` is never mutated when the instance pre-check fails
-    - [ ] Test original `source_code` is restored on a `reload()` failure
-- [ ] Task: Implement hardening in the canonical `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (Green)
-    - [ ] Capture original `source_code` before any mutation
-    - [ ] Add an active-instance pre-check; skip + warn when instances exist
-    - [ ] Restore `script.source_code = original` in the `reload()` error path before returning
-- [ ] Task: Sync the spike copy (`spike/addons/gd-tools-coverage/pre_run_hook.gd`) if needed for integration testing
+- [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
+- [x] Task: Write failing tests for `_instrument_file` hardening (Red)
+    - [x] Test a script with active instances is skipped and a warning is logged (no `reload()` call)
+    - [x] Test `source_code` is never mutated when the instance pre-check fails
+    - [x] Test original `source_code` is restored on a `reload()` failure
+- [x] Task: Implement hardening in the canonical `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (Green)
+    - [x] Capture original `source_code` before any mutation
+    - [x] Add an active-instance pre-check; skip + warn when instances exist
+    - [x] Restore `script.source_code = original` in the `reload()` error path before returning
+- [x] Task: Sync the spike copy (`spike/addons/gd-tools-coverage/pre_run_hook.gd`) if needed for integration testing
 - [ ] Task: Conductor - User Manual Verification 'Phase 3 - Harden pre_run_hook.gd' (Protocol in workflow.md)
 
 ## Phase 4: Multi-Path CLI (FR-4, FR-5, FR-6)
