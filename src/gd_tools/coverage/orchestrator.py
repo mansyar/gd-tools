@@ -36,6 +36,7 @@ def run_coverage_test(
     no_exit_code: bool = False,
     min_percent: int | None = None,
     timeout: int | None = None,
+    paths: list[str] | None = None,
 ) -> TestResult:
     """Run tests with coverage instrumentation and generate reports.
 
@@ -94,6 +95,7 @@ def run_coverage_test(
             junit_xml=junit_xml,
             no_exit_code=no_exit_code,
             timeout=timeout,
+            paths=paths,
         )
     except TestFailureError as exc:
         test_error = exc

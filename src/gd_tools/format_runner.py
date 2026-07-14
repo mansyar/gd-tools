@@ -46,15 +46,16 @@ class FormatResult:
 
 def run_format(
     config: GdToolsConfig,
-    path: str = ".",
+    paths: list[str] | None = None,
     check: bool = False,
     diff: bool = False,
 ) -> FormatResult:
-    """Format ``.gd`` files in ``path`` using the gdtoolkit formatter.
+    """Format ``.gd`` files in ``paths`` using the gdtoolkit formatter.
 
     Args:
         config: Project configuration with format excludes.
-        path: Root directory to search for .gd files.
+        paths: Root directories to search for .gd files. Defaults to
+            ``["."]``.
         check: If True, report files needing format without modifying.
         diff: If True, show unified diffs without modifying.
 
@@ -64,6 +65,9 @@ def run_format(
     Raises:
         FormatError: If both check and diff are True (mutually exclusive).
     """
+    if not paths:
+        paths = ["."]
+
     if check and diff:
         raise FormatError(
             "--check and --diff are mutually exclusive",
@@ -71,7 +75,10 @@ def run_format(
         )
 
     excludes = config.format.exclude
-    gd_files = discover_gd_files(path, excludes)
+    gd_files: list[str] = []
+    for p in paths:
+        gd_files.extend(discover_gd_files(p, excludes))
+    gd_files = list(dict.fromkeys(gd_files))
 
     if not gd_files:
         return FormatResult()

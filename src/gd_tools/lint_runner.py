@@ -57,9 +57,11 @@ class LintResult:
 
 
 def run_lint(
-    config: GdToolsConfig, path: str = ".", report_format: str = "text"
+    config: GdToolsConfig,
+    paths: list[str] | None = None,
+    report_format: str = "text",
 ) -> LintResult:
-    """Run gdlint on ``path``, respecting config excludes.
+    """Run gdlint on ``paths``, respecting config excludes.
 
     Discovers ``.gd`` files via :func:`discover_gd_files`, reads each
     file, and invokes ``gdtoolkit.linter.lint_code`` to check for
@@ -68,7 +70,7 @@ def run_lint(
 
     Args:
         config: Project configuration with lint excludes.
-        path: Root directory to lint.
+        paths: Root directories to lint. Defaults to ``["."]``.
         report_format: Output format hint (unused here; formatting
             is handled by :func:`format_lint_text` /
             :func:`format_lint_json`).
@@ -76,8 +78,14 @@ def run_lint(
     Returns:
         :class:`LintResult` with file count and issue lists.
     """
+    if not paths:
+        paths = ["."]
+
     excludes = config.lint.exclude
-    gd_files = discover_gd_files(path, excludes)
+    gd_files: list[str] = []
+    for p in paths:
+        gd_files.extend(discover_gd_files(p, excludes))
+    gd_files = list(dict.fromkeys(gd_files))
 
     errors: list[LintIssue] = []
     warnings: list[LintIssue] = []

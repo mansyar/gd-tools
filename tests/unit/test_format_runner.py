@@ -53,7 +53,7 @@ def test_run_format_formats_unformatted_file(tmp_path):
     )
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path))
+    result = run_format(config, [str(tmp_path)])
 
     assert result.files_checked == 1
     assert result.files_formatted == 1
@@ -75,7 +75,7 @@ def test_run_format_already_formatted_file(tmp_path):
     (tmp_path / "player.gd").write_text(formatted)
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path))
+    result = run_format(config, [str(tmp_path)])
 
     assert result.files_checked == 1
     assert result.files_formatted == 0
@@ -90,7 +90,7 @@ def test_run_format_multiple_files(tmp_path):
     (tmp_path / "b.gd").write_text("extends Node2D\nfunc _init():\n    pass\n")
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path))
+    result = run_format(config, [str(tmp_path)])
 
     assert result.files_checked == 2
     assert result.files_formatted == 2
@@ -105,7 +105,7 @@ def test_run_format_uses_discover_gd_files(tmp_path):
     (tmp_path / "readme.txt").write_text("hello\n")
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path))
+    result = run_format(config, [str(tmp_path)])
 
     assert result.files_checked == 1
 
@@ -120,7 +120,7 @@ def test_run_format_check_reports_unformatted(tmp_path):
     )
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path), check=True)
+    result = run_format(config, [str(tmp_path)], check=True)
 
     assert result.files_checked == 1
     assert result.files_needing_format == 1
@@ -139,7 +139,7 @@ def test_run_format_check_already_formatted(tmp_path):
     (tmp_path / "player.gd").write_text(formatted)
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path), check=True)
+    result = run_format(config, [str(tmp_path)], check=True)
 
     assert result.files_checked == 1
     assert result.files_needing_format == 0
@@ -152,7 +152,7 @@ def test_run_format_check_does_not_modify(tmp_path):
     (tmp_path / "player.gd").write_text(original)
     config = GdToolsConfig()
 
-    run_format(config, str(tmp_path), check=True)
+    run_format(config, [str(tmp_path)], check=True)
 
     assert (tmp_path / "player.gd").read_text() == original
 
@@ -167,7 +167,7 @@ def test_run_format_diff_returns_diffs(tmp_path):
     )
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path), diff=True)
+    result = run_format(config, [str(tmp_path)], diff=True)
 
     assert result.files_checked == 1
     assert len(result.diffs) == 1
@@ -181,7 +181,7 @@ def test_run_format_diff_does_not_modify(tmp_path):
     (tmp_path / "player.gd").write_text(original)
     config = GdToolsConfig()
 
-    run_format(config, str(tmp_path), diff=True)
+    run_format(config, [str(tmp_path)], diff=True)
 
     assert (tmp_path / "player.gd").read_text() == original
 
@@ -196,7 +196,7 @@ def test_run_format_diff_already_formatted(tmp_path):
     (tmp_path / "player.gd").write_text(formatted)
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path), diff=True)
+    result = run_format(config, [str(tmp_path)], diff=True)
 
     assert result.files_checked == 1
     assert result.diffs == []
@@ -210,7 +210,7 @@ def test_run_format_mutual_exclusion_raises(tmp_path):
     config = GdToolsConfig()
 
     try:
-        run_format(config, str(tmp_path), check=True, diff=True)
+        run_format(config, [str(tmp_path)], check=True, diff=True)
         assert False, "Should have raised FormatError"
     except FormatError as e:
         assert e.exit_code == 2
@@ -230,7 +230,7 @@ def test_run_format_syntax_error_continues(tmp_path, capsys):
     (tmp_path / "broken.gd").write_text("extends Node\nfunc ():\n    pass\n")
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path))
+    result = run_format(config, [str(tmp_path)])
 
     # Valid file should still be formatted
     assert result.files_checked == 1
@@ -250,7 +250,7 @@ def test_run_format_syntax_error_in_check_mode(tmp_path):
     (tmp_path / "broken.gd").write_text("extends Node\nfunc ():\n    pass\n")
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path), check=True)
+    result = run_format(config, [str(tmp_path)], check=True)
 
     assert result.files_checked == 1
     assert result.files_skipped == 1
@@ -267,7 +267,7 @@ def test_run_format_no_files(tmp_path):
     (tmp_path / "readme.txt").write_text("hello\n")
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path))
+    result = run_format(config, [str(tmp_path)])
 
     assert result.files_checked == 0
     assert result.files_formatted == 0
@@ -279,7 +279,44 @@ def test_run_format_no_files_check_mode(tmp_path):
     """Test run_format --check on empty directory returns zeros."""
     config = GdToolsConfig()
 
-    result = run_format(config, str(tmp_path), check=True)
+    result = run_format(config, [str(tmp_path)], check=True)
 
     assert result.files_checked == 0
     assert result.files_needing_format == 0
+
+
+# --- Multi-path support (FR-5) ---
+
+
+def test_run_format_multiple_paths_discovers_all(tmp_path):
+    """Test run_format discovers files across multiple paths."""
+    dir_a = tmp_path / "a"
+    dir_b = tmp_path / "b"
+    dir_a.mkdir()
+    dir_b.mkdir()
+    (dir_a / "foo.gd").write_text("extends Node\n")
+    (dir_b / "bar.gd").write_text("extends Node\n")
+
+    config = GdToolsConfig()
+    result = run_format(config, [str(dir_a), str(dir_b)])
+    assert result.files_checked == 2
+
+
+def test_run_format_multiple_paths_deduplicates(tmp_path):
+    """Test run_format deduplicates files discovered via overlapping paths."""
+    (tmp_path / "foo.gd").write_text("extends Node\n")
+    (tmp_path / "bar.gd").write_text("extends Node\n")
+
+    config = GdToolsConfig()
+    result = run_format(config, [str(tmp_path), str(tmp_path)])
+    assert result.files_checked == 2
+
+
+def test_run_format_default_paths(monkeypatch):
+    """Test run_format with None paths defaults to current directory."""
+    monkeypatch.setattr(
+        "gd_tools.format_runner.discover_gd_files", lambda *a, **kw: []
+    )
+    config = GdToolsConfig()
+    result = run_format(config, None)
+    assert isinstance(result, FormatResult)

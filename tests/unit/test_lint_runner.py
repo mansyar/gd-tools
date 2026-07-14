@@ -140,7 +140,7 @@ def test_run_lint_clean_files(tmp_path):
     """Test run_lint with clean .gd files (no errors, no warnings)."""
     (tmp_path / "clean.gd").write_text("extends Node\n")
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.files_checked == 1
     assert result.errors == []
     assert result.warnings == []
@@ -152,7 +152,7 @@ def test_run_lint_with_errors(tmp_path):
         "extends Node\n\nfunc BadFunctionName():\n    pass\n"
     )
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.files_checked == 1
     assert len(result.errors) >= 1
     issue = result.errors[0]
@@ -169,7 +169,7 @@ def test_run_lint_warnings_empty(tmp_path):
         "extends Node\n\nfunc BadFunctionName():\n    pass\n"
     )
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.warnings == []
 
 
@@ -181,7 +181,7 @@ def test_run_lint_respects_excludes(tmp_path):
         "extends Node\n\nfunc BadFunctionName():\n    pass\n"
     )
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.files_checked == 1
     assert result.errors == []
 
@@ -190,7 +190,7 @@ def test_run_lint_no_gd_files(tmp_path):
     """Test run_lint with no .gd files in the path."""
     (tmp_path / "readme.txt").write_text("hello\n")
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.files_checked == 0
     assert result.errors == []
     assert result.warnings == []
@@ -203,7 +203,7 @@ def test_run_lint_multiple_files(tmp_path):
         "extends Node\n\nfunc BadFunctionName():\n    pass\n"
     )
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.files_checked == 2
     assert len(result.errors) >= 1
     # All errors should be from the bad file
@@ -218,7 +218,7 @@ def test_run_lint_syntax_error(tmp_path):
     """Test that a syntax error is reported as rule=SYNTAX_ERROR, severity=error."""
     (tmp_path / "broken.gd").write_text("extends Node\n\nfunc ():\n    pass\n")
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.files_checked == 1
     assert len(result.errors) == 1
     issue = result.errors[0]
@@ -237,7 +237,7 @@ def test_run_lint_syntax_error_continues(tmp_path):
     )
     (tmp_path / "clean.gd").write_text("extends Node\n")
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert result.files_checked == 3
     # Should have the syntax error plus the function-name error
     assert len(result.errors) >= 2
@@ -250,7 +250,7 @@ def test_run_lint_syntax_error_counts_as_error(tmp_path):
     """Test that syntax errors are in the errors list (would cause exit code 1)."""
     (tmp_path / "broken.gd").write_text("extends Node\n\nfunc ():\n    pass\n")
     config = GdToolsConfig()
-    result = run_lint(config, str(tmp_path))
+    result = run_lint(config, [str(tmp_path)])
     assert len(result.errors) >= 1
     assert len(result.warnings) == 0
 
@@ -356,3 +356,38 @@ def test_format_lint_json_no_violations():
     assert data["errors"] == []
     assert data["warnings"] == []
     assert data["files_checked"] == 0
+
+
+# --- Multi-path support (FR-4) ---
+
+
+def test_run_lint_multiple_paths_discovers_all(tmp_path):
+    """Test run_lint discovers files across multiple paths."""
+    dir_a = tmp_path / "a"
+    dir_b = tmp_path / "b"
+    dir_a.mkdir()
+    dir_b.mkdir()
+    (dir_a / "foo.gd").write_text("extends Node\n")
+    (dir_b / "bar.gd").write_text("extends Node\n")
+
+    config = GdToolsConfig()
+    result = run_lint(config, [str(dir_a), str(dir_b)])
+    assert result.files_checked == 2
+
+
+def test_run_lint_multiple_paths_deduplicates(tmp_path):
+    """Test run_lint deduplicates files discovered via overlapping paths."""
+    (tmp_path / "foo.gd").write_text("extends Node\n")
+    (tmp_path / "bar.gd").write_text("extends Node\n")
+
+    config = GdToolsConfig()
+    # Passing the same root twice should not double-count files
+    result = run_lint(config, [str(tmp_path), str(tmp_path)])
+    assert result.files_checked == 2
+
+
+def test_run_lint_default_paths(tmp_path):
+    """Test run_lint with None paths defaults to current directory."""
+    config = GdToolsConfig()
+    result = run_lint(config, None)
+    assert isinstance(result, LintResult)

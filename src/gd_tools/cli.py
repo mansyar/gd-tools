@@ -136,6 +136,7 @@ def doctor():
 
 
 @cli.command()
+@click.argument("paths", nargs=-1)
 @click.option("--coverage", is_flag=True, help="Generate coverage report.")
 @click.option("--min", type=int, help="Minimum coverage threshold.")
 @click.option("--suite", help="Specify which test suite to run.")
@@ -151,7 +152,7 @@ def doctor():
     type=int,
     help="Timeout in seconds for the test run.",
 )
-def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
+def test(paths, coverage, min, suite, test, junit_xml, no_exit_code, timeout):
     """Run GDScript tests using GUT."""
     try:
         config = load_config()
@@ -177,6 +178,7 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
                 no_exit_code=no_exit_code,
                 min_percent=min,
                 timeout=timeout,
+                paths=list(paths) if paths else None,
             )
         else:
             run_tests(
@@ -188,6 +190,7 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
                 junit_xml=junit_xml,
                 no_exit_code=no_exit_code,
                 timeout=timeout,
+                paths=list(paths) if paths else None,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)
@@ -203,7 +206,7 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
 
 
 @cli.command()
-@click.argument("path", required=False, default=".")
+@click.argument("paths", nargs=-1)
 @click.option(
     "--report-format",
     type=click.Choice(["text", "json"]),
@@ -215,7 +218,7 @@ def test(coverage, min, suite, test, junit_xml, no_exit_code, timeout):
     is_flag=True,
     help="Attempt to fix lint issues (no-op for gdlint).",
 )
-def lint(path, report_format, fix):
+def lint(paths, report_format, fix):
     """Lint GDScript files."""
     if fix:
         click.echo(
@@ -229,7 +232,7 @@ def lint(path, report_format, fix):
         ctx = click.get_current_context()
         ctx.exit(2)
 
-    result = run_lint(config, path, report_format)
+    result = run_lint(config, list(paths), report_format)
 
     if report_format == "json":
         output = format_lint_json(result)
@@ -245,10 +248,10 @@ def lint(path, report_format, fix):
 
 
 @cli.command()
-@click.argument("path", required=False, default=".")
+@click.argument("paths", nargs=-1)
 @click.option("--check", is_flag=True, help="Check only, don't modify files.")
 @click.option("--diff", is_flag=True, help="Show diff of changes.")
-def format(path, check, diff):
+def format(paths, check, diff):
     """Format GDScript files."""
     if check and diff:
         click.echo("Error: --check and --diff are mutually exclusive", err=True)
@@ -262,7 +265,7 @@ def format(path, check, diff):
         ctx = click.get_current_context()
         ctx.exit(2)
 
-    result = run_format(config, path, check=check, diff=diff)
+    result = run_format(config, list(paths), check=check, diff=diff)
 
     ctx = click.get_current_context()
     if result.files_checked == 0:

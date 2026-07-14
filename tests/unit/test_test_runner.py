@@ -313,6 +313,33 @@ def test_build_gut_args_default_junit_xml_path(tmp_path):
     assert xml_path.name == "results.xml"
 
 
+@pytest.mark.unit
+def test_build_gut_args_paths_override():
+    """build_gut_args uses paths override instead of config.test_dirs."""
+    config = TestConfig(test_dirs=["config_dir"])
+    args = build_gut_args(config, Path("/fake/project"), paths=["override_dir"])
+    assert "-gdir=res://override_dir/" in args
+    assert not any("config_dir" in a for a in args)
+
+
+@pytest.mark.unit
+def test_build_gut_args_paths_multiple():
+    """build_gut_args accepts multiple paths as comma-separated -gdir."""
+    config = TestConfig(test_dirs=["config_dir"])
+    args = build_gut_args(
+        config, Path("/fake/project"), paths=["dir_a", "dir_b"]
+    )
+    assert "-gdir=res://dir_a/,res://dir_b/" in args
+
+
+@pytest.mark.unit
+def test_build_gut_args_no_paths_uses_config():
+    """build_gut_args falls back to config.test_dirs when paths is None."""
+    config = TestConfig(test_dirs=["config_dir"])
+    args = build_gut_args(config, Path("/fake/project"))
+    assert "-gdir=res://config_dir/" in args
+
+
 # --- check_gut_installed ---
 
 

@@ -84,6 +84,7 @@ def build_gut_args(
     test_name: str | None = None,
     junit_xml: str | None = None,
     coverage: bool = False,
+    paths: list[str] | None = None,
 ) -> list[str]:
     """Build GUT CLI arguments from test configuration.
 
@@ -101,6 +102,8 @@ def build_gut_args(
             ``<project_root>/.gd-tools/results.xml``.
         coverage: Whether coverage hooks should be included. When True,
             adds ``-gpre_run_script`` and ``-gpost_run_script`` args.
+        paths: Optional test directories that override
+            ``config.test_dirs`` for this invocation.
 
     Returns:
         List of CLI arguments for Godot/GUT.
@@ -113,8 +116,10 @@ def build_gut_args(
     ]
 
     # Test directories (comma-separated per GUT 9.x CLI spec).
-    if config.test_dirs:
-        dirs = ",".join(f"res://{d}/" for d in config.test_dirs)
+    # Use paths override if provided, otherwise fall back to config.
+    test_dirs = paths if paths else config.test_dirs
+    if test_dirs:
+        dirs = ",".join(f"res://{d}/" for d in test_dirs)
         args.append(f"-gdir={dirs}")
 
     # Prefix/suffix for test file discovery.
@@ -320,6 +325,7 @@ def run_tests(
     junit_xml: str | None = None,
     no_exit_code: bool = False,
     timeout: int | None = 300,
+    paths: list[str] | None = None,
 ) -> TestResult:
     """Run GUT tests via the Godot CLI.
 
@@ -393,6 +399,7 @@ def run_tests(
         test_name=test_name,
         junit_xml=junit_xml,
         coverage=coverage,
+        paths=paths,
     )
 
     # Set up environment variables for coverage.

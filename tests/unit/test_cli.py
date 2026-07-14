@@ -169,6 +169,7 @@ def test_test_calls_run_tests_with_correct_args():
         junit_xml=None,
         no_exit_code=False,
         timeout=None,
+        paths=None,
     )
 
 
@@ -538,7 +539,7 @@ def test_lint_default_path():
     ):
         result = runner.invoke(cli, ["lint"])
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(mock_config, ".", "text")
+    mock_run.assert_called_once_with(mock_config, [], "text")
 
 
 def test_lint_report_format_json():
@@ -637,7 +638,7 @@ def test_lint_wired_to_run_lint():
             cli, ["lint", "some/path", "--report-format", "json"]
         )
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(mock_config, "some/path", "json")
+    mock_run.assert_called_once_with(mock_config, ["some/path"], "json")
 
 
 def test_format_config_error_exit_2():
@@ -663,7 +664,7 @@ def test_format_default_mode():
         result = runner.invoke(cli, ["format", "some/path"])
     assert result.exit_code == 0
     mock_run.assert_called_once_with(
-        mock_config, "some/path", check=False, diff=False
+        mock_config, ["some/path"], check=False, diff=False
     )
     assert "Formatted 2 of 3 file(s)" in result.output
 
@@ -679,7 +680,7 @@ def test_format_default_path():
     ):
         result = runner.invoke(cli, ["format"])
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(mock_config, ".", check=False, diff=False)
+    mock_run.assert_called_once_with(mock_config, [], check=False, diff=False)
 
 
 def test_format_default_all_formatted():
@@ -1203,3 +1204,62 @@ def test_env_var_disables_notification_in_cli(mock_requests_get, monkeypatch):
     assert result.exit_code == 0
     assert "A new version of gd-tools" not in result.output
     mock_get.assert_not_called()
+
+
+# --- Multi-path CLI tests (FR-4, FR-5, FR-6) ---
+
+
+def test_lint_multiple_paths():
+    """Test lint accepts multiple path arguments."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = LintResult(files_checked=0, errors=[], warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["lint", "path_a", "path_b"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(mock_config, ["path_a", "path_b"], "text")
+
+
+def test_format_multiple_paths():
+    """Test format accepts multiple path arguments."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(files_checked=2, files_formatted=1)
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["format", "path_a", "path_b"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(
+        mock_config, ["path_a", "path_b"], check=False, diff=False
+    )
+
+
+def test_test_paths_arg():
+    """Test test command accepts optional path arguments."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+    ):
+        result = runner.invoke(cli, ["test", "dir_a", "dir_b"])
+    assert result.exit_code == 0
+    _, kwargs = mock_run.call_args
+    assert kwargs["paths"] == ["dir_a", "dir_b"]
