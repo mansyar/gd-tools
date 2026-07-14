@@ -1,0 +1,8 @@
+{
+  "track_id": "coverage_autoload_fix_20260714",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-07-14T01:36:11Z",
+  "updated_at": "2026-07-14T01:36:11Z",
+  "description": "Fix coverage instrumentation corrupting autoload scripts (path-aware excludes, autoload auto-exclusion from project.godot, harden pre_run_hook.gd) and add multi-path CLI support to lint, format, and test commands."
+}
