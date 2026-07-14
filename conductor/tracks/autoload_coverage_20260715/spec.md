@@ -1,3 +1,4 @@
+<protect>
 # Track 24.5: Autoload-Based Coverage Instrumentation
 
 **Type:** Bug Fix (Urgent)
@@ -83,3 +84,4 @@ When an autoload's `_ready()` creates instances of other scripts (e.g., `GameSta
 | `reload()` bug in pre-4.6 Godot (Issue #107869) | Low (we target 4.5+) | `_GDTCoverage` is first, no instances exist, `reload()` should never fail. Defensive error handling added. |
 | Autoload ordering dependency — users manually reorder | Medium | `register_coverage_autoload()` auto-fixes to position 0 with warning on every `gd-tools init`. |
 | Env var change for existing users | Low | Release notes document the change. Workaround becomes harmless dead code. |
+</protect>

@@ -1,3 +1,4 @@
+<protect>
 # Track 24.5: Autoload-Based Coverage Instrumentation — Implementation Plan
 
 ## Phase 1: Plan Generator — Remove Autoload Exclusion
@@ -6,6 +7,7 @@
 
 **Files:** `src/gd_tools/coverage/plan_generator.py`, `tests/unit/test_plan_generator.py`
 
+- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
 - [ ] Task: Write tests for autoload inclusion in plan
     - [ ] Write test: autoload scripts appear in `generate_plan()` output when `project.godot` has `[autoload]` section
     - [ ] Write test: autoload scripts get instrumented lines (file_id, lines array) in the plan
@@ -24,6 +26,7 @@
 
 **Files:** `src/gd_tools/init.py`, `tests/unit/test_init.py`
 
+- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
 - [ ] Task: Write tests for prepend behavior
     - [ ] Write test: `register_coverage_autoload()` inserts `_GDTCoverage` as the FIRST entry in `[autoload]` (before existing autoloads)
     - [ ] Write test: when no `[autoload]` section exists, creates one with `_GDTCoverage` as the only entry
@@ -46,6 +49,7 @@
 
 **Files:** `src/gd_tools/addons/gd-tools-coverage/coverage.gd`, `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`, `tests/integration/test_coverage_hooks.py`
 
+- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
 - [ ] Task: Write tests for instrumentation in _ready()
     - [ ] Write integration test: `_ready()` reads `GD_TOOLS_COVERAGE_PLAN` env var (not `GD_TOOLS_COVERAGE_ACTIVE`)
     - [ ] Write integration test: when `GD_TOOLS_COVERAGE_PLAN` is set, all files in the plan are instrumented
@@ -77,6 +81,7 @@
 
 **Files:** `src/gd_tools/test_runner.py`, `tests/unit/test_test_runner.py`
 
+- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
 - [ ] Task: Write tests for env var removal
     - [ ] Write test: `GD_TOOLS_COVERAGE_ACTIVE` is NOT in the env dict when `coverage=True`
     - [ ] Write test: `GD_TOOLS_COVERAGE_PLAN` is still set when `coverage=True`
@@ -93,6 +98,7 @@
 
 **Files:** `tests/fixtures/autoload_coverage/` (new), `tests/e2e/test_autoload_coverage_e2e.py` (new)
 
+- [ ] Task: Read `./spec.md` and `../../workflow.md` to refresh context before starting this phase
 - [ ] Task: Create minimal fixture Godot project
     - [ ] Create `tests/fixtures/autoload_coverage/project.godot` with `_GDTCoverage` as first autoload + a second autoload (`GameState`)
     - [ ] Create `tests/fixtures/autoload_coverage/scripts/game_state.gd` — autoload that instantiates `ChimeraData` in `_ready()`
@@ -103,3 +109,4 @@
     - [ ] Write test: autoload initialization code (`game_state.gd._ready()`) is NOT recorded as coverage
     - [ ] Write test: existing non-autoload coverage still works (regression check)
 - [ ] Task: Conductor - User Manual Verification 'Phase 5: E2E Fixture & Integration Test' (Protocol in workflow.md)
+</protect>
