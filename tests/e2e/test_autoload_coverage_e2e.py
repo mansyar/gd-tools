@@ -102,10 +102,9 @@ def test_autoload_instantiated_script_gets_coverage(tmp_path):
     """Scripts instantiated by autoloads show non-zero coverage.
 
     chimera_data.gd is instantiated by GameState._ready() (an autoload).
-    Previously, reload() failed with ERR_ALREADY_IN_USE because the
-    instance already existed when the pre-run hook tried to instrument.
-    Now, _GDTCoverage._ready() runs first and instruments the file before
-    any instances are created.
+    Godot creates all autoload instances before calling any _ready(), so
+    coverage.gd uses reload(true) (keep_state) to instrument scripts that
+    already have active instances.
     """
     project = _setup_autoload_coverage_project(tmp_path)
     result = _run_cli(
@@ -130,7 +129,7 @@ def test_autoload_instantiated_script_gets_coverage(tmp_path):
 
     assert chimera_entry is not None, (
         "chimera_data.gd not in coverage output — "
-        "instrumentation may have failed (ERR_ALREADY_IN_USE)"
+        "instrumentation may have failed (reload(true) did not apply)"
     )
 
     total_hits = sum(int(v) for v in chimera_entry["hits"].values())

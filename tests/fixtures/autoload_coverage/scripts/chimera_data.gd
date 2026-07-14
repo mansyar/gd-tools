@@ -1,8 +1,8 @@
 extends RefCounted
 
 ## Data class instantiated by the GameState autoload.
-## Previously showed 0% coverage because reload() failed with
-## ERR_ALREADY_IN_USE when active instances existed at instrumentation time.
+## Instruments correctly because coverage.gd uses reload(true)
+## (keep_state) which reloads source without discarding instances.
 
 var _name: String = ""
 var _health: int = 0

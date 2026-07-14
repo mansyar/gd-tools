@@ -2,10 +2,11 @@ extends Node
 
 ## Coverage tracker autoload for gd-tools.
 ## Instruments GDScript source files with coverage tracking calls
-## in _ready() (as the first autoload, before other autoloads create
-## instances, so reload() succeeds). Records line hit counts during
-## GUT test execution. Tracker activation happens via pre_run_hook.gd's
-## set_active(true) call after all autoloads have initialized.
+## in _ready() using reload(true) (keep_state) so existing autoload
+## instances pick up the instrumented code. Records line hit counts
+## during GUT test execution. Tracker activation happens via
+## pre_run_hook.gd's set_active(true) call after all autoloads have
+## initialized.
 
 const TRACKER_NAME = "_GDTCoverage"
 
@@ -18,8 +19,8 @@ var _plan: Dictionary = {}
 
 func _ready() -> void:
 	# Instrument files when GD_TOOLS_COVERAGE_PLAN is set.
-	# This runs as the first autoload, before any other autoload creates
-	# instances, so reload() succeeds (no ERR_ALREADY_IN_USE).
+	# Uses reload(true) (keep_state) so scripts with existing instances
+	# (e.g. other autoloads) are reloaded without discarding them.
 	var plan_path: String = OS.get_environment("GD_TOOLS_COVERAGE_PLAN")
 	if plan_path.is_empty():
 		return
@@ -102,19 +103,15 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 	var original_source: String = script.source_code
 	var instrumented: String = _inject_trackers(original_source, file_id, lines)
 	script.source_code = instrumented
-	var err: int = script.reload()
-	if err == ERR_ALREADY_IN_USE:
-		print("[gd-tools] [Warning] Skipping instrumented script with active instances: " + path)
-		script.source_code = original_source
-		return false
+	var err: int = script.reload(true)
 	if err != OK:
 		_log_error(
 			"Failed to reload instrumented script.",
-			"reload() failed for: " + path,
+			"reload(true) failed for: " + path,
 			"Check tracker injection logic for syntax errors."
 		)
 		script.source_code = original_source
-		script.reload()
+		script.reload(true)
 		return false
 
 	return true

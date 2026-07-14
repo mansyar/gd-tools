@@ -1,9 +1,9 @@
 extends Node
 
 ## Autoload that creates ChimeraData instances during _ready().
-## This simulates the pattern where autoloads instantiate other scripts,
-## which previously caused ERR_ALREADY_IN_USE during coverage instrumentation
-## because the pre-run hook ran after instances already existed.
+## Godot creates all autoload instances before calling any _ready(),
+## so reload(true) (keep_state) is used to instrument scripts that
+## already have active instances.
 
 var _chimera: Object
 

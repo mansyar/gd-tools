@@ -1,0 +1,8 @@
+{
+  "track_id": "reload_keep_state_20260715",
+  "name": "Reload Keep-State Fix for Autoload Instrumentation",
+  "created": "2026-07-15",
+  "status": "in_progress",
+  "type": "bugfix",
+  "priority": "high"
+}
