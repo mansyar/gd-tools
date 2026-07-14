@@ -1,0 +1,17 @@
+Task Summary: Show Coverage Summary on Success (Tasks 2-4)
+
+Summary of changes:
+- Added _print_coverage_table() private helper in orchestrator.py, extracting the Rich table rendering logic from show_coverage_summary() (FR-3: reuse existing table implementation)
+- Modified run_coverage_test() to print the coverage summary table on the success path (after generate_report() returns) and on the threshold-error path (before re-raising CoverageThresholdError) (FR-1, FR-2)
+- Added report_result attribute to CoverageThresholdError in errors.py, allowing generate_report() to attach the already-computed ReportResult so callers can display coverage without recomputation (NFR-2)
+- Modified generate_report() in reporter.py to pass report_result=result when raising CoverageThresholdError
+- Refactored show_coverage_summary() to call _print_coverage_table() instead of inline table construction
+
+Modified files:
+- src/gd_tools/errors.py: Added report_result attribute and __init__ to CoverageThresholdError
+- src/gd_tools/coverage/orchestrator.py: Added _print_coverage_table(), modified run_coverage_test() and show_coverage_summary()
+- src/gd_tools/coverage/reporter.py: Attached report_result to CoverageThresholdError in generate_report()
+- tests/unit/test_orchestrator.py: Added 5 new tests for coverage summary display
+
+Core why:
+When running 'gd-tools test --coverage', the coverage summary was only shown on failure (below threshold). On success, no coverage information was displayed at all. This track fixes that gap by displaying the coverage summary table on success as well, giving users immediate feedback on their coverage metrics. The table reuses the existing show_coverage_summary() rendering logic for consistency.
