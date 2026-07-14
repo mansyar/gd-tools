@@ -1,0 +1,15 @@
+Task: Use reload(true) for autoload instrumentation
+
+Summary: Fixed coverage instrumentation failing on autoload scripts with active instances.
+Godot creates all autoload instances before calling _ready(), so reload() returned
+ERR_ALREADY_IN_USE. Changed to reload(true) (keep_state=true) which keeps instances
+while recompiling source with instrumented code.
+
+Files modified:
+- src/gd_tools/addons/gd-tools-coverage/coverage.gd: reload() -> reload(true), removed ERR_ALREADY_IN_USE dead code
+- tests/fixtures/gdscript/test_coverage_instrumentation.gd: Rewrote 2 tests for keep_state behavior
+- tests/e2e/test_autoload_coverage_e2e.py: Updated docstring and assertion message
+- tests/fixtures/autoload_coverage/scripts/game_state.gd: Updated comment
+- tests/fixtures/autoload_coverage/scripts/chimera_data.gd: Updated comment
+
+Tests: 649 unit (97.63% coverage), 13 integration, 3 E2E, 46 other E2E/integration = 711 total passed
