@@ -1,0 +1,8 @@
+{
+  "track_id": "version_command_20260715",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-15T01:20:34Z",
+  "updated_at": "2026-07-15T01:20:34Z",
+  "description": "Add gd-tools version command that prints all component versions in a table"
+}
