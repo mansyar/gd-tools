@@ -18,15 +18,15 @@ This plan implements the stale addon detection feature (Track 23) following the 
 
 ## Phase 1: Version File Creation During Init
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
-- [ ] Task: Write tests for version file creation during init
-    - [ ] Test that `install_coverage_addon()` writes a `_version.txt` file to `addons/gd-tools-coverage/`
-    - [ ] Test that the file content matches `gd_tools.__version__` (with trailing newline)
-    - [ ] Test that re-running init overwrites an existing version file with the current version
-    - [ ] Test that `run_init()` action summary includes a version file entry (e.g., "Wrote addon version file (v0.3.0)")
-- [ ] Task: Implement version file writing in init.py
-    - [ ] Extend `install_coverage_addon()` to write `_version.txt` with `__version__` after copying `.gd` files
-    - [ ] Add action summary entry in `run_init()` for the version file write
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to load context for this phase
+- [x] Task: Write tests for version file creation during init
+    - [x] Test that `install_coverage_addon()` writes a `_version.txt` file to `addons/gd-tools-coverage/`
+    - [x] Test that the file content matches `gd_tools.__version__` (with trailing newline)
+    - [x] Test that re-running init overwrites an existing version file with the current version
+    - [x] Test that `run_init()` action summary includes a version file entry (e.g., "Wrote addon version file (v0.3.0)")
+- [x] Task: Implement version file writing in init.py [2ee000a]
+    - [x] Extend `install_coverage_addon()` to write `_version.txt` with `__version__` after copying `.gd` files
+    - [x] Add action summary entry in `run_init()` for the version file write
 - [ ] Task: Conductor - User Manual Verification 'Version File Creation During Init' (Protocol in workflow.md)
 
 ---
