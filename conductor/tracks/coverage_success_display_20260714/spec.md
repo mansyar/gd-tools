@@ -1,3 +1,4 @@
+<protect>
 # Track: Show Coverage Summary on Success
 
 ## Overview
@@ -59,3 +60,4 @@ The summary computation already happens inside `generate_report()` via `compute_
 - Adding new coverage metrics or report formats.
 - Changes to the HTML/LCOV/Cobertura report generation.
 - Changes to the `TestFailureError` handling flow (test failures without coverage threshold).
+</protect>

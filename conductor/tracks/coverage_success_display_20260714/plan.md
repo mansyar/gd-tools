@@ -1,6 +1,11 @@
+<protect>
 # Implementation Plan: Show Coverage Summary on Success
 
 ## Phase 1: Coverage Summary Display
+
+- [ ] Task: Read spec.md and workflow.md to load context for this phase
+    - [ ] Read `conductor/tracks/coverage_success_display_20260714/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Write failing tests for coverage summary display (Red Phase)
     - [ ] Test: `run_coverage_test()` prints coverage summary table to stdout on success (without `--min`)
@@ -27,3 +32,4 @@
     - [ ] Run full test suite `CI=true pytest` to confirm no regressions
 
 - [ ] Task: Conductor - User Manual Verification 'Coverage Summary Display' (Protocol in workflow.md)
+</protect>
