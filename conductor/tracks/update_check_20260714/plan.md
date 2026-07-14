@@ -54,7 +54,7 @@
     - [x] Run `CI=true pytest --cov=gd_tools.update_check --cov-branch --cov-report=term-missing`
     - [x] Confirm >80% line coverage and >70% branch coverage for `update_check.py`
 
-- [ ] Task: Conductor - User Manual Verification 'Update Check Module'
+- [~] Task: Conductor - User Manual Verification 'Update Check Module'
 
 ## Phase 2: CLI Integration
 

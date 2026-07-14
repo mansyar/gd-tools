@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: PyPI update notification when running gd-tools commands**
+- [~] **Track: PyPI update notification when running gd-tools commands**
 *Link: [./tracks/update_check_20260714/](./tracks/update_check_20260714/)*
