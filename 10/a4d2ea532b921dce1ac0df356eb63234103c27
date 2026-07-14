@@ -1,0 +1,15 @@
+FR-3 Implementation: Harden _instrument_file
+
+Changes:
+- pre_run_hook.gd: _instrument_file now checks for ERR_ALREADY_IN_USE (active instances),
+  restores source_code on all failure paths, renamed source->original_source
+- test_pre_run_hook.gd: 3 new GUT tests for instance-skip and source restoration
+- test_coverage_hooks.py: updated expected test count 28->31
+
+Verification:
+- 604/604 unit tests pass
+- 31/31 GUT tests pass (Godot v4.6.2)
+- ruff check: passed
+- black --check: passed
+
+Commit: 10a4d2e
