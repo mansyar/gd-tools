@@ -1,0 +1,26 @@
+Phase 2 Tasks 2-3: CLI Command Integration
+
+## Task 2: Write unit tests for version Click command
+- Added 4 tests to tests/unit/test_cli.py:
+  1. test_cli_version_table_output - Rich table with all 5 component names
+  2. test_cli_version_json_output - --json flag, valid JSON, null for missing
+  3. test_cli_version_exit_zero_with_missing - exit 0 with missing components
+  4. test_cli_version_missing_display - 'not detected' for Godot, 'not installed' for GUT/gdtoolkit
+- Red confirmed: AttributeError (collect_versions not in gd_tools.cli)
+- Added 'import json' for JSON test validation
+
+## Task 3: Implement version command in cli.py
+- Added imports: json, rich.table.Table, .version.collect_versions
+- Added @cli.command() 'version' with --json flag (as_json parameter to avoid shadowing)
+- Default: Rich table (Component + Version columns) with title 'gd-tools Component Versions'
+- --json: click.echo(json.dumps(versions)) - flat JSON, null for missing
+- Missing display: godot->'not detected', gut/gdtoolkit->'not installed'
+- Exit code always 0
+
+## Quality Gates
+- 5/5 version tests passed
+- Full unit suite: 647 passed, 0 failed
+- ruff: PASSED
+- black: PASSED
+- version.py: 100% coverage
+- version command lines in cli.py: fully covered
