@@ -1,0 +1,17 @@
+PHASE 3 CHECKPOINT - Harden pre_run_hook.gd (FR-3)
+
+Verification Report:
+====================
+- Unit tests: 604/604 pass - no regressions
+- GUT tests: 31/31 pass (Godot v4.6.2)
+- ruff check: passed
+- black --check: passed (60 files unchanged)
+
+Changes:
+--------
+- pre_run_hook.gd: _instrument_file now checks for ERR_ALREADY_IN_USE, restores source_code on all failure paths
+- test_pre_run_hook.gd: 3 new GUT tests for instance-skip and source restoration
+- test_coverage_hooks.py: updated expected test count 28->31
+
+Implementation commit: 10a4d2e
+Checkpoint commit: 0e5e86f
