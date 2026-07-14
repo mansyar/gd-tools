@@ -91,3 +91,55 @@ def test_discover_gd_files_default_excludes(tmp_path):
     result = discover_gd_files(str(tmp_path))
     assert len(result) == 1
     assert Path(result[0]).name == "player.gd"
+
+
+def test_discover_gd_files_bare_exclude_multiple_depths(tmp_path):
+    """Test that bare-name excludes match at any depth (backward compat)."""
+    (tmp_path / "autoload").mkdir()
+    (tmp_path / "autoload" / "a.gd").write_text("extends Node\n")
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "autoload").mkdir()
+    (tmp_path / "scripts" / "autoload" / "b.gd").write_text("extends Node\n")
+    (tmp_path / "scripts" / "main.gd").write_text("extends Node\n")
+
+    result = discover_gd_files(str(tmp_path), excludes=["autoload"])
+    files = {Path(f).name for f in result}
+    assert files == {"main.gd"}
+
+
+def test_discover_gd_files_exclude_by_path_prefix(tmp_path):
+    """Test that exclude entries with `/` match as path prefix relative to root."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "main.gd").write_text("extends Node\n")
+    (tmp_path / "scripts" / "autoload").mkdir()
+    (tmp_path / "scripts" / "autoload" / "autoload.gd").write_text(
+        "extends Node\n"
+    )
+    (tmp_path / "other").mkdir()
+    (tmp_path / "other" / "autoload").mkdir()
+    (tmp_path / "other" / "autoload" / "plugin.gd").write_text("extends Node\n")
+
+    result = discover_gd_files(str(tmp_path), excludes=["scripts/autoload"])
+    files = {Path(f).name for f in result}
+    assert "main.gd" in files
+    assert "plugin.gd" in files  # other/autoload NOT excluded by path prefix
+    assert "autoload.gd" not in files  # scripts/autoload IS excluded
+
+
+def test_discover_gd_files_exclude_path_prefix_cross_platform(tmp_path):
+    """Test that `/` and `\\` separators normalize equivalently."""
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "autoload").mkdir()
+    (tmp_path / "scripts" / "autoload" / "autoload.gd").write_text(
+        "extends Node\n"
+    )
+    (tmp_path / "scripts" / "main.gd").write_text("extends Node\n")
+
+    # Both forward slash and backslash should work
+    for sep in ("/", "\\"):
+        result = discover_gd_files(
+            str(tmp_path), excludes=[f"scripts{sep}autoload"]
+        )
+        files = {Path(f).name for f in result}
+        assert "main.gd" in files
+        assert "autoload.gd" not in files

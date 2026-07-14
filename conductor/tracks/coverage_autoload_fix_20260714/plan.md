@@ -4,8 +4,8 @@
 
 ## Phase 1: Hybrid Exclude Matching (FR-1)
 
-- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
-- [ ] Task: Write failing tests for hybrid exclude matching in `discover_gd_files` (Red)
+- [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
+- [~] Task: Write failing tests for hybrid exclude matching in `discover_gd_files` (Red)
     - [ ] Test bare-name exclude matches a directory basename at any depth (backward compat with `DEFAULT_EXCLUDES`)
     - [ ] Test an entry containing `/` (e.g. `scripts/autoload`) excludes by path prefix relative to root
     - [ ] Test cross-platform separators (`\` and `/` normalize equivalently)
