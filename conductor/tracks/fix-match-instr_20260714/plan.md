@@ -1,7 +1,11 @@
+<protect>
 # Implementation Plan: Fix Match Statement Instrumentation (Option A+)
 
 ## Phase 1: Fix Match Statement Instrumentation
 
+- [ ] Task: Read spec.md and workflow.md to understand requirements and workflow
+    - [ ] Read this track's `spec.md` to understand all functional requirements, acceptance criteria, and scope
+    - [ ] Read the project's `conductor/workflow.md` to understand the TDD lifecycle, commit guidelines, and quality gates
 - [ ] Task: Write failing tests for _inject_trackers match case injection
     - [ ] Write GUT unit tests in `tests/fixtures/gdscript/test_pre_run_hook.gd` for each match pattern type:
         - Literal/enum pattern: `0:`, `GameEnums.PartSlot.HEAD:`
@@ -27,3 +31,4 @@
     - [ ] Run full test suite: `CI=true pytest` — confirm all existing tests pass with no regressions
     - [ ] Verify coverage thresholds: `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` — confirm >80% line, >70% branch
 - [ ] Task: Conductor - User Manual Verification 'Fix Match Statement Instrumentation' (Protocol in workflow.md)
+</protect>

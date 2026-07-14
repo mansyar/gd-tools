@@ -1,3 +1,4 @@
+<protect>
 # Track: Fix Match Statement Instrumentation (Option A+)
 
 ## Overview
@@ -65,3 +66,4 @@ The plan generator (`plan_generator.py`) requires no changes. `CoverageVisitor.m
 - Changes to the plan JSON schema.
 - Changes to `CoverageVisitor.match_branch` tracking logic.
 - Inline match case bodies (e.g., `0: print("x")`) — GDScript 4.5 does not support this syntax; match case bodies must be on the next indented line.
+</protect>
