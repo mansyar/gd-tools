@@ -1,0 +1,18 @@
+Phase 1 Checkpoint Verification Report - Hybrid Exclude Matching (FR-1)
+
+Automated Test Command: \='true'; pytest tests/unit/test_file_discovery.py --cov=gd_tools.file_discovery --cov-branch --cov-report=term-missing
+
+Test Results: 9 passed. file_discovery.py at 100% line and 100% branch coverage.
+
+Manual Verification Steps:
+1. Ensure gd-tools is installed: pip install -e .
+2. Create a test project with scripts/autoload/ subdirectory containing a .gd file and scripts/main.gd
+3. Test path-prefix exclude: Set exclude=['scripts/autoload'] in gd-tools.toml, run gd-tools lint scripts/ — files under scripts/autoload/ excluded, scripts/main.gd included
+4. Test bare-name exclude (backward compat): Use exclude=['autoload'] — any directory named autoload at any depth excluded
+5. Confirm cross-platform: Forward slash and backslash separators behave identically
+
+User Confirmation: User confirmed 'Yes, proceed' — verification satisfactory.
+
+Changes in this phase:
+- src/gd_tools/file_discovery.py: Hybrid exclude matching (bare names + path prefixes)
+- tests/unit/test_file_discovery.py: 3 new tests for path-prefix and cross-platform matching
