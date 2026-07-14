@@ -40,10 +40,11 @@
 
 ## Phase 3: Documentation & Final Verification
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
-- [ ] Task: Update documentation
-    - [ ] Add `version` command to README command list (if a command list exists)
-    - [ ] Add `version` command section to USER_GUIDE (if it exists)
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocol
+- [x] Task: Update documentation
+    - [x] Add `version` command to README command list (if a command list exists)
+    - [x] Add `version` command section to USER_GUIDE (if it exists)
+    - Commit: `b868e50`
 - [ ] Task: Run full test suite and verify all acceptance criteria
     - [ ] Run `CI=true pytest` and confirm all tests pass
     - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/` — no errors
