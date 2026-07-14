@@ -1,3 +1,16 @@
+## v0.3.0 (2026-07-14)
+
+### Feat
+
+- **coverage**: Display coverage summary table on test --coverage success
+
+### Fix
+
+- **conductor**: Apply review suggestions for track 'Show Coverage Summary on Success'
+- **coverage**: Inject if_false and elif_true trackers after keyword line
+- **conductor**: Apply review suggestions for track 'Fix Match Statement Instrumentation (Option A+)'
+- **coverage**: Inject match_case trackers after pattern line, not before
+
 ## v0.2.0 (2026-07-14)
 
 ### Feat
