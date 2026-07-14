@@ -72,6 +72,7 @@ gd-tools test --coverage --min 80
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
+| `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, GUT, gdtoolkit, Python) in a table or JSON. |
 
 See the [User Guide](./docs/USER_GUIDE.md) for full command reference,
 flags, examples, and exit codes.

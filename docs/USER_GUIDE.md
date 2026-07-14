@@ -608,6 +608,52 @@ gd-tools coverage show --min 80
 | 1 | Coverage is below the specified threshold. |
 | 2 | Configuration or environment error, or no coverage data found. |
 
+### 3.8 gd-tools version
+
+Display the versions of all gd-tools components.
+
+**Usage:**
+
+```bash
+gd-tools version [OPTIONS]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--json` | flag | `false` | Output versions as a JSON object instead of a table. |
+
+**Components Detected:**
+
+| Component | Source |
+|---|---|
+| gd-tools | The installed `gd-tools-cli` package version. |
+| Godot | The detected Godot engine binary version. |
+| GUT | The installed GUT (Godot Unit Test) addon version. |
+| gdtoolkit | The installed `gdtoolkit` package version (provides `gdlint` and `gdformat`). |
+| Python | The running Python interpreter version. |
+
+When a component is not found, the table displays "not detected" for
+Godot and "not installed" for GUT and gdtoolkit. In JSON output, missing
+components are `null`.
+
+**Examples:**
+
+```bash
+# Display versions in a table
+gd-tools version
+
+# Output as JSON (for scripting)
+gd-tools version --json
+```
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Always -- version detection never fails. |
+
 
 ## 4. Examples
 
