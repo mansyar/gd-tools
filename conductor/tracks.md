@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Fix Match Statement Instrumentation (Option A+)**
+- [x] **Track: Fix Match Statement Instrumentation (Option A+)**
 *Link: [./tracks/fix-match-instr_20260714/](./tracks/fix-match-instr_20260714/)*
