@@ -1,7 +1,10 @@
+<protect>
+
 # Implementation Plan — coverage_autoload_fix
 
 ## Phase 1: Hybrid Exclude Matching (FR-1)
 
+- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [ ] Task: Write failing tests for hybrid exclude matching in `discover_gd_files` (Red)
     - [ ] Test bare-name exclude matches a directory basename at any depth (backward compat with `DEFAULT_EXCLUDES`)
     - [ ] Test an entry containing `/` (e.g. `scripts/autoload`) excludes by path prefix relative to root
@@ -15,6 +18,7 @@
 
 ## Phase 2: Autoload Auto-Exclusion (FR-2)
 
+- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [ ] Task: Write failing tests for `project.godot` `[autoload]` parsing & exclusion (Red)
     - [ ] Test parsing `[autoload]` entries from a fixture `project.godot`
     - [ ] Test resolving autoload paths (strip leading `*`, normalize `res://` → relative path)
@@ -28,6 +32,7 @@
 
 ## Phase 3: Harden pre_run_hook.gd (FR-3)
 
+- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [ ] Task: Write failing tests for `_instrument_file` hardening (Red)
     - [ ] Test a script with active instances is skipped and a warning is logged (no `reload()` call)
     - [ ] Test `source_code` is never mutated when the instance pre-check fails
@@ -41,6 +46,7 @@
 
 ## Phase 4: Multi-Path CLI (FR-4, FR-5, FR-6)
 
+- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [ ] Task: Write failing tests for multi-path `lint` (Red)
     - [ ] Test combined discovery across multiple paths into one deduplicated set
     - [ ] Test default to `.` with no path args
@@ -64,7 +70,10 @@
 
 ## Phase 5: Documentation & Final Verification
 
+- [ ] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [ ] Task: Update `docs/USER_GUIDE.md` with multi-path CLI usage examples (lint/format/test)
 - [ ] Task: Run full test suite with coverage (`CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`)
 - [ ] Task: Run lint + format checks on all changed code (`ruff check src/ tests/` && `black --check src/ tests/`)
 - [ ] Task: Conductor - User Manual Verification 'Phase 5 - Documentation & Final Verification' (Protocol in workflow.md)
+
+</protect>

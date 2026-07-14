@@ -1,3 +1,5 @@
+<protect>
+
 # Track: coverage_autoload_fix — Fix Coverage Autoload Corruption & Multi-Path CLI
 
 ## Overview
@@ -73,3 +75,5 @@ Two related issues are addressed in this track:
 - Glob/wildcard syntax in excludes (e.g. `**/autoload`) — hybrid basename+path-prefix only.
 - Auto-detecting autoloads for the `lint`/`format` exclude (autoload auto-exclusion applies to coverage plan only).
 - Splitting this into separate tracks — bundled per user request.
+
+</protect>
