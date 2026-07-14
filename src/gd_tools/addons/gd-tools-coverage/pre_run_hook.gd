@@ -141,8 +141,12 @@ static func _inject_trackers(source: String, file_id: int, lines: Array) -> Stri
 			branch_type = ""
 		var insert_index: int
 		var indent: String
-		if branch_type == "match_case":
-			# Inject AFTER the pattern line (inside the match case body)
+		if branch_type in ["match_case", "if_false", "elif_true"]:
+			# Inject AFTER the branch line (inside the body).
+			# match_case patterns, else: and elif: lines must have trackers
+			# placed inside their body — injecting before these lines would
+			# insert a statement between the if/elif/else keywords, breaking
+			# the GDScript block structure (orphaned else/elif = syntax error).
 			insert_index = target_index + 1
 			indent = _detect_body_indent(source_lines, target_index)
 		else:

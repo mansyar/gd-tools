@@ -399,6 +399,61 @@ func test_inject_trackers_mixed_match_and_non_match():
 	assert_eq(result_lines[6], "\treturn", "return line preserved")
 
 
+func test_inject_trackers_if_false_injects_after_else():
+	# if_false (else:) tracker must be injected AFTER the else: line,
+	# inside the else body — injecting before would break the if-else structure.
+	var source = (
+		"func foo(x):\n" + "\tif x > 0:\n" + "\t\treturn 1\n" + "\telse:\n" + "\t\treturn 0\n"
+	)
+	var lines = [
+		{"line": 2, "id": 0, "type": "branch", "branch_type": "if_true"},
+		{"line": 4, "id": 1, "type": "branch", "branch_type": "if_false"},
+	]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	# if_true tracker BEFORE the if line
+	assert_eq(result_lines[1], "\t_GDTCoverage.hit(0, 0)", "if_true tracker before if")
+	assert_eq(result_lines[2], "\tif x > 0:", "if line preserved")
+	assert_eq(result_lines[3], "\t\treturn 1", "if body preserved")
+	# if_false tracker AFTER the else: line (inside else body)
+	assert_eq(result_lines[4], "\telse:", "else line preserved")
+	assert_eq(result_lines[5], "\t\t_GDTCoverage.hit(0, 1)", "if_false tracker after else")
+	assert_eq(result_lines[6], "\t\treturn 0", "else body preserved")
+
+
+func test_inject_trackers_elif_true_injects_after_elif():
+	# elif_true tracker must be injected AFTER the elif: line,
+	# inside the elif body — injecting before would break the if-elif structure.
+	var source = (
+		"func foo(x):\n"
+		+ "\tif x > 10:\n"
+		+ "\t\treturn 1\n"
+		+ "\telif x > 5:\n"
+		+ "\t\treturn 2\n"
+		+ "\telse:\n"
+		+ "\t\treturn 0\n"
+	)
+	var lines = [
+		{"line": 2, "id": 0, "type": "branch", "branch_type": "if_true"},
+		{"line": 4, "id": 1, "type": "branch", "branch_type": "elif_true"},
+		{"line": 6, "id": 2, "type": "branch", "branch_type": "if_false"},
+	]
+	var result = _hook._inject_trackers(source, 0, lines)
+	var result_lines = result.split("\n")
+	# if_true tracker BEFORE the if line
+	assert_eq(result_lines[1], "\t_GDTCoverage.hit(0, 0)", "if_true tracker before if")
+	assert_eq(result_lines[2], "\tif x > 10:", "if line preserved")
+	assert_eq(result_lines[3], "\t\treturn 1", "if body preserved")
+	# elif_true tracker AFTER the elif: line (inside elif body)
+	assert_eq(result_lines[4], "\telif x > 5:", "elif line preserved")
+	assert_eq(result_lines[5], "\t\t_GDTCoverage.hit(0, 1)", "elif_true tracker after elif")
+	assert_eq(result_lines[6], "\t\treturn 2", "elif body preserved")
+	# if_false tracker AFTER the else: line (inside else body)
+	assert_eq(result_lines[7], "\telse:", "else line preserved")
+	assert_eq(result_lines[8], "\t\t_GDTCoverage.hit(0, 2)", "if_false tracker after else")
+	assert_eq(result_lines[9], "\t\treturn 0", "else body preserved")
+
+
 # === _instrument_file() tests ===
 
 
