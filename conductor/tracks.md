@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Stale Addon Detection**
+- [x] **Track: Stale Addon Detection**
 *Link: [./tracks/stale_addon_detection_20260714/](./tracks/stale_addon_detection_20260714/)*
