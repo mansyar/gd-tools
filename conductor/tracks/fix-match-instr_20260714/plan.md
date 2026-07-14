@@ -31,4 +31,7 @@
     - [x] Run full test suite: `CI=true pytest` — confirm all existing tests pass with no regressions — 618 passed, 97.12% coverage
     - [x] Verify coverage thresholds: `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` — confirm >80% line, >70% branch — 97.12% line coverage
 - [x] Task: Conductor - User Manual Verification 'Fix Match Statement Instrumentation' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions 3a1cee3
 </protect>
