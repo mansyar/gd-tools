@@ -20,7 +20,7 @@
     - [x] Run tests to confirm autoload scripts now appear in plan
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Plan Generator' (Protocol in workflow.md)
 
-## Phase 2: Init — Autoload Registration (Prepend + Auto-fix)
+## Phase 2: Init — Autoload Registration (Prepend + Auto-fix) [checkpoint: 5bda503]
 
 **Goal:** Change `register_coverage_autoload()` from APPEND to PREPEND, and auto-fix `_GDTCoverage` to position 0 if not first.
 
