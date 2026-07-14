@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-09
-**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18); PyPI Update Notification delivered (Track 19)
+**Status:** Post-v1.0 — Coverage Autoload Fix & Multi-Path CLI delivered (Track 20)
 **Related docs:** [PRD.md](./PRD.md), [TDD.md](./TDD.md), [TESTING_STRATEGY.md](./TESTING_STRATEGY.md), [SPIKE_coverage_instrumentation.md](./SPIKE_coverage_instrumentation.md)
 
 ---
@@ -66,8 +66,9 @@ Phase 4: Polish & Release              ──┐
 Phase 5: Post-Release                  ──┐
   Track 18: Agent Skill & Versioning ✅    │  ~1 day
   Track 19: PyPI Update Notification ✅   │  ~0.5 day
-                                           │  Risk: LOW
-  ──────────────────────────────────────────┘
+  Track 20: Coverage Autoload Fix ✅       │  ~1 day
+                                           │  Risk: LOW-MEDIUM
+   ──────────────────────────────────────────┘
 
 Total estimated effort: ~25-30 days
 ```
@@ -1587,7 +1588,77 @@ partially met — deferred to future track.
 
 ---
 
-| Risk | Track(s) | Mitigation |
+### Track 20: Coverage Autoload Fix & Multi-Path CLI ✅ COMPLETED
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 5 — Post-Release |
+| **Goal** | Fix coverage autoload corruption and add multi-path support to lint, format, and test commands |
+| **Dependencies** | Track 9 (plan_generator), Track 11 (hooks), Track 4-6 (lint/format/test runners) |
+| **Modules** | `file_discovery.py`, `coverage/plan_generator.py`, `addons/gd-tools-coverage/pre_run_hook.gd`, `cli.py`, `lint_runner.py`, `format_runner.py`, `test_runner.py`, `coverage/orchestrator.py` |
+| **Effort** | 1 day |
+| **Risk** | LOW-MEDIUM |
+| **Status** | ✅ **COMPLETED** (2026-07-14) — All acceptance criteria passed |
+| **Conductor track** | `coverage_autoload_fix_20260714` (archived to `conductor/archive/`) |
+| **Commits** | `1076998`..`1df7d72` (5 phases, 23 files changed, 755 insertions, 66 deletions) |
+
+**Scope (two workstreams):**
+
+*Workstream A: Coverage Autoload Corruption Fix*
+- **FR-1: Hybrid exclude matching** — `file_discovery.py` now splits excludes
+  into bare names (basename match, backward-compatible) and path prefixes
+  (entries with `/` or `\`, normalized to `os.sep`, matched as path prefix).
+- **FR-2: Autoload auto-exclusion** — `plan_generator.py` gains
+  `resolve_autoload_paths(project_root)` which reads `project.godot`,
+  parses the `[autoload]` section, strips `*` and `res://`, and returns
+  relative paths. `generate_plan` filters these from the coverage plan.
+- **FR-3: Harden pre_run_hook.gd** — `_instrument_file` captures original
+  source before mutation. On `reload()` returning `ERR_ALREADY_IN_USE`,
+  restores source and skips the file with a warning. On other `reload()`
+  failures, restores source and attempts best-effort reload. (GDScript has
+  no public API for pre-mutation instance checking.)
+
+*Workstream B: Multi-Path CLI*
+- **FR-4: Lint multi-path** — `lint` command changed from single `path`
+  argument to `paths` (`nargs=-1`). `run_lint` accepts `list[str] | None`.
+  Files discovered across all paths, deduplicated via `dict.fromkeys`.
+- **FR-5: Format multi-path** — Same pattern as lint. `run_format` accepts
+  `list[str] | None`, deduplicates.
+- **FR-6: Test paths filter** — `test` command gains `paths` argument
+  (`nargs=-1`). `build_gut_args` uses `paths if paths else config.test_dirs`,
+  formatting each as `res://path/` for GUT's `-gdir`. `run_coverage_test`
+  passes `paths` through to `run_tests`.
+
+**Success Criteria:**
+1. Exclude entries with path separators match as path prefixes, not basenames
+2. Autoload scripts in `project.godot` are auto-excluded from coverage plans
+3. `pre_run_hook.gd` restores source and skips on `ERR_ALREADY_IN_USE`
+4. `gd-tools lint src/ test/` lints files from both paths, deduplicated
+5. `gd-tools format src/ test/` formats files from both paths, deduplicated
+6. `gd-tools test test/unit/ test/integration/` runs tests from both dirs
+
+**Track 20 Results (2026-07-14):**
+- ✅ All acceptance criteria PASSED
+- ✅ 674 tests passed (0 failures, 292s)
+- ✅ 97% total coverage; all changed modules >91% (file_discovery 100%,
+  plan_generator 98%, cli 98%, lint_runner 96%, format_runner 95%,
+  test_runner 96%, orchestrator 91%)
+- ✅ ruff check + black --check pass
+- **Test breakdown:** 3 new in `test_file_discovery.py`, 7 new in
+  `test_plan_generator.py`, 3 new GUT tests in `test_pre_run_hook.gd`,
+  updated `test_coverage_hooks.py` (expected count 28→31), 3 new + updated
+  in `test_cli.py`, 3 new + updated in `test_lint_runner.py`, 3 new +
+  updated in `test_format_runner.py`, 3 new in `test_test_runner.py`
+- **Review fix applied:** Updated `spec.md` FR-3 and acceptance criterion #3
+  to accurately reflect implementation's `ERR_ALREADY_IN_USE` detection
+  approach and GDScript API limitations (spec originally required pre-mutation
+  instance check, which is not possible with GDScript's public API).
+- **Docs updated:** README.md command table and USER_GUIDE.md updated for
+  multi-path support
+
+---
+
+
 |------|----------|------------|
 | **Runtime instrumentation doesn't work** (Script.reload fails, tracker doesn't fire) | 0, 11 | Spike first. Fallback: Architecture B (fork jamie-pate) or Architecture A (pure Python) |
 | **Lark AST traversal misses edge cases** (complex GDScript patterns) | 9 | Comprehensive fixtures (6 test files). Fallback: iterative improvement, report as "partial coverage" |

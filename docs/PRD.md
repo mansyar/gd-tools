@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Agent Skill & Automated Versioning delivered (Track 18); PyPI Update Notification delivered (Track 19)
+**Status:** Post-v1.0 — Coverage Autoload Fix & Multi-Path CLI delivered (Track 20)
 **Target Godot Version:** 4.5+
 
 ---
@@ -118,9 +118,9 @@ respecting the realities of the Godot/GDScript ecosystem.
 ```
 gd-tools init                    Bootstrap project (GUT, coverage addon, configs)
 gd-tools doctor                  Diagnose environment and configuration
-gd-tools test [options]          Run unit tests via GUT
-gd-tools lint [path]              Lint GDScript files via gdlint
-gd-tools format [options] [path]  Format GDScript files via gdformat
+gd-tools test [options] [paths]   Run unit tests via GUT
+gd-tools lint [paths]...           Lint GDScript files via gdlint
+gd-tools format [options] [paths]...  Format GDScript files via gdformat
 gd-tools coverage report          Generate report from last coverage run
 gd-tools coverage merge           Merge multiple coverage data files
 gd-tools coverage show            Print coverage summary to terminal
@@ -129,12 +129,13 @@ gd-tools coverage show            Print coverage summary to terminal
 ### `gd-tools test`
 
 ```
-gd-tools test [--coverage] [--min N] [--suite NAME] [--test NAME]
+gd-tools test [paths]... [--coverage] [--min N] [--suite NAME] [--test NAME]
               [--junit-xml PATH] [--no-exit-code]
 ```
 
-| Flag             | Description                                              |
+| Flag/Arg         | Description                                              |
 |------------------|----------------------------------------------------------|
+| `paths`          | One or more test directories to run (default: config test_dirs) |
 | `--coverage`     | Enable coverage instrumentation during test run         |
 | `--min N`        | Fail if coverage falls below N% (requires `--coverage`) |
 | `--suite NAME`   | Run only the named test suite                            |
@@ -142,24 +143,30 @@ gd-tools test [--coverage] [--min N] [--suite NAME] [--test NAME]
 | `--junit-xml P`  | Write JUnit XML to path (default: `.gd-tools/results.xml`)|
 | `--no-exit-code` | Always exit 0 regardless of test failures               |
 
+When `paths` are provided, they override `test_dirs` from config. Each path
+is formatted as `res://path/` and passed to GUT's `-gdir` flag.
+
 **Exit codes:** 0 = pass, 1 = test failures, 2 = environment/config error.
 
 ### `gd-tools lint`
 
 ```
-gd-tools lint [path] [--fix] [--report-format text|json]
+gd-tools lint [paths]... [--fix] [--report-format text|json]
 ```
 
-- `path` defaults to project root (respecting excludes).
+- `paths` — one or more directories/files to lint (default: `.`).
+  Files are discovered across all paths and deduplicated.
 - `--fix` is a no-op placeholder (gdlint is read-only; reserved for future).
 - Exits non-zero if any lint errors (not warnings).
 
 ### `gd-tools format`
 
 ```
-gd-tools format [path] [--check] [--diff]
+gd-tools format [paths]... [--check] [--diff]
 ```
 
+- `paths` — one or more directories/files to format (default: `.`).
+  Files are discovered across all paths and deduplicated.
 - `--check` — report unformatted files without modifying; exit 1 if any
   need formatting (CI mode).
 - `--diff` — show a diff of what would change (does not modify).
@@ -603,7 +610,7 @@ func take_damage(amount: int) -> void:
             die()
     return
 
-# After instrumentation (conceptual):
+# After instrumentation (Conceptual):
 func take_damage(amount: int) -> void:
     _gd_tools_cov.hit(0)          # line 2: expr entry
     if amount > 0:
@@ -620,6 +627,14 @@ func take_damage(amount: int) -> void:
 manipulation vs. Script API bytecode injection) is an implementation detail to
 be resolved during development. The plan JSON provides line numbers and IDs;
 the GDScript addon decides how to inject trackers.
+
+**Autoload safety (Track 20):** `pre_run_hook.gd` captures the original source
+before mutation. If `reload()` returns `ERR_ALREADY_IN_USE` (the script is an
+already-loaded autoload singleton), the hook restores the original source and
+skips instrumentation for that file. GDScript provides no public API for
+pre-mutation instance checking, so detection is reactive. Autoload scripts are
+also auto-excluded from the coverage plan at plan generation time (see
+`resolve_autoload_paths()` in `plan_generator.py`).
 
 ---
 
@@ -639,6 +654,32 @@ DEFAULT_EXCLUDES = ["addons", ".godot", ".gd-tools", ".git"]
 - `.godot/` — Godot's generated cache directory.
 - `.gd-tools/` — our own output directory (coverage data, reports, results).
 - `.git/` — version control metadata.
+
+### Hybrid Exclude Matching
+
+Exclude entries support both bare names and path prefixes:
+
+- **Bare names** (no `/` or `\`): Matched against the basename of each
+  discovered file's path. This is the original behavior and remains
+  backward-compatible (e.g., `"addons"` excludes any directory named
+  `addons` at any depth).
+- **Path prefixes** (containing `/` or `\`): Normalized to the OS separator
+  and matched as a path prefix via `os.path.relpath`. This allows
+  excluding specific subdirectories while keeping same-named directories
+  elsewhere (e.g., `"src/vendor/addons"` excludes only that specific path).
+
+### Autoload Auto-Exclusion (Coverage)
+
+During coverage plan generation, autoload scripts registered in
+`project.godot`'s `[autoload]` section are automatically excluded from
+instrumentation. This prevents coverage corruption caused by instrumenting
+already-loaded autoload singletons (whose `reload()` would fail with
+`ERR_ALREADY_IN_USE`).
+
+The `resolve_autoload_paths()` function in `plan_generator.py` reads
+`project.godot`, parses the `[autoload]` section, strips the `*` prefix
+and `res://` scheme, and returns a list of relative paths. These paths
+are filtered from the coverage plan's file list.
 
 ### gdtoolkit Config Generation
 

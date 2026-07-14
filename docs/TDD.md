@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Documentation delivered (Track 16); Update Notification delivered (Track 19)
+**Status:** Post-v1.0 — Coverage Autoload Fix & Multi-Path CLI delivered (Track 20)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -38,6 +38,7 @@ src/gd_tools/
 ├── godot.py                  # Godot binary detection + invocation
 ├── init.py                   # `gd-tools init` bootstrap flow
 ├── doctor.py                 # `gd-tools doctor` diagnostics
+├── file_discovery.py         # Shared .gd file discovery (hybrid exclude matching)
 ├── test_runner.py            # `gd-tools test` — GUT orchestration
 ├── lint_runner.py            # `gd-tools lint` — gdlint wrapper
 ├── format_runner.py          # `gd-tools format` — gdformat wrapper
@@ -45,7 +46,7 @@ src/gd_tools/
 ├── coverage/
 │   ├── __init__.py
 │   ├── orchestrator.py        # Coverage CLI orchestration (test --coverage, report, merge, show)
-│   ├── plan_generator.py     # Lark AST → instrumentation plan (JSON)
+│   ├── plan_generator.py     # Lark AST → instrumentation plan (JSON) + autoload exclusion
 │   ├── reporter.py           # Coverage data → report dispatch
 │   ├── html_reporter.py     # Jinja2 HTML report
 │   ├── lcov_reporter.py      # LCOV format
@@ -57,7 +58,7 @@ src/gd_tools/
 └── addons/
     └── gd-tools-coverage/
         ├── coverage.gd       # Autoload singleton — hit tracking
-        ├── pre_run_hook.gd   # GUT pre-run hook — instruments scripts
+        ├── pre_run_hook.gd   # GUT pre-run hook — instruments scripts (autoload-safe)
         └── post_run_hook.gd  # GUT post-run hook — saves coverage JSON
 ```
 
@@ -340,20 +341,21 @@ def doctor():
 @click.option("--test", "test_name", type=str, help="Run tests matching name")
 @click.option("--junit-xml", type=str, help="JUnit XML output path")
 @click.option("--no-exit-code", is_flag=True, help="Always exit 0")
-def test(coverage, min_percent, suite, test_name, junit_xml, no_exit_code):
+@click.argument("paths", nargs=-1)
+def test(coverage, min_percent, suite, test_name, junit_xml, no_exit_code, paths):
     """Run unit tests via GUT."""
 
 @cli.command()
-@click.argument("path", required=False, default=".")
+@click.argument("paths", nargs=-1)
 @click.option("--report-format", type=click.Choice(["text", "json"]), default="text")
-def lint(path, report_format):
+def lint(paths, report_format):
     """Lint GDScript files via gdlint."""
 
 @cli.command()
-@click.argument("path", required=False, default=".")
+@click.argument("paths", nargs=-1)
 @click.option("--check", is_flag=True, help="Check only, don't modify (CI mode)")
 @click.option("--diff", is_flag=True, help="Show diff of changes")
-def format(path, check, diff):
+def format(paths, check, diff):
     """Format GDScript files via gdformat."""
 
 @cli.group()
@@ -576,9 +578,11 @@ def run_tests(
     test_name: str | None = None,
     junit_xml: str | None = None,
     no_exit_code: bool = False,
+    paths: list[str] | None = None,
 ) -> TestResult:
     """Main entry point for `gd-tools test`.
-    Orchestrates GUT execution, optionally with coverage."""
+    Orchestrates GUT execution, optionally with coverage.
+    When paths is provided, they override config.test_dirs."""
 
 @dataclass
 class TestResult:
@@ -595,11 +599,14 @@ def build_gut_args(
     suite: str | None,
     test_name: str | None,
     junit_xml: str | None,
+    paths: list[str] | None = None,
 ) -> list[str]:
     """Build GUT CLI args list.
     Base: ['--headless', '-s', 'addons/gut/gut_cmdln.gd', '-gexit']  (--path added by run_godot)
     Add: ['-gdir=<test_dirs>'], ['-gselect=<suite>'], ['-gunit_test_name=<test_name>']
-    Add: ['-gjunit_xml_file=<path>']"""
+    Add: ['-gjunit_xml_file=<path>']
+    When paths is provided, uses paths instead of config.test_dirs,
+    formatting each as 'res://path/'."""
 
 def run_gut_with_coverage(
     config: GdToolsConfig,
@@ -673,6 +680,15 @@ still present but inactive (checks `GD_TOOLS_COVERAGE_ACTIVE` env var).
 - When JUnit XML is not found, error message now includes Godot exit code,
   stdout (last 2000 chars), and stderr for diagnostics.
 
+**Multi-path support (Track 20, 2026-07-14):**
+
+- `run_tests()` and `build_gut_args()` accept `paths: list[str] | None`.
+  When provided, `paths` overrides `config.test_dirs` — each path is
+  formatted as `res://path/` and passed to GUT's `-gdir` flag. When `None`
+  or empty, config `test_dirs` are used as before.
+- `run_coverage_test()` in `orchestrator.py` also accepts `paths` and
+  passes it through to `run_tests()`.
+
 ---
 
 ### 3.8 `lint_runner.py` — gdlint Wrapper
@@ -680,10 +696,12 @@ still present but inactive (checks `GD_TOOLS_COVERAGE_ACTIVE` env var).
 ```python
 def run_lint(
     config: GdToolsConfig,
-    path: str = ".",
+    paths: list[str] | None = None,
     report_format: str = "text",
 ) -> LintResult:
-    """Run gdlint on path, respecting excludes.
+    """Run gdlint on paths, respecting excludes.
+    When paths is None or empty, defaults to ['.'].
+    Discovers .gd files across all paths, deduplicates.
     Calls: gdlint <path> (gdlint reads gdlintrc for excludes)
     Parses output, returns structured result."""
 
@@ -713,11 +731,13 @@ filter paths in Python — the config file handles it.
 ```python
 def run_format(
     config: GdToolsConfig,
-    path: str = ".",
+    paths: list[str] | None = None,
     check: bool = False,
     diff: bool = False,
 ) -> FormatResult:
-    """Run gdformat on path, respecting excludes.
+    """Run gdformat on paths, respecting excludes.
+    When paths is None or empty, defaults to ['.'].
+    Discovers .gd files across all paths, deduplicates.
     check=True: gdformat --check <path>
     diff=True: gdformat --diff <path>
     normal: gdformat <path>
@@ -753,6 +773,19 @@ class FormatResult:
   (`discover_gd_files(path, excludes)`), used by both `lint_runner` and
   `format_runner`.
 
+**Multi-path support (Track 20, 2026-07-14):**
+
+- `run_lint()` and `run_format()` accept `paths: list[str] | None`. When
+  `None` or empty, defaults to `['.']`. Files are discovered across all
+  provided paths and deduplicated via `dict.fromkeys()`.
+- CLI `lint` and `format` commands use `@click.argument("paths", nargs=-1)`
+  instead of a single `path` argument. Multiple paths are passed as a list.
+- `file_discovery.py` now supports **hybrid exclude matching**: bare names
+  (no path separator) match basenames (backward-compatible); entries with
+  `/` or `\` are normalized to `os.sep` and matched as path prefixes via
+  `os.path.relpath`. This allows excluding specific subdirectories while
+  keeping same-named directories elsewhere (e.g., `"src/vendor/addons"`).
+
 ---
 
 ### 3.10 `coverage/plan_generator.py` — Instrumentation Plan Generation
@@ -771,9 +804,18 @@ def generate_plan(
 ) -> CoveragePlan:
     """Walk project, parse each .gd file, generate instrumentation plan.
     1. Find all .gd files in source_dirs, excluding exclude_dirs and test_dirs
-    2. For each file: parse with gdtoolkit, walk AST, extract trackable points
-    3. Assign unique IDs to each point
-    4. Return CoveragePlan"""
+    2. Resolve autoload paths from project.godot and exclude them (Track 20)
+    3. For each file: parse with gdtoolkit, walk AST, extract trackable points
+    4. Assign unique IDs to each point
+    5. Return CoveragePlan"""
+
+def resolve_autoload_paths(project_root: Path) -> list[str]:
+    """Read project.godot [autoload] section and return relative paths.
+    Strips the '*' prefix and 'res://' scheme from each autoload entry.
+    Returns forward-slash paths. Returns empty list if project.godot
+    is missing or has no [autoload] section.
+    (Track 20 — prevents coverage corruption from instrumenting
+    already-loaded autoload singletons.)"""
 
 @dataclass
 class CoveragePlan:
@@ -945,6 +987,20 @@ assignment) are NOT tracked — they're declarations, not executable statements.
   `.expected.json` files verified correct against fixtures.
 - 49 unit tests in `test_plan_generator.py` + 2 in
   `test_generate_expected_plans.py`. `plan_generator.py` at 100% coverage.
+
+**Autoload exclusion (Track 20, 2026-07-14):**
+
+- `resolve_autoload_paths(project_root)` reads `project.godot`, parses the
+  `[autoload]` section manually (line-by-line), strips the `*` prefix and
+  `res://` scheme, and returns a list of relative paths with forward slashes.
+- `generate_plan()` calls `resolve_autoload_paths()` and filters autoload
+  paths from the discovered file list before generating the plan.
+- Handles missing `project.godot`, empty/missing `[autoload]` section
+  gracefully (returns empty list).
+- Prevents coverage corruption: instrumenting an already-loaded autoload
+  singleton causes `Script.reload()` to fail with `ERR_ALREADY_IN_USE`.
+- 7 new tests in `test_plan_generator.py` for autoload resolution edge cases.
+- `plan_generator.py` at 98% coverage after Track 20 changes.
 
 ---
 
@@ -1166,12 +1222,13 @@ def run_coverage_test(
     junit_xml: str | None = None,
     no_exit_code: bool = False,
     timeout: int | None = 300,
+    paths: list[str] | None = None,
 ) -> TestResult:
     """Run tests with coverage instrumentation enabled.
     1. Generate plan (plan_generator.generate_plan)
     2. Write plan.json to config.coverage.output_dir
     3. Set env vars: GD_TOOLS_COVERAGE_ACTIVE=1, GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
-    4. Run tests via test_runner.run_tests(coverage=True)
+    4. Run tests via test_runner.run_tests(coverage=True, paths=paths)
     5. Read coverage.json + plan.json
     6. Generate reports (reporter.generate_report)
     7. Apply --min threshold (raises CoverageThresholdError if below)
@@ -1469,8 +1526,8 @@ static func _extract_indent(line: String) -> String:
             break
     return indent
 
-func _instrument_file(file_entry: Dictionary) -> void:
-    ## Instrument a single script file.
+func _instrument_file(file_entry: Dictionary) -> bool:
+    ## Instrument a single script file. Returns true on success.
     var res_path: String = file_entry["path"]
     var file_id: int = int(file_entry.get("file_id", 0))
     var lines: Array = file_entry["lines"]
@@ -1478,20 +1535,48 @@ func _instrument_file(file_entry: Dictionary) -> void:
     var script := load(res_path)
     if script == null:
         push_warning("gd-tools: Cannot load script: %s" % res_path)
-        return
+        return false
 
-    var source := script.source_code
-    var instrumented_source := _inject_trackers(source, file_id, lines)
+    var original_source := script.source_code  # Capture before mutation (Track 20)
+    var instrumented_source := _inject_trackers(original_source, file_id, lines)
 
     script.source_code = instrumented_source
     var err := script.reload()
+    if err == ERR_ALREADY_IN_USE:
+        # Script is an already-loaded autoload singleton (Track 20)
+        script.source_code = original_source  # Restore original
+        push_warning("gd-tools: Skipping autoload script (already in use): %s" % res_path)
+        return false
     if err != OK:
+        # Other reload failure — restore and attempt best-effort reload (Track 20)
+        script.source_code = original_source
         push_error("gd-tools: Failed to reload instrumented script: %s (error %d)" % [res_path, err])
+        script.reload()  # Best-effort restore
+        return false
+    return true
 ```
 
 **Instrumentation approach:** String manipulation — split source into lines,
 insert tracker calls before each instrumented line (bottom-to-top to preserve
 line numbers), set `source_code`, call `reload()`.
+
+**Autoload safety hardening (Track 20, 2026-07-14):**
+
+- `_instrument_file()` now returns `bool` (was `void`). Returns `false` when
+  the script cannot be loaded or instrumented.
+- Original source is captured **before** mutation. On `reload()` returning
+  `ERR_ALREADY_IN_USE` (the script is an already-loaded autoload singleton),
+  the original source is restored and the file is skipped with a warning.
+- On other `reload()` failures, the original source is restored and a
+  best-effort `reload()` is attempted to get back to the original state.
+- GDScript provides no public API for checking whether a script is an active
+  singleton instance *before* mutation, so detection is reactive (after
+  `reload()` fails). This is mitigated by `resolve_autoload_paths()` in
+  `plan_generator.py`, which auto-excludes autoload scripts from the coverage
+  plan at plan generation time (Track 20, FR-2).
+- 3 new GUT tests in `test_pre_run_hook.gd` (active instance skip, source
+  restored after skip, source restored on reload failure). Expected GUT test
+  count updated from 28 to 31 in `test_coverage_hooks.py`.
 
 ---
 
