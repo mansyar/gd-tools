@@ -37,8 +37,8 @@ Two related issues are addressed in this track:
 **FR-3: Harden `_instrument_file` in the canonical `pre_run_hook.gd`.**
 `_instrument_file` must:
 - Capture the original `source_code` before any mutation.
-- Before mutating, check whether the script has active instances; if so, skip instrumentation for that file and log a warning (do not call `reload()`).
-- On any `reload()` failure, restore `script.source_code` to the original before returning, so a script is never left in a corrupted state.
+- When `reload()` returns `ERR_ALREADY_IN_USE` (indicating active script instances, e.g. autoloads), restore `script.source_code` to the original, log a warning, and skip the file. (GDScript does not expose a public API to check for active instances before calling `reload()`; the `ERR_ALREADY_IN_USE` return value is the only runtime detection mechanism. FR-2 provides the primary defense by excluding autoloads from the plan at generation time — this is a defense-in-depth measure.)
+- On any other `reload()` failure, restore `script.source_code` to the original and attempt a best-effort reload before returning, so a script is never left in a corrupted state.
 
 ### Workstream B — Multi-Path CLI
 
@@ -62,7 +62,7 @@ Two related issues are addressed in this track:
 
 1. `exclude = ["scripts/autoload"]` in `[coverage]` (and `[lint]`/`[format]`) excludes files under `scripts/autoload/` from discovery; `exclude = ["autoload"]` still excludes any dir named `autoload` at any depth.
 2. With a `project.godot` containing `[autoload]` entries, those autoload scripts do NOT appear in the generated `plan.json`.
-3. In `pre_run_hook.gd`, a script with active instances is skipped with a warning and its `source_code` is never mutated; on any `reload()` failure the original `source_code` is restored.
+3. In `pre_run_hook.gd`, a script with active instances (detected via `reload()` returning `ERR_ALREADY_IN_USE`) is skipped with a warning and its `source_code` is restored to the original; on any other `reload()` failure the original `source_code` is also restored.
 4. `gd-tools lint src/ tests/` lints all `.gd` files in both directories in one run; `gd-tools lint` (no args) lints `.`.
 5. `gd-tools format src/ tests/` formats files across both dirs; `gd-tools format` (no args) formats `.`.
 6. `gd-tools test test/foo.gd test/bar/` runs only the specified test paths for that invocation; `gd-tools test` (no args) uses config test_dirs.
