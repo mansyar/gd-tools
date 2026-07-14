@@ -5,15 +5,15 @@
 ## Phase 1: Hybrid Exclude Matching (FR-1)
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
-- [~] Task: Write failing tests for hybrid exclude matching in `discover_gd_files` (Red)
-    - [ ] Test bare-name exclude matches a directory basename at any depth (backward compat with `DEFAULT_EXCLUDES`)
-    - [ ] Test an entry containing `/` (e.g. `scripts/autoload`) excludes by path prefix relative to root
-    - [ ] Test cross-platform separators (`\` and `/` normalize equivalently)
-- [ ] Task: Implement hybrid exclude matching in `src/gd_tools/file_discovery.py` (Green)
-    - [ ] Route entries containing a path separator to path-prefix filtering against each file's relative path
-    - [ ] Keep existing basename matching for bare entries
-    - [ ] Refactor and rerun tests to green
-- [ ] Task: Verify coverage for `file_discovery.py` (>80% line, >70% branch)
+- [x] Task: Write failing tests for hybrid exclude matching in `discover_gd_files` (Red) [5f0bcfe]
+    - [x] Test bare-name exclude matches a directory basename at any depth (backward compat with `DEFAULT_EXCLUDES`)
+    - [x] Test an entry containing `/` (e.g. `scripts/autoload`) excludes by path prefix relative to root
+    - [x] Test cross-platform separators (`\` and `/` normalize equivalently)
+- [x] Task: Implement hybrid exclude matching in `src/gd_tools/file_discovery.py` (Green) [5f0bcfe]
+    - [x] Route entries containing a path separator to path-prefix filtering against each file's relative path
+    - [x] Keep existing basename matching for bare entries
+    - [x] Refactor and rerun tests to green
+- [x] Task: Verify coverage for `file_discovery.py` (>80% line, >70% branch) [5f0bcfe]
 - [ ] Task: Conductor - User Manual Verification 'Phase 1 - Hybrid Exclude Matching' (Protocol in workflow.md)
 
 ## Phase 2: Autoload Auto-Exclusion (FR-2)
