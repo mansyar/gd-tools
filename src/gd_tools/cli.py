@@ -1,5 +1,6 @@
 """CLI entry point for gd-tools."""
 
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,7 @@ from typing import Any
 import click
 from rich.console import Console
 from rich.syntax import Syntax
+from rich.table import Table
 
 from . import __version__
 from .config import load_config
@@ -29,6 +31,7 @@ from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .test_runner import run_tests
 from .update_check import check_for_update
 from .addon_check import check_addon_version
+from .version import collect_versions
 
 
 def _configure_windows_utf8() -> None:
@@ -135,6 +138,33 @@ def doctor():
     console.print(format_doctor_table(result))
     ctx = click.get_current_context()
     ctx.exit(0 if result.all_passed else 1)
+
+
+@cli.command()
+@click.option(
+    "--json", "as_json", is_flag=True, help="Output versions as JSON."
+)
+def version(as_json):
+    """Display version information for all components."""
+    versions = collect_versions()
+    if as_json:
+        click.echo(json.dumps(versions))
+    else:
+        table = Table(title="gd-tools Component Versions")
+        table.add_column("Component")
+        table.add_column("Version")
+        for component, ver in versions.items():
+            if ver is None:
+                display = (
+                    "not detected" if component == "godot" else "not installed"
+                )
+            else:
+                display = ver
+            table.add_row(component, display)
+        console = Console()
+        console.print(table)
+    ctx = click.get_current_context()
+    ctx.exit(0)
 
 
 @cli.command()

@@ -1,5 +1,6 @@
 """Unit tests for the gd_tools CLI skeleton."""
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -1263,3 +1264,76 @@ def test_test_paths_arg():
     assert result.exit_code == 0
     _, kwargs = mock_run.call_args
     assert kwargs["paths"] == ["dir_a", "dir_b"]
+
+
+def test_cli_version_table_output():
+    """Test version command renders Rich table with all component names."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.collect_versions") as mock_collect:
+        mock_collect.return_value = {
+            "gd-tools": "0.3.0",
+            "godot": "4.5.1",
+            "gut": "9.2.0",
+            "gdtoolkit": "4.5.0",
+            "python": "3.13.5",
+        }
+        result = runner.invoke(cli, ["version"])
+    assert result.exit_code == 0
+    assert "gd-tools" in result.output
+    assert "godot" in result.output
+    assert "gut" in result.output
+    assert "gdtoolkit" in result.output
+    assert "python" in result.output
+
+
+def test_cli_version_json_output():
+    """Test --json flag outputs valid JSON with null for missing."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.collect_versions") as mock_collect:
+        mock_collect.return_value = {
+            "gd-tools": "0.3.0",
+            "godot": None,
+            "gut": None,
+            "gdtoolkit": "4.5.0",
+            "python": "3.13.5",
+        }
+        result = runner.invoke(cli, ["version", "--json"])
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data["gd-tools"] == "0.3.0"
+    assert data["godot"] is None
+    assert data["gut"] is None
+    assert data["gdtoolkit"] == "4.5.0"
+    assert data["python"] == "3.13.5"
+
+
+def test_cli_version_exit_zero_with_missing():
+    """Test version exits 0 even when components are missing."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.collect_versions") as mock_collect:
+        mock_collect.return_value = {
+            "gd-tools": "0.3.0",
+            "godot": None,
+            "gut": None,
+            "gdtoolkit": None,
+            "python": "3.13.5",
+        }
+        result = runner.invoke(cli, ["version"])
+    assert result.exit_code == 0
+
+
+def test_cli_version_missing_display():
+    """Test missing components show 'not detected' or 'not installed'."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.collect_versions") as mock_collect:
+        mock_collect.return_value = {
+            "gd-tools": "0.3.0",
+            "godot": None,
+            "gut": None,
+            "gdtoolkit": None,
+            "python": "3.13.5",
+        }
+        result = runner.invoke(cli, ["version"])
+    assert result.exit_code == 0
+    assert "not detected" in result.output
+    assert "not installed" in result.output
