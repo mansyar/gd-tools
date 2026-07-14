@@ -1,0 +1,8 @@
+{
+  "track_id": "autoload_coverage_20260715",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-07-15T05:06:14Z",
+  "updated_at": "2026-07-15T05:06:14Z",
+  "description": "Autoload-Based Coverage Instrumentation (Urgent Bug Fix) — Move coverage instrumentation from GUT's pre-run hook to _GDTCoverage._ready() (first autoload), eliminating ERR_ALREADY_IN_USE for scripts instantiated by autoloads."
+}
