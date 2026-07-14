@@ -1,0 +1,21 @@
+Phase 3: Move instrumentation to coverage.gd._ready() + simplify pre_run_hook
+
+Changes:
+- coverage.gd: Added instrumentation logic (moved from pre_run_hook.gd):
+  _load_plan, _validate_plan, _validate_file_entry, _instrument_files,
+  _instrument_file, _inject_trackers (static), _extract_indent (static),
+  _detect_body_indent (static), _log_error
+- coverage.gd: Rewrote _ready() to read GD_TOOLS_COVERAGE_PLAN env var,
+  load plan, instrument all files, leave _active=false
+- coverage.gd: Added TRACKER_NAME const and _plan var
+- pre_run_hook.gd: Simplified run() to single call: _GDTCoverage.set_active(true)
+- pre_run_hook.gd: Removed all instrumentation helper functions
+- test_coverage_instrumentation.gd: NEW - 38 GUT tests moved from test_pre_run_hook.gd
+- test_pre_run_hook.gd: Simplified to 2 tests (activate + no instrumentation methods)
+- test_coverage_hooks.py: Updated test counts (43->2), added test_coverage_instrumentation_gut_tests_pass,
+  updated test_hooks_missing_plan_env_var (no warning message, check empty output)
+
+Why: Instrumentation in _ready() (first autoload) runs before any other
+autoload creates instances, preventing ERR_ALREADY_IN_USE on reload().
+Tracker activation stays in pre_run_hook to preserve coverage semantics
+(test execution only, not autoload init).
