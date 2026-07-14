@@ -1,0 +1,17 @@
+FR-4, FR-5, FR-6 Implementation: Multi-Path CLI
+
+Changes:
+- lint_runner.py: run_lint accepts list[str] paths, defaults to ['.'], deduplicates
+- format_runner.py: run_format accepts list[str] paths, defaults to ['.'], deduplicates
+- test_runner.py: build_gut_args + run_tests gain paths param for -gdir override
+- orchestrator.py: run_coverage_test passes paths through to run_tests
+- cli.py: lint/format/test commands accept nargs=-1 paths argument
+- Updated 24 existing tests, added 12 new tests
+
+Verification:
+- 616/616 unit tests pass
+- ruff check: passed
+- black --check: passed
+- Coverage: cli.py 98%, orchestrator.py 91%, format_runner.py 95%, lint_runner.py 96%, test_runner.py 96%
+
+Commit: 0950afb
