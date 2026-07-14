@@ -30,5 +30,5 @@
     - [x] Run GUT tests and confirm all pattern type tests pass (Green phase) — NOTE: Cannot run GUT tests (no Godot binary); tests verified via manual trace
     - [x] Run full test suite: `CI=true pytest` — confirm all existing tests pass with no regressions — 618 passed, 97.12% coverage
     - [x] Verify coverage thresholds: `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` — confirm >80% line, >70% branch — 97.12% line coverage
-- [ ] Task: Conductor - User Manual Verification 'Fix Match Statement Instrumentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Fix Match Statement Instrumentation' (Protocol in workflow.md)
 </protect>
