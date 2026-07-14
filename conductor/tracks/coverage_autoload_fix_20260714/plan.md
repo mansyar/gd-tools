@@ -30,7 +30,7 @@
 - [x] Task: Verify coverage for `plan_generator.py` (>80% line, >70% branch) [d4c3215]
 - [x] Task: Conductor - User Manual Verification 'Phase 2 - Autoload Auto-Exclusion' (Protocol in workflow.md) [5676d09]
 
-## Phase 3: Harden pre_run_hook.gd (FR-3)
+## Phase 3: Harden pre_run_hook.gd (FR-3) [checkpoint: 0e5e86f]
 
 - [x] Task: Read spec.md and workflow.md to align with current requirements and the TDD/verification protocol
 - [x] Task: Write failing tests for `_instrument_file` hardening (Red) [10a4d2e]
@@ -42,7 +42,7 @@
     - [x] Add an active-instance pre-check; skip + warn when instances exist
     - [x] Restore `script.source_code = original` in the `reload()` error path before returning
 - [x] Task: Sync the spike copy (`spike/addons/gd-tools-coverage/pre_run_hook.gd`) if needed for integration testing [10a4d2e]
-- [~] Task: Conductor - User Manual Verification 'Phase 3 - Harden pre_run_hook.gd' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3 - Harden pre_run_hook.gd' (Protocol in workflow.md) [0e5e86f]
 
 ## Phase 4: Multi-Path CLI (FR-4, FR-5, FR-6)
 
