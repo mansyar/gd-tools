@@ -62,8 +62,12 @@ def _setup_hooks_project(tmp_path: Path) -> Path:
     )
     install_coverage_addon(tmp_path)
     register_coverage_autoload(tmp_path)
-    # Copy GUT test scripts for hooks
-    for test_script in ["test_pre_run_hook.gd", "test_post_run_hook.gd"]:
+    # Copy GUT test scripts for hooks and instrumentation
+    for test_script in [
+        "test_pre_run_hook.gd",
+        "test_post_run_hook.gd",
+        "test_coverage_instrumentation.gd",
+    ]:
         fixture = FIXTURES_DIR / "gdscript" / test_script
         if fixture.exists():
             shutil.copy2(fixture, tmp_path / "test" / test_script)
@@ -85,14 +89,31 @@ def _clear_coverage_env() -> None:
 @pytest.mark.integration
 @skip_if_no_godot
 def test_pre_run_hook_gut_tests_pass(tmp_path):
-    """GUT tests for pre_run_hook.gd plan loading all pass."""
+    """GUT tests for simplified pre_run_hook.gd (set_active only) pass."""
     project = _setup_hooks_project(tmp_path)
     config = GdToolsConfig()
     with patch("gd_tools.test_runner.find_project_root", return_value=project):
         result = run_tests(config, suite="test_pre_run_hook.gd")
 
     assert result.failed == 0
-    assert result.passed == 43
+    assert result.passed == 2
+
+
+@pytest.mark.integration
+@skip_if_no_godot
+def test_coverage_instrumentation_gut_tests_pass(tmp_path):
+    """GUT tests for coverage.gd instrumentation methods pass.
+
+    Tests _load_plan, _validate_plan, _extract_indent, _inject_trackers,
+    and _instrument_file (moved from pre_run_hook.gd to coverage.gd).
+    """
+    project = _setup_hooks_project(tmp_path)
+    config = GdToolsConfig()
+    with patch("gd_tools.test_runner.find_project_root", return_value=project):
+        result = run_tests(config, suite="test_coverage_instrumentation.gd")
+
+    assert result.failed == 0
+    assert result.passed == 38
 
 
 @pytest.mark.integration
@@ -174,7 +195,13 @@ def test_hooks_end_to_end_flow(tmp_path):
 @pytest.mark.integration
 @skip_if_no_godot
 def test_hooks_missing_plan_env_var(tmp_path):
-    """Missing GD_TOOLS_COVERAGE_PLAN -> no instrumentation, warning logged."""
+    """Missing GD_TOOLS_COVERAGE_PLAN -> no instrumentation, tests still pass.
+
+    After Phase 3, _ready() silently returns when GD_TOOLS_COVERAGE_PLAN
+    is empty (no warning printed). The pre_run_hook still calls
+    set_active(true) unconditionally, so the tracker is active but no
+    files are instrumented.
+    """
     project = _setup_hooks_project(tmp_path)
 
     output_path = tmp_path / "coverage_output.json"
@@ -198,10 +225,13 @@ def test_hooks_missing_plan_env_var(tmp_path):
         assert result.failed == 0
         assert result.passed == 4
 
-        # Warning should appear in Godot output
-        combined = result.stdout + result.stderr
-        assert "GD_TOOLS_COVERAGE_PLAN" in combined
-        assert "not set" in combined.lower()
+        # No instrumentation occurred — output file has empty files
+        # (tracker is active via pre_run_hook, but no files were instrumented)
+        assert output_path.exists()
+        data = json.loads(output_path.read_text())
+        assert (
+            data["files"] == []
+        ), "files should be empty when no plan was loaded"
     finally:
         _clear_coverage_env()
 
@@ -516,7 +546,7 @@ def test_hooks_empty_plan(tmp_path):
         assert result.failed == 0
         assert result.passed == 4
 
-        # Output file should exist with empty files (tracker active from env var)
+        # Output file should exist with empty files (tracker active via pre_run_hook)
         assert output_path.exists()
         data = json.loads(output_path.read_text())
         assert data["version"] == 1
