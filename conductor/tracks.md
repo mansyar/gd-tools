@@ -8,6 +8,6 @@ _No active tracks. Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Autoload-Based Coverage Instrumentation (Urgent Bug Fix)**
+- [x] **Track: Autoload-Based Coverage Instrumentation (Urgent Bug Fix)**
 *Link: [./tracks/autoload_coverage_20260715/](./tracks/autoload_coverage_20260715/)*
 
