@@ -1,0 +1,40 @@
+Phase 1 Checkpoint Verification Report: Fix Match Statement Instrumentation
+
+## Automated Test Results
+- Command: CI=true pytest tests/unit/ --cov=gd_tools --cov-branch --cov-report=term-missing
+- Result: 618 passed, 97.12% coverage (threshold: >80% line, >70% branch)
+- ruff check: All checks passed
+- black --check: All files formatted
+- gdlint: No problems found
+- gdformat --check: All files unchanged
+
+## GUT Tests (cannot run - no Godot binary)
+- 10 new GUT tests written for match_case injection:
+  - test_inject_trackers_match_case_literal_pattern
+  - test_inject_trackers_match_case_wildcard_pattern
+  - test_inject_trackers_match_case_var_binding
+  - test_inject_trackers_match_case_array_pattern
+  - test_inject_trackers_match_case_dict_pattern
+  - test_inject_trackers_match_case_multiple_patterns
+  - test_inject_trackers_match_case_guarded_pattern
+  - test_inject_trackers_match_case_full_statement
+  - test_inject_trackers_non_match_case_still_injects_before
+  - test_inject_trackers_mixed_match_and_non_match
+- Total GUT test count: 41 (was 31)
+- Tests verified via manual code trace
+
+## Python Integration Tests
+- 2 new unit tests in tests/unit/test_match_coverage.py:
+  - test_match_coverage_all_branches_hit (4/4 branches covered)
+  - test_match_coverage_partial_branches_hit (2/4 branches, branch_rate=0.5)
+- Integration test count updated from 31 to 41 in test_coverage_hooks.py
+
+## Manual Verification Plan (presented to user)
+1. Run GUT tests with Godot: confirm all 41 tests pass
+2. Run gd-tools test --coverage on project with match statements: confirm no parse errors
+3. Verify match_case branches reported as covered when body executes
+4. Verify non-match code still injects trackers BEFORE tracked line (no regression)
+
+## User Confirmation
+User confirmed: 'Yes, confirmed' - verification plan meets expectations.
+Note: Godot binary not available in this environment; GUT tests require manual execution.
