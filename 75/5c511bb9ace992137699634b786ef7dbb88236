@@ -1,0 +1,28 @@
+Phase 3 Verification Report — Autoload-Based Coverage Instrumentation
+
+== Automated Tests ==
+Command: $env:CI='true'; pytest tests/unit/ -q --no-cov
+Result: 648 passed in 8.31s
+
+Lint: ruff check src/ tests/ — All checks passed
+Format: black --check src/ tests/ — 65 files would be left unchanged
+
+Integration tests (test_coverage_hooks.py) and GUT tests (.gd) require
+Godot binary — skipped in this environment.
+
+== Manual Verification Steps (Proposed) ==
+1. Verify pre_run_hook.gd is simplified (only set_active(true))
+2. Verify coverage.gd has instrumentation in _ready()
+3. Run GUT tests: test_pre_run_hook.gd (2 tests), test_coverage_instrumentation.gd (38 tests)
+4. Run coverage end-to-end: gd-tools test --coverage --min 80
+5. Verify autoload-instantiated scripts get coverage (Phase 5 E2E)
+
+== User Confirmation ==
+User confirmed: "Yes, looks good"
+
+== Files Changed in Phase 3 ==
+- src/gd_tools/addons/gd-tools-coverage/coverage.gd (instrumentation logic moved here)
+- src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd (simplified to set_active(true))
+- tests/fixtures/gdscript/test_coverage_instrumentation.gd (NEW — 38 GUT tests)
+- tests/fixtures/gdscript/test_pre_run_hook.gd (simplified to 2 GUT tests)
+- tests/integration/test_coverage_hooks.py (updated test counts, behavior)
