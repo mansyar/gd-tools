@@ -1003,3 +1003,90 @@ def test_run_init_gut_installed_version_unknown(tmp_path: Path):
     )
     assert isinstance(actions, list)
     assert any("version unknown" in a for a in actions)
+
+
+# --- install_coverage_addon version file ---
+
+
+def test_install_coverage_addon_writes_version_file(tmp_path: Path):
+    """Test install_coverage_addon writes _version.txt to the addon directory."""
+    install_coverage_addon(tmp_path)
+
+    version_file = (
+        tmp_path / "addons" / "gd-tools-coverage" / "_version.txt"
+    )
+    assert version_file.exists()
+
+
+def test_install_coverage_addon_version_file_content(tmp_path: Path):
+    """Test _version.txt content matches __version__ with trailing newline."""
+    from gd_tools import __version__
+
+    install_coverage_addon(tmp_path)
+
+    version_file = (
+        tmp_path / "addons" / "gd-tools-coverage" / "_version.txt"
+    )
+    content = version_file.read_text(encoding="utf-8")
+    assert content == f"{__version__}\n"
+
+
+def test_install_coverage_addon_overwrites_existing_version_file(
+    tmp_path: Path,
+):
+    """Test re-running init overwrites an existing version file with current
+    version."""
+    from gd_tools import __version__
+
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+    target_dir.mkdir(parents=True)
+    (target_dir / "_version.txt").write_text("0.0.1\n", encoding="utf-8")
+
+    install_coverage_addon(tmp_path)
+
+    content = (target_dir / "_version.txt").read_text(encoding="utf-8")
+    assert content == f"{__version__}\n"
+    assert content != "0.0.1\n"
+
+
+# --- run_init version file action summary ---
+
+
+def test_run_init_action_summary_includes_version_file_entry(
+    tmp_path: Path,
+):
+    """Test run_init action summary includes a version file entry."""
+    (tmp_path / "project.godot").write_text("config_version=5\n")
+
+    config = GdToolsConfig()
+    mock_info = GodotInfo(
+        path="/usr/bin/godot", version="4.5.1", is_valid=True
+    )
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.load_config", return_value=config),
+        patch("gd_tools.init.find_godot", return_value=mock_info),
+        patch("gd_tools.init.is_gut_installed", return_value=True),
+        patch(
+            "gd_tools.init.get_installed_gut_version", return_value="9.5.0"
+        ),
+        patch("gd_tools.init.install_gut"),
+        patch("gd_tools.init.enable_gut_plugin"),
+        patch("gd_tools.init.install_coverage_addon"),
+        patch("gd_tools.init.update_gutconfig"),
+        patch("gd_tools.init.create_config_file"),
+        patch("gd_tools.init.generate_lint_format_rcs"),
+        patch("gd_tools.init.create_data_dir"),
+        patch("gd_tools.init.print_summary") as mock_summary,
+        patch("gd_tools.init.__version__", "0.3.0"),
+    ):
+        run_init()
+
+    call_args = mock_summary.call_args
+    actions = (
+        call_args.args[1] if call_args.args else call_args.kwargs.get("actions")
+    )
+    assert isinstance(actions, list)
+    assert any("version file" in a.lower() for a in actions)
+    assert any("v0.3.0" in a for a in actions)

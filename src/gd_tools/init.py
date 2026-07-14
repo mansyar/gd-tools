@@ -35,6 +35,7 @@ from .config import (
     load_config,
     save_config,
 )
+from . import __version__
 from .errors import GdToolsError
 from .godot import find_godot, get_gut_version_for_godot
 from .test_runner import is_gut_installed
@@ -321,11 +322,13 @@ def enable_gut_plugin(project_root: Path) -> None:
 
 
 def install_coverage_addon(project_root: Path) -> None:
-    """Copy bundled coverage addon placeholder files to the project.
+    """Copy bundled coverage addon files to the project.
 
-    Copies the placeholder GDScript stubs from the package data to
+    Copies the GDScript files from the package data to
     ``project_root/addons/gd-tools-coverage/``. Always overwrites
-    existing files to ensure they are up-to-date.
+    existing files to ensure they are up-to-date. Also writes a
+    ``_version.txt`` file stamping the deployed addon with the current
+    package version.
 
     Args:
         project_root: Path to the Godot project root.
@@ -335,6 +338,8 @@ def install_coverage_addon(project_root: Path) -> None:
     target_dir.mkdir(parents=True, exist_ok=True)
     for gd_file in COVERAGE_ADDON_FILES:
         shutil.copy2(source_dir / gd_file, target_dir / gd_file)
+    version_file = target_dir / "_version.txt"
+    version_file.write_text(f"{__version__}\n", encoding="utf-8")
 
 
 def register_coverage_autoload(project_root: Path) -> None:
@@ -598,6 +603,7 @@ def run_init(non_interactive: bool = False) -> None:
 
     install_coverage_addon(project_root)
     actions.append("Deployed coverage addon")
+    actions.append(f"Wrote addon version file (v{__version__})")
 
     register_coverage_autoload(project_root)
     actions.append("Registered _GDTCoverage autoload")
