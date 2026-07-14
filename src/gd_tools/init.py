@@ -345,11 +345,17 @@ def install_coverage_addon(project_root: Path) -> None:
 def register_coverage_autoload(project_root: Path) -> None:
     """Register the coverage tracker autoload in ``project.godot``.
 
-    Adds ``_GDTCoverage`` to the ``[autoload]`` section, pointing at
-    ``res://addons/gd-tools-coverage/coverage.gd``. Idempotent: running
-    multiple times produces the same result. If ``_GDTCoverage`` is
-    already registered with a different path, the entry is replaced
-    to avoid duplicate autoload keys.
+    Adds ``_GDTCoverage`` as the **first** entry in the ``[autoload]``
+    section, pointing at ``res://addons/gd-tools-coverage/coverage.gd``.
+    This ordering is critical: ``_GDTCoverage._ready()`` must run before
+    any other autoload creates script instances, so instrumentation via
+    ``reload()`` succeeds.
+
+    If ``_GDTCoverage`` is already registered but not in position 0, it
+    is moved to position 0 and a warning is printed to stderr.
+
+    Idempotent: if ``_GDTCoverage`` is already the first autoload with
+    the correct path, no changes are made.
 
     Args:
         project_root: Path to the Godot project root.
@@ -358,40 +364,75 @@ def register_coverage_autoload(project_root: Path) -> None:
     content = project_godot.read_text(encoding="utf-8")
 
     autoload_entry = f'_GDTCoverage="*{COVERAGE_AUTOLOAD_PATH}"'
-
-    # Idempotent: if already registered with correct path, do nothing.
-    # Use regex to match only at start of line (after optional
-    # whitespace), not in comments.
-    if re.search(
-        rf"^\s*{re.escape(autoload_entry)}",
-        content,
-        re.MULTILINE,
-    ):
-        return
-
     lines = content.split("\n")
 
-    # If _GDTCoverage is already registered with a different path,
-    # replace the existing entry to avoid duplicate autoload keys.
+    # Find the [autoload] section header and its entries (in order).
+    autoload_header_idx: int | None = None
+    autoload_entries: list[tuple[int, str]] = []
+    in_autoload = False
     for i, line in enumerate(lines):
-        if line.strip().startswith("_GDTCoverage="):
-            lines[i] = autoload_entry
-            project_godot.write_text("\n".join(lines), encoding="utf-8")
-            return
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_autoload = stripped == "[autoload]"
+            if in_autoload:
+                autoload_header_idx = i
+            continue
+        if in_autoload and stripped and "=" in stripped:
+            autoload_entries.append((i, line))
 
-    if "[autoload]" in content:
-        # Section exists, append entry after the section header.
-        for i, line in enumerate(lines):
-            if line.strip() == "[autoload]":
-                lines.insert(i + 1, f"\n{autoload_entry}")
-                break
-        project_godot.write_text("\n".join(lines), encoding="utf-8")
-    else:
-        # No [autoload] section, append it.
-        if not content.endswith("\n"):
-            content += "\n"
-        content += f"\n[autoload]\n\n{autoload_entry}\n"
-        project_godot.write_text(content, encoding="utf-8")
+    # Find _GDTCoverage among existing autoload entries.
+    gdtc_entry_idx: int | None = None
+    for idx, (_, line) in enumerate(autoload_entries):
+        if line.strip().startswith("_GDTCoverage="):
+            gdtc_entry_idx = idx
+            break
+
+    if gdtc_entry_idx is None:
+        # _GDTCoverage not registered yet — prepend as first entry.
+        if autoload_header_idx is not None:
+            insert_at = autoload_header_idx + 1
+            # Skip blank lines after header to find first entry position.
+            while insert_at < len(lines) and lines[insert_at].strip() == "":
+                insert_at += 1
+            lines.insert(insert_at, autoload_entry)
+            project_godot.write_text("\n".join(lines), encoding="utf-8")
+        else:
+            # No [autoload] section — create one.
+            if not content.endswith("\n"):
+                content += "\n"
+            content += f"\n[autoload]\n\n{autoload_entry}\n"
+            project_godot.write_text(content, encoding="utf-8")
+        return
+
+    # _GDTCoverage is already registered.
+    gdtc_line_idx, gdtc_line = autoload_entries[gdtc_entry_idx]
+    needs_write = False
+
+    # Fix wrong path if needed.
+    if gdtc_line.strip() != autoload_entry:
+        lines[gdtc_line_idx] = autoload_entry
+        needs_write = True
+
+    # Check if _GDTCoverage is the first autoload entry.
+    if gdtc_entry_idx == 0:
+        if needs_write:
+            project_godot.write_text("\n".join(lines), encoding="utf-8")
+        return
+
+    # Not first — move to position 0.
+    lines.pop(gdtc_line_idx)
+    assert autoload_header_idx is not None  # guaranteed: entries found
+    insert_at = autoload_header_idx + 1
+    while insert_at < len(lines) and lines[insert_at].strip() == "":
+        insert_at += 1
+    lines.insert(insert_at, autoload_entry)
+    project_godot.write_text("\n".join(lines), encoding="utf-8")
+
+    print(
+        "Moved _GDTCoverage to first autoload position "
+        "for coverage to work correctly.",
+        file=sys.stderr,
+    )
 
 
 # --- Phase 4: Configuration File Generation ---

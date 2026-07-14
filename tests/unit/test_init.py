@@ -430,6 +430,111 @@ def test_register_coverage_autoload_preserves_existing_autoloads(
     )
 
 
+def test_register_coverage_autoload_prepends_before_existing(tmp_path: Path):
+    """_GDTCoverage must be the FIRST entry in [autoload], before existing
+    autoloads."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "config_version=5\n\n"
+        "[autoload]\n\n"
+        'GlobalSignals="*res://autoloads/global_signals.gd"\n'
+        'PlayerData="*res://autoloads/player_data.gd"\n'
+    )
+
+    register_coverage_autoload(tmp_path)
+
+    content = project_godot.read_text()
+    lines = content.split("\n")
+    # Collect autoload entry keys in order.
+    in_autoload = False
+    entry_order: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_autoload = stripped == "[autoload]"
+            continue
+        if in_autoload and stripped and "=" in stripped:
+            entry_order.append(stripped.split("=")[0])
+
+    assert entry_order[0] == "_GDTCoverage"
+    assert "GlobalSignals" in entry_order
+    assert "PlayerData" in entry_order
+
+
+def test_register_coverage_autoload_moves_to_first_when_not_first(
+    tmp_path: Path,
+):
+    """When _GDTCoverage is registered but not in position 0, it gets
+    moved to position 0."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "config_version=5\n\n"
+        "[autoload]\n\n"
+        'GlobalSignals="*res://autoloads/global_signals.gd"\n'
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"\n'
+    )
+
+    register_coverage_autoload(tmp_path)
+
+    content = project_godot.read_text()
+    # Parse autoload entry order.
+    lines = content.split("\n")
+    in_autoload = False
+    entry_order: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_autoload = stripped == "[autoload]"
+            continue
+        if in_autoload and stripped and "=" in stripped:
+            entry_order.append(stripped.split("=")[0])
+
+    assert entry_order[0] == "_GDTCoverage"
+    assert "GlobalSignals" in entry_order
+    # No duplicate _GDTCoverage entries.
+    assert content.count("_GDTCoverage=") == 1
+
+
+def test_register_coverage_autoload_warns_when_moving(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    """A warning is printed to stderr when _GDTCoverage is moved to
+    first position."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "config_version=5\n\n"
+        "[autoload]\n\n"
+        'GlobalSignals="*res://autoloads/global_signals.gd"\n'
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"\n'
+    )
+
+    register_coverage_autoload(tmp_path)
+
+    captured = capsys.readouterr()
+    assert "Moved _GDTCoverage to first autoload position" in captured.err
+
+
+def test_register_coverage_autoload_no_warning_when_already_first(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+):
+    """No warning printed when _GDTCoverage is already in position 0."""
+    project_godot = tmp_path / "project.godot"
+    project_godot.write_text(
+        "config_version=5\n\n"
+        "[autoload]\n\n"
+        '_GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"\n'
+        'GlobalSignals="*res://autoloads/global_signals.gd"\n'
+    )
+
+    register_coverage_autoload(tmp_path)
+
+    captured = capsys.readouterr()
+    assert "Moved _GDTCoverage" not in captured.err
+    assert "Moved _GDTCoverage" not in captured.out
+
+
 def test_register_coverage_autoload_handles_no_trailing_newline(
     tmp_path: Path,
 ):
@@ -1012,9 +1117,7 @@ def test_install_coverage_addon_writes_version_file(tmp_path: Path):
     """Test install_coverage_addon writes _version.txt to the addon directory."""
     install_coverage_addon(tmp_path)
 
-    version_file = (
-        tmp_path / "addons" / "gd-tools-coverage" / "_version.txt"
-    )
+    version_file = tmp_path / "addons" / "gd-tools-coverage" / "_version.txt"
     assert version_file.exists()
 
 
@@ -1024,9 +1127,7 @@ def test_install_coverage_addon_version_file_content(tmp_path: Path):
 
     install_coverage_addon(tmp_path)
 
-    version_file = (
-        tmp_path / "addons" / "gd-tools-coverage" / "_version.txt"
-    )
+    version_file = tmp_path / "addons" / "gd-tools-coverage" / "_version.txt"
     content = version_file.read_text(encoding="utf-8")
     assert content == f"{__version__}\n"
 
@@ -1059,18 +1160,14 @@ def test_run_init_action_summary_includes_version_file_entry(
     (tmp_path / "project.godot").write_text("config_version=5\n")
 
     config = GdToolsConfig()
-    mock_info = GodotInfo(
-        path="/usr/bin/godot", version="4.5.1", is_valid=True
-    )
+    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
 
     with (
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
         patch("gd_tools.init.is_gut_installed", return_value=True),
-        patch(
-            "gd_tools.init.get_installed_gut_version", return_value="9.5.0"
-        ),
+        patch("gd_tools.init.get_installed_gut_version", return_value="9.5.0"),
         patch("gd_tools.init.install_gut"),
         patch("gd_tools.init.enable_gut_plugin"),
         patch("gd_tools.init.install_coverage_addon"),
