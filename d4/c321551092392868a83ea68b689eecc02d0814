@@ -1,0 +1,13 @@
+Implementation: FR-2 Autoload Auto-Exclusion
+
+Changes:
+- src/gd_tools/coverage/plan_generator.py: Added resolve_autoload_paths() function that reads project.godot, parses [autoload] section line-by-line, strips * prefix and res:// prefix, returns relative paths with forward slashes. Updated generate_plan() to filter discovered .gd files against autoload paths before building FilePlans.
+- tests/unit/test_plan_generator.py: 7 new tests covering autoload section parsing, star/res:// stripping, missing project.godot, missing [autoload] section, empty [autoload] section, exclusion from CoveragePlan, and all-files-included when no autoload section.
+
+Verification:
+- 7/7 autoload tests pass
+- 55/55 plan_generator tests pass
+- 604/604 unit tests pass (no regressions)
+- plan_generator.py: 98% line, 93% branch coverage
+- ruff check: passed
+- black: reformatted test file
