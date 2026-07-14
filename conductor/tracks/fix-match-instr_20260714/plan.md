@@ -1,7 +1,7 @@
 <protect>
 # Implementation Plan: Fix Match Statement Instrumentation (Option A+)
 
-## Phase 1: Fix Match Statement Instrumentation
+## Phase 1: Fix Match Statement Instrumentation [checkpoint: 073acf7]
 
 - [x] Task: Read spec.md and workflow.md to understand requirements and workflow
     - [x] Read this track's `spec.md` to understand all functional requirements, acceptance criteria, and scope
