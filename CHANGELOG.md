@@ -1,3 +1,40 @@
+## v0.4.0 (2026-07-16)
+
+### Feat
+
+- **coverage**: Standardize coverage output via shared output module
+- **test**: Standardize test output via shared output module
+- **format**: Standardize format output via shared output module
+- **lint**: Standardize lint output via shared output module
+- **output**: Add shared output module with rendering helpers
+- **cli**: add config validate subcommand
+- **cli**: add config command group with show subcommand
+- **config**: add format_config_table, format_config_toml, format_config_json
+- **config**: add validate_paths for filesystem path validation
+- **config**: add deprecation infrastructure for config fields
+- **version**: add version CLI command with Rich table and --json output
+- **version**: add collect_versions() version detection module
+- **doctor**: report addon version status in check_coverage_addon
+- **addon-check**: add stale addon detection module and CLI integration
+- **init**: write _version.txt during coverage addon deployment
+
+### Fix
+
+- **tests**: Fix CI failures — tomllib import for Python 3.10 and format summary assertion
+- **conductor**: Apply review suggestions for track 'stdout_20260715'
+- **conductor**: Apply review suggestions for track 'Config Show/Validate'
+- **conductor**: Apply review suggestions for track 'lint_output_clipping_fix_20260715'
+- **lint**: Replace Rich Table with flat line-based output format
+- **coverage**: Use reload(true) for autoload instrumentation
+- **coverage**: Remove GD_TOOLS_COVERAGE_ACTIVE env var from test_runner
+- **coverage**: Prepend _GDTCoverage autoload and auto-fix ordering
+- **coverage**: Remove autoload exclusion from plan generator
+- **conductor**: Apply review suggestions for track 'Stale Addon Detection'
+
+### Refactor
+
+- **coverage**: Move instrumentation to _ready(), simplify pre_run_hook
+
 ## v0.3.0 (2026-07-14)
 
 ### Feat
