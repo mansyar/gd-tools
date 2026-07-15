@@ -311,7 +311,8 @@ def test_format_lint_text_summary(monkeypatch):
     )
     # Errors present → red summary
     colored_output = format_lint_text(result)
-    assert "\x1b[31" in colored_output  # red
+    summary_line = colored_output.strip().splitlines()[-1]
+    assert "\x1b[31" in summary_line  # red summary
 
     # Warnings only → yellow summary
     result_wo = LintResult(
@@ -320,7 +321,8 @@ def test_format_lint_text_summary(monkeypatch):
         warnings=[LintIssue("b.gd", 2, 1, "R", "msg", "warning")],
     )
     output_wo = format_lint_text(result_wo)
-    assert "\x1b[33" in output_wo  # yellow
+    summary_line_wo = output_wo.strip().splitlines()[-1]
+    assert "\x1b[33" in summary_line_wo  # yellow summary
 
 
 def test_format_lint_text_clean(monkeypatch):
