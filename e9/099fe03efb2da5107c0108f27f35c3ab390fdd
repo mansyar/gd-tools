@@ -1,0 +1,8 @@
+Task: Deprecation Infrastructure
+
+- Added DeprecatedField dataclass with field_path, since_version, replacement, migration_message fields.
+- Added _DEPRECATED_FIELDS module-level dict (empty by default).
+- Added check_deprecated_settings(raw_toml_data) function that traverses raw TOML dict to find deprecated field paths.
+- 8 unit tests covering: dataclass fields, empty registry, key present/absent, multiple keys, replacement=None, empty data.
+- All tests pass, ruff clean, black clean.
+- Coverage: config.py deprecation code fully covered.
