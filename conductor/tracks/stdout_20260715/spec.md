@@ -1,3 +1,4 @@
+<protect>
 # Specification: Standardize Terminal Output
 
 ## Overview
@@ -103,3 +104,4 @@ Command logic, exit codes, and return values remain unchanged. Only output rende
 - Changes to command logic, exit codes, or return values.
 - Changes to the `coverage report` or `coverage merge` subcommands (only `coverage show` and `test --coverage` inline summary are in scope).
 - Changes to `init`, `doctor`, or `config` command output.
+</protect>

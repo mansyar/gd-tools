@@ -1,6 +1,11 @@
+<protect>
 # Implementation Plan: Standardize Terminal Output
 
 ## Phase 1: Shared Output Module (FR-1)
+
+- [ ] Task: Read spec.md and workflow.md for context
+    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Write tests for `src/gd_tools/output.py`
     - [ ] Create `tests/unit/test_output.py`
@@ -29,6 +34,10 @@
 
 ## Phase 2: Lint Command Output Standardization (FR-2)
 
+- [ ] Task: Read spec.md and workflow.md for context
+    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Write/update tests for lint output using shared module
     - [ ] Update `tests/unit/test_lint_runner.py` — tests for `format_lint_text()` using shared output helpers
     - [ ] Test that clean state uses `print_success()` with `[OK]` marker
@@ -52,6 +61,10 @@
 
 ## Phase 3: Format Command Output Standardization (FR-3)
 
+- [ ] Task: Read spec.md and workflow.md for context
+    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Write/update tests for format output using shared module
     - [ ] Update `tests/unit/test_format_runner.py` — tests for format output using shared helpers
     - [ ] Test `--check` mode: files needing format listed with `dim` style, summary via `print_summary()`
@@ -74,6 +87,10 @@
 - [ ] Task: Conductor - User Manual Verification 'Format Command Output' (Protocol in workflow.md)
 
 ## Phase 4: Test Command Output Standardization (FR-4)
+
+- [ ] Task: Read spec.md and workflow.md for context
+    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Write/update tests for test output using shared module
     - [ ] Update `tests/unit/test_test_runner.py` — tests for `format_test_results()` using shared helpers
@@ -99,6 +116,10 @@
 - [ ] Task: Conductor - User Manual Verification 'Test Command Output' (Protocol in workflow.md)
 
 ## Phase 5: Coverage Command Output Standardization (FR-5)
+
+- [ ] Task: Read spec.md and workflow.md for context
+    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Write/update tests for `coverage show` output
     - [ ] Update `tests/unit/test_orchestrator.py` — tests for `show_coverage_summary()` using shared helpers
@@ -133,6 +154,10 @@
 
 ## Phase 6: Final Verification and Consistency Check (FR-6, FR-7, NFRs)
 
+- [ ] Task: Read spec.md and workflow.md for context
+    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Verify cross-command consistency
     - [ ] Run full test suite: `CI=true pytest`
     - [ ] Run full coverage: `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
@@ -144,3 +169,4 @@
     - [ ] Verify markers consistent across all four commands (`[OK]`, `[FAIL]`, `✓`, `✗`)
 
 - [ ] Task: Conductor - User Manual Verification 'Final Verification and Consistency Check' (Protocol in workflow.md)
+</protect>
