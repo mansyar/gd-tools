@@ -169,4 +169,8 @@
     - [x] Verify markers consistent across all four commands (`[OK]`, `[FAIL]`, `✓`, `✗`) — consistent
 
 - [x] Task: Conductor - User Manual Verification 'Final Verification and Consistency Check' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions b4db08d
 </protect>
