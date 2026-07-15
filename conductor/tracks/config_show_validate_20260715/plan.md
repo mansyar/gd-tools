@@ -1,8 +1,11 @@
+<protect>
 # Track 25: Config Show/Validate — Implementation Plan
 
 ## Phase 1: Config Module Extensions (`config.py`)
 
 This phase adds the backend logic to `config.py`: the deprecation registry, deprecation detection, path validation, and config formatting helpers. These are pure functions that the CLI layer (Phase 2) will call.
+
+- [ ] Task: Read `spec.md` and `workflow.md` to understand requirements and TDD workflow before starting implementation.
 
 - [ ] Task: Deprecation Infrastructure
     - [ ] Write unit tests in `tests/unit/test_config.py` for the `DeprecatedField` dataclass, `_DEPRECATED_FIELDS` registry, and `check_deprecated_settings()` function. Test cases: empty registry (no warnings), registry with a deprecated key present in raw TOML, deprecated key absent, multiple deprecated keys, `replacement` is None (no replacement). Use a temporary deprecated field in tests via monkeypatching `_DEPRECATED_FIELDS`.
@@ -25,6 +28,8 @@ This phase adds the backend logic to `config.py`: the deprecation registry, depr
 
 This phase adds the `config` command group with `show` and `validate` subcommands, wiring the Phase 1 functions into Click commands.
 
+- [ ] Task: Read `spec.md` and `workflow.md` to understand requirements and TDD workflow before starting implementation.
+
 - [ ] Task: `config` Command Group + `show` Subcommand
     - [ ] Write unit tests in `tests/unit/test_cli_config.py` (new file) using Click's `CliRunner`. Test cases: `config show` prints Rich table with all sections, `config show --format toml` prints valid TOML, `config show --json` prints valid JSON, `config show` with no config file shows defaults, `config show --format toml --json` produces error and exit code 2, exit code 0 on success, exit code 2 on config load error.
     - [ ] Implement `config` command group and `show` subcommand in `cli.py`. The `show` command: loads config via `load_config()`, calls the appropriate formatting helper based on flags (`--format toml` → `format_config_toml()`, `--json` → `format_config_json()`, default → `format_config_table()` printed via Rich `Console`). Enforce mutual exclusion of `--format` and `--json` (Click constraint or manual check → exit 2). Catch `ConfigError` → print error to stderr, exit 2.
@@ -36,3 +41,4 @@ This phase adds the `config` command group with `show` and `validate` subcommand
     - [ ] Verify: `CI=true pytest tests/unit/test_cli_config.py -k validate` passes. `ruff check src/gd_tools/cli.py` and `black --check src/gd_tools/cli.py` pass.
 
 - [ ] Task: Conductor - User Manual Verification 'CLI Commands' (Protocol in workflow.md)
+</protect>
