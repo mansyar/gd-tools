@@ -1,0 +1,69 @@
+Phase 6: Final Verification and Consistency Check - Checkpoint Verification Report
+================================================================================
+
+Date: 2026-07-16
+Checkpoint SHA: 666b3bb
+
+## Automated Verification Results
+
+### Test Suite
+- Command: $env:CI='true'; python -m pytest tests/unit/ --cov=gd_tools --cov-branch --cov-report=term-missing
+- Result: 716 passed in 10.69s
+- All tests pass, no failures
+
+### Coverage Report
+- Overall: 97.11% (required: 80% line, 70% branch)
+- Modified files coverage:
+  - src/gd_tools/output.py: 100% line / 100% branch
+  - src/gd_tools/lint_runner.py: 96% line / 100% branch
+  - src/gd_tools/cli.py: 94% line / 91% branch
+  - src/gd_tools/test_runner.py: 96% line / 99% branch
+  - src/gd_tools/coverage/orchestrator.py: 97% line / 90% branch
+  - src/gd_tools/format_runner.py: 95% line / 100% branch
+
+### Lint Check
+- Command: ruff check src/ tests/
+- Result: All checks passed
+
+### Format Check
+- Command: black --check src/ tests/
+- Result: All done! 69 files would be left unchanged
+
+## Cross-Command Consistency Verification
+
+### JSON Output Modes Unaffected
+- format_lint_json() returns json.dumps(data, indent=2) directly — no shared output helpers used
+- --junit-xml for test writes XML separately from format_test_results() console output
+- Coverage reports written as files by generate_coverage_report() — not affected by output changes
+- 3 JSON tests pass in test_lint_runner.py
+
+### Color Semantics Consistent
+- Green: pass/success (print_success, print_summary("pass"), green rate cells)
+- Red: fail/error (print_summary("fail"), red ERROR issue lines, red test failure marker, red rate cells below threshold)
+- Yellow: warning (print_summary("warning"), yellow WARN issue lines)
+- Cyan: info (print_info for no-files messages, coverage inline summary)
+- Dim: secondary file paths in format --check mode
+
+### Markers Consistent
+- [OK] green: used by print_success() in lint (clean), format (clean), test (all pass)
+- [FAIL] red: defined in print_error() (available but commands use print_summary("fail") consistently)
+- ✗ red: used in test per-test failure details
+- ✓ / -: available markers, not individually shown (only failures shown per FR-4)
+
+## Manual Verification Plan (User Confirmed)
+1. gd-tools lint on sample project — [OK] marker on clean, red ERROR / yellow WARN lines, summary footer
+2. gd-tools lint --report-format json — JSON output unchanged
+3. gd-tools format --check — dim file paths, [OK] on clean, summary footer
+4. gd-tools test — Rich table, per-test ✗ failure details, summary footer, [OK] on all-pass
+5. gd-tools coverage show — Rich table with line/branch %, color-coded threshold, summary footer
+6. gd-tools test --coverage — inline coverage summary after test output
+
+## Conclusion
+All automated checks pass. Cross-command consistency verified for color semantics, markers, and JSON output modes. Phase 6 verification complete.
+
+## Files Modified Across All Phases (1-6)
+- src/gd_tools/output.py — NEW (Phase 1): shared output module
+- src/gd_tools/lint_runner.py — Phase 2: format_lint_text() uses shared output helpers
+- src/gd_tools/cli.py — Phase 2 (lint), Phase 3 (format): uses shared output helpers
+- src/gd_tools/test_runner.py — Phase 4: format_test_results() uses shared output helpers
+- src/gd_tools/coverage/orchestrator.py — Phase 5: _print_coverage_table(), _print_coverage_inline(), show_coverage_summary(), run_coverage_test() use shared output helpers
