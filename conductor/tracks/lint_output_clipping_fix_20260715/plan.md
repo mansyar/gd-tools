@@ -20,7 +20,7 @@
     - [x] Run `CI=true pytest tests/unit/test_lint_runner.py tests/integration/test_lint_integration.py`
     - [x] Verify tests fail due to format mismatch (table output vs. expected flat format)
 
-- [ ] Task: Conductor - User Manual Verification 'TDD - Update Tests for New Format (Red Phase)' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'TDD - Update Tests for New Format (Red Phase)' (Protocol in workflow.md) [checkpoint: f7e2b1a]
 
 ## Phase 2: TDD - Implement Flat Format (Green Phase)
 
