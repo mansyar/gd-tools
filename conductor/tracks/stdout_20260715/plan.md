@@ -115,7 +115,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Test Command Output' (Protocol in workflow.md)
 
-## Phase 5: Coverage Command Output Standardization (FR-5)
+## Phase 5: Coverage Command Output Standardization (FR-5) [checkpoint: 14ed418]
 
 - [x] Task: Read spec.md and workflow.md for context
     - [x] Read `conductor/tracks/stdout_20260715/spec.md`
@@ -150,7 +150,7 @@
     - [x] Run `ruff check src/gd_tools/coverage/orchestrator.py` and `black --check`
     - [x] Run `CI=true pytest tests/unit/test_orchestrator.py --cov-branch --cov-report=term-missing`
 
-- [ ] Task: Conductor - User Manual Verification 'Coverage Command Output' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Coverage Command Output' (Protocol in workflow.md)
 
 ## Phase 6: Final Verification and Consistency Check (FR-6, FR-7, NFRs)
 
