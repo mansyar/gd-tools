@@ -4,9 +4,17 @@ Covers Pydantic models, project-root discovery, TOML loading,
 serialization, and rc-file generation.
 """
 
+import io
+import json
+
 import yaml
 import pytest
 from pydantic import ValidationError
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover
+    import tomli as tomllib  # type: ignore
 
 from gd_tools import config as config_module
 from gd_tools.config import (
@@ -20,6 +28,9 @@ from gd_tools.config import (
     TestConfig,
     check_deprecated_settings,
     find_project_root,
+    format_config_json,
+    format_config_table,
+    format_config_toml,
     generate_gdformatrc,
     generate_gdlintrc,
     load_config,
@@ -690,3 +701,104 @@ def test_path_validation_coverage_exclude_nonexistent(tmp_path):
     )
     warnings = validate_paths(config, tmp_path)
     assert any("coverage" in w.lower() for w in warnings)
+
+
+# --- Config Formatting Helpers ---
+
+
+def test_format_config_table_has_all_sections():
+    """Test format_config_table returns a Rich Table with all 5 sections."""
+    config = GdToolsConfig()
+    table = format_config_table(config)
+    assert table is not None
+    # Rich Table stores column headers
+    headers = [col.header for col in table.columns]
+    assert "Section" in headers
+    assert "Key" in headers
+    assert "Value" in headers
+
+
+def test_format_config_table_contains_section_keys():
+    """Test format_config_table includes keys from all config sections."""
+    config = GdToolsConfig()
+    table = format_config_table(config)
+    # Render the table to text to check content
+    from rich.console import Console
+
+    console = Console(file=io.StringIO(), width=200, record=True)
+    console.print(table)
+    output = console.export_text()
+    assert "godot" in output.lower()
+    assert "test" in output.lower()
+    assert "lint" in output.lower()
+    assert "format" in output.lower()
+    assert "coverage" in output.lower()
+
+
+def test_format_config_toml_valid_toml():
+    """Test format_config_toml produces valid parseable TOML."""
+    config = GdToolsConfig(
+        godot=GodotConfig(binary="/usr/bin/godot"),
+        coverage=CoverageConfig(enabled=True, min_percent=80),
+    )
+    toml_str = format_config_toml(config)
+    parsed = tomllib.loads(toml_str)
+    assert parsed["godot"]["binary"] == "/usr/bin/godot"
+    assert parsed["coverage"]["enabled"] is True
+    assert parsed["coverage"]["min_percent"] == 80
+
+
+def test_format_config_toml_roundtrip():
+    """Test format_config_toml round-trips through GdToolsConfig."""
+    original = GdToolsConfig(
+        godot=GodotConfig(binary="/usr/bin/godot"),
+        test=TestConfig(test_dirs=["my_tests"]),
+        lint=LintConfig(exclude=["node_modules"]),
+        format=FormatConfig(max_line_length=120),
+        coverage=CoverageConfig(enabled=True, min_percent=90),
+    )
+    toml_str = format_config_toml(original)
+    parsed = tomllib.loads(toml_str)
+    restored = GdToolsConfig(**parsed)
+    assert restored == original
+
+
+def test_format_config_json_valid_json():
+    """Test format_config_json produces valid parseable JSON."""
+    config = GdToolsConfig(
+        godot=GodotConfig(binary="/usr/bin/godot"),
+        coverage=CoverageConfig(enabled=True, min_percent=80),
+    )
+    json_str = format_config_json(config)
+    parsed = json.loads(json_str)
+    assert parsed["godot"]["binary"] == "/usr/bin/godot"
+    assert parsed["coverage"]["enabled"] is True
+    assert parsed["coverage"]["min_percent"] == 80
+
+
+def test_format_config_json_defaults():
+    """Test format_config_json includes all default values."""
+    config = GdToolsConfig()
+    json_str = format_config_json(config)
+    parsed = json.loads(json_str)
+    assert "godot" in parsed
+    assert "test" in parsed
+    assert "lint" in parsed
+    assert "format" in parsed
+    assert "coverage" in parsed
+    assert parsed["test"]["test_dirs"] == ["test", "tests"]
+    assert parsed["format"]["max_line_length"] == 100
+
+
+def test_format_config_toml_defaults():
+    """Test format_config_toml shows defaults when no config file."""
+    config = GdToolsConfig()
+    toml_str = format_config_toml(config)
+    parsed = tomllib.loads(toml_str)
+    assert "godot" in parsed
+    assert "test" in parsed
+    assert "lint" in parsed
+    assert "format" in parsed
+    assert "coverage" in parsed
+    assert parsed["test"]["test_dirs"] == ["test", "tests"]
+    assert parsed["format"]["max_line_length"] == 100

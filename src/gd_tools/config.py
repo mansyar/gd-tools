@@ -5,6 +5,7 @@ default resolution of ``gd-tools.toml`` configuration files.
 See TDD §3.2 for model definitions and PRD §6 for config format.
 """
 
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,7 @@ from pydantic import (
     ValidationError,
     field_validator,
 )
+from rich.table import Table
 
 from gd_tools.errors import ConfigError
 
@@ -452,3 +454,66 @@ def validate_paths(
             )
 
     return warnings
+
+
+# --- Config Formatting Helpers ---
+
+
+def format_config_table(config: GdToolsConfig) -> Table:
+    """Build a Rich table displaying the resolved configuration.
+
+    The table has three columns — Section, Key, Value — and one row
+    per setting across all five sections (godot, test, lint, format,
+    coverage).
+
+    Args:
+        config: The resolved configuration to display.
+
+    Returns:
+        A Rich ``Table`` ready to be printed by a ``Console``.
+    """
+    table = Table(title="gd-tools Configuration")
+    table.add_column("Section", style="cyan")
+    table.add_column("Key", style="white")
+    table.add_column("Value", style="green")
+
+    data = config.model_dump()
+    for section in ("godot", "test", "lint", "format", "coverage"):
+        for key, value in data[section].items():
+            table.add_row(section, key, str(value))
+
+    return table
+
+
+def format_config_toml(config: GdToolsConfig) -> str:
+    """Serialize the configuration to a TOML string.
+
+    Keys with ``None`` values are omitted because TOML has no null
+    type.
+
+    Args:
+        config: The resolved configuration to serialize.
+
+    Returns:
+        A TOML string representing the configuration.
+    """
+    data = config.model_dump()
+
+    def _strip_none(obj):
+        if isinstance(obj, dict):
+            return {k: _strip_none(v) for k, v in obj.items() if v is not None}
+        return obj
+
+    return tomli_w.dumps(_strip_none(data))
+
+
+def format_config_json(config: GdToolsConfig) -> str:
+    """Serialize the configuration to a JSON string.
+
+    Args:
+        config: The resolved configuration to serialize.
+
+    Returns:
+        A JSON string representing the configuration.
+    """
+    return json.dumps(config.model_dump(), indent=2)
