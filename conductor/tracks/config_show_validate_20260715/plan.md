@@ -5,14 +5,14 @@
 
 This phase adds the backend logic to `config.py`: the deprecation registry, deprecation detection, path validation, and config formatting helpers. These are pure functions that the CLI layer (Phase 2) will call.
 
-- [ ] Task: Read `spec.md` and `workflow.md` to understand requirements and TDD workflow before starting implementation.
+- [x] Task: Read `spec.md` and `workflow.md` to understand requirements and TDD workflow before starting implementation.
 
-- [ ] Task: Deprecation Infrastructure
-    - [ ] Write unit tests in `tests/unit/test_config.py` for the `DeprecatedField` dataclass, `_DEPRECATED_FIELDS` registry, and `check_deprecated_settings()` function. Test cases: empty registry (no warnings), registry with a deprecated key present in raw TOML, deprecated key absent, multiple deprecated keys, `replacement` is None (no replacement). Use a temporary deprecated field in tests via monkeypatching `_DEPRECATED_FIELDS`.
-    - [ ] Implement `DeprecatedField` dataclass (fields: `field_path`, `since_version`, `replacement`, `migration_message`), `_DEPRECATED_FIELDS` dict (empty), and `check_deprecated_settings(raw_toml_data: dict) -> list[DeprecatedField]` in `config.py`. The function traverses the raw TOML dict and checks for any key paths matching entries in `_DEPRECATED_FIELDS`.
-    - [ ] Verify: `CI=true pytest tests/unit/test_config.py -k deprecation` passes. `ruff check src/gd_tools/config.py` and `black --check src/gd_tools/config.py` pass.
+- [x] Task: Deprecation Infrastructure [e9099fe]
+    - [x] Write unit tests in `tests/unit/test_config.py` for the `DeprecatedField` dataclass, `_DEPRECATED_FIELDS` registry, and `check_deprecated_settings()` function. Test cases: empty registry (no warnings), registry with a deprecated key present in raw TOML, deprecated key absent, multiple deprecated keys, `replacement` is None (no replacement). Use a temporary deprecated field in tests via monkeypatching `_DEPRECATED_FIELDS`.
+    - [x] Implement `DeprecatedField` dataclass (fields: `field_path`, `since_version`, `replacement`, `migration_message`), `_DEPRECATED_FIELDS` dict (empty), and `check_deprecated_settings(raw_toml_data: dict) -> list[DeprecatedField]` in `config.py`. The function traverses the raw TOML dict and checks for any key paths matching entries in `_DEPRECATED_FIELDS`.
+    - [x] Verify: `CI=true pytest tests/unit/test_config.py -k deprecation` passes. `ruff check src/gd_tools/config.py` and `black --check src/gd_tools/config.py` pass.
 
-- [ ] Task: Path Validation
+- [~] Task: Path Validation
     - [ ] Write unit tests in `tests/unit/test_config.py` for `validate_paths()` function. Test cases: all paths valid (no warnings), `test.test_dirs` with nonexistent dir, `godot.binary` set but missing (and None case — skip), `coverage.output_dir` parent missing, `lint.exclude` / `format.exclude` / `coverage.exclude` with nonexistent dirs. Use `tmp_path` fixtures for real filesystem checks. Paths resolved relative to project root.
     - [ ] Implement `validate_paths(config: GdToolsConfig, project_root: Path) -> list[str]` in `config.py`. Checks: `test.test_dirs` (each dir must exist), `godot.binary` (if not None, file must exist), `coverage.output_dir` (parent dir must exist), `lint.exclude` / `format.exclude` / `coverage.exclude` (each dir must exist). Returns a list of warning message strings.
     - [ ] Verify: `CI=true pytest tests/unit/test_config.py -k path` passes. `ruff check` and `black --check` pass.
