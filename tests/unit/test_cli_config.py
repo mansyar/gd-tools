@@ -1,8 +1,12 @@
 """Unit tests for the config show/validate CLI commands."""
 
 import json
-import tomllib
 from unittest.mock import patch
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 import pytest
 from click.testing import CliRunner

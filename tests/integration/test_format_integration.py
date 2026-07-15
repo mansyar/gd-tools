@@ -84,7 +84,7 @@ def test_format_full_run_check_needs_formatting(tmp_path):
     assert result.exit_code == 1
     assert "bad.gd" in result.output
     assert "1 file(s) need formatting" in result.output
-    assert "out of 2 checked" in result.output
+    assert "2 files checked" in result.output
     # Files not modified in check mode
     assert bad_file.read_text() == original_bad
 
