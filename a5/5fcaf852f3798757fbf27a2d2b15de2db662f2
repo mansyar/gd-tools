@@ -1,0 +1,37 @@
+Phase 4: Test Command Output Standardization (FR-4) - Verification Report
+==========================================================================
+
+Checkpoint SHA: a55fcaf
+Implementation commit: d0a2db7
+
+Changed Files:
+- src/gd_tools/test_runner.py
+- tests/unit/test_test_runner.py
+
+Implementation Summary:
+- Replaced `from rich.console import Console` with `from rich.text import Text` + `from gd_tools import output`
+- format_test_results() signature: removed `console` parameter (now uses shared output.console)
+- Table printed via output.print_table(table) instead of console.print(table)
+- All-pass case: output.print_success(f"All {result.total} test(s) passed.") then return
+- Failure case: per-test failure details with ✗ marker (red) + suite.name + message via Text.assemble
+- GUT stdout/stderr on failure unchanged (truncated 5000 chars), now via output.console.print()
+- Summary footer via output.print_summary("fail", f"{N} failed, {N} passed, {N} skipped")
+
+Test Updates:
+- 4 existing tests updated (all_pass, with_failures, zero_tests, color_coding)
+- 2 new tests: test_format_test_results_failure_details, test_format_test_results_success_color
+- test_cli.py: No changes needed (CLI tests mock run_tests, check exit codes only)
+
+Test Results:
+- 712 tests passed (2 new)
+- Coverage: 97.09% overall
+  - test_runner.py: 96% line / 99% branch
+  - output.py: 100% / 100%
+- ruff check: passed
+- black --check: passed
+
+Manual Verification Plan (user-approved):
+1. Run `python -m gd_tools test` on passing tests - table + [OK] success in green
+2. Run `python -m gd_tools test` on failing tests - table + ✗ details + GUT output + red footer
+3. Run `python -m gd_tools test` on 0 tests - table with 0s + [OK] message
+4. Verify exit codes and JSON output unchanged
