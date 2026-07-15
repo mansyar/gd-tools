@@ -1,0 +1,30 @@
+Task: config validate subcommand
+
+TDD: Red → Green → Refactor → Verify
+
+Tests (8 new in tests/unit/test_cli_config.py):
+- test_config_validate_valid_config: valid config exits 0, prints success
+- test_config_validate_invalid_toml: invalid TOML exits 1
+- test_config_validate_unknown_key: unknown key exits 1, reports it
+- test_config_validate_nonexistent_test_dir: bad test dir exits 0, warns
+- test_config_validate_nonexistent_godot_binary: bad binary exits 0, warns
+- test_config_validate_nonexistent_exclude_dir: bad exclude exits 0, warns
+- test_config_validate_deprecated_setting: deprecated setting exits 1, warns
+- test_config_validate_no_config_file: no config file exits 0, defaults
+
+Implementation (src/gd_tools/cli.py):
+- Added imports: copy, ValidationError from pydantic, check_deprecated_settings,
+  find_project_root, validate_paths, GdToolsConfig from .config, tomllib
+- _remove_deprecated_keys(): removes deprecated keys from deep copy for
+  Pydantic validation (prevents extra-forbidden errors on deprecated fields)
+- validate command: resolves project root, reads raw TOML, checks deprecated
+  settings before Pydantic, validates schema via GdToolsConfig(**clean_toml),
+  runs validate_paths() for non-fatal path warnings, prints grouped findings
+  (schema errors, deprecated settings, path warnings) + summary
+- Exit 0 if valid (path warnings non-fatal), exit 1 if schema errors or
+  deprecated settings, exit 2 if project root not found
+
+Verification:
+- 690 unit tests pass, 97.20% coverage
+- ruff check: clean
+- black --check: clean
