@@ -3,15 +3,15 @@
 Wraps ``gdlint`` (via the gdtoolkit Python API) with config-driven
 excludes and clean, formatted output. Discovers ``.gd`` files,
 invokes gdlint programmatically, collects issues into structured
-dataclasses, and renders results as either a rich terminal table
-or JSON.
+dataclasses, and renders results as either a flat line-based text
+format or JSON.
 """
 
 import json
 from dataclasses import dataclass, field
 
 from rich.console import Console
-from rich.table import Table
+from rich.text import Text
 
 from gdtoolkit.linter import lint_code
 from lark.exceptions import LarkError
@@ -138,64 +138,64 @@ def run_lint(
 
 
 def format_lint_text(result: LintResult) -> str:
-    """Format lint results as a rich terminal table.
+    """Format lint results as flat line-based text.
 
-    Renders a table with columns File, Line, Column, Rule, Severity,
-    and Message.  Error rows are styled red, warning rows yellow.
-    A summary line is appended below the table.
+    Each issue is rendered as ``file:line:col: rule: message  [SEVERITY]``,
+    matching the convention used by ESLint, ruff, flake8, and other
+    linters.  Issues are sorted by file path, then line, then column.
+    Error severity tags are styled red, warning tags yellow.  The
+    summary line is colored red (errors present) or yellow (warnings
+    only).  The ``[OK]`` message is green when clean.
 
     Args:
         result: Lint results to format.
 
     Returns:
-        Formatted string with table and summary, or an informational
+        Formatted string with issues and summary, or an informational
         message when there are no files or no issues.
     """
     if result.files_checked == 0:
         return "No GDScript files found."
 
+    console = Console()
+
     if not result.errors and not result.warnings:
-        return "[OK] No lint issues found."
+        with console.capture() as capture:
+            console.print(Text("[OK] No lint issues found.", style="green"))
+        return capture.get()
 
-    console = Console(force_terminal=True)
-    table = Table()
-    table.add_column("File")
-    table.add_column("Line")
-    table.add_column("Column")
-    table.add_column("Rule")
-    table.add_column("Severity")
-    table.add_column("Message")
-
-    for issue in result.errors:
-        table.add_row(
-            issue.file,
-            str(issue.line),
-            str(issue.column),
-            issue.rule,
-            f"[red]{issue.severity}[/red]",
-            issue.message,
-        )
-
-    for issue in result.warnings:
-        table.add_row(
-            issue.file,
-            str(issue.line),
-            str(issue.column),
-            issue.rule,
-            f"[yellow]{issue.severity}[/yellow]",
-            issue.message,
-        )
+    all_issues = result.errors + result.warnings
+    all_issues.sort(key=lambda i: (i.file, i.line, i.column))
 
     with console.capture() as capture:
-        console.print(table)
+        for issue in all_issues:
+            if issue.severity == "error":
+                color = "red"
+                severity_tag = "ERROR"
+            else:
+                color = "yellow"
+                severity_tag = "WARN"
+            console.print(
+                Text.assemble(
+                    f"{issue.file}:{issue.line}:{issue.column}: "
+                    f"{issue.rule}: {issue.message}  ",
+                    (f"[{severity_tag}]", color),
+                )
+            )
 
-    summary = (
-        f"{len(result.errors)} errors, "
-        f"{len(result.warnings)} warnings, "
-        f"{result.files_checked} files checked"
-    )
+        summary = (
+            f"{len(result.errors)} errors, "
+            f"{len(result.warnings)} warnings, "
+            f"{result.files_checked} files checked"
+        )
+        if result.errors:
+            summary_style = "red"
+        else:
+            summary_style = "yellow"
+        console.print()
+        console.print(Text(summary, style=summary_style))
 
-    return capture.get() + "\n" + summary
+    return capture.get()
 
 
 def format_lint_json(result: LintResult) -> str:
