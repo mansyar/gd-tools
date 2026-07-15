@@ -34,6 +34,16 @@ Uncovered branches must be annotated with their branch type. The branch type is 
 ### FR-5: Data Model Enhancement
 Add an `uncovered_branches: list[int]` field to the `FileSummary` dataclass in `reporter.py`. The `compute_file_summary()` function must compute this list by identifying branch-type lines (from the plan) that have zero coverage hits.
 
+### FR-6: Documentation and Help Text Updates
+The `--show-uncovered` flag and the enhanced `coverage show` output must be documented across all user-facing documentation:
+
+- **`--help` output**: The Click `--show-uncovered` option must include a descriptive `help` string so `gd-tools test --help` automatically displays it.
+- **README.md**: Update the test command usage examples to mention `--show-uncovered`.
+- **docs/PRD.md**: Add `--show-uncovered` to the command reference flags table.
+- **docs/USER_GUIDE.md**: Add a section or example showing `--show-uncovered` usage and the uncovered panel output.
+- **skills/gd-tools/SKILL.md**: Add `--show-uncovered` to the CLI flag documentation.
+- **CHANGELOG.md**: Add a feature entry for uncovered lines/branches display.
+
 ## Non-Functional Requirements
 
 ### NFR-1: Performance
@@ -54,6 +64,8 @@ The existing one-line summary and summary table outputs remain unchanged. The un
 8. No uncovered items are truncated or omitted regardless of count.
 9. Unit tests cover: `--show-uncovered` CLI flag, line range formatting, branch type annotation, `uncovered_branches` computation in `compute_file_summary()`, and the inline/show output formatting.
 10. Existing tests continue to pass without modification (additive change only).
+11. `gd-tools test --help` displays the `--show-uncovered` flag with a descriptive help string.
+12. README.md, docs/PRD.md, docs/USER_GUIDE.md, skills/gd-tools/SKILL.md, and CHANGELOG.md are updated to document the new `--show-uncovered` flag and enhanced `coverage show` output.
 
 ## Out of Scope
 

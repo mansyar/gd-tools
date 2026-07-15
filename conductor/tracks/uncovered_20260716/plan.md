@@ -25,7 +25,7 @@
 
 - [ ] Task: Add `--show-uncovered` flag to `test` CLI command
     - [ ] Write failing CLI tests for `--show-uncovered` flag (flag present with `--coverage`, flag absent, `--show-uncovered` without `--coverage`)
-    - [ ] Implement `--show-uncovered` option in `cli.py` `test` command and thread `show_uncovered` parameter to `run_coverage_test()`
+    - [ ] Implement `--show-uncovered` option in `cli.py` `test` command with a descriptive `help` string for `--help` output, and thread `show_uncovered` parameter to `run_coverage_test()`
     - [ ] Run tests and verify coverage
 - [ ] Task: Integrate uncovered panels into `test --coverage` inline output (FR-1)
     - [ ] Write failing tests for `_print_coverage_inline()` with `show_uncovered=True` — verify panels are printed when coverage < 100% and omitted when 100%
@@ -36,3 +36,13 @@
     - [ ] Implement rendering call in `show_coverage_summary()` to always show uncovered panels
     - [ ] Run tests and verify >80% line, >70% branch coverage for all changed files
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: CLI Flag and Output Integration' (Protocol in workflow.md)
+
+## Phase 4: Documentation Updates
+
+- [ ] Task: Update documentation for `--show-uncovered` flag and enhanced `coverage show` output
+    - [ ] Update README.md — add `--show-uncovered` to test command usage examples
+    - [ ] Update docs/PRD.md — add `--show-uncovered` to the command reference flags table
+    - [ ] Update docs/USER_GUIDE.md — add `--show-uncovered` usage example and sample uncovered panel output
+    - [ ] Update skills/gd-tools/SKILL.md — add `--show-uncovered` to CLI flag documentation
+    - [ ] Add CHANGELOG.md feature entry for uncovered lines/branches display
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: Documentation Updates' (Protocol in workflow.md)
