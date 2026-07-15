@@ -1107,7 +1107,7 @@ def test_run_tests_coverage_env_vars_use_config_output_dir(
 
 @pytest.mark.unit
 def test_format_test_results_all_pass(capsys):
-    """format_test_results with all-passing tests shows table, no GUT output."""
+    """format_test_results with all-passing tests shows table + [OK] message."""
     result = TestResult(
         total=3,
         passed=3,
@@ -1123,6 +1123,8 @@ def test_format_test_results_all_pass(capsys):
     format_test_results(result)
     captured = capsys.readouterr()
     assert "3" in captured.out
+    assert "[OK]" in captured.out
+    assert "All 3 test(s) passed." in captured.out
     # Should NOT print GUT stdout/stderr when no failures.
     assert "GUT stdout" not in captured.out
     assert "Running tests" not in captured.out
@@ -1130,7 +1132,7 @@ def test_format_test_results_all_pass(capsys):
 
 @pytest.mark.unit
 def test_format_test_results_with_failures(capsys):
-    """format_test_results with failures shows table + GUT output."""
+    """format_test_results with failures shows table + details + GUT output."""
     result = TestResult(
         total=3,
         passed=2,
@@ -1141,12 +1143,26 @@ def test_format_test_results_with_failures(capsys):
         coverage_data_path=None,
         stdout="Some output from GUT",
         stderr="Some error from GUT",
-        test_details=[],
+        test_details=[
+            TestDetail(
+                name="test_fail",
+                suite="TestSuite",
+                status="fail",
+                message="assertion failed",
+                duration=0.1,
+            ),
+        ],
     )
     format_test_results(result)
     captured = capsys.readouterr()
     assert "Some output from GUT" in captured.out
     assert "Some error from GUT" in captured.out
+    # Per-test failure details.
+    assert "✗" in captured.out
+    assert "TestSuite.test_fail" in captured.out
+    assert "assertion failed" in captured.out
+    # Summary footer.
+    assert "1 failed" in captured.out
 
 
 @pytest.mark.unit
@@ -1175,7 +1191,7 @@ def test_format_test_results_truncates_long_output(capsys):
 
 @pytest.mark.unit
 def test_format_test_results_zero_tests(capsys):
-    """format_test_results with zero tests shows 0/0/0/0."""
+    """format_test_results with zero tests shows 0/0/0/0 and [OK] message."""
     result = TestResult(
         total=0,
         passed=0,
@@ -1192,11 +1208,13 @@ def test_format_test_results_zero_tests(capsys):
     captured = capsys.readouterr()
     assert "Test Results" in captured.out
     assert "0" in captured.out
+    assert "[OK]" in captured.out
 
 
 @pytest.mark.unit
-def test_format_test_results_color_coding(capsys):
+def test_format_test_results_color_coding(capsys, monkeypatch):
     """format_test_results uses ANSI color codes for pass/fail."""
+    monkeypatch.setattr("gd_tools.output.console", Console(force_terminal=True))
     result = TestResult(
         total=3,
         passed=2,
@@ -1209,7 +1227,68 @@ def test_format_test_results_color_coding(capsys):
         stderr="",
         test_details=[],
     )
-    format_test_results(result, console=Console(force_terminal=True))
+    format_test_results(result)
     captured = capsys.readouterr()
     # ANSI escape codes should be present (force_terminal=True).
     assert "\x1b[" in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_failure_details(capsys):
+    """format_test_results shows per-test failure details when tests fail."""
+    result = TestResult(
+        total=2,
+        passed=1,
+        failed=1,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[
+            TestDetail(
+                name="test_addition",
+                suite="TestCalculator",
+                status="pass",
+                message="",
+                duration=0.1,
+            ),
+            TestDetail(
+                name="test_subtraction",
+                suite="TestCalculator",
+                status="fail",
+                message="Expected 5 but got 3",
+                duration=0.2,
+            ),
+        ],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    # Should show failure details with ✗ marker, suite.name, and message.
+    assert "✗" in captured.out
+    assert "TestCalculator.test_subtraction" in captured.out
+    assert "Expected 5 but got 3" in captured.out
+    # Should NOT show passing test details in failure section.
+    assert "✗ TestCalculator.test_addition" not in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_success_color(capsys, monkeypatch):
+    """format_test_results prints [OK] in green when all tests pass."""
+    monkeypatch.setattr("gd_tools.output.console", Console(force_terminal=True))
+    result = TestResult(
+        total=3,
+        passed=3,
+        failed=0,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "\x1b[32" in captured.out  # green ANSI code

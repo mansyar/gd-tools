@@ -12,9 +12,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from junitparser import JUnitXml
-from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
+from gd_tools import output
 from gd_tools.config import GdToolsConfig, TestConfig, find_project_root
 from gd_tools.errors import (
     GdToolsError,
@@ -266,25 +267,18 @@ def parse_junit_xml(
     return (total, passed, failed, skipped, duration, test_details)
 
 
-def format_test_results(
-    result: TestResult, console: Console | None = None
-) -> None:
+def format_test_results(result: TestResult) -> None:
     """Print a Rich table summarizing test results.
 
     Always prints a table with total, passed, failed, skipped, and
-    duration. When tests fail, also prints GUT's stdout and stderr
-    for debugging context (truncated to 5000 characters if longer).
+    duration. When all tests pass, prints a success message. When
+    tests fail, prints per-test failure details and GUT's stdout and
+    stderr for debugging context (truncated to 5000 characters if
+    longer), followed by a summary footer.
 
     Args:
         result: The :class:`TestResult` to format and print.
-        console: Optional :class:`rich.console.Console` for output.
-            When ``None``, a default ``Console()`` is created which
-            auto-detects terminal capabilities (no ANSI codes when
-            piped).  Tests may pass ``Console(force_terminal=True)``
-            to force ANSI output for color assertions.
     """
-    if console is None:
-        console = Console()
     table = Table(title="Test Results")
     table.add_column("Total", justify="right")
     table.add_column("Passed", justify="right", style="green")
@@ -298,22 +292,43 @@ def format_test_results(
         str(result.skipped),
         f"{result.duration:.2f}s",
     )
-    console.print(table)
+    output.print_table(table)
 
-    # On failure, surface GUT stdout/stderr for debugging.
-    if result.failed > 0:
-        if result.stdout:
-            console.print("\n--- GUT stdout ---")
-            stdout_text = result.stdout
-            if len(stdout_text) > 5000:
-                stdout_text = stdout_text[:5000] + "\n... (truncated)"
-            console.print(stdout_text, markup=False)
-        if result.stderr:
-            console.print("\n--- GUT stderr ---")
-            stderr_text = result.stderr
-            if len(stderr_text) > 5000:
-                stderr_text = stderr_text[:5000] + "\n... (truncated)"
-            console.print(stderr_text, markup=False)
+    if result.failed == 0:
+        output.print_success(f"All {result.total} test(s) passed.")
+        return
+
+    # Print per-test failure details.
+    for detail in result.test_details:
+        if detail.status == "fail":
+            parts = [
+                ("✗ ", "red"),
+                (f"{detail.suite}.{detail.name}", ""),
+            ]
+            if detail.message:
+                parts.append((f": {detail.message}", ""))
+            output.console.print(Text.assemble(*parts))
+
+    # Surface GUT stdout/stderr for debugging.
+    if result.stdout:
+        output.console.print("\n--- GUT stdout ---")
+        stdout_text = result.stdout
+        if len(stdout_text) > 5000:
+            stdout_text = stdout_text[:5000] + "\n... (truncated)"
+        output.console.print(stdout_text, markup=False)
+    if result.stderr:
+        output.console.print("\n--- GUT stderr ---")
+        stderr_text = result.stderr
+        if len(stderr_text) > 5000:
+            stderr_text = stderr_text[:5000] + "\n... (truncated)"
+        output.console.print(stderr_text, markup=False)
+
+    # Summary footer.
+    output.print_summary(
+        "fail",
+        f"{result.failed} failed, {result.passed} passed, "
+        f"{result.skipped} skipped",
+    )
 
 
 def run_tests(
