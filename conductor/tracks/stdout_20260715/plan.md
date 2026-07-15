@@ -88,32 +88,32 @@
 
 ## Phase 4: Test Command Output Standardization (FR-4)
 
-- [ ] Task: Read spec.md and workflow.md for context
-    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md for context
+    - [x] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write/update tests for test output using shared module
-    - [ ] Update `tests/unit/test_test_runner.py` — tests for `format_test_results()` using shared helpers
-    - [ ] Test summary table rendered via `print_table()`
-    - [ ] Test per-test failure details shown when tests fail (test name, suite, ✗ marker, message)
-    - [ ] Test per-test details NOT shown when all tests pass
-    - [ ] Test summary footer via `print_summary()` with pass/fail status
-    - [ ] Test clean state uses `print_success()` when all tests pass
-    - [ ] Test GUT stdout/stderr still printed on failure (truncated to 5000 chars)
-    - [ ] Update `tests/unit/test_cli.py` — CLI integration tests for test command output
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Write/update tests for test output using shared module (d0a2db7)
+    - [x] Update `tests/unit/test_test_runner.py` — tests for `format_test_results()` using shared helpers
+    - [x] Test summary table rendered via `print_table()`
+    - [x] Test per-test failure details shown when tests fail (test name, suite, ✗ marker, message)
+    - [x] Test per-test details NOT shown when all tests pass
+    - [x] Test summary footer via `print_summary()` with pass/fail status
+    - [x] Test clean state uses `print_success()` when all tests pass
+    - [x] Test GUT stdout/stderr still printed on failure (truncated to 5000 chars)
+    - [x] Update `tests/unit/test_cli.py` — CLI integration tests for test command output (no changes needed, existing tests pass)
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement test output changes
-    - [ ] Refactor `format_test_results()` in `src/gd_tools/test_runner.py` to use `print_table()` for summary table
-    - [ ] Add per-test failure detail rendering: list failed tests with name, suite, ✗ marker, and failure message
-    - [ ] Add `print_summary()` footer line below table with pass/fail status
-    - [ ] Use `print_success()` when all tests pass
-    - [ ] Keep GUT stdout/stderr on-failure behavior unchanged
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `ruff check src/gd_tools/test_runner.py` and `black --check`
-    - [ ] Run `CI=true pytest tests/unit/test_test_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
+- [x] Task: Implement test output changes (d0a2db7)
+    - [x] Refactor `format_test_results()` in `src/gd_tools/test_runner.py` to use `print_table()` for summary table
+    - [x] Add per-test failure detail rendering: list failed tests with name, suite, ✗ marker, and failure message
+    - [x] Add `print_summary()` footer line below table with pass/fail status
+    - [x] Use `print_success()` when all tests pass
+    - [x] Keep GUT stdout/stderr on-failure behavior unchanged
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `ruff check src/gd_tools/test_runner.py` and `black --check`
+    - [x] Run `CI=true pytest tests/unit/test_test_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
 
-- [ ] Task: Conductor - User Manual Verification 'Test Command Output' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Test Command Output' (Protocol in workflow.md)
 
 ## Phase 5: Coverage Command Output Standardization (FR-5)
 
