@@ -8,3 +8,6 @@ _Archived tracks live in `./archive/`._
 
 ---
 
+- [ ] **Track: Config Show/Validate**
+*Link: [./tracks/config_show_validate_20260715/](./tracks/config_show_validate_20260715/)*
+

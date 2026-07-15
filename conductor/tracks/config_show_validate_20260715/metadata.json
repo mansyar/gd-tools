@@ -1,0 +1,8 @@
+{
+  "track_id": "config_show_validate_20260715",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-15T16:03:35Z",
+  "updated_at": "2026-07-15T16:03:35Z",
+  "description": "Config Show/Validate as detailed in docs/ROADMAP.md"
+}
