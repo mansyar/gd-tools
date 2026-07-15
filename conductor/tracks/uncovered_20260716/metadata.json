@@ -1,0 +1,8 @@
+{
+  "track_id": "uncovered_20260716",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-16T09:52:21Z",
+  "updated_at": "2026-07-16T09:52:21Z",
+  "description": "Make gd-tools test --coverage result show uncovered lines or branches"
+}
