@@ -1,0 +1,12 @@
+Task: Config Formatting Helpers
+
+TDD Cycle:
+- Red: 8 tests written (test_format_config_*), covering: table has all sections/keys, TOML is valid parseable, TOML roundtrip through GdToolsConfig, JSON is valid parseable, JSON/TOML defaults
+- Green: Implemented format_config_table (Rich Table with Section/Key/Value columns), format_config_toml (tomli_w.dumps with None stripping), format_config_json (json.dumps with indent=2)
+- Tests: 8 passed, 0 failed
+
+Implementation notes:
+- format_config_toml strips None values (TOML has no null type) via recursive helper
+- format_config_table iterates model_dump() sections in order: godot, test, lint, format, coverage
+- Added json and rich.table.Table imports to config.py
+- Added io, json, tomllib imports to test_config.py
