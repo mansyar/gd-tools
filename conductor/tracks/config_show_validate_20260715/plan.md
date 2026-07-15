@@ -17,10 +17,10 @@ This phase adds the backend logic to `config.py`: the deprecation registry, depr
     - [x] Implement `validate_paths(config: GdToolsConfig, project_root: Path) -> list[str]` in `config.py`. Checks: `test.test_dirs` (each dir must exist), `godot.binary` (if not None, file must exist), `coverage.output_dir` (parent dir must exist), `lint.exclude` / `format.exclude` / `coverage.exclude` (each dir must exist). Returns a list of warning message strings.
     - [x] Verify: `CI=true pytest tests/unit/test_config.py -k path` passes. `ruff check` and `black --check` pass.
 
-- [ ] Task: Config Formatting Helpers
-    - [ ] Write unit tests in `tests/unit/test_config.py` for `format_config_table()`, `format_config_toml()`, and `format_config_json()`. Test cases: table contains all 5 sections (godot, test, lint, format, coverage) with key/value pairs, defaults shown when no config file, TOML output is valid TOML (parseable by `tomllib`), JSON output is valid JSON (parseable by `json.loads`), round-trip: `format_config_toml()` → `tomllib.loads()` → `GdToolsConfig()` matches original.
-    - [ ] Implement `format_config_table(config: GdToolsConfig) -> Table` (returns Rich `Table` with Section/Key/Value columns), `format_config_toml(config: GdToolsConfig) -> str` (uses `tomli_w.dumps`), and `format_config_json(config: GdToolsConfig) -> str` (uses `json.dumps(config.model_dump())`) in `config.py`.
-    - [ ] Verify: `CI=true pytest tests/unit/test_config.py -k format` passes. `ruff check` and `black --check` pass.
+- [x] Task: Config Formatting Helpers [22e5b9a]
+    - [x] Write unit tests in `tests/unit/test_config.py` for `format_config_table()`, `format_config_toml()`, and `format_config_json()`. Test cases: table contains all 5 sections (godot, test, lint, format, coverage) with key/value pairs, defaults shown when no config file, TOML output is valid TOML (parseable by `tomllib`), JSON output is valid JSON (parseable by `json.loads`), round-trip: `format_config_toml()` → `tomllib.loads()` → `GdToolsConfig()` matches original.
+    - [x] Implement `format_config_table(config: GdToolsConfig) -> Table` (returns Rich `Table` with Section/Key/Value columns), `format_config_toml(config: GdToolsConfig) -> str` (uses `tomli_w.dumps`), and `format_config_json(config: GdToolsConfig) -> str` (uses `json.dumps(config.model_dump())`) in `config.py`.
+    - [x] Verify: `CI=true pytest tests/unit/test_config.py -k format` passes. `ruff check` and `black --check` pass.
 
 - [ ] Task: Conductor - User Manual Verification 'Config Module Extensions' (Protocol in workflow.md)
 
