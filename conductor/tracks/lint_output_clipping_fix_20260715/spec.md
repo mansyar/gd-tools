@@ -1,3 +1,4 @@
+<protect>
 # Track 24.6: Lint Output Clipping Fix
 
 ## Overview
@@ -109,3 +110,4 @@ The `lint` command in `cli.py` already calls `format_lint_text(result)`, so the 
 - GitHub Actions annotation format (Track 31)
 - Configurable output format selection
 - Documentation changes (USER_GUIDE, README)
+</protect>
