@@ -32,7 +32,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Shared Output Module' (Protocol in workflow.md)
 
-## Phase 2: Lint Command Output Standardization (FR-2)
+## Phase 2: Lint Command Output Standardization (FR-2) [checkpoint: 494a919]
 
 - [x] Task: Read spec.md and workflow.md for context
     - [x] Read `conductor/tracks/stdout_20260715/spec.md`
@@ -57,7 +57,7 @@
     - [x] Run `ruff check src/gd_tools/lint_runner.py src/gd_tools/cli.py` and `black --check`
     - [x] Run `CI=true pytest tests/unit/test_lint_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
 
-- [ ] Task: Conductor - User Manual Verification 'Lint Command Output' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Lint Command Output' (Protocol in workflow.md)
 
 ## Phase 3: Format Command Output Standardization (FR-3)
 
