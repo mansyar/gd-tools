@@ -34,28 +34,28 @@
 
 ## Phase 2: Lint Command Output Standardization (FR-2)
 
-- [ ] Task: Read spec.md and workflow.md for context
-    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md for context
+    - [x] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write/update tests for lint output using shared module
-    - [ ] Update `tests/unit/test_lint_runner.py` — tests for `format_lint_text()` using shared output helpers
-    - [ ] Test that clean state uses `print_success()` with `[OK]` marker
-    - [ ] Test that summary footer uses `print_summary()` with correct status color
-    - [ ] Test that detail format remains `file:line:col: rule: message  [ERROR/WARN]`
-    - [ ] Test that JSON output (`format_lint_json()`) is unchanged
-    - [ ] Update `tests/unit/test_cli.py` — CLI integration tests for lint command output
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Write/update tests for lint output using shared module (080dc55)
+    - [x] Update `tests/unit/test_lint_runner.py` — tests for `format_lint_text()` using shared output helpers
+    - [x] Test that clean state uses `print_success()` with `[OK]` marker
+    - [x] Test that summary footer uses `print_summary()` with correct status color
+    - [x] Test that detail format remains `file:line:col: rule: message  [ERROR/WARN]`
+    - [x] Test that JSON output (`format_lint_json()`) is unchanged
+    - [x] Update `tests/unit/test_cli.py` — CLI integration tests for lint command output (no changes needed, existing tests pass)
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement lint output changes
-    - [ ] Refactor `format_lint_text()` in `src/gd_tools/lint_runner.py` to use shared `print_success()` for clean state
-    - [ ] Replace `Console().capture()` + inline `Text()` summary with shared `print_summary()` call
-    - [ ] Keep detail format unchanged (`file:line:col: rule: message  [ERROR/WARN]`)
-    - [ ] Keep `format_lint_json()` unchanged
-    - [ ] Update `src/gd_tools/cli.py` lint command to use shared console for output
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `ruff check src/gd_tools/lint_runner.py src/gd_tools/cli.py` and `black --check`
-    - [ ] Run `CI=true pytest tests/unit/test_lint_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
+- [x] Task: Implement lint output changes (080dc55)
+    - [x] Refactor `format_lint_text()` in `src/gd_tools/lint_runner.py` to use shared `print_success()` for clean state
+    - [x] Replace `Console().capture()` + inline `Text()` summary with shared `print_summary()` call
+    - [x] Keep detail format unchanged (`file:line:col: rule: message  [ERROR/WARN]`)
+    - [x] Keep `format_lint_json()` unchanged
+    - [x] Update `src/gd_tools/cli.py` lint command to use shared console for output
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `ruff check src/gd_tools/lint_runner.py src/gd_tools/cli.py` and `black --check`
+    - [x] Run `CI=true pytest tests/unit/test_lint_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
 
 - [ ] Task: Conductor - User Manual Verification 'Lint Command Output' (Protocol in workflow.md)
 
