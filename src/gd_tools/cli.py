@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
 
-from . import __version__
+from . import __version__, output
 from .config import (
     check_deprecated_settings,
     find_project_root,
@@ -315,35 +315,46 @@ def format(paths, check, diff):
 
     ctx = click.get_current_context()
     if result.files_checked == 0:
-        click.echo("No .gd files found.")
+        output.print_info("No .gd files found.")
         ctx.exit(0)
 
     if check:
         if result.files_needing_format > 0:
             for file_path in result.files_needing_format_paths:
-                click.echo(f"  {file_path}")
-            click.echo(
-                f"\n{result.files_needing_format} file(s) need "
-                f"formatting (out of {result.files_checked} checked)."
+                output.console.print(f"[dim]{file_path}[/dim]")
+            output.print_summary(
+                "fail",
+                f"{result.files_needing_format} file(s) need formatting",
+                result.files_checked,
             )
             ctx.exit(1)
         else:
-            click.echo(f"All {result.files_checked} file(s) are formatted.")
+            output.print_success(
+                f"All {result.files_checked} file(s) are formatted."
+            )
             ctx.exit(0)
     elif diff:
-        console = Console()
-        for diff_str in result.diffs:
-            syntax = Syntax(diff_str, "diff", theme="ansi_dark")
-            console.print(syntax)
+        if result.diffs:
+            for diff_str in result.diffs:
+                syntax = Syntax(diff_str, "diff", theme="ansi_dark")
+                output.console.print(syntax)
+        else:
+            output.print_success(
+                f"All {result.files_checked} file(s) already formatted."
+            )
         ctx.exit(0)
     else:
         if result.files_formatted > 0:
-            click.echo(
+            output.print_summary(
+                "pass",
                 f"Formatted {result.files_formatted} of "
-                f"{result.files_checked} file(s)."
+                f"{result.files_checked} file(s)",
+                result.files_checked,
             )
         else:
-            click.echo(f"All {result.files_checked} file(s) already formatted.")
+            output.print_success(
+                f"All {result.files_checked} file(s) already formatted."
+            )
         ctx.exit(0)
 
 

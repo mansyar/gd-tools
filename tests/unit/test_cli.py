@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import click
 import pytest
 from click.testing import CliRunner
+from rich.console import Console
 
 from gd_tools.cli import cli
 from gd_tools.doctor import CheckResult, DoctorResult
@@ -668,6 +669,7 @@ def test_format_default_mode():
         mock_config, ["some/path"], check=False, diff=False
     )
     assert "Formatted 2 of 3 file(s)" in result.output
+    assert "3 files checked" in result.output
 
 
 def test_format_default_path():
@@ -696,6 +698,7 @@ def test_format_default_all_formatted():
         result = runner.invoke(cli, ["format", "some/path"])
     assert result.exit_code == 0
     assert "already formatted" in result.output
+    assert "[OK]" in result.output
 
 
 def test_format_check_needs_formatting():
@@ -716,6 +719,7 @@ def test_format_check_needs_formatting():
     assert "a.gd" in result.output
     assert "b.gd" in result.output
     assert "2 file(s) need formatting" in result.output
+    assert "3 files checked" in result.output
 
 
 def test_format_check_all_formatted():
@@ -730,6 +734,7 @@ def test_format_check_all_formatted():
         result = runner.invoke(cli, ["format", "--check", "some/path"])
     assert result.exit_code == 0
     assert "All 2 file(s) are formatted" in result.output
+    assert "[OK]" in result.output
 
 
 def test_format_diff_renders_diffs():
@@ -772,6 +777,42 @@ def test_format_no_files_found():
         result = runner.invoke(cli, ["format", "some/path"])
     assert result.exit_code == 0
     assert "No .gd files found" in result.output
+
+
+def test_format_diff_no_diffs():
+    """Test format --diff shows success message when no diffs found."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(files_checked=2, diffs=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["format", "--diff", "some/path"])
+    assert result.exit_code == 0
+    assert "[OK]" in result.output
+    assert "already formatted" in result.output
+
+
+def test_format_check_dim_file_paths(monkeypatch):
+    """Test format --check renders file paths with dim style."""
+    monkeypatch.setattr("gd_tools.output.console", Console(force_terminal=True))
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = FormatResult(
+        files_checked=2,
+        files_needing_format=1,
+        files_needing_format_paths=["test.gd"],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_format", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["format", "--check", "some/path"])
+    assert result.exit_code == 1
+    assert "test.gd" in result.output
+    # ANSI dim code (\x1b[2m) should be present when terminal is forced
+    assert "\x1b[2m" in result.output
 
 
 def test_cli_init_calls_run_init():
