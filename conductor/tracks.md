@@ -8,6 +8,3 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Standardize the terminal output of lint, format, test commands to match existing similar tools**
-*Link: [./tracks/stdout_20260715/](./tracks/stdout_20260715/)*
-
