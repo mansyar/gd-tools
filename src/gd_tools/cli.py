@@ -11,7 +11,12 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from . import __version__
-from .config import load_config
+from .config import (
+    format_config_json,
+    format_config_table,
+    format_config_toml,
+    load_config,
+)
 from .coverage.orchestrator import (
     generate_coverage_report,
     merge_coverage_files,
@@ -406,3 +411,61 @@ def show(min):
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
         ctx.exit(e.exit_code)
+
+
+@cli.group()
+def config():
+    """Configuration management commands."""
+
+
+@config.command(name="show")
+@click.option(
+    "--format",
+    type=click.Choice(["toml"]),
+    default=None,
+    help="Output format (currently only 'toml').",
+)
+@click.option(
+    "--json",
+    "as_json",
+    is_flag=True,
+    help="Output as JSON.",
+)
+def config_show(format, as_json):
+    """Show the resolved configuration.
+
+    By default, prints a Rich table of all configuration sections.
+    Use ``--format toml`` for TOML output or ``--json`` for JSON
+    output. These two options are mutually exclusive.
+    """
+    if format is not None and as_json:
+        click.echo(
+            "Error: --format and --json are mutually exclusive.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        resolved_config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    if as_json:
+        click.echo(format_config_json(resolved_config))
+    elif format == "toml":
+        click.echo(format_config_toml(resolved_config))
+    else:
+        console = Console()
+        console.print(format_config_table(resolved_config))
+
+    ctx = click.get_current_context()
+    ctx.exit(0)
+
+
+@config.command()
+def validate():
+    """Validate the configuration file."""
+    pass
