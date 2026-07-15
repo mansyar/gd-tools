@@ -49,18 +49,18 @@
 
 ## Phase 3: Quality Gates & Verification
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to review requirements and TDD methodology before starting this phase
-- [ ] Task: Verify code coverage meets requirements
-    - [ ] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
-    - [ ] Confirm >80% line coverage and >70% branch coverage for `lint_runner.py`
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to review requirements and TDD methodology before starting this phase
+- [x] Task: Verify code coverage meets requirements
+    - [x] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
+    - [x] Confirm >80% line coverage and >70% branch coverage for `lint_runner.py`
 
-- [ ] Task: Run linting and formatting checks
-    - [ ] Run `ruff check src/ tests/`
-    - [ ] Run `black --check src/ tests/`
+- [x] Task: Run linting and formatting checks
+    - [x] Run `ruff check src/ tests/`
+    - [x] Run `black --check src/ tests/`
 
-- [ ] Task: Run full test suite to confirm no regressions
-    - [ ] Run `CI=true pytest`
-    - [ ] Confirm all tests pass
+- [x] Task: Run full test suite to confirm no regressions
+    - [x] Run `CI=true pytest`
+    - [x] Confirm all tests pass
 
-- [ ] Task: Conductor - User Manual Verification 'Quality Gates & Verification' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Quality Gates & Verification' (Protocol in workflow.md)
 </protect>
