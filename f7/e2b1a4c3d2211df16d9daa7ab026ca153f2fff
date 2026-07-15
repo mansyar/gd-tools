@@ -1,0 +1,26 @@
+Phase 1 Checkpoint Verification Report
+
+Phase: TDD - Update Tests for New Format (Red Phase)
+Track: Track 24.6 - Lint Output Clipping Fix
+
+Automated Test Command: $env:CI='true'; pytest tests/unit/test_lint_runner.py tests/integration/test_lint_integration.py
+Test Results: 4 failed, 30 passed (Red phase confirmed - tests fail as expected)
+
+Failed Tests (expected):
+1. test_format_lint_text_with_violations - expects file:line:col: flat format
+2. test_format_lint_text_clean - expects green-colored [OK] message
+3. test_format_lint_text_long_paths_not_truncated - expects no truncation of 76-char path
+4. test_lint_full_run_text_output - expects BadFunctionName in full
+
+Manual Verification Steps:
+1. Review updated test assertions for flat format (file:line:col: rule: message [SEVERITY])
+2. Review long-path test (76-char path, 52-char rule, no ellipsis)
+3. Review color tests (monkeypatch force_terminal, ANSI codes for red/yellow/green)
+4. Review integration test (no table headers, full rule name and message)
+5. Run tests to confirm 4 expected failures
+
+User Confirmation: YES - meets expectations
+
+Changed Files:
+- tests/unit/test_lint_runner.py (updated 5 tests, added 1 new test)
+- tests/integration/test_lint_integration.py (updated test_lint_full_run_text_output)
