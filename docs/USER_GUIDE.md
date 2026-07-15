@@ -432,6 +432,27 @@ gd-tools lint --report-format json
 gd-tools lint src/scripts/
 ```
 
+**Output Format (text):**
+
+Issues are rendered as flat, line-based output — one issue per line in
+`file:line:col: rule: message  [SEVERITY]` format, sorted by file path
+then line number. This format is recognized by editors and IDEs for
+click-to-navigate (VS Code, JetBrains, Vim/Emacs, GitHub Actions).
+
+```
+src/player.gd:10:1: function-name: Function name BadFunctionName is not valid  [ERROR]
+src/enemy.gd:5:3: some-rule: Warning message  [WARN]
+
+1 errors, 1 warnings, 2 files checked
+```
+
+- Severity tags `[ERROR]` (red) and `[WARN]` (yellow) are colored when
+  output goes to a terminal; piped/redirected output is plain text.
+- The summary line is colored red (errors present), yellow (warnings
+  only), or the `[OK] No lint issues found.` message is green when clean.
+- File paths and rule names of any length appear in full — no truncation.
+- Use `--report-format json` for stable, machine-readable output.
+
 **Exit Codes:**
 
 | Code | Condition |

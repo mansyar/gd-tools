@@ -414,7 +414,7 @@ Phase 1 Foundation (parallel to spike for non-coverage tracks):
   - `discover_gd_files()` handles exclude patterns and `.gd` extension filtering
   - `run_lint()` uses `gdtoolkit.linter.lint_code()` Python API (not subprocess) for direct integration
   - Syntax errors (Lark parse failures) are caught and reported as `SYNTAX_ERROR` issues, not crashes
-  - `format_lint_text()` uses rich `Table` with `force_terminal=True` for testable ANSI output
+  - `format_lint_text()` renders flat `file:line:col:` line-based output (Track 24.6 replaced the original Rich `Table` + `force_terminal=True` with a flat format to eliminate path/rule truncation; colors appear only on a real TTY via plain `Console()`)
   - `format_lint_json()` produces structured JSON with `files_checked`, `error_count`, `issues` fields
   - `generate_gdlintrc()` in `config.py` writes YAML `!!set` format for `excluded_directories`
   - CLI `lint` command: `path` defaults to `.`, `--report-format` (text/json), `--fix` no-op flag, exit codes 0/1/2
