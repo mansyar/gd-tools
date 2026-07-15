@@ -1,7 +1,9 @@
+<protect>
 # Implementation Plan: Show Uncovered Lines and Branches in Coverage Output
 
 ## Phase 1: Data Model Enhancement
 
+- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
 - [ ] Task: Add `uncovered_branches` field to `FileSummary` and update `compute_file_summary()`
     - [ ] Write failing unit tests for `uncovered_branches` computation in `compute_file_summary()` — test that branch-type lines with zero hits are collected, and non-branch uncovered lines are excluded from this list
     - [ ] Add `uncovered_branches: list[int]` field to `FileSummary` dataclass in `reporter.py`
@@ -11,6 +13,7 @@
 
 ## Phase 2: Rendering Utilities
 
+- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
 - [ ] Task: Implement line range formatting helper
     - [ ] Write failing unit tests for range formatting: `[1,2,3,5,6]` → `"1-3, 5-6"`; `[]` → `""`; `[4]` → `"4"`; `[10,11,15]` → `"10-11, 15"`
     - [ ] Implement `_format_line_ranges(lines: list[int]) -> str` helper function
@@ -23,6 +26,7 @@
 
 ## Phase 3: CLI Flag and Output Integration
 
+- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
 - [ ] Task: Add `--show-uncovered` flag to `test` CLI command
     - [ ] Write failing CLI tests for `--show-uncovered` flag (flag present with `--coverage`, flag absent, `--show-uncovered` without `--coverage`)
     - [ ] Implement `--show-uncovered` option in `cli.py` `test` command with a descriptive `help` string for `--help` output, and thread `show_uncovered` parameter to `run_coverage_test()`
@@ -39,6 +43,7 @@
 
 ## Phase 4: Documentation Updates
 
+- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
 - [ ] Task: Update documentation for `--show-uncovered` flag and enhanced `coverage show` output
     - [ ] Update README.md — add `--show-uncovered` to test command usage examples
     - [ ] Update docs/PRD.md — add `--show-uncovered` to the command reference flags table
@@ -46,3 +51,4 @@
     - [ ] Update skills/gd-tools/SKILL.md — add `--show-uncovered` to CLI flag documentation
     - [ ] Add CHANGELOG.md feature entry for uncovered lines/branches display
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Documentation Updates' (Protocol in workflow.md)
+</protect>

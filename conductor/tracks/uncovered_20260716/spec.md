@@ -1,3 +1,4 @@
+<protect>
 # Track: Show Uncovered Lines and Branches in Coverage Output
 
 ## Overview
@@ -73,3 +74,4 @@ The existing one-line summary and summary table outputs remain unchanged. The un
 - Uncovered detail in the text-format report file (terminal_reporter.py table) — only `test --coverage` inline and `coverage show` outputs are enhanced.
 - HTML or other report format enhancements.
 - A `--hide-uncovered` flag for `coverage show` (it always shows detail).
+</protect>
