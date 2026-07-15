@@ -154,19 +154,19 @@
 
 ## Phase 6: Final Verification and Consistency Check (FR-6, FR-7, NFRs)
 
-- [ ] Task: Read spec.md and workflow.md for context
-    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md for context
+    - [x] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Verify cross-command consistency
-    - [ ] Run full test suite: `CI=true pytest`
-    - [ ] Run full coverage: `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
-    - [ ] Verify ≥80% line, ≥70% branch coverage for all modified source code
-    - [ ] Run lint: `ruff check src/ tests/`
-    - [ ] Run format check: `black --check src/ tests/`
-    - [ ] Verify JSON output modes unaffected (`--report-format json` for lint, `--junit-xml` for test)
-    - [ ] Verify color semantics consistent across all four commands (green/red/yellow/cyan/dim)
-    - [ ] Verify markers consistent across all four commands (`[OK]`, `[FAIL]`, `✓`, `✗`)
+- [x] Task: Verify cross-command consistency
+    - [x] Run full test suite: `CI=true pytest` — 716 passed
+    - [x] Run full coverage: `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` — 97.11% overall
+    - [x] Verify ≥80% line, ≥70% branch coverage for all modified source code — all pass
+    - [x] Run lint: `ruff check src/ tests/` — All checks passed
+    - [x] Run format check: `black --check src/ tests/` — 69 files unchanged
+    - [x] Verify JSON output modes unaffected (`--report-format json` for lint, `--junit-xml` for test) — format_lint_json() uses json.dumps() directly, JUnit XML written separately
+    - [x] Verify color semantics consistent across all four commands (green/red/yellow/cyan/dim) — consistent
+    - [x] Verify markers consistent across all four commands (`[OK]`, `[FAIL]`, `✓`, `✗`) — consistent
 
 - [ ] Task: Conductor - User Manual Verification 'Final Verification and Consistency Check' (Protocol in workflow.md)
 </protect>
