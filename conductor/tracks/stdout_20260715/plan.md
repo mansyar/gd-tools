@@ -61,30 +61,30 @@
 
 ## Phase 3: Format Command Output Standardization (FR-3)
 
-- [ ] Task: Read spec.md and workflow.md for context
-    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md for context
+    - [x] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write/update tests for format output using shared module
-    - [ ] Update `tests/unit/test_format_runner.py` — tests for format output using shared helpers
-    - [ ] Test `--check` mode: files needing format listed with `dim` style, summary via `print_summary()`
-    - [ ] Test `--diff` mode: diffs rendered via shared console with `Syntax`
-    - [ ] Test default mode: formatted count via `print_summary()`, clean state via `print_success()`
-    - [ ] Test "no files found" message
-    - [ ] Update `tests/unit/test_cli.py` — CLI integration tests for format command output
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Write/update tests for format output using shared module (4d8c8e7)
+    - [x] Update `tests/unit/test_format_runner.py` — tests for format output using shared helpers (no changes needed, existing tests pass)
+    - [x] Test `--check` mode: files needing format listed with `dim` style, summary via `print_summary()`
+    - [x] Test `--diff` mode: diffs rendered via shared console with `Syntax`
+    - [x] Test default mode: formatted count via `print_summary()`, clean state via `print_success()`
+    - [x] Test "no files found" message
+    - [x] Update `tests/unit/test_cli.py` — CLI integration tests for format command output
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement format output changes
-    - [ ] Refactor `src/gd_tools/cli.py` format command to replace `click.echo()` with shared output helpers
-    - [ ] Use `print_success()` for "all files formatted" clean state
-    - [ ] Use `print_summary()` for file count summaries (formatted/checked, needing format/checked)
-    - [ ] Render file paths in `--check` mode with `dim` style via shared console
-    - [ ] Route `--diff` mode `Syntax` rendering through shared console
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `ruff check src/gd_tools/cli.py` and `black --check`
-    - [ ] Run `CI=true pytest tests/unit/test_format_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
+- [x] Task: Implement format output changes (4d8c8e7)
+    - [x] Refactor `src/gd_tools/cli.py` format command to replace `click.echo()` with shared output helpers
+    - [x] Use `print_success()` for "all files formatted" clean state
+    - [x] Use `print_summary()` for file count summaries (formatted/checked, needing format/checked)
+    - [x] Render file paths in `--check` mode with `dim` style via shared console
+    - [x] Route `--diff` mode `Syntax` rendering through shared console
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `ruff check src/gd_tools/cli.py` and `black --check`
+    - [x] Run `CI=true pytest tests/unit/test_format_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
 
-- [ ] Task: Conductor - User Manual Verification 'Format Command Output' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Format Command Output' (Protocol in workflow.md)
 
 ## Phase 4: Test Command Output Standardization (FR-4)
 
