@@ -1,0 +1,50 @@
+Phase 5 Checkpoint Verification Report
+======================================
+
+Track: Standardize Terminal Output
+Phase: 5 - Coverage Command Output Standardization (FR-5)
+Checkpoint SHA: 14ed418
+Date: 2026-07-15
+
+Changed Files:
+- src/gd_tools/coverage/orchestrator.py
+- tests/unit/test_orchestrator.py
+
+Implementation Summary:
+- Refactored _print_coverage_table() to use output.print_table() with
+  color-coded rate cells (green >= threshold, red < threshold) via Text objects
+- Added _print_threshold_footer() shared helper for threshold pass/fail summary
+- Added _print_coverage_inline() for test --coverage inline summary
+  (print_info for coverage line + print_summary for threshold footer)
+- Updated show_coverage_summary() to pass min_percent to table and
+  print threshold footer before threshold check
+- Updated run_coverage_test() to use _print_coverage_inline() instead
+  of _print_coverage_table() on both success and error paths
+- merge_coverage_files() unchanged (out of scope)
+
+Test Results:
+- test_orchestrator.py: 40 passed (6 updated, 4 new)
+- Full unit suite: 716 passed
+- orchestrator.py: 97% line (2 missed: lines 115, 141 - pre-existing edge cases),
+  90% branch (18/20)
+- output.py: 100% line/branch
+- ruff check: passed
+- black --check: passed
+
+New Tests:
+- test_show_coverage_summary_summary_footer: verifies print_summary footer
+- test_show_coverage_summary_color_coded_above_threshold: green ANSI for rates >= threshold
+- test_show_coverage_summary_color_coded_below_threshold: red ANSI for rates < threshold
+- test_run_coverage_test_inline_summary_content: verifies line % and branch % in inline output
+
+Updated Tests (Console patch -> capsys):
+- test_show_coverage_summary_prints_rich_table
+- test_run_coverage_test_coverage_summary_on_success
+- test_run_coverage_test_coverage_summary_threshold_met
+- test_run_coverage_test_coverage_summary_before_threshold_error
+- test_run_coverage_test_no_coverage_summary_on_plan_error
+- test_coverage_summary_table_format_matches_show_summary
+
+User Confirmation: Approved
+
+Phase 5 checkpoint verification report
