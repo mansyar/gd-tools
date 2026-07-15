@@ -3,22 +3,22 @@
 
 ## Phase 1: TDD - Update Tests for New Format (Red Phase)
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to review requirements and TDD methodology before starting this phase
-- [ ] Task: Update unit tests in `tests/unit/test_lint_runner.py` for flat format
-    - [ ] Update `test_format_lint_text_with_violations` to assert on `file:line:col:` prefix instead of table column headers
-    - [ ] Update `test_format_lint_text_color_coding` to verify ANSI color codes present on severity tag (`[ERROR]` red, `[WARN]` yellow)
-    - [ ] Update `test_format_lint_text_summary` to assert colored summary (red for errors, yellow for warnings-only, green for clean)
-    - [ ] Update clean/no-files tests for green-colored `[OK]` message and unchanged `No GDScript files found.`
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to review requirements and TDD methodology before starting this phase
+- [x] Task: Update unit tests in `tests/unit/test_lint_runner.py` for flat format
+    - [x] Update `test_format_lint_text_with_violations` to assert on `file:line:col:` prefix instead of table column headers
+    - [x] Update `test_format_lint_text_color_coding` to verify ANSI color codes present on severity tag (`[ERROR]` red, `[WARN]` yellow)
+    - [x] Update `test_format_lint_text_summary` to assert colored summary (red for errors, yellow for warnings-only, green for clean)
+    - [x] Update clean/no-files tests for green-colored `[OK]` message and unchanged `No GDScript files found.`
 
-- [ ] Task: Add new unit test case for long paths/rules not truncated
-    - [ ] Add `test_format_lint_text_long_paths_not_truncated` verifying a 76-char file path and 52-char rule name appear in full (no `…` character)
+- [x] Task: Add new unit test case for long paths/rules not truncated
+    - [x] Add `test_format_lint_text_long_paths_not_truncated` verifying a 76-char file path and 52-char rule name appear in full (no `…` character)
 
-- [ ] Task: Update integration test in `tests/integration/test_lint_integration.py`
-    - [ ] Update `test_lint_full_run_text_output` to remove truncation workaround comment and assert on full rule name and longer message fragment
+- [x] Task: Update integration test in `tests/integration/test_lint_integration.py`
+    - [x] Update `test_lint_full_run_text_output` to remove truncation workaround comment and assert on full rule name and longer message fragment
 
-- [ ] Task: Run test suite and confirm Red phase (updated tests fail as expected, implementation not yet changed)
-    - [ ] Run `CI=true pytest tests/unit/test_lint_runner.py tests/integration/test_lint_integration.py`
-    - [ ] Verify tests fail due to format mismatch (table output vs. expected flat format)
+- [x] Task: Run test suite and confirm Red phase (updated tests fail as expected, implementation not yet changed) [5299fe4]
+    - [x] Run `CI=true pytest tests/unit/test_lint_runner.py tests/integration/test_lint_integration.py`
+    - [x] Verify tests fail due to format mismatch (table output vs. expected flat format)
 
 - [ ] Task: Conductor - User Manual Verification 'TDD - Update Tests for New Format (Red Phase)' (Protocol in workflow.md)
 
