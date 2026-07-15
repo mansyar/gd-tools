@@ -16,6 +16,7 @@ from rich.text import Text
 from gdtoolkit.linter import lint_code
 from lark.exceptions import LarkError
 
+from gd_tools import output
 from gd_tools.config import GdToolsConfig
 from gd_tools.file_discovery import discover_gd_files
 
@@ -137,65 +138,57 @@ def run_lint(
     )
 
 
-def format_lint_text(result: LintResult) -> str:
-    """Format lint results as flat line-based text.
+def format_lint_text(result: LintResult) -> None:
+    """Format and print lint results as flat line-based text.
 
     Each issue is rendered as ``file:line:col: rule: message  [SEVERITY]``,
     matching the convention used by ESLint, ruff, flake8, and other
     linters.  Issues are sorted by file path, then line, then column.
     Error severity tags are styled red, warning tags yellow.  The
-    summary line is colored red (errors present) or yellow (warnings
-    only).  The ``[OK]`` message is green when clean.
+    summary line is rendered via the shared :func:`print_summary`
+    helper (red for errors, yellow for warnings only).  The clean
+    state uses :func:`print_success` (green ``[OK]`` marker).
+
+    Output is printed directly to the shared console — this function
+    does not return a string.
 
     Args:
-        result: Lint results to format.
-
-    Returns:
-        Formatted string with issues and summary, or an informational
-        message when there are no files or no issues.
+        result: Lint results to format and print.
     """
     if result.files_checked == 0:
-        return "No GDScript files found."
-
-    console = Console()
+        output.print_info("No GDScript files found.")
+        return
 
     if not result.errors and not result.warnings:
-        with console.capture() as capture:
-            console.print(Text("[OK] No lint issues found.", style="green"))
-        return capture.get()
+        output.print_success("No lint issues found.")
+        return
 
     all_issues = result.errors + result.warnings
     all_issues.sort(key=lambda i: (i.file, i.line, i.column))
 
-    with console.capture() as capture:
-        for issue in all_issues:
-            if issue.severity == "error":
-                color = "red"
-                severity_tag = "ERROR"
-            else:
-                color = "yellow"
-                severity_tag = "WARN"
-            console.print(
-                Text.assemble(
-                    f"{issue.file}:{issue.line}:{issue.column}: "
-                    f"{issue.rule}: {issue.message}  ",
-                    (f"[{severity_tag}]", color),
-                )
-            )
-
-        summary = (
-            f"{len(result.errors)} errors, "
-            f"{len(result.warnings)} warnings, "
-            f"{result.files_checked} files checked"
-        )
-        if result.errors:
-            summary_style = "red"
+    for issue in all_issues:
+        if issue.severity == "error":
+            color = "red"
+            severity_tag = "ERROR"
         else:
-            summary_style = "yellow"
-        console.print()
-        console.print(Text(summary, style=summary_style))
+            color = "yellow"
+            severity_tag = "WARN"
+        output.console.print(
+            Text.assemble(
+                f"{issue.file}:{issue.line}:{issue.column}: "
+                f"{issue.rule}: {issue.message}  ",
+                (f"[{severity_tag}]", color),
+            )
+        )
 
-    return capture.get()
+    output.console.print()  # blank line before summary
+
+    counts = f"{len(result.errors)} errors, {len(result.warnings)} warnings"
+    if result.errors:
+        status = "fail"
+    else:
+        status = "warning"
+    output.print_summary(status, counts, result.files_checked)
 
 
 def format_lint_json(result: LintResult) -> str:

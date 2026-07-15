@@ -283,11 +283,9 @@ def lint(paths, report_format, fix):
     result = run_lint(config, list(paths), report_format)
 
     if report_format == "json":
-        output = format_lint_json(result)
+        click.echo(format_lint_json(result))
     else:
-        output = format_lint_text(result)
-
-    click.echo(output)
+        format_lint_text(result)
 
     ctx = click.get_current_context()
     if result.errors:
