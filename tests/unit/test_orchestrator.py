@@ -400,7 +400,7 @@ def test_merge_coverage_files_writes_json_to_custom_output(
     mock_merge.return_value = _make_coverage_data()
     custom_output = tmp_path / "merged" / "result.json"
 
-    merge_coverage_files([Path("a.json")], output=custom_output)
+    merge_coverage_files([Path("a.json")], output_path=custom_output)
 
     assert custom_output.exists()
 
@@ -412,7 +412,9 @@ def test_merge_coverage_files_returns_merged_data(mock_merge):
     merged = _make_coverage_data()
     mock_merge.return_value = merged
 
-    result = merge_coverage_files([Path("a.json")], output=Path("out.json"))
+    result = merge_coverage_files(
+        [Path("a.json")], output_path=Path("out.json")
+    )
 
     assert result is merged
 
@@ -424,7 +426,7 @@ def test_merge_coverage_files_creates_output_dir(mock_merge, tmp_path):
     mock_merge.return_value = _make_coverage_data()
     output = tmp_path / "deep" / "nested" / "dir" / "coverage.json"
 
-    merge_coverage_files([Path("a.json")], output=output)
+    merge_coverage_files([Path("a.json")], output_path=output)
 
     assert output.exists()
 
@@ -438,7 +440,7 @@ def test_merge_coverage_files_empty_list(mock_merge, tmp_path):
     with patch(
         "gd_tools.coverage.orchestrator.Path.cwd", return_value=tmp_path
     ):
-        result = merge_coverage_files([], output=None)
+        result = merge_coverage_files([], output_path=None)
 
     output_file = tmp_path / ".gd-tools" / "coverage" / "coverage.json"
     assert output_file.exists()
@@ -456,7 +458,7 @@ def test_merge_coverage_files_with_config_no_output(
     mock_find_root.return_value = tmp_path
     config = _make_config(output_dir="custom_cov")
 
-    merge_coverage_files([Path("a.json")], output=None, config=config)
+    merge_coverage_files([Path("a.json")], output_path=None, config=config)
 
     output_file = tmp_path / "custom_cov" / "coverage.json"
     assert output_file.exists()

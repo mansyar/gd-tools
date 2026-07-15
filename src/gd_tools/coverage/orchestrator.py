@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
@@ -194,7 +193,7 @@ def generate_coverage_report(
 
 def merge_coverage_files(
     files: list[Path],
-    output: Path | None = None,
+    output_path: Path | None = None,
     config: GdToolsConfig | None = None,
 ) -> CoverageData:
     """Merge multiple coverage data files into one.
@@ -204,7 +203,7 @@ def merge_coverage_files(
 
     Args:
         files: List of paths to coverage data JSON files.
-        output: Path for the merged output file. If ``None``,
+        output_path: Path for the merged output file. If ``None``,
             defaults to ``<output_dir>/coverage.json`` (resolved via
             ``find_project_root`` and ``config.coverage.output_dir``
             when ``config`` is provided, or ``.gd-tools/coverage/
@@ -216,21 +215,24 @@ def merge_coverage_files(
     Returns:
         The merged :class:`CoverageData`.
     """
-    if output is None:
+    if output_path is None:
         if config is not None:
             project_root = find_project_root()
-            output = project_root / config.coverage.output_dir / "coverage.json"
+            output_path = (
+                project_root / config.coverage.output_dir / "coverage.json"
+            )
         else:
-            output = Path.cwd() / ".gd-tools" / "coverage" / "coverage.json"
+            output_path = (
+                Path.cwd() / ".gd-tools" / "coverage" / "coverage.json"
+            )
 
     merged = reporter.merge_coverage_data(files)
 
-    reporter.write_coverage_json(merged, output)
+    reporter.write_coverage_json(merged, output_path)
 
-    console = Console()
-    console.print(
+    output.console.print(
         f"Merged {len(files)} file(s) → {len(merged.files)} file(s) "
-        f"in output. Written to: {output}"
+        f"in output. Written to: {output_path}"
     )
 
     return merged
