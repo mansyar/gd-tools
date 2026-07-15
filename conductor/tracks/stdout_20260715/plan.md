@@ -59,7 +59,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Lint Command Output' (Protocol in workflow.md)
 
-## Phase 3: Format Command Output Standardization (FR-3)
+## Phase 3: Format Command Output Standardization (FR-3) [checkpoint: 86f6086]
 
 - [x] Task: Read spec.md and workflow.md for context
     - [x] Read `conductor/tracks/stdout_20260715/spec.md`
