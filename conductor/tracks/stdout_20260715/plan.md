@@ -1,7 +1,7 @@
 <protect>
 # Implementation Plan: Standardize Terminal Output
 
-## Phase 1: Shared Output Module (FR-1)
+## Phase 1: Shared Output Module (FR-1) [checkpoint: f290132]
 
 - [x] Task: Read spec.md and workflow.md for context
     - [x] Read `conductor/tracks/stdout_20260715/spec.md`
@@ -30,7 +30,7 @@
     - [x] Run `ruff check src/gd_tools/output.py` and `black --check src/gd_tools/output.py`
     - [x] Run `CI=true pytest --cov=gd_tools.output --cov-branch --cov-report=term-missing` and verify ≥80% line, ≥70% branch
 
-- [~] Task: Conductor - User Manual Verification 'Shared Output Module' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Shared Output Module' (Protocol in workflow.md)
 
 ## Phase 2: Lint Command Output Standardization (FR-2)
 
