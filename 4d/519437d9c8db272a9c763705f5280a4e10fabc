@@ -1,0 +1,12 @@
+Task: Path Validation
+
+TDD Cycle:
+- Red: 8 tests written (test_path_validation_*), covering: all valid, test_dirs nonexistent, godot.binary missing/None, coverage.output_dir parent missing, lint/format/coverage exclude nonexistent
+- Green: Implemented validate_paths(config, project_root) -> list[str] in config.py
+- Tests: 8 passed, 0 failed
+- Coverage: function fully covered
+
+Implementation:
+- validate_paths checks test.test_dirs, godot.binary (if not None), coverage.output_dir parent, lint/format/coverage exclude lists
+- All checks are non-fatal, returns list of warning strings
+- Uses Path for path resolution, supports both absolute and relative paths
