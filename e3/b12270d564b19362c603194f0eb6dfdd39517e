@@ -1,0 +1,20 @@
+Task: TDD Green Phase - Implement Flat Format
+
+Summary: Replaced Rich Table in format_lint_text with flat line-based format (file:line:col: rule: message [SEVERITY]). Eliminates silent truncation of long file paths and rule names in non-interactive contexts.
+
+Modified files:
+- src/gd_tools/lint_runner.py: Replaced Table-based rendering with Text.assemble for flat format
+
+Changes:
+- Removed Table import, added Text import from rich.text
+- Replaced Console(force_terminal=True) with plain Console()
+- Issues sorted by (file, line, column) before rendering
+- Severity tags [ERROR] red, [WARN] yellow via Text.assemble styled segments
+- Summary line colored red (errors) or yellow (warnings only)
+- [OK] message rendered green via Text with style='green'
+- No ellipsis truncation at any terminal width
+
+Test results: 34 passed, 0 failed (Green phase confirmed)
+lint_runner.py coverage: 96% line, meets >80% requirement
+
+Why: Rich Table with force_terminal=True defaults to 79-char width in non-interactive contexts, causing silent truncation of long file paths (76 chars) and rule names (52 chars) with ellipsis.
