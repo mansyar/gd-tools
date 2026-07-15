@@ -8,14 +8,17 @@ import yaml
 import pytest
 from pydantic import ValidationError
 
+from gd_tools import config as config_module
 from gd_tools.config import (
     DEFAULT_EXCLUDES,
     CoverageConfig,
+    DeprecatedField,
     FormatConfig,
     GdToolsConfig,
     GodotConfig,
     LintConfig,
     TestConfig,
+    check_deprecated_settings,
     find_project_root,
     generate_gdformatrc,
     generate_gdlintrc,
@@ -486,3 +489,116 @@ def test_generate_gdformatrc_custom_excludes(tmp_path):
     for exclude in custom_excludes:
         assert exclude in content
     assert "addons" not in content
+
+
+# --- Deprecation Infrastructure ---
+
+
+def test_deprecation_field_dataclass_fields():
+    """Test DeprecatedField dataclass has all required fields."""
+    df = DeprecatedField(
+        field_path="coverage.min_percent",
+        since_version="0.2.0",
+        replacement="coverage.threshold",
+        migration_message="Use coverage.threshold instead.",
+    )
+    assert df.field_path == "coverage.min_percent"
+    assert df.since_version == "0.2.0"
+    assert df.replacement == "coverage.threshold"
+    assert df.migration_message == "Use coverage.threshold instead."
+
+
+def test_deprecation_registry_empty_by_default():
+    """Test _DEPRECATED_FIELDS is empty by default (no fields deprecated)."""
+    assert config_module._DEPRECATED_FIELDS == {}
+
+
+def test_deprecation_check_empty_registry():
+    """Test check_deprecated_settings returns empty list with empty registry."""
+    result = check_deprecated_settings({"coverage": {"min_percent": 80}})
+    assert result == []
+
+
+def test_deprecation_check_key_present(monkeypatch):
+    """Test check_deprecated_settings finds a deprecated key in raw TOML."""
+    fake_dep = DeprecatedField(
+        field_path="coverage.min_percent",
+        since_version="0.2.0",
+        replacement="coverage.threshold",
+        migration_message="Use coverage.threshold instead.",
+    )
+    monkeypatch.setitem(
+        config_module._DEPRECATED_FIELDS, "coverage.min_percent", fake_dep
+    )
+    result = check_deprecated_settings({"coverage": {"min_percent": 80}})
+    assert len(result) == 1
+    assert result[0].field_path == "coverage.min_percent"
+
+
+def test_deprecation_check_key_absent(monkeypatch):
+    """Test check_deprecated_settings returns empty when key is absent."""
+    fake_dep = DeprecatedField(
+        field_path="coverage.min_percent",
+        since_version="0.2.0",
+        replacement="coverage.threshold",
+        migration_message="Use coverage.threshold instead.",
+    )
+    monkeypatch.setitem(
+        config_module._DEPRECATED_FIELDS, "coverage.min_percent", fake_dep
+    )
+    result = check_deprecated_settings({"coverage": {"enabled": True}})
+    assert result == []
+
+
+def test_deprecation_check_multiple_keys(monkeypatch):
+    """Test check_deprecated_settings finds multiple deprecated keys."""
+    dep1 = DeprecatedField(
+        field_path="coverage.min_percent",
+        since_version="0.2.0",
+        replacement="coverage.threshold",
+        migration_message="Use coverage.threshold instead.",
+    )
+    dep2 = DeprecatedField(
+        field_path="test.gutconfig",
+        since_version="0.3.0",
+        replacement=None,
+        migration_message="gutconfig is no longer supported.",
+    )
+    monkeypatch.setitem(
+        config_module._DEPRECATED_FIELDS, "coverage.min_percent", dep1
+    )
+    monkeypatch.setitem(
+        config_module._DEPRECATED_FIELDS, "test.gutconfig", dep2
+    )
+    result = check_deprecated_settings(
+        {
+            "coverage": {"min_percent": 80},
+            "test": {"gutconfig": "custom.json"},
+        }
+    )
+    assert len(result) == 2
+    paths = {r.field_path for r in result}
+    assert "coverage.min_percent" in paths
+    assert "test.gutconfig" in paths
+
+
+def test_deprecation_check_replacement_none(monkeypatch):
+    """Test check_deprecated_settings handles replacement=None."""
+    fake_dep = DeprecatedField(
+        field_path="test.gutconfig",
+        since_version="0.3.0",
+        replacement=None,
+        migration_message="gutconfig is no longer supported.",
+    )
+    monkeypatch.setitem(
+        config_module._DEPRECATED_FIELDS, "test.gutconfig", fake_dep
+    )
+    result = check_deprecated_settings({"test": {"gutconfig": "custom.json"}})
+    assert len(result) == 1
+    assert result[0].replacement is None
+
+
+def test_deprecation_check_empty_data():
+    """Test check_deprecated_settings with empty dict returns empty list."""
+    result = check_deprecated_settings({})
+    assert result == []

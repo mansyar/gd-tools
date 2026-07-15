@@ -6,6 +6,7 @@ See TDD §3.2 for model definitions and PRD §6 for config format.
 """
 
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import tomli_w
@@ -311,3 +312,62 @@ def gdformatrc_content(config: GdToolsConfig) -> str:
         One exclude path per line, newline-terminated.
     """
     return "\n".join(config.format.exclude) + "\n"
+
+
+# --- Deprecation Infrastructure ---
+
+
+@dataclass
+class DeprecatedField:
+    """Metadata for a deprecated configuration field.
+
+    Attributes:
+        field_path: Dotted path to the field (e.g.
+            ``coverage.min_percent``).
+        since_version: Version in which the field was
+            deprecated.
+        replacement: Dotted path to the replacement field,
+            or None if there is no replacement.
+        migration_message: Human-readable message explaining
+            how to migrate.
+    """
+
+    field_path: str
+    since_version: str
+    replacement: str | None
+    migration_message: str
+
+
+_DEPRECATED_FIELDS: dict[str, DeprecatedField] = {}
+
+
+def check_deprecated_settings(
+    raw_toml_data: dict,
+) -> list[DeprecatedField]:
+    """Check raw TOML data for deprecated configuration fields.
+
+    Traverses the raw TOML dict (before Pydantic validation) and
+    checks whether any key paths matching entries in
+    :data:`_DEPRECATED_FIELDS` are present.
+
+    Args:
+        raw_toml_data: The raw parsed TOML data as a dict.
+
+    Returns:
+        A list of :class:`DeprecatedField` entries found in the
+        data. Empty if no deprecated fields are present.
+    """
+    found: list[DeprecatedField] = []
+    for field_path, dep_info in _DEPRECATED_FIELDS.items():
+        parts = field_path.split(".")
+        current = raw_toml_data
+        present = True
+        for part in parts:
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                present = False
+                break
+        if present:
+            found.append(dep_info)
+    return found
