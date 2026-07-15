@@ -24,28 +24,28 @@
 
 ## Phase 2: TDD - Implement Flat Format (Green Phase)
 
-- [ ] Task: Read `spec.md` and `conductor/workflow.md` to review requirements and TDD methodology before starting this phase
-- [ ] Task: Replace Rich Table with flat line-based format in `format_lint_text` (`src/gd_tools/lint_runner.py`)
-    - [ ] Remove `Table` import/usage and `console.capture()` block
-    - [ ] Replace `Console(force_terminal=True)` with plain `Console()`
-    - [ ] Render each issue as: `{file}:{line}:{col}: {rule}: {message}  [{SEVERITY}]`
-    - [ ] Style `[ERROR]` red and `[WARN]` yellow via Rich markup
+- [x] Task: Read `spec.md` and `conductor/workflow.md` to review requirements and TDD methodology before starting this phase
+- [x] Task: Replace Rich Table with flat line-based format in `format_lint_text` (`src/gd_tools/lint_runner.py`) [e3b1227]
+    - [x] Remove `Table` import/usage and `console.capture()` block
+    - [x] Replace `Console(force_terminal=True)` with plain `Console()`
+    - [x] Render each issue as: `{file}:{line}:{col}: {rule}: {message}  [{SEVERITY}]`
+    - [x] Style `[ERROR]` red and `[WARN]` yellow via Rich markup
 
-- [ ] Task: Implement issue sorting by file path, then line, then column
-    - [ ] Combine errors and warnings into a single list
-    - [ ] Sort by `(file, line, column)` before rendering
+- [x] Task: Implement issue sorting by file path, then line, then column [e3b1227]
+    - [x] Combine errors and warnings into a single list
+    - [x] Sort by `(file, line, column)` before rendering
 
-- [ ] Task: Implement summary line coloring
-    - [ ] Color summary red if errors > 0
-    - [ ] Color summary yellow if only warnings (no errors)
-    - [ ] Color summary green if clean (no errors, no warnings)
-    - [ ] Color `[OK] No lint issues found.` green
+- [x] Task: Implement summary line coloring [e3b1227]
+    - [x] Color summary red if errors > 0
+    - [x] Color summary yellow if only warnings (no errors)
+    - [x] Color summary green if clean (no errors, no warnings)
+    - [x] Color `[OK] No lint issues found.` green
 
-- [ ] Task: Run test suite and confirm Green phase (all tests pass)
-    - [ ] Run `CI=true pytest tests/unit/test_lint_runner.py tests/integration/test_lint_integration.py`
-    - [ ] Verify all tests pass
+- [x] Task: Run test suite and confirm Green phase (all tests pass) [e3b1227]
+    - [x] Run `CI=true pytest tests/unit/test_lint_runner.py tests/integration/test_lint_integration.py`
+    - [x] Verify all tests pass
 
-- [ ] Task: Conductor - User Manual Verification 'TDD - Implement Flat Format (Green Phase)' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'TDD - Implement Flat Format (Green Phase)' (Protocol in workflow.md)
 
 ## Phase 3: Quality Gates & Verification
 
