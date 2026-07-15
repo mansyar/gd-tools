@@ -7,6 +7,7 @@ via gdtoolkit, output formatting, and syntax error handling.
 import json
 
 import pytest
+from rich.console import Console
 
 from gd_tools.config import GdToolsConfig
 from gd_tools.lint_runner import (
@@ -259,7 +260,7 @@ def test_run_lint_syntax_error_counts_as_error(tmp_path):
 
 
 def test_format_lint_text_with_violations():
-    """Test text output with violations contains table columns and values."""
+    """Test text output with violations in flat file:line:col: format."""
     errors = [
         LintIssue("src/player.gd", 10, 1, "function-name", "Bad name", "error"),
     ]
@@ -268,23 +269,23 @@ def test_format_lint_text_with_violations():
     ]
     result = LintResult(files_checked=2, errors=errors, warnings=warnings)
     output = format_lint_text(result)
-    assert "File" in output
-    assert "Line" in output
-    assert "Column" in output
-    assert "Rule" in output
-    assert "Severity" in output
-    assert "Message" in output
-    assert "src/player.gd" in output
-    assert "10" in output
+    # Flat line format: file:line:col: rule: message  [SEVERITY]
+    assert "src/player.gd:10:1:" in output
     assert "function-name" in output
     assert "Bad name" in output
-    assert "src/enemy.gd" in output
+    assert "[ERROR]" in output
+    assert "src/enemy.gd:5:3:" in output
     assert "some-rule" in output
     assert "Warning msg" in output
+    assert "[WARN]" in output
 
 
-def test_format_lint_text_color_coding():
+def test_format_lint_text_color_coding(monkeypatch):
     """Test that errors are red and warnings are yellow (ANSI codes present)."""
+    monkeypatch.setattr(
+        "gd_tools.lint_runner.Console",
+        lambda *a, **kw: Console(force_terminal=True),
+    )
     errors = [LintIssue("a.gd", 1, 1, "R", "msg", "error")]
     warnings = [LintIssue("b.gd", 2, 1, "R", "msg", "warning")]
     result = LintResult(files_checked=2, errors=errors, warnings=warnings)
@@ -293,8 +294,8 @@ def test_format_lint_text_color_coding():
     assert "\x1b[" in output
 
 
-def test_format_lint_text_summary():
-    """Test that the summary line is present."""
+def test_format_lint_text_summary(monkeypatch):
+    """Test that the summary line is present and colored by severity."""
     errors = [LintIssue("a.gd", 1, 1, "R", "msg", "error")]
     warnings = [LintIssue("b.gd", 2, 1, "R", "msg", "warning")]
     result = LintResult(files_checked=5, errors=errors, warnings=warnings)
@@ -303,12 +304,38 @@ def test_format_lint_text_summary():
     assert "1 warnings" in output
     assert "5 files checked" in output
 
+    # Force terminal to verify color coding
+    monkeypatch.setattr(
+        "gd_tools.lint_runner.Console",
+        lambda *a, **kw: Console(force_terminal=True),
+    )
+    # Errors present → red summary
+    colored_output = format_lint_text(result)
+    assert "\x1b[31" in colored_output  # red
 
-def test_format_lint_text_clean():
-    """Test clean files output (success message)."""
+    # Warnings only → yellow summary
+    result_wo = LintResult(
+        files_checked=1,
+        errors=[],
+        warnings=[LintIssue("b.gd", 2, 1, "R", "msg", "warning")],
+    )
+    output_wo = format_lint_text(result_wo)
+    assert "\x1b[33" in output_wo  # yellow
+
+
+def test_format_lint_text_clean(monkeypatch):
+    """Test clean files output (success message, green-colored)."""
     result = LintResult(files_checked=3, errors=[], warnings=[])
     output = format_lint_text(result)
     assert "[OK] No lint issues found." in output
+
+    # Force terminal to verify green coloring
+    monkeypatch.setattr(
+        "gd_tools.lint_runner.Console",
+        lambda *a, **kw: Console(force_terminal=True),
+    )
+    colored_output = format_lint_text(result)
+    assert "\x1b[32" in colored_output  # green
 
 
 def test_format_lint_text_no_files():
@@ -316,6 +343,21 @@ def test_format_lint_text_no_files():
     result = LintResult(files_checked=0, errors=[], warnings=[])
     output = format_lint_text(result)
     assert "No GDScript files found." in output
+
+
+def test_format_lint_text_long_paths_not_truncated():
+    """Test that long file paths and rule names are not truncated."""
+    long_path = (
+        "src/very/deeply/nested/module/subsystem/components/"
+        "PlayerCharacterController.gd"
+    )
+    long_rule = "class-name-underscore-prefix-violation-detailed-check"
+    errors = [LintIssue(long_path, 10, 1, long_rule, "Some message", "error")]
+    result = LintResult(files_checked=1, errors=errors, warnings=[])
+    output = format_lint_text(result)
+    assert long_path in output
+    assert long_rule in output
+    assert "…" not in output  # No truncation
 
 
 # --- format_lint_json ---

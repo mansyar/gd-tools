@@ -41,17 +41,10 @@ def test_lint_full_run_text_output(tmp_path):
         result = runner.invoke(cli, ["lint", str(tmp_path)])
 
     assert result.exit_code == 1
-    # Table headers present
-    assert "File" in result.output
-    assert "Line" in result.output
-    assert "Column" in result.output
-    assert "Rule" in result.output
-    assert "Severity" in result.output
-    assert "Message" in result.output
-    # The function-name rule should appear in the output
+    # Flat line format: file:line:col: rule: message  [SEVERITY]
     assert "function-name" in result.output
-    # Rich table may truncate long messages, so check a short fragment
-    assert "is not valid" in result.output
+    assert "BadFunctionName" in result.output
+    assert "[ERROR]" in result.output
     # Summary line
     assert "errors" in result.output
     assert "files checked" in result.output
