@@ -152,7 +152,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Coverage Command Output' (Protocol in workflow.md)
 
-## Phase 6: Final Verification and Consistency Check (FR-6, FR-7, NFRs)
+## Phase 6: Final Verification and Consistency Check (FR-6, FR-7, NFRs) [checkpoint: PENDING]
 
 - [x] Task: Read spec.md and workflow.md for context
     - [x] Read `conductor/tracks/stdout_20260715/spec.md`
@@ -168,5 +168,5 @@
     - [x] Verify color semantics consistent across all four commands (green/red/yellow/cyan/dim) — consistent
     - [x] Verify markers consistent across all four commands (`[OK]`, `[FAIL]`, `✓`, `✗`) — consistent
 
-- [ ] Task: Conductor - User Manual Verification 'Final Verification and Consistency Check' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Final Verification and Consistency Check' (Protocol in workflow.md)
 </protect>
