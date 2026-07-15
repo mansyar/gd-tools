@@ -1,0 +1,7 @@
+Task: config Command Group + show Subcommand [a778dad]
+
+TDD: Red (9 tests fail) → Green (9 tests pass)
+- config show: Rich table default, --format toml, --json, mutual exclusion (--format + --json → exit 2), config error → exit 2, help output
+- config group with show + validate stub registered
+- Function renamed to config_show with name='show' to avoid ruff F811 redefinition
+- 682 total tests pass, 97.69% coverage, ruff + black clean
