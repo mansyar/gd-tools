@@ -1,0 +1,42 @@
+Phase 2 Checkpoint Verification Report
+======================================
+
+Phase: Lint Command Output Standardization (FR-2)
+Checkpoint SHA: 494a919
+Implementation commit: 080dc55
+
+Changes Made:
+- src/gd_tools/lint_runner.py: Refactored format_lint_text() to print directly
+  via shared output module (output.console, output.print_success,
+  output.print_summary, output.print_info) instead of Console().capture().
+  Return type changed from str to None.
+- src/gd_tools/cli.py: lint command calls format_lint_text(result) directly
+  without click.echo(). JSON mode unchanged.
+- tests/unit/test_lint_runner.py: 7 tests updated to use capsys for stdout
+  capture. 1 new test (test_format_lint_text_prints_directly). Color tests
+  now monkeypatch gd_tools.output.console.
+
+Test Results:
+- test_lint_runner.py: 31 passed
+- test_cli.py: 82 passed (no changes needed)
+- Full unit suite: 708 passed
+
+Coverage (lint_runner.py):
+- Line: 96% (75 statements, 4 missed - run_lint file-skip warnings)
+- Branch: 100% (18 branches, 0 missed)
+
+Quality Gates:
+- ruff check: All checks passed
+- black --check: All files unchanged
+- Tests: 708 passed
+- Coverage: 96% line / 100% branch (above 80%/70% thresholds)
+
+FR-2 Compliance:
+- [x] file:line:col: rule: message [ERROR/WARN] format preserved
+- [x] Shared helpers used for summary (print_summary) and clean state (print_success)
+- [x] Console().capture() replaced with direct console.print()
+- [x] JSON mode unchanged
+
+User Confirmation: Verified and confirmed.
+
+Phase 2 Checkpoint Verification Report
