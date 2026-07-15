@@ -12,7 +12,9 @@ from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
+from gd_tools import output
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
 from gd_tools.coverage.reporter import (
@@ -124,7 +126,7 @@ def run_coverage_test(
         )
     except CoverageThresholdError as exc:
         if exc.report_result is not None:
-            _print_coverage_table(exc.report_result.summary)
+            _print_coverage_inline(exc.report_result.summary, min_percent)
         if test_error is not None:
             raise test_error
         raise
@@ -132,8 +134,8 @@ def run_coverage_test(
     if test_error is not None:
         raise test_error
 
-    # Print coverage summary table on success.
-    _print_coverage_table(report_result.summary)
+    # Print coverage inline summary on success.
+    _print_coverage_inline(report_result.summary, min_percent)
 
     if result is None:
         raise CoveragePlanError(
@@ -234,37 +236,94 @@ def merge_coverage_files(
     return merged
 
 
-def _print_coverage_table(summary: CoverageSummary) -> None:
+def _print_coverage_table(
+    summary: CoverageSummary, min_percent: int | None = None
+) -> None:
     """Print a Rich coverage summary table to stdout.
 
     Renders a table with Lines and Branches rows, showing Found,
-    Hit, and Rate columns.  Used by both :func:`show_coverage_summary`
-    and :func:`run_coverage_test` to ensure a consistent table format.
+    Hit, and Rate columns.  Rate cells are color-coded based on the
+    minimum threshold: green when at or above the threshold, red when
+    below.  Uses the shared output module for consistent rendering.
 
     Args:
         summary: The coverage summary to display.
+        min_percent: Optional minimum coverage percentage (0-100).
+            When set, rate cells are color-coded green if at or above
+            the threshold, red if below.
     """
-    console = Console()
     table = Table(title="Coverage Summary")
     table.add_column("Metric", style="cyan")
     table.add_column("Found", justify="right")
     table.add_column("Hit", justify="right")
-    table.add_column("Rate", justify="right", style="green")
+    table.add_column("Rate", justify="right")
+
+    line_pct = summary.line_rate * 100
+    branch_pct = summary.branch_rate * 100
+
+    if min_percent is not None:
+        line_style = "green" if line_pct >= min_percent else "red"
+        branch_style = "green" if branch_pct >= min_percent else "red"
+    else:
+        line_style = "green"
+        branch_style = "green"
 
     table.add_row(
         "Lines",
         str(summary.total_lines),
         str(summary.covered_lines),
-        f"{summary.line_rate * 100:.1f}%",
+        Text(f"{line_pct:.1f}%", style=line_style),
     )
     table.add_row(
         "Branches",
         str(summary.total_branches),
         str(summary.covered_branches),
-        f"{summary.branch_rate * 100:.1f}%",
+        Text(f"{branch_pct:.1f}%", style=branch_style),
     )
 
-    console.print(table)
+    output.print_table(table)
+
+
+def _print_threshold_footer(
+    summary: CoverageSummary, min_percent: int | None = None
+) -> None:
+    """Print a summary footer with threshold pass/fail status.
+
+    Args:
+        summary: The coverage summary to display.
+        min_percent: Optional minimum coverage percentage (0-100).
+    """
+    line_pct = summary.line_rate * 100
+    if min_percent is not None:
+        status = "pass" if line_pct >= min_percent else "fail"
+        output.print_summary(
+            status,
+            f"{line_pct:.1f}% line coverage (threshold: {min_percent}%)",
+        )
+    else:
+        output.print_summary("pass", f"{line_pct:.1f}% line coverage")
+
+
+def _print_coverage_inline(
+    summary: CoverageSummary, min_percent: int | None = None
+) -> None:
+    """Print a one-line coverage summary.
+
+    Used by :func:`run_coverage_test` to show coverage after test
+    results.  Prints the line and branch coverage percentages followed
+    by a summary footer indicating whether the threshold was met.
+
+    Args:
+        summary: The coverage summary to display.
+        min_percent: Optional minimum coverage percentage (0-100).
+    """
+    line_pct = summary.line_rate * 100
+    branch_pct = summary.branch_rate * 100
+
+    output.print_info(
+        f"Coverage: {line_pct:.1f}% lines, {branch_pct:.1f}% branches"
+    )
+    _print_threshold_footer(summary, min_percent)
 
 
 def show_coverage_summary(
@@ -302,8 +361,11 @@ def show_coverage_summary(
     # Compute summary.
     summary = reporter.compute_summary(plan, data)
 
-    # Print Rich terminal table.
-    _print_coverage_table(summary)
+    # Print Rich terminal table with color-coded rates.
+    _print_coverage_table(summary, min_percent)
+
+    # Print summary footer with threshold status.
+    _print_threshold_footer(summary, min_percent)
 
     # Threshold check.
     if min_percent is not None and summary.line_rate * 100 < min_percent:

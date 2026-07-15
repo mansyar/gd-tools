@@ -496,12 +496,14 @@ def test_show_coverage_summary_calls_compute_summary(mock_deps):
 
 
 @pytest.mark.unit
-def test_show_coverage_summary_prints_rich_table(mock_deps):
+def test_show_coverage_summary_prints_rich_table(mock_deps, capsys):
     """show_coverage_summary() prints a Rich terminal summary table."""
-    with patch("gd_tools.coverage.orchestrator.Console") as mock_console_cls:
-        show_coverage_summary(_make_config())
+    show_coverage_summary(_make_config())
 
-        mock_console_cls.return_value.print.assert_called_once()
+    captured = capsys.readouterr()
+    assert "Coverage Summary" in captured.out
+    assert "Lines" in captured.out
+    assert "Branches" in captured.out
 
 
 @pytest.mark.unit
@@ -536,63 +538,124 @@ def test_show_coverage_summary_missing_coverage_raises_plan_error(mock_deps):
 
 
 @pytest.mark.unit
-def test_run_coverage_test_coverage_summary_on_success(mock_deps):
-    """run_coverage_test() prints coverage summary table on success (no --min)."""
-    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
-        run_coverage_test(_make_config())
+def test_run_coverage_test_coverage_summary_on_success(mock_deps, capsys):
+    """run_coverage_test() prints coverage inline summary on success (no --min)."""
+    run_coverage_test(_make_config())
 
-        mock_console.return_value.print.assert_called_once()
-        table = mock_console.return_value.print.call_args[0][0]
-        assert table.title == "Coverage Summary"
+    captured = capsys.readouterr()
+    assert "Coverage:" in captured.out
+    assert "80.0%" in captured.out  # line_rate = 0.8 = 80%
 
 
 @pytest.mark.unit
-def test_run_coverage_test_coverage_summary_threshold_met(mock_deps):
-    """run_coverage_test() prints coverage summary table when --min threshold is met."""
-    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
-        run_coverage_test(_make_config(), min_percent=80)
+def test_run_coverage_test_coverage_summary_threshold_met(mock_deps, capsys):
+    """run_coverage_test() prints coverage inline summary when --min threshold is met."""
+    run_coverage_test(_make_config(), min_percent=80)
 
-        mock_console.return_value.print.assert_called_once()
+    captured = capsys.readouterr()
+    assert "Coverage:" in captured.out
+    assert "80.0%" in captured.out
 
 
 @pytest.mark.unit
 def test_run_coverage_test_coverage_summary_before_threshold_error(
     mock_deps,
+    capsys,
 ):
-    """run_coverage_test() prints coverage table before raising CoverageThresholdError."""
+    """run_coverage_test() prints coverage inline summary before raising CoverageThresholdError."""
     err = CoverageThresholdError(
         "Below threshold", report_result=_make_report_result()
     )
     mock_deps["generate_report"].side_effect = err
 
-    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
-        with pytest.raises(CoverageThresholdError):
-            run_coverage_test(_make_config(), min_percent=90)
+    with pytest.raises(CoverageThresholdError):
+        run_coverage_test(_make_config(), min_percent=90)
 
-        mock_console.return_value.print.assert_called_once()
+    captured = capsys.readouterr()
+    assert "Coverage:" in captured.out
 
 
 @pytest.mark.unit
-def test_run_coverage_test_no_coverage_summary_on_plan_error(mock_deps):
-    """run_coverage_test() does NOT print coverage table when coverage data is unavailable."""
+def test_run_coverage_test_no_coverage_summary_on_plan_error(mock_deps, capsys):
+    """run_coverage_test() does NOT print coverage summary when coverage data is unavailable."""
     mock_deps["read_coverage_json"].side_effect = CoveragePlanError(
         "File not found"
     )
 
-    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
-        with pytest.raises(CoveragePlanError):
-            run_coverage_test(_make_config())
+    with pytest.raises(CoveragePlanError):
+        run_coverage_test(_make_config())
 
-        mock_console.return_value.print.assert_not_called()
+    captured = capsys.readouterr()
+    assert "Coverage:" not in captured.out
+    assert "Coverage Summary" not in captured.out
 
 
 @pytest.mark.unit
-def test_coverage_summary_table_format_matches_show_summary(mock_deps):
-    """Coverage summary table has same columns as show_coverage_summary: Metric, Found, Hit, Rate."""
-    with patch("gd_tools.coverage.orchestrator.Console") as mock_console:
-        run_coverage_test(_make_config())
+def test_coverage_summary_table_format_matches_show_summary(mock_deps, capsys):
+    """show_coverage_summary() table has columns: Metric, Found, Hit, Rate."""
+    show_coverage_summary(_make_config())
 
-        table = mock_console.return_value.print.call_args[0][0]
-        assert table.title == "Coverage Summary"
-        column_names = [col.header for col in table.columns]
-        assert column_names == ["Metric", "Found", "Hit", "Rate"]
+    captured = capsys.readouterr()
+    assert "Coverage Summary" in captured.out
+    assert "Metric" in captured.out
+    assert "Found" in captured.out
+    assert "Hit" in captured.out
+    assert "Rate" in captured.out
+
+
+# --- Coverage output color-coding and summary footer ---
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_summary_footer(mock_deps, capsys):
+    """show_coverage_summary() prints a summary footer with coverage percentage."""
+    show_coverage_summary(_make_config())
+
+    captured = capsys.readouterr()
+    assert "80.0%" in captured.out  # line_rate = 0.8 = 80%
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_color_coded_above_threshold(
+    mock_deps,
+    monkeypatch,
+    capsys,
+):
+    """show_coverage_summary() color-codes rate cells green when at or above threshold."""
+    from rich.console import Console
+
+    monkeypatch.setattr("gd_tools.output.console", Console(force_terminal=True))
+    show_coverage_summary(_make_config(), min_percent=80)
+
+    captured = capsys.readouterr()
+    # Green ANSI code for rates at or above threshold
+    assert "\x1b[32" in captured.out  # green
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_color_coded_below_threshold(
+    mock_deps,
+    monkeypatch,
+    capsys,
+):
+    """show_coverage_summary() color-codes rate cells red when below threshold."""
+    from rich.console import Console
+
+    monkeypatch.setattr("gd_tools.output.console", Console(force_terminal=True))
+    with pytest.raises(CoverageThresholdError):
+        show_coverage_summary(_make_config(), min_percent=90)
+
+    captured = capsys.readouterr()
+    # Red ANSI code for rates below threshold
+    assert "\x1b[31" in captured.out  # red
+
+
+@pytest.mark.unit
+def test_run_coverage_test_inline_summary_content(mock_deps, capsys):
+    """run_coverage_test() inline summary shows line and branch coverage percentages."""
+    run_coverage_test(_make_config())
+
+    captured = capsys.readouterr()
+    assert "Coverage:" in captured.out
+    assert "80.0%" in captured.out  # line_rate = 0.8 = 80%
+    assert "100.0%" in captured.out  # branch_rate = 1.0 = 100%
