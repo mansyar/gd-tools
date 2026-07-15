@@ -1,0 +1,51 @@
+Phase 3 Checkpoint Verification Report
+======================================
+
+Track: Standardize Terminal Output (stdout_20260715)
+Phase: 3 - Format Command Output Standardization (FR-3)
+Checkpoint SHA: 86f6086
+Implementation SHA: 4d8c8e7
+
+Changed Files:
+- src/gd_tools/cli.py (refactored format command to use shared output helpers)
+- tests/unit/test_cli.py (4 tests updated, 2 new tests added)
+
+Changes Summary:
+- Added `output` import to cli.py: `from . import __version__, output`
+- No files case: output.print_info("No .gd files found.") (was click.echo)
+- --check with files needing format: file paths rendered with [dim] markup, summary via output.print_summary("fail", ...)
+- --check clean: output.print_success("All N file(s) are formatted.")
+- --diff with diffs: uses output.console.print(syntax) instead of new Console()
+- --diff clean (no diffs): output.print_success("All N file(s) already formatted.") (NEW - was no output)
+- Default with files formatted: output.print_summary("pass", ...)
+- Default all formatted: output.print_success("All N file(s) already formatted.")
+
+New Tests:
+- test_format_diff_no_diffs: tests --diff with no diffs shows [OK] success message
+- test_format_check_dim_file_paths: tests file paths in --check mode use dim style (ANSI \x1b[2m)
+
+Updated Tests:
+- test_format_default_mode: added assert "3 files checked" in result.output
+- test_format_default_all_formatted: added assert "[OK]" in result.output
+- test_format_check_needs_formatting: added assert "3 files checked" in result.output
+- test_format_check_all_formatted: added assert "[OK]" in result.output
+
+Automated Verification:
+- Tests: 710 passed (2 new)
+- Coverage: 97.11% overall
+  - cli.py: 94% line / 91% branch
+  - format_runner.py: 95% line / 100% branch
+  - output.py: 100% line / 100% branch
+- ruff check: passed
+- black --check: passed
+
+Manual Verification Plan:
+1. gd-tools format (unformatted) -> green summary with "Formatted N of M file(s), M files checked"
+2. gd-tools format (all formatted) -> green [OK] "All N file(s) already formatted."
+3. gd-tools format --check (unformatted) -> dim file paths, red summary
+4. gd-tools format --check (all formatted) -> green [OK] "All N file(s) are formatted."
+5. gd-tools format --diff (unformatted) -> syntax-highlighted diffs
+6. gd-tools format --diff (all formatted) -> green [OK] "All N file(s) already formatted."
+7. gd-tools format (no .gd files) -> cyan "No .gd files found."
+
+User Confirmation: Confirmed
