@@ -86,7 +86,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Format Command Output' (Protocol in workflow.md)
 
-## Phase 4: Test Command Output Standardization (FR-4)
+## Phase 4: Test Command Output Standardization (FR-4) [checkpoint: a55fcaf]
 
 - [x] Task: Read spec.md and workflow.md for context
     - [x] Read `conductor/tracks/stdout_20260715/spec.md`
