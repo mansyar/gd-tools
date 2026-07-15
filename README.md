@@ -152,3 +152,16 @@ setup details.
 ## 9. License
 
 MIT
+
+## 10. Acknowledgements
+
+`gd-tools` stands on the shoulders of two excellent community tools. It
+wraps them; it does not replace them. Full credit to their authors for the
+hard parts.
+
+- **[GUT (Godot Unit Test)](https://github.com/bitwes/Gut)** by [bitwes](https://github.com/bitwes): the GDScript test framework that `gd-tools test` drives.
+- **[gdtoolkit](https://github.com/Scony/godot-gdscript-toolkit)** by [Scony](https://github.com/Scony): provides `gdlint` and `gdformat`, which `gd-tools lint` and `gd-tools format` wrap.
+
+The custom hybrid coverage system (plan generation, runtime instrumentation,
+and reporting) is the original work of `gd-tools` and fills the gap these
+tools do not cover.

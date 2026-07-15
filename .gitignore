@@ -22,3 +22,6 @@ out.json
 # Spike generated artifacts
 spike/coverage.json
 spike/spike_output.log
+
+# demo script
+demo.ps1
