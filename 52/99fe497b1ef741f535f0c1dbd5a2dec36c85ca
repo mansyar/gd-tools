@@ -1,0 +1,15 @@
+Task: TDD Red Phase - Update Tests for New Format
+
+Summary: Updated unit and integration tests to expect flat line-based lint output format (file:line:col: rule: message [SEVERITY]) instead of Rich Table columns. Added test for long path/rule truncation prevention.
+
+Modified files:
+- tests/unit/test_lint_runner.py: Updated 5 tests, added 1 new test
+- tests/integration/test_lint_integration.py: Updated test_lint_full_run_text_output
+
+Test results: 4 tests fail as expected (Red phase confirmed):
+- test_format_lint_text_with_violations (flat format not yet implemented)
+- test_format_lint_text_clean (green coloring not yet implemented)
+- test_format_lint_text_long_paths_not_truncated (truncation not yet fixed)
+- test_lint_full_run_text_output (truncation not yet fixed)
+
+Why: Rich Table with Console(force_terminal=True) truncates long file paths and rule names at 79-char width. New flat format eliminates truncation entirely.
