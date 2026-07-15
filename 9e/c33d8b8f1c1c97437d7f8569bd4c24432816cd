@@ -1,0 +1,21 @@
+Task: Implement shared output module (src/gd_tools/output.py)
+
+Summary:
+Created src/gd_tools/output.py with shared rendering helpers for consistent
+terminal output across all commands. The module provides:
+- console: Shared Console instance (auto-detects terminal, no ANSI when piped)
+- print_success(message): [OK] marker in green
+- print_error(message): [FAIL] marker in red
+- print_warning(message): yellow text
+- print_info(message): cyan text
+- print_summary(status, counts, files_checked, extra_info): summary footer with
+  color coding (green=pass, red=fail, yellow=warning)
+- print_table(table): wrapper around console.print(table)
+
+Files created:
+- src/gd_tools/output.py (shared output module)
+- tests/unit/test_output.py (17 unit tests, 100% line/branch coverage)
+
+Why: Establishes a unified visual language for all CLI commands per the
+standardize terminal output spec (FR-1). Color semantics and markers follow
+product-guidelines.md sections 2.1 and 7.
