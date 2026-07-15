@@ -117,38 +117,38 @@
 
 ## Phase 5: Coverage Command Output Standardization (FR-5)
 
-- [ ] Task: Read spec.md and workflow.md for context
-    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md for context
+    - [x] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write/update tests for `coverage show` output
-    - [ ] Update `tests/unit/test_orchestrator.py` — tests for `show_coverage_summary()` using shared helpers
-    - [ ] Test Rich table with line coverage %, branch coverage %
-    - [ ] Test color-coded threshold status (green ≥ threshold, red < threshold)
-    - [ ] Test summary footer via `print_summary()` for threshold pass/fail
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Write/update tests for `coverage show` output
+    - [x] Update `tests/unit/test_orchestrator.py` — tests for `show_coverage_summary()` using shared helpers
+    - [x] Test Rich table with line coverage %, branch coverage %
+    - [x] Test color-coded threshold status (green ≥ threshold, red < threshold)
+    - [x] Test summary footer via `print_summary()` for threshold pass/fail
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement `coverage show` output changes
-    - [ ] Refactor `show_coverage_summary()` in `src/gd_tools/coverage/orchestrator.py` to render Rich table via `print_table()`
-    - [ ] Add line %, branch % columns with color coding
-    - [ ] Add threshold status column (green ≥ threshold, red < threshold)
-    - [ ] Use `print_summary()` for threshold pass/fail footer
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `ruff check src/gd_tools/coverage/orchestrator.py` and `black --check`
-    - [ ] Run `CI=true pytest tests/unit/test_orchestrator.py --cov-branch --cov-report=term-missing`
+- [x] Task: Implement `coverage show` output changes
+    - [x] Refactor `show_coverage_summary()` in `src/gd_tools/coverage/orchestrator.py` to render Rich table via `print_table()`
+    - [x] Add line %, branch % columns with color coding
+    - [x] Add threshold status column (green ≥ threshold, red < threshold)
+    - [x] Use `print_summary()` for threshold pass/fail footer
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `ruff check src/gd_tools/coverage/orchestrator.py` and `black --check`
+    - [x] Run `CI=true pytest tests/unit/test_orchestrator.py --cov-branch --cov-report=term-missing`
 
-- [ ] Task: Write/update tests for `test --coverage` inline summary
-    - [ ] Update `tests/unit/test_test_runner.py` — tests for inline coverage summary after test run
-    - [ ] Test coverage summary line printed after test summary table (line %, branch %)
-    - [ ] Test color coding by threshold (green ≥ threshold, red < threshold)
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Write/update tests for `test --coverage` inline summary
+    - [x] Update `tests/unit/test_orchestrator.py` — tests for inline coverage summary (implemented in orchestrator's `run_coverage_test()`)
+    - [x] Test coverage summary line printed after test summary table (line %, branch %)
+    - [x] Test color coding by threshold (green ≥ threshold, red < threshold)
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement `test --coverage` inline summary
-    - [ ] Add inline coverage summary rendering in `run_tests()` or `format_test_results()` after test summary table
-    - [ ] Print line %, branch % using `print_info()` / `print_summary()` with threshold color coding
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `ruff check src/gd_tools/test_runner.py` and `black --check`
-    - [ ] Run `CI=true pytest tests/unit/test_test_runner.py --cov-branch --cov-report=term-missing`
+- [x] Task: Implement `test --coverage` inline summary
+    - [x] Add `_print_coverage_inline()` in `orchestrator.py` — called by `run_coverage_test()` after `run_tests()` returns
+    - [x] Print line %, branch % using `print_info()` / `print_summary()` with threshold color coding
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `ruff check src/gd_tools/coverage/orchestrator.py` and `black --check`
+    - [x] Run `CI=true pytest tests/unit/test_orchestrator.py --cov-branch --cov-report=term-missing`
 
 - [ ] Task: Conductor - User Manual Verification 'Coverage Command Output' (Protocol in workflow.md)
 
