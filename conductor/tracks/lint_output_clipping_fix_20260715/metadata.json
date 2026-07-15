@@ -1,0 +1,8 @@
+{
+  "track_id": "lint_output_clipping_fix_20260715",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-07-15T12:19:04Z",
+  "updated_at": "2026-07-15T12:19:04Z",
+  "description": "Track 24.6: Lint Output Clipping Fix - Replace the Rich Table in format_lint_text with a flat line-based format to eliminate file path and rule name truncation"
+}
