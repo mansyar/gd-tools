@@ -1,0 +1,146 @@
+# Implementation Plan: Standardize Terminal Output
+
+## Phase 1: Shared Output Module (FR-1)
+
+- [ ] Task: Write tests for `src/gd_tools/output.py`
+    - [ ] Create `tests/unit/test_output.py`
+    - [ ] Test `print_success(message)` renders `[OK]` marker in green
+    - [ ] Test `print_error(message)` renders `[FAIL]` marker in red
+    - [ ] Test `print_warning(message)` renders message in yellow
+    - [ ] Test `print_info(message)` renders message in cyan
+    - [ ] Test `print_summary(status, counts, files_checked, extra_info)` renders summary footer with correct color coding (green=pass, red=fail, yellow=warning)
+    - [ ] Test `print_table(table)` renders a Rich Table via shared console
+    - [ ] Test shared Console instance auto-detects terminal capabilities (no ANSI when piped)
+    - [ ] Run tests and confirm they fail (Red phase)
+
+- [ ] Task: Implement `src/gd_tools/output.py`
+    - [ ] Create module with shared `Console` instance (or factory function)
+    - [ ] Implement `print_success(message)` — `[OK]` marker in green via `Text.assemble`
+    - [ ] Implement `print_error(message)` — `[FAIL]` marker in red via `Text.assemble`
+    - [ ] Implement `print_warning(message)` — yellow text
+    - [ ] Implement `print_info(message)` — cyan text
+    - [ ] Implement `print_summary(status, counts, files_checked, extra_info)` — summary footer with color based on status
+    - [ ] Implement `print_table(table)` — wrapper around `console.print(table)`
+    - [ ] Run tests and confirm they pass (Green phase)
+    - [ ] Run `ruff check src/gd_tools/output.py` and `black --check src/gd_tools/output.py`
+    - [ ] Run `CI=true pytest --cov=gd_tools.output --cov-branch --cov-report=term-missing` and verify ≥80% line, ≥70% branch
+
+- [ ] Task: Conductor - User Manual Verification 'Shared Output Module' (Protocol in workflow.md)
+
+## Phase 2: Lint Command Output Standardization (FR-2)
+
+- [ ] Task: Write/update tests for lint output using shared module
+    - [ ] Update `tests/unit/test_lint_runner.py` — tests for `format_lint_text()` using shared output helpers
+    - [ ] Test that clean state uses `print_success()` with `[OK]` marker
+    - [ ] Test that summary footer uses `print_summary()` with correct status color
+    - [ ] Test that detail format remains `file:line:col: rule: message  [ERROR/WARN]`
+    - [ ] Test that JSON output (`format_lint_json()`) is unchanged
+    - [ ] Update `tests/unit/test_cli.py` — CLI integration tests for lint command output
+    - [ ] Run tests and confirm they fail (Red phase)
+
+- [ ] Task: Implement lint output changes
+    - [ ] Refactor `format_lint_text()` in `src/gd_tools/lint_runner.py` to use shared `print_success()` for clean state
+    - [ ] Replace `Console().capture()` + inline `Text()` summary with shared `print_summary()` call
+    - [ ] Keep detail format unchanged (`file:line:col: rule: message  [ERROR/WARN]`)
+    - [ ] Keep `format_lint_json()` unchanged
+    - [ ] Update `src/gd_tools/cli.py` lint command to use shared console for output
+    - [ ] Run tests and confirm they pass (Green phase)
+    - [ ] Run `ruff check src/gd_tools/lint_runner.py src/gd_tools/cli.py` and `black --check`
+    - [ ] Run `CI=true pytest tests/unit/test_lint_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
+
+- [ ] Task: Conductor - User Manual Verification 'Lint Command Output' (Protocol in workflow.md)
+
+## Phase 3: Format Command Output Standardization (FR-3)
+
+- [ ] Task: Write/update tests for format output using shared module
+    - [ ] Update `tests/unit/test_format_runner.py` — tests for format output using shared helpers
+    - [ ] Test `--check` mode: files needing format listed with `dim` style, summary via `print_summary()`
+    - [ ] Test `--diff` mode: diffs rendered via shared console with `Syntax`
+    - [ ] Test default mode: formatted count via `print_summary()`, clean state via `print_success()`
+    - [ ] Test "no files found" message
+    - [ ] Update `tests/unit/test_cli.py` — CLI integration tests for format command output
+    - [ ] Run tests and confirm they fail (Red phase)
+
+- [ ] Task: Implement format output changes
+    - [ ] Refactor `src/gd_tools/cli.py` format command to replace `click.echo()` with shared output helpers
+    - [ ] Use `print_success()` for "all files formatted" clean state
+    - [ ] Use `print_summary()` for file count summaries (formatted/checked, needing format/checked)
+    - [ ] Render file paths in `--check` mode with `dim` style via shared console
+    - [ ] Route `--diff` mode `Syntax` rendering through shared console
+    - [ ] Run tests and confirm they pass (Green phase)
+    - [ ] Run `ruff check src/gd_tools/cli.py` and `black --check`
+    - [ ] Run `CI=true pytest tests/unit/test_format_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
+
+- [ ] Task: Conductor - User Manual Verification 'Format Command Output' (Protocol in workflow.md)
+
+## Phase 4: Test Command Output Standardization (FR-4)
+
+- [ ] Task: Write/update tests for test output using shared module
+    - [ ] Update `tests/unit/test_test_runner.py` — tests for `format_test_results()` using shared helpers
+    - [ ] Test summary table rendered via `print_table()`
+    - [ ] Test per-test failure details shown when tests fail (test name, suite, ✗ marker, message)
+    - [ ] Test per-test details NOT shown when all tests pass
+    - [ ] Test summary footer via `print_summary()` with pass/fail status
+    - [ ] Test clean state uses `print_success()` when all tests pass
+    - [ ] Test GUT stdout/stderr still printed on failure (truncated to 5000 chars)
+    - [ ] Update `tests/unit/test_cli.py` — CLI integration tests for test command output
+    - [ ] Run tests and confirm they fail (Red phase)
+
+- [ ] Task: Implement test output changes
+    - [ ] Refactor `format_test_results()` in `src/gd_tools/test_runner.py` to use `print_table()` for summary table
+    - [ ] Add per-test failure detail rendering: list failed tests with name, suite, ✗ marker, and failure message
+    - [ ] Add `print_summary()` footer line below table with pass/fail status
+    - [ ] Use `print_success()` when all tests pass
+    - [ ] Keep GUT stdout/stderr on-failure behavior unchanged
+    - [ ] Run tests and confirm they pass (Green phase)
+    - [ ] Run `ruff check src/gd_tools/test_runner.py` and `black --check`
+    - [ ] Run `CI=true pytest tests/unit/test_test_runner.py tests/unit/test_cli.py --cov-branch --cov-report=term-missing`
+
+- [ ] Task: Conductor - User Manual Verification 'Test Command Output' (Protocol in workflow.md)
+
+## Phase 5: Coverage Command Output Standardization (FR-5)
+
+- [ ] Task: Write/update tests for `coverage show` output
+    - [ ] Update `tests/unit/test_orchestrator.py` — tests for `show_coverage_summary()` using shared helpers
+    - [ ] Test Rich table with line coverage %, branch coverage %
+    - [ ] Test color-coded threshold status (green ≥ threshold, red < threshold)
+    - [ ] Test summary footer via `print_summary()` for threshold pass/fail
+    - [ ] Run tests and confirm they fail (Red phase)
+
+- [ ] Task: Implement `coverage show` output changes
+    - [ ] Refactor `show_coverage_summary()` in `src/gd_tools/coverage/orchestrator.py` to render Rich table via `print_table()`
+    - [ ] Add line %, branch % columns with color coding
+    - [ ] Add threshold status column (green ≥ threshold, red < threshold)
+    - [ ] Use `print_summary()` for threshold pass/fail footer
+    - [ ] Run tests and confirm they pass (Green phase)
+    - [ ] Run `ruff check src/gd_tools/coverage/orchestrator.py` and `black --check`
+    - [ ] Run `CI=true pytest tests/unit/test_orchestrator.py --cov-branch --cov-report=term-missing`
+
+- [ ] Task: Write/update tests for `test --coverage` inline summary
+    - [ ] Update `tests/unit/test_test_runner.py` — tests for inline coverage summary after test run
+    - [ ] Test coverage summary line printed after test summary table (line %, branch %)
+    - [ ] Test color coding by threshold (green ≥ threshold, red < threshold)
+    - [ ] Run tests and confirm they fail (Red phase)
+
+- [ ] Task: Implement `test --coverage` inline summary
+    - [ ] Add inline coverage summary rendering in `run_tests()` or `format_test_results()` after test summary table
+    - [ ] Print line %, branch % using `print_info()` / `print_summary()` with threshold color coding
+    - [ ] Run tests and confirm they pass (Green phase)
+    - [ ] Run `ruff check src/gd_tools/test_runner.py` and `black --check`
+    - [ ] Run `CI=true pytest tests/unit/test_test_runner.py --cov-branch --cov-report=term-missing`
+
+- [ ] Task: Conductor - User Manual Verification 'Coverage Command Output' (Protocol in workflow.md)
+
+## Phase 6: Final Verification and Consistency Check (FR-6, FR-7, NFRs)
+
+- [ ] Task: Verify cross-command consistency
+    - [ ] Run full test suite: `CI=true pytest`
+    - [ ] Run full coverage: `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
+    - [ ] Verify ≥80% line, ≥70% branch coverage for all modified source code
+    - [ ] Run lint: `ruff check src/ tests/`
+    - [ ] Run format check: `black --check src/ tests/`
+    - [ ] Verify JSON output modes unaffected (`--report-format json` for lint, `--junit-xml` for test)
+    - [ ] Verify color semantics consistent across all four commands (green/red/yellow/cyan/dim)
+    - [ ] Verify markers consistent across all four commands (`[OK]`, `[FAIL]`, `✓`, `✗`)
+
+- [ ] Task: Conductor - User Manual Verification 'Final Verification and Consistency Check' (Protocol in workflow.md)
