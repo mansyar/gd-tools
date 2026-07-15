@@ -41,4 +41,8 @@ This phase adds the `config` command group with `show` and `validate` subcommand
     - [x] Verify: `CI=true pytest tests/unit/test_cli_config.py -k validate` passes. `ruff check src/gd_tools/cli.py` and `black --check src/gd_tools/cli.py` pass.
 
 - [x] Task: Conductor - User Manual Verification 'CLI Commands' (Protocol in workflow.md) [checkpoint: 0901c2f]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions [f06c1b2]
 </protect>
