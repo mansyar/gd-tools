@@ -22,7 +22,7 @@ This phase adds the backend logic to `config.py`: the deprecation registry, depr
     - [x] Implement `format_config_table(config: GdToolsConfig) -> Table` (returns Rich `Table` with Section/Key/Value columns), `format_config_toml(config: GdToolsConfig) -> str` (uses `tomli_w.dumps`), and `format_config_json(config: GdToolsConfig) -> str` (uses `json.dumps(config.model_dump())`) in `config.py`.
     - [x] Verify: `CI=true pytest tests/unit/test_config.py -k format` passes. `ruff check` and `black --check` pass.
 
-- [ ] Task: Conductor - User Manual Verification 'Config Module Extensions' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Config Module Extensions' (Protocol in workflow.md) [checkpoint: 8650c04]
 
 ## Phase 2: CLI Commands (`cli.py`)
 
