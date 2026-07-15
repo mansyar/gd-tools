@@ -86,7 +86,7 @@ A successful v1.0 release is defined by:
 - **PyPI publish.** The package is published to PyPI and installable via `pip install gd-tools-cli`. This is the primary release gate — the product is not "released" until it is on PyPI and a clean-environment install produces a working `gd-tools --version`.
 
 Supporting success metrics (measured but not gating):
-- All CLI commands (test, lint, format, coverage, init, doctor) functional end-to-end.
+- All CLI commands (test, lint, format, coverage, init, doctor, config) functional end-to-end.
 - gd-tools itself achieves ≥80% line coverage, ≥70% branch coverage.
 - GitHub Actions CI pipeline completes in under 10 minutes.
 - Install-to-first-run time under 2 minutes.
