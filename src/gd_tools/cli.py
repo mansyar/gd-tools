@@ -1,21 +1,27 @@
 """CLI entry point for gd-tools."""
 
+import copy
 import json
 import sys
 from pathlib import Path
 from typing import Any
 
 import click
+from pydantic import ValidationError
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
 
 from . import __version__
 from .config import (
+    check_deprecated_settings,
+    find_project_root,
     format_config_json,
     format_config_table,
     format_config_toml,
     load_config,
+    validate_paths,
+    GdToolsConfig,
 )
 from .coverage.orchestrator import (
     generate_coverage_report,
@@ -37,6 +43,11 @@ from .test_runner import run_tests
 from .update_check import check_for_update
 from .addon_check import check_addon_version
 from .version import collect_versions
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover
+    import tomli as tomllib
 
 
 def _configure_windows_utf8() -> None:
@@ -465,7 +476,137 @@ def config_show(format, as_json):
     ctx.exit(0)
 
 
+def _remove_deprecated_keys(
+    data: dict,
+    deprecated_paths: set[str],
+) -> dict:
+    """Remove deprecated keys from a deep copy of the data dict.
+
+    Args:
+        data: The original dict (e.g. raw parsed TOML).
+        deprecated_paths: Set of dotted paths to remove
+            (e.g. ``{"coverage.old_field"}``).
+
+    Returns:
+        A new dict with deprecated keys removed.  If
+        ``deprecated_paths`` is empty, the original dict is
+        returned unchanged.
+    """
+    if not deprecated_paths:
+        return data
+    result = copy.deepcopy(data)
+    for path in deprecated_paths:
+        parts = path.split(".")
+        current: dict | None = result
+        for part in parts[:-1]:
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                current = None
+                break
+        if isinstance(current, dict) and parts[-1] in current:
+            del current[parts[-1]]
+    return result
+
+
 @config.command()
 def validate():
-    """Validate the configuration file."""
-    pass
+    """Validate the configuration file.
+
+    Checks for schema errors (invalid keys, bad values), deprecated
+    settings, and path issues.  Schema errors and deprecated settings
+    cause a non-zero exit; path warnings are advisory only.
+    """
+    try:
+        project_root = find_project_root()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    config_file = project_root / "gd-tools.toml"
+
+    schema_errors: list[str] = []
+    path_warnings: list[str] = []
+
+    # --- No config file: validate defaults ---
+    if not config_file.is_file():
+        config = GdToolsConfig()
+        path_warnings = validate_paths(config, project_root)
+        if path_warnings:
+            click.echo("Path Warnings:")
+            for w in path_warnings:
+                click.echo(f"  ! {w}")
+        click.echo("No gd-tools.toml found. Using default configuration.")
+        click.echo("Configuration is valid (using defaults).")
+        ctx = click.get_current_context()
+        ctx.exit(0)
+
+    # --- Read raw TOML ---
+    try:
+        with open(config_file, "rb") as f:
+            raw_toml = tomllib.load(f)
+    except tomllib.TOMLDecodeError as exc:
+        click.echo(f"Schema Error: Invalid TOML syntax: {exc}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(1)
+
+    # --- Deprecated settings (checked before Pydantic) ---
+    deprecated = check_deprecated_settings(raw_toml)
+    deprecated_paths = {dep.field_path for dep in deprecated}
+
+    # Remove deprecated keys so they don't trigger extra-forbidden errors
+    clean_toml = _remove_deprecated_keys(raw_toml, deprecated_paths)
+
+    # --- Schema validation via Pydantic ---
+    config: GdToolsConfig | None = None
+    try:
+        config = GdToolsConfig(**clean_toml)
+    except ValidationError as exc:
+        for error in exc.errors():
+            loc = ".".join(str(p) for p in error["loc"])
+            msg = error["msg"]
+            if "Extra inputs are not permitted" in msg:
+                schema_errors.append(
+                    f"Unknown key '{loc}': not a recognized "
+                    "configuration field"
+                )
+            else:
+                schema_errors.append(f"{loc}: {msg}")
+
+    # --- Path validation (only if schema is valid) ---
+    if config is not None:
+        path_warnings = validate_paths(config, project_root)
+
+    # --- Print grouped findings ---
+    if schema_errors:
+        click.echo("Schema Errors:")
+        for err in schema_errors:
+            click.echo(f"  X {err}")
+
+    if deprecated:
+        click.echo("Deprecated Settings:")
+        for dep in deprecated:
+            click.echo(
+                f"  X {dep.field_path}: deprecated since "
+                f"v{dep.since_version}"
+            )
+            if dep.replacement:
+                click.echo(f"    Use '{dep.replacement}' instead")
+            click.echo(f"    {dep.migration_message}")
+
+    if path_warnings:
+        click.echo("Path Warnings:")
+        for w in path_warnings:
+            click.echo(f"  ! {w}")
+
+    # --- Summary ---
+    click.echo(f"Configuration file: {config_file}")
+    has_errors = bool(schema_errors or deprecated)
+    if not has_errors:
+        click.echo("Configuration is valid.")
+        if path_warnings:
+            click.echo(f"  ({len(path_warnings)} path warning(s))")
+
+    ctx = click.get_current_context()
+    ctx.exit(1 if has_errors else 0)

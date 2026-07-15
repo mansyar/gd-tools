@@ -114,3 +114,142 @@ def test_config_group_help():
     assert result.exit_code == 0
     assert "show" in result.output
     assert "validate" in result.output
+
+
+# ---------------------------------------------------------------------------
+# config validate tests
+# ---------------------------------------------------------------------------
+
+
+def _create_default_dirs(path):
+    """Create directories matching default config to avoid path warnings."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (path / d).mkdir(exist_ok=True)
+
+
+def test_config_validate_valid_config(tmp_path, monkeypatch):
+    """config validate with a valid config exits 0 and prints success."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        '[test]\ntest_dirs = ["test", "tests"]\n'
+    )
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 0
+    assert "valid" in result.output.lower()
+
+
+def test_config_validate_invalid_toml(tmp_path, monkeypatch):
+    """config validate with invalid TOML exits 1 and reports error."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text("= invalid toml\n")
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 1
+
+
+def test_config_validate_unknown_key(tmp_path, monkeypatch):
+    """config validate with unknown key exits 1 and reports it."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text('[test]\nunknown_key = "value"\n')
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 1
+    assert "unknown_key" in result.output
+
+
+def test_config_validate_nonexistent_test_dir(tmp_path, monkeypatch):
+    """config validate with nonexistent test dir exits 0, warns."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        '[test]\ntest_dirs = ["nonexistent_dir"]\n'
+    )
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 0
+    assert "nonexistent_dir" in result.output
+
+
+def test_config_validate_nonexistent_godot_binary(tmp_path, monkeypatch):
+    """config validate with nonexistent godot.binary exits 0, warns."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        '[godot]\nbinary = "nonexistent_godot"\n'
+    )
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 0
+    assert "nonexistent_godot" in result.output
+
+
+def test_config_validate_nonexistent_exclude_dir(tmp_path, monkeypatch):
+    """config validate with nonexistent exclude dir exits 0, warns."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        "[lint]\nexclude = "
+        '["addons", ".godot", ".gd-tools", ".git", "nonexistent"]\n'
+    )
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 0
+    assert "nonexistent" in result.output
+
+
+def test_config_validate_deprecated_setting(tmp_path, monkeypatch):
+    """config validate with deprecated setting exits 1, warns."""
+    from gd_tools import config as config_module
+    from gd_tools.config import DeprecatedField
+
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        '[test]\ntest_dirs = ["test", "tests"]\n'
+        "[coverage]\nold_field = true\n"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    config_module._DEPRECATED_FIELDS["coverage.old_field"] = DeprecatedField(
+        field_path="coverage.old_field",
+        since_version="1.0.0",
+        replacement="coverage.min_percent",
+        migration_message="Replace old_field with min_percent.",
+    )
+
+    try:
+        runner = CliRunner()
+        result = runner.invoke(cli, ["config", "validate"])
+        assert result.exit_code == 1
+        assert "coverage.old_field" in result.output
+        assert "deprecated" in result.output.lower()
+    finally:
+        config_module._DEPRECATED_FIELDS.pop("coverage.old_field", None)
+
+
+def test_config_validate_no_config_file(tmp_path, monkeypatch):
+    """config validate with no config file exits 0, prints defaults."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 0
+    assert "default" in result.output.lower()
