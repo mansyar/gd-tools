@@ -382,6 +382,18 @@ gd-tools test tests/unit
 gd-tools test tests/unit tests/integration
 ```
 
+**Output Format:**
+
+Test results are rendered as a Rich table with columns for Status, Suite,
+and Test name. Passing tests show a green ✓; failing tests show a red ✗
+with the failure message printed below (indented, including the suite
+name and error message). A summary footer line shows pass/fail counts,
+and a `[OK]` success message is displayed when all tests pass.
+
+When `--coverage` is used, an inline coverage summary is printed after
+the test results showing line and branch coverage rates with color-coded
+threshold status (green if meeting threshold, red if below).
+
 **Exit Codes:**
 
 | Code | Condition |
@@ -506,6 +518,15 @@ gd-tools format src/player.gd
 gd-tools format src/player.gd src/enemy.gd scripts/
 ```
 
+**Output Format:**
+
+In `--check` mode, files needing formatting are listed with their paths
+rendered in dim text. When all files are already formatted, a green
+`[OK]` success message is displayed.
+
+In `--diff` mode, each file's diff is shown with the file path in dim
+text preceding the diff output.
+
 **Exit Codes:**
 
 | Code | Condition |
@@ -620,6 +641,13 @@ gd-tools coverage show
 # Enforce a 80% minimum threshold
 gd-tools coverage show --min 80
 ```
+
+**Output Format:**
+
+Coverage is displayed as a Rich table with per-file line and branch
+coverage rates. Rate cells are color-coded: green when at or above the
+threshold, red when below. A summary footer shows the overall coverage
+and threshold status (green if meeting threshold, red if below).
 
 **Exit Codes:**
 

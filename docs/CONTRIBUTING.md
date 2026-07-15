@@ -334,6 +334,7 @@ gd-tools/
 |   |-- godot.py               # Godot binary detection (5-level chain)
 |   |-- init.py                # Project initialization (GUT, addon, config)
 |   |-- lint_runner.py         # gdlint wrapper
+|   |-- output.py              # Shared terminal output module (Rich-based)
 |   |-- test_runner.py         # GUT test execution and JUnit parsing
 |   |-- coverage/              # Coverage subsystem
 |   |   |-- orchestrator.py    # Coverage flow orchestration
@@ -391,6 +392,7 @@ Each Python module in `src/gd_tools/` maps to a specific responsibility:
 | `godot.py` | `GodotInfo`, 5-level binary detection, `GUT_VERSION_MAP` |
 | `init.py` | Full project bootstrap: GUT install, addon deploy, config creation |
 | `lint_runner.py` | `gdtoolkit.linter` wrapper, `LintResult` dataclass |
+| `output.py` | Shared terminal output module — Rich-based rendering helpers (`print_success`, `print_error`, `print_warning`, `print_info`, `print_summary`, `print_table`) and shared `Console` instance |
 | `test_runner.py` | GUT argument construction, subprocess execution, JUnit parsing |
 | `coverage/` | Coverage plan generation, runtime instrumentation, reporting |
 

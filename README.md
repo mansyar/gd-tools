@@ -25,7 +25,7 @@ One install, one config, one mental model.
 
 | Feature | Description |
 |---------|-------------|
-| **Unified workflow** | One install, one config (`gd-tools.toml`), one mental model for test, lint, format, and coverage. |
+| **Unified workflow** | One install, one config (`gd-tools.toml`), one mental model for test, lint, format, and coverage. Consistent terminal output with colored markers and summary footers across all commands. |
 | **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute -- GUT installed, coverage addon deployed, configs generated. |
 | **Coverage gap-filling** | Production-quality line and branch coverage for GDScript -- HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. |
 | **CI/CD friendly** | Exit codes, `--check` flags, machine-readable output (JSON, JUnit XML, LCOV, Cobertura), no interactive prompts in CI mode. |

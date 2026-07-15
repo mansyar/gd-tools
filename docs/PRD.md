@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Config Show/Validate delivered (Track 25)
+**Status:** Post-v1.0 — Terminal Output Standardization delivered (Track 25b)
 **Target Godot Version:** 4.5+
 
 ---
@@ -875,6 +875,7 @@ gd-tools/
 │       ├── doctor.py             # `gd-tools doctor` logic
 │       ├── test_runner.py        # `gd-tools test` — GUT orchestration
 │       ├── lint_runner.py       # `gd-tools lint` — gdlint wrapper
+│       ├── output.py           # Shared terminal output module (Rich-based)
 │       ├── format_runner.py     # `gd-tools format` — gdformat wrapper
 │       ├── version.py           # `gd-tools version` — component version detection
 │       ├── coverage/

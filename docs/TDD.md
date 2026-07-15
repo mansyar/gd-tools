@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Config Show/Validate delivered (Track 25)
+**Status:** Post-v1.0 — Terminal Output Standardization delivered (Track 25b)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -45,6 +45,7 @@ src/gd_tools/
 ├── format_runner.py            # `gd-tools format` — gdformat wrapper
 ├── version.py                 # `gd-tools version` — component version detection
 ├── errors.py                 # Exception hierarchy
+├── output.py                 # Shared terminal output module (Rich-based)
 ├── coverage/
 │   ├── __init__.py
 │   ├── orchestrator.py        # Coverage CLI orchestration (test --coverage, report, merge, show)
@@ -69,17 +70,18 @@ src/gd_tools/
 ```
 cli.py
 ├── config.py
+├── output.py (→ rich: Console, Table, Text)
 ├── update_check.py (-> packaging, requests)
 ├── addon_check.py (-> packaging, config)
 ├── godot.py
 ├── init.py (→ config, godot)
 ├── doctor.py (→ config, godot)
-├── test_runner.py (→ config, godot, coverage/plan_generator, coverage/reporter)
-├── lint_runner.py (→ config)
+├── test_runner.py (→ config, godot, output, coverage/plan_generator, coverage/reporter)
+├── lint_runner.py (→ config, output)
 ├── format_runner.py (→ config)
 ├── version.py (→ config, godot, init)
 └── coverage/
-    ├── orchestrator.py (→ config, test_runner, plan_generator, reporter, errors)
+    ├── orchestrator.py (→ config, output, test_runner, plan_generator, reporter, errors)
     └── __init__.py (→ orchestrator: re-exports run_coverage_test, generate_coverage_report, merge_coverage_files, show_coverage_summary)
 
 coverage/plan_generator.py → gdtoolkit (external)
@@ -141,6 +143,43 @@ class FormatError(GdToolsError):
 
 **Usage pattern:** CLI commands catch `GdToolsError`, print message to stderr,
 and `sys.exit(e.exit_code)`. Unknown exceptions propagate (bug report).
+
+---
+
+### 3.1b `output.py` — Shared Terminal Output
+
+> **Implemented:** Track `stdout_20260715` (archived). See
+> `src/gd_tools/output.py`.
+
+Provides a shared `Console` instance and rendering helpers so that all
+commands use a single visual language: colored markers, summary footers,
+and table rendering. Color semantics follow `product-guidelines.md` §2.1
+(green = pass, red = fail, yellow = warning, cyan = info, dim = paths).
+Markers are ASCII-only (`[OK]`, `[FAIL]`) per `product-guidelines.md` §7.
+
+```python
+from rich.console import Console
+from rich.table import Table
+
+console = Console()  # Shared instance — auto-detects TTY
+
+def print_success(message: str) -> None: ...   # "[OK] message" in green
+def print_error(message: str) -> None: ...    # "[FAIL] message" in red
+def print_warning(message: str) -> None: ...  # message in yellow
+def print_info(message: str) -> None: ...     # message in cyan
+def print_summary(
+    status: str,            # "pass" | "fail" | "warning"
+    counts: str,            # e.g. "3 errors, 2 warnings"
+    files_checked: int = 0, # appended as "N files checked"
+    extra_info: str | None = None,
+) -> None: ...              # colored by status
+def print_table(table: Table) -> None: ...    # renders via shared console
+```
+
+**Consumers:** `cli.py` (format command output), `lint_runner.py` (lint
+text output + summary), `test_runner.py` (test result table + failure
+details + summary), `coverage/orchestrator.py` (coverage show table +
+threshold summary).
 
 ---
 

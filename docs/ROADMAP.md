@@ -41,6 +41,7 @@ Phase 6: Quick Wins                        ──┐
   Track 23: Stale Addon Detection             │  ~2-3 days
   Track 24: Version Command                    │  Risk: LOW
   Track 25: Config Show/Validate              │
+  Track 25b: Terminal Output Standardization   │  (unplanned)
   Track 26: Shell Completion                   │
   Track 27: Verbose/Quiet Flags               │
   ──────────────────────────────────────────────┘
@@ -601,6 +602,55 @@ that uses it. Unknown keys are silently rejected by Pydantic's
   - "Did you mean" suggestions for unknown keys via `_get_valid_keys_for_section()` using `GdToolsConfig.model_fields`
   - Deprecation infrastructure (`DeprecatedField`, `_DEPRECATED_FIELDS`, `check_deprecated_settings()`) is future-proofing — dict currently empty
   - 28 new unit tests added; config.py at 99% coverage
+
+---
+
+### Track 25b: Terminal Output Standardization
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 6 -- Quick Wins (unplanned) |
+| **Goal** | Standardize terminal output across lint, format, test, and coverage commands |
+| **Dependencies** | Tracks 1-6 (CLI skeleton, test runner, lint runner, format runner, coverage) |
+| **Modules** | `src/gd_tools/output.py` (new), `lint_runner.py`, `cli.py`, `test_runner.py`, `coverage/orchestrator.py` |
+| **Effort** | 1 day |
+| **Risk** | LOW |
+| **Status** | Delivered |
+
+**Problem:**
+
+Each command rendered terminal output independently using ad-hoc
+`click.echo` calls or direct `Rich` Console instances. Output styles
+varied — no shared markers, inconsistent color usage, no unified summary
+footer format, and coverage rates lacked visual threshold feedback.
+
+**Scope:**
+- Create a shared `output.py` module with `print_success`,
+  `print_error`, `print_warning`, `print_info`, `print_summary`, and
+  `print_table` helpers backed by a shared `Console` instance
+- Refactor lint text output to use shared helpers (format unchanged)
+- Refactor format command to use Rich via shared module (dim file paths
+  in `--check`/`--diff`, success message for clean state)
+- Enhance test output with per-test failure details (✗ marker, suite
+  name, message), summary footer, and success message
+- Enhance `coverage show` with color-coded rate cells (green ≥
+  threshold, red < threshold) and threshold footer
+- Add inline coverage summary to `test --coverage` via
+  `_print_coverage_inline()`
+
+**Results:**
+- **Conductor track:** `stdout_20260715` (archived to `conductor/archive/`)
+- **Commits:** `23fd605`..`74e3ecd` + review fix `b4db08d`
+- **Key implementation notes:**
+  - Shared `Console` instance auto-detects TTY (no ANSI codes when piped)
+  - Color semantics: green = pass, red = fail, yellow = warning, cyan = info, dim = paths
+  - ASCII-only markers (`[OK]`, `[FAIL]`, ✓, ✗) per product-guidelines
+  - Lint detail format unchanged; JSON output unchanged
+  - Coverage show table renders rate cells colored by threshold status
+  - 716 unit tests pass; 97.11% coverage; ruff and black clean
+- **Review fix:** Renamed `output` parameter to `output_path` in
+  `merge_coverage_files()` to resolve variable shadowing with the
+  `from gd_tools import output` import
 
 ---
 
