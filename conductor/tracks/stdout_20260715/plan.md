@@ -3,32 +3,32 @@
 
 ## Phase 1: Shared Output Module (FR-1)
 
-- [ ] Task: Read spec.md and workflow.md for context
-    - [ ] Read `conductor/tracks/stdout_20260715/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read spec.md and workflow.md for context
+    - [x] Read `conductor/tracks/stdout_20260715/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write tests for `src/gd_tools/output.py`
-    - [ ] Create `tests/unit/test_output.py`
-    - [ ] Test `print_success(message)` renders `[OK]` marker in green
-    - [ ] Test `print_error(message)` renders `[FAIL]` marker in red
-    - [ ] Test `print_warning(message)` renders message in yellow
-    - [ ] Test `print_info(message)` renders message in cyan
-    - [ ] Test `print_summary(status, counts, files_checked, extra_info)` renders summary footer with correct color coding (green=pass, red=fail, yellow=warning)
-    - [ ] Test `print_table(table)` renders a Rich Table via shared console
-    - [ ] Test shared Console instance auto-detects terminal capabilities (no ANSI when piped)
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Write tests for `src/gd_tools/output.py`
+    - [x] Create `tests/unit/test_output.py`
+    - [x] Test `print_success(message)` renders `[OK]` marker in green
+    - [x] Test `print_error(message)` renders `[FAIL]` marker in red
+    - [x] Test `print_warning(message)` renders message in yellow
+    - [x] Test `print_info(message)` renders message in cyan
+    - [x] Test `print_summary(status, counts, files_checked, extra_info)` renders summary footer with correct color coding (green=pass, red=fail, yellow=warning)
+    - [x] Test `print_table(table)` renders a Rich Table via shared console
+    - [x] Test shared Console instance auto-detects terminal capabilities (no ANSI when piped)
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement `src/gd_tools/output.py`
-    - [ ] Create module with shared `Console` instance (or factory function)
-    - [ ] Implement `print_success(message)` — `[OK]` marker in green via `Text.assemble`
-    - [ ] Implement `print_error(message)` — `[FAIL]` marker in red via `Text.assemble`
-    - [ ] Implement `print_warning(message)` — yellow text
-    - [ ] Implement `print_info(message)` — cyan text
-    - [ ] Implement `print_summary(status, counts, files_checked, extra_info)` — summary footer with color based on status
-    - [ ] Implement `print_table(table)` — wrapper around `console.print(table)`
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `ruff check src/gd_tools/output.py` and `black --check src/gd_tools/output.py`
-    - [ ] Run `CI=true pytest --cov=gd_tools.output --cov-branch --cov-report=term-missing` and verify ≥80% line, ≥70% branch
+- [x] Task: Implement `src/gd_tools/output.py` (9ec33d8)
+    - [x] Create module with shared `Console` instance (or factory function)
+    - [x] Implement `print_success(message)` — `[OK]` marker in green via `Text.assemble`
+    - [x] Implement `print_error(message)` — `[FAIL]` marker in red via `Text.assemble`
+    - [x] Implement `print_warning(message)` — yellow text
+    - [x] Implement `print_info(message)` — cyan text
+    - [x] Implement `print_summary(status, counts, files_checked, extra_info)` — summary footer with color based on status
+    - [x] Implement `print_table(table)` — wrapper around `console.print(table)`
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `ruff check src/gd_tools/output.py` and `black --check src/gd_tools/output.py`
+    - [x] Run `CI=true pytest --cov=gd_tools.output --cov-branch --cov-report=term-missing` and verify ≥80% line, ≥70% branch
 
 - [ ] Task: Conductor - User Manual Verification 'Shared Output Module' (Protocol in workflow.md)
 
