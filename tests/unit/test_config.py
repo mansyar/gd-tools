@@ -24,6 +24,7 @@ from gd_tools.config import (
     generate_gdlintrc,
     load_config,
     save_config,
+    validate_paths,
 )
 from gd_tools.errors import ConfigError
 
@@ -602,3 +603,90 @@ def test_deprecation_check_empty_data():
     """Test check_deprecated_settings with empty dict returns empty list."""
     result = check_deprecated_settings({})
     assert result == []
+
+
+# --- Path Validation ---
+
+
+def test_path_validation_all_valid(tmp_path):
+    """Test validate_paths returns no warnings when all paths exist."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (tmp_path / d).mkdir()
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=str(tmp_path / "godot")),
+    )
+    (tmp_path / "godot").touch()
+    warnings = validate_paths(config, tmp_path)
+    assert warnings == []
+
+
+def test_path_validation_test_dirs_nonexistent(tmp_path):
+    """Test validate_paths warns about nonexistent test_dirs."""
+    config = GdToolsConfig()
+    warnings = validate_paths(config, tmp_path)
+    assert len(warnings) > 0
+    assert any("test" in w.lower() for w in warnings)
+
+
+def test_path_validation_godot_binary_missing(tmp_path):
+    """Test validate_paths warns when godot.binary is set but missing."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (tmp_path / d).mkdir()
+    config = GdToolsConfig(
+        godot=GodotConfig(binary="/nonexistent/godot"),
+    )
+    warnings = validate_paths(config, tmp_path)
+    assert any("godot" in w.lower() for w in warnings)
+
+
+def test_path_validation_godot_binary_none(tmp_path):
+    """Test validate_paths does not warn when godot.binary is None."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (tmp_path / d).mkdir()
+    config = GdToolsConfig()
+    warnings = validate_paths(config, tmp_path)
+    assert not any("godot" in w.lower() for w in warnings)
+
+
+def test_path_validation_coverage_output_parent_missing(tmp_path):
+    """Test validate_paths warns when coverage.output_dir parent missing."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (tmp_path / d).mkdir()
+    config = GdToolsConfig(
+        coverage=CoverageConfig(output_dir="nonexistent_dir/coverage"),
+    )
+    warnings = validate_paths(config, tmp_path)
+    assert any("coverage" in w.lower() for w in warnings)
+
+
+def test_path_validation_lint_exclude_nonexistent(tmp_path):
+    """Test validate_paths warns about nonexistent lint exclude dirs."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (tmp_path / d).mkdir()
+    config = GdToolsConfig(
+        lint=LintConfig(exclude=["nonexistent_lint_dir"]),
+    )
+    warnings = validate_paths(config, tmp_path)
+    assert any("lint" in w.lower() for w in warnings)
+
+
+def test_path_validation_format_exclude_nonexistent(tmp_path):
+    """Test validate_paths warns about nonexistent format exclude dirs."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (tmp_path / d).mkdir()
+    config = GdToolsConfig(
+        format=FormatConfig(exclude=["nonexistent_format_dir"]),
+    )
+    warnings = validate_paths(config, tmp_path)
+    assert any("format" in w.lower() for w in warnings)
+
+
+def test_path_validation_coverage_exclude_nonexistent(tmp_path):
+    """Test validate_paths warns about nonexistent coverage exclude dirs."""
+    for d in ("test", "tests", "addons", ".godot", ".gd-tools", ".git"):
+        (tmp_path / d).mkdir()
+    config = GdToolsConfig(
+        coverage=CoverageConfig(exclude=["nonexistent_cov_dir"]),
+    )
+    warnings = validate_paths(config, tmp_path)
+    assert any("coverage" in w.lower() for w in warnings)

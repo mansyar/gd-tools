@@ -371,3 +371,84 @@ def check_deprecated_settings(
         if present:
             found.append(dep_info)
     return found
+
+
+# --- Path Validation ---
+
+
+def validate_paths(
+    config: GdToolsConfig,
+    project_root: Path,
+) -> list[str]:
+    """Validate filesystem paths referenced in a configuration.
+
+    Checks the following paths and returns a warning for each that
+    does not exist:
+
+    - ``test.test_dirs``: each directory must exist.
+    - ``godot.binary``: if set (not None), the file must exist.
+    - ``coverage.output_dir``: the parent directory must exist.
+    - ``lint.exclude`` / ``format.exclude`` / ``coverage.exclude``:
+      each directory must exist.
+
+    All checks are non-fatal; the returned warnings are advisory.
+
+    Args:
+        config: The configuration to validate.
+        project_root: The project root directory paths are
+            resolved relative to.
+
+    Returns:
+        A list of warning message strings. Empty if all paths
+        are valid.
+    """
+    warnings: list[str] = []
+
+    for test_dir in config.test.test_dirs:
+        full_path = project_root / test_dir
+        if not full_path.is_dir():
+            warnings.append(
+                f"test.test_dirs: directory '{test_dir}' does not exist"
+            )
+
+    if config.godot.binary is not None:
+        binary_path = Path(config.godot.binary)
+        if not binary_path.is_absolute():
+            binary_path = project_root / binary_path
+        if not binary_path.is_file():
+            warnings.append(
+                f"godot.binary: file '{config.godot.binary}' does not exist"
+            )
+
+    output_path = Path(config.coverage.output_dir)
+    if not output_path.is_absolute():
+        output_path = project_root / output_path
+    if not output_path.parent.is_dir():
+        warnings.append(
+            f"coverage.output_dir: parent directory of "
+            f"'{config.coverage.output_dir}' does not exist"
+        )
+
+    for exclude_dir in config.lint.exclude:
+        full_path = project_root / exclude_dir
+        if not full_path.is_dir():
+            warnings.append(
+                f"lint.exclude: directory '{exclude_dir}' does not exist"
+            )
+
+    for exclude_dir in config.format.exclude:
+        full_path = project_root / exclude_dir
+        if not full_path.is_dir():
+            warnings.append(
+                f"format.exclude: directory '{exclude_dir}' does not exist"
+            )
+
+    for exclude_dir in config.coverage.exclude:
+        full_path = project_root / exclude_dir
+        if not full_path.is_dir():
+            warnings.append(
+                f"coverage.exclude: directory '{exclude_dir}' "
+                f"does not exist"
+            )
+
+    return warnings
