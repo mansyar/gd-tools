@@ -509,6 +509,32 @@ def _remove_deprecated_keys(
     return result
 
 
+def _get_valid_keys_for_section(section: str) -> list[str] | None:
+    """Get valid field names for a config section.
+
+    If *section* is a known top-level section (e.g. ``test``),
+    returns its valid field names.  If the section itself is
+    unknown, returns the valid top-level section names so the user
+    can see what sections exist.
+
+    Args:
+        section: The top-level section name extracted from a
+            Pydantic error ``loc``.
+
+    Returns:
+        List of valid field or section names, or ``None`` if no
+        suggestion is available.
+    """
+    section_fields = GdToolsConfig.model_fields
+    if section not in section_fields:
+        return list(section_fields.keys())
+    field_info = section_fields[section]
+    nested_model = field_info.annotation
+    if nested_model is not None and hasattr(nested_model, "model_fields"):
+        return list(nested_model.model_fields.keys())  # type: ignore[arg-type]
+    return None
+
+
 @config.command()
 def validate():
     """Validate the configuration file.
@@ -538,7 +564,7 @@ def validate():
             for w in path_warnings:
                 click.echo(f"  ! {w}")
         click.echo("No gd-tools.toml found. Using default configuration.")
-        click.echo("Configuration is valid (using defaults).")
+        click.echo("✓ Configuration is valid (using defaults).")
         ctx = click.get_current_context()
         ctx.exit(0)
 
@@ -567,9 +593,13 @@ def validate():
             loc = ".".join(str(p) for p in error["loc"])
             msg = error["msg"]
             if "Extra inputs are not permitted" in msg:
+                parts = loc.split(".")
+                section = parts[0] if parts else ""
+                valid = _get_valid_keys_for_section(section)
+                hint = f" — valid keys: {', '.join(valid)}" if valid else ""
                 schema_errors.append(
                     f"Unknown key '{loc}': not a recognized "
-                    "configuration field"
+                    f"configuration field{hint}"
                 )
             else:
                 schema_errors.append(f"{loc}: {msg}")
@@ -582,13 +612,13 @@ def validate():
     if schema_errors:
         click.echo("Schema Errors:")
         for err in schema_errors:
-            click.echo(f"  X {err}")
+            click.echo(f"  ✗ {err}")
 
     if deprecated:
         click.echo("Deprecated Settings:")
         for dep in deprecated:
             click.echo(
-                f"  X {dep.field_path}: deprecated since "
+                f"  ✗ {dep.field_path}: deprecated since "
                 f"v{dep.since_version}"
             )
             if dep.replacement:
@@ -602,9 +632,16 @@ def validate():
 
     # --- Summary ---
     click.echo(f"Configuration file: {config_file}")
+    click.echo("Sections validated: 5 (godot, test, lint, format, coverage)")
     has_errors = bool(schema_errors or deprecated)
+    if has_errors or path_warnings:
+        click.echo(
+            f"Found: {len(schema_errors)} schema error(s), "
+            f"{len(deprecated)} deprecated setting(s), "
+            f"{len(path_warnings)} path warning(s)"
+        )
     if not has_errors:
-        click.echo("Configuration is valid.")
+        click.echo("✓ Configuration is valid.")
         if path_warnings:
             click.echo(f"  ({len(path_warnings)} path warning(s))")
 
