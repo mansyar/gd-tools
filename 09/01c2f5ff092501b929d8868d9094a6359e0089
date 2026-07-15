@@ -1,0 +1,15 @@
+Phase 2 Checkpoint - CLI Commands
+
+Changed files (since Phase 1 checkpoint 8650c04):
+- src/gd_tools/cli.py: Added config command group with show and validate subcommands, plus _remove_deprecated_keys helper
+- tests/unit/test_cli_config.py: New test file with 17 tests (9 for show, 8 for validate)
+
+Verification:
+- 690 unit tests pass (97.20% coverage)
+- ruff check: clean
+- black --check: clean
+- Manual verification plan approved by user
+
+Features delivered:
+- config show: Rich table (default), --format toml, --json, mutual exclusion error handling
+- config validate: schema validation, unknown-key friendly messages, path warnings (non-fatal), deprecated settings detection, no-config-file defaults, grouped findings + summary
