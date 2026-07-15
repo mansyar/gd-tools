@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Autoload-Based Coverage Instrumentation delivered (Track 24.5)
+**Status:** Post-v1.0 — Config Show/Validate delivered (Track 25)
 **Companion to:** `PRD.md`, `SPIKE_coverage_instrumentation.md`
 
 ---
@@ -236,6 +236,40 @@ def generate_gdformatrc(config: GdToolsConfig, project_root: Path) -> None:
    validate with Pydantic.
 4. If not found → return `GdToolsConfig()` with all defaults.
 
+#### Deprecation & Validation (Track 25)
+
+```python
+@dataclass
+class DeprecatedField:
+    """Represents a deprecated configuration field."""
+    field_path: tuple[str, ...]   # e.g. ("godot", "path")
+    since_version: str
+    replacement: str | None        # New key path, if any
+    migration_message: str | None  # Custom migration guidance
+
+_DEPRECATED_FIELDS: dict[tuple[str, ...], DeprecatedField] = {}
+    # Currently empty — future-proofing for deprecated settings.
+
+def check_deprecated_settings(raw_toml_data: dict) -> list[DeprecatedField]:
+    """Traverse raw TOML dict to find deprecated config keys.
+    Returns list of DeprecatedField for each found."""
+
+def validate_paths(config: GdToolsConfig, project_root: Path) -> list[str]:
+    """Check that paths in config actually exist on disk.
+    Returns list of warning strings (advisory, non-fatal).
+    Checks: test_dirs, godot.binary, coverage.output_dir parent,
+    lint/format/coverage exclude dirs."""
+
+def format_config_table(config: GdToolsConfig) -> Rich.Table:
+    """Render config as a Rich table (Section, Key, Value)."""
+
+def format_config_toml(config: GdToolsConfig) -> str:
+    """Serialize config to TOML string via tomli_w.dumps(). Strips None."""
+
+def format_config_json(config: GdToolsConfig) -> str:
+    """Serialize config to JSON string via json.dumps(indent=2)."""
+```
+
 ---
 
 ### 3.3 `godot.py` — Godot Binary Detection & Invocation
@@ -388,6 +422,20 @@ def merge(files, output):
 @click.option("--min", "min_percent", type=int, help="Min coverage % to pass")
 def show(min_percent):
     """Print coverage summary to terminal."""
+
+@cli.group()
+def config():
+    """Configuration management commands."""
+
+@config.command(name="show")
+@click.option("--format", "fmt", type=click.Choice(["toml"]), default=None)
+@click.option("--json", "as_json", is_flag=True)
+def config_show(fmt, as_json):
+    """Display resolved configuration (Rich table, TOML, or JSON)."""
+
+@config.command()
+def validate():
+    """Validate gd-tools.toml — schema, deprecated settings, paths."""
 ```
 
 #### Entry Point

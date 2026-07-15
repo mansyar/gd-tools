@@ -558,7 +558,7 @@ Benefits:
 | **Modules** | `src/gd_tools/cli.py`, `src/gd_tools/config.py` |
 | **Effort** | 0.5 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Delivered |
 
 **Problem:**
 
@@ -591,6 +591,16 @@ that uses it. Unknown keys are silently rejected by Pydantic's
 3. Invalid paths are detected and reported
 4. `--json` flag produces valid JSON output
 5. Command works with no config file (shows all defaults)
+
+**Results:**
+- **Conductor track:** `config_show_validate_20260715` (archived to `conductor/archive/`)
+- **Commits:** `e9099fe`..`0901c2f` (implementation) + review fix `f06c1b2`
+- **Key implementation notes:**
+  - `config show` supports three output formats: Rich table (default), `--format toml`, `--json`; `--format` and `--json` mutually exclusive (exit 2)
+  - `config validate` groups findings into Schema Errors (✗), Deprecated Settings (✗), and Path Warnings (!); path warnings are advisory (non-fatal)
+  - "Did you mean" suggestions for unknown keys via `_get_valid_keys_for_section()` using `GdToolsConfig.model_fields`
+  - Deprecation infrastructure (`DeprecatedField`, `_DEPRECATED_FIELDS`, `check_deprecated_settings()`) is future-proofing — dict currently empty
+  - 28 new unit tests added; config.py at 99% coverage
 
 ---
 

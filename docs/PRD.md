@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Autoload-Based Coverage Instrumentation delivered (Track 24.5)
+**Status:** Post-v1.0 — Config Show/Validate delivered (Track 25)
 **Target Godot Version:** 4.5+
 
 ---
@@ -124,6 +124,8 @@ gd-tools format [options] [paths]...  Format GDScript files via gdformat
 gd-tools coverage report          Generate report from last coverage run
 gd-tools coverage merge           Merge multiple coverage data files
 gd-tools coverage show            Print coverage summary to terminal
+gd-tools config show             Display resolved configuration (Rich table, TOML, or JSON)
+gd-tools config validate         Validate gd-tools.toml — schema, deprecated settings, paths
 gd-tools version                 Print all component versions (gd-tools, Godot, GUT, gdtoolkit, Python)
 ```
 
@@ -248,6 +250,38 @@ Run `gd-tools init` to update.
   variable that disables the PyPI update check also disables this check.
 - **Doctor integration**: The `gd-tools doctor` command reports addon
   staleness in the Coverage Addon check.
+
+### `gd-tools config`
+
+```
+gd-tools config show [--format toml] [--json]
+gd-tools config validate
+```
+
+- `show` — Print the resolved configuration (including defaults applied):
+  - Default: Rich table (Section, Key, Value) — one row per setting across
+    all 5 sections (godot, test, lint, format, coverage).
+  - `--format toml` — Output as TOML (uses `tomli_w.dumps`, strips `None`
+    values).
+  - `--json` — Output as JSON (`json.dumps` with `indent=2`).
+  - `--format` and `--json` are mutually exclusive (exit code 2 if both
+    given).
+  - Works with no config file — shows all defaults.
+
+- `validate` — Check config validity without running a command:
+  - **Schema errors** (✗): Unknown keys, type mismatches, constraint
+    violations. Includes "did you mean" suggestions for misspelled keys.
+  - **Deprecated settings** (✗): Warns on deprecated config keys (future
+    deprecation infrastructure, currently empty).
+  - **Path warnings** (!): Advisory, non-fatal — `test_dirs`, `godot.binary`,
+    `coverage.output_dir` parent, and `exclude` directories checked for
+    existence.
+  - Summary: file path, sections validated (5: godot, test, lint, format,
+    coverage), counts, and "✓ Configuration is valid." on success.
+
+**Exit codes:** `show` — 0 on success, 2 on config error or conflicting
+flags. `validate` — 0 on valid config, 1 on schema errors or deprecated
+settings, 2 on config read error.
 
 ---
 

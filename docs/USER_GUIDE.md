@@ -676,6 +676,108 @@ gd-tools version --json
 | 0 | Always -- version detection never fails. |
 
 
+### 3.9 gd-tools config
+
+Manage and validate your `gd-tools.toml` configuration.
+
+#### 3.9.1 gd-tools config show
+
+Display the resolved configuration (including defaults applied).
+
+**Usage:**
+
+```bash
+gd-tools config show [OPTIONS]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--format` | choice (`toml`) | `none` | Output as TOML instead of a Rich table. |
+| `--json` | flag | `false` | Output as a JSON object instead of a Rich table. |
+
+`--format` and `--json` are mutually exclusive. Using both exits with code 2.
+
+**Output Formats:**
+
+- **Rich table** (default) — Three columns (Section, Key, Value), one row per
+  setting across all 5 sections (godot, test, lint, format, coverage).
+- **TOML** (`--format toml`) — Valid TOML output using `tomli_w`, with `None`
+  values stripped.
+- **JSON** (`--json`) — JSON object with `indent=2`, suitable for scripting.
+
+Works with no config file — shows all defaults.
+
+**Examples:**
+
+```bash
+# Show resolved config as a Rich table
+gd-tools config show
+
+# Output as TOML
+gd-tools config show --format toml
+
+# Output as JSON (for scripting)
+gd-tools config show --json
+```
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Configuration displayed successfully. |
+| 2 | Config file is invalid (parse error or Pydantic validation failure), or `--format` and `--json` were both specified. |
+
+#### 3.9.2 gd-tools config validate
+
+Check your `gd-tools.toml` for schema validity, deprecated settings, and
+non-existent paths — without running a command that uses the config.
+
+**Usage:**
+
+```bash
+gd-tools config validate
+```
+
+**Validation Checks:**
+
+| Check | Symbol | Severity |
+|---|---|---|
+| Schema errors (unknown keys, type mismatches, constraint violations) | ✗ | Fatal (exit 1) |
+| Deprecated settings | ✗ | Fatal (exit 1) |
+| Path warnings (non-existent directories/files referenced in config) | ! | Advisory (non-fatal) |
+
+When a schema error is an unknown key, a "did you mean" suggestion is shown
+with the valid field names for that section.
+
+**Summary Output:**
+
+The summary includes:
+- The config file path being validated
+- Sections validated: 5 (godot, test, lint, format, coverage)
+- Count of schema errors, deprecated settings, and path warnings
+- "✓ Configuration is valid." on success
+
+**Examples:**
+
+```bash
+# Validate config in current project
+gd-tools config validate
+
+# Use in CI to catch config issues early
+gd-tools config validate || exit 1
+```
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Configuration is valid (path warnings may be present but are non-fatal). |
+| 1 | Schema errors or deprecated settings found. |
+| 2 | Config file could not be read or parsed. |
+
+
 ## 4. Examples
 
 ### 4.1 First Test Run
