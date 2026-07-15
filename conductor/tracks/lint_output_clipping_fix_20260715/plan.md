@@ -62,5 +62,5 @@
     - [x] Run `CI=true pytest`
     - [x] Confirm all tests pass
 
-- [~] Task: Conductor - User Manual Verification 'Quality Gates & Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Quality Gates & Verification' (Protocol in workflow.md) [checkpoint: 7edc9df]
 </protect>
