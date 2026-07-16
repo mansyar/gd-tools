@@ -51,4 +51,7 @@
     - [x] Update skills/gd-tools/SKILL.md — add `--show-uncovered` to CLI flag documentation
     - [x] Add CHANGELOG.md feature entry for uncovered lines/branches display
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Documentation Updates' (Protocol in workflow.md) [checkpoint: bc76c84]
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions [f1839b7]
 </protect>
