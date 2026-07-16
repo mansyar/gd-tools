@@ -1,0 +1,20 @@
+Documentation: --verbose and --quiet Global Flags
+==================================================
+
+Files Modified:
+- README.md: Added "Verbosity Control" subsection under CLI Command Summary
+  with flag table, examples, and "always shown" note.
+- docs/USER_GUIDE.md: Added section 3.11 "Global Verbosity Flags" with:
+  - Usage syntax
+  - Flag table (--verbose/-v, --quiet/-q)
+  - Verbose mode section with examples and sample output
+  - Quiet mode section with CI examples and sample output
+  - Mutual exclusion section with error example
+  - Exit codes table
+
+Content covers:
+- Verbose: shows underlying commands (Godot/GUT, gdlint, gdformat) and timing
+- Quiet: suppresses update checks, info messages, init/doctor details
+- Always shown: test summaries, lint violations, coverage, errors, exit codes
+- Mutual exclusion: --verbose --quiet exits 2
+- Default: no visible change to output
