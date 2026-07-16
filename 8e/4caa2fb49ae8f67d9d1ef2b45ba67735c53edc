@@ -1,0 +1,7 @@
+Task: Create Verbosity enum and context module
+
+- Created src/gd_tools/verbosity.py with Verbosity enum (QUIET=0, DEFAULT=1, VERBOSE=2)
+- Module-level _active variable stores current verbosity level (defaults to DEFAULT)
+- get_verbosity() returns active level, set_verbosity(level) sets it
+- 8 unit tests in tests/unit/test_verbosity.py covering enum members and accessor round-trips
+- 100% line coverage, ruff/black clean
