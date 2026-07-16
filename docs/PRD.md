@@ -133,7 +133,7 @@ gd-tools version                 Print all component versions (gd-tools, Godot, 
 
 ```
 gd-tools test [paths]... [--coverage] [--min N] [--suite NAME] [--test NAME]
-              [--junit-xml PATH] [--no-exit-code]
+              [--junit-xml PATH] [--no-exit-code] [--show-uncovered]
 ```
 
 | Flag/Arg         | Description                                              |
@@ -145,6 +145,7 @@ gd-tools test [paths]... [--coverage] [--min N] [--suite NAME] [--test NAME]
 | `--test NAME`    | Run only tests matching the name substring              |
 | `--junit-xml P`  | Write JUnit XML to path (default: `.gd-tools/results.xml`)|
 | `--no-exit-code` | Always exit 0 regardless of test failures               |
+| `--show-uncovered` | Show uncovered lines and branches when coverage < 100% (requires `--coverage`) |
 
 When `paths` are provided, they override `test_dirs` from config. Each path
 is formatted as `res://path/` and passed to GUT's `-gdir` flag.

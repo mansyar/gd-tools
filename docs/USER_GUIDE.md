@@ -353,6 +353,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--junit-xml` | string | None | Path to write a JUnit XML report. |
 | `--no-exit-code` | flag | `false` | Do not exit with non-zero on test failure. |
 | `--timeout` | integer | None | Timeout in seconds for the test run. |
+| `--show-uncovered` | flag | `false` | Show uncovered lines and branches as Rich panels when coverage is below 100%. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
 
 **Examples:**
 
@@ -365,6 +366,9 @@ gd-tools test --coverage
 
 # Run tests with coverage and enforce an 80% threshold
 gd-tools test --coverage --min 80
+
+# Show uncovered lines and branches when coverage is below 100%
+gd-tools test --coverage --show-uncovered
 
 # Run a specific test suite
 gd-tools test --suite PlayerTests
@@ -393,6 +397,23 @@ and a `[OK]` success message is displayed when all tests pass.
 When `--coverage` is used, an inline coverage summary is printed after
 the test results showing line and branch coverage rates with color-coded
 threshold status (green if meeting threshold, red if below).
+
+When `--show-uncovered` is passed with `--coverage` and coverage is below
+100%, per-file Rich panels are printed after the summary line. Each panel
+shows the file path as its title and lists uncovered lines (as ranges) and
+uncovered branches (with type annotations like `if`, `else`, `loop`,
+`match`). Files with full coverage are omitted.
+
+Example panel output:
+
+```
+╭───────────────────────────────────────────╮
+│ res://scripts/player.gd                  │
+│                                          │
+│ Uncovered lines: 15-16, 23               │
+│ Uncovered branches: 12 (if), 18 (loop)   │
+╰───────────────────────────────────────────╯
+```
 
 **Exit Codes:**
 
@@ -648,6 +669,10 @@ Coverage is displayed as a Rich table with per-file line and branch
 coverage rates. Rate cells are color-coded: green when at or above the
 threshold, red when below. A summary footer shows the overall coverage
 and threshold status (green if meeting threshold, red if below).
+
+When coverage is below 100%, per-file Rich panels are also printed after
+the summary table showing uncovered lines (as ranges) and uncovered
+branches (with type annotations). Files with full coverage are omitted.
 
 **Exit Codes:**
 

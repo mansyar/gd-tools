@@ -2,6 +2,7 @@
 
 ### Feat
 
+- **coverage**: Show uncovered lines and branches in coverage output (`--show-uncovered` flag for `test`, automatic for `coverage show`)
 - **coverage**: Standardize coverage output via shared output module
 - **test**: Standardize test output via shared output module
 - **format**: Standardize format output via shared output module

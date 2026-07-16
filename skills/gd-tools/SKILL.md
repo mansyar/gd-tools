@@ -93,6 +93,7 @@ Run GDScript tests using GUT.
 - `--junit-xml <path>` — Path to write JUnit XML report
 - `--no-exit-code` — Don't exit with non-zero on test failure
 - `--timeout <int>` — Timeout in seconds for the test run
+- `--show-uncovered` — Show uncovered lines and branches when coverage < 100% (requires `--coverage`)
 
 **Exit codes:**
 - `0` — All tests passed
@@ -159,7 +160,7 @@ Merge multiple coverage data files.
 
 ### `gd-tools coverage show`
 
-Display coverage summary with optional threshold check.
+Display coverage summary with optional threshold check. When coverage is below 100%, per-file panels showing uncovered lines and branches are also displayed.
 
 **Flags:**
 - `--min <int>` — Minimum coverage threshold percentage

@@ -56,6 +56,9 @@ gd-tools test
 
 # 4. Run tests with coverage
 gd-tools test --coverage --min 80
+
+# 5. Show uncovered lines and branches when coverage is below 100%
+gd-tools test --coverage --show-uncovered
 ```
 
 `gd-tools init` installs GUT, deploys the coverage addon, generates
