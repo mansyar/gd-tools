@@ -51,5 +51,5 @@
     - [x] Document Click's env-var approach as an alternative for advanced users
     - [x] Commit with message `docs(user-guide): Add detailed shell completion instructions` (18562b5)
 
-- [~] Task: Conductor - User Manual Verification 'Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Documentation' (Protocol in workflow.md)
 </protect>
