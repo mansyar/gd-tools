@@ -467,6 +467,76 @@ def test_compute_file_summary_elif_loop_match_branches():
     assert fs.uncovered_lines == [5]  # loop_body line
 
 
+def test_compute_file_summary_uncovered_branches_zero_hits():
+    """compute_file_summary collects branch-type lines with zero hits into uncovered_branches."""
+    file_plan = FilePlan(
+        file_id=0,
+        path="res://test.gd",
+        source_hash="sha256:test",
+        lines=[
+            LinePlan(line=5, id=0, type="statement"),
+            LinePlan(line=8, id=1, type="branch", branch_type="if_true"),
+            LinePlan(line=10, id=2, type="branch", branch_type="if_false"),
+        ],
+    )
+    # if_true covered, if_false not
+    data = FileCoverage(file_id=0, hits={"0": 1, "1": 2, "2": 0})
+    fs = compute_file_summary(file_plan, data)
+    assert fs.uncovered_branches == [10]
+
+
+def test_compute_file_summary_uncovered_branches_excludes_statements():
+    """compute_file_summary excludes non-branch uncovered lines from uncovered_branches."""
+    file_plan = FilePlan(
+        file_id=0,
+        path="res://test.gd",
+        source_hash="sha256:test",
+        lines=[
+            LinePlan(line=5, id=0, type="statement"),
+            LinePlan(line=8, id=1, type="branch", branch_type="if_true"),
+            LinePlan(line=12, id=2, type="statement"),
+        ],
+    )
+    # statement at line 5 uncovered, branch at line 8 covered, statement at line 12 uncovered
+    data = FileCoverage(file_id=0, hits={"0": 0, "1": 1, "2": 0})
+    fs = compute_file_summary(file_plan, data)
+    assert fs.uncovered_lines == [5, 12]
+    assert fs.uncovered_branches == []  # the only branch is covered
+
+
+def test_compute_file_summary_uncovered_branches_all_covered():
+    """compute_file_summary returns empty uncovered_branches when all branches hit."""
+    file_plan = FilePlan(
+        file_id=0,
+        path="res://test.gd",
+        source_hash="sha256:test",
+        lines=[
+            LinePlan(line=3, id=0, type="branch", branch_type="if_true"),
+            LinePlan(line=5, id=1, type="branch", branch_type="if_false"),
+        ],
+    )
+    data = FileCoverage(file_id=0, hits={"0": 1, "1": 1})
+    fs = compute_file_summary(file_plan, data)
+    assert fs.uncovered_branches == []
+
+
+def test_compute_file_summary_uncovered_branches_all_uncovered():
+    """compute_file_summary returns all branch line numbers when none are hit."""
+    file_plan = FilePlan(
+        file_id=0,
+        path="res://test.gd",
+        source_hash="sha256:test",
+        lines=[
+            LinePlan(line=3, id=0, type="branch", branch_type="if_true"),
+            LinePlan(line=5, id=1, type="branch", branch_type="loop_body"),
+            LinePlan(line=8, id=2, type="branch", branch_type="match_case"),
+        ],
+    )
+    data = FileCoverage(file_id=0, hits={"0": 0, "1": 0, "2": 0})
+    fs = compute_file_summary(file_plan, data)
+    assert fs.uncovered_branches == [3, 5, 8]
+
+
 def test_compute_summary_aggregates_multiple_files():
     """compute_summary aggregates coverage across all files."""
     plan = read_plan_json(_PLAN_FIXTURE)

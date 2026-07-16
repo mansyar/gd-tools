@@ -85,6 +85,7 @@ class FileSummary:
         covered_branches: Count of branches with hit count > 0.
         total_branches: Total branch points in this file's plan.
         uncovered_lines: Line numbers with zero hits.
+        uncovered_branches: Line numbers of branch points with zero hits.
     """
 
     file_id: int
@@ -96,6 +97,7 @@ class FileSummary:
     covered_branches: int
     total_branches: int
     uncovered_lines: list[int]
+    uncovered_branches: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -331,6 +333,7 @@ def compute_file_summary(
     covered_branches = 0
     total_branches = 0
     uncovered_lines: list[int] = []
+    uncovered_branches: list[int] = []
 
     for line in file_plan.lines:
         total_lines += 1
@@ -345,6 +348,8 @@ def compute_file_summary(
             total_branches += 1
             if hit_count > 0:
                 covered_branches += 1
+            else:
+                uncovered_branches.append(line.line)
 
     line_rate = covered_lines / total_lines if total_lines > 0 else 0.0
     branch_rate = (
@@ -361,6 +366,7 @@ def compute_file_summary(
         covered_branches=covered_branches,
         total_branches=total_branches,
         uncovered_lines=uncovered_lines,
+        uncovered_branches=uncovered_branches,
     )
 
 
