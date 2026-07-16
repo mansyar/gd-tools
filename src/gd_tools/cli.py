@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import Any
 
 import click
+from click.shell_completion import (
+    BashComplete,
+    add_completion_class,
+    get_completion_class,
+)
 from pydantic import ValidationError
 from rich.console import Console
 from rich.syntax import Syntax
@@ -70,6 +75,59 @@ def _configure_windows_utf8() -> None:
 
 
 _configure_windows_utf8()
+
+
+_SOURCE_POWERSHELL = """$env:%(complete_var)s = "powershell_complete"
+
+Register-ArgumentCompleter -Native -CommandName %(prog_name)s -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+
+    $env:COMP_WORDS = $commandAst.CommandElements |
+        ForEach-Object { $env:COMP_WORDS += $_.ToString() }
+    $env:COMP_CWORD = $commandAst.CommandElements.Count
+    $commandElements = $commandAst.CommandElements
+    $env:COMP_CWORD = $commandElements.Count
+    for ($i = 0; $i -lt $commandElements.Count; $i++) {
+        if ($cursorPosition -le $commandElements[$i].Extent.StartOffset) {
+            $env:COMP_CWORD = $i
+            break
+        }
+    }
+
+    $env:%(complete_var)s = "powershell_complete"
+    %(prog_name)s | ForEach-Object {
+        $values = $_.Split(",")
+        if ($values[0] -eq "dir") {
+            [System.Management.Automation.CompletionResult]::new($values[1], $values[1], "ParameterValue", $values[1])
+        } elseif ($values[0] -eq "file") {
+            [System.Management.Automation.CompletionResult]::new($values[1], $values[1], "ParameterValue", $values[1])
+        } else {
+            $help = if ($values[2] -eq "_") { "" } else { $values[2] }
+            [System.Management.Automation.CompletionResult]::new($values[1], $values[1], "ParameterValue", $help)
+        }
+    }
+
+    $env:COMP_WORDS = $null
+    $env:COMP_CWORD = 0
+    $env:%(complete_var)s = $null
+}
+"""
+
+
+class PowerShellComplete(BashComplete):
+    """Shell completion for PowerShell.
+
+    Click 8.2.x does not include a PowerShell completion class.
+    This subclass reuses BashComplete's completion args and
+    format_completion, providing a PowerShell-compatible source
+    template using Register-ArgumentCompleter.
+    """
+
+    name = "powershell"
+    source_template = _SOURCE_POWERSHELL
+
+
+add_completion_class(PowerShellComplete)
 
 
 class GdToolsGroup(click.Group):
@@ -679,3 +737,42 @@ def validate():
 
     ctx = click.get_current_context()
     ctx.exit(1 if has_errors else 0)
+
+
+@cli.command()
+@click.argument(
+    "shell",
+    type=click.Choice(["bash", "zsh", "fish", "powershell"]),
+)
+def completion(shell: str) -> None:
+    """Generate shell completion scripts for gd-tools.
+
+    Outputs the completion script for the specified shell to stdout.
+    Source the script in your shell's configuration file to enable
+    tab completion for gd-tools commands and options.
+
+    \b
+    Supported shells:
+      bash       Generate bash completion script
+      zsh        Generate zsh completion script
+      fish       Generate fish completion script
+      powershell Generate PowerShell completion script
+
+    \b
+    Examples:
+      eval "$(gd-tools completion bash)"
+      gd-tools completion zsh > ~/.zsh/completions/_gd-tools
+      gd-tools completion fish > ~/.config/fish/completions/gd-tools.fish
+      gd-tools completion powershell | Out-String | Add-Content $PROFILE
+    """
+    comp_class = get_completion_class(shell)
+    assert comp_class is not None  # guarded by click.Choice
+    prog_name = "gd-tools"
+    complete_var = f"_{prog_name.upper().replace('-', '_')}_COMPLETE"
+    comp = comp_class(
+        cli=cli,
+        ctx_args={},
+        prog_name=prog_name,
+        complete_var=complete_var,
+    )
+    click.echo(comp.source())
