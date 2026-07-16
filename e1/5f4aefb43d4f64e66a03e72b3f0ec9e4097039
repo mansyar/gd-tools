@@ -1,0 +1,16 @@
+Task: Implement line range formatting helper and uncovered panel rendering function
+
+Summary:
+- Added _format_line_ranges(lines: list[int]) -> str utility that groups consecutive line numbers into ranges (e.g., [1,2,3,5,6] -> '1-3, 5-6')
+- Added _render_uncovered_panels(file_summaries, plan) -> Group | None that creates per-file Rich Panels showing uncovered lines (as ranges) and uncovered branches (with type annotations like '42 (if)')
+- Added _BRANCH_TYPE_DISPLAY mapping: if_true->if, if_false->else, elif_true->elif, loop_body->loop, match_case->match
+- Files with full coverage are omitted from panels; returns None when all files have full coverage
+- Added TYPE_CHECKING import for Group type annotation
+
+Files modified:
+- src/gd_tools/coverage/reporter.py: Added _BRANCH_TYPE_DISPLAY constant, _format_line_ranges(), _render_uncovered_panels(), TYPE_CHECKING import
+- tests/unit/test_reporter.py: Added 8 tests (4 for _format_line_ranges, 4 for _render_uncovered_panels)
+
+Test results: 728 unit tests pass (720 existing + 8 new). reporter.py at 97% line coverage.
+
+Why: These rendering utilities are the building blocks for Phase 3 integration into the test --coverage inline output and coverage show command.
