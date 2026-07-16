@@ -37,8 +37,8 @@
 
 ## Phase 3: Verbose Mode Implementation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
-- [ ] Task: Display underlying commands in verbose mode
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
+- [x] Task: Display underlying commands in verbose mode (eaddb11)
     - [ ] Write failing tests verifying that when verbosity is VERBOSE, the full Godot/GUT command is printed before execution in `run_tests()`, the gdlint invocation is shown in `run_lint()`, and the gdformat invocation is shown in `run_format()` (`tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`, `tests/unit/test_format_runner.py`)
     - [ ] Implement command display logic — add a `print_verbose()` call in `test_runner.py` (before `run_godot()` showing `[binary, --path, project_root, *args]`), in `lint_runner.py` (before `lint_code()` showing the file being linted), and in `format_runner.py` (before `format_code()` showing the file being formatted)
     - [ ] Run tests, confirm Green phase
