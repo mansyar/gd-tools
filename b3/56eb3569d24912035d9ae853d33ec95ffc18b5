@@ -1,0 +1,32 @@
+Task: Display timing information in verbose mode (Phase 3, Task 2)
+
+Summary:
+Added timing measurement using time.perf_counter() to all three runner
+modules. In verbose mode, the elapsed time for each major operation is
+printed via output.print_verbose() after the operation completes.
+
+Files modified:
+- src/gd_tools/test_runner.py: Added import time; wrapped the GUT test
+  run_godot() call with perf_counter start/end; print "Elapsed: X.XXs"
+- src/gd_tools/lint_runner.py: Added import time; wrapped the entire lint
+  loop with perf_counter; print "Elapsed: X.XXs" after loop completes
+- src/gd_tools/format_runner.py: Added import time; wrapped the entire
+  format loop with perf_counter; print "Elapsed: X.XXs" after loop completes
+- tests/unit/test_test_runner.py: Added 2 timing tests (verbose shows timing,
+  default mode no timing)
+- tests/unit/test_lint_runner.py: Added 2 timing tests
+- tests/unit/test_format_runner.py: Added 2 timing tests
+
+Why:
+Users need to see how long each operation takes for performance debugging.
+The --verbose flag now shows elapsed time for test runs, lint scans, and
+format passes.
+
+Verification:
+- All 783 unit tests pass
+- 97.18% total coverage
+- test_runner.py: 96% line coverage
+- lint_runner.py: 96% line coverage
+- format_runner.py: 95% line coverage
+- ruff check: clean
+- black --check: clean
