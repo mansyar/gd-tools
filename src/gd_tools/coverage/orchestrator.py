@@ -38,6 +38,7 @@ def run_coverage_test(
     min_percent: int | None = None,
     timeout: int | None = None,
     paths: list[str] | None = None,
+    show_uncovered: bool = False,
 ) -> TestResult:
     """Run tests with coverage instrumentation and generate reports.
 
@@ -63,6 +64,8 @@ def run_coverage_test(
             coverage is below this, raises
             :class:`CoverageThresholdError`.
         timeout: Optional test timeout in seconds.
+        show_uncovered: If True, print per-file uncovered lines and
+            branches when coverage is below 100%.
 
     Returns:
         The :class:`TestResult` from running tests.

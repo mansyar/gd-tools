@@ -200,7 +200,22 @@ def version(as_json):
     type=int,
     help="Timeout in seconds for the test run.",
 )
-def test(paths, coverage, min, suite, test, junit_xml, no_exit_code, timeout):
+@click.option(
+    "--show-uncovered",
+    is_flag=True,
+    help="Show uncovered lines and branches when coverage is below 100%.",
+)
+def test(
+    paths,
+    coverage,
+    min,
+    suite,
+    test,
+    junit_xml,
+    no_exit_code,
+    timeout,
+    show_uncovered,
+):
     """Run GDScript tests using GUT."""
     try:
         config = load_config()
@@ -216,6 +231,13 @@ def test(paths, coverage, min, suite, test, junit_xml, no_exit_code, timeout):
             "ignoring.[/yellow]"
         )
 
+    if show_uncovered and not coverage:
+        console = Console()
+        console.print(
+            "[yellow]Warning: --show-uncovered is only valid with "
+            "--coverage; ignoring.[/yellow]"
+        )
+
     try:
         if coverage:
             run_coverage_test(
@@ -227,6 +249,7 @@ def test(paths, coverage, min, suite, test, junit_xml, no_exit_code, timeout):
                 min_percent=min,
                 timeout=timeout,
                 paths=list(paths) if paths else None,
+                show_uncovered=show_uncovered,
             )
         else:
             run_tests(
