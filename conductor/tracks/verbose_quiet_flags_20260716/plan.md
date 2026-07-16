@@ -87,8 +87,8 @@
 
 ## Phase 5: Integration Testing & Documentation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
-- [ ] Task: Write integration tests for verbose/quiet across all commands
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
+- [x] Task: Write integration tests for verbose/quiet across all commands (da11b1d)
     - [ ] Write integration tests verifying end-to-end verbose output (commands shown, timing shown) and quiet output (minimal output, results only) for `test`, `lint`, `format`, `doctor`, and `init` commands (`tests/integration/test_verbosity_integration.py`)
     - [ ] Run integration tests, confirm all pass
     - [ ] Verify no regressions in existing integration tests
