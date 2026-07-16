@@ -879,6 +879,133 @@ gd-tools completion powershell | Out-String | Add-Content $PROFILE
 | 2 | Invalid shell argument (not one of `bash`, `zsh`, `fish`, `powershell`). |
 
 
+### 3.11 Global Verbosity Flags
+
+`gd-tools` provides two global flags that control how much output a
+command produces. These flags are placed **before** the subcommand and
+apply to all commands.
+
+**Usage:**
+
+```bash
+gd-tools [--verbose | --quiet] <command> [command-options]
+```
+
+**Flags:**
+
+| Flag | Short | Description |
+|---|---|---|
+| `--verbose` | `-v` | Show underlying commands (Godot/GUT, gdlint, gdformat) and timing information for each operation. |
+| `--quiet` | `-q` | Suppress non-essential output: update checks, info/progress messages, and detailed tables. Only essential results are shown. |
+
+The `--verbose` and `--quiet` flags are mutually exclusive. Using both
+together produces a usage error with exit code 2.
+
+When neither flag is provided, the default verbosity level is used,
+which matches the existing behavior -- no visible change to output.
+
+#### Verbose Mode (`--verbose` / `-v`)
+
+Verbose mode is designed for debugging and understanding what
+`gd-tools` is doing under the hood. When active, the CLI displays:
+
+- **Underlying commands:** The full external command being executed
+  (e.g., the complete `godot --headless -s addons/gut/gut_cmdln.gd ...`
+  invocation, the file being linted, the file being formatted).
+- **Timing information:** Elapsed time for each major operation (test
+  run, lint scan, format pass).
+
+```bash
+# See the Godot command and timing for a test run
+gd-tools --verbose test
+
+# See which files are being linted and how long it takes
+gd-tools --verbose lint
+
+# See which files are being formatted and timing
+gd-tools --verbose format
+
+# Short flag works the same
+gd-tools -v test
+```
+
+Example verbose output (lint):
+
+```
+Linting: src/player.gd
+Linting: src/enemy.gd
+Elapsed: 0.12s
+src/player.gd:10:1: function-name: Function name BadFunctionName is not valid  [ERROR]
+1 errors, 0 warnings, 2 files checked
+```
+
+#### Quiet Mode (`--quiet` / `-q`)
+
+Quiet mode is designed for CI pipelines and scripting where only
+essential output matters. When active, the CLI suppresses:
+
+- **Update check notifications** (PyPI version check and addon
+  staleness warning are skipped entirely).
+- **Info/progress messages** (e.g., "No GDScript files found",
+  "Running tests...").
+- **Init/doctor details** (init shows only `[OK] Initialized`; doctor
+  shows only `[OK] All checks passed` or `[FAIL] Some checks failed`).
+
+The following outputs are **always shown** regardless of quiet mode:
+
+- Test pass/fail summaries
+- Lint violations
+- Coverage reports and threshold results
+- Error messages
+- Exit codes (unchanged)
+
+```bash
+# CI pipeline: minimal output, only failures shown
+gd-tools --quiet lint
+gd-tools --quiet format --check
+gd-tools --quiet test --coverage --min 80
+
+# Quick doctor check: one-line status only
+gd-tools --quiet doctor
+
+# Init without detailed summary
+gd-tools --quiet init --non-interactive
+
+# Short flag works the same
+gd-tools -q lint
+```
+
+Example quiet output (doctor, all passing):
+
+```
+[OK] All checks passed
+```
+
+Example quiet output (doctor, failures):
+
+```
+[FAIL] Some checks failed
+```
+
+#### Mutual Exclusion
+
+`--verbose` and `--quiet` cannot be used together. If both are
+provided, the CLI exits with code 2 and prints an error:
+
+```bash
+$ gd-tools --verbose --quiet test
+Error: --verbose and --quiet are mutually exclusive.
+```
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Command completed successfully (same as without the flag). |
+| 1 | Tool failure (test failures, lint errors, etc.) -- same as without the flag. |
+| 2 | `--verbose` and `--quiet` used together, or configuration/environment error. |
+
+
 ## 4. Examples
 
 ### 4.1 First Test Run

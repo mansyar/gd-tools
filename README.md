@@ -79,6 +79,33 @@ gd-tools test --coverage --show-uncovered
 | `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, GUT, gdtoolkit, Python) in a table or JSON. |
 | `gd-tools completion` | Generate shell completion scripts for bash, zsh, fish, or PowerShell. |
 
+### Verbosity Control
+
+`gd-tools` supports two global flags that control output verbosity. Place
+them before the subcommand:
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--verbose` | `-v` | Show underlying commands and timing information. |
+| `--quiet` | `-q` | Suppress non-essential output (update checks, info messages, detailed tables). |
+
+The flags are mutually exclusive -- using both exits with code 2.
+
+```bash
+# Verbose: see the Godot/GUT command and elapsed time
+gd-tools --verbose test
+
+# Quiet: minimal output for CI pipelines
+gd-tools --quiet lint
+gd-tools --quiet doctor
+
+# Default: current behavior (no change)
+gd-tools test
+```
+
+**Always shown** (regardless of flag): test pass/fail summaries, lint
+violations, coverage reports, error messages, and exit codes.
+
 See the [User Guide](./docs/USER_GUIDE.md) for full command reference,
 flags, examples, and exit codes.
 
