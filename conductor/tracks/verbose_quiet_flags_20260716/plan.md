@@ -24,15 +24,15 @@
 
 ## Phase 2: Global CLI Flags
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
-- [ ] Task: Add --verbose/-v and --quiet/-q global flags to CLI group
-    - [ ] Write failing tests for flag parsing (`gd-tools --verbose test`, `gd-tools -v test`, `gd-tools --quiet test`, `gd-tools -q test`), mutual exclusion error (`gd-tools --verbose --quiet test` exits 2), and default behavior (no flag = DEFAULT verbosity) (`tests/unit/test_cli.py`)
-    - [ ] Implement `--verbose`/`-v` and `--quiet`/`-q` flags on the `@click.group(cls=GdToolsGroup)` decorator in `cli.py`; add mutual exclusion check in the group callback; call `set_verbosity()` based on flags; store verbosity in `ctx.obj` for subcommand access
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage for modified `cli.py` sections
-    - [ ] Commit: `feat(cli): Add --verbose and --quiet global flags with mutual exclusion`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
+- [x] Task: Add --verbose/-v and --quiet/-q global flags to CLI group (a58e1e6)
+    - [x] Write failing tests for flag parsing (`gd-tools --verbose test`, `gd-tools -v test`, `gd-tools --quiet test`, `gd-tools -q test`), mutual exclusion error (`gd-tools --verbose --quiet test` exits 2), and default behavior (no flag = DEFAULT verbosity) (`tests/unit/test_cli.py`)
+    - [x] Implement `--verbose`/`-v` and `--quiet`/`-q` flags on the `@click.group(cls=GdToolsGroup)` decorator in `cli.py`; add mutual exclusion check in the group callback; call `set_verbosity()` based on flags; store verbosity in `ctx.obj` for subcommand access
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage for modified `cli.py` sections
+    - [x] Commit: `feat(cli): Add --verbose and --quiet global flags with mutual exclusion`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Global CLI Flags' (Protocol in workflow.md)
 
 ## Phase 3: Verbose Mode Implementation
