@@ -95,7 +95,7 @@
     - [ ] Commit: `test(verbosity): Add integration tests for verbose and quiet modes`
     - [ ] Attach git note with task summary to commit
     - [ ] Mark task complete in `plan.md` with commit SHA
-- [ ] Task: Update documentation with --verbose/--quiet usage
+- [x] Task: Update documentation with --verbose/--quiet usage (7828d92)
     - [ ] Add a "Verbosity Control" section to README documenting `--verbose`/`-v` and `--quiet`/`-q` flags with examples
     - [ ] Add a "Verbosity Control" section to USER_GUIDE with detailed usage examples for CI (quiet) and debugging (verbose) scenarios
     - [ ] Commit: `docs(verbosity): Document --verbose and --quiet global flags`
