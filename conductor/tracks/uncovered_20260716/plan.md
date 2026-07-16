@@ -3,12 +3,12 @@
 
 ## Phase 1: Data Model Enhancement
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
-- [ ] Task: Add `uncovered_branches` field to `FileSummary` and update `compute_file_summary()`
-    - [ ] Write failing unit tests for `uncovered_branches` computation in `compute_file_summary()` — test that branch-type lines with zero hits are collected, and non-branch uncovered lines are excluded from this list
-    - [ ] Add `uncovered_branches: list[int]` field to `FileSummary` dataclass in `reporter.py`
-    - [ ] Update `compute_file_summary()` to compute `uncovered_branches` by cross-referencing the plan's branch-type lines against coverage hits
-    - [ ] Run tests and verify >80% line, >70% branch coverage for `reporter.py`
+- [x] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
+- [x] Task: Add `uncovered_branches` field to `FileSummary` and update `compute_file_summary()` [76ad4b1]
+    - [x] Write failing unit tests for `uncovered_branches` computation in `compute_file_summary()` — test that branch-type lines with zero hits are collected, and non-branch uncovered lines are excluded from this list
+    - [x] Add `uncovered_branches: list[int]` field to `FileSummary` dataclass in `reporter.py`
+    - [x] Update `compute_file_summary()` to compute `uncovered_branches` by cross-referencing the plan's branch-type lines against coverage hits
+    - [x] Run tests and verify >80% line, >70% branch coverage for `reporter.py`
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Model Enhancement' (Protocol in workflow.md)
 
 ## Phase 2: Rendering Utilities
