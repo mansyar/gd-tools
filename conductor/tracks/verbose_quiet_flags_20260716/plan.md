@@ -33,7 +33,7 @@
     - [x] Commit: `feat(cli): Add --verbose and --quiet global flags with mutual exclusion`
     - [x] Attach git note with task summary to commit
     - [x] Mark task complete in `plan.md` with commit SHA
-- [ ] Task: Conductor - User Manual Verification 'Global CLI Flags' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Global CLI Flags' (Protocol in workflow.md)
 
 ## Phase 3: Verbose Mode Implementation
 
