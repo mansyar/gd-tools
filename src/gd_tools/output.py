@@ -22,6 +22,8 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
+from .verbosity import Verbosity, get_verbosity
+
 # Shared Console instance — auto-detects terminal capabilities
 # (no ANSI codes when stdout is piped).
 console = Console()
@@ -48,19 +50,41 @@ def print_error(message: str) -> None:
 def print_warning(message: str) -> None:
     """Render a warning message in yellow.
 
+    Suppressed when verbosity is QUIET.
+
     Args:
         message: The warning message to display.
     """
+    if get_verbosity() == Verbosity.QUIET:
+        return
     console.print(Text(message, style="yellow"))
 
 
 def print_info(message: str) -> None:
     """Render an informational message in cyan.
 
+    Suppressed when verbosity is QUIET.
+
     Args:
         message: The informational message to display.
     """
+    if get_verbosity() == Verbosity.QUIET:
+        return
     console.print(Text(message, style="cyan"))
+
+
+def print_verbose(message: str) -> None:
+    """Render a verbose-only message in dim style.
+
+    Only renders when verbosity is VERBOSE; suppressed in DEFAULT and
+    QUIET modes.
+
+    Args:
+        message: The verbose message to display.
+    """
+    if get_verbosity() != Verbosity.VERBOSE:
+        return
+    console.print(Text(message, style="dim"))
 
 
 def print_summary(

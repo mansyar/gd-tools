@@ -16,10 +16,19 @@ from gd_tools.output import (
     print_success,
     print_summary,
     print_table,
+    print_verbose,
     print_warning,
 )
+from gd_tools.verbosity import Verbosity, set_verbosity
 
 pytestmark = pytest.mark.unit
+
+
+@pytest.fixture(autouse=True)
+def _reset_verbosity():
+    """Reset verbosity to DEFAULT after each test to avoid state leakage."""
+    yield
+    set_verbosity(Verbosity.DEFAULT)
 
 
 # --- print_success ---
@@ -173,3 +182,120 @@ def test_console_no_ansi_when_piped(capsys):
     print_info("test message")
     captured = capsys.readouterr()
     assert "\x1b[" not in captured.out  # no ANSI escape codes
+
+
+# --- Verbosity: print_info ---
+
+
+def test_print_info_suppressed_when_quiet(capsys):
+    """print_info() produces no output when verbosity is QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    print_info("hidden")
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_print_info_shown_when_default(capsys):
+    """print_info() renders normally when verbosity is DEFAULT."""
+    print_info("visible")
+    captured = capsys.readouterr()
+    assert "visible" in captured.out
+
+
+def test_print_info_shown_when_verbose(capsys):
+    """print_info() renders normally when verbosity is VERBOSE."""
+    set_verbosity(Verbosity.VERBOSE)
+    print_info("visible")
+    captured = capsys.readouterr()
+    assert "visible" in captured.out
+
+
+# --- Verbosity: print_warning ---
+
+
+def test_print_warning_suppressed_when_quiet(capsys):
+    """print_warning() produces no output when verbosity is QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    print_warning("hidden")
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_print_warning_shown_when_default(capsys):
+    """print_warning() renders normally when verbosity is DEFAULT."""
+    print_warning("visible")
+    captured = capsys.readouterr()
+    assert "visible" in captured.out
+
+
+# --- Verbosity: print_success (always renders) ---
+
+
+def test_print_success_renders_when_quiet(capsys):
+    """print_success() always renders, even when QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    print_success("visible")
+    captured = capsys.readouterr()
+    assert "visible" in captured.out
+
+
+# --- Verbosity: print_error (always renders) ---
+
+
+def test_print_error_renders_when_quiet(capsys):
+    """print_error() always renders, even when QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    print_error("visible")
+    captured = capsys.readouterr()
+    assert "visible" in captured.out
+
+
+# --- Verbosity: print_summary (always renders) ---
+
+
+def test_print_summary_renders_when_quiet(capsys):
+    """print_summary() always renders, even when QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    print_summary("pass", "5 passed", 5)
+    captured = capsys.readouterr()
+    assert "5 passed" in captured.out
+
+
+# --- Verbosity: print_table (always renders) ---
+
+
+def test_print_table_renders_when_quiet(capsys):
+    """print_table() always renders, even when QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    table = Table(title="Test")
+    table.add_column("Name")
+    table.add_row("Alice")
+    print_table(table)
+    captured = capsys.readouterr()
+    assert "Alice" in captured.out
+
+
+# --- Verbosity: print_verbose ---
+
+
+def test_print_verbose_renders_when_verbose(capsys):
+    """print_verbose() renders when verbosity is VERBOSE."""
+    set_verbosity(Verbosity.VERBOSE)
+    print_verbose("debug info")
+    captured = capsys.readouterr()
+    assert "debug info" in captured.out
+
+
+def test_print_verbose_suppressed_when_default(capsys):
+    """print_verbose() produces no output when verbosity is DEFAULT."""
+    print_verbose("debug info")
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+
+def test_print_verbose_suppressed_when_quiet(capsys):
+    """print_verbose() produces no output when verbosity is QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    print_verbose("debug info")
+    captured = capsys.readouterr()
+    assert captured.out == ""
