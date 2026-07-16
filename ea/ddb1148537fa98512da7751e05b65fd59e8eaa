@@ -1,0 +1,38 @@
+Task: Display underlying commands in verbose mode (Phase 3, Task 1)
+
+Summary:
+Added print_verbose() calls to display the underlying commands being
+executed when verbosity is set to VERBOSE. In test_runner.py, the full
+Godot command (binary --path project_root <args>) is printed before each
+run_godot() call (headless import and GUT test run). In lint_runner.py,
+the file being linted is printed before each lint_code() call. In
+format_runner.py, the file being formatted is printed before each
+format_code() call. Also added an autouse _reset_verbosity fixture to
+conftest.py to prevent verbosity state leakage between tests.
+
+Files modified:
+- src/gd_tools/test_runner.py: Added output.print_verbose() before both
+  run_godot() calls, showing the full command with binary, --path, and args
+- src/gd_tools/lint_runner.py: Added output.print_verbose() before
+  lint_code(), showing "Linting: <file_path>"
+- src/gd_tools/format_runner.py: Added output import and
+  output.print_verbose() before format_code(), showing "Formatting: <file_path>"
+- tests/unit/conftest.py: Added autouse _reset_verbosity fixture
+- tests/unit/test_test_runner.py: Added 2 verbose mode tests
+- tests/unit/test_lint_runner.py: Added 2 verbose mode tests
+- tests/unit/test_format_runner.py: Added 2 verbose mode tests
+- conductor/tracks.md: Updated track status to [~] (in progress)
+
+Why:
+Users need to see the actual commands being executed for debugging
+purposes. The --verbose flag now reveals the underlying Godot/GUT,
+gdlint, and gdformat invocations that are otherwise hidden.
+
+Verification:
+- All 777 unit tests pass
+- 97.17% total coverage
+- test_runner.py: 96% line coverage
+- lint_runner.py: 96% line coverage
+- format_runner.py: 95% line coverage
+- ruff check: clean
+- black --check: clean
