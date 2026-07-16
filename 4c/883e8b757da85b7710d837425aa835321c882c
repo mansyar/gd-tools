@@ -1,0 +1,9 @@
+Task: Integrate uncovered panels into coverage show output (FR-2)
+
+Summary: Updated show_coverage_summary() in orchestrator.py to compute per-file summaries (same pattern as generate_report()) and render uncovered detail panels below the summary table. Panels are always shown when coverage < 100% — no flag needed for the coverage show command (FR-2). Added FileCoverage and compute_file_summary calls to build file_summaries from plan and data, then calls reporter._render_uncovered_panels() and prints via output.console.print().
+
+Files modified:
+- src/gd_tools/coverage/orchestrator.py: Added file_summaries computation in show_coverage_summary(), added panel rendering after footer, updated docstring
+- tests/unit/test_orchestrator.py: 2 new tests (test_show_coverage_summary_prints_uncovered_panels, test_show_coverage_summary_no_panels_when_full_coverage) using mock_deps with custom plan/data overrides
+
+Why: FR-2 requires that coverage show always displays per-file uncovered detail after the summary table when coverage is below 100%.
