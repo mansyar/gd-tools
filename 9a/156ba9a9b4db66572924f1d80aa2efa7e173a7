@@ -1,0 +1,9 @@
+Task: Integrate uncovered panels into test --coverage inline output (FR-1)
+
+Summary: Updated _print_coverage_inline() in orchestrator.py to accept show_uncovered, file_summaries, and plan parameters. When show_uncovered=True and coverage is below 100%, renders per-file uncovered panels below the one-line summary via reporter._render_uncovered_panels(). Updated both call sites in run_coverage_test() (threshold error path at the except block, and success path) to thread show_uncovered, file_summaries, and plan through.
+
+Files modified:
+- src/gd_tools/coverage/orchestrator.py: Added FileSummary import, TYPE_CHECKING import for CoveragePlan, updated _print_coverage_inline() signature and body, updated both call sites in run_coverage_test()
+- tests/unit/test_orchestrator.py: Added FileSummary import, 3 helper functions (_make_uncovered_file_summaries, _make_uncovered_plan, _make_full_coverage_file_summaries), 3 new tests (test_print_coverage_inline_show_uncovered_prints_panels, test_print_coverage_inline_show_uncovered_omits_when_full, test_print_coverage_inline_without_show_uncovered_no_panels)
+
+Why: FR-1 requires that when --show-uncovered is passed with --coverage and coverage < 100%, per-file panels showing uncovered lines and branches are printed below the one-line summary.
