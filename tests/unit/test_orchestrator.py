@@ -26,6 +26,7 @@ from gd_tools.coverage.reporter import (
     CoverageData,
     CoverageSummary,
     FileCoverage,
+    FileSummary,
     ReportResult,
 )
 from gd_tools.errors import (
@@ -661,3 +662,142 @@ def test_run_coverage_test_inline_summary_content(mock_deps, capsys):
     assert "Coverage:" in captured.out
     assert "80.0%" in captured.out  # line_rate = 0.8 = 80%
     assert "100.0%" in captured.out  # branch_rate = 1.0 = 100%
+
+
+# --- _print_coverage_inline() with show_uncovered ---
+
+
+def _make_uncovered_file_summaries() -> list[FileSummary]:
+    """Create FileSummary list with uncovered lines and branches."""
+    return [
+        FileSummary(
+            file_id=0,
+            path="res://script.gd",
+            line_rate=0.5,
+            branch_rate=0.5,
+            covered_lines=1,
+            total_lines=2,
+            covered_branches=0,
+            total_branches=1,
+            uncovered_lines=[2],
+            uncovered_branches=[3],
+        )
+    ]
+
+
+def _make_uncovered_plan() -> CoveragePlan:
+    """Create a CoveragePlan matching the uncovered file summaries."""
+    return CoveragePlan(
+        version=1,
+        generated_by="gd-tools",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://script.gd",
+                source_hash="sha256:abc",
+                lines=[
+                    LinePlan(line=1, id=0, type="statement", branch_type=None),
+                    LinePlan(line=2, id=1, type="statement", branch_type=None),
+                    LinePlan(
+                        line=3, id=2, type="branch", branch_type="if_true"
+                    ),
+                ],
+            )
+        ],
+    )
+
+
+def _make_full_coverage_file_summaries() -> list[FileSummary]:
+    """Create FileSummary list with 100% coverage."""
+    return [
+        FileSummary(
+            file_id=0,
+            path="res://script.gd",
+            line_rate=1.0,
+            branch_rate=1.0,
+            covered_lines=2,
+            total_lines=2,
+            covered_branches=1,
+            total_branches=1,
+            uncovered_lines=[],
+            uncovered_branches=[],
+        )
+    ]
+
+
+@pytest.mark.unit
+def test_print_coverage_inline_show_uncovered_prints_panels(capsys):
+    """_print_coverage_inline() with show_uncovered prints panels when coverage < 100%."""
+    from gd_tools.coverage.orchestrator import _print_coverage_inline
+
+    summary = CoverageSummary(
+        line_rate=0.5,
+        branch_rate=0.5,
+        covered_lines=1,
+        total_lines=2,
+        covered_branches=0,
+        total_branches=1,
+    )
+
+    _print_coverage_inline(
+        summary,
+        show_uncovered=True,
+        file_summaries=_make_uncovered_file_summaries(),
+        plan=_make_uncovered_plan(),
+    )
+
+    captured = capsys.readouterr()
+    assert "Coverage:" in captured.out
+    assert "res://script.gd" in captured.out
+    assert "Uncovered lines" in captured.out
+
+
+@pytest.mark.unit
+def test_print_coverage_inline_show_uncovered_omits_when_full(capsys):
+    """_print_coverage_inline() with show_uncovered omits panels at 100% coverage."""
+    from gd_tools.coverage.orchestrator import _print_coverage_inline
+
+    summary = CoverageSummary(
+        line_rate=1.0,
+        branch_rate=1.0,
+        covered_lines=2,
+        total_lines=2,
+        covered_branches=1,
+        total_branches=1,
+    )
+
+    _print_coverage_inline(
+        summary,
+        show_uncovered=True,
+        file_summaries=_make_full_coverage_file_summaries(),
+        plan=_make_uncovered_plan(),
+    )
+
+    captured = capsys.readouterr()
+    assert "Coverage:" in captured.out
+    assert "Uncovered lines" not in captured.out
+
+
+@pytest.mark.unit
+def test_print_coverage_inline_without_show_uncovered_no_panels(capsys):
+    """_print_coverage_inline() without show_uncovered does not print panels."""
+    from gd_tools.coverage.orchestrator import _print_coverage_inline
+
+    summary = CoverageSummary(
+        line_rate=0.5,
+        branch_rate=0.5,
+        covered_lines=1,
+        total_lines=2,
+        covered_branches=0,
+        total_branches=1,
+    )
+
+    _print_coverage_inline(
+        summary,
+        file_summaries=_make_uncovered_file_summaries(),
+        plan=_make_uncovered_plan(),
+    )
+
+    captured = capsys.readouterr()
+    assert "Coverage:" in captured.out
+    assert "Uncovered lines" not in captured.out

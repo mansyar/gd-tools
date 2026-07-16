@@ -9,6 +9,7 @@ business logic directly.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rich.table import Table
 from rich.text import Text
@@ -19,6 +20,7 @@ from gd_tools.coverage import plan_generator, reporter
 from gd_tools.coverage.reporter import (
     CoverageData,
     CoverageSummary,
+    FileSummary,
     ReportResult,
 )
 from gd_tools.errors import (
@@ -27,6 +29,9 @@ from gd_tools.errors import (
     TestFailureError,
 )
 from gd_tools.test_runner import TestResult, run_tests
+
+if TYPE_CHECKING:
+    from gd_tools.coverage.plan_generator import CoveragePlan
 
 
 def run_coverage_test(
@@ -128,7 +133,13 @@ def run_coverage_test(
         )
     except CoverageThresholdError as exc:
         if exc.report_result is not None:
-            _print_coverage_inline(exc.report_result.summary, min_percent)
+            _print_coverage_inline(
+                exc.report_result.summary,
+                min_percent,
+                show_uncovered=show_uncovered,
+                file_summaries=exc.report_result.file_summaries,
+                plan=plan,
+            )
         if test_error is not None:
             raise test_error
         raise
@@ -137,7 +148,13 @@ def run_coverage_test(
         raise test_error
 
     # Print coverage inline summary on success.
-    _print_coverage_inline(report_result.summary, min_percent)
+    _print_coverage_inline(
+        report_result.summary,
+        min_percent,
+        show_uncovered=show_uncovered,
+        file_summaries=report_result.file_summaries,
+        plan=plan,
+    )
 
     if result is None:
         raise CoveragePlanError(
@@ -310,17 +327,29 @@ def _print_threshold_footer(
 
 
 def _print_coverage_inline(
-    summary: CoverageSummary, min_percent: int | None = None
+    summary: CoverageSummary,
+    min_percent: int | None = None,
+    show_uncovered: bool = False,
+    file_summaries: list[FileSummary] | None = None,
+    plan: CoveragePlan | None = None,
 ) -> None:
     """Print a one-line coverage summary.
 
     Used by :func:`run_coverage_test` to show coverage after test
     results.  Prints the line and branch coverage percentages followed
     by a summary footer indicating whether the threshold was met.
+    When ``show_uncovered`` is True and coverage is below 100%,
+    per-file uncovered detail panels are printed below the summary.
 
     Args:
         summary: The coverage summary to display.
         min_percent: Optional minimum coverage percentage (0-100).
+        show_uncovered: If True, print per-file uncovered lines and
+            branches panels when coverage is below 100%.
+        file_summaries: Per-file summaries for uncovered detail.
+            Required when ``show_uncovered`` is True.
+        plan: Coverage plan for branch type lookup.  Required when
+            ``show_uncovered`` is True.
     """
     line_pct = summary.line_rate * 100
     branch_pct = summary.branch_rate * 100
@@ -329,6 +358,11 @@ def _print_coverage_inline(
         f"Coverage: {line_pct:.1f}% lines, {branch_pct:.1f}% branches"
     )
     _print_threshold_footer(summary, min_percent)
+
+    if show_uncovered and file_summaries is not None and plan is not None:
+        panels = reporter._render_uncovered_panels(file_summaries, plan)
+        if panels is not None:
+            output.console.print(panels)
 
 
 def show_coverage_summary(
