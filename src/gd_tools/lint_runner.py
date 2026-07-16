@@ -104,6 +104,7 @@ def run_lint(
             )
             files_skipped += 1
             continue
+        output.print_verbose(f"Linting: {file_path}")
         try:
             problems = lint_code(code)
         except LarkError as e:

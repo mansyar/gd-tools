@@ -12,6 +12,7 @@ import click
 from gdtoolkit.formatter import format_code
 from lark.exceptions import LarkError
 
+from gd_tools import output
 from gd_tools.config import GdToolsConfig
 from gd_tools.errors import FormatError
 from gd_tools.file_discovery import discover_gd_files
@@ -95,6 +96,7 @@ def run_format(
             with open(file_path, "r", encoding="utf-8") as f:
                 original_code = f.read()
 
+            output.print_verbose(f"Formatting: {file_path}")
             formatted_code = format_code(
                 original_code,
                 max_line_length=config.format.max_line_length,

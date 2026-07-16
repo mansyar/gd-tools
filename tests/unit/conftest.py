@@ -126,3 +126,12 @@ def _mock_cli_update_check():
     """
     with patch("gd_tools.cli.check_for_update", return_value=None):
         yield
+
+
+@pytest.fixture(autouse=True)
+def _reset_verbosity():
+    """Reset verbosity to DEFAULT after each test to avoid state leakage."""
+    yield
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.DEFAULT)

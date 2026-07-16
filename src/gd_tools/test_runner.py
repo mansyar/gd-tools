@@ -392,11 +392,16 @@ def run_tests(
     # Run headless import to register GUT class names. Required for
     # fresh projects without a .godot/ cache. Non-zero exit codes are
     # ignored — Godot may emit warnings during import.
+    import_args = ["--headless", "--import"]
+    output.print_verbose(
+        f"Command: {godot_info.path} --path {project_root} "
+        f"{' '.join(import_args)}"
+    )
     try:
         run_godot(
             godot_info.path,
             project_root,
-            ["--headless", "--import"],
+            import_args,
             timeout=timeout,
         )
     except subprocess.TimeoutExpired:
@@ -434,6 +439,9 @@ def run_tests(
         }
 
     # Run Godot with GUT.
+    output.print_verbose(
+        f"Command: {godot_info.path} --path {project_root} " f"{' '.join(args)}"
+    )
     try:
         result = run_godot(
             godot_info.path,

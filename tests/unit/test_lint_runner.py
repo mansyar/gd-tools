@@ -454,3 +454,34 @@ def test_run_lint_default_paths(tmp_path):
     config = GdToolsConfig()
     result = run_lint(config, None)
     assert isinstance(result, LintResult)
+
+
+# --- Verbose mode: command display ---
+
+
+def test_run_lint_verbose_shows_file_being_linted(tmp_path, capsys):
+    """In verbose mode, run_lint prints the file being linted."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.VERBOSE)
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+
+    run_lint(config, [str(tmp_path)])
+
+    captured = capsys.readouterr()
+    assert "player.gd" in captured.out
+
+
+def test_run_lint_default_mode_no_file_info_shown(tmp_path, capsys):
+    """In default mode, run_lint does not print the file being linted."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.DEFAULT)
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+
+    run_lint(config, [str(tmp_path)])
+
+    captured = capsys.readouterr()
+    assert "Linting:" not in captured.out
