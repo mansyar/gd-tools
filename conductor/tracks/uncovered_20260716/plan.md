@@ -41,7 +41,7 @@
     - [x] Run tests and verify >80% line, >70% branch coverage for all changed files
 - [x] Task: Conductor - User Manual Verification 'Phase 3: CLI Flag and Output Integration' (Protocol in workflow.md)
 
-## Phase 4: Documentation Updates
+## Phase 4: Documentation Updates [checkpoint: bc76c84]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
 - [x] Task: Update documentation for `--show-uncovered` flag and enhanced `coverage show` output [commit: 955a4ba]
@@ -50,5 +50,5 @@
     - [x] Update docs/USER_GUIDE.md — add `--show-uncovered` usage example and sample uncovered panel output
     - [x] Update skills/gd-tools/SKILL.md — add `--show-uncovered` to CLI flag documentation
     - [x] Add CHANGELOG.md feature entry for uncovered lines/branches display
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Documentation Updates' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Documentation Updates' (Protocol in workflow.md) [checkpoint: bc76c84]
 </protect>
