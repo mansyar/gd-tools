@@ -60,7 +60,7 @@ This positioning avoids leading with the riskiest, most complex feature and inst
 | **Unified workflow** | One install, one config (`gd-tools.toml`), one mental model for test, lint, format, and coverage. |
 | **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute — GUT installed, coverage addon deployed, configs generated. |
 | **Coverage gap-filling** | Production-quality line and branch coverage for GDScript — HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. |
-| **CI/CD friendly** | Exit codes, `--check` flags, machine-readable output, no interactive prompts when run non-interactively. |
+| **CI/CD friendly** | Exit codes, `--check` flags, `--quiet` for minimal CI output, machine-readable output, no interactive prompts when run non-interactively. |
 | **Standalone compatibility** | gdlint, gdformat, and GUT continue to work if invoked directly. `gd-tools` is a layer on top, not a lock-in. |
 | **Convention over configuration** | Sensible defaults out of the box; config for when conventions don't fit. |
 
