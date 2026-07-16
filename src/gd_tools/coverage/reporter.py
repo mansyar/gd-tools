@@ -15,9 +15,13 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.errors import CoveragePlanError, CoverageThresholdError
+
+if TYPE_CHECKING:
+    from rich.console import Group
 
 # --- Data structures (FR-1, FR-2, FR-3) ---
 
@@ -414,6 +418,125 @@ def compute_summary(plan: CoveragePlan, data: CoverageData) -> CoverageSummary:
         covered_branches=total_covered_branches,
         total_branches=total_branches,
     )
+
+
+# --- Uncovered detail rendering (Phase 2) ---
+
+
+_BRANCH_TYPE_DISPLAY: dict[str, str] = {
+    "if_true": "if",
+    "if_false": "else",
+    "elif_true": "elif",
+    "loop_body": "loop",
+    "match_case": "match",
+}
+
+
+def _format_line_ranges(lines: list[int]) -> str:
+    """Format a list of line numbers as a human-readable range string.
+
+    Consecutive numbers are grouped into ranges (e.g., ``[1, 2, 3, 5, 6]``
+    becomes ``"1-3, 5-6"``).
+
+    Args:
+        lines: List of line numbers (need not be sorted).
+
+    Returns:
+        A comma-separated string of individual numbers and ranges,
+        or an empty string if *lines* is empty.
+    """
+    if not lines:
+        return ""
+
+    sorted_lines = sorted(lines)
+    ranges: list[str] = []
+    start = sorted_lines[0]
+    end = sorted_lines[0]
+
+    for num in sorted_lines[1:]:
+        if num == end + 1:
+            end = num
+        else:
+            if start == end:
+                ranges.append(str(start))
+            else:
+                ranges.append(f"{start}-{end}")
+            start = num
+            end = num
+
+    if start == end:
+        ranges.append(str(start))
+    else:
+        ranges.append(f"{start}-{end}")
+
+    return ", ".join(ranges)
+
+
+def _render_uncovered_panels(
+    file_summaries: list[FileSummary],
+    plan: CoveragePlan,
+) -> Group | None:
+    """Render per-file Rich panels showing uncovered lines and branches.
+
+    For each file with at least one uncovered line or branch, a
+    :class:`~rich.panel.Panel` is created with the file path as the
+    title and two content lines:
+
+    - **Uncovered lines** — line numbers formatted as ranges.
+    - **Uncovered branches** — branch line numbers annotated with
+      their branch type (e.g., ``42 (if)``).
+
+    Files with full coverage are omitted.
+
+    Args:
+        file_summaries: Per-file coverage summaries.
+        plan: The instrumentation plan (used to look up branch types).
+
+    Returns:
+        A :class:`~rich.console.Group` of panels, or ``None`` if
+        every file has full coverage.
+    """
+    from rich.console import Group
+    from rich.panel import Panel
+
+    plan_by_id = {fp.file_id: fp for fp in plan.files}
+    panels: list[Panel] = []
+
+    for fs in file_summaries:
+        if not fs.uncovered_lines and not fs.uncovered_branches:
+            continue
+
+        file_plan = plan_by_id.get(fs.file_id)
+        content_parts: list[str] = []
+
+        if fs.uncovered_lines:
+            ranges_str = _format_line_ranges(fs.uncovered_lines)
+            content_parts.append(f"Uncovered lines: {ranges_str}")
+
+        if fs.uncovered_branches:
+            if file_plan is not None:
+                branch_map = {
+                    lp.line: lp.branch_type
+                    for lp in file_plan.lines
+                    if lp.type == "branch" and lp.branch_type is not None
+                }
+                branch_parts: list[str] = []
+                for line_num in fs.uncovered_branches:
+                    bt = branch_map.get(line_num, "unknown")
+                    display = _BRANCH_TYPE_DISPLAY.get(bt, bt)
+                    branch_parts.append(f"{line_num} ({display})")
+            else:
+                branch_parts = [str(ln) for ln in fs.uncovered_branches]
+            content_parts.append(
+                f"Uncovered branches: {', '.join(branch_parts)}"
+            )
+
+        panels.append(Panel("\n".join(content_parts), title=fs.path))
+
+    if not panels:
+        return None
+
+    return Group(*panels)
 
 
 # --- Report dispatch and threshold (FR-3) ---

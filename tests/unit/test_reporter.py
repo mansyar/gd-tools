@@ -710,3 +710,246 @@ def test_generate_report_result_fields(tmp_path):
     assert result.file_summaries[0].path == "res://player.gd"
 
     assert result.threshold_met is True
+
+
+# --- Line range formatting (Phase 2) ---
+
+
+def test_format_line_ranges_consecutive():
+    """_format_line_ranges groups consecutive numbers into ranges."""
+    from gd_tools.coverage.reporter import _format_line_ranges
+
+    assert _format_line_ranges([1, 2, 3, 5, 6]) == "1-3, 5-6"
+
+
+def test_format_line_ranges_empty():
+    """_format_line_ranges returns empty string for empty list."""
+    from gd_tools.coverage.reporter import _format_line_ranges
+
+    assert _format_line_ranges([]) == ""
+
+
+def test_format_line_ranges_single():
+    """_format_line_ranges returns single number without range syntax."""
+    from gd_tools.coverage.reporter import _format_line_ranges
+
+    assert _format_line_ranges([4]) == "4"
+
+
+def test_format_line_ranges_non_consecutive():
+    """_format_line_ranges handles mix of ranges and singles."""
+    from gd_tools.coverage.reporter import _format_line_ranges
+
+    assert _format_line_ranges([10, 11, 15]) == "10-11, 15"
+
+
+# --- Uncovered panel rendering (Phase 2) ---
+
+
+def test_render_uncovered_panels_shows_file_path_and_lines():
+    """_render_uncovered_panels includes file path as title and uncovered line ranges."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    from gd_tools.coverage.reporter import _render_uncovered_panels
+
+    file_summaries = [
+        FileSummary(
+            file_id=0,
+            path="res://player.gd",
+            line_rate=0.6,
+            branch_rate=0.5,
+            covered_lines=3,
+            total_lines=5,
+            covered_branches=1,
+            total_branches=2,
+            uncovered_lines=[7, 12, 15, 16],
+            uncovered_branches=[12],
+        ),
+    ]
+    plan = CoveragePlan(
+        version=1,
+        generated_by="test",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://player.gd",
+                source_hash="sha256:test",
+                lines=[
+                    LinePlan(line=5, id=0, type="statement"),
+                    LinePlan(line=7, id=1, type="statement"),
+                    LinePlan(line=10, id=2, type="statement"),
+                    LinePlan(
+                        line=12, id=3, type="branch", branch_type="if_true"
+                    ),
+                    LinePlan(line=15, id=4, type="statement"),
+                    LinePlan(line=16, id=5, type="statement"),
+                ],
+            ),
+        ],
+    )
+
+    panels = _render_uncovered_panels(file_summaries, plan)
+    assert panels is not None
+
+    console = Console(file=StringIO(), width=120, force_terminal=False)
+    console.print(panels)
+    output = console.file.getvalue()
+
+    assert "res://player.gd" in output
+    assert "7" in output
+    assert "15-16" in output
+    assert "12 (if)" in output
+
+
+def test_render_uncovered_panels_omits_full_coverage_files():
+    """_render_uncovered_panels skips files with no uncovered lines or branches."""
+    from gd_tools.coverage.reporter import _render_uncovered_panels
+
+    file_summaries = [
+        FileSummary(
+            file_id=0,
+            path="res://full.gd",
+            line_rate=1.0,
+            branch_rate=1.0,
+            covered_lines=5,
+            total_lines=5,
+            covered_branches=2,
+            total_branches=2,
+            uncovered_lines=[],
+            uncovered_branches=[],
+        ),
+    ]
+    plan = CoveragePlan(
+        version=1,
+        generated_by="test",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://full.gd",
+                source_hash="sha256:test",
+                lines=[
+                    LinePlan(line=5, id=0, type="statement"),
+                    LinePlan(
+                        line=8, id=1, type="branch", branch_type="if_true"
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    panels = _render_uncovered_panels(file_summaries, plan)
+    assert panels is None
+
+
+def test_render_uncovered_panels_branch_type_annotations():
+    """_render_uncovered_panels annotates branches with their type."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    from gd_tools.coverage.reporter import _render_uncovered_panels
+
+    file_summaries = [
+        FileSummary(
+            file_id=0,
+            path="res://test.gd",
+            line_rate=0.0,
+            branch_rate=0.0,
+            covered_lines=0,
+            total_lines=3,
+            covered_branches=0,
+            total_branches=3,
+            uncovered_lines=[5, 8, 10],
+            uncovered_branches=[5, 8, 10],
+        ),
+    ]
+    plan = CoveragePlan(
+        version=1,
+        generated_by="test",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://test.gd",
+                source_hash="sha256:test",
+                lines=[
+                    LinePlan(
+                        line=5, id=0, type="branch", branch_type="if_true"
+                    ),
+                    LinePlan(
+                        line=8, id=1, type="branch", branch_type="loop_body"
+                    ),
+                    LinePlan(
+                        line=10, id=2, type="branch", branch_type="match_case"
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    panels = _render_uncovered_panels(file_summaries, plan)
+    assert panels is not None
+
+    console = Console(file=StringIO(), width=120, force_terminal=False)
+    console.print(panels)
+    output = console.file.getvalue()
+
+    assert "5 (if)" in output
+    assert "8 (loop)" in output
+    assert "10 (match)" in output
+
+
+def test_render_uncovered_panels_only_lines_no_branches():
+    """_render_uncovered_panels shows only uncovered lines when no branches are uncovered."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    from gd_tools.coverage.reporter import _render_uncovered_panels
+
+    file_summaries = [
+        FileSummary(
+            file_id=0,
+            path="res://stmts.gd",
+            line_rate=0.5,
+            branch_rate=1.0,
+            covered_lines=2,
+            total_lines=4,
+            covered_branches=1,
+            total_branches=1,
+            uncovered_lines=[3, 7],
+            uncovered_branches=[],
+        ),
+    ]
+    plan = CoveragePlan(
+        version=1,
+        generated_by="test",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://stmts.gd",
+                source_hash="sha256:test",
+                lines=[
+                    LinePlan(line=1, id=0, type="statement"),
+                    LinePlan(line=3, id=1, type="statement"),
+                    LinePlan(
+                        line=5, id=2, type="branch", branch_type="if_true"
+                    ),
+                    LinePlan(line=7, id=3, type="statement"),
+                ],
+            ),
+        ],
+    )
+
+    panels = _render_uncovered_panels(file_summaries, plan)
+    assert panels is not None
+
+    console = Console(file=StringIO(), width=120, force_terminal=False)
+    console.print(panels)
+    output = console.file.getvalue()
+
+    assert "res://stmts.gd" in output
+    assert "3" in output
+    assert "7" in output
+    assert "Uncovered branches" not in output
