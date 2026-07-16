@@ -3,31 +3,31 @@
 
 ## Phase 1: Completion Command Implementation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and TDD protocol before starting implementation
-    - [ ] Read `conductor/tracks/shell_completion_20260716/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and TDD protocol before starting implementation
+    - [x] Read `conductor/tracks/shell_completion_20260716/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Write failing tests for the `completion` command
-    - [ ] Create `tests/unit/test_completion.py`
-    - [ ] Test `gd-tools completion bash` outputs a valid bash completion script (non-empty, contains shell completion markers)
-    - [ ] Test `gd-tools completion zsh` outputs a valid zsh completion script
-    - [ ] Test `gd-tools completion fish` outputs a valid fish completion script
-    - [ ] Test `gd-tools completion powershell` outputs a valid PowerShell completion script
-    - [ ] Test `gd-tools completion <invalid>` exits with code 2 and prints an error message
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Write failing tests for the `completion` command
+    - [x] Create `tests/unit/test_completion.py`
+    - [x] Test `gd-tools completion bash` outputs a valid bash completion script (non-empty, contains shell completion markers)
+    - [x] Test `gd-tools completion zsh` outputs a valid zsh completion script
+    - [x] Test `gd-tools completion fish` outputs a valid fish completion script
+    - [x] Test `gd-tools completion powershell` outputs a valid PowerShell completion script
+    - [x] Test `gd-tools completion <invalid>` exits with code 2 and prints an error message
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement the `completion` command in `cli.py`
-    - [ ] Add `completion` subcommand to the `cli` group using Click's shell completion infrastructure (`click.shell_completion`)
-    - [ ] Accept a `shell` argument restricted to `bash`, `zsh`, `fish`, `powershell` via `click.Choice`
-    - [ ] Generate and output the completion script to stdout for the requested shell
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Refactor if needed; rerun tests to confirm still passing
+- [x] Task: Implement the `completion` command in `cli.py`
+    - [x] Add `completion` subcommand to the `cli` group using Click's shell completion infrastructure (`click.shell_completion`)
+    - [x] Accept a `shell` argument restricted to `bash`, `zsh`, `fish`, `powershell` via `click.Choice`
+    - [x] Generate and output the completion script to stdout for the requested shell
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Refactor if needed; rerun tests to confirm still passing
 
-- [ ] Task: Verify coverage and quality gates
-    - [ ] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` and confirm >80% line / >70% branch for new code
-    - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/` — both must pass
-    - [ ] Commit code changes with message `feat(cli): Add shell completion command`
-    - [ ] Attach git note with task summary to the commit
+- [x] Task: Verify coverage and quality gates
+    - [x] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` and confirm >80% line / >70% branch for new code
+    - [x] Run `ruff check src/ tests/` and `black --check src/ tests/` — both must pass
+    - [x] Commit code changes with message `feat(cli): Add shell completion command` (39e4bfd)
+    - [x] Attach git note with task summary to the commit
 
 - [ ] Task: Conductor - User Manual Verification 'Completion Command' (Protocol in workflow.md)
 
