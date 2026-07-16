@@ -8,6 +8,6 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Verbose/Quiet Global Flags**
+- [x] **Track: Verbose/Quiet Global Flags**
 *Link: [./tracks/verbose_quiet_flags_20260716/](./tracks/verbose_quiet_flags_20260716/)*
 
