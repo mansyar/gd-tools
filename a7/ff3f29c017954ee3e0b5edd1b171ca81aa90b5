@@ -1,0 +1,48 @@
+Phase 3 Verification Report: Verbose Mode Implementation
+
+Phase: Phase 3 - Verbose Mode Implementation
+Track: Verbose/Quiet Global Flags (Track 27)
+Checkpoint Commit: a7ff3f2
+
+Tasks Completed:
+1. Display underlying commands in verbose mode (commit eaddb11)
+   - Added output.print_verbose() calls in test_runner.py before both
+     run_godot() calls (headless import and GUT test run)
+   - Added output.print_verbose() in lint_runner.py before lint_code()
+   - Added output import and output.print_verbose() in format_runner.py
+     before format_code()
+   - Added autouse _reset_verbosity fixture to conftest.py
+
+2. Display timing information in verbose mode (commit b356eb3)
+   - Added time.perf_counter() timing in test_runner.py around GUT test run
+   - Added time.perf_counter() timing in lint_runner.py around lint loop
+   - Added time.perf_counter() timing in format_runner.py around format loop
+   - All timing output via output.print_verbose("Elapsed: X.XXs")
+
+Automated Test Results:
+- Command: CI=true pytest tests/unit/ --cov=gd_tools --cov-branch --cov-report=term-missing
+- Result: 783 passed
+- Total coverage: 97.18%
+- test_runner.py: 96% line, 96% branch
+- lint_runner.py: 96% line, 100% branch
+- format_runner.py: 95% line, 100% branch
+- ruff check: clean
+- black --check: clean
+
+Manual Verification Steps:
+1. Ensure gd-tools is installed: pip install -e .
+2. Test verbose mode with lint: gd-tools --verbose lint
+   - Confirm "Linting: <file_path>" lines appear
+   - Confirm "Elapsed: X.XXs" appears at end
+3. Test verbose mode with format: gd-tools --verbose format
+   - Confirm "Formatting: <file_path>" lines appear
+   - Confirm "Elapsed: X.XXs" appears at end
+4. Test verbose mode with test: gd-tools --verbose test
+   - Confirm "Command: ..." lines appear before Godot invocations
+   - Confirm "Elapsed: X.XXs" appears after test run
+5. Test default mode: gd-tools lint / gd-tools format
+   - Confirm NO verbose output (Command:, Linting:, Formatting:, Elapsed:)
+6. Test short flag: gd-tools -v lint
+   - Confirm same verbose output as --verbose
+
+User Confirmation: Approved
