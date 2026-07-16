@@ -1,0 +1,10 @@
+Task: Add --show-uncovered flag to test CLI command
+
+Summary: Added --show-uncovered boolean flag to the test CLI command in cli.py. When used with --coverage, threads show_uncovered=True to run_coverage_test(). When used without --coverage, prints a warning (matching the existing --min behavior). Added show_uncovered: bool = False parameter to run_coverage_test() in orchestrator.py with docstring documentation.
+
+Files modified:
+- src/gd_tools/cli.py: Added @click.option('--show-uncovered') decorator, show_uncovered param to test() function, warning for --show-uncovered without --coverage, and show_uncovered=show_uncovered kwarg passed to run_coverage_test()
+- src/gd_tools/coverage/orchestrator.py: Added show_uncovered: bool = False parameter to run_coverage_test() signature + docstring
+- tests/unit/test_cli.py: 3 new tests — test_test_coverage_show_uncovered_passed_to_orchestrator, test_test_coverage_without_show_uncovered_defaults_false, test_test_show_uncovered_without_coverage_warns
+
+Why: FR-1 requires a --show-uncovered flag on the test command to optionally show uncovered lines/branches detail. This is the CLI plumbing; actual rendering integration follows in the next task.
