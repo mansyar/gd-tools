@@ -12,14 +12,14 @@
     - [x] Commit: `feat(verbosity): Add Verbosity enum and context module`
     - [x] Attach git note with task summary to commit
     - [x] Mark task complete in `plan.md` with commit SHA
-- [ ] Task: Extend output.py to respect verbosity level
-    - [ ] Write failing tests verifying that `print_info` and `print_warning` are suppressed when verbosity is QUIET, and that `print_success`, `print_error`, `print_summary`, and `print_table` always render regardless of verbosity (`tests/unit/test_output.py`)
-    - [ ] Implement verbosity checks in `output.py` — `print_info` and `print_warning` check `get_verbosity()` and skip output when QUIET; add a new `print_verbose()` helper that only renders when VERBOSE
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage for `output.py`
-    - [ ] Commit: `feat(output): Integrate verbosity checks into output module`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+- [x] Task: Extend output.py to respect verbosity level (ff4c9ca)
+    - [x] Write failing tests verifying that `print_info` and `print_warning` are suppressed when verbosity is QUIET, and that `print_success`, `print_error`, `print_summary`, and `print_table` always render regardless of verbosity (`tests/unit/test_output.py`)
+    - [x] Implement verbosity checks in `output.py` — `print_info` and `print_warning` check `get_verbosity()` and skip output when QUIET; add a new `print_verbose()` helper that only renders when VERBOSE
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage for `output.py`
+    - [x] Commit: `feat(output): Integrate verbosity checks into output module`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Verbosity Core Infrastructure' (Protocol in workflow.md)
 
 ## Phase 2: Global CLI Flags
