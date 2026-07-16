@@ -1,3 +1,4 @@
+<protect>
 # Track 26: Shell Completion
 
 ## Overview
@@ -57,3 +58,4 @@ This track adds a `gd-tools completion [shell]` subcommand that outputs the appr
 - Integration with `gd-tools init`.
 - Completion for shells other than bash, zsh, fish, and PowerShell.
 - Testing that completion scripts actually function in real shells (only script generation is tested).
+</protect>

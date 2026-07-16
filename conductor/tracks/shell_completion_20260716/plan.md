@@ -1,6 +1,11 @@
+<protect>
 # Implementation Plan: Track 26 — Shell Completion
 
 ## Phase 1: Completion Command Implementation
+
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and TDD protocol before starting implementation
+    - [ ] Read `conductor/tracks/shell_completion_20260716/spec.md`
+    - [ ] Read `conductor/workflow.md`
 
 - [ ] Task: Write failing tests for the `completion` command
     - [ ] Create `tests/unit/test_completion.py`
@@ -28,6 +33,10 @@
 
 ## Phase 2: Documentation
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and TDD protocol before starting implementation
+    - [ ] Read `conductor/tracks/shell_completion_20260716/spec.md`
+    - [ ] Read `conductor/workflow.md`
+
 - [ ] Task: Add Shell Completion section to README
     - [ ] Add brief setup instructions for bash, zsh, fish, and PowerShell
     - [ ] Mention Click's env-var approach (`_GD_TOOLS_COMPLETE=<shell>_source gd-tools`) as an alternative
@@ -43,3 +52,4 @@
     - [ ] Commit with message `docs(user-guide): Add detailed shell completion instructions`
 
 - [ ] Task: Conductor - User Manual Verification 'Documentation' (Protocol in workflow.md)
+</protect>
