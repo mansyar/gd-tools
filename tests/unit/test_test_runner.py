@@ -1359,3 +1359,62 @@ def test_run_tests_default_mode_no_command_shown(
     captured = capsys.readouterr()
     # Should NOT show the command prefix in default mode.
     assert "Command:" not in captured.out
+
+
+# --- Verbose mode: timing display ---
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_verbose_shows_timing(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+    capsys,
+):
+    """In verbose mode, run_tests prints elapsed time for the test run."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.VERBOSE)
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (1, 1, 0, 0, 0.1, [])
+
+    run_tests(GdToolsConfig())
+
+    captured = capsys.readouterr()
+    assert "Elapsed:" in captured.out
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_default_mode_no_timing_shown(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+    capsys,
+):
+    """In default mode, run_tests does not print timing information."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.DEFAULT)
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (1, 1, 0, 0, 0.1, [])
+
+    run_tests(GdToolsConfig())
+
+    captured = capsys.readouterr()
+    assert "Elapsed:" not in captured.out

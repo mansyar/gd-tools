@@ -8,6 +8,7 @@ format or JSON.
 """
 
 import json
+import time
 from dataclasses import dataclass, field
 
 from rich.console import Console
@@ -94,6 +95,7 @@ def run_lint(
 
     console = Console()
 
+    start_time = time.perf_counter()
     for file_path in gd_files:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -131,6 +133,9 @@ def run_lint(
                     severity="error",
                 )
             )
+
+    elapsed = time.perf_counter() - start_time
+    output.print_verbose(f"Elapsed: {elapsed:.2f}s")
 
     return LintResult(
         files_checked=len(gd_files) - files_skipped,

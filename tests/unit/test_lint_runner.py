@@ -485,3 +485,34 @@ def test_run_lint_default_mode_no_file_info_shown(tmp_path, capsys):
 
     captured = capsys.readouterr()
     assert "Linting:" not in captured.out
+
+
+# --- Verbose mode: timing display ---
+
+
+def test_run_lint_verbose_shows_timing(tmp_path, capsys):
+    """In verbose mode, run_lint prints elapsed time for the lint scan."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.VERBOSE)
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+
+    run_lint(config, [str(tmp_path)])
+
+    captured = capsys.readouterr()
+    assert "Elapsed:" in captured.out
+
+
+def test_run_lint_default_mode_no_timing_shown(tmp_path, capsys):
+    """In default mode, run_lint does not print timing information."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.DEFAULT)
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+
+    run_lint(config, [str(tmp_path)])
+
+    captured = capsys.readouterr()
+    assert "Elapsed:" not in captured.out

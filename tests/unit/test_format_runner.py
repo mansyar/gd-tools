@@ -351,3 +351,34 @@ def test_run_format_default_mode_no_file_info_shown(tmp_path, capsys):
 
     captured = capsys.readouterr()
     assert "Formatting:" not in captured.out
+
+
+# --- Verbose mode: timing display ---
+
+
+def test_run_format_verbose_shows_timing(tmp_path, capsys):
+    """In verbose mode, run_format prints elapsed time for the format pass."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.VERBOSE)
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+
+    run_format(config, [str(tmp_path)])
+
+    captured = capsys.readouterr()
+    assert "Elapsed:" in captured.out
+
+
+def test_run_format_default_mode_no_timing_shown(tmp_path, capsys):
+    """In default mode, run_format does not print timing information."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.DEFAULT)
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    config = GdToolsConfig()
+
+    run_format(config, [str(tmp_path)])
+
+    captured = capsys.readouterr()
+    assert "Elapsed:" not in captured.out

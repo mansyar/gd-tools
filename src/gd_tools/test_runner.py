@@ -8,6 +8,7 @@ returns a :class:`TestResult`.
 
 import os
 import subprocess
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -442,6 +443,7 @@ def run_tests(
     output.print_verbose(
         f"Command: {godot_info.path} --path {project_root} " f"{' '.join(args)}"
     )
+    start_time = time.perf_counter()
     try:
         result = run_godot(
             godot_info.path,
@@ -452,6 +454,8 @@ def run_tests(
         )
     except subprocess.TimeoutExpired:
         raise GdToolsError(f"Godot/GUT timed out after {timeout}s")
+    elapsed = time.perf_counter() - start_time
+    output.print_verbose(f"Elapsed: {elapsed:.2f}s")
 
     # Handle crash exit codes (>1). Exit code 1 means tests ran but
     # some failed — proceed to parse JUnit XML for details.

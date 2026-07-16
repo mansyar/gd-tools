@@ -6,6 +6,7 @@ invokes the formatter programmatically, and returns structured results.
 """
 
 import difflib
+import time
 from dataclasses import dataclass, field
 
 import click
@@ -91,6 +92,7 @@ def run_format(
     files_skipped = 0
     diffs_list: list[str] = []
 
+    start_time = time.perf_counter()
     for file_path in gd_files:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -129,6 +131,9 @@ def run_format(
             click.echo(f"Warning: Skipping {file_path}: {e}", err=True)
             files_skipped += 1
             continue
+
+    elapsed = time.perf_counter() - start_time
+    output.print_verbose(f"Elapsed: {elapsed:.2f}s")
 
     return FormatResult(
         files_checked=files_checked - files_skipped,
