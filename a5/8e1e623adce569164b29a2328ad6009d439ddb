@@ -1,0 +1,10 @@
+Task: Add --verbose/-v and --quiet/-q global flags to CLI group
+
+- Added --verbose/-v and --quiet/-q flag options to the cli() group in cli.py
+- Mutual exclusion: --verbose --quiet exits with code 2
+- Calls set_verbosity() to set VERBOSE, QUIET, or DEFAULT based on flags
+- Added import of Verbosity and set_verbosity from verbosity module
+- Added 9 tests in test_cli.py: flag parsing (long/short for both), mutual exclusion (long/short), default behavior, help output visibility
+- Added _reset_verbosity_after_test autouse fixture to prevent verbosity leakage between tests
+- All 771 unit tests pass, 97.16% total coverage, cli.py at 95% line coverage
+- ruff check: clean, black --check: clean
