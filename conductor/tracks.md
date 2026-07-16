@@ -8,7 +8,3 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Shell Completion**
-*Link: [./tracks/shell_completion_20260716/](./tracks/shell_completion_20260716/)*
-
-
