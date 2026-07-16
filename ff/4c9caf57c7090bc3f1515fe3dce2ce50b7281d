@@ -1,0 +1,8 @@
+Task: Extend output.py to respect verbosity level
+
+- print_info() and print_warning() now check get_verbosity() and skip output when QUIET
+- Added print_verbose() helper that only renders when VERBOSE (dim style)
+- print_success, print_error, print_summary, print_table always render regardless of verbosity
+- Added 13 new unit tests to test_output.py covering all verbosity combinations
+- Added autouse _reset_verbosity fixture to prevent state leakage between tests
+- 100% line and branch coverage for output.py, ruff/black clean
