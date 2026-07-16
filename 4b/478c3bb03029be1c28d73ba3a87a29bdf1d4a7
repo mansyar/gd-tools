@@ -1,0 +1,38 @@
+Phase 3: CLI Flag and Output Integration — Verification Report
+
+## Automated Tests
+Command: CI=true python -m pytest tests/unit/ --no-cov
+Result: 736 passed (728 existing + 8 new tests)
+
+New tests added:
+- tests/unit/test_cli.py: 3 tests for --show-uncovered flag
+  - test_test_coverage_show_uncovered_passed_to_orchestrator
+  - test_test_coverage_without_show_uncovered_defaults_false
+  - test_test_show_uncovered_without_coverage_warns
+- tests/unit/test_orchestrator.py: 5 tests for panel integration
+  - test_print_coverage_inline_show_uncovered_prints_panels
+  - test_print_coverage_inline_show_uncovered_omits_when_full
+  - test_print_coverage_inline_without_show_uncovered_no_panels
+  - test_show_coverage_summary_prints_uncovered_panels
+  - test_show_coverage_summary_no_panels_when_full_coverage
+
+## Coverage
+- src/gd_tools/coverage/orchestrator.py: 97% line coverage
+- src/gd_tools/cli.py: 63% overall (new --show-uncovered code fully covered)
+- ruff check: All checks passed
+- black --check: All files formatted correctly
+
+## Changes Summary
+1. cli.py: Added --show-uncovered flag to test command, warning when used without --coverage, threads show_uncovered to run_coverage_test()
+2. orchestrator.py: Added show_uncovered param to run_coverage_test(), updated _print_coverage_inline() to render panels, updated show_coverage_summary() to always render panels
+
+## Manual Verification Steps (presented to user)
+1. gd-tools test --help shows --show-uncovered flag
+2. gd-tools test --show-uncovered (without --coverage) shows warning
+3. gd-tools test --coverage --show-uncovered prints panels when coverage < 100%
+4. gd-tools test --coverage (without --show-uncovered) unchanged behavior
+5. gd-tools coverage show always shows panels when coverage < 100%
+6. gd-tools coverage show at 100% coverage shows only summary table
+
+## User Confirmation
+User approved Phase 3 verification with 'Yes, approved'.
