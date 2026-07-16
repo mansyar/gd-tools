@@ -2,7 +2,7 @@
 
 **Version:** 0.1.0 (draft)
 **Date:** 2026-07-08
-**Status:** Post-v1.0 — Terminal Output Standardization delivered (Track 25b)
+**Status:** Post-v1.0 — Shell Completion delivered (Track 26)
 **Target Godot Version:** 4.5+
 
 ---
@@ -127,6 +127,7 @@ gd-tools coverage show            Print coverage summary to terminal
 gd-tools config show             Display resolved configuration (Rich table, TOML, or JSON)
 gd-tools config validate         Validate gd-tools.toml — schema, deprecated settings, paths
 gd-tools version                 Print all component versions (gd-tools, Godot, GUT, gdtoolkit, Python)
+gd-tools completion [shell]      Generate shell completion script (bash, zsh, fish, powershell)
 ```
 
 ### `gd-tools test`
@@ -208,6 +209,25 @@ Useful for environment diagnostics and bug reports.
 - **`--json`**: Flat JSON object keyed by component name (machine-readable).
 - **Exit code**: Always 0 — version detection never fails.
 - **No network calls**: All detection is local.
+
+### `gd-tools completion`
+
+```
+gd-tools completion [bash|zsh|fish|powershell]
+```
+
+Generates a shell completion script for the specified shell. The script
+is printed to stdout and can be sourced directly or saved to a file.
+
+- **Shell argument**: Restricted to `bash`, `zsh`, `fish`, `powershell`
+  via `click.Choice`. Invalid shells exit with code 2.
+- **PowerShell**: Click 8.2.x does not include a native PowerShell
+  completion class. `gd-tools` provides a custom `PowerShellComplete`
+  class (subclass of `BashComplete`) with a `Register-ArgumentCompleter`
+  template.
+- **Alternative**: Click's built-in env-var approach
+  (`_GD_TOOLS_COMPLETE=<shell>_source gd-tools`) also works without
+  sourcing a script.
 
 ### Update Notification
 

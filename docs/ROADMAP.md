@@ -664,7 +664,7 @@ footer format, and coverage rates lacked visual threshold feedback.
 | **Modules** | `src/gd_tools/cli.py`, documentation |
 | **Effort** | 0.25 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Delivered |
 
 **Problem:**
 
@@ -692,6 +692,21 @@ commands, flags, or file paths.
 3. `gd-tools completion fish` prints a valid fish completion script
 4. `gd-tools completion powershell` prints a valid PowerShell completion script
 5. Documentation includes setup instructions for each shell
+
+**Results:**
+- **Conductor track:** `shell_completion_20260716` (archived to `conductor/archive/`)
+- **Commits:** `39e4bfd` (implementation) → `f46b0d7` (README docs) → `18562b5` (USER_GUIDE docs) + review fix `e28d3ae`
+- **Key implementation notes:**
+  - `completion` command accepts `shell` arg via `click.Choice(['bash','zsh','fish','powershell'])`
+  - Custom `PowerShellComplete(BashComplete)` class — Click 8.2.x lacks native PowerShell completion; uses `Register-ArgumentCompleter` template
+  - 6 unit tests covering all 4 shells, invalid shell (exit 2), and help output
+  - README Section 6 and USER_GUIDE Section 6 document per-shell setup + Click env-var alternative
+- **Review fixes (commit `e28d3ae`):**
+  - **Critical:** Removed top-level env var from PowerShell template that permanently broke the CLI when sourced
+  - **Medium:** Fixed COMP_WORDS construction in PowerShell template (space-joined string instead of broken pipeline)
+  - **Medium:** Fixed PowerShell env-var docs (`powershell_source` instead of `powershell_complete`)
+  - **Low:** Replaced `assert` with `click.UsageError` (style guide compliance)
+  - **Low:** Removed redundant COMP_CWORD assignment in PowerShell template
 
 ---
 
