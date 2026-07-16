@@ -101,5 +101,5 @@
     - [ ] Commit: `docs(verbosity): Document --verbose and --quiet global flags`
     - [ ] Attach git note with task summary to commit
     - [ ] Mark task complete in `plan.md` with commit SHA
-- [ ] Task: Conductor - User Manual Verification 'Integration Testing & Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Integration Testing & Documentation' (Protocol in workflow.md) [checkpoint: 6321cfe]
 </protect>
