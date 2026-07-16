@@ -67,14 +67,14 @@
     - [x] Commit: `feat(quiet): Suppress update and addon version checks in quiet mode`
     - [x] Attach git note with task summary to commit
     - [x] Mark task complete in `plan.md` with commit SHA
-- [ ] Task: Suppress progress/info messages in quiet mode
-    - [ ] Write failing tests verifying that when verbosity is QUIET, `print_info()` calls in runner modules produce no output, but `print_success()`, `print_error()`, and `print_summary()` still render (`tests/unit/test_output.py`, `tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`)
-    - [ ] Verify that the `output.py` changes from Phase 1 already handle this (print_info checks verbosity); if any runner modules use `click.echo` or direct `Console` calls for non-essential output, route them through `print_info()` or add explicit verbosity checks
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage
-    - [ ] Commit: `feat(quiet): Suppress progress and info messages in quiet mode`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+- [x] Task: Suppress progress/info messages in quiet mode (4282872)
+    - [x] Write failing tests verifying that when verbosity is QUIET, `print_info()` calls in runner modules produce no output, but `print_success()`, `print_error()`, and `print_summary()` still render (`tests/unit/test_output.py`, `tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`)
+    - [x] Verify that the `output.py` changes from Phase 1 already handle this (print_info checks verbosity); if any runner modules use `click.echo` or direct `Console` calls for non-essential output, route them through `print_info()` or add explicit verbosity checks
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage
+    - [x] Commit: `feat(quiet): Suppress progress and info messages in quiet mode`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [ ] Task: Suppress init/doctor details in quiet mode
     - [ ] Write failing tests verifying that when verbosity is QUIET, `gd-tools init` shows only a success/failure status (no summary table), and `gd-tools doctor` shows only pass/fail status (no detailed table) (`tests/unit/test_cli.py` or `tests/integration/test_init_integration.py`)
     - [ ] Implement quiet mode in `init` and `doctor` commands — check `get_verbosity()` before printing detailed output; in QUIET mode, print only a one-line status (`[OK] Initialized` or `[FAIL] Initialization failed`)
