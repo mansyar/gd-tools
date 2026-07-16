@@ -423,8 +423,9 @@ def doctor():
 @click.option("--test", "test_name", type=str, help="Run tests matching name")
 @click.option("--junit-xml", type=str, help="JUnit XML output path")
 @click.option("--no-exit-code", is_flag=True, help="Always exit 0")
+@click.option("--show-uncovered", is_flag=True, help="Show uncovered lines and branches when coverage is below 100%")
 @click.argument("paths", nargs=-1)
-def test(coverage, min_percent, suite, test_name, junit_xml, no_exit_code, paths):
+def test(coverage, min_percent, suite, test_name, junit_xml, no_exit_code, show_uncovered, paths):
     """Run unit tests via GUT."""
 
 @cli.command()
@@ -1157,6 +1158,7 @@ class FileSummary:
     covered_branches: int
     branch_rate: float
     uncovered_lines: list[int]
+    uncovered_branches: list[int]
 
 @dataclass
 class ReportResult:
@@ -1172,7 +1174,8 @@ def compute_file_summary(
     file_data: FileCoverage,
 ) -> FileSummary:
     """Per-file coverage breakdown. Uses line.type == 'branch'
-    for branch detection. Tracks uncovered_lines."""
+    for branch detection. Tracks uncovered_lines and
+    uncovered_branches (branch-type lines with zero hits)."""
 
 def read_coverage_json(path: Path) -> CoverageData:
     """Read and validate coverage JSON from GDScript addon output.
@@ -1183,6 +1186,17 @@ def merge_coverage_data(files: list[CoverageData]) -> CoverageData:
     """Merge multiple coverage data objects (for parallel CI shards).
     Sums hit counts per file_id/line_id. Empty list returns
     empty CoverageData(version=1)."""
+
+def render_uncovered_panels(
+    file_summaries: list[FileSummary],
+    plan: CoveragePlan,
+) -> Group | None:
+    """Render per-file Rich panels showing uncovered lines (as ranges)
+    and branches (with type annotations). Returns None if no file has
+    uncovered lines or branches."""
+
+def _format_line_ranges(lines: list[int]) -> str:
+    """Format line numbers as ranges: [1,2,3,5,6] -> '1-3, 5-6'."""
 ```
 
 ---
@@ -1320,6 +1334,7 @@ def run_coverage_test(
     no_exit_code: bool = False,
     timeout: int | None = 300,
     paths: list[str] | None = None,
+    show_uncovered: bool = False,
 ) -> TestResult:
     """Run tests with coverage instrumentation enabled.
     1. Generate plan (plan_generator.generate_plan)
@@ -1332,6 +1347,8 @@ def run_coverage_test(
     8. Print coverage summary table (Lines/Branches: Found/Hit/Rate)
        — on success: after generate_report() returns
        — on threshold failure: BEFORE re-raising CoverageThresholdError
+    9. If show_uncovered=True and coverage < 100%, print per-file
+       uncovered detail panels (lines as ranges, branches with type).
     Error precedence (NFR-2): TestFailureError reported first, then
     CoverageThresholdError. Coverage summary table is printed in both
     cases before any error propagates."""
@@ -1361,7 +1378,9 @@ def show_coverage_summary(
 ) -> CoverageSummary:
     """Print terminal summary table from existing coverage data.
     Reads plan.json + coverage.json, computes summary via reporter.
-    Prints Rich table (Lines/Branches with Found/Hit/Rate).
+    Prints Rich table (Lines/Branches with Found/Hit/Rate), then
+    per-file uncovered detail panels (lines as ranges, branches with
+    type annotations) when coverage < 100%.
     Raises CoverageThresholdError if line_rate*100 < min_percent (Cause/Fix format)."""
 ```
 
@@ -1410,6 +1429,21 @@ the already-computed summary without recomputation. `generate_report()`
 passes `report_result=result` when raising. Uses `TYPE_CHECKING` guard
 to avoid circular import with `reporter.py`. 5 new tests in
 `test_orchestrator.py`; 623 unit tests total, 97.31% coverage.
+
+**Uncovered lines/branches display (Track: uncovered_20260716,
+2026-07-16):** Added `--show-uncovered` flag to `test` command.
+When `--coverage` + `--show-uncovered` and coverage < 100%, per-file
+Rich panels are printed below the one-line summary showing uncovered
+lines (as ranges, e.g. `15, 23, 31-35`) and uncovered branches (with
+type annotations like `42 (if)`, `8 (loop)`, `10 (match)`). The
+`coverage show` command always displays these panels after the summary
+table (no flag needed). `FileSummary` gained `uncovered_branches:
+list[int]` field, computed by `compute_file_summary()` from branch-type
+lines with zero hits. `render_uncovered_panels()` in `reporter.py`
+builds the Rich `Panel`/`Group` output. `_BRANCH_TYPE_DISPLAY` maps
+internal branch types to display names (if_true→if, if_false→else,
+elif_true→elif, loop_body→loop, match_case→match). 17 new unit tests
+across `test_reporter.py`, `test_orchestrator.py`, and `test_cli.py`.
 
 ---
 

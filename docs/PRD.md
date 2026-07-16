@@ -188,7 +188,8 @@ gd-tools coverage show [--min N]
   without re-running tests.
 - `merge` — combine multiple coverage data files (e.g., from parallel CI
   shards or multiple test runs).
-- `show` — print a terminal summary table (file -> line %, branch %).
+- `show` — print a terminal summary table (file -> line %, branch %),
+  followed by per-file uncovered detail panels (lines and branches).
 
 ### `gd-tools version`
 

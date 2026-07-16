@@ -503,6 +503,27 @@ def test_terminal_report_color_thresholds():
 ```
 ```
 
+**Uncovered panels (`reporter.py` — `render_uncovered_panels`):**
+- Returns `None` when all files have full coverage
+- Panels include file path as title
+- Uncovered lines displayed as ranges (e.g., `1-3, 5-6`)
+- Uncovered branches annotated with type (e.g., `42 (if)`, `8 (loop)`)
+- Files with full coverage are omitted from output
+- `uncovered_branches` computed from branch-type lines with zero hits
+- `--show-uncovered` flag threads through CLI to orchestrator
+- `coverage show` always renders panels when coverage < 100%
+
+```python
+def test_uncovered_branches_zero_hits():
+    """Branch-type lines with zero hits are collected."""
+
+def test_render_uncovered_panels_omits_full_coverage():
+    """Files with no uncovered lines or branches are skipped."""
+
+def test_render_uncovered_panels_branch_type_annotations():
+    """Branch annotations show type (if, else, loop, match)."""
+```
+
 ---
 
 ### 4.6 `lint_runner.py` & `format_runner.py` — Tool Wrappers

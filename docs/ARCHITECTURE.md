@@ -503,7 +503,7 @@ metrics, and dispatches to format-specific reporters.
 - `CoverageData` --- top-level data (version, generated_at, files).
 - `CoverageSummary` --- aggregated metrics (line_rate, branch_rate,
   covered/total counts).
-- `FileSummary` --- per-file metrics with uncovered line list.
+- `FileSummary` --- per-file metrics with uncovered line and branch lists.
 - `ReportResult` --- output of report generation (output_path,
   format, summary, file_summaries, threshold_met).
 
@@ -516,6 +516,9 @@ metrics, and dispatches to format-specific reporters.
 - `write_coverage_json(data, path)` --- serializes coverage data.
 - `compute_file_summary(file_plan, file_data)` --- per-file metrics.
 - `compute_summary(plan, data)` --- overall metrics across all files.
+- `render_uncovered_panels(file_summaries, plan)` --- renders Rich
+  panels showing uncovered lines (as ranges) and branches (with type
+  annotations) per file.
 - `generate_report(plan, data, output_dir, format, min_threshold)`
   --- dispatches to the format-specific reporter and enforces the
   threshold.
