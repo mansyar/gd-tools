@@ -46,7 +46,7 @@
     - [ ] Commit: `feat(verbose): Display underlying commands in verbose mode`
     - [ ] Attach git note with task summary to commit
     - [ ] Mark task complete in `plan.md` with commit SHA
-- [ ] Task: Display timing information in verbose mode
+- [x] Task: Display timing information in verbose mode (b356eb3)
     - [ ] Write failing tests verifying that when verbosity is VERBOSE, elapsed time is printed after each major operation (test run, lint scan, format pass) (`tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`, `tests/unit/test_format_runner.py`)
     - [ ] Implement timing logic — wrap each major operation in `time.perf_counter()` start/end calls and print elapsed time via `print_verbose()` in `test_runner.py`, `lint_runner.py`, and `format_runner.py`
     - [ ] Run tests, confirm Green phase
