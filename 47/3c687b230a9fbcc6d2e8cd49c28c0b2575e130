@@ -1,0 +1,17 @@
+Task: Suppress update check and addon version check in quiet mode
+
+Summary:
+- Modified GdToolsGroup.invoke() in cli.py to check ctx.params.get('quiet') before calling check_for_update() and check_addon_version()
+- When --quiet/-q flag is set, both update check and addon version check are skipped entirely
+- Used ctx.params instead of get_verbosity() because invoke() runs before the cli() group callback where set_verbosity() is called
+- Added 4 tests in test_cli.py:
+  - test_quiet_suppresses_update_and_addon_checks: verifies --quiet skips both checks
+  - test_quiet_short_flag_suppresses_update_and_addon_checks: verifies -q skips both checks
+  - test_default_mode_calls_update_and_addon_checks: verifies default mode calls both checks
+  - test_quiet_suppresses_update_notification_when_available: verifies --quiet suppresses notification even when update available
+
+Verification:
+- All 787 unit tests pass
+- cli.py: 95% line coverage (386 stmts, 15 missed)
+- ruff check: clean
+- black --check: clean
