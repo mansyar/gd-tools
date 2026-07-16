@@ -472,7 +472,7 @@ def _format_line_ranges(lines: list[int]) -> str:
     return ", ".join(ranges)
 
 
-def _render_uncovered_panels(
+def render_uncovered_panels(
     file_summaries: list[FileSummary],
     plan: CoveragePlan,
 ) -> Group | None:

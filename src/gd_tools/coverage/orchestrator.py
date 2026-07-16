@@ -360,7 +360,7 @@ def _print_coverage_inline(
     _print_threshold_footer(summary, min_percent)
 
     if show_uncovered and file_summaries is not None and plan is not None:
-        panels = reporter._render_uncovered_panels(file_summaries, plan)
+        panels = reporter.render_uncovered_panels(file_summaries, plan)
         if panels is not None:
             output.console.print(panels)
 
@@ -420,7 +420,7 @@ def show_coverage_summary(
     _print_threshold_footer(summary, min_percent)
 
     # Print uncovered detail panels (always shown for coverage show).
-    panels = reporter._render_uncovered_panels(file_summaries, plan)
+    panels = reporter.render_uncovered_panels(file_summaries, plan)
     if panels is not None:
         output.console.print(panels)
 

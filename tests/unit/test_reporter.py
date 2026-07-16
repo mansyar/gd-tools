@@ -747,12 +747,12 @@ def test_format_line_ranges_non_consecutive():
 
 
 def test_render_uncovered_panels_shows_file_path_and_lines():
-    """_render_uncovered_panels includes file path as title and uncovered line ranges."""
+    """render_uncovered_panels includes file path as title and uncovered line ranges."""
     from io import StringIO
 
     from rich.console import Console
 
-    from gd_tools.coverage.reporter import _render_uncovered_panels
+    from gd_tools.coverage.reporter import render_uncovered_panels
 
     file_summaries = [
         FileSummary(
@@ -790,7 +790,7 @@ def test_render_uncovered_panels_shows_file_path_and_lines():
         ],
     )
 
-    panels = _render_uncovered_panels(file_summaries, plan)
+    panels = render_uncovered_panels(file_summaries, plan)
     assert panels is not None
 
     console = Console(file=StringIO(), width=120, force_terminal=False)
@@ -804,8 +804,8 @@ def test_render_uncovered_panels_shows_file_path_and_lines():
 
 
 def test_render_uncovered_panels_omits_full_coverage_files():
-    """_render_uncovered_panels skips files with no uncovered lines or branches."""
-    from gd_tools.coverage.reporter import _render_uncovered_panels
+    """render_uncovered_panels skips files with no uncovered lines or branches."""
+    from gd_tools.coverage.reporter import render_uncovered_panels
 
     file_summaries = [
         FileSummary(
@@ -839,17 +839,17 @@ def test_render_uncovered_panels_omits_full_coverage_files():
         ],
     )
 
-    panels = _render_uncovered_panels(file_summaries, plan)
+    panels = render_uncovered_panels(file_summaries, plan)
     assert panels is None
 
 
 def test_render_uncovered_panels_branch_type_annotations():
-    """_render_uncovered_panels annotates branches with their type."""
+    """render_uncovered_panels annotates branches with their type."""
     from io import StringIO
 
     from rich.console import Console
 
-    from gd_tools.coverage.reporter import _render_uncovered_panels
+    from gd_tools.coverage.reporter import render_uncovered_panels
 
     file_summaries = [
         FileSummary(
@@ -888,7 +888,7 @@ def test_render_uncovered_panels_branch_type_annotations():
         ],
     )
 
-    panels = _render_uncovered_panels(file_summaries, plan)
+    panels = render_uncovered_panels(file_summaries, plan)
     assert panels is not None
 
     console = Console(file=StringIO(), width=120, force_terminal=False)
@@ -901,12 +901,12 @@ def test_render_uncovered_panels_branch_type_annotations():
 
 
 def test_render_uncovered_panels_only_lines_no_branches():
-    """_render_uncovered_panels shows only uncovered lines when no branches are uncovered."""
+    """render_uncovered_panels shows only uncovered lines when no branches are uncovered."""
     from io import StringIO
 
     from rich.console import Console
 
-    from gd_tools.coverage.reporter import _render_uncovered_panels
+    from gd_tools.coverage.reporter import render_uncovered_panels
 
     file_summaries = [
         FileSummary(
@@ -942,7 +942,7 @@ def test_render_uncovered_panels_only_lines_no_branches():
         ],
     )
 
-    panels = _render_uncovered_panels(file_summaries, plan)
+    panels = render_uncovered_panels(file_summaries, plan)
     assert panels is not None
 
     console = Console(file=StringIO(), width=120, force_terminal=False)
