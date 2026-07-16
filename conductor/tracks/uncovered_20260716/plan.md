@@ -24,7 +24,7 @@
     - [x] Run tests and verify >80% line, >70% branch coverage for changed files
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Rendering Utilities' (Protocol in workflow.md)
 
-## Phase 3: CLI Flag and Output Integration
+## Phase 3: CLI Flag and Output Integration [checkpoint: 4b478c3]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
 - [x] Task: Add `--show-uncovered` flag to `test` CLI command [54a39bb]
@@ -39,7 +39,7 @@
     - [x] Write failing tests for `show_coverage_summary()` — verify uncovered panels appear below the summary table when coverage < 100%
     - [x] Implement rendering call in `show_coverage_summary()` to always show uncovered panels
     - [x] Run tests and verify >80% line, >70% branch coverage for all changed files
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: CLI Flag and Output Integration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: CLI Flag and Output Integration' (Protocol in workflow.md)
 
 ## Phase 4: Documentation Updates
 
