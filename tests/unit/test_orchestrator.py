@@ -537,6 +537,53 @@ def test_show_coverage_summary_missing_coverage_raises_plan_error(mock_deps):
         show_coverage_summary(_make_config())
 
 
+@pytest.mark.unit
+def test_show_coverage_summary_prints_uncovered_panels(mock_deps, capsys):
+    """show_coverage_summary() prints uncovered panels when coverage < 100%."""
+    mock_deps["read_plan_json"].return_value = _make_uncovered_plan()
+    mock_deps["read_coverage_json"].return_value = _make_coverage_data()
+    mock_deps["compute_summary"].return_value = CoverageSummary(
+        line_rate=0.5,
+        branch_rate=0.5,
+        covered_lines=1,
+        total_lines=3,
+        covered_branches=0,
+        total_branches=1,
+    )
+
+    show_coverage_summary(_make_config())
+
+    captured = capsys.readouterr()
+    assert "Coverage Summary" in captured.out
+    assert "res://script.gd" in captured.out
+    assert "Uncovered lines" in captured.out
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_no_panels_when_full_coverage(mock_deps, capsys):
+    """show_coverage_summary() omits uncovered panels when coverage is 100%."""
+    mock_deps["read_plan_json"].return_value = _make_uncovered_plan()
+    mock_deps["read_coverage_json"].return_value = CoverageData(
+        version=1,
+        generated_at="2025-01-01T00:00:00",
+        files=[FileCoverage(file_id=0, hits={"0": 3, "1": 2, "2": 1})],
+    )
+    mock_deps["compute_summary"].return_value = CoverageSummary(
+        line_rate=1.0,
+        branch_rate=1.0,
+        covered_lines=3,
+        total_lines=3,
+        covered_branches=1,
+        total_branches=1,
+    )
+
+    show_coverage_summary(_make_config())
+
+    captured = capsys.readouterr()
+    assert "Coverage Summary" in captured.out
+    assert "Uncovered lines" not in captured.out
+
+
 # --- Coverage summary display in run_coverage_test() ---
 
 

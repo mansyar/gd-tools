@@ -373,7 +373,8 @@ def show_coverage_summary(
 
     Reads existing ``plan.json`` and ``coverage.json``, computes a
     summary, prints a Rich table, and optionally enforces a minimum
-    threshold.
+    threshold.  Per-file uncovered detail panels are always printed
+    below the summary when coverage is below 100%.
 
     Args:
         config: Project configuration.
@@ -400,11 +401,28 @@ def show_coverage_summary(
     # Compute summary.
     summary = reporter.compute_summary(plan, data)
 
+    # Compute per-file summaries for uncovered detail.
+    coverage_by_id = {fc.file_id: fc for fc in data.files}
+    file_summaries: list[FileSummary] = []
+    for file_plan in plan.files:
+        file_data = coverage_by_id.get(
+            file_plan.file_id,
+            reporter.FileCoverage(file_id=file_plan.file_id, hits={}),
+        )
+        file_summaries.append(
+            reporter.compute_file_summary(file_plan, file_data)
+        )
+
     # Print Rich terminal table with color-coded rates.
     _print_coverage_table(summary, min_percent)
 
     # Print summary footer with threshold status.
     _print_threshold_footer(summary, min_percent)
+
+    # Print uncovered detail panels (always shown for coverage show).
+    panels = reporter._render_uncovered_panels(file_summaries, plan)
+    if panels is not None:
+        output.console.print(panels)
 
     # Threshold check.
     if min_percent is not None and summary.line_rate * 100 < min_percent:
