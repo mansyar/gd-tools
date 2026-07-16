@@ -889,6 +889,23 @@ def test_print_summary_prints_next_steps(tmp_path: Path):
     assert "gd-tools test" in printed_text
 
 
+def test_print_summary_quiet_shows_one_line_status(tmp_path: Path, capsys):
+    """In quiet mode, print_summary shows only a one-line status."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.QUIET)
+    actions = ["Created .gd-tools/ directory", "Installed GUT v9.5.0"]
+    print_summary(tmp_path, actions)
+    captured = capsys.readouterr()
+    # Should NOT show detailed output
+    assert "Actions taken" not in captured.out
+    assert "Next steps" not in captured.out
+    assert "gd-tools init complete" not in captured.out
+    # Should show a one-line status
+    assert "OK" in captured.out
+    assert "Initialized" in captured.out
+
+
 # --- run_init ---
 
 

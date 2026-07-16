@@ -47,7 +47,7 @@ from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .test_runner import run_tests
 from .update_check import check_for_update
 from .addon_check import check_addon_version
-from .verbosity import Verbosity, set_verbosity
+from .verbosity import Verbosity, get_verbosity, set_verbosity
 from .version import collect_versions
 
 if sys.version_info >= (3, 11):
@@ -237,8 +237,14 @@ def init(non_interactive):
 def doctor():
     """Check the environment for required tools."""
     result = run_doctor()
-    console = Console()
-    console.print(format_doctor_table(result))
+    if get_verbosity() == Verbosity.QUIET:
+        if result.all_passed:
+            output.print_success("All checks passed")
+        else:
+            output.print_error("Some checks failed")
+    else:
+        console = Console()
+        console.print(format_doctor_table(result))
     ctx = click.get_current_context()
     ctx.exit(0 if result.all_passed else 1)
 

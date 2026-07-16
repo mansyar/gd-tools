@@ -1613,3 +1613,59 @@ def test_quiet_suppresses_update_notification_when_available():
         result = runner.invoke(cli, ["--quiet", "doctor"])
     assert result.exit_code == 0
     assert "A new version of gd-tools" not in result.output
+
+
+# ---------------------------------------------------------------------------
+# Quiet mode: suppress init/doctor details
+# ---------------------------------------------------------------------------
+
+
+def test_doctor_quiet_shows_one_line_pass():
+    """--quiet doctor shows only a one-line pass status, no table."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(
+            checks=[
+                CheckResult(name="Godot Binary", passed=True, message="Found"),
+            ],
+            all_passed=True,
+        )
+        result = runner.invoke(cli, ["--quiet", "doctor"])
+    assert result.exit_code == 0
+    assert "Godot Binary" not in result.output
+    assert "OK" in result.output
+
+
+def test_doctor_quiet_shows_one_line_fail():
+    """--quiet doctor shows only a one-line fail status, no table."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(
+            checks=[
+                CheckResult(
+                    name="Godot Binary",
+                    passed=False,
+                    message="Not found",
+                ),
+            ],
+            all_passed=False,
+        )
+        result = runner.invoke(cli, ["--quiet", "doctor"])
+    assert result.exit_code == 1
+    assert "Godot Binary" not in result.output
+    assert "FAIL" in result.output
+
+
+def test_doctor_default_shows_table():
+    """Without --quiet, doctor shows the full table with check names."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.run_doctor") as mock_run:
+        mock_run.return_value = DoctorResult(
+            checks=[
+                CheckResult(name="Godot Binary", passed=True, message="Found"),
+            ],
+            all_passed=True,
+        )
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 0
+    assert "Godot Binary" in result.output

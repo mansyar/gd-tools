@@ -36,9 +36,11 @@ from .config import (
     save_config,
 )
 from . import __version__
+from . import output
 from .errors import GdToolsError
 from .godot import find_godot, get_gut_version_for_godot
 from .test_runner import is_gut_installed
+from .verbosity import Verbosity, get_verbosity
 
 # --- Constants ---
 
@@ -574,10 +576,15 @@ def print_summary(project_root: Path, actions: list[str]) -> None:
     Lists all actions taken during initialization and prints guidance
     on what the user should do next (e.g., run tests).
 
+    In quiet mode, only a one-line success status is printed.
+
     Args:
         project_root: Path to the Godot project root.
         actions: List of action descriptions to display.
     """
+    if get_verbosity() == Verbosity.QUIET:
+        output.print_success("Initialized")
+        return
     console.print("\n[bold green]gd-tools init complete![/bold green]\n")
     console.print("[bold]Actions taken:[/bold]")
     for action in actions:
