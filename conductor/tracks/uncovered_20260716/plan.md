@@ -1,7 +1,7 @@
 <protect>
 # Implementation Plan: Show Uncovered Lines and Branches in Coverage Output
 
-## Phase 1: Data Model Enhancement
+## Phase 1: Data Model Enhancement [checkpoint: b7b714c]
 
 - [x] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
 - [x] Task: Add `uncovered_branches` field to `FileSummary` and update `compute_file_summary()` [76ad4b1]
@@ -9,7 +9,7 @@
     - [x] Add `uncovered_branches: list[int]` field to `FileSummary` dataclass in `reporter.py`
     - [x] Update `compute_file_summary()` to compute `uncovered_branches` by cross-referencing the plan's branch-type lines against coverage hits
     - [x] Run tests and verify >80% line, >70% branch coverage for `reporter.py`
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Data Model Enhancement' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Model Enhancement' (Protocol in workflow.md)
 
 ## Phase 2: Rendering Utilities
 
