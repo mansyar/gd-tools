@@ -26,11 +26,11 @@
 
 ## Phase 3: CLI Flag and Output Integration
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
-- [ ] Task: Add `--show-uncovered` flag to `test` CLI command
-    - [ ] Write failing CLI tests for `--show-uncovered` flag (flag present with `--coverage`, flag absent, `--show-uncovered` without `--coverage`)
-    - [ ] Implement `--show-uncovered` option in `cli.py` `test` command with a descriptive `help` string for `--help` output, and thread `show_uncovered` parameter to `run_coverage_test()`
-    - [ ] Run tests and verify coverage
+- [x] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
+- [x] Task: Add `--show-uncovered` flag to `test` CLI command [54a39bb]
+    - [x] Write failing CLI tests for `--show-uncovered` flag (flag present with `--coverage`, flag absent, `--show-uncovered` without `--coverage`)
+    - [x] Implement `--show-uncovered` option in `cli.py` `test` command with a descriptive `help` string for `--help` output, and thread `show_uncovered` parameter to `run_coverage_test()`
+    - [x] Run tests and verify coverage
 - [ ] Task: Integrate uncovered panels into `test --coverage` inline output (FR-1)
     - [ ] Write failing tests for `_print_coverage_inline()` with `show_uncovered=True` — verify panels are printed when coverage < 100% and omitted when 100%
     - [ ] Implement rendering call in `_print_coverage_inline()` when `show_uncovered` is True
