@@ -47,6 +47,7 @@ from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .test_runner import run_tests
 from .update_check import check_for_update
 from .addon_check import check_addon_version
+from .verbosity import Verbosity, set_verbosity
 from .version import collect_versions
 
 if sys.version_info >= (3, 11):
@@ -178,8 +179,34 @@ class GdToolsGroup(click.Group):
     prog_name="gd-tools",
     message="%(prog)s %(version)s",
 )
-def cli():
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Show verbose output including underlying commands and timing.",
+)
+@click.option(
+    "--quiet",
+    "-q",
+    is_flag=True,
+    default=False,
+    help="Suppress non-essential output (update checks, progress info).",
+)
+def cli(verbose: bool, quiet: bool):
     """gd-tools: A modern development workflow CLI for GDScript."""
+    if verbose and quiet:
+        click.echo(
+            "Error: --verbose and --quiet are mutually exclusive.", err=True
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+    if verbose:
+        set_verbosity(Verbosity.VERBOSE)
+    elif quiet:
+        set_verbosity(Verbosity.QUIET)
+    else:
+        set_verbosity(Verbosity.DEFAULT)
 
 
 @cli.command()

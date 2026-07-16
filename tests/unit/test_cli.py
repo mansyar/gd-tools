@@ -11,6 +11,7 @@ from rich.console import Console
 
 from gd_tools.cli import cli
 from gd_tools.doctor import CheckResult, DoctorResult
+from gd_tools.verbosity import Verbosity, get_verbosity, set_verbosity
 from gd_tools.errors import (
     ConfigError,
     CoveragePlanError,
@@ -1464,3 +1465,80 @@ def test_cli_version_missing_display():
     assert result.exit_code == 0
     assert "not detected" in result.output
     assert "not installed" in result.output
+
+
+# ---------------------------------------------------------------------------
+# Verbosity global flags: --verbose/-v and --quiet/-q
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _reset_verbosity_after_test():
+    """Reset verbosity to DEFAULT after each test to avoid leakage."""
+    yield
+    set_verbosity(Verbosity.DEFAULT)
+
+
+def test_verbose_long_flag_sets_verbosity():
+    """--verbose sets verbosity to VERBOSE."""
+    runner = CliRunner()
+    runner.invoke(cli, ["--verbose", "version"])
+    assert get_verbosity() == Verbosity.VERBOSE
+
+
+def test_verbose_short_flag_sets_verbosity():
+    """-v sets verbosity to VERBOSE."""
+    runner = CliRunner()
+    runner.invoke(cli, ["-v", "version"])
+    assert get_verbosity() == Verbosity.VERBOSE
+
+
+def test_quiet_long_flag_sets_verbosity():
+    """--quiet sets verbosity to QUIET."""
+    runner = CliRunner()
+    runner.invoke(cli, ["--quiet", "version"])
+    assert get_verbosity() == Verbosity.QUIET
+
+
+def test_quiet_short_flag_sets_verbosity():
+    """-q sets verbosity to QUIET."""
+    runner = CliRunner()
+    runner.invoke(cli, ["-q", "version"])
+    assert get_verbosity() == Verbosity.QUIET
+
+
+def test_no_flag_defaults_to_default_verbosity():
+    """No verbosity flag leaves verbosity at DEFAULT."""
+    runner = CliRunner()
+    runner.invoke(cli, ["version"])
+    assert get_verbosity() == Verbosity.DEFAULT
+
+
+def test_verbose_and_quiet_mutual_exclusion():
+    """--verbose --quiet exits with code 2."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--verbose", "--quiet", "version"])
+    assert result.exit_code == 2
+
+
+def test_verbose_short_and_quiet_short_mutual_exclusion():
+    """-v -q exits with code 2."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["-v", "-q", "version"])
+    assert result.exit_code == 2
+
+
+def test_verbose_flag_shown_in_help():
+    """--help shows --verbose option."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--help"])
+    assert result.exit_code == 0
+    assert "--verbose" in result.output
+
+
+def test_quiet_flag_shown_in_help():
+    """--help shows --quiet option."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--help"])
+    assert result.exit_code == 0
+    assert "--quiet" in result.output
