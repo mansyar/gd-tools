@@ -1,0 +1,16 @@
+Task: Suppress init/doctor details in quiet mode
+
+Summary:
+- Modified init.py print_summary() to check get_verbosity() — in QUIET mode, prints only output.print_success('Initialized') and returns early, skipping detailed 'Actions taken' and 'Next steps' output
+- Modified cli.py doctor command to check get_verbosity() — in QUIET mode, prints one-line status (output.print_success('All checks passed') or output.print_error('Some checks failed')) instead of the full Rich table
+- Added imports: get_verbosity in cli.py, output + get_verbosity + Verbosity in init.py
+- Added 4 tests:
+  - test_init.py: test_print_summary_quiet_shows_one_line_status (no detailed output, shows OK + Initialized)
+  - test_cli.py: test_doctor_quiet_shows_one_line_pass (no table, shows OK), test_doctor_quiet_shows_one_line_fail (no table, shows FAIL), test_doctor_default_shows_table (default mode still shows table)
+
+Verification:
+- All 794 unit tests pass
+- cli.py: 95% line coverage (390 stmts, 15 missed)
+- init.py: 98% line coverage (256 stmts, 1 missed)
+- ruff check: clean
+- black --check: clean
