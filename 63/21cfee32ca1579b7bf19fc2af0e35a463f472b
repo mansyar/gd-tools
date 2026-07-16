@@ -1,0 +1,34 @@
+Phase 5: Integration Testing & Documentation - Checkpoint Verification Report
+=============================================================================
+
+Tasks Completed:
+1. Write integration tests for verbose/quiet across all commands (da11b1d)
+2. Update documentation with --verbose/--quiet usage (7828d92)
+
+Files Changed:
+- tests/integration/test_verbosity_integration.py: 17 integration tests
+  - Verbose lint: shows file being linted, shows timing
+  - Default lint: no verbose output (backward compat)
+  - Quiet lint: shows only violations, suppresses info messages
+  - Verbose format: shows file being formatted, shows timing
+  - Default format: no verbose output (backward compat)
+  - Quiet format: shows results, suppresses info messages
+  - Quiet doctor: shows one-line pass/fail status, no detailed table
+  - Default doctor: shows full table (backward compat)
+  - Mutual exclusion: --verbose --quiet exits 2, -v -q exits 2
+  - Quiet update check: check_for_update not called in quiet mode
+  - Default update check: check_for_update called in default mode
+- README.md: Added "Verbosity Control" subsection with flag table and examples
+- docs/USER_GUIDE.md: Added section 3.11 "Global Verbosity Flags" with detailed usage
+
+Quality Gates:
+- All 811 tests pass (794 unit + 17 integration)
+- 97.20% total coverage
+- ruff check: clean
+- black --check: clean
+
+Manual Verification:
+- User approved manual verification of documentation and verbose/quiet behavior
+
+Phase 5 Status: COMPLETE
+Track 27 Status: ALL PHASES COMPLETE
