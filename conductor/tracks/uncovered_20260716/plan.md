@@ -35,10 +35,10 @@
     - [x] Write failing tests for `_print_coverage_inline()` with `show_uncovered=True` — verify panels are printed when coverage < 100% and omitted when 100%
     - [x] Implement rendering call in `_print_coverage_inline()` when `show_uncovered` is True
     - [x] Run tests and verify coverage
-- [ ] Task: Integrate uncovered panels into `coverage show` output (FR-2)
-    - [ ] Write failing tests for `show_coverage_summary()` — verify uncovered panels appear below the summary table when coverage < 100%
-    - [ ] Implement rendering call in `show_coverage_summary()` to always show uncovered panels
-    - [ ] Run tests and verify >80% line, >70% branch coverage for all changed files
+- [x] Task: Integrate uncovered panels into `coverage show` output (FR-2) [4c883e8]
+    - [x] Write failing tests for `show_coverage_summary()` — verify uncovered panels appear below the summary table when coverage < 100%
+    - [x] Implement rendering call in `show_coverage_summary()` to always show uncovered panels
+    - [x] Run tests and verify >80% line, >70% branch coverage for all changed files
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: CLI Flag and Output Integration' (Protocol in workflow.md)
 
 ## Phase 4: Documentation Updates
