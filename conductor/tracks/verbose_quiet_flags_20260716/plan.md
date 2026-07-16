@@ -75,14 +75,14 @@
     - [x] Commit: `feat(quiet): Suppress progress and info messages in quiet mode`
     - [x] Attach git note with task summary to commit
     - [x] Mark task complete in `plan.md` with commit SHA
-- [ ] Task: Suppress init/doctor details in quiet mode
-    - [ ] Write failing tests verifying that when verbosity is QUIET, `gd-tools init` shows only a success/failure status (no summary table), and `gd-tools doctor` shows only pass/fail status (no detailed table) (`tests/unit/test_cli.py` or `tests/integration/test_init_integration.py`)
-    - [ ] Implement quiet mode in `init` and `doctor` commands — check `get_verbosity()` before printing detailed output; in QUIET mode, print only a one-line status (`[OK] Initialized` or `[FAIL] Initialization failed`)
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage
-    - [ ] Commit: `feat(quiet): Suppress init and doctor details in quiet mode`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+- [x] Task: Suppress init/doctor details in quiet mode (953303d)
+    - [x] Write failing tests verifying that when verbosity is QUIET, `gd-tools init` shows only a success/failure status (no summary table), and `gd-tools doctor` shows only pass/fail status (no detailed table) (`tests/unit/test_cli.py` or `tests/integration/test_init_integration.py`)
+    - [x] Implement quiet mode in `init` and `doctor` commands — check `get_verbosity()` before printing detailed output; in QUIET mode, print only a one-line status (`[OK] Initialized` or `[FAIL] Initialization failed`)
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage
+    - [x] Commit: `feat(quiet): Suppress init and doctor details in quiet mode`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Quiet Mode Implementation' (Protocol in workflow.md)
 
 ## Phase 5: Integration Testing & Documentation
