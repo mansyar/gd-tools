@@ -516,3 +516,30 @@ def test_run_lint_default_mode_no_timing_shown(tmp_path, capsys):
 
     captured = capsys.readouterr()
     assert "Elapsed:" not in captured.out
+
+
+# --- Quiet mode: suppress info messages, keep results ---
+
+
+def test_format_lint_text_no_files_quiet_suppressed(capsys):
+    """In quiet mode, 'No GDScript files found.' info message is suppressed."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.QUIET)
+    result = LintResult(files_checked=0, errors=[], warnings=[])
+    format_lint_text(result)
+    captured = capsys.readouterr()
+    assert "No GDScript files found." not in captured.out
+
+
+def test_format_lint_text_violations_render_when_quiet(capsys):
+    """In quiet mode, lint violations still render (always shown)."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.QUIET)
+    errors = [LintIssue("res://foo.gd", 10, 1, "RULE", "Some message", "error")]
+    result = LintResult(files_checked=1, errors=errors, warnings=[])
+    format_lint_text(result)
+    captured = capsys.readouterr()
+    assert "foo.gd" in captured.out
+    assert "Some message" in captured.out

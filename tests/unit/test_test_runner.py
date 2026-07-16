@@ -1418,3 +1418,32 @@ def test_run_tests_default_mode_no_timing_shown(
 
     captured = capsys.readouterr()
     assert "Elapsed:" not in captured.out
+
+
+@pytest.mark.unit
+@patch("gd_tools.test_runner.parse_junit_xml")
+@patch("gd_tools.test_runner.run_godot")
+@patch("gd_tools.test_runner.find_godot")
+@patch("gd_tools.test_runner.find_project_root")
+def test_run_tests_quiet_shows_results(
+    mock_find_root,
+    mock_find_godot,
+    mock_run_godot,
+    mock_parse,
+    gut_project,
+    capsys,
+):
+    """In quiet mode, test results (summary, table) still render."""
+    from gd_tools.verbosity import Verbosity, set_verbosity
+
+    set_verbosity(Verbosity.QUIET)
+    mock_find_root.return_value = gut_project
+    mock_find_godot.return_value = _make_godot_info()
+    mock_run_godot.return_value = _make_completed_process(stdout="", stderr="")
+    mock_parse.return_value = (1, 1, 0, 0, 0.1, [])
+
+    run_tests(GdToolsConfig())
+
+    captured = capsys.readouterr()
+    assert "[OK]" in captured.out
+    assert "All 1 test(s) passed." in captured.out
