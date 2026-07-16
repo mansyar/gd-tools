@@ -77,14 +77,11 @@ def _configure_windows_utf8() -> None:
 _configure_windows_utf8()
 
 
-_SOURCE_POWERSHELL = """$env:%(complete_var)s = "powershell_complete"
-
-Register-ArgumentCompleter -Native -CommandName %(prog_name)s -ScriptBlock {
+_SOURCE_POWERSHELL = """Register-ArgumentCompleter -Native -CommandName %(prog_name)s -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
 
-    $env:COMP_WORDS = $commandAst.CommandElements |
-        ForEach-Object { $env:COMP_WORDS += $_.ToString() }
-    $env:COMP_CWORD = $commandAst.CommandElements.Count
+    $words = $commandAst.CommandElements | ForEach-Object { $_.ToString() }
+    $env:COMP_WORDS = $words -join ' '
     $commandElements = $commandAst.CommandElements
     $env:COMP_CWORD = $commandElements.Count
     for ($i = 0; $i -lt $commandElements.Count; $i++) {
@@ -766,7 +763,8 @@ def completion(shell: str) -> None:
       gd-tools completion powershell | Out-String | Add-Content $PROFILE
     """
     comp_class = get_completion_class(shell)
-    assert comp_class is not None  # guarded by click.Choice
+    if comp_class is None:  # pragma: no cover
+        raise click.UsageError(f"Unsupported shell: {shell}")
     prog_name = "gd-tools"
     complete_var = f"_{prog_name.upper().replace('-', '_')}_COMPLETE"
     comp = comp_class(

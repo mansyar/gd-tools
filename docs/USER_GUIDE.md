@@ -1210,7 +1210,7 @@ set -x _GD_TOOLS_COMPLETE fish_source
 gd-tools | source
 
 # PowerShell
-$env:_GD_TOOLS_COMPLETE = "powershell_complete"
+$env:_GD_TOOLS_COMPLETE = "powershell_source"
 gd-tools | Out-String | Invoke-Expression
 ```
 
