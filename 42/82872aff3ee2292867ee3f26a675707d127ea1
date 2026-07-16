@@ -1,0 +1,15 @@
+Task: Suppress progress/info messages in quiet mode
+
+Summary:
+- Verified that output.py changes from Phase 1 already handle print_info/print_warning suppression when QUIET
+- No source code changes needed — all print_info calls in runner modules route through output.print_info which checks verbosity
+- No non-essential click.echo/Console calls found in runners — all direct calls are for error/skip warnings (always shown)
+- Added 3 verification tests:
+  - test_lint_runner.py: test_format_lint_text_no_files_quiet_suppressed (info message suppressed), test_format_lint_text_violations_render_when_quiet (violations still render)
+  - test_test_runner.py: test_run_tests_quiet_shows_results (test results still render in quiet mode)
+
+Verification:
+- All 790 unit tests pass
+- 97.19% total coverage
+- ruff check: clean
+- black --check: clean
