@@ -1542,3 +1542,74 @@ def test_quiet_flag_shown_in_help():
     result = runner.invoke(cli, ["--help"])
     assert result.exit_code == 0
     assert "--quiet" in result.output
+
+
+# ---------------------------------------------------------------------------
+# Quiet mode: suppress update and addon version checks
+# ---------------------------------------------------------------------------
+
+
+def test_quiet_suppresses_update_and_addon_checks():
+    """--quiet flag suppresses both check_for_update and check_addon_version."""
+    runner = CliRunner()
+    with (
+        patch(
+            "gd_tools.cli.check_for_update", return_value=None
+        ) as mock_update,
+        patch("gd_tools.cli.check_addon_version") as mock_addon,
+        patch("gd_tools.cli.run_doctor") as mock_run,
+    ):
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["--quiet", "doctor"])
+    assert result.exit_code == 0
+    mock_update.assert_not_called()
+    mock_addon.assert_not_called()
+
+
+def test_quiet_short_flag_suppresses_update_and_addon_checks():
+    """-q flag suppresses both check_for_update and check_addon_version."""
+    runner = CliRunner()
+    with (
+        patch(
+            "gd_tools.cli.check_for_update", return_value=None
+        ) as mock_update,
+        patch("gd_tools.cli.check_addon_version") as mock_addon,
+        patch("gd_tools.cli.run_doctor") as mock_run,
+    ):
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["-q", "doctor"])
+    assert result.exit_code == 0
+    mock_update.assert_not_called()
+    mock_addon.assert_not_called()
+
+
+def test_default_mode_calls_update_and_addon_checks():
+    """Without --quiet, both check_for_update and check_addon_version are called."""
+    runner = CliRunner()
+    with (
+        patch(
+            "gd_tools.cli.check_for_update", return_value=None
+        ) as mock_update,
+        patch("gd_tools.cli.check_addon_version") as mock_addon,
+        patch("gd_tools.cli.run_doctor") as mock_run,
+    ):
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["doctor"])
+    assert result.exit_code == 0
+    mock_update.assert_called_once()
+    mock_addon.assert_called_once()
+
+
+def test_quiet_suppresses_update_notification_when_available():
+    """--quiet suppresses update notification even when an update is available."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.check_for_update", return_value="1.0.0"),
+        patch("gd_tools.cli.__version__", "0.1.0"),
+        patch("gd_tools.cli.check_addon_version"),
+        patch("gd_tools.cli.run_doctor") as mock_run,
+    ):
+        mock_run.return_value = DoctorResult(checks=[], all_passed=True)
+        result = runner.invoke(cli, ["--quiet", "doctor"])
+    assert result.exit_code == 0
+    assert "A new version of gd-tools" not in result.output

@@ -144,6 +144,9 @@ class GdToolsGroup(click.Group):
         If a newer version is available, a notification is printed to
         stderr. The check fails silently and never blocks execution.
 
+        In quiet mode (``--quiet``/``-q``), both the update check and
+        the addon version check are skipped entirely.
+
         Args:
             ctx: The Click context for this invocation.
 
@@ -154,15 +157,17 @@ class GdToolsGroup(click.Group):
             SystemExit: With code 2 if a command raises
                 NotImplementedError.
         """
-        latest = check_for_update()
-        if latest is not None:
-            click.echo(
-                f"A new version of gd-tools is available: {latest} "
-                f"(you have {__version__}).\n"
-                f"Run `pip install --upgrade gd-tools-cli` to update.",
-                err=True,
-            )
-        check_addon_version()
+        quiet = ctx.params.get("quiet", False)
+        if not quiet:
+            latest = check_for_update()
+            if latest is not None:
+                click.echo(
+                    f"A new version of gd-tools is available: {latest} "
+                    f"(you have {__version__}).\n"
+                    f"Run `pip install --upgrade gd-tools-cli` to update.",
+                    err=True,
+                )
+            check_addon_version()
         try:
             return super().invoke(ctx)
         except NotImplementedError:
