@@ -77,11 +77,61 @@ gd-tools test --coverage --show-uncovered
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
 | `gd-tools config` | Configuration management -- `show` (display resolved config), `validate` (check config validity). |
 | `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, GUT, gdtoolkit, Python) in a table or JSON. |
+| `gd-tools completion` | Generate shell completion scripts for bash, zsh, fish, or PowerShell. |
 
 See the [User Guide](./docs/USER_GUIDE.md) for full command reference,
 flags, examples, and exit codes.
 
-## 6. Configuration
+## 6. Shell Completion
+
+`gd-tools` supports tab completion for bash, zsh, fish, and PowerShell.
+Generate a completion script with `gd-tools completion <shell>` and
+source it in your shell configuration.
+
+**Bash:**
+
+```bash
+# Add to ~/.bashrc or ~/.bash_profile
+eval "$(gd-tools completion bash)"
+```
+
+**Zsh:**
+
+```bash
+# Add to ~/.zshrc
+eval "$(gd-tools completion zsh)"
+# Or save to a file in your fpath:
+gd-tools completion zsh > ~/.zsh/completions/_gd-tools
+```
+
+**Fish:**
+
+```bash
+gd-tools completion fish > ~/.config/fish/completions/gd-tools.fish
+```
+
+**PowerShell:**
+
+```powershell
+gd-tools completion powershell | Out-String | Add-Content $PROFILE
+```
+
+**Alternative -- Click's environment variable:**
+
+Click also supports completion via the `_GD_TOOLS_COMPLETE` environment
+variable. This is useful for advanced users who prefer not to modify
+their shell profile:
+
+```bash
+# Bash example
+export _GD_TOOLS_COMPLETE=bash_source
+eval "$(gd-tools)"
+```
+
+See the [User Guide](./docs/USER_GUIDE.md) for detailed per-shell
+instructions.
+
+## 7. Configuration
 
 `gd-tools` uses a single `gd-tools.toml` file as the source of truth for
 all tool configuration. `gd-tools init` generates this file with sensible
@@ -115,7 +165,7 @@ test_dirs = ["test", "tests"]
 See the [User Guide](./docs/USER_GUIDE.md) for a full configuration reference
 with all keys, defaults, and examples.
 
-## 7. Documentation
+## 8. Documentation
 
 | Document | Description |
 |----------|-------------|
@@ -126,7 +176,7 @@ with all keys, defaults, and examples.
 | [Roadmap](./docs/ROADMAP.md) | Release phases and milestones. |
 | [Testing Strategy](./docs/TESTING_STRATEGY.md) | Test pyramid, coverage targets, and CI integration. |
 
-## 8. Development
+## 9. Development
 
 ```bash
 # Clone and install in editable mode with dev dependencies
@@ -152,11 +202,11 @@ See [Testing Strategy](./docs/TESTING_STRATEGY.md) for the full testing
 guide and [Contributing Guide](./docs/CONTRIBUTING.md) for development
 setup details.
 
-## 9. License
+## 10. License
 
 MIT
 
-## 10. Acknowledgements
+## 11. Acknowledgements
 
 `gd-tools` stands on the shoulders of two excellent community tools. It
 wraps them; it does not replace them. Full credit to their authors for the
