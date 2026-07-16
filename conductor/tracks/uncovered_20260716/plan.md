@@ -13,15 +13,15 @@
 
 ## Phase 2: Rendering Utilities
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
-- [ ] Task: Implement line range formatting helper
-    - [ ] Write failing unit tests for range formatting: `[1,2,3,5,6]` → `"1-3, 5-6"`; `[]` → `""`; `[4]` → `"4"`; `[10,11,15]` → `"10-11, 15"`
-    - [ ] Implement `_format_line_ranges(lines: list[int]) -> str` helper function
-    - [ ] Run tests and verify coverage
-- [ ] Task: Implement uncovered detail panel rendering function
-    - [ ] Write failing unit tests for panel rendering — verify Rich panel content includes file path as title, uncovered line ranges, and branch annotations with type (e.g., `42 (if)`)
-    - [ ] Implement `_render_uncovered_panels(file_summaries, plan)` function using Rich `Panel`/`Group`
-    - [ ] Run tests and verify >80% line, >70% branch coverage for changed files
+- [x] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
+- [x] Task: Implement line range formatting helper [e15f4ae]
+    - [x] Write failing unit tests for range formatting: `[1,2,3,5,6]` → `"1-3, 5-6"`; `[]` → `""`; `[4]` → `"4"`; `[10,11,15]` → `"10-11, 15"`
+    - [x] Implement `_format_line_ranges(lines: list[int]) -> str` helper function
+    - [x] Run tests and verify coverage
+- [x] Task: Implement uncovered detail panel rendering function [e15f4ae]
+    - [x] Write failing unit tests for panel rendering — verify Rich panel content includes file path as title, uncovered line ranges, and branch annotations with type (e.g., `42 (if)`)
+    - [x] Implement `_render_uncovered_panels(file_summaries, plan)` function using Rich `Panel`/`Group`
+    - [x] Run tests and verify >80% line, >70% branch coverage for changed files
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Rendering Utilities' (Protocol in workflow.md)
 
 ## Phase 3: CLI Flag and Output Integration
