@@ -58,15 +58,15 @@
 
 ## Phase 4: Quiet Mode Implementation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
-- [ ] Task: Suppress update check and addon version check in quiet mode
-    - [ ] Write failing tests verifying that when verbosity is QUIET, `check_for_update()` and `check_addon_version()` are skipped (no update notification printed) (`tests/unit/test_cli.py`)
-    - [ ] Implement suppression in `GdToolsGroup.invoke()` — check `get_verbosity()` before calling `check_for_update()` and `check_addon_version()`; skip both when QUIET
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage for modified `cli.py` sections
-    - [ ] Commit: `feat(quiet): Suppress update and addon version checks in quiet mode`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
+- [x] Task: Suppress update check and addon version check in quiet mode (473c687)
+    - [x] Write failing tests verifying that when verbosity is QUIET, `check_for_update()` and `check_addon_version()` are skipped (no update notification printed) (`tests/unit/test_cli.py`)
+    - [x] Implement suppression in `GdToolsGroup.invoke()` — check `get_verbosity()` before calling `check_for_update()` and `check_addon_version()`; skip both when QUIET
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage for modified `cli.py` sections
+    - [x] Commit: `feat(quiet): Suppress update and addon version checks in quiet mode`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [ ] Task: Suppress progress/info messages in quiet mode
     - [ ] Write failing tests verifying that when verbosity is QUIET, `print_info()` calls in runner modules produce no output, but `print_success()`, `print_error()`, and `print_summary()` still render (`tests/unit/test_output.py`, `tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`)
     - [ ] Verify that the `output.py` changes from Phase 1 already handle this (print_info checks verbosity); if any runner modules use `click.echo` or direct `Console` calls for non-essential output, route them through `print_info()` or add explicit verbosity checks
