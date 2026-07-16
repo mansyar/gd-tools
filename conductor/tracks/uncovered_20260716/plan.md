@@ -43,12 +43,12 @@
 
 ## Phase 4: Documentation Updates
 
-- [ ] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
-- [ ] Task: Update documentation for `--show-uncovered` flag and enhanced `coverage show` output
-    - [ ] Update README.md — add `--show-uncovered` to test command usage examples
-    - [ ] Update docs/PRD.md — add `--show-uncovered` to the command reference flags table
-    - [ ] Update docs/USER_GUIDE.md — add `--show-uncovered` usage example and sample uncovered panel output
-    - [ ] Update skills/gd-tools/SKILL.md — add `--show-uncovered` to CLI flag documentation
-    - [ ] Add CHANGELOG.md feature entry for uncovered lines/branches display
+- [x] Task: Read `spec.md` and `workflow.md` to align with current requirements and TDD methodology
+- [x] Task: Update documentation for `--show-uncovered` flag and enhanced `coverage show` output [commit: 955a4ba]
+    - [x] Update README.md — add `--show-uncovered` to test command usage examples
+    - [x] Update docs/PRD.md — add `--show-uncovered` to the command reference flags table
+    - [x] Update docs/USER_GUIDE.md — add `--show-uncovered` usage example and sample uncovered panel output
+    - [x] Update skills/gd-tools/SKILL.md — add `--show-uncovered` to CLI flag documentation
+    - [x] Add CHANGELOG.md feature entry for uncovered lines/branches display
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Documentation Updates' (Protocol in workflow.md)
 </protect>
