@@ -1,0 +1,8 @@
+{
+  "track_id": "verbose_quiet_flags_20260716",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-16T19:43:20Z",
+  "updated_at": "2026-07-16T19:43:20Z",
+  "description": "Add --verbose and --quiet global flags to control output verbosity"
+}
