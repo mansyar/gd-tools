@@ -33,23 +33,23 @@
 
 ## Phase 2: Documentation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and TDD protocol before starting implementation
-    - [ ] Read `conductor/tracks/shell_completion_20260716/spec.md`
-    - [ ] Read `conductor/workflow.md`
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and TDD protocol before starting implementation
+    - [x] Read `conductor/tracks/shell_completion_20260716/spec.md`
+    - [x] Read `conductor/workflow.md`
 
-- [ ] Task: Add Shell Completion section to README
-    - [ ] Add brief setup instructions for bash, zsh, fish, and PowerShell
-    - [ ] Mention Click's env-var approach (`_GD_TOOLS_COMPLETE=<shell>_source gd-tools`) as an alternative
-    - [ ] Commit with message `docs(readme): Add shell completion setup instructions`
+- [x] Task: Add Shell Completion section to README
+    - [x] Add brief setup instructions for bash, zsh, fish, and PowerShell
+    - [x] Mention Click's env-var approach (`_GD_TOOLS_COMPLETE=<shell>_source gd-tools`) as an alternative
+    - [x] Commit with message `docs(readme): Add shell completion setup instructions` (f46b0d7)
 
-- [ ] Task: Add Shell Completion section to USER_GUIDE
-    - [ ] Add detailed per-shell setup instructions:
+- [x] Task: Add Shell Completion section to USER_GUIDE
+    - [x] Add detailed per-shell setup instructions:
         - Bash: `eval "$(gd-tools completion bash)"` or source from file
         - Zsh: Add to `~/.zshrc`
         - Fish: Save to `~/.config/fish/completions/`
         - PowerShell: Add to PowerShell profile
-    - [ ] Document Click's env-var approach as an alternative for advanced users
-    - [ ] Commit with message `docs(user-guide): Add detailed shell completion instructions`
+    - [x] Document Click's env-var approach as an alternative for advanced users
+    - [x] Commit with message `docs(user-guide): Add detailed shell completion instructions` (18562b5)
 
-- [ ] Task: Conductor - User Manual Verification 'Documentation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Documentation' (Protocol in workflow.md)
 </protect>
