@@ -1,0 +1,11 @@
+Task: Add uncovered_branches field to FileSummary and update compute_file_summary()
+
+Summary: Added uncovered_branches: list[int] field to the FileSummary dataclass in reporter.py. Updated compute_file_summary() to collect line numbers of branch-type lines (line.type == 'branch') that have zero coverage hits into the new uncovered_branches list.
+
+Files modified:
+- src/gd_tools/coverage/reporter.py: Added uncovered_branches field with field(default_factory=list) default for backward compat; updated compute_file_summary() to populate it
+- tests/unit/test_reporter.py: Added 4 new tests (zero_hits, excludes_statements, all_covered, all_uncovered)
+
+Why: The uncovered_branches field is required by FR-5 of the uncovered lines/branches track to enable per-file branch coverage gap display in coverage output.
+
+Coverage: reporter.py at 98% line coverage.
