@@ -1,7 +1,9 @@
+<protect>
 # Track 27: Verbose/Quiet Global Flags — Implementation Plan
 
 ## Phase 1: Verbosity Core Infrastructure
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
 - [ ] Task: Create Verbosity enum and context module
     - [ ] Write failing tests for `Verbosity` enum (QUIET, DEFAULT, VERBOSE values) and a verbosity context object that stores and retrieves the active level (`tests/unit/test_verbosity.py`)
     - [ ] Implement `Verbosity` enum and context in a new `src/gd_tools/verbosity.py` module — context stores active level, provides `get_verbosity()` / `set_verbosity()` accessors
@@ -22,6 +24,7 @@
 
 ## Phase 2: Global CLI Flags
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
 - [ ] Task: Add --verbose/-v and --quiet/-q global flags to CLI group
     - [ ] Write failing tests for flag parsing (`gd-tools --verbose test`, `gd-tools -v test`, `gd-tools --quiet test`, `gd-tools -q test`), mutual exclusion error (`gd-tools --verbose --quiet test` exits 2), and default behavior (no flag = DEFAULT verbosity) (`tests/unit/test_cli.py`)
     - [ ] Implement `--verbose`/`-v` and `--quiet`/`-q` flags on the `@click.group(cls=GdToolsGroup)` decorator in `cli.py`; add mutual exclusion check in the group callback; call `set_verbosity()` based on flags; store verbosity in `ctx.obj` for subcommand access
@@ -34,6 +37,7 @@
 
 ## Phase 3: Verbose Mode Implementation
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
 - [ ] Task: Display underlying commands in verbose mode
     - [ ] Write failing tests verifying that when verbosity is VERBOSE, the full Godot/GUT command is printed before execution in `run_tests()`, the gdlint invocation is shown in `run_lint()`, and the gdformat invocation is shown in `run_format()` (`tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`, `tests/unit/test_format_runner.py`)
     - [ ] Implement command display logic — add a `print_verbose()` call in `test_runner.py` (before `run_godot()` showing `[binary, --path, project_root, *args]`), in `lint_runner.py` (before `lint_code()` showing the file being linted), and in `format_runner.py` (before `format_code()` showing the file being formatted)
@@ -54,6 +58,7 @@
 
 ## Phase 4: Quiet Mode Implementation
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
 - [ ] Task: Suppress update check and addon version check in quiet mode
     - [ ] Write failing tests verifying that when verbosity is QUIET, `check_for_update()` and `check_addon_version()` are skipped (no update notification printed) (`tests/unit/test_cli.py`)
     - [ ] Implement suppression in `GdToolsGroup.invoke()` — check `get_verbosity()` before calling `check_for_update()` and `check_addon_version()`; skip both when QUIET
@@ -82,6 +87,7 @@
 
 ## Phase 5: Integration Testing & Documentation
 
+- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
 - [ ] Task: Write integration tests for verbose/quiet across all commands
     - [ ] Write integration tests verifying end-to-end verbose output (commands shown, timing shown) and quiet output (minimal output, results only) for `test`, `lint`, `format`, `doctor`, and `init` commands (`tests/integration/test_verbosity_integration.py`)
     - [ ] Run integration tests, confirm all pass
@@ -96,3 +102,4 @@
     - [ ] Attach git note with task summary to commit
     - [ ] Mark task complete in `plan.md` with commit SHA
 - [ ] Task: Conductor - User Manual Verification 'Integration Testing & Documentation' (Protocol in workflow.md)
+</protect>

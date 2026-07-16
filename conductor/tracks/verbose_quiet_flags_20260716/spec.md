@@ -1,3 +1,4 @@
+<protect>
 # Track 27: Verbose/Quiet Global Flags
 
 ## Overview
@@ -79,3 +80,4 @@ The following outputs are **always shown** regardless of quiet mode:
 - Config file support for default verbosity (e.g., `verbosity = "quiet"` in `gd-tools.toml`)
 - Logging to file — verbosity controls terminal output only
 - Changes to JSON output format — machine-readable output is unaffected by verbosity flags
+</protect>
