@@ -3,15 +3,15 @@
 
 ## Phase 1: Verbosity Core Infrastructure
 
-- [ ] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
-- [ ] Task: Create Verbosity enum and context module
-    - [ ] Write failing tests for `Verbosity` enum (QUIET, DEFAULT, VERBOSE values) and a verbosity context object that stores and retrieves the active level (`tests/unit/test_verbosity.py`)
-    - [ ] Implement `Verbosity` enum and context in a new `src/gd_tools/verbosity.py` module — context stores active level, provides `get_verbosity()` / `set_verbosity()` accessors
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage for `verbosity.py`
-    - [ ] Commit: `feat(verbosity): Add Verbosity enum and context module`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+- [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
+- [x] Task: Create Verbosity enum and context module (8e4caa2)
+    - [x] Write failing tests for `Verbosity` enum (QUIET, DEFAULT, VERBOSE values) and a verbosity context object that stores and retrieves the active level (`tests/unit/test_verbosity.py`)
+    - [x] Implement `Verbosity` enum and context in a new `src/gd_tools/verbosity.py` module — context stores active level, provides `get_verbosity()` / `set_verbosity()` accessors
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage for `verbosity.py`
+    - [x] Commit: `feat(verbosity): Add Verbosity enum and context module`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [ ] Task: Extend output.py to respect verbosity level
     - [ ] Write failing tests verifying that `print_info` and `print_warning` are suppressed when verbosity is QUIET, and that `print_success`, `print_error`, `print_summary`, and `print_table` always render regardless of verbosity (`tests/unit/test_output.py`)
     - [ ] Implement verbosity checks in `output.py` — `print_info` and `print_warning` check `get_verbosity()` and skip output when QUIET; add a new `print_verbose()` helper that only renders when VERBOSE
