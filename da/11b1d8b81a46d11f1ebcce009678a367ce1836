@@ -1,0 +1,32 @@
+Integration Tests for Verbose/Quiet Modes
+==========================================
+
+Created: tests/integration/test_verbosity_integration.py (17 tests)
+
+Test Coverage:
+- Verbose lint: shows file being linted, shows timing
+- Default lint: no verbose output (backward compat)
+- Quiet lint: shows only violations, suppresses info messages
+- Verbose format: shows file being formatted, shows timing
+- Default format: no verbose output (backward compat)
+- Quiet format: shows results, suppresses info messages
+- Quiet doctor: shows one-line pass/fail status, no detailed table
+- Default doctor: shows full table (backward compat)
+- Mutual exclusion: --verbose --quiet exits 2, -v -q exits 2
+- Quiet update check: check_for_update not called in quiet mode
+- Default update check: check_for_update called in default mode
+
+Patterns:
+- pytestmark = pytest.mark.integration
+- Autouse _reset_verbosity fixture (resets to DEFAULT after each test)
+- Autouse _mock_update_check fixture (prevents network calls)
+- CliRunner for CLI invocation
+- Mocks: load_config, find_godot, subprocess.run, check_for_update, check_addon_version
+- Real run_lint, run_format, run_doctor execute against fixture .gd files
+
+Quality:
+- All 17 integration tests pass
+- All 811 tests pass (794 unit + 17 integration)
+- 97.20% total coverage
+- ruff check: clean
+- black --check: clean
