@@ -1,0 +1,19 @@
+Task Summary: CLI --no-cache Flag (Phase 3 - Red/Green)
+
+Red Phase:
+- Added 3 failing tests to tests/unit/test_cli.py:
+  1. test_test_coverage_no_cache_passed_to_orchestrator: --coverage --no-cache passes no_cache=True
+  2. test_test_coverage_default_no_cache_false: --coverage without --no-cache passes no_cache=False
+  3. test_test_no_cache_without_coverage_accepted: --no-cache without --coverage accepted, calls run_tests
+- All 3 failed as expected (exit code 2: Click unknown option, KeyError: no_cache)
+
+Green Phase:
+- Added --no-cache Click option to test command decorator in cli.py
+- Added no_cache parameter to test() function signature
+- Threaded no_cache=no_cache through to run_coverage_test() call
+- All 3 new tests pass
+- All 814 unit tests pass (811 + 3 new)
+- cli.py coverage: 95% line, 91% branch (pre-existing missing lines only)
+- ruff: clean, black: clean
+
+No deviations from spec FR-3.
