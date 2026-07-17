@@ -11,10 +11,12 @@ from pathlib import Path
 import pytest
 
 from gd_tools.coverage.plan_generator import (
+    CacheStatus,
     CoveragePlan,
     FilePlan,
     LinePlan,
     generate_plan,
+    generate_plan_cached,
     parse_gdscript,
     read_plan_json,
     write_plan_json,
@@ -793,3 +795,177 @@ def test_generate_plan_no_autoload_section_all_files_included(tmp_path):
 
     cp = generate_plan(str(tmp_path))
     assert len(cp.files) == 2
+
+
+# --- generate_plan_cached (cache check) ---
+
+
+def _write_cached_plan(tmp_path, cache_path, files):
+    """Create .gd files, generate a plan, and write it to cache_path.
+
+    Returns the freshly generated CoveragePlan.
+    """
+    for name, content in files.items():
+        (tmp_path / name).write_text(content, encoding="utf-8")
+    plan = generate_plan(str(tmp_path))
+    write_plan_json(plan, str(cache_path))
+    return plan
+
+
+def test_cache_status_dataclass_fields():
+    """CacheStatus has hit (bool) and reason (str) fields."""
+    cs = CacheStatus(hit=True, reason="3 files unchanged")
+    assert cs.hit is True
+    assert cs.reason == "3 files unchanged"
+
+    cs2 = CacheStatus(hit=False, reason="cache disabled")
+    assert cs2.hit is False
+    assert cs2.reason == "cache disabled"
+
+
+def test_generate_plan_cached_hit(tmp_path):
+    """Cache hit: all file hashes match cached plan -> returns cached plan, hit=True."""
+    cache_path = tmp_path / "plan.json"
+    original = _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is True
+    assert "unchanged" in status.reason
+    assert plan == original
+
+
+def test_generate_plan_cached_miss_file_modified(tmp_path):
+    """Cache miss: a source file is modified -> regenerates, hit=False."""
+    cache_path = tmp_path / "plan.json"
+    original = _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+
+    # Modify the file content (changes the source hash).
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    var x = 1\n", encoding="utf-8"
+    )
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert "chang" in status.reason
+    # Regenerated plan reflects the modified content (new hash).
+    assert plan.files[0].source_hash != original.files[0].source_hash
+
+
+def test_generate_plan_cached_miss_file_added(tmp_path):
+    """Cache miss: a new .gd file is added -> regenerates."""
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+
+    # Add a new file on disk not present in the cached plan.
+    (tmp_path / "enemy.gd").write_text(
+        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+    )
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert len(plan.files) == 2
+
+
+def test_generate_plan_cached_miss_file_deleted(tmp_path):
+    """Cache miss: a source file is deleted -> regenerates."""
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {
+            "player.gd": "extends Node\nfunc _ready():\n    pass\n",
+            "enemy.gd": "extends Node\nfunc _ready():\n    pass\n",
+        },
+    )
+
+    # Delete a file that was in the cached plan.
+    (tmp_path / "enemy.gd").unlink()
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert len(plan.files) == 1
+
+
+def test_generate_plan_cached_miss_no_cache_file(tmp_path):
+    """Cache miss: plan.json does not exist -> regenerates."""
+    cache_path = tmp_path / "nonexistent.json"
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+    )
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert len(plan.files) == 1
+
+
+def test_generate_plan_cached_miss_corrupt_plan(tmp_path):
+    """Cache miss: corrupt plan.json -> safe fallback to regeneration."""
+    cache_path = tmp_path / "plan.json"
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+    )
+    # Write corrupt JSON that read_plan_json will reject.
+    cache_path.write_text("{not valid json", encoding="utf-8")
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert len(plan.files) == 1
+
+
+def test_generate_plan_cached_use_cache_false(tmp_path):
+    """use_cache=False forces regeneration even when cache is valid."""
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path), use_cache=False
+    )
+
+    assert status.hit is False
+    assert len(plan.files) == 1
+
+
+def test_generate_plan_cached_no_cache_path(tmp_path):
+    """cache_path=None -> no cache available -> regenerates."""
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+    )
+
+    plan, status = generate_plan_cached(str(tmp_path), cache_path=None)
+
+    assert status.hit is False
+    assert len(plan.files) == 1

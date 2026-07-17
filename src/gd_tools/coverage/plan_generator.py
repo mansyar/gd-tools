@@ -77,6 +77,20 @@ class CoveragePlan:
     files: list[FilePlan] = field(default_factory=list)
 
 
+@dataclass
+class CacheStatus:
+    """Outcome of a cached plan generation attempt.
+
+    Attributes:
+        hit: ``True`` if the cached plan was reused without regeneration.
+        reason: Human-readable explanation of the cache outcome
+            (e.g. ``"3 files unchanged"`` or ``"1 changed"``).
+    """
+
+    hit: bool
+    reason: str
+
+
 # --- JSON I/O (FR-5) ---
 
 
@@ -382,3 +396,120 @@ def generate_plan(
         generated_by="gd-tools",
         files=file_plans,
     )
+
+
+# --- Plan Caching (Track 37) ---
+
+
+def generate_plan_cached(
+    project_root: str,
+    exclude_dirs: list[str] | None = None,
+    test_dirs: list[str] | None = None,
+    cache_path: str | None = None,
+    use_cache: bool = True,
+) -> tuple[CoveragePlan, CacheStatus]:
+    """Generate a coverage plan, reusing a cached plan when possible.
+
+    When ``use_cache`` is ``True`` and a valid ``plan.json`` exists at
+    ``cache_path``, the cached plan's file set and source hashes are
+    compared against the currently discovered ``.gd`` files.  If every
+    file path and hash matches, the cached plan is reused without AST
+    parsing.  Otherwise — or when the cache is disabled, missing, or
+    corrupt — a fresh plan is generated via :func:`generate_plan`.
+
+    Args:
+        project_root: Root directory of the Godot project.
+        exclude_dirs: Directories to exclude from discovery.
+            Defaults to :data:`~gd_tools.config.DEFAULT_EXCLUDES`.
+        test_dirs: Directories whose files should be excluded from
+            coverage targets. Defaults to ``["test", "tests"]``.
+        cache_path: Path to the cached ``plan.json``. If ``None`` or
+            the file does not exist, the cache is always missed.
+        use_cache: If ``False``, force full regeneration regardless
+            of cache state.
+
+    Returns:
+        A tuple of ``(CoveragePlan, CacheStatus)``. ``CacheStatus.hit``
+        is ``True`` when the cached plan was reused; ``reason`` explains
+        the outcome (e.g. ``"3 files unchanged"`` or ``"1 changed"``).
+    """
+    # Resolve defaults the same way generate_plan does.
+    if exclude_dirs is None:
+        from gd_tools.config import DEFAULT_EXCLUDES
+
+        exclude_dirs = DEFAULT_EXCLUDES.copy()
+
+    if test_dirs is None:
+        test_dirs = ["test", "tests"]
+
+    # --- Attempt cache hit ---
+    if use_cache and cache_path is not None and Path(cache_path).exists():
+        try:
+            cached_plan = read_plan_json(cache_path)
+        except CoveragePlanError:
+            cached_plan = None
+        else:
+            # Discover current files + compute hashes (no AST parsing).
+            gd_files = discover_gd_files(project_root, excludes=exclude_dirs)
+            gd_files = [
+                f
+                for f in gd_files
+                if not any(td in PurePath(f).parts for td in test_dirs)
+            ]
+
+            current_hashes: dict[str, str] = {}
+            for gd_file in gd_files:
+                source = Path(gd_file).read_text(encoding="utf-8")
+                res_path = "res://" + str(
+                    Path(gd_file).relative_to(project_root)
+                ).replace("\\", "/")
+                current_hashes[res_path] = (
+                    "sha256:"
+                    + hashlib.sha256(source.encode("utf-8")).hexdigest()
+                )
+
+            cached_hashes = {
+                fp.path: fp.source_hash for fp in cached_plan.files
+            }
+
+            if current_hashes == cached_hashes:
+                return cached_plan, CacheStatus(
+                    hit=True,
+                    reason=f"{len(cached_plan.files)} files unchanged",
+                )
+
+            # Determine the reason for the miss.
+            current_paths = set(current_hashes)
+            cached_paths = set(cached_hashes)
+            added = len(current_paths - cached_paths)
+            deleted = len(cached_paths - current_paths)
+            changed = sum(
+                1
+                for p in current_paths & cached_paths
+                if current_hashes[p] != cached_hashes[p]
+            )
+
+            parts: list[str] = []
+            if added:
+                parts.append(f"{added} added")
+            if deleted:
+                parts.append(f"{deleted} deleted")
+            if changed:
+                parts.append(f"{changed} changed")
+            reason = ", ".join(parts) if parts else "file set changed"
+
+            fresh_plan = generate_plan(project_root, exclude_dirs, test_dirs)
+            return fresh_plan, CacheStatus(hit=False, reason=reason)
+
+    # --- Cache miss: disabled, no path, missing, or corrupt ---
+    if not use_cache:
+        reason = "cache disabled"
+    elif cache_path is None:
+        reason = "no cache path provided"
+    elif not Path(cache_path).exists():
+        reason = "cache file missing"
+    else:
+        reason = "cache file corrupt or invalid"
+
+    fresh_plan = generate_plan(project_root, exclude_dirs, test_dirs)
+    return fresh_plan, CacheStatus(hit=False, reason=reason)
