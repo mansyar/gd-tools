@@ -1,0 +1,27 @@
+Task Summary: Phase 4 - Integration Tests & Documentation
+
+Phase: 4 (Full Integration & Documentation)
+Track: Plan Generator Caching (Track 37)
+
+Changes:
+- Created tests/integration/test_plan_cache_integration.py with 3 integration tests:
+  * test_cache_hit_on_second_run: First run generates plan.json (cache miss), second run with no changes uses cached plan (cache hit)
+  * test_cache_miss_on_file_modified: Modifying a .gd file between runs triggers plan regeneration (cache miss)
+  * test_no_cache_forces_regeneration: --no-cache flag forces regeneration even when no files changed, and subsequent run without --no-cache hits cache
+- Tests use CliRunner with --verbose to capture cache hit/miss messages
+- External deps (Godot runner, coverage data, report generator) are mocked; real plan generation, caching, and plan.json I/O execute against real .gd files
+- Updated README.md: Added --no-cache example to Quick Start section
+- Updated docs/USER_GUIDE.md: Added --no-cache to test command flags table, added Plan Caching section explaining cache behavior, added --no-cache example
+
+Files modified:
+- tests/integration/test_plan_cache_integration.py (new)
+- README.md
+- docs/USER_GUIDE.md
+
+Verification:
+- All 3 integration tests pass
+- All 814 unit tests pass (97% coverage)
+- ruff check: clean
+- black --check: clean
+
+Why: Phase 4 completes the plan caching feature by adding end-to-end integration tests that verify the caching behavior through the full CLI flow, and documenting the --no-cache flag for users.
