@@ -59,6 +59,9 @@ gd-tools test --coverage --min 80
 
 # 5. Show uncovered lines and branches when coverage is below 100%
 gd-tools test --coverage --show-uncovered
+
+# 6. Force plan regeneration, bypassing the coverage plan cache
+gd-tools test --coverage --no-cache
 ```
 
 `gd-tools init` installs GUT, deploys the coverage addon, generates

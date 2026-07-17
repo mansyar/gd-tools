@@ -355,6 +355,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--no-exit-code` | flag | `false` | Do not exit with non-zero on test failure. |
 | `--timeout` | integer | None | Timeout in seconds for the test run. |
 | `--show-uncovered` | flag | `false` | Show uncovered lines and branches as Rich panels when coverage is below 100%. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
+| `--no-cache` | flag | `false` | Force plan regeneration, bypassing the coverage plan cache. Only effective with `--coverage`; has no effect without it. |
 
 **Examples:**
 
@@ -371,6 +372,9 @@ gd-tools test --coverage --min 80
 # Show uncovered lines and branches when coverage is below 100%
 gd-tools test --coverage --show-uncovered
 
+# Force plan regeneration, bypassing the cache
+gd-tools test --coverage --no-cache
+
 # Run a specific test suite
 gd-tools test --suite PlayerTests
 
@@ -386,6 +390,21 @@ gd-tools test tests/unit
 # Run tests from multiple directories
 gd-tools test tests/unit tests/integration
 ```
+
+**Plan Caching:**
+
+When `--coverage` is used, `gd-tools` caches the coverage plan
+(`plan.json`) to skip AST parsing on subsequent runs. The cache is
+validated by comparing source file hashes -- any file added, deleted,
+or modified invalidates the cache automatically. Use `--no-cache` to
+force a full plan regeneration:
+
+```bash
+# Bypass the plan cache (useful after switching branches)
+gd-tools test --coverage --no-cache
+```
+
+Cache hit/miss status is logged when `--verbose` is active.
 
 **Output Format:**
 
