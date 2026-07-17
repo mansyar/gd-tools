@@ -1,0 +1,39 @@
+Phase 3 Verification Report: CLI --no-cache Flag
+
+Phase: 3 — CLI --no-cache Flag
+Track: Plan Generator Caching (Track 37)
+
+Implementation:
+- Added --no-cache Click option (is_flag=True) to test command decorator in cli.py
+- Added no_cache parameter to test() function signature
+- Threaded no_cache=no_cache through to run_coverage_test() call
+- Flag only affects coverage path (--coverage); without --coverage it's accepted silently
+
+Tests (3 new, all passing):
+1. test_test_coverage_no_cache_passed_to_orchestrator: --coverage --no-cache → no_cache=True
+2. test_test_coverage_default_no_cache_false: --coverage (default) → no_cache=False
+3. test_test_no_cache_without_coverage_accepted: --no-cache without --coverage → run_tests called, run_coverage_test not called
+
+Test Results:
+- 3 new tests: PASS
+- 814 total unit tests: PASS (0 failures)
+- cli.py coverage: 95% line (376/391), 91% branch (99/108)
+  - Missing lines are pre-existing, unrelated to this change
+
+Code Quality:
+- ruff check: clean
+- black --check: clean (no changes needed)
+
+Spec Compliance (FR-3):
+✅ --no-cache flag added to test command
+✅ Forces full plan regeneration (bypasses cache)
+✅ Default behavior: cache is used (no_cache=False)
+✅ Threaded through run_coverage_test() → generate_plan_cached()
+✅ Without --coverage: flag accepted, no effect
+
+Commits:
+- Code: 858e4dd
+- Plan: 64e5937
+- Checkpoint: eb1ddfb
+
+User Approval: APPROVED
