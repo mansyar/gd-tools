@@ -9,31 +9,31 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 1: Cache Check Function (plan_generator.py)
 
-- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
-- [ ] Task: Write failing tests for `generate_plan_cached()` cache check logic
-    - [ ] Create `tests/unit/test_plan_generator.py` additions (or new test section) for cache tests
-    - [ ] Test cache hit: all file hashes match cached plan → returns cached plan, `hit=True`
-    - [ ] Test cache miss — file modified: one source hash differs → regenerates, `hit=False`
-    - [ ] Test cache miss — file added: new `.gd` file on disk not in cached plan → regenerates
-    - [ ] Test cache miss — file deleted: file in cached plan not on disk → regenerates
-    - [ ] Test cache miss — `plan.json` missing: no cached plan → regenerates
-    - [ ] Test cache miss — `plan.json` corrupt/invalid: bad JSON or schema → safe fallback, regenerates
-    - [ ] Test `use_cache=False`: forces regeneration even when cache is valid
-    - [ ] Test returned `CacheStatus` dataclass has correct `hit` boolean and `reason` string
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
+- [x] Task: Write failing tests for `generate_plan_cached()` cache check logic
+    - [x] Create `tests/unit/test_plan_generator.py` additions (or new test section) for cache tests
+    - [x] Test cache hit: all file hashes match cached plan → returns cached plan, `hit=True`
+    - [x] Test cache miss — file modified: one source hash differs → regenerates, `hit=False`
+    - [x] Test cache miss — file added: new `.gd` file on disk not in cached plan → regenerates
+    - [x] Test cache miss — file deleted: file in cached plan not on disk → regenerates
+    - [x] Test cache miss — `plan.json` missing: no cached plan → regenerates
+    - [x] Test cache miss — `plan.json` corrupt/invalid: bad JSON or schema → safe fallback, regenerates
+    - [x] Test `use_cache=False`: forces regeneration even when cache is valid
+    - [x] Test returned `CacheStatus` dataclass has correct `hit` boolean and `reason` string
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement `generate_plan_cached()` function in `plan_generator.py`
-    - [ ] Add `CacheStatus` dataclass with `hit: bool` and `reason: str` fields
-    - [ ] Implement `generate_plan_cached(project_root, exclude_dirs, test_dirs, cache_path, use_cache=True) -> tuple[CoveragePlan, CacheStatus]`
-    - [ ] Cache check logic: if `use_cache` and `cache_path` exists, read plan via `read_plan_json()`
-    - [ ] Discover current `.gd` files (reuse `discover_gd_files` + test-dir filtering)
-    - [ ] Compute current source hashes for all discovered files
-    - [ ] Compare cached plan file paths + hashes vs current file paths + hashes
-    - [ ] Cache hit: same path set AND all hashes match → return cached plan + `CacheStatus(hit=True, reason="N files unchanged")`
-    - [ ] Cache miss: paths differ or hashes differ → call `generate_plan()` + `CacheStatus(hit=False, reason="...")`
-    - [ ] Wrap `read_plan_json()` in try/except `CoveragePlanError` for corrupt plan fallback
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `pytest --cov=gd_tools.coverage.plan_generator --cov-branch` and verify >80% line, >70% branch
+- [x] Task: Implement `generate_plan_cached()` function in `plan_generator.py` [12f510d]
+    - [x] Add `CacheStatus` dataclass with `hit: bool` and `reason: str` fields
+    - [x] Implement `generate_plan_cached(project_root, exclude_dirs, test_dirs, cache_path, use_cache=True) -> tuple[CoveragePlan, CacheStatus]`
+    - [x] Cache check logic: if `use_cache` and `cache_path` exists, read plan via `read_plan_json()`
+    - [x] Discover current `.gd` files (reuse `discover_gd_files` + test-dir filtering)
+    - [x] Compute current source hashes for all discovered files
+    - [x] Compare cached plan file paths + hashes vs current file paths + hashes
+    - [x] Cache hit: same path set AND all hashes match → return cached plan + `CacheStatus(hit=True, reason="N files unchanged")`
+    - [x] Cache miss: paths differ or hashes differ → call `generate_plan()` + `CacheStatus(hit=False, reason="...")`
+    - [x] Wrap `read_plan_json()` in try/except `CoveragePlanError` for corrupt plan fallback
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `pytest --cov=gd_tools.coverage.plan_generator --cov-branch` and verify >80% line, >70% branch
 
 - [ ] Task: Conductor - User Manual Verification 'Cache Check Function' (Protocol in workflow.md)
 
