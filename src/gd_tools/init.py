@@ -350,10 +350,11 @@ def install_coverage_addon(project_root: Path) -> None:
             bundled_bytes = source_file.read_bytes()
             if existing_bytes != bundled_bytes:
                 backups_dir.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(target_file, backups_dir / f"{gd_file}.bak")
+                backup_path = backups_dir / f"{gd_file}.bak"
+                shutil.copy2(target_file, backup_path)
                 console.print(
                     f"[yellow]Warning: {gd_file} was modified. "
-                    f"Backed up to {backups_dir / f'{gd_file}.bak'}"
+                    f"Backed up to {backup_path}"
                     f" before overwriting.[/yellow]"
                 )
         shutil.copy2(source_file, target_file)
