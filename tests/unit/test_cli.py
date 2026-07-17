@@ -11,7 +11,7 @@ from rich.console import Console
 
 from gd_tools.cli import cli
 from gd_tools.doctor import CheckResult, DoctorResult
-from gd_tools.verbosity import Verbosity, get_verbosity, set_verbosity
+from gd_tools.verbosity import Verbosity, get_verbosity
 from gd_tools.errors import (
     ConfigError,
     CoveragePlanError,
@@ -1470,13 +1470,6 @@ def test_cli_version_missing_display():
 # ---------------------------------------------------------------------------
 # Verbosity global flags: --verbose/-v and --quiet/-q
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(autouse=True)
-def _reset_verbosity_after_test():
-    """Reset verbosity to DEFAULT after each test to avoid leakage."""
-    yield
-    set_verbosity(Verbosity.DEFAULT)
 
 
 def test_verbose_long_flag_sets_verbosity():

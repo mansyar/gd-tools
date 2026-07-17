@@ -157,6 +157,9 @@ class GdToolsGroup(click.Group):
             SystemExit: With code 2 if a command raises
                 NotImplementedError.
         """
+        # Use raw ctx.params here — set_verbosity() runs inside the group
+        # callback (invoked by super().invoke below), so get_verbosity()
+        # is not yet set at this point.
         quiet = ctx.params.get("quiet", False)
         if not quiet:
             latest = check_for_update()

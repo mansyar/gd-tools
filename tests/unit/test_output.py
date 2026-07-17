@@ -24,13 +24,6 @@ from gd_tools.verbosity import Verbosity, set_verbosity
 pytestmark = pytest.mark.unit
 
 
-@pytest.fixture(autouse=True)
-def _reset_verbosity():
-    """Reset verbosity to DEFAULT after each test to avoid state leakage."""
-    yield
-    set_verbosity(Verbosity.DEFAULT)
-
-
 # --- print_success ---
 
 
