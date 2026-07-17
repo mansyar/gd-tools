@@ -69,21 +69,21 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 3: CLI --no-cache Flag
 
-- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
-- [ ] Task: Write failing tests for `--no-cache` CLI flag
-    - [ ] Add tests to `tests/unit/test_cli.py` for `test --coverage --no-cache`
-    - [ ] Test `--no-cache` flag exists on `test` command and is passed through to `run_coverage_test()`
-    - [ ] Test `--no-cache` without `--coverage`: flag is accepted but has no effect (no plan generated)
-    - [ ] Test default (no `--no-cache`): cache is used
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
+- [x] Task: Write failing tests for `--no-cache` CLI flag (858e4dd)
+    - [x] Add tests to `tests/unit/test_cli.py` for `test --coverage --no-cache`
+    - [x] Test `--no-cache` flag exists on `test` command and is passed through to `run_coverage_test()`
+    - [x] Test `--no-cache` without `--coverage`: flag is accepted but has no effect (no plan generated)
+    - [x] Test default (no `--no-cache`): cache is used
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement `--no-cache` flag in `cli.py`
-    - [ ] Add `--no-cache` Click option to the `test` command decorator
-    - [ ] Thread `no_cache` parameter through to `run_coverage_test()` call
-    - [ ] Ensure flag only affects coverage plan generation (not test execution itself)
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`
-    - [ ] Run `pytest --cov=gd_tools.cli --cov-branch` and verify >80% line, >70% branch
+- [x] Task: Implement `--no-cache` flag in `cli.py` (858e4dd)
+    - [x] Add `--no-cache` Click option to the `test` command decorator
+    - [x] Thread `no_cache` parameter through to `run_coverage_test()` call
+    - [x] Ensure flag only affects coverage plan generation (not test execution itself)
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
+    - [x] Run `pytest --cov=gd_tools.cli --cov-branch` and verify >80% line, >70% branch (95% line, 91% branch)
 
 - [ ] Task: Conductor - User Manual Verification 'CLI --no-cache Flag' (Protocol in workflow.md)
 
