@@ -7,7 +7,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ---
 
-## Phase 1: Cache Check Function (plan_generator.py)
+## Phase 1: Cache Check Function (plan_generator.py) [checkpoint: 4475dff]
 
 - [x] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
 - [x] Task: Write failing tests for `generate_plan_cached()` cache check logic
