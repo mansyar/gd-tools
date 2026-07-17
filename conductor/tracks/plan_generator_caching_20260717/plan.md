@@ -35,7 +35,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
     - [x] Run tests and confirm they pass (Green phase)
     - [x] Run `pytest --cov=gd_tools.coverage.plan_generator --cov-branch` and verify >80% line, >70% branch
 
-- [ ] Task: Conductor - User Manual Verification 'Cache Check Function' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Cache Check Function' (Protocol in workflow.md)
 
 ---
 
