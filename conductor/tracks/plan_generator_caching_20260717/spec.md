@@ -1,3 +1,4 @@
+<protect>
 # Track 37: Plan Generator Caching
 
 ## Overview
@@ -110,3 +111,4 @@ Update `orchestrator.run_coverage_test()` to:
 - **Configurable cache directory or TTL**: The cache lives at the existing `plan.json` output path (`.gd-tools/coverage/plan.json`). No separate cache directory or time-based expiration.
 - **Cache for non-coverage test runs**: Only `test --coverage` generates plans. Plain `test` without `--coverage` is unaffected.
 - **`gd-tools clean --cache`**: The existing Track 39 (Clean Command) already plans a `--cache` flag. This track does not add clean functionality.
+</protect>

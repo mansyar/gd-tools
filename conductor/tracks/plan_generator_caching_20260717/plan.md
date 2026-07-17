@@ -1,3 +1,4 @@
+<protect>
 # Implementation Plan: Track 37 — Plan Generator Caching
 
 ## Overview
@@ -8,6 +9,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 1: Cache Check Function (plan_generator.py)
 
+- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
 - [ ] Task: Write failing tests for `generate_plan_cached()` cache check logic
     - [ ] Create `tests/unit/test_plan_generator.py` additions (or new test section) for cache tests
     - [ ] Test cache hit: all file hashes match cached plan → returns cached plan, `hit=True`
@@ -39,6 +41,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 2: Orchestrator Integration & Verbose Logging
 
+- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
 - [ ] Task: Write failing tests for orchestrator cache integration
     - [ ] Add tests to `tests/unit/test_orchestrator.py` for cache-aware `run_coverage_test()`
     - [ ] Test `run_coverage_test()` with cache hit: `generate_plan_cached()` is called, not `generate_plan()`
@@ -66,6 +69,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 3: CLI --no-cache Flag
 
+- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
 - [ ] Task: Write failing tests for `--no-cache` CLI flag
     - [ ] Add tests to `tests/unit/test_cli.py` for `test --coverage --no-cache`
     - [ ] Test `--no-cache` flag exists on `test` command and is passed through to `run_coverage_test()`
@@ -87,6 +91,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 4: Full Integration & Documentation
 
+- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
 - [ ] Task: Write integration test for end-to-end cache behavior
     - [ ] Add test to `tests/integration/` for full `test --coverage` with cache
     - [ ] Test: first run generates plan, second run with no changes uses cache
@@ -100,3 +105,4 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
     - [ ] Run `ruff check` and `black --check` on all changed files
 
 - [ ] Task: Conductor - User Manual Verification 'Full Integration & Documentation' (Protocol in workflow.md)
+</protect>
