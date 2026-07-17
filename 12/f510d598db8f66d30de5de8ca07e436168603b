@@ -1,0 +1,19 @@
+Task: Implement generate_plan_cached() function in plan_generator.py (Track 37 Phase 1)
+
+Summary:
+Added CacheStatus dataclass (hit: bool, reason: str) and generate_plan_cached()
+function to plan_generator.py. The function checks a cached plan.json: if all
+discovered .gd files have matching source hashes, the cached plan is reused
+without AST parsing (cache hit). Falls back to full generate_plan() on any
+file added/deleted/modified, corrupt/missing cache, or use_cache=False.
+
+Files modified:
+- src/gd_tools/coverage/plan_generator.py: Added CacheStatus dataclass and
+  generate_plan_cached() function (~130 lines)
+- tests/unit/test_plan_generator.py: Added 9 cache tests (hit, miss-modified,
+  miss-added, miss-deleted, miss-no-file, miss-corrupt, use_cache=False,
+  no-cache-path, dataclass fields)
+
+Why: Coverage plan regeneration on every test --coverage run adds latency for
+large projects. Hash-based caching skips AST parsing when no source files
+changed. Part of Track 37 (Plan Generator Caching), Phase 1.
