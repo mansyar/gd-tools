@@ -574,8 +574,11 @@ def enable_gut_plugin(project_root: Path) -> None:
 
 def install_coverage_addon(project_root: Path) -> None:
     """Copy bundled GDScript files from package data to
-    addons/gd-tools-coverage/. Overwrites if stale. Also writes
-    _version.txt with the current package version."""
+    addons/gd-tools-coverage/. Overwrites if stale. Before overwriting,
+    compares each existing file byte-for-byte to the bundled version; if
+    they differ, backs up the user's modified file to
+    addons/gd-tools-coverage/.backups/<filename>.bak and prints a yellow
+    warning. Also writes _version.txt with the current package version."""
 
 def update_gutconfig(project_root: Path, config: GdToolsConfig) -> None:
     """Create or update .gutconfig.json with coverage hook paths.
@@ -657,6 +660,21 @@ When merging with existing config: preserve user's `dirs`, `prefix`, `suffix`,
   `addon_check.py` on CLI invocation and by `check_coverage_addon()`
   in `doctor.py` to detect version skew between the deployed addon and
   the installed package.
+
+**Smart backup before overwrite (Track: smart_backup_20260717, 2026-07-18):**
+
+- `install_coverage_addon()` now performs a smart backup before
+  overwriting existing addon files. For each file in
+  `COVERAGE_ADDON_FILES`, if the target file exists and its byte content
+  differs from the bundled source, the existing file is copied to
+  `addons/gd-tools-coverage/.backups/<filename>.bak` (via `shutil.copy2`
+  to preserve metadata) before the bundled version overwrites it. A
+  yellow warning is printed naming the file and its backup path.
+- The `.backups/` directory is auto-created (lazy) on the first modified
+  file — no directory is created when no backups are needed (first-time
+  install or all files unmodified).
+- Unmodified files (byte-identical to bundled version) are overwritten
+  silently — no backup, no warning (idempotent re-init).
 
 ---
 

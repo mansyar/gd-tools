@@ -375,6 +375,10 @@ test_dirs = ["test", "tests"]
      - **n** → print manual install instructions (Asset Library link + zip URL).
 4. **Install coverage addon** — copy bundled GDScript files to
    `addons/gd-tools-coverage/` (always, idempotent — overwrites if stale).
+   Before overwriting, each existing file is compared byte-for-byte to the
+   bundled version; if they differ (indicating user modification), the
+   existing file is backed up to `addons/gd-tools-coverage/.backups/<filename>.bak`
+   and a yellow warning is printed. Unchanged files are overwritten silently.
    Writes a `_version.txt` file recording the package version for
    staleness detection.
 5. **Create/update `.gutconfig.json`** — add coverage hook paths
@@ -426,6 +430,13 @@ gd_tools/
 
 - On `gd-tools init`, these are copied to the project's `addons/gd-tools-coverage/`.
 - Always version-matched with the CLI — no separate download.
+- **Smart backup before overwrite**: When re-running `init` on a project
+  where addon files have been modified by the user, the modified file is
+  backed up to `addons/gd-tools-coverage/.backups/<filename>.bak` before
+  being overwritten with the bundled version. A yellow warning names the
+  file and its backup location. Unmodified files are overwritten silently
+  (no backup, no warning). The `.backups/` directory is auto-created on
+  first backup.
 - A `_version.txt` file is written alongside the addon files, recording
   the gd-tools package version at deploy time. This enables stale-addon
   detection on subsequent CLI invocations (see §5 Addon Version

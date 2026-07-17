@@ -289,6 +289,19 @@ gd-tools init --non-interactive
 | 1 | User declined GUT installation when prompted. |
 | 2 | Configuration or environment error (e.g., Godot not found). |
 
+**Smart Backup of Modified Addon Files:**
+
+When re-running `gd-tools init` on a project where coverage addon files
+(`coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd`) have been modified
+by the user, the modified file is backed up to
+`addons/gd-tools-coverage/.backups/<filename>.bak` before being
+overwritten with the bundled version. A yellow warning is printed naming
+the file and its backup path. Unmodified files are overwritten silently.
+The `.backups/` directory is auto-created on the first backup.
+
+This protects user customizations from being silently destroyed during
+re-init (e.g., after upgrading `gd-tools` via pip).
+
 ### 3.3 gd-tools doctor
 
 Run diagnostic checks on the development environment.

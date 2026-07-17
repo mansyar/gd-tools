@@ -1396,6 +1396,49 @@ what's safe to delete.
 
 ---
 
+### Track 40: Smart Backup of Coverage Addon Files (Delivered)
+
+| Field | Value |
+|-------|-------|
+| **Phase** | Ad-hoc (quality improvement) |
+| **Goal** | Back up user-modified coverage addon files before overwrite during `gd-tools init` |
+| **Dependencies** | Track 7 (init command), Track 23 (stale addon detection) |
+| **Modules** | `src/gd_tools/init.py`, `tests/unit/test_init.py` |
+| **Effort** | 0.5 day |
+| **Risk** | LOW |
+| **Status** | Delivered — archived `smart_backup_20260717` |
+
+**Problem:**
+
+When `gd-tools init` is re-run on an existing project, `install_coverage_addon`
+blindly overwrites all coverage addon files (`coverage.gd`, `pre_run_hook.gd`,
+`post_run_hook.gd`) using `shutil.copy2`. If a user has customized any of these
+files, their modifications are silently destroyed with no backup, no warning,
+and no recovery path.
+
+**Solution:**
+
+Before overwriting each file, compare the existing file's content (byte-level)
+to the bundled version. If they differ (indicating user modification), copy the
+existing file to `addons/gd-tools-coverage/.backups/<filename>.bak` before
+proceeding with the overwrite, and print a yellow warning naming the file and
+its backup path. Unmodified files are overwritten silently (idempotent).
+
+**Deliverables:**
+- Smart backup logic in `install_coverage_addon()` (`src/gd_tools/init.py`)
+- 6 new unit tests + 1 updated test in `tests/unit/test_init.py`
+- Updated documentation in PRD, TDD, USER_GUIDE
+
+**Success Criteria:**
+1. Re-init with unmodified files: no `.bak` files created, no warnings
+2. Re-init with modified files: backup created at `.backups/<filename>.bak`
+3. Yellow warning printed with filename and backup path
+4. First-time install: no backups, no warnings (unchanged behavior)
+5. `.backups/` directory auto-created on first backup
+6. `init.py` coverage ≥ 98%
+
+---
+
 ## 5. Risk Register
 
 | Risk | Affected Tracks | Mitigation |

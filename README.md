@@ -67,6 +67,8 @@ gd-tools test --coverage --no-cache
 `gd-tools init` installs GUT, deploys the coverage addon, generates
 `gd-tools.toml`, and creates per-tool config files (`.gutconfig.json`,
 `gdlintrc`, `gdformatrc`). The command is idempotent -- safe to re-run.
+If you've modified coverage addon files, they are automatically backed up
+to `addons/gd-tools-coverage/.backups/` before being overwritten.
 
 ## 5. CLI Command Summary
 
