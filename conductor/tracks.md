@@ -8,3 +8,6 @@ _Archived tracks live in `./archive/`._
 
 ---
 
+- [ ] **Track: Smart backup of coverage addon files before overwrite**
+*Link: [./tracks/smart_backup_20260717/](./tracks/smart_backup_20260717/)*
+
