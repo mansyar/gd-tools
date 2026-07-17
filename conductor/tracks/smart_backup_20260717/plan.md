@@ -21,4 +21,4 @@
     - [ ] Run `CI=true pytest tests/unit/test_init.py` and confirm all tests pass (Green phase)
     - [ ] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` and verify coverage meets thresholds (>80% line, >70% branch)
 
-- [ ] Task: Conductor - User Manual Verification 'Smart Backup for Coverage Addon Files' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Smart Backup for Coverage Addon Files' (Protocol in workflow.md)
