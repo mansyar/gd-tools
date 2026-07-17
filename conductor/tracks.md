@@ -8,6 +8,3 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Plan Generator Caching**
-*Link: [./tracks/plan_generator_caching_20260717/](./tracks/plan_generator_caching_20260717/)*
-
