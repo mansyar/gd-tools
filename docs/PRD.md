@@ -933,7 +933,7 @@ gd-tools/
 ```
 .gd-tools/
 ├── coverage/
-│   ├── plan.json              # Instrumentation plan (regenerated per run)
+│   ├── plan.json              # Instrumentation plan (cached when source unchanged)
 │   ├── coverage.json          # Raw coverage data from last run
 │   ├── results.xml            # JUnit XML from last test run
 │   └── html/                  # HTML report output

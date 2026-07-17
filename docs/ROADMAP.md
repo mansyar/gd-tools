@@ -1250,10 +1250,10 @@ that go untested.
 | **Phase** | 9 -- Robustness & Quality |
 | **Goal** | Cache the coverage plan to avoid regeneration when source files haven't changed |
 | **Dependencies** | Track 9 (plan generator) |
-| **Modules** | `src/gd_tools/coverage/plan_generator.py`, `src/gd_tools/coverage/orchestrator.py` |
+| **Modules** | `src/gd_tools/coverage/plan_generator.py`, `src/gd_tools/coverage/orchestrator.py`, `src/gd_tools/cli.py` |
 | **Effort** | 1 day |
 | **Risk** | LOW-MEDIUM -- cache invalidation, staleness detection |
-| **Status** | Planned |
+| **Status** | Done |
 
 **Problem:**
 
@@ -1289,6 +1289,13 @@ adds noticeable latency to every test run.
 4. `--no-cache` forces regeneration
 5. Cached plan produces identical coverage results to fresh plan
 6. Performance improvement is measurable on 50+ file project
+
+**Completed:** All success criteria met. Implementation includes
+`generate_plan_cached()` with `CacheStatus` dataclass, `--no-cache` CLI
+flag, verbose cache hit/miss logging, and integration tests. Code review
+applied two optimizations: skip `write_plan_json` on cache hit, and skip
+syntax-error files during hash computation to prevent false cache misses.
+Coverage: `plan_generator.py` 99%, `orchestrator.py` 97%.
 
 ---
 

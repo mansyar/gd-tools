@@ -128,10 +128,11 @@ User runs: gd-tools test --coverage --min 80
             v
 +---------------------------+     +-----------------------+
 | orchestrator.py           |     | plan_generator.py     |
-|  run_coverage_test()      |---->|  generate_plan()      |
-|                           |     |  discover .gd files  |
-|  1. Generate plan         |     |  parse via Lark AST   |
-|  2. Write plan.json       |<----|  CoverageVisitor      |
+|  run_coverage_test()      |---->|  generate_plan_cached()|
+|                           |     |  cache check:         |
+|  1. Generate/cached plan  |     |   compare file hashes |
+|  2. Write plan.json       |<----|   hit: reuse cached   |
+|     (skip on cache hit)   |     |   miss: generate_plan()|
 |  3. Run tests w/ coverage |     +-----------------------+
 |  4. Read coverage.json    |
 |  5. Generate reports      |     plan.json written to:
@@ -195,14 +196,18 @@ User runs: gd-tools test --coverage --min 80
 1. **CLI entry:** `gd-tools test --coverage` calls
    `orchestrator.run_coverage_test()` with config and flags.
 
-2. **Plan generation:** `plan_generator.generate_plan()` discovers all
-   `.gd` files in the project root (excluding `addons`, `.godot`,
-   `.gd-tools`, `.git`, and test directories), parses each file via
-   gdtoolkit's Lark parser, runs `CoverageVisitor` to identify
+2. **Plan generation (with cache):** `plan_generator.generate_plan_cached()`
+   checks if a cached `plan.json` exists and all source file hashes match.
+   On a cache hit, the cached plan is reused without AST parsing. On a miss
+   (file added/deleted/modified, corrupt plan, or `--no-cache` flag),
+   `generate_plan()` discovers all `.gd` files in the project root (excluding
+   `addons`, `.godot`, `.gd-tools`, `.git`, and test directories), parses
+   each file via gdtoolkit's Lark parser, runs `CoverageVisitor` to identify
    trackable points, and assembles a `CoveragePlan`.
 
 3. **Plan persistence:** The plan is serialized to
-   `<output_dir>/plan.json`.
+   `<output_dir>/plan.json` (skipped on cache hit — the file already
+   exists and is unchanged).
 
 4. **Test execution with coverage:** `test_runner.run_tests()` is
    called with `coverage=True`. This:
@@ -381,6 +386,13 @@ and branch points, and emits an instrumentation plan.
 - `generate_plan(project_root, exclude_dirs, test_dirs)`
   --- discovers `.gd` files, filters test directories, parses each
   file, runs `CoverageVisitor`, assembles a `CoveragePlan`.
+- `generate_plan_cached(project_root, exclude_dirs, test_dirs,
+  cache_path, use_cache)` --- wraps `generate_plan()` with hash-based
+  cache check. Returns `tuple[CoveragePlan, CacheStatus]`. Cache hit:
+  all file paths and source hashes match the cached plan. Cache miss:
+  any file added/deleted/modified, corrupt plan, or `use_cache=False`.
+- `CacheStatus` --- dataclass with `hit: bool` and `reason: str`,
+  indicating whether the cached plan was reused.
 - `write_plan_json(plan, output_path)` --- serializes a plan to JSON.
 - `read_plan_json(path)` --- deserializes a plan from JSON with
   schema validation.

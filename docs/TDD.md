@@ -764,8 +764,9 @@ def run_gut_with_coverage(
     project_root: Path,
 ) -> None:
     """Generate coverage plan, set env vars, run Godot+GUT.
-    1. Call coverage/plan_generator.generate_plan()
-    2. Write plan to .gd-tools/coverage/plan.json
+    1. Call coverage/plan_generator.generate_plan_cached()
+       (reuses cached plan.json when source hashes match; --no-cache bypasses)
+    2. Write plan to .gd-tools/coverage/plan.json (skipped on cache hit)
     3. Set env: GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
     4. Run Godot with GUT args
     5. After completion, call coverage/reporter.generate_report()"""
@@ -960,6 +961,27 @@ def generate_plan(
     4. Return CoveragePlan"""
 
 @dataclass
+class CacheStatus:
+    """Outcome of a cached plan generation attempt."""
+    hit: bool
+    reason: str
+
+def generate_plan_cached(
+    project_root: Path,
+    exclude_dirs: list[str],
+    test_dirs: list[str],
+    cache_path: str | None = None,
+    use_cache: bool = True,
+) -> tuple[CoveragePlan, CacheStatus]:
+    """Generate a coverage plan, reusing a cached plan when possible.
+    1. If use_cache and cache_path exists, read cached plan.json
+    2. Discover current .gd files and compute source hashes
+    3. Compare cached file set + hashes against current
+    4. Cache hit: all paths and hashes match -> reuse cached plan
+    5. Cache miss: any file added/deleted/changed -> regenerate via generate_plan()
+    6. Return (plan, CacheStatus) with hit/miss indicator"""
+
+@dataclass
 class CoveragePlan:
     version: int  # 1
     generated_by: str  # "gd-tools 0.1.0"
@@ -1115,6 +1137,13 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 - `generate_plan()` signature: `(project_root, exclude_dirs,
   test_dirs)` — reuses `discover_gd_files()` from `file_discovery.py` for
   file discovery, then filters out test_dirs from coverage targets.
+- `generate_plan_cached()` signature: `(project_root, exclude_dirs,
+  test_dirs, cache_path, use_cache)` — wraps `generate_plan()` with
+  hash-based cache check. Returns `tuple[CoveragePlan, CacheStatus]`.
+  Cache hit: same file paths + source hashes as cached plan. Cache miss:
+  any file added/deleted/modified, corrupt plan, or `use_cache=False`.
+  Skips files with syntax errors during hash computation (matching
+  `generate_plan()`'s skip behavior) to avoid false cache misses.
 - Source hash: SHA-256 with `sha256:` prefix (e.g., `sha256:abc123...`).
 - `read_plan_json` validates schema on read: checks `data` is a dict,
   `version` is present, `files` is a list, each file entry is a dict with
@@ -1377,10 +1406,12 @@ def run_coverage_test(
     timeout: int | None = 300,
     paths: list[str] | None = None,
     show_uncovered: bool = False,
+    no_cache: bool = False,
 ) -> TestResult:
     """Run tests with coverage instrumentation enabled.
-    1. Generate plan (plan_generator.generate_plan)
-    2. Write plan.json to config.coverage.output_dir
+    1. Generate plan (plan_generator.generate_plan_cached)
+       — reuses cached plan.json if source hashes match; --no-cache bypasses
+    2. Write plan.json to config.coverage.output_dir (skipped on cache hit)
     3. Set env vars: GD_TOOLS_COVERAGE_PLAN, GD_TOOLS_COVERAGE_OUTPUT
     4. Run tests via test_runner.run_tests(coverage=True, paths=paths)
     5. Read coverage.json + plan.json
