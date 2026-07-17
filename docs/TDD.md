@@ -46,6 +46,7 @@ src/gd_tools/
 ├── version.py                 # `gd-tools version` — component version detection
 ├── errors.py                 # Exception hierarchy
 ├── output.py                 # Shared terminal output module (Rich-based)
+├── verbosity.py              # Global verbosity context (Verbosity enum + accessors)
 ├── coverage/
 │   ├── __init__.py
 │   ├── orchestrator.py        # Coverage CLI orchestration (test --coverage, report, merge, show)
@@ -70,15 +71,16 @@ src/gd_tools/
 ```
 cli.py
 ├── config.py
-├── output.py (→ rich: Console, Table, Text)
+├── output.py (→ rich: Console, Table, Text; → verbosity: get_verbosity)
+├── verbosity.py (Verbosity enum, get_verbosity/set_verbosity)
 ├── update_check.py (-> packaging, requests)
 ├── addon_check.py (-> packaging, config)
 ├── godot.py
-├── init.py (→ config, godot)
+├── init.py (→ config, godot, output, verbosity)
 ├── doctor.py (→ config, godot)
-├── test_runner.py (→ config, godot, output, coverage/plan_generator, coverage/reporter)
-├── lint_runner.py (→ config, output)
-├── format_runner.py (→ config)
+├── test_runner.py (→ config, godot, output, verbosity, coverage/plan_generator, coverage/reporter)
+├── lint_runner.py (→ config, output, verbosity)
+├── format_runner.py (→ config, output, verbosity)
 ├── version.py (→ config, godot, init)
 └── coverage/
     ├── orchestrator.py (→ config, output, test_runner, plan_generator, reporter, errors)
@@ -149,13 +151,20 @@ and `sys.exit(e.exit_code)`. Unknown exceptions propagate (bug report).
 ### 3.1b `output.py` — Shared Terminal Output
 
 > **Implemented:** Track `stdout_20260715` (archived). See
-> `src/gd_tools/output.py`.
+> `src/gd_tools/output.py`. Extended with verbosity integration in Track
+> `verbose_quiet_flags_20260716` (archived).
 
 Provides a shared `Console` instance and rendering helpers so that all
 commands use a single visual language: colored markers, summary footers,
 and table rendering. Color semantics follow `product-guidelines.md` §2.1
 (green = pass, red = fail, yellow = warning, cyan = info, dim = paths).
 Markers are ASCII-only (`[OK]`, `[FAIL]`) per `product-guidelines.md` §7.
+
+Verbosity integration (Track `verbose_quiet_flags_20260716`):
+- `print_info` and `print_warning` are suppressed when verbosity is `QUIET`.
+- `print_verbose` only renders when verbosity is `VERBOSE`.
+- `print_success`, `print_error`, `print_summary`, and `print_table`
+  always render regardless of verbosity level.
 
 ```python
 from rich.console import Console
@@ -165,8 +174,9 @@ console = Console()  # Shared instance — auto-detects TTY
 
 def print_success(message: str) -> None: ...   # "[OK] message" in green
 def print_error(message: str) -> None: ...    # "[FAIL] message" in red
-def print_warning(message: str) -> None: ...  # message in yellow
-def print_info(message: str) -> None: ...     # message in cyan
+def print_warning(message: str) -> None: ...  # message in yellow (suppressed when QUIET)
+def print_info(message: str) -> None: ...     # message in cyan (suppressed when QUIET)
+def print_verbose(message: str) -> None: ... # message in dim (only when VERBOSE)
 def print_summary(
     status: str,            # "pass" | "fail" | "warning"
     counts: str,            # e.g. "3 errors, 2 warnings"
@@ -176,10 +186,42 @@ def print_summary(
 def print_table(table: Table) -> None: ...    # renders via shared console
 ```
 
-**Consumers:** `cli.py` (format command output), `lint_runner.py` (lint
-text output + summary), `test_runner.py` (test result table + failure
-details + summary), `coverage/orchestrator.py` (coverage show table +
-threshold summary).
+**Consumers:** `cli.py` (format command output, doctor quiet mode),
+`lint_runner.py` (lint text output + summary + verbose file display),
+`test_runner.py` (test result table + failure details + summary + verbose
+command/timing), `format_runner.py` (verbose file display + timing),
+`init.py` (quiet-mode summary), `coverage/orchestrator.py` (coverage show
+table + threshold summary).
+
+---
+
+### 3.1c `verbosity.py` — Global Verbosity Context
+
+> **Implemented:** Track `verbose_quiet_flags_20260716` (archived). See
+> `src/gd_tools/verbosity.py`.
+
+Provides a `Verbosity` enum (`QUIET`, `DEFAULT`, `VERBOSE`) and
+module-level `get_verbosity()` / `set_verbosity()` accessors. The CLI
+group callback sets the active level once from the `--verbose` / `--quiet`
+global flags; all output helpers and runner modules read it via
+`get_verbosity()` before printing non-essential output.
+
+```python
+class Verbosity(Enum):
+    QUIET = 0
+    DEFAULT = 1
+    VERBOSE = 2
+
+_active: Verbosity = Verbosity.DEFAULT
+
+def get_verbosity() -> Verbosity: ...
+def set_verbosity(level: Verbosity) -> None: ...
+```
+
+**Consumers:** `output.py` (suppresses `print_info`/`print_warning` when
+`QUIET`, gates `print_verbose` on `VERBOSE`), `cli.py` (quiet-mode doctor
+output), `init.py` (quiet-mode summary), `test_runner.py`,
+`lint_runner.py`, `format_runner.py` (verbose command/timing display).
 
 ---
 

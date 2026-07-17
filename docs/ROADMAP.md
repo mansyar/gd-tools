@@ -717,10 +717,10 @@ commands, flags, or file paths.
 | **Phase** | 6 -- Quick Wins |
 | **Goal** | Add `--verbose` and `--quiet` global flags to control output verbosity |
 | **Dependencies** | Track 1 (CLI skeleton) |
-| **Modules** | `src/gd_tools/cli.py`, all runner modules |
+| **Modules** | `src/gd_tools/cli.py`, `src/gd_tools/verbosity.py`, `src/gd_tools/output.py`, all runner modules |
 | **Effort** | 0.5-1 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Completed |
 
 **Problem:**
 
@@ -732,29 +732,38 @@ commands being run. Currently, there's no way to control this.
 - Add `--verbose` / `-v` global flag (before subcommand):
   - Shows underlying commands being run (e.g., the full `godot --headless
     -s addons/gut/gut_cmdln.gd ...` command)
-  - Shows internal state (config file path, plan path, coverage output path)
-  - Shows timing information
+  - Shows file-level operations (e.g., "Linting: <file>", "Formatting: <file>")
+  - Shows timing information for each major operation
 - Add `--quiet` / `-q` global flag:
   - Suppresses non-essential output (only show results and errors)
   - Still shows test pass/fail summary
   - Still shows lint violations
   - Suppresses update check notification, init summary, doctor details
-- Implement a verbosity context (e.g., a `Verbosity` enum or logging level)
-  that runners check before printing
-- `--verbose` and `--quiet` are mutually exclusive
+- Implement a verbosity context (a `Verbosity` enum with module-level
+  `get_verbosity()` / `set_verbosity()` accessors) that runners check
+  before printing
+- `--verbose` and `--quiet` are mutually exclusive (exit code 2)
+
+> **Note:** Internal state path display (config file path, plan path,
+> coverage output path) was evaluated and explicitly descoped — see
+> `spec.md` §Out of Scope.
 
 **Deliverables:**
-- Global flags in `cli.py`
-- Verbosity context passed to runner modules
-- Updated runner modules to respect verbosity
-- Unit tests for verbose output, quiet output, mutual exclusion
+- New `verbosity.py` module (`Verbosity` enum, `get_verbosity()`/`set_verbosity()` accessors)
+- Extended `output.py` with `print_verbose()` helper and quiet-mode suppression
+- Global flags in `cli.py` with mutual exclusion (exit code 2)
+- Updated runner modules (`test_runner.py`, `lint_runner.py`, `format_runner.py`) with verbose command/timing display
+- Quiet-mode suppression in `cli.py` (update/addon checks), `init.py` (summary), `doctor` (detailed table)
+- Unit tests + integration tests for verbose/quiet behavior
+- Documentation in README and USER_GUIDE
 
 **Success Criteria:**
 1. `gd-tools --verbose test` shows the underlying Godot/GUT command
 2. `gd-tools --quiet test` shows only test results summary
-3. `--verbose` and `--quiet` together produce an error
+3. `--verbose` and `--quiet` together produce an error (exit code 2)
 4. Default verbosity (no flag) matches current behavior
 5. All existing tests still pass
+6. New code achieves >80% line coverage and >70% branch coverage
 
 ---
 

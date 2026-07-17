@@ -662,6 +662,11 @@ def test_doctor_autoload_not_registered(mocker, tmp_path):
 - Non-interactive mode (`--non-interactive`) doesn't prompt
 - `version` subcommand prints all component versions (table and `--json`)
 - `version` exits 0 even when components are missing
+- `--verbose`/`-v` sets verbosity to VERBOSE; `--quiet`/`-q` sets QUIET
+- `--verbose` and `--quiet` together exit with code 2
+- Quiet mode suppresses update/addon checks and info messages
+- Verbose mode shows underlying commands and timing
+- Default mode (no flag) matches pre-verbosity behavior
 
 **Using Click's test runner:**
 ```python

@@ -336,6 +336,7 @@ gd-tools/
 |   |-- lint_runner.py         # gdlint wrapper
 |   |-- output.py              # Shared terminal output module (Rich-based)
 |   |-- test_runner.py         # GUT test execution and JUnit parsing
+|   |-- verbosity.py           # Global verbosity context (Verbosity enum + accessors)
 |   |-- coverage/              # Coverage subsystem
 |   |   |-- orchestrator.py    # Coverage flow orchestration
 |   |   |-- plan_generator.py  # Lark AST traversal for instrumentation plan
@@ -383,7 +384,7 @@ Each Python module in `src/gd_tools/` maps to a specific responsibility:
 
 | Module | Responsibility |
 |--------|---------------|
-| `cli.py` | Click command definitions, flag parsing, exit code dispatch |
+| `cli.py` | Click command definitions, flag parsing, `--verbose`/`--quiet` global flags, exit code dispatch |
 | `config.py` | `Config` Pydantic model, TOML loading and validation |
 | `doctor.py` | `CheckResult` dataclass, nine diagnostic checks, Rich table output |
 | `errors.py` | `GdToolsError` base, exit code convention (0/1/2) |
@@ -392,8 +393,9 @@ Each Python module in `src/gd_tools/` maps to a specific responsibility:
 | `godot.py` | `GodotInfo`, 5-level binary detection, `GUT_VERSION_MAP` |
 | `init.py` | Full project bootstrap: GUT install, addon deploy, config creation |
 | `lint_runner.py` | `gdtoolkit.linter` wrapper, `LintResult` dataclass |
-| `output.py` | Shared terminal output module — Rich-based rendering helpers (`print_success`, `print_error`, `print_warning`, `print_info`, `print_summary`, `print_table`) and shared `Console` instance |
+| `output.py` | Shared terminal output module — Rich-based rendering helpers (`print_success`, `print_error`, `print_warning`, `print_info`, `print_verbose`, `print_summary`, `print_table`) and shared `Console` instance; `print_info`/`print_warning` respect quiet mode, `print_verbose` only renders in verbose mode |
 | `test_runner.py` | GUT argument construction, subprocess execution, JUnit parsing |
+| `verbosity.py` | `Verbosity` enum (`QUIET`, `DEFAULT`, `VERBOSE`) and module-level `get_verbosity()`/`set_verbosity()` accessors for global output level control |
 | `coverage/` | Coverage plan generation, runtime instrumentation, reporting |
 
 For coverage system architecture details, see

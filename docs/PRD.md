@@ -43,8 +43,9 @@ respecting the realities of the Godot/GDScript ecosystem.
 3. **Production-quality coverage** — line and branch coverage for GDScript,
    with HTML and LCOV/Cobertura reports that integrate with CI and code
    review tools.
-4. **CI/CD friendly** — exit codes, `--check` flags, machine-readable output,
-   no interactive prompts when run non-interactively.
+4. **CI/CD friendly** — exit codes, `--check` flags, `--quiet` for minimal
+   CI output, machine-readable output, no interactive prompts when run
+   non-interactively.
 5. **Standalone tool compatibility** — gdlint, gdformat, and GUT continue to
    work if invoked directly. `gd-tools` is a layer on top, not a lock-in.
 
@@ -898,6 +899,7 @@ gd-tools/
 │       ├── test_runner.py        # `gd-tools test` — GUT orchestration
 │       ├── lint_runner.py       # `gd-tools lint` — gdlint wrapper
 │       ├── output.py           # Shared terminal output module (Rich-based)
+│       ├── verbosity.py        # Global verbosity context (Verbosity enum + accessors)
 │       ├── format_runner.py     # `gd-tools format` — gdformat wrapper
 │       ├── version.py           # `gd-tools version` — component version detection
 │       ├── coverage/
@@ -998,7 +1000,7 @@ Generated/managed by `gd-tools init`. Contains GUT config + coverage hook paths:
 |------|--------------------|
 | 0    | Success            |
 | 1    | Test/lint/format failure or coverage below threshold |
-| 2    | Environment/config error |
+| 2    | Environment/config error, or `--verbose` and `--quiet` used together |
 
 ### Project CI/CD Pipeline
 
