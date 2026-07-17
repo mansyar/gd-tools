@@ -1,6 +1,6 @@
 # Implementation Plan: Smart Backup of Coverage Addon Files Before Overwrite
 
-## Phase 1: Smart Backup for Coverage Addon Files
+## Phase 1: Smart Backup for Coverage Addon Files [checkpoint: 51a135a]
 
 - [x] Task: Write failing unit tests for smart backup behavior in `tests/unit/test_init.py`
     - [ ] Add test: first-time install (no existing addon files) creates no `.bak` files and prints no warnings
@@ -21,4 +21,4 @@
     - [ ] Run `CI=true pytest tests/unit/test_init.py` and confirm all tests pass (Green phase)
     - [ ] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` and verify coverage meets thresholds (>80% line, >70% branch)
 
-- [~] Task: Conductor - User Manual Verification 'Smart Backup for Coverage Addon Files' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Smart Backup for Coverage Addon Files' (Protocol in workflow.md)
