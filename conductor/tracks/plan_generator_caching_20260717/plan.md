@@ -85,7 +85,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
     - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`
     - [x] Run `pytest --cov=gd_tools.cli --cov-branch` and verify >80% line, >70% branch (95% line, 91% branch)
 
-- [ ] Task: Conductor - User Manual Verification 'CLI --no-cache Flag' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'CLI --no-cache Flag' (Protocol in workflow.md) (checkpoint: eb1ddfb)
 
 ---
 
