@@ -91,18 +91,18 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 4: Full Integration & Documentation
 
-- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
-- [ ] Task: Write integration test for end-to-end cache behavior
-    - [ ] Add test to `tests/integration/` for full `test --coverage` with cache
-    - [ ] Test: first run generates plan, second run with no changes uses cache
-    - [ ] Test: modifying a file between runs triggers regeneration
-    - [ ] Test: `--no-cache` flag on second run forces regeneration
-    - [ ] Run tests and confirm they pass
+- [x] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
+- [x] Task: Write integration test for end-to-end cache behavior
+    - [x] Add test to `tests/integration/` for full `test --coverage` with cache
+    - [x] Test: first run generates plan, second run with no changes uses cache
+    - [x] Test: modifying a file between runs triggers regeneration
+    - [x] Test: `--no-cache` flag on second run forces regeneration
+    - [x] Run tests and confirm they pass
 
-- [ ] Task: Update documentation
-    - [ ] Add `--no-cache` flag to `test` command help text and README
-    - [ ] Add cache behavior section to USER_GUIDE (brief: plan is cached by default, `--no-cache` to force regeneration)
-    - [ ] Run `ruff check` and `black --check` on all changed files
+- [x] Task: Update documentation (337266e)
+    - [x] Add `--no-cache` flag to `test` command help text and README
+    - [x] Add cache behavior section to USER_GUIDE (brief: plan is cached by default, `--no-cache` to force regeneration)
+    - [x] Run `ruff check` and `black --check` on all changed files
 
-- [ ] Task: Conductor - User Manual Verification 'Full Integration & Documentation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Full Integration & Documentation' (Protocol in workflow.md)
 </protect>
