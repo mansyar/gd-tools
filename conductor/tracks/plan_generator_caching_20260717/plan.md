@@ -63,7 +63,7 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
     - [x] Run tests and confirm they pass (Green phase)
     - [x] Run `pytest --cov=gd_tools.coverage.orchestrator --cov-branch` and verify >80% line, >70% branch
 
-- [x] Task: Conductor - User Manual Verification 'Orchestrator Integration & Verbose Logging' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Orchestrator Integration & Verbose Logging' (Protocol in workflow.md) [checkpoint: 0a1dfe3]
 
 ---
 
