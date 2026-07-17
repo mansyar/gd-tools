@@ -41,27 +41,27 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
 
 ## Phase 2: Orchestrator Integration & Verbose Logging
 
-- [ ] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
-- [ ] Task: Write failing tests for orchestrator cache integration
-    - [ ] Add tests to `tests/unit/test_orchestrator.py` for cache-aware `run_coverage_test()`
-    - [ ] Test `run_coverage_test()` with cache hit: `generate_plan_cached()` is called, not `generate_plan()`
-    - [ ] Test `run_coverage_test()` with `no_cache=True`: forces regeneration
-    - [ ] Test `run_coverage_test()` writes `plan.json` after generation (even on cache hit)
-    - [ ] Test verbose logging: `output.print_verbose()` called with cache hit message when `--verbose`
-    - [ ] Test verbose logging: `output.print_verbose()` called with cache miss message when `--verbose`
-    - [ ] Test default verbosity: no cache status output printed
-    - [ ] Test quiet verbosity: no cache status output printed
-    - [ ] Run tests and confirm they fail (Red phase)
+- [x] Task: Read `spec.md` and `workflow.md` to re-establish context before starting this phase
+- [x] Task: Write failing tests for orchestrator cache integration (b958136)
+    - [x] Add tests to `tests/unit/test_orchestrator.py` for cache-aware `run_coverage_test()`
+    - [x] Test `run_coverage_test()` with cache hit: `generate_plan_cached()` is called, not `generate_plan()`
+    - [x] Test `run_coverage_test()` with `no_cache=True`: forces regeneration
+    - [x] Test `run_coverage_test()` writes `plan.json` after generation (even on cache hit)
+    - [x] Test verbose logging: `output.print_verbose()` called with cache hit message when `--verbose`
+    - [x] Test verbose logging: `output.print_verbose()` called with cache miss message when `--verbose`
+    - [x] Test default verbosity: no cache status output printed
+    - [x] Test quiet verbosity: no cache status output printed
+    - [x] Run tests and confirm they fail (Red phase)
 
-- [ ] Task: Implement orchestrator changes and verbose logging
-    - [ ] Add `no_cache: bool = False` parameter to `run_coverage_test()` signature
-    - [ ] Replace `plan_generator.generate_plan()` call (line 87) with `plan_generator.generate_plan_cached()`
-    - [ ] Pass `cache_path=str(output_dir / "plan.json")` and `use_cache=not no_cache`
-    - [ ] Handle the returned `CacheStatus` to construct verbose log messages
-    - [ ] Call `output.print_verbose()` with cache hit/miss message based on `CacheStatus`
-    - [ ] Always call `write_plan_json()` after generation (skip on cache hit since file already exists, OR write anyway for safety)
-    - [ ] Run tests and confirm they pass (Green phase)
-    - [ ] Run `pytest --cov=gd_tools.coverage.orchestrator --cov-branch` and verify >80% line, >70% branch
+- [x] Task: Implement orchestrator changes and verbose logging (b958136)
+    - [x] Add `no_cache: bool = False` parameter to `run_coverage_test()` signature
+    - [x] Replace `plan_generator.generate_plan()` call (line 87) with `plan_generator.generate_plan_cached()`
+    - [x] Pass `cache_path=str(output_dir / "plan.json")` and `use_cache=not no_cache`
+    - [x] Handle the returned `CacheStatus` to construct verbose log messages
+    - [x] Call `output.print_verbose()` with cache hit/miss message based on `CacheStatus`
+    - [x] Always call `write_plan_json()` after generation (skip on cache hit since file already exists, OR write anyway for safety)
+    - [x] Run tests and confirm they pass (Green phase)
+    - [x] Run `pytest --cov=gd_tools.coverage.orchestrator --cov-branch` and verify >80% line, >70% branch
 
 - [ ] Task: Conductor - User Manual Verification 'Orchestrator Integration & Verbose Logging' (Protocol in workflow.md)
 
