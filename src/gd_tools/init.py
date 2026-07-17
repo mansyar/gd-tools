@@ -328,8 +328,11 @@ def install_coverage_addon(project_root: Path) -> None:
 
     Copies the GDScript files from the package data to
     ``project_root/addons/gd-tools-coverage/``. Always overwrites
-    existing files to ensure they are up-to-date. Also writes a
-    ``_version.txt`` file stamping the deployed addon with the current
+    existing files to ensure they are up-to-date. If an existing file
+    differs from the bundled version (indicating user modification),
+    a backup copy is saved to ``addons/gd-tools-coverage/.backups/``
+    before overwriting, and a yellow warning is printed. Also writes
+    a ``_version.txt`` file stamping the deployed addon with the current
     package version.
 
     Args:
@@ -338,8 +341,22 @@ def install_coverage_addon(project_root: Path) -> None:
     source_dir = Path(__file__).parent / "addons" / "gd-tools-coverage"
     target_dir = project_root / "addons" / "gd-tools-coverage"
     target_dir.mkdir(parents=True, exist_ok=True)
+    backups_dir = target_dir / ".backups"
     for gd_file in COVERAGE_ADDON_FILES:
-        shutil.copy2(source_dir / gd_file, target_dir / gd_file)
+        target_file = target_dir / gd_file
+        source_file = source_dir / gd_file
+        if target_file.exists():
+            existing_bytes = target_file.read_bytes()
+            bundled_bytes = source_file.read_bytes()
+            if existing_bytes != bundled_bytes:
+                backups_dir.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(target_file, backups_dir / f"{gd_file}.bak")
+                console.print(
+                    f"[yellow]Warning: {gd_file} was modified. "
+                    f"Backed up to {backups_dir / f'{gd_file}.bak'}"
+                    f" before overwriting.[/yellow]"
+                )
+        shutil.copy2(source_file, target_file)
     version_file = target_dir / "_version.txt"
     version_file.write_text(f"{__version__}\n", encoding="utf-8")
 

@@ -1,6 +1,7 @@
 """Unit tests for the init command module."""
 
 import json
+import shutil
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -566,7 +567,11 @@ def test_install_coverage_addon_copies_all_files(tmp_path: Path):
 
 
 def test_install_coverage_addon_overwrites_stale_files(tmp_path: Path):
-    """Test install_coverage_addon overwrites existing stale files."""
+    """Test install_coverage_addon overwrites existing stale files.
+
+    Stale content differs from the bundled version, so a backup must be
+    created for each file before overwriting.
+    """
     target_dir = tmp_path / "addons" / "gd-tools-coverage"
     target_dir.mkdir(parents=True)
     for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]:
@@ -574,9 +579,170 @@ def test_install_coverage_addon_overwrites_stale_files(tmp_path: Path):
 
     install_coverage_addon(tmp_path)
 
+    backups_dir = target_dir / ".backups"
     for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]:
         content = (target_dir / gd_file).read_text()
         assert content != "old stale content"
+        # Backup must exist with the user's modified content
+        bak = backups_dir / f"{gd_file}.bak"
+        assert bak.exists()
+        assert bak.read_text() == "old stale content"
+
+
+def test_smart_backup_first_install_no_backups(tmp_path: Path):
+    """First-time install (no existing addon files) creates no .bak files."""
+    install_coverage_addon(tmp_path)
+
+    backups_dir = tmp_path / "addons" / "gd-tools-coverage" / ".backups"
+    # No backups should exist on first install
+    assert not backups_dir.exists() or not any(backups_dir.iterdir())
+
+
+def test_smart_backup_unchanged_files_no_backups(tmp_path: Path):
+    """Re-init with unmodified files (identical to bundled) creates no .bak."""
+    # First install to get the bundled files in place
+    install_coverage_addon(tmp_path)
+
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+    # Capture the bundled content
+    bundled_content = {
+        gd_file: (target_dir / gd_file).read_bytes()
+        for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]
+    }
+
+    # Remove any .backups dir from first install (shouldn't exist, but be safe)
+    backups_dir = target_dir / ".backups"
+    if backups_dir.exists():
+        shutil.rmtree(backups_dir)
+
+    # Re-run init — files are identical to bundled, so no backups
+    install_coverage_addon(tmp_path)
+
+    # No .bak files should exist
+    assert not backups_dir.exists() or not any(backups_dir.iterdir())
+    # Files should still match bundled content
+    for gd_file, content in bundled_content.items():
+        assert (target_dir / gd_file).read_bytes() == content
+
+
+def test_smart_backup_modified_pre_run_hook(tmp_path: Path):
+    """Re-init with modified pre_run_hook.gd creates backup and warns."""
+    # First install
+    install_coverage_addon(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+
+    # Modify pre_run_hook.gd
+    modified_content = "# user customization\n"
+    (target_dir / "pre_run_hook.gd").write_text(modified_content)
+
+    with patch("gd_tools.init.console.print") as mock_print:
+        install_coverage_addon(tmp_path)
+
+    # Backup should exist with the user's modified content
+    bak = target_dir / ".backups" / "pre_run_hook.gd.bak"
+    assert bak.exists()
+    assert bak.read_text() == modified_content
+
+    # The target file should now have the bundled content (not the modified)
+    source_dir = (
+        Path(__file__).parent.parent.parent
+        / "src"
+        / "gd_tools"
+        / "addons"
+        / "gd-tools-coverage"
+    )
+    bundled = (source_dir / "pre_run_hook.gd").read_bytes()
+    assert (target_dir / "pre_run_hook.gd").read_bytes() == bundled
+
+    # A yellow warning should have been printed
+    assert mock_print.called
+    printed = " ".join(str(c) for c in mock_print.call_args[0])
+    assert "pre_run_hook.gd" in printed
+    assert ".bak" in printed
+    assert "yellow" in printed.lower()
+
+
+def test_smart_backup_modified_post_run_hook(tmp_path: Path):
+    """Re-init with modified post_run_hook.gd creates backup and warns."""
+    install_coverage_addon(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+
+    modified_content = "# user customization\n"
+    (target_dir / "post_run_hook.gd").write_text(modified_content)
+
+    with patch("gd_tools.init.console.print") as mock_print:
+        install_coverage_addon(tmp_path)
+
+    bak = target_dir / ".backups" / "post_run_hook.gd.bak"
+    assert bak.exists()
+    assert bak.read_text() == modified_content
+
+    source_dir = (
+        Path(__file__).parent.parent.parent
+        / "src"
+        / "gd_tools"
+        / "addons"
+        / "gd-tools-coverage"
+    )
+    bundled = (source_dir / "post_run_hook.gd").read_bytes()
+    assert (target_dir / "post_run_hook.gd").read_bytes() == bundled
+
+    assert mock_print.called
+    printed = " ".join(str(c) for c in mock_print.call_args[0])
+    assert "post_run_hook.gd" in printed
+    assert ".bak" in printed
+    assert "yellow" in printed.lower()
+
+
+def test_smart_backup_modified_coverage_gd(tmp_path: Path):
+    """Re-init with modified coverage.gd creates backup and warns."""
+    install_coverage_addon(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+
+    modified_content = "# user customization\n"
+    (target_dir / "coverage.gd").write_text(modified_content)
+
+    with patch("gd_tools.init.console.print") as mock_print:
+        install_coverage_addon(tmp_path)
+
+    bak = target_dir / ".backups" / "coverage.gd.bak"
+    assert bak.exists()
+    assert bak.read_text() == modified_content
+
+    source_dir = (
+        Path(__file__).parent.parent.parent
+        / "src"
+        / "gd_tools"
+        / "addons"
+        / "gd-tools-coverage"
+    )
+    bundled = (source_dir / "coverage.gd").read_bytes()
+    assert (target_dir / "coverage.gd").read_bytes() == bundled
+
+    assert mock_print.called
+    printed = " ".join(str(c) for c in mock_print.call_args[0])
+    assert "coverage.gd" in printed
+    assert ".bak" in printed
+    assert "yellow" in printed.lower()
+
+
+def test_smart_backup_creates_backups_dir(tmp_path: Path):
+    """The .backups/ subdirectory is auto-created if it does not exist."""
+    install_coverage_addon(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+
+    # Modify a file so a backup will be triggered
+    (target_dir / "coverage.gd").write_text("modified\n")
+
+    # Ensure .backups does not exist yet
+    backups_dir = target_dir / ".backups"
+    assert not backups_dir.exists()
+
+    install_coverage_addon(tmp_path)
+
+    # .backups should now exist and contain the backup
+    assert backups_dir.is_dir()
+    assert (backups_dir / "coverage.gd.bak").exists()
 
 
 def test_install_coverage_addon_creates_target_dir(tmp_path: Path):
