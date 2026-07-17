@@ -44,6 +44,7 @@ def run_coverage_test(
     timeout: int | None = None,
     paths: list[str] | None = None,
     show_uncovered: bool = False,
+    no_cache: bool = False,
 ) -> TestResult:
     """Run tests with coverage instrumentation and generate reports.
 
@@ -71,6 +72,8 @@ def run_coverage_test(
         timeout: Optional test timeout in seconds.
         show_uncovered: If True, print per-file uncovered lines and
             branches when coverage is below 100%.
+        no_cache: If True, bypass the plan cache and force plan
+            regeneration.
 
     Returns:
         The :class:`TestResult` from running tests.
@@ -83,13 +86,20 @@ def run_coverage_test(
     output_dir = project_root / config.coverage.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate and write instrumentation plan.
-    plan = plan_generator.generate_plan(
+    # Generate instrumentation plan (with cache support).
+    plan, cache_status = plan_generator.generate_plan_cached(
         str(project_root),
         config.coverage.exclude,
         config.coverage.test_dirs,
+        cache_path=str(output_dir / "plan.json"),
+        use_cache=not no_cache,
     )
     plan_generator.write_plan_json(plan, str(output_dir / "plan.json"))
+
+    output.print_verbose(
+        f"Coverage plan cache {'hit' if cache_status.hit else 'miss'}: "
+        f"{cache_status.reason}"
+    )
 
     # Run tests with coverage enabled.
     test_error: TestFailureError | None = None

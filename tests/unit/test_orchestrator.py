@@ -21,7 +21,12 @@ from gd_tools.coverage.orchestrator import (
     run_coverage_test,
     show_coverage_summary,
 )
-from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan, LinePlan
+from gd_tools.coverage.plan_generator import (
+    CacheStatus,
+    CoveragePlan,
+    FilePlan,
+    LinePlan,
+)
 from gd_tools.coverage.reporter import (
     CoverageData,
     CoverageSummary,
@@ -35,6 +40,7 @@ from gd_tools.errors import (
     TestFailureError,
 )
 from gd_tools.test_runner import TestResult
+from gd_tools.verbosity import Verbosity, set_verbosity
 
 # --- Helpers ---
 
@@ -120,6 +126,9 @@ def mock_deps(tmp_path):
             "gd_tools.coverage.orchestrator.plan_generator.generate_plan"
         ) as mock_gen_plan,
         patch(
+            "gd_tools.coverage.orchestrator.plan_generator.generate_plan_cached"
+        ) as mock_gen_plan_cached,
+        patch(
             "gd_tools.coverage.orchestrator.plan_generator.write_plan_json"
         ) as mock_write_plan,
         patch("gd_tools.coverage.orchestrator.run_tests") as mock_run_tests,
@@ -138,6 +147,10 @@ def mock_deps(tmp_path):
     ):
         mock_find_root.return_value = tmp_path
         mock_gen_plan.return_value = _make_plan()
+        mock_gen_plan_cached.return_value = (
+            _make_plan(),
+            CacheStatus(hit=False, reason="1 file changed"),
+        )
         mock_run_tests.return_value = _make_test_result()
         mock_read_cov.return_value = _make_coverage_data()
         mock_read_plan.return_value = _make_plan()
@@ -154,6 +167,7 @@ def mock_deps(tmp_path):
         yield {
             "find_project_root": mock_find_root,
             "generate_plan": mock_gen_plan,
+            "generate_plan_cached": mock_gen_plan_cached,
             "write_plan_json": mock_write_plan,
             "run_tests": mock_run_tests,
             "read_coverage_json": mock_read_cov,
@@ -163,15 +177,31 @@ def mock_deps(tmp_path):
         }
 
 
+@pytest.fixture
+def verbose_mode():
+    """Set verbosity to VERBOSE for the test, restore to DEFAULT after."""
+    set_verbosity(Verbosity.VERBOSE)
+    yield
+    set_verbosity(Verbosity.DEFAULT)
+
+
+@pytest.fixture
+def quiet_mode():
+    """Set verbosity to QUIET for the test, restore to DEFAULT after."""
+    set_verbosity(Verbosity.QUIET)
+    yield
+    set_verbosity(Verbosity.DEFAULT)
+
+
 # --- run_coverage_test() ---
 
 
 @pytest.mark.unit
 def test_run_coverage_test_generates_plan(mock_deps):
-    """run_coverage_test() generates a plan via plan_generator.generate_plan()."""
+    """run_coverage_test() generates a plan via plan_generator.generate_plan_cached()."""
     run_coverage_test(_make_config())
 
-    mock_deps["generate_plan"].assert_called_once()
+    mock_deps["generate_plan_cached"].assert_called_once()
 
 
 @pytest.mark.unit
@@ -266,6 +296,92 @@ def test_run_coverage_test_no_exit_code_passes_flag(mock_deps):
     kwargs = mock_deps["run_tests"].call_args.kwargs
     assert kwargs.get("no_exit_code") is True
     mock_deps["generate_report"].assert_called_once()
+
+
+# --- Cache integration tests ---
+
+
+@pytest.mark.unit
+def test_run_coverage_test_no_cache_forces_regeneration(mock_deps):
+    """run_coverage_test() with no_cache=True passes use_cache=False."""
+    run_coverage_test(_make_config(), no_cache=True)
+
+    kwargs = mock_deps["generate_plan_cached"].call_args.kwargs
+    assert kwargs.get("use_cache") is False
+
+
+@pytest.mark.unit
+def test_run_coverage_test_default_uses_cache(mock_deps):
+    """run_coverage_test() without no_cache passes use_cache=True."""
+    run_coverage_test(_make_config())
+
+    kwargs = mock_deps["generate_plan_cached"].call_args.kwargs
+    assert kwargs.get("use_cache") is True
+
+
+@pytest.mark.unit
+def test_run_coverage_test_passes_cache_path(mock_deps):
+    """run_coverage_test() passes cache_path pointing to plan.json."""
+    run_coverage_test(_make_config())
+
+    kwargs = mock_deps["generate_plan_cached"].call_args.kwargs
+    cache_path = kwargs.get("cache_path")
+    assert cache_path is not None
+    assert cache_path.endswith("plan.json")
+
+
+@pytest.mark.unit
+def test_run_coverage_test_writes_plan_on_cache_hit(mock_deps):
+    """run_coverage_test() writes plan.json even on cache hit."""
+    mock_deps["generate_plan_cached"].return_value = (
+        _make_plan(),
+        CacheStatus(hit=True, reason="1 file unchanged"),
+    )
+    run_coverage_test(_make_config())
+
+    mock_deps["write_plan_json"].assert_called_once()
+
+
+@pytest.mark.unit
+def test_run_coverage_test_verbose_cache_hit(mock_deps, capsys, verbose_mode):
+    """run_coverage_test() prints cache hit message when --verbose."""
+    mock_deps["generate_plan_cached"].return_value = (
+        _make_plan(),
+        CacheStatus(hit=True, reason="1 file unchanged"),
+    )
+    run_coverage_test(_make_config())
+
+    captured = capsys.readouterr()
+    assert "cache hit" in captured.out.lower()
+
+
+@pytest.mark.unit
+def test_run_coverage_test_verbose_cache_miss(mock_deps, capsys, verbose_mode):
+    """run_coverage_test() prints cache miss message when --verbose."""
+    run_coverage_test(_make_config())
+
+    captured = capsys.readouterr()
+    assert "cache miss" in captured.out.lower()
+
+
+@pytest.mark.unit
+def test_run_coverage_test_default_no_cache_output(mock_deps, capsys):
+    """run_coverage_test() does not print cache status in default verbosity."""
+    run_coverage_test(_make_config())
+
+    captured = capsys.readouterr()
+    assert "cache hit" not in captured.out.lower()
+    assert "cache miss" not in captured.out.lower()
+
+
+@pytest.mark.unit
+def test_run_coverage_test_quiet_no_cache_output(mock_deps, capsys, quiet_mode):
+    """run_coverage_test() does not print cache status in quiet mode."""
+    run_coverage_test(_make_config())
+
+    captured = capsys.readouterr()
+    assert "cache hit" not in captured.out.lower()
+    assert "cache miss" not in captured.out.lower()
 
 
 # --- generate_coverage_report() ---
