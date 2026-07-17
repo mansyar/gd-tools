@@ -104,5 +104,5 @@ This plan implements hash-based coverage plan caching in `plan_generator.py`, th
     - [x] Add cache behavior section to USER_GUIDE (brief: plan is cached by default, `--no-cache` to force regeneration)
     - [x] Run `ruff check` and `black --check` on all changed files
 
-- [~] Task: Conductor - User Manual Verification 'Full Integration & Documentation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Full Integration & Documentation' (Protocol in workflow.md) (checkpoint: 8bd58fc)
 </protect>
