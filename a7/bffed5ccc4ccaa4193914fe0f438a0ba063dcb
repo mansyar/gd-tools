@@ -1,0 +1,18 @@
+Task: Implement smart backup logic in install_coverage_addon
+
+Summary:
+- Modified install_coverage_addon in src/gd_tools/init.py to compare existing
+  coverage addon files against bundled versions before overwriting.
+- If content differs (user modification detected), the existing file is backed
+  up to addons/gd-tools-coverage/.backups/<filename>.bak before overwrite.
+- A yellow warning is printed via console.print naming the file and backup path.
+- The .backups/ directory is auto-created if it does not exist.
+- Unchanged files are overwritten silently (no backup, no warning).
+- First-time install behavior is unchanged (no existing files to compare).
+
+Files modified:
+- src/gd_tools/init.py: Updated install_coverage_addon with backup logic
+- tests/unit/test_init.py: Added 6 new tests + updated 1 existing test
+
+Why: Re-running gd-tools init previously destroyed user customizations to
+coverage addon files with no backup or warning. This provides a recovery path.
