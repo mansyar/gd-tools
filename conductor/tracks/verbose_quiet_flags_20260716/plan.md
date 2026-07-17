@@ -39,21 +39,21 @@
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
 - [x] Task: Display underlying commands in verbose mode (eaddb11)
-    - [ ] Write failing tests verifying that when verbosity is VERBOSE, the full Godot/GUT command is printed before execution in `run_tests()`, the gdlint invocation is shown in `run_lint()`, and the gdformat invocation is shown in `run_format()` (`tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`, `tests/unit/test_format_runner.py`)
-    - [ ] Implement command display logic — add a `print_verbose()` call in `test_runner.py` (before `run_godot()` showing `[binary, --path, project_root, *args]`), in `lint_runner.py` (before `lint_code()` showing the file being linted), and in `format_runner.py` (before `format_code()` showing the file being formatted)
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage for modified runner sections
-    - [ ] Commit: `feat(verbose): Display underlying commands in verbose mode`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+    - [x] Write failing tests verifying that when verbosity is VERBOSE, the full Godot/GUT command is printed before execution in `run_tests()`, the gdlint invocation is shown in `run_lint()`, and the gdformat invocation is shown in `run_format()` (`tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`, `tests/unit/test_format_runner.py`)
+    - [x] Implement command display logic — add a `print_verbose()` call in `test_runner.py` (before `run_godot()` showing `[binary, --path, project_root, *args]`), in `lint_runner.py` (before `lint_code()` showing the file being linted), and in `format_runner.py` (before `format_code()` showing the file being formatted)
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage for modified runner sections
+    - [x] Commit: `feat(verbose): Display underlying commands in verbose mode`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [x] Task: Display timing information in verbose mode (b356eb3)
-    - [ ] Write failing tests verifying that when verbosity is VERBOSE, elapsed time is printed after each major operation (test run, lint scan, format pass) (`tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`, `tests/unit/test_format_runner.py`)
-    - [ ] Implement timing logic — wrap each major operation in `time.perf_counter()` start/end calls and print elapsed time via `print_verbose()` in `test_runner.py`, `lint_runner.py`, and `format_runner.py`
-    - [ ] Run tests, confirm Green phase
-    - [ ] Verify >80% line / >70% branch coverage for modified runner sections
-    - [ ] Commit: `feat(verbose): Display timing information in verbose mode`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+    - [x] Write failing tests verifying that when verbosity is VERBOSE, elapsed time is printed after each major operation (test run, lint scan, format pass) (`tests/unit/test_test_runner.py`, `tests/unit/test_lint_runner.py`, `tests/unit/test_format_runner.py`)
+    - [x] Implement timing logic — wrap each major operation in `time.perf_counter()` start/end calls and print elapsed time via `print_verbose()` in `test_runner.py`, `lint_runner.py`, and `format_runner.py`
+    - [x] Run tests, confirm Green phase
+    - [x] Verify >80% line / >70% branch coverage for modified runner sections
+    - [x] Commit: `feat(verbose): Display timing information in verbose mode`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [x] Task: Conductor - User Manual Verification 'Verbose Mode Implementation' (Protocol in workflow.md) [checkpoint: a7ff3f2]
 
 ## Phase 4: Quiet Mode Implementation
@@ -89,17 +89,21 @@
 
 - [x] Task: Read `spec.md` and `workflow.md` to review requirements and workflow protocols
 - [x] Task: Write integration tests for verbose/quiet across all commands (da11b1d)
-    - [ ] Write integration tests verifying end-to-end verbose output (commands shown, timing shown) and quiet output (minimal output, results only) for `test`, `lint`, `format`, `doctor`, and `init` commands (`tests/integration/test_verbosity_integration.py`)
-    - [ ] Run integration tests, confirm all pass
-    - [ ] Verify no regressions in existing integration tests
-    - [ ] Commit: `test(verbosity): Add integration tests for verbose and quiet modes`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+    - [x] Write integration tests verifying end-to-end verbose output (commands shown, timing shown) and quiet output (minimal output, results only) for `test`, `lint`, `format`, `doctor`, and `init` commands (`tests/integration/test_verbosity_integration.py`)
+    - [x] Run integration tests, confirm all pass
+    - [x] Verify no regressions in existing integration tests
+    - [x] Commit: `test(verbosity): Add integration tests for verbose and quiet modes`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [x] Task: Update documentation with --verbose/--quiet usage (7828d92)
-    - [ ] Add a "Verbosity Control" section to README documenting `--verbose`/`-v` and `--quiet`/`-q` flags with examples
-    - [ ] Add a "Verbosity Control" section to USER_GUIDE with detailed usage examples for CI (quiet) and debugging (verbose) scenarios
-    - [ ] Commit: `docs(verbosity): Document --verbose and --quiet global flags`
-    - [ ] Attach git note with task summary to commit
-    - [ ] Mark task complete in `plan.md` with commit SHA
+    - [x] Add a "Verbosity Control" section to README documenting `--verbose`/`-v` and `--quiet`/`-q` flags with examples
+    - [x] Add a "Verbosity Control" section to USER_GUIDE with detailed usage examples for CI (quiet) and debugging (verbose) scenarios
+    - [x] Commit: `docs(verbosity): Document --verbose and --quiet global flags`
+    - [x] Attach git note with task summary to commit
+    - [x] Mark task complete in `plan.md` with commit SHA
 - [x] Task: Conductor - User Manual Verification 'Integration Testing & Documentation' (Protocol in workflow.md) [checkpoint: 6321cfe]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions 83fd718
 </protect>
