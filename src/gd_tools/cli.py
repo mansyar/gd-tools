@@ -301,6 +301,12 @@ def version(as_json):
     is_flag=True,
     help="Show uncovered lines and branches when coverage is below 100%.",
 )
+@click.option(
+    "--no-cache",
+    is_flag=True,
+    help="Force plan regeneration, bypassing the coverage plan cache. "
+    "Only effective with --coverage.",
+)
 def test(
     paths,
     coverage,
@@ -311,6 +317,7 @@ def test(
     no_exit_code,
     timeout,
     show_uncovered,
+    no_cache,
 ):
     """Run GDScript tests using GUT."""
     try:
@@ -346,6 +353,7 @@ def test(
                 timeout=timeout,
                 paths=list(paths) if paths else None,
                 show_uncovered=show_uncovered,
+                no_cache=no_cache,
             )
         else:
             run_tests(

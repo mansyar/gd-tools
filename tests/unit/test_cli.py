@@ -500,6 +500,91 @@ def test_test_show_uncovered_without_coverage_warns():
     mock_orch.assert_not_called()
 
 
+def test_test_coverage_no_cache_passed_to_orchestrator():
+    """Test --coverage --no-cache passes no_cache=True to orchestrator."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            return_value=mock_result,
+        ) as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test", "--coverage", "--no-cache"])
+    assert result.exit_code == 0
+    _, kwargs = mock_orch.call_args
+    assert kwargs["no_cache"] is True
+
+
+def test_test_coverage_default_no_cache_false():
+    """Test --coverage without --no-cache passes no_cache=False."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_coverage_test",
+            return_value=mock_result,
+        ) as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test", "--coverage"])
+    assert result.exit_code == 0
+    _, kwargs = mock_orch.call_args
+    assert kwargs["no_cache"] is False
+
+
+def test_test_no_cache_without_coverage_accepted():
+    """Test --no-cache without --coverage is accepted, calls run_tests."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
+        patch("gd_tools.cli.run_coverage_test") as mock_orch,
+    ):
+        result = runner.invoke(cli, ["test", "--no-cache"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once()
+    mock_orch.assert_not_called()
+
+
 def test_test_junit_xml_flag():
     """Test --junit-xml passes junit_xml to run_tests."""
     runner = CliRunner()
