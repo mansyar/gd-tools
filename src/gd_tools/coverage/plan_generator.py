@@ -460,6 +460,12 @@ def generate_plan_cached(
             current_hashes: dict[str, str] = {}
             for gd_file in gd_files:
                 source = Path(gd_file).read_text(encoding="utf-8")
+                # Skip files that generate_plan() would skip (syntax
+                # errors) to avoid false cache misses.
+                try:
+                    parse_gdscript(source)
+                except LarkError:
+                    continue
                 res_path = "res://" + str(
                     Path(gd_file).relative_to(project_root)
                 ).replace("\\", "/")

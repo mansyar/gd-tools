@@ -123,9 +123,6 @@ def mock_deps(tmp_path):
             "gd_tools.coverage.orchestrator.find_project_root"
         ) as mock_find_root,
         patch(
-            "gd_tools.coverage.orchestrator.plan_generator.generate_plan"
-        ) as mock_gen_plan,
-        patch(
             "gd_tools.coverage.orchestrator.plan_generator.generate_plan_cached"
         ) as mock_gen_plan_cached,
         patch(
@@ -146,7 +143,6 @@ def mock_deps(tmp_path):
         ) as mock_compute_summary,
     ):
         mock_find_root.return_value = tmp_path
-        mock_gen_plan.return_value = _make_plan()
         mock_gen_plan_cached.return_value = (
             _make_plan(),
             CacheStatus(hit=False, reason="1 file changed"),
@@ -166,7 +162,6 @@ def mock_deps(tmp_path):
 
         yield {
             "find_project_root": mock_find_root,
-            "generate_plan": mock_gen_plan,
             "generate_plan_cached": mock_gen_plan_cached,
             "write_plan_json": mock_write_plan,
             "run_tests": mock_run_tests,
@@ -331,15 +326,15 @@ def test_run_coverage_test_passes_cache_path(mock_deps):
 
 
 @pytest.mark.unit
-def test_run_coverage_test_writes_plan_on_cache_hit(mock_deps):
-    """run_coverage_test() writes plan.json even on cache hit."""
+def test_run_coverage_test_skips_write_on_cache_hit(mock_deps):
+    """run_coverage_test() skips writing plan.json on cache hit."""
     mock_deps["generate_plan_cached"].return_value = (
         _make_plan(),
         CacheStatus(hit=True, reason="1 file unchanged"),
     )
     run_coverage_test(_make_config())
 
-    mock_deps["write_plan_json"].assert_called_once()
+    mock_deps["write_plan_json"].assert_not_called()
 
 
 @pytest.mark.unit

@@ -94,7 +94,8 @@ def run_coverage_test(
         cache_path=str(output_dir / "plan.json"),
         use_cache=not no_cache,
     )
-    plan_generator.write_plan_json(plan, str(output_dir / "plan.json"))
+    if not cache_status.hit:
+        plan_generator.write_plan_json(plan, str(output_dir / "plan.json"))
 
     output.print_verbose(
         f"Coverage plan cache {'hit' if cache_status.hit else 'miss'}: "
