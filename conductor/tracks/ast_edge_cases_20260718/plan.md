@@ -1,7 +1,11 @@
+<protect>
 # Track 38: GDScript AST Edge Cases — Implementation Plan
 
 ## Phase 1: Fixture & Baseline Audit
 
+- [ ] Task: Read spec.md and workflow.md to refresh context
+    - [ ] Read `./spec.md` for the track requirements and acceptance criteria
+    - [ ] Read `../../workflow.md` for the TDD task lifecycle and phase completion protocol
 - [ ] Task: Create `edge_cases_advanced.gd` fixture
     - [ ] Write `tests/fixtures/gdscript/edge_cases_advanced.gd` exercising all 8 patterns (ternary, lambda, setter/getter, match bind, @onready/@export, static calls, await, super)
     - [ ] Verify the fixture parses without errors via `gdtoolkit.parser` (no `LarkError`)
@@ -19,6 +23,9 @@
 
 ## Phase 2: TDD — Failing Tests & Implementation
 
+- [ ] Task: Read spec.md and workflow.md to refresh context
+    - [ ] Read `./spec.md` for the track requirements and acceptance criteria
+    - [ ] Read `../../workflow.md` for the TDD task lifecycle and phase completion protocol
 - [ ] Task: Write failing unit tests for each confirmed gap (Red phase)
     - [ ] Create `tests/unit/test_plan_generator_edge_cases.py` (or extend existing plan-generator test file per repo convention)
     - [ ] Write test asserting ternary true AND false branches are both tracked (fails: only single statement tracked)
@@ -39,6 +46,9 @@
 
 ## Phase 3: Regression Safety, Quality Gates & Finalization
 
+- [ ] Task: Read spec.md and workflow.md to refresh context
+    - [ ] Read `./spec.md` for the track requirements and acceptance criteria
+    - [ ] Read `../../workflow.md` for the TDD task lifecycle and phase completion protocol
 - [ ] Task: Verify no regressions in existing fixtures
     - [ ] Run `git diff --stat tests/fixtures/plans/` and confirm only `edge_cases_advanced.expected.json` is new/changed
     - [ ] Confirm existing expected JSON files (`simple`, `branches`, `loops`, `match_stmt`, `nested`, `edge_cases`) are byte-identical to their pre-track state
@@ -53,3 +63,4 @@
     - [ ] If the audit (Phase 1) found any pattern that cannot be instrumented, document it with rationale in the spec's `## Known Limitations` section
     - [ ] If no limitations were found, replace the placeholder text with "None — all 8 patterns are fully tracked."
 - [ ] Task: Conductor - User Manual Verification 'Regression Safety, Quality Gates & Finalization' (Protocol in workflow.md)
+</protect>

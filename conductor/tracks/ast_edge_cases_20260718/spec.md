@@ -1,3 +1,4 @@
+<protect>
 # Track 38: GDScript AST Edge Cases — Specification
 
 ## Overview
@@ -94,3 +95,4 @@ _To be populated during implementation. Any pattern from the audit (FR-3) that c
 - Coverage exclusion annotations (`# gd-tools: no cover`) — that is Track 30 (separate)
 - Changes to plan caching (Track 37 — already delivered)
 - User-facing documentation changes (USER_GUIDE) — limitations stay in this spec.md only
+</protect>
