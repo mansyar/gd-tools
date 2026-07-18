@@ -12,7 +12,7 @@ These tests serve as regression guards for all 8 patterns.
 
 import pytest
 
-from gd_tools.coverage.plan_generator import parse_gdscript
+from gd_tools.coverage.plan_generator import CoverageVisitor, parse_gdscript
 
 pytestmark = pytest.mark.unit
 
@@ -28,14 +28,12 @@ def test_ternary_produces_both_branch_points():
         "    var x = 10\n"
         "    var r = 42 if x > 5 else 0\n"
     )
-    from gd_tools.coverage.plan_generator import CoverageVisitor
-
     tree = parse_gdscript(source)
     visitor = CoverageVisitor()
     visitor.visit(tree)
     branch_types = [p.branch_type for p in visitor.points if p.type == "branch"]
-    assert "ternary_true" in branch_types
-    assert "ternary_false" in branch_types
+    assert branch_types.count("ternary_true") == 1
+    assert branch_types.count("ternary_false") == 1
 
 
 # --- Verification tests (audit confirmed already tracked; these guard regressions) ---
@@ -50,8 +48,6 @@ def test_lambda_body_statements_tracked():
         "        return 42\n"
         "    var result = cb.call()\n"
     )
-    from gd_tools.coverage.plan_generator import CoverageVisitor
-
     tree = parse_gdscript(source)
     visitor = CoverageVisitor()
     visitor.visit(tree)
@@ -73,8 +69,6 @@ def test_setter_getter_bodies_tracked():
         "    get:\n"
         "        return health\n"
     )
-    from gd_tools.coverage.plan_generator import CoverageVisitor
-
     tree = parse_gdscript(source)
     visitor = CoverageVisitor()
     visitor.visit(tree)
@@ -95,8 +89,6 @@ def test_match_bind_pattern_tracked():
         "        _:\n"
         '            print("default")\n'
     )
-    from gd_tools.coverage.plan_generator import CoverageVisitor
-
     tree = parse_gdscript(source)
     visitor = CoverageVisitor()
     visitor.visit(tree)
@@ -116,8 +108,6 @@ def test_annotations_produce_no_false_positives():
         "@onready var node: Node\n"
         "@export var speed: float = 1.0\n"
     )
-    from gd_tools.coverage.plan_generator import CoverageVisitor
-
     tree = parse_gdscript(source)
     visitor = CoverageVisitor()
     visitor.visit(tree)
@@ -143,8 +133,6 @@ def test_await_expression_tracked():
         "func _ready():\n"
         "    await get_tree().process_frame\n"
     )
-    from gd_tools.coverage.plan_generator import CoverageVisitor
-
     tree = parse_gdscript(source)
     visitor = CoverageVisitor()
     visitor.visit(tree)
