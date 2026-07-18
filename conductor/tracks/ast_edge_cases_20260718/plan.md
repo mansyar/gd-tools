@@ -61,5 +61,5 @@
 - [x] Task: Finalize `spec.md` Known Limitations section [c135e69]
     - [x] If the audit (Phase 1) found any pattern that cannot be instrumented, document it with rationale in the spec's `## Known Limitations` section
     - [x] If no limitations were found, replace the placeholder text with "None — all 8 patterns are fully tracked."
-- [~] Task: Conductor - User Manual Verification 'Regression Safety, Quality Gates & Finalization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Regression Safety, Quality Gates & Finalization' (Protocol in workflow.md) — approved
 </protect>
