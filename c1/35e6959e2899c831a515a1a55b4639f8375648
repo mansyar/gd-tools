@@ -1,0 +1,1 @@
+Track 38 Phase 3: Finalize spec.md Known Limitations. Audit confirmed all 8 patterns fully tracked (ternary gap fixed). Replaced placeholder with 'None'. Fixed invalid match-bind example (1 as a: -> var y:).
