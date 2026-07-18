@@ -1,0 +1,1 @@
+Phase 2 (TDD Green): Added test_expr visitor method to CoverageVisitor (lines 319-327) producing ternary_true + ternary_false branch points. 8 tests in test_plan_generator_edge_cases.py (1 RED→GREEN ternary test + 7 verification tests). Regenerated edge_cases + edge_cases_advanced expected JSONs. All 70 tests pass. plan_generator.py: 98% line coverage. ruff + black clean.
