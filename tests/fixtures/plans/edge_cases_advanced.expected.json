@@ -14,92 +14,104 @@
           "branch_type": null
         },
         {
-          "line": 33,
+          "line": 19,
           "id": 1,
-          "type": "statement",
-          "branch_type": null
+          "type": "branch",
+          "branch_type": "ternary_true"
         },
         {
-          "line": 35,
+          "line": 19,
           "id": 2,
-          "type": "statement",
-          "branch_type": null
+          "type": "branch",
+          "branch_type": "ternary_false"
         },
         {
-          "line": 37,
+          "line": 33,
           "id": 3,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 10,
+          "line": 35,
           "id": 4,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 12,
+          "line": 37,
           "id": 5,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 18,
+          "line": 10,
           "id": 6,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 19,
+          "line": 12,
           "id": 7,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 21,
+          "line": 18,
           "id": 8,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 25,
+          "line": 19,
           "id": 9,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 27,
+          "line": 21,
           "id": 10,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 32,
+          "line": 25,
           "id": 11,
-          "type": "branch",
-          "branch_type": "match_case"
+          "type": "statement",
+          "branch_type": null
         },
         {
-          "line": 34,
+          "line": 27,
           "id": 12,
-          "type": "branch",
-          "branch_type": "match_case"
+          "type": "statement",
+          "branch_type": null
         },
         {
-          "line": 36,
+          "line": 32,
           "id": 13,
           "type": "branch",
           "branch_type": "match_case"
         },
         {
-          "line": 16,
+          "line": 34,
           "id": 14,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 36,
+          "id": 15,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 16,
+          "id": 16,
           "type": "statement",
           "branch_type": null
         },
         {
           "line": 23,
-          "id": 15,
+          "id": 17,
           "type": "statement",
           "branch_type": null
         }

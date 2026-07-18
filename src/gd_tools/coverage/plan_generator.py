@@ -316,6 +316,16 @@ class CoverageVisitor(Visitor):
         """Track each match case as ``match_case``."""
         self._add_point(tree, "branch", "match_case")
 
+    def test_expr(self, tree: Tree) -> None:
+        """Track ternary expression branches (true and false values).
+
+        The ``test_expr`` AST node materializes exclusively for ternary
+        expressions (``value_if_true if cond else value_if_false``). Both
+        value-branches are tracked as separate branch points.
+        """
+        self._add_point(tree, "branch", "ternary_true")
+        self._add_point(tree, "branch", "ternary_false")
+
 
 # --- Plan Generation (FR-4, FR-6) ---
 

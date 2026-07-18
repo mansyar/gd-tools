@@ -20,98 +20,110 @@
           "branch_type": null
         },
         {
-          "line": 31,
+          "line": 24,
           "id": 2,
+          "type": "branch",
+          "branch_type": "ternary_true"
+        },
+        {
+          "line": 24,
+          "id": 3,
+          "type": "branch",
+          "branch_type": "ternary_false"
+        },
+        {
+          "line": 31,
+          "id": 4,
           "type": "statement",
           "branch_type": null
         },
         {
           "line": 11,
-          "id": 3,
-          "type": "branch",
-          "branch_type": "if_true"
-        },
-        {
-          "line": 18,
-          "id": 4,
-          "type": "branch",
-          "branch_type": "if_true"
-        },
-        {
-          "line": 30,
           "id": 5,
           "type": "branch",
           "branch_type": "if_true"
         },
         {
-          "line": 13,
+          "line": 18,
           "id": 6,
-          "type": "statement",
-          "branch_type": null
+          "type": "branch",
+          "branch_type": "if_true"
         },
         {
-          "line": 20,
+          "line": 30,
           "id": 7,
-          "type": "statement",
-          "branch_type": null
+          "type": "branch",
+          "branch_type": "if_true"
         },
         {
-          "line": 24,
+          "line": 13,
           "id": 8,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 28,
+          "line": 20,
           "id": 9,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 32,
+          "line": 24,
           "id": 10,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 10,
+          "line": 28,
           "id": 11,
-          "type": "branch",
-          "branch_type": "loop_body"
+          "type": "statement",
+          "branch_type": null
         },
         {
-          "line": 14,
+          "line": 32,
           "id": 12,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 17,
+          "line": 10,
           "id": 13,
           "type": "branch",
           "branch_type": "loop_body"
         },
         {
-          "line": 21,
+          "line": 14,
           "id": 14,
           "type": "statement",
           "branch_type": null
         },
         {
-          "line": 25,
+          "line": 17,
           "id": 15,
+          "type": "branch",
+          "branch_type": "loop_body"
+        },
+        {
+          "line": 21,
+          "id": 16,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 25,
+          "id": 17,
           "type": "statement",
           "branch_type": null
         },
         {
           "line": 29,
-          "id": 16,
+          "id": 18,
           "type": "branch",
           "branch_type": "loop_body"
         },
         {
           "line": 33,
-          "id": 17,
+          "id": 19,
           "type": "statement",
           "branch_type": null
         }
