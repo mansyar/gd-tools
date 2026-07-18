@@ -101,7 +101,8 @@ tests/
     │   ├── loops.gd
     │   ├── match_stmt.gd
     │   ├── nested.gd
-    │   └── edge_cases.gd
+    │   ├── edge_cases.gd
+    │   └── edge_cases_advanced.gd  # ternary, lambda, setter/getter, match bind, @onready/@export, await, super
     ├── plans/         # Expected instrumentation plans
     │   ├── simple.expected.json
     │   ├── branches.expected.json
@@ -308,6 +309,7 @@ corresponding expected plans in `tests/fixtures/plans/`.
     "match_stmt",   # match/case
     "nested",       # Nested control flow
     "edge_cases",   # break, continue, pass, empty functions
+    "edge_cases_advanced",  # ternary, lambda, setter/getter, match bind, @onready/@export, await, super
 ])
 def test_plan_generation_matches_expected(fixture_name):
     """Generated plan matches expected plan fixture."""

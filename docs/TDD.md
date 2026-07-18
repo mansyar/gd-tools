@@ -1016,7 +1016,7 @@ class LinePlan:
     line: int  # 1-indexed line number
     id: int  # unique within file
     type: str  # "statement" | "branch"
-    branch_type: str | None  # "if_true" | "if_false" | "elif_true" | "loop_body" | "match_case"
+    branch_type: str | None  # "if_true" | "if_false" | "elif_true" | "loop_body" | "match_case" | "ternary_true" | "ternary_false"
 
 class CoverageVisitor:
     """Lark Visitor that walks the AST and collects trackable points.
@@ -1083,6 +1083,16 @@ class CoverageVisitor:
             if hasattr(child, 'data') and child.data == "match_branch":
                 self._add_point(child, "branch", "match_case")
 
+    def test_expr(self, tree: Tree) -> None:
+        """Track ternary expression branches (true and false values).
+
+        The ``test_expr`` AST node materializes exclusively for ternary
+        expressions (``value_if_true if cond else value_if_false``). Both
+        value-branches are tracked as separate branch points.
+        """
+        self._add_point(tree, "branch", "ternary_true")
+        self._add_point(tree, "branch", "ternary_false")
+
     def _add_point(self, tree: Tree, type_: str, branch_type: str | None = None) -> None:
         """Extract line number from tree.meta and create LinePlan."""
         line = tree.meta.line  # 1-indexed
@@ -1123,6 +1133,7 @@ def read_plan_json(path: Path) -> CoveragePlan:
 | `for_stmt`            | branch        | yes    | loop_body       |
 | `for_stmt_typed`      | branch        | yes    | loop_body       |
 | `match_branch`        | branch        | yes    | match_case      |
+| `test_expr`           | branch        | yes    | ternary_true/ternary_false |
 | `pass_stmt`           | no-op         | no     | —               |
 | `breakpoint_stmt`     | debug         | no     | —               |
 | `const_stmt`          | declarative   | no     | —               |
@@ -1167,15 +1178,34 @@ assignment) are NOT tracked — they're declarations, not executable statements.
   `version` is present, `files` is a list, each file entry is a dict with
   required fields (`file_id`, `path`, `source_hash`). All failures raise
   `CoveragePlanError` (not raw `KeyError`).
-- `tools/generate_expected_plans.py` — CLI script that regenerates all 6
+- `tools/generate_expected_plans.py` — CLI script that regenerates all 7
   expected plan JSON fixtures from GDScript fixture files. Used to verify
   fixture correctness and detect drift.
-- 6 GDScript fixtures in `tests/fixtures/gdscript/`: `simple.gd`,
-  `branches.gd`, `loops.gd`, `match_stmt.gd`, `nested.gd`, `edge_cases.gd`.
-- 6 expected JSON plans in `tests/fixtures/plans/`: corresponding
+- 7 GDScript fixtures in `tests/fixtures/gdscript/`: `simple.gd`,
+  `branches.gd`, `loops.gd`, `match_stmt.gd`, `nested.gd`, `edge_cases.gd`,
+  `edge_cases_advanced.gd`.
+- 7 expected JSON plans in `tests/fixtures/plans/`: corresponding
   `.expected.json` files verified correct against fixtures.
 - 49 unit tests in `test_plan_generator.py` + 2 in
-  `test_generate_expected_plans.py`. `plan_generator.py` at 100% coverage.
+  `test_generate_expected_plans.py` + 8 in
+  `test_plan_generator_edge_cases.py`. `plan_generator.py` at 98% line
+  coverage (179 statements).
+
+**Ternary branch tracking (Track 38, 2026-07-18):**
+
+- Added the `test_expr()` visitor method. The `test_expr` Lark AST node
+  materializes exclusively for ternary expressions
+  (`value_if_true if cond else value_if_false`); both value-branches are
+  emitted as separate branch points (`ternary_true`, `ternary_false`) on
+  `tree.meta.line`.
+- Phase 1 audit confirmed 7 of 8 advanced GDScript 4.5+ patterns
+  (lambdas, setter/getter blocks, match bind, `@onready`/`@export`,
+  static/builtin calls, `await`, `super`) were already correctly tracked
+  by existing visitors — only ternary was a genuine gap.
+- New fixture `edge_cases_advanced.gd` exercises all 8 patterns; 8 new
+  unit tests in `test_plan_generator_edge_cases.py` guard regressions.
+- `@onready`/`@export` annotations produce zero trackable points (no
+  false positives).
 
 **Autoload inclusion (Track 24.5, 2026-07-15):**
 
@@ -2151,7 +2181,8 @@ branch_rate = covered_branches / total_branch_points
 ```
 
 Branch points are: `if_true`, `if_false`, `elif_true`, `loop_body`,
-`match_case`. A branch is "covered" if its hit count > 0.
+`match_case`, `ternary_true`, `ternary_false`. A branch is "covered" if
+its hit count > 0.
 
 **Example:** An `if` statement with no `else`:
 - `if_true` branch: tracked, covered if hit > 0

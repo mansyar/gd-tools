@@ -704,6 +704,7 @@ types are identified as **executable** (have line coverage):
 | For loop         | `for_stmt`               | branch (loop_body)      |
 | For loop (typed) | `for_stmt_typed`         | branch (loop_body)      |
 | Match            | `match_branch`           | branch (match_case)     |
+| Ternary          | `test_expr`              | branch (ternary_true, ternary_false) |
 | Break            | `break_stmt`             | statement               |
 | Continue         | `continue_stmt`          | statement               |
 

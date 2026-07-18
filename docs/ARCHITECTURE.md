@@ -325,6 +325,7 @@ nodes in the GDScript AST:
 | `for_stmt` | `loop_body` | `for` loop body |
 | `for_stmt_typed` | `loop_body` | Typed `for` loop body |
 | `match_branch` | `match_case` | `match` case body |
+| `test_expr` | `ternary_true`, `ternary_false` | Ternary expression (`a if cond else b`) — both value-branches |
 
 ### 4.2 Coverage Data (`coverage.json`)
 

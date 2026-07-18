@@ -1309,7 +1309,7 @@ Coverage: `plan_generator.py` 99%, `orchestrator.py` 97%.
 | **Modules** | `src/gd_tools/coverage/plan_generator.py`, `tests/fixtures/gdscript/` |
 | **Effort** | 1-2 days |
 | **Risk** | MEDIUM -- Lark AST traversal complexity |
-| **Status** | Planned |
+| **Status** | Done (commits `d2e0991`..`c135e69`; review fixes `5a9b5cf`) |
 
 **Problem:**
 
@@ -1348,6 +1348,17 @@ not be fully covered by the current statement classification:
 6. `await` expressions are tracked
 7. `super()` calls are tracked
 8. All new fixtures pass plan generation tests
+
+**Outcome (Track 38, 2026-07-18):**
+
+A Phase 1 audit against `edge_cases_advanced.gd` confirmed 7 of 8 patterns
+were already correctly tracked by existing `CoverageVisitor` methods
+(lambda bodies, setter/getter blocks, match bind, `@onready`/`@export`
+annotations, static/builtin calls, `await`, `super`). The single genuine
+gap — ternary expression branches — was fixed by adding the `test_expr()`
+visitor method, which emits `ternary_true` and `ternary_false` branch
+points. No limitations found; all 8 patterns are fully tracked.
+`plan_generator.py` at 98% line coverage; `ruff`/`black` clean.
 
 ---
 
