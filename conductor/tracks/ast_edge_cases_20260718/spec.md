@@ -40,7 +40,7 @@ Create a single GDScript fixture file `tests/fixtures/gdscript/edge_cases_advanc
 1. Ternary expressions (`var x = a if cond else b`)
 2. Lambda functions (`var f = func(): ...`)
 3. Setter/getter blocks (`var x: set(v): ...`, `get(): ...`)
-4. Match statements with bind patterns (`match x: 1 as a: ...`)
+4. Match statements with bind patterns (`match x: var y: ...`)
 5. `@onready` and `@export` annotations
 6. Static function calls (`ClassName.static_method()`)
 7. `await` expressions
@@ -86,7 +86,7 @@ Add unit tests in `tests/unit/` (following existing test naming conventions) tha
 
 ## Known Limitations
 
-_To be populated during implementation. Any pattern from the audit (FR-3) that cannot be instrumented will be documented here with rationale. Initially none are anticipated — all 8 patterns are expected to be trackable — but the audit phase will confirm._
+None — all 8 patterns are fully tracked. The audit (Phase 1) confirmed that 7 of the 8 patterns were already correctly handled by existing `CoverageVisitor` methods (lambda bodies, setter/getter blocks, match bind, annotations, static/builtin calls, await, and super calls). The single gap — ternary expression branches — was fixed by adding the `test_expr` visitor method, which emits `ternary_true` and `ternary_false` branch points. No pattern required documentation as a limitation.
 
 ## Out of Scope
 
