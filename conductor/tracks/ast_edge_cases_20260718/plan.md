@@ -40,26 +40,26 @@
     - [x] Regenerate expected JSON: `python tools/generate_expected_plans.py` (now reflects fixed ternary tracking)
     - [x] Manually verify the regenerated JSON: `edge_cases_advanced` gains 2 ternary branch points; `edge_cases` gains 2 ternary branch points (line 24); all other existing JSONs byte-identical
     - [x] Run `$env:CI='true'; pytest tests/unit/test_plan_generator_edge_cases.py` and confirm all tests pass
-- [ ] Task: Conductor - User Manual Verification 'TDD Tests & Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'TDD Tests & Implementation' (Protocol in workflow.md) — approved
 
 ## Phase 3: Regression Safety, Quality Gates & Finalization
 
 - [x] Task: Read spec.md and workflow.md to refresh context (no commit — read-only)
     - [x] Read `./spec.md` for the track requirements and acceptance criteria
     - [x] Read `../../workflow.md` for the TDD task lifecycle and phase completion protocol
-- [ ] Task: Verify no unintended regressions in existing fixtures
-    - [ ] Run `git diff --stat tests/fixtures/plans/` and confirm only `edge_cases.expected.json` (intentional ternary fix) and `edge_cases_advanced.expected.json` (new) differ
-    - [ ] Confirm `simple`, `branches`, `loops`, `match_stmt`, `nested` expected JSON files are byte-identical to pre-track state
-    - [ ] Confirm `edge_cases.expected.json` changes are ONLY the 2 new ternary branch points (line 24); no other points altered
-    - [ ] Run `$env:CI='true'; pytest tests/unit/test_plan_generator.py` (existing plan-generator tests) and confirm all pass
-- [ ] Task: Verify coverage thresholds
-    - [ ] Run `$env:CI='true'; pytest --cov=gd_tools.coverage.plan_generator --cov-branch --cov-report=term-missing`
-    - [ ] Confirm `plan_generator.py` line coverage ≥80% and branch coverage ≥70%
-- [ ] Task: Verify style gates
-    - [ ] Run `ruff check src/ tests/ tools/` and confirm no errors
-    - [ ] Run `black --check src/ tests/ tools/` and confirm no reformatting needed
-- [ ] Task: Finalize `spec.md` Known Limitations section
-    - [ ] If the audit (Phase 1) found any pattern that cannot be instrumented, document it with rationale in the spec's `## Known Limitations` section
-    - [ ] If no limitations were found, replace the placeholder text with "None — all 8 patterns are fully tracked."
-- [ ] Task: Conductor - User Manual Verification 'Regression Safety, Quality Gates & Finalization' (Protocol in workflow.md)
+- [x] Task: Verify no unintended regressions in existing fixtures [c867f90]
+    - [x] Run `git diff --stat tests/fixtures/plans/` and confirm only `edge_cases.expected.json` (intentional ternary fix) and `edge_cases_advanced.expected.json` (new) differ
+    - [x] Confirm `simple`, `branches`, `loops`, `match_stmt`, `nested` expected JSON files are byte-identical to pre-track state
+    - [x] Confirm `edge_cases.expected.json` changes are ONLY the 2 new ternary branch points (line 24); no other points altered
+    - [x] Run `$env:CI='true'; pytest tests/unit/test_plan_generator.py` (existing plan-generator tests) and confirm all pass (61 passed)
+- [x] Task: Verify coverage thresholds [c867f90]
+    - [x] Run `$env:CI='true'; pytest --cov=gd_tools.coverage.plan_generator --cov-branch --cov-report=term-missing`
+    - [x] Confirm `plan_generator.py` line coverage ≥80% and branch coverage ≥70% (actual: 98% line, 179 stmts / 2 missed)
+- [x] Task: Verify style gates [c867f90]
+    - [x] Run `ruff check src/ tests/ tools/` and confirm no errors (exit 0)
+    - [x] Run `black --check src/ tests/ tools/` and confirm no reformatting needed (exit 0)
+- [x] Task: Finalize `spec.md` Known Limitations section [c135e69]
+    - [x] If the audit (Phase 1) found any pattern that cannot be instrumented, document it with rationale in the spec's `## Known Limitations` section
+    - [x] If no limitations were found, replace the placeholder text with "None — all 8 patterns are fully tracked."
+- [~] Task: Conductor - User Manual Verification 'Regression Safety, Quality Gates & Finalization' (Protocol in workflow.md)
 </protect>
