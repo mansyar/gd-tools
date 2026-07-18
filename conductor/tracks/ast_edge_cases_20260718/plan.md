@@ -20,26 +20,26 @@
     - [x] Confirm or reject each preliminary gap hypothesis from the spec's gap-analysis table
     - [x] Record the confirmed gap list (this drives Phase 2 test-writing)
     - **AUDIT RESULT:** Only ternary is a gap (tracked as single statement, missing `ternary_true`/`ternary_false` branch points). All other 7 patterns already tracked via existing visitor methods. `@onready`/`@export` produce zero false positives. Spec's match-bind example `1 as a:` was invalid GDScript; correct `var y:` syntax used in fixture.
-- [ ] Task: Conductor - User Manual Verification 'Fixture & Baseline Audit' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Fixture & Baseline Audit' (Protocol in workflow.md) — approved
 
 ## Phase 2: TDD — Failing Tests & Implementation
 
 - [x] Task: Read spec.md and workflow.md to refresh context (no commit — read-only)
     - [x] Read `./spec.md` for the track requirements and acceptance criteria
     - [x] Read `../../workflow.md` for the TDD task lifecycle and phase completion protocol
-- [ ] Task: Write unit tests for ternary gap + verification tests for already-tracked patterns (Red phase)
-    - [ ] Create `tests/unit/test_plan_generator_edge_cases.py`
-    - [ ] Write test asserting ternary true AND false branches are both tracked (FAILS: only single statement tracked — the sole genuine gap)
-    - [ ] Write verification tests asserting lambda body statements are tracked (PASSES immediately — audit confirmed already tracked via existing visitors)
-    - [ ] Write verification tests asserting setter/getter block bodies are tracked (PASSES immediately — audit confirmed already tracked via existing visitors)
-    - [ ] Write verification tests for match bind, await, super, static/builtin calls (PASSES immediately — audit confirmed all tracked)
-    - [ ] Write test asserting `@onready`/`@export` annotations produce NO false-positive points (PASSES immediately — audit confirmed zero points)
-    - [ ] Run `$env:CI='true'; pytest tests/unit/test_plan_generator_edge_cases.py` and confirm only ternary test fails as expected
-- [ ] Task: Implement visitor fix to make ternary test pass (Green phase)
-    - [ ] Add `test_expr` visitor method to `CoverageVisitor` in `plan_generator.py` (after `match_branch`) that adds two branch points: `ternary_true` + `ternary_false` on `tree.meta.line`
-    - [ ] Regenerate expected JSON: `python tools/generate_expected_plans.py` (now reflects fixed ternary tracking)
-    - [ ] Manually verify the regenerated JSON: `edge_cases_advanced` gains 2 ternary branch points; `edge_cases` gains 2 ternary branch points (line 24); all other existing JSONs byte-identical
-    - [ ] Run `$env:CI='true'; pytest tests/unit/test_plan_generator_edge_cases.py` and confirm all tests pass
+- [x] Task: Write unit tests for ternary gap + verification tests for already-tracked patterns (Red phase) — SHA: c867f90
+    - [x] Create `tests/unit/test_plan_generator_edge_cases.py`
+    - [x] Write test asserting ternary true AND false branches are both tracked (FAILS: only single statement tracked — the sole genuine gap)
+    - [x] Write verification tests asserting lambda body statements are tracked (PASSES immediately — audit confirmed already tracked via existing visitors)
+    - [x] Write verification tests asserting setter/getter block bodies are tracked (PASSES immediately — audit confirmed already tracked via existing visitors)
+    - [x] Write verification tests for match bind, await, super, static/builtin calls (PASSES immediately — audit confirmed all tracked)
+    - [x] Write test asserting `@onready`/`@export` annotations produce NO false-positive points (PASSES immediately — audit confirmed zero points)
+    - [x] Run `$env:CI='true'; pytest tests/unit/test_plan_generator_edge_cases.py` and confirm only ternary test fails as expected
+- [x] Task: Implement visitor fix to make ternary test pass (Green phase) — SHA: c867f90
+    - [x] Add `test_expr` visitor method to `CoverageVisitor` in `plan_generator.py` (after `match_branch`) that adds two branch points: `ternary_true` + `ternary_false` on `tree.meta.line`
+    - [x] Regenerate expected JSON: `python tools/generate_expected_plans.py` (now reflects fixed ternary tracking)
+    - [x] Manually verify the regenerated JSON: `edge_cases_advanced` gains 2 ternary branch points; `edge_cases` gains 2 ternary branch points (line 24); all other existing JSONs byte-identical
+    - [x] Run `$env:CI='true'; pytest tests/unit/test_plan_generator_edge_cases.py` and confirm all tests pass
 - [ ] Task: Conductor - User Manual Verification 'TDD Tests & Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Regression Safety, Quality Gates & Finalization

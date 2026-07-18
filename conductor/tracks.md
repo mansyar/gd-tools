@@ -8,6 +8,6 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: GDScript AST Edge Cases**
+- [~] **Track: GDScript AST Edge Cases**
 *Link: [./tracks/ast_edge_cases_20260718/](./tracks/ast_edge_cases_20260718/)*
 
