@@ -649,7 +649,15 @@ _PLANS_DIR = Path(__file__).parent.parent / "fixtures" / "plans"
 
 @pytest.mark.parametrize(
     "fixture_name",
-    ["simple", "branches", "loops", "match_stmt", "nested", "edge_cases"],
+    [
+        "simple",
+        "branches",
+        "loops",
+        "match_stmt",
+        "nested",
+        "edge_cases",
+        "edge_cases_advanced",
+    ],
 )
 def test_plan_generation_matches_expected(tmp_path, fixture_name):
     """Generated plan matches expected JSON fixture for each .gd fixture."""

@@ -24,6 +24,7 @@ _FIXTURE_NAMES = [
     "match_stmt",
     "nested",
     "edge_cases",
+    "edge_cases_advanced",
 ]
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent

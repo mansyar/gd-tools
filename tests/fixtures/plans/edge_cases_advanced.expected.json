@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "generated_by": "gd-tools",
+  "files": [
+    {
+      "file_id": 0,
+      "path": "res://edge_cases_advanced.gd",
+      "source_hash": "sha256:bb75dcb0285b3df710827c0aae9dbe473781928cae14b30840ef0fcad398b3bb",
+      "lines": [
+        {
+          "line": 26,
+          "id": 0,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 33,
+          "id": 1,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 35,
+          "id": 2,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 37,
+          "id": 3,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 10,
+          "id": 4,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 12,
+          "id": 5,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 18,
+          "id": 6,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 19,
+          "id": 7,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 21,
+          "id": 8,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 25,
+          "id": 9,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 27,
+          "id": 10,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 32,
+          "id": 11,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 34,
+          "id": 12,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 36,
+          "id": 13,
+          "type": "branch",
+          "branch_type": "match_case"
+        },
+        {
+          "line": 16,
+          "id": 14,
+          "type": "statement",
+          "branch_type": null
+        },
+        {
+          "line": 23,
+          "id": 15,
+          "type": "statement",
+          "branch_type": null
+        }
+      ]
+    }
+  ]
+}
