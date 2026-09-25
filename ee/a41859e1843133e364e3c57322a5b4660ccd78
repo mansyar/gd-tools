@@ -1,0 +1,16 @@
+Task: Add failing preflight E2E tests
+
+Summary:
+- Added a dedicated Godot E2E contract for protocol-v2 integration preflight.
+- Covers explicit defaults, field-wise suite/test merging, null removal, resource maps, malformed declarations, unknown tests, protocol mismatch, script-load failure, and the no-instantiation/no-lifecycle guarantee.
+
+Files:
+- tests/e2e/test_native_preflight.py
+
+Why:
+- Establishes the Godot-side metadata contract before implementing the bundled preflight entrypoint.
+
+Verification:
+- Red: .venv\Scripts\python.exe -m pytest tests/e2e/test_native_preflight.py --no-cov -q
+  Result: 13 failed as expected because res://addons/gd-tools-test/gd_tools_test_preflight.gd does not exist.
+- Ruff, Black, and git diff checks passed.
