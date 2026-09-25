@@ -1,0 +1,1 @@
+Automated review-fix verification: 889 unit tests passed with 95.09% coverage; 66 integration tests passed; 42 E2E tests passed; Ruff passed; Black reported 90 files unchanged; CRLF-aware diff check passed. Manual verification and checkpoint remain pending.
