@@ -85,14 +85,14 @@
 
 **Purpose:** Prove the runtime can handle real Godot coroutine behavior and isolated suite execution.
 
-- [ ] Task: Add failing async and timeout tests
+- [x] Task: Add failing async and timeout tests [5c897c0]
   - [ ] Add a process-frame wait case.
   - [ ] Add a physics-frame wait case.
   - [ ] Add a timer/signal wait case.
   - [ ] Add a deliberately hanging test for timeout validation.
   - [ ] Add tests for cleanup after timeout and assertion failure.
   - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement async helpers
+- [x] Task: Implement async helpers [5c897c0]
   - [ ] Add process-frame, physics-frame, timer, and signal helpers.
   - [ ] Allow lifecycle hooks and test methods to return coroutines.
   - [ ] Enforce the five-second default timeout.
