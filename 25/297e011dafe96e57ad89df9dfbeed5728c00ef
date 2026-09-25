@@ -1,0 +1,22 @@
+Phase 1 verification report: Protocol v2 and integration metadata contract
+
+Automated verification:
+- .venv\Scripts\python.exe -m pytest tests/unit/test_native_protocol.py --no-cov -q
+  Result: 30 passed.
+- .venv\Scripts\python.exe -m pytest tests/unit -k native --no-cov -q
+  Result: 76 passed, 835 deselected.
+- .venv\Scripts\python.exe -m pytest tests/e2e/test_native_runtime.py --no-cov -q
+  Result: 16 passed.
+- .venv\Scripts\python.exe -m pytest tests/e2e/test_native_cli.py --no-cov -q
+  Result: 8 passed.
+- Focused coverage report for src/gd_tools/native_test/protocol.py
+  Result: 95% statements and branches; all new model branches covered.
+- Ruff, Black, and git diff checks passed.
+
+Manual verification:
+1. Constructed a public protocol-v2 preflight result containing a windowed suite, suite scene/resources, and per-test scene override.
+2. Confirmed atomic JSON output contained protocol_version 2, windowed mode, and both res:// scene paths.
+3. Confirmed the bundled Godot runner declares PROTOCOL_VERSION 2.
+4. User explicitly confirmed the Phase 1 verification expectations on 2026-09-25.
+
+Result: PASS. Phase 1 satisfies the approved protocol and preflight-data contract.
