@@ -1,0 +1,8 @@
+{
+  "track_id": "coverage_target_contract_20260926",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-09-26T00:00:00Z",
+  "updated_at": "2026-09-26T00:00:00Z",
+  "description": "Decide and implement the contract for a coverage target that cannot be instrumented: fail the run, skip silently, or skip while recording the omission. Applies to both the native and legacy runtimes. Awaiting a behavior decision before planning."
+}

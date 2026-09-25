@@ -18,3 +18,10 @@ _Archived tracks live in `./archive/`._
 - [x] **Track: Native Scene and Resource Integration**
   *Link: [native_scene_integration_20260925](./tracks/native_scene_integration_20260925/index.md)*
 
+---
+
+- [ ] **Track: Coverage Target Contract** — decide skip vs. fail for a
+  uninstrumentable coverage target, in both runtimes. Awaiting a behavior
+  decision before planning.
+  *Link: [coverage_target_contract_20260926](./tracks/coverage_target_contract_20260926/index.md)*
+
