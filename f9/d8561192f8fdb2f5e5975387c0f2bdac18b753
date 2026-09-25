@@ -1,0 +1,10 @@
+Defined the Phase 6 coverage and packaging Red contracts.
+
+- Scene-executed production code must appear in the coverage plan with recorded hits, and addon support files must stay excluded from the denominator.
+- gd-tools init must deploy gd_tools_test_preflight.gd and gd_tools_test_context.gd.
+- The managed native file list must cover every bundled addon script.
+- Doctor must fail critically when the preflight or context script is missing, and pass with the full runtime.
+
+Red run: 3 failed, 142 passed. Failures were the undeployed integration scripts, the incomplete managed file list, and doctor not reporting the missing files. The scene-coverage contract passed on first run, confirming coverage already activates before scene setup; it is kept as a regression guard.
+
+Black, Ruff, and diff checks passed.
