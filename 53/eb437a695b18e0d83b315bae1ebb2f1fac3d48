@@ -1,0 +1,3 @@
+Task: Implement core assertions and structured failure records
+
+Completed the core assertion surface and added caller-aware source/line diagnostics to failure records. The native E2E suite now verifies assert_eq actual/expected/message data and user-test source locations. Verified with all native runtime E2E tests, package tests, Ruff, Black, and whitespace checks.
