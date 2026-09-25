@@ -75,7 +75,7 @@
   - [ ] Emit optional structured progress events.
   - [ ] Ensure final result writes are atomic and recoverable after partial execution.
   - [ ] Add result serialization tests.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run native GDScript fixture tests headlessly.
   - [ ] Verify no GUT files or GUT hooks are required.
   - [ ] Review the public API for consistency with the approved specification.
