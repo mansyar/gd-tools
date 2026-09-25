@@ -8,7 +8,11 @@ from unittest.mock import patch
 import pytest
 
 from gd_tools.native_test.orchestrator import run_native_tests
-from gd_tools.native_test.protocol import NativeSuite, NativeTest
+from gd_tools.native_test.protocol import (
+    NativeCoverage,
+    NativeSuite,
+    NativeTest,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -125,6 +129,55 @@ def test_run_native_tests_rejects_inconsistent_process_result(tmp_path):
     assert result.status == "error"
     assert result.tests[0].status == "error"
     assert "process exit code 1" in result.tests[0].message
+
+
+def test_run_native_tests_merges_coverage_shards(tmp_path):
+    """Per-suite coverage files are merged into the final configured path."""
+    final_coverage = tmp_path / "coverage.json"
+    plan_path = tmp_path / "plan.json"
+    plan_path.write_text("{}", encoding="utf-8")
+    calls = []
+
+    def fake_run(args, **kwargs):
+        calls.append(args)
+        manifest = json.loads(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_MANIFEST"]).read_text()
+        )
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        _write_result(result_path)
+        shard_path = Path(manifest["coverage"]["output_path"])
+        assert shard_path != final_coverage
+        hit_count = len(calls)
+        shard_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "generated_at": "test",
+                    "files": [{"file_id": 0, "hits": {"0": hit_count}}],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            coverage=NativeCoverage(
+                enabled=True,
+                plan_path=plan_path,
+                output_path=final_coverage,
+            ),
+        )
+
+    merged = json.loads(final_coverage.read_text(encoding="utf-8"))
+    assert merged["files"][0]["hits"]["0"] == 3
+    assert result.coverage_data_path == final_coverage
 
 
 def test_run_native_tests_records_subprocess_timeout(tmp_path):
