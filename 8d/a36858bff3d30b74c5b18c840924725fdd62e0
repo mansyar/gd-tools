@@ -1,0 +1,8 @@
+Red-phase artifact management contract.
+
+- Defines a fixed .gd-tools/artifacts/<run_id> layout with stable preflight, suite, index, and screenshot names.
+- Requires machine-readable absolute artifact paths and safe run ID validation.
+- Requires latest-run index publication before pruning older runs.
+- Requires failed publication to preserve the previous run for diagnosis.
+- Initial run failed with the expected missing-artifacts module import; final focused contract is 9 passing tests after implementation.
+- Black, Ruff, and diff checks passed.
