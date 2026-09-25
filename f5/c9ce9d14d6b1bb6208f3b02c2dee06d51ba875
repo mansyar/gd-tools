@@ -1,0 +1,1 @@
+Review-fix checkpoint after explicit manual verification. Automated results: 889 unit tests passed with 95.09% coverage; 66 integration tests passed; 42 E2E tests passed; Ruff passed; Black passed (90 files unchanged); CRLF-aware diff check passed. Manual native init, managed-file backup, selector/result, lifecycle, and engine-diagnostic checks were confirmed by the user.
