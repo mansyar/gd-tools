@@ -188,7 +188,7 @@
   - [x] Perform manual headless and display-capable verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 6 — Reporting, coverage, doctor, and packaging
+## Phase 6 — Reporting, coverage, doctor, and packaging (Checkpoint: `78d929c`)
 
 **Purpose:** Make integration behavior visible and installable through every existing product boundary.
 
@@ -233,23 +233,23 @@
 
 **Purpose:** Prove the complete user workflow and close implementation against the approved specification.
 
-- [ ] Task: Add full native scene-integration acceptance tests
-  - [ ] Run a clean GUT-free project using default and overridden scenes/resources.
-  - [ ] Verify selectors, tags, lifecycle hooks, retries, timeouts, and per-test isolation.
-  - [ ] Verify native coverage and all report formats.
-  - [ ] Verify JUnit, structured diagnostics, and artifact paths.
-  - [ ] Verify pass, test-failure, and infrastructure-failure exit codes.
-  - [ ] Verify explicit GUT routing remains unchanged.
-  - [ ] Run the complete native E2E set to Green.
-- [ ] Task: Update implementation and user documentation
-  - [ ] Add scene/resource authoring examples to `docs/USER_GUIDE.md`.
-  - [ ] Document the explicit context API and field-wise merge behavior.
-  - [ ] Document headless defaults, windowed requirements, screenshots, and artifact paths.
-  - [ ] Update protocol/addon compatibility notes.
-  - [ ] Mark Phase 2 complete in `docs/ROADMAP.md`.
-  - [ ] Synchronize `docs/PRD.md`, `conductor/product.md`, and `conductor/tech-stack.md`.
-  - [ ] Keep broader README/changelog/release alignment in its separate track.
-- [ ] Task: Complete final quality gates
+- [x] Task: Add full native scene-integration acceptance tests `[commit: 5c61ccb]`
+  - [x] Run a clean GUT-free project using default and overridden scenes/resources.
+  - [x] Verify selectors, tags, lifecycle hooks, retries, timeouts, and per-test isolation.
+  - [x] Verify native coverage and all report formats.
+  - [x] Verify JUnit, structured diagnostics, and artifact paths.
+  - [x] Verify pass, test-failure, and infrastructure-failure exit codes.
+  - [x] Verify explicit GUT routing remains unchanged.
+  - [x] Run the complete native E2E set to Green.
+- [x] Task: Update implementation and user documentation `[commit: be933b4]`
+  - [x] Add scene/resource authoring examples to `docs/USER_GUIDE.md`.
+  - [x] Document the explicit context API and field-wise merge behavior.
+  - [x] Document headless defaults, windowed requirements, screenshots, and artifact paths.
+  - [x] Update protocol/addon compatibility notes.
+  - [x] Mark Phase 2 complete in `docs/ROADMAP.md`.
+  - [x] Synchronize `docs/PRD.md`, `conductor/product.md`, and `conductor/tech-stack.md`.
+  - [x] Keep broader README/changelog/release alignment in its separate track.
+- [~] Task: Complete final quality gates
   - [ ] Run the full unit and integration suites.
   - [ ] Run headless and display-capable E2E verification.
   - [ ] Run `ruff check src/ tests/`.
