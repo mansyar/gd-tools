@@ -159,6 +159,70 @@ func wait_for_signal(target_signal: Signal, timeout_seconds: float) -> bool:
 	return _wait_signal_received
 
 
+func capture_screenshot(path: String) -> Dictionary:
+	## Capture the active viewport and publish the PNG atomically.
+	var message := ""
+	var temporary_path := ""
+	if _test == null:
+		message = "Cannot capture a screenshot without an active test context"
+	elif path.is_empty():
+		message = "Screenshot path must not be empty"
+	else:
+		var viewport := _test.get_tree().root
+		var texture := viewport.get_texture()
+		if texture == null:
+			message = "Viewport texture is unavailable"
+		else:
+			var image := texture.get_image()
+			if image == null or image.is_empty():
+				message = "Viewport image is empty"
+			else:
+				var directory := path.get_base_dir()
+				if not DirAccess.dir_exists_absolute(directory):
+					var directory_error := DirAccess.make_dir_recursive_absolute(directory)
+					if directory_error != OK:
+						message = (
+							"Unable to create screenshot directory %s (error %s)"
+							% [
+								directory,
+								directory_error,
+							]
+						)
+				if message.is_empty():
+					temporary_path = path + ".tmp"
+					var save_error := image.save_png(temporary_path)
+					if save_error != OK:
+						message = (
+							"Unable to write screenshot %s (error %s)"
+							% [
+								path,
+								save_error,
+							]
+						)
+				if message.is_empty() and FileAccess.file_exists(path):
+					var remove_error := DirAccess.remove_absolute(path)
+					if remove_error != OK:
+						message = (
+							"Unable to replace screenshot %s (error %s)"
+							% [
+								path,
+								remove_error,
+							]
+						)
+				if message.is_empty():
+					var rename_error := DirAccess.rename_absolute(temporary_path, path)
+					if rename_error != OK:
+						DirAccess.remove_absolute(temporary_path)
+						message = (
+							"Unable to publish screenshot %s (error %s)"
+							% [
+								path,
+								rename_error,
+							]
+						)
+	return {"ok": message.is_empty(), "path": path, "message": message}
+
+
 func clear() -> void:
 	## Release references owned by the completed attempt.
 	if _wait_signal_connected or _wait_timer_connected:

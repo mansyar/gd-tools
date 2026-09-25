@@ -25,6 +25,8 @@ var _run_finished_at := ""
 var _engine_errors: Array[String] = []
 var _engine_warnings: Array[String] = []
 var _log_path := ""
+var _current_windowed := false
+var _screenshot_path := ""
 
 
 func _init() -> void:
@@ -79,6 +81,18 @@ func _load_manifest() -> Dictionary:
 func _run_suite(suite_data: Dictionary) -> void:
 	var suite_name := str(suite_data.get("name", ""))
 	var suite_path := str(suite_data.get("path", ""))
+	var integration: Variant = suite_data.get("integration", {})
+	_current_windowed = (
+		typeof(integration) == TYPE_DICTIONARY
+		and integration.get("mode", "headless") == "windowed"
+	)
+	_screenshot_path = OS.get_environment("GD_TOOLS_NATIVE_SCREENSHOT")
+	if _current_windowed and DisplayServer.get_name() == "headless":
+		_record_suite_error(
+			suite_name,
+			"Windowed execution requires a display; the renderer is headless",
+		)
+		return
 	var script := load(suite_path) as GDScript
 	if script == null:
 		_record_suite_error(suite_name, "Unable to load suite: %s" % suite_path)
@@ -312,6 +326,17 @@ func _run_test_attempt(
 	elif timed_out:
 		status = "timeout"
 		message = "Test timed out after %.3f seconds" % timeout_seconds
+	var diagnostics := {"failures": failures}
+	if _current_windowed and status in ["failed", "timeout", "error"]:
+		var screenshot_result := await _capture_failure_screenshot(test_context)
+		if not bool(screenshot_result.get("ok", false)):
+			status = "error"
+			message = "Screenshot capture failed: %s" % str(
+				screenshot_result.get("message", "unknown screenshot error")
+			)
+			diagnostics["screenshot_error"] = screenshot_result
+		elif not str(screenshot_result.get("path", "")).is_empty():
+			diagnostics["screenshot"] = screenshot_result["path"]
 	var duration := float(Time.get_ticks_msec() - started_ticks) / 1000.0
 	var finished_at := _timestamp()
 	_active_test_token += 1
@@ -322,7 +347,7 @@ func _run_test_attempt(
 		"status": status,
 		"duration_seconds": duration,
 		"message": message,
-		"diagnostics": {"failures": failures},
+		"diagnostics": diagnostics,
 		"started_at": started_at,
 		"finished_at": finished_at,
 	}
@@ -398,6 +423,24 @@ func _load_integration_scene(scene_value: Variant) -> Dictionary:
 
 func _integration_error(message: String) -> Dictionary:
 	return {"ok": false, "message": message}
+
+
+func _capture_failure_screenshot(test_context: GdToolsTest) -> Dictionary:
+	if _screenshot_path.is_empty():
+		return {
+			"ok": false,
+			"path": "",
+			"message": "Windowed failure screenshot path was not provided",
+		}
+	await RenderingServer.frame_post_draw
+	var context = test_context.get_test_context()
+	if context == null:
+		return {
+			"ok": false,
+			"path": _screenshot_path,
+			"message": "Integration context is unavailable for screenshot capture",
+		}
+	return context.capture_screenshot(_screenshot_path)
 
 
 func _teardown_integration(test_context: GdToolsTest) -> void:

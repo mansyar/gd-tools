@@ -90,12 +90,14 @@ def run_native_tests(
             result_path = suite_paths["result"]
             events_path = suite_paths["events"]
             log_path = suite_paths["log"]
+            screenshot_path = suite_paths["screenshot"]
             suite_artifact_paths.append(suite_paths)
         else:
             manifest_path = output_dir / f"suite-{index:04d}.manifest.json"
             result_path = output_dir / f"suite-{index:04d}.result.json"
             events_path = output_dir / f"suite-{index:04d}.events.ndjson"
             log_path = output_dir / f"suite-{index:04d}.log"
+            screenshot_path = output_dir / f"suite-{index:04d}.failure.png"
         result_path.unlink(missing_ok=True)
         events_path.unlink(missing_ok=True)
         log_path.unlink(missing_ok=True)
@@ -127,6 +129,7 @@ def run_native_tests(
                 "GD_TOOLS_NATIVE_RESULT": str(result_path),
                 "GD_TOOLS_NATIVE_EVENTS": str(events_path),
                 "GD_TOOLS_NATIVE_LOG": str(log_path),
+                "GD_TOOLS_NATIVE_SCREENSHOT": str(screenshot_path),
                 "GD_TOOLS_NATIVE_RUN_ID": run_id,
             }
         )
