@@ -9,7 +9,7 @@
 
 **Purpose:** Establish the Python-owned contract before introducing GDScript runtime behavior.
 
-- [ ] Task: Add failing unit tests for native manifest models and validation
+- [x] Task: Add failing unit tests for native manifest models and validation [f7d91b5]
   - [ ] Define tests for schema/version validation and required fields.
   - [ ] Define tests for suite, test, tag, timeout, and coverage metadata.
   - [ ] Define tests for invalid paths, malformed manifests, and unsupported runtime modes.
