@@ -2,7 +2,7 @@
 
 - **Track ID:** native_scene_integration_20260925
 - **Type:** Feature
-- **Status:** New
+- **Status:** In Progress
 - **Specification:** [`spec.md`](./spec.md)
 
 ## Phase 1 — Protocol v2 and integration metadata contract
@@ -23,10 +23,10 @@
   - [x] Reuse the existing atomic JSON writer.
   - [x] Update existing fixtures and unit tests to the intentional protocol bump.
   - [x] Run the targeted protocol tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run targeted Python unit tests and static checks.
-  - [ ] Validate protocol compatibility and actionable error behavior.
-  - [ ] Perform the workflow's manual verification.
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Run targeted Python unit tests and static checks.
+  - [x] Validate protocol compatibility and actionable error behavior.
+  - [x] Perform the workflow's manual verification.
   - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 2 — Godot metadata preflight
