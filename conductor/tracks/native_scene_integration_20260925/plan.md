@@ -163,30 +163,30 @@
   - [x] Prune older runs after successful publication.
   - [x] Keep coverage shards under their existing coverage output boundary.
   - [x] Run artifact unit tests to Green.
-- [~] Task: Add failing windowed and screenshot tests
-  - [ ] Verify windowed suites omit headless mode.
-  - [ ] Verify no hidden headless fallback occurs.
-  - [ ] Verify display/renderer initialization failure returns `2`.
-  - [ ] Verify failed/timed-out windowed tests capture a PNG after `after_each` and before teardown.
-  - [ ] Verify passing tests and headless tests do not create screenshots.
-  - [ ] Verify screenshot write failure is an infrastructure error.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement windowed readiness and screenshot capture
-  - [ ] Add minimal display/renderer readiness validation.
-  - [ ] Capture the primary viewport after rendering completes.
-  - [ ] Write screenshots through a temporary file and atomic finalization.
-  - [ ] Add screenshot paths to structured diagnostics and JUnit output.
-  - [ ] Run windowed-capable and simulated-failure tests to Green.
-- [ ] Task: Add display-capable E2E coverage
-  - [ ] Run a real windowed fixture where the environment provides a display.
-  - [ ] Skip only with an explicit, actionable environment reason when no display exists.
-  - [ ] Keep the simulated initialization-failure path active in headless CI.
-  - [ ] Run focused artifact/window tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run artifact, windowed, and failure-diagnostic tests.
-  - [ ] Verify artifact retention remains bounded.
-  - [ ] Perform manual headless and display-capable verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+- [x] Task: Add failing windowed and screenshot tests [commit: `847e4be`]
+  - [x] Verify windowed suites omit headless mode.
+  - [x] Verify no hidden headless fallback occurs.
+  - [x] Verify display/renderer initialization failure returns `2`.
+  - [x] Verify failed/timed-out windowed tests capture a PNG after `after_each` and before teardown.
+  - [x] Verify passing tests and headless tests do not create screenshots.
+  - [x] Verify screenshot write failure is an infrastructure error.
+  - [x] Confirm the expected Red phase.
+- [x] Task: Implement windowed readiness and screenshot capture [commit: `087f064`]
+  - [x] Add minimal display/renderer readiness validation.
+  - [x] Capture the primary viewport after rendering completes.
+  - [x] Write screenshots through a temporary file and atomic finalization.
+  - [x] Add screenshot paths to structured diagnostics and JUnit output.
+  - [x] Run windowed-capable and simulated-failure tests to Green.
+- [x] Task: Add display-capable E2E coverage [commit: `847e4be`]
+  - [x] Run a real windowed fixture where the environment provides a display.
+  - [x] Skip only with an explicit, actionable environment reason when no display exists.
+  - [x] Keep the simulated initialization-failure path active in headless CI.
+  - [x] Run focused artifact/window tests to Green.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Run artifact, windowed, and failure-diagnostic tests.
+  - [x] Verify artifact retention remains bounded.
+  - [x] Perform manual headless and display-capable verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 6 — Reporting, coverage, doctor, and packaging
 
