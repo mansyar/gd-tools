@@ -42,14 +42,14 @@
   - [x] Reject malformed declarations, invalid paths, unsupported modes, unknown fields, and unknown test names.
   - [x] Prove that filtering to one valid test does not invalidate declarations for other real suite tests.
   - [x] Confirm the expected Red phase.
-- [ ] Task: Implement the bundled Godot preflight entrypoint
-  - [ ] Add a preflight `SceneTree` script under the managed native addon.
-  - [ ] Read suite constants through Godot script metadata rather than Python source parsing.
-  - [ ] Validate the complete suite method list before resolving selected tests.
-  - [ ] Calculate effective per-test metadata using field-wise merge rules.
-  - [ ] Write an atomic protocol-v2 preflight result.
-  - [ ] Do not instantiate the scene or execute lifecycle/test methods.
-  - [ ] Run the preflight E2E tests to Green.
+- [x] Task: Implement the bundled Godot preflight entrypoint [commit: `b736bb2`]
+  - [x] Add a preflight `SceneTree` script under the managed native addon.
+  - [x] Read suite constants through Godot script metadata rather than Python source parsing.
+  - [x] Validate the complete suite method list before resolving selected tests.
+  - [x] Calculate effective per-test metadata using field-wise merge rules.
+  - [x] Write an atomic protocol-v2 preflight result.
+  - [x] Do not instantiate the scene or execute lifecycle/test methods.
+  - [x] Run the preflight E2E tests to Green.
 - [ ] Task: Add failing Python preflight-adapter tests
   - [ ] Verify one preflight process runs after project import.
   - [ ] Verify manifest/result paths and environment isolation.
