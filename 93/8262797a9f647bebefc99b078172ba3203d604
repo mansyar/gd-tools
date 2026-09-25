@@ -1,0 +1,16 @@
+Phase 3 checkpoint: mode-aware suite orchestration
+
+Automated verification:
+- 53 native protocol, preflight, command, and orchestrator unit tests passed.
+- 19 Godot E2E tests passed, including plain-suite preflight flow, selectors, coverage, retries, timeouts, and assertions.
+- Ruff, Black, git diff, and new preflight GDScript formatter/linter checks passed.
+- git grep found no Python-side INTEGRATION parser; GDScript remains the sole metadata parser.
+- The pre-existing bundled runner still has inherited gdformat/gdlint findings; the parent revision reproduces the same findings, and no unrelated runner reformat was applied.
+
+Manual verification:
+- User confirmed the plain native suite passes through the preflight-aware command and headless remains the default.
+
+Checkpoint scope:
+- One shared run ID and artifact root connect preflight and suite execution.
+- Headless is the default; validated windowed suites omit --headless.
+- Explicit GUT routing remains unchanged.
