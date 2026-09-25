@@ -1,0 +1,13 @@
+Final-gate regression fix.
+
+Found by the Phase 7 quality gate: tests/e2e/test_native_cli.py still read native
+results from the retired .gd-tools/native/ directory, which the Phase 5 artifact
+layout replaced with .gd-tools/artifacts/<run_id>/native/ plus a published
+artifacts.json index. The suite had not been re-run since that change.
+
+- The test now resolves the run through the published index and asserts its
+  status before reading the per-suite result file.
+- The USER_GUIDE native runtime notes point at the artifact directory and index.
+
+Verification: tests/e2e/test_native_cli.py 8 passed; the other four native E2E
+modules passed 44 tests. Ruff, Black, and diff checks passed.
