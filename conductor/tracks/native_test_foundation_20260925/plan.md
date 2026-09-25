@@ -118,14 +118,14 @@
 
 **Purpose:** Preserve the product’s line/branch coverage differentiator without a permanent native test autoload.
 
-- [ ] Task: Add failing native coverage tests
+- [x] Task: Add failing native coverage tests [4f25671]
   - [ ] Test coverage activation from the transient runner.
   - [ ] Test statement and branch hit collection.
   - [ ] Test framework/test-file exclusions.
   - [ ] Test full-project denominator behavior under filtered execution.
   - [ ] Test line and branch report generation.
   - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement native coverage activation and collection
+- [x] Task: Implement native coverage activation and collection [4f25671]
   - [ ] Reuse the existing coverage plan schema v1 where possible.
   - [ ] Make the native runtime activate instrumentation before application execution.
   - [ ] Collect coverage data without requiring `_GDTCoverage` as a native permanent autoload.
