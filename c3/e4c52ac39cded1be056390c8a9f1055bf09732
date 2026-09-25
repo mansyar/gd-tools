@@ -1,0 +1,8 @@
+Implemented deterministic native integration teardown.
+
+- Tracks and disconnects context-owned signal-wait connections and timers.
+- Explicitly removes/frees the primary scene after after_each, then clears context/resource references before the test context is freed.
+- Reuses the teardown boundary for setup failures and missing test methods.
+- Classifies after_each assertion failures and cleanup timeouts as infrastructure errors while preserving ordinary pass/fail/timeout results.
+- Preserves suite state and retry behavior; integration E2E: 6 passed.
+- Regression native runtime E2E: 17 passed; gdlint, Black, Ruff, and diff checks passed.
