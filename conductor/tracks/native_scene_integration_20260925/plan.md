@@ -120,14 +120,14 @@
   - [x] Record integration lookup failures through the owning test instance.
   - [x] Keep all context state private to the current test attempt.
   - [x] Run focused GDScript fixture tests to Green.
-- [~] Task: Implement per-attempt scene/resource setup
+- [x] Task: Implement per-attempt scene/resource setup [commit: `0720c6b`]
   - [x] Load and validate named resources before the test starts.
   - [x] Instantiate and add at most one primary scene.
   - [x] Attach the context before `before_each`.
   - [x] Make the context available to the test and cleanup hooks.
-  - [ ] Reject runtime scene/resource load failures with actionable paths.
-  - [ ] Run scene/resource E2E tests to Green.
-- [ ] Task: Add failing cleanup and retry-isolation tests
+  - [x] Reject runtime scene/resource load failures with actionable paths.
+  - [x] Run scene/resource E2E tests to Green.
+- [~] Task: Add failing cleanup and retry-isolation tests
   - [ ] Prove `after_each` can inspect the live scene.
   - [ ] Prove teardown occurs after `after_each` on pass, failure, and timeout.
   - [ ] Prove retries start with fresh scene/resource/context state.
