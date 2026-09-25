@@ -337,6 +337,51 @@ def test_preflight_rejects_malformed_declarations(
     assert expected_error in payload["error"]
 
 
+def test_preflight_rejects_overrides_for_parameterized_tests(
+    godot_bin, tmp_path
+):
+    """A test method with parameters is not a runnable test, so it is unknown.
+
+    Python discovery only selects no-argument ``test_*`` methods, so an
+    override targeting a parameterized method must be reported rather than
+    silently accepted and then never executed.
+    """
+    integration = {
+        "tests": {
+            "test_parameterized": {
+                "scene": "res://scenes/main.tscn",
+            }
+        }
+    }
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {
+            "test/integration_suite.gd": _suite_source(
+                integration,
+                body=(
+                    "func test_parameterized(value: int = 1) -> void:\n"
+                    "\tpass"
+                ),
+            ),
+        },
+    )
+    result_path = tmp_path / "preflight-parameterized.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project),
+        result_path,
+    )
+
+    assert process.returncode == 2, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "error"
+    assert payload["suites"] == []
+    assert "unknown test 'test_parameterized'" in payload["error"]
+
+
 def test_preflight_rejects_protocol_v1(godot_bin, tmp_path):
     """A version-mismatched discovery manifest returns a structured error."""
     project = _prepare_project(

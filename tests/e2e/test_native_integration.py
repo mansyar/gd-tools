@@ -216,7 +216,11 @@ def _integration_files() -> dict[str, str]:
                 assert_not_null(root)
                 assert_eq(root.name, "Main")
                 assert_not_null(context.find_node("Content/Target"))
-                assert_eq(context.find_nodes("Target*").size(), 2)
+                var found: Array[String] = []
+                for node in context.find_nodes("Target*"):
+                    found.append(String(node.name))
+                found.sort()
+                assert_eq(found, ["Target", "TargetExtra"])
                 var settings = context.get_resource("settings")
                 assert_not_null(settings)
                 assert_eq(settings.get("value"), 7)
@@ -632,7 +636,7 @@ def test_native_windowed_failure_captures_screenshot_after_each(
         / "artifacts"
         / "integration"
         / "native"
-        / "suite-0000.failure.png"
+        / "suite-0000.test_windowed.failure.png"
     )
     assert preflight.status == "ok"
     assert result.status == "failed"
@@ -640,6 +644,57 @@ def test_native_windowed_failure_captures_screenshot_after_each(
     assert result.tests[0].diagnostics["screenshot"] == str(screenshot)
     assert screenshot.is_file()
     assert screenshot.stat().st_size > 0
+
+
+def _windowed_multi_failure_files() -> dict[str, str]:
+    """A windowed suite with two independent failing tests."""
+    return {
+        "scenes/window.tscn": """
+            [gd_scene format=3]
+
+            [node name="Window" type="Node"]
+        """,
+        "test/windowed_multi_suite.gd": """
+            extends GdToolsTest
+            class_name WindowedMultiSuite
+
+            const INTEGRATION := {
+                "scene": "res://scenes/window.tscn",
+                "mode": "windowed"
+            }
+
+            func test_first_failure() -> void:
+                assert_true(false, "first windowed failure")
+
+            func test_second_failure() -> void:
+                assert_true(false, "second windowed failure")
+        """,
+    }
+
+
+def test_native_windowed_failures_keep_one_screenshot_each(tmp_path, godot_bin):
+    """Each failing windowed test keeps its own screenshot instead of sharing one."""
+    project = _prepare_project(
+        tmp_path, godot_bin, _windowed_multi_failure_files()
+    )
+    _, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "windowed_multi_suite.gd",
+    )
+    _skip_without_display(result)
+
+    native_dir = project / ".gd-tools" / "artifacts" / "integration" / "native"
+    screenshots = {
+        test.name: test.diagnostics.get("screenshot") for test in result.tests
+    }
+    assert set(screenshots) == {"test_first_failure", "test_second_failure"}
+    assert len(set(screenshots.values())) == 2, screenshots
+    for test_name, path in screenshots.items():
+        expected = native_dir / f"suite-0000.{test_name}.failure.png"
+        assert path == str(expected)
+        assert expected.is_file(), expected
+        assert expected.stat().st_size > 0
 
 
 def _scene_coverage_files() -> dict[str, str]:
@@ -742,14 +797,15 @@ def test_native_windowed_pass_and_headless_failure_skip_screenshots(
     )
     _skip_without_display(passing)
     assert passing.status == "passed"
-    assert not (
-        passing_project
-        / ".gd-tools"
-        / "artifacts"
-        / "integration"
-        / "native"
-        / "suite-0000.failure.png"
-    ).exists()
+    assert not list(
+        (
+            passing_project
+            / ".gd-tools"
+            / "artifacts"
+            / "integration"
+            / "native"
+        ).glob("*.failure.png")
+    )
 
     headless_project = _prepare_project(
         tmp_path / "headless", godot_bin, _windowed_files("headless", True)
@@ -760,14 +816,15 @@ def test_native_windowed_pass_and_headless_failure_skip_screenshots(
         headless_project / "test" / "windowed_suite.gd",
     )
     assert headless.status == "failed"
-    assert not (
-        headless_project
-        / ".gd-tools"
-        / "artifacts"
-        / "integration"
-        / "native"
-        / "suite-0000.failure.png"
-    ).exists()
+    assert not list(
+        (
+            headless_project
+            / ".gd-tools"
+            / "artifacts"
+            / "integration"
+            / "native"
+        ).glob("*.failure.png")
+    )
 
 
 def test_native_context_screenshot_write_failure_is_infrastructure(
@@ -815,3 +872,98 @@ def test_native_context_screenshot_write_failure_is_infrastructure(
     assert "Can't save PNG" in "\n".join(
         engine_result.diagnostics.get("engine_errors", [])
     )
+
+
+def _retain_resource_files() -> dict[str, str]:
+    """A suite that keeps the declared resource alive between attempts."""
+    return {
+        "scripts/retry_resource.gd": """
+            extends Resource
+            class_name RetryResource
+
+            var value: int = 7
+            """,
+        "scenes/retry.tscn": """
+            [gd_scene format=3]
+
+            [node name="Retry" type="Node"]
+            """,
+        "resources/retry_settings.tres": """
+            [gd_resource type="Resource" script_class="RetryResource" load_steps=2 format=3]
+
+            [ext_resource type="Script" path="res://scripts/retry_resource.gd" id="1"]
+
+            [resource]
+            script = ExtResource("1")
+            value = 7
+            """,
+        "test/retain_suite.gd": """
+            extends GdToolsTest
+            class_name RetainSuite
+
+            const INTEGRATION := {
+                "scene": "res://scenes/retry.tscn",
+                "resources": {
+                    "settings": "res://resources/retry_settings.tres"
+                }
+            }
+
+            func test_retain() -> void:
+                var state = _gd_tools_get_suite_state()
+                var attempt := int(state.get("attempt", 0))
+                state["attempt"] = attempt + 1
+                var resource = get_test_context().get_resource("settings")
+                assert_not_null(resource)
+                if attempt == 0:
+                    resource.set("value", 99)
+                    state["retained"] = resource
+                    assert_true(false, "retry once")
+                else:
+                    assert_eq(resource.get("value"), 7)
+            """,
+    }
+
+
+def test_native_retry_isolates_retained_declared_resource(tmp_path, godot_bin):
+    """A declared resource stays pristine even when a suite retains it."""
+    project = _prepare_project(tmp_path, godot_bin, _retain_resource_files())
+
+    _, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "retain_suite.gd",
+        retries=1,
+    )
+
+    test = next(t for t in result.tests if t.name == "test_retain")
+    assert test.status == "passed", test.diagnostics
+
+
+def test_native_screenshot_failure_keeps_original_failure_message(
+    tmp_path, godot_bin
+):
+    """An unwritable screenshot must not erase the real assertion message."""
+    project = _prepare_project(
+        tmp_path, godot_bin, _windowed_files("windowed", True)
+    )
+    blocker = (
+        project
+        / ".gd-tools"
+        / "artifacts"
+        / "integration"
+        / "native"
+        / "suite-0000.test_windowed.failure.png"
+    )
+    blocker.mkdir(parents=True)
+
+    _, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "windowed_suite.gd",
+    )
+    _skip_without_display(result)
+
+    test = next(t for t in result.tests if t.name == "test_windowed")
+    assert test.status == "error"
+    assert "windowed failure" in test.message, test.message
+    assert "Screenshot capture failed" in test.message, test.message

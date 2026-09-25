@@ -86,13 +86,13 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
     """A completed run records suite paths before retaining the latest run."""
     old_run = tmp_path / ".gd-tools" / "artifacts" / "old-run"
     old_run.mkdir(parents=True)
-    (old_run / "old.txt").write_text("old", encoding="utf-8")
+    (old_run / "artifacts.json").write_text("old", encoding="utf-8")
     layout = NativeArtifactLayout.create(tmp_path, "run-1")
 
     def fake_run(args, **kwargs):
         _write_result(Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]))
         assert kwargs["env"]["GD_TOOLS_NATIVE_SCREENSHOT"] == str(
-            layout.suite_paths(0)["screenshot"]
+            layout.suite_paths(0)["screenshot_base"]
         )
         return CompletedProcess(args, 0, "", "")
 
@@ -113,10 +113,72 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
     assert index["run_id"] == "run-1"
     assert index["suites"][0]["suite"] == "ExampleSuite"
     assert index["suites"][0]["result"] == str(layout.suite_paths(0)["result"])
-    assert index["suites"][0]["screenshot"] == str(
-        layout.suite_paths(0)["screenshot"]
-    )
+    assert "screenshot" not in index["suites"][0]
     assert not old_run.exists()
+
+
+def test_run_native_tests_passes_screenshot_base_and_indexes_captures(
+    tmp_path,
+):
+    """The runner gets a per-suite screenshot base, and captures are indexed."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    captured = layout.native_dir / "suite-0000.test_example.failure.png"
+
+    def fake_run(args, **kwargs):
+        assert kwargs["env"]["GD_TOOLS_NATIVE_SCREENSHOT"] == str(
+            layout.suite_paths(0)["screenshot_base"]
+        )
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        _write_result(result_path)
+        captured.parent.mkdir(parents=True, exist_ok=True)
+        captured.write_bytes(b"png")
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("ExampleSuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+        )
+
+    index = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert result.status == "passed"
+    assert index["suites"][0]["screenshots"] == [str(captured)]
+
+
+def test_run_native_tests_republishes_index_when_retention_fails(tmp_path):
+    """A prune failure must not leave a passing index beside an error exit."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    def fake_run(args, **kwargs):
+        _write_result(Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]))
+        return CompletedProcess(args, 0, "", "")
+
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator.subprocess.run",
+            side_effect=fake_run,
+        ),
+        patch(
+            "gd_tools.native_test.artifacts._prune_old_runs",
+            side_effect=OSError("cannot remove old run"),
+        ),
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("ExampleSuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+        )
+
+    index = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert result.status == "error"
+    assert index["status"] == "error"
+    assert "retention" in result.tests[-1].message.lower()
 
 
 def test_run_native_tests_omits_headless_for_windowed_suite(tmp_path):

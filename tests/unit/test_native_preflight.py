@@ -348,3 +348,28 @@ def test_run_native_preflight_rejects_status_exit_code_disagreement(tmp_path):
     assert "status 'ok' disagrees with process exit code 2" in str(
         exc_info.value
     )
+
+
+def test_run_native_preflight_bounds_process_output_in_errors(tmp_path):
+    """A chatty Godot process cannot flood the CLI error or JUnit output."""
+
+    def fake_run(command, **kwargs):
+        return subprocess.CompletedProcess(
+            command, 2, "x" * 50_000, "y" * 50_000
+        )
+
+    with patch(
+        "gd_tools.native_test.preflight.subprocess.run",
+        side_effect=fake_run,
+    ):
+        with pytest.raises(NativePreflightError) as exc_info:
+            run_native_preflight(
+                tmp_path,
+                _manifest(tmp_path),
+                godot_binary="godot",
+                run_dir=tmp_path / "run",
+            )
+
+    message = str(exc_info.value)
+    assert "truncated" in message
+    assert len(message) < 11_000

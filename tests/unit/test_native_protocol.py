@@ -241,6 +241,21 @@ def test_integration_metadata_requires_res_resource_paths(model):
         model(resources={"stats": "tests/fixtures/stats.tres"})
 
 
+@pytest.mark.parametrize(
+    "model", [NativeSuiteIntegration, NativeTestIntegration]
+)
+@pytest.mark.parametrize(
+    "path", ["res://", "res://../outside.tscn", "res://a/../.."]
+)
+def test_integration_metadata_rejects_traversing_paths(model, path):
+    """A res:// prefix alone is not enough; the whole path must be project-local."""
+    with pytest.raises(ValidationError):
+        if model is NativeSuiteIntegration:
+            model(scene=path)
+        else:
+            model(resources={"stats": path})
+
+
 def test_manifest_rejects_protocol_v1():
     """Protocol-v1 manifests are rejected after the v2 migration."""
     with pytest.raises(ValidationError):
