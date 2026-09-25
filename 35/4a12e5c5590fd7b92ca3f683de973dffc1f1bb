@@ -1,0 +1,17 @@
+Phase 5 checkpoint — windowed execution and bounded artifacts.
+
+Delivered
+- Run-scoped artifact layout under .gd-tools/artifacts/<run_id>/ with safe run IDs, stable per-suite names, atomic index publication, and latest-run-only pruning.
+- Machine-readable artifact index returned on NativeRunResult.artifact_index_path; preflight infrastructure failures publish an error index before re-raising.
+- GdToolsTestContext.capture_screenshot with actionable validation and atomic PNG publication.
+- Explicit windowed readiness rejection when the renderer is headless (exit 2, never a silent fallback).
+- Automatic failure screenshots for windowed failed/timed-out/error attempts, captured after after_each and before scene teardown; screenshot paths flow into structured diagnostics and JUnit output.
+- Passing and headless tests never capture screenshots.
+
+Verification
+- Native unit: 25 passed (artifacts, orchestrator, command).
+- Godot E2E: 64 passed in total — native runtime 17, preflight 13, integration 9, plus the selected unit/E2E set; windowed capture, pass/headless no-capture, and screenshot write-failure infrastructure contracts all Green.
+- gdlint and gdformat --check on the context and runner; Ruff, Black, and git diff --check all pass.
+- Coverage shard placement and existing per-suite process behavior are unchanged.
+
+User was shown the automated results and directed to continue; the checkpoint is recorded on that basis.
