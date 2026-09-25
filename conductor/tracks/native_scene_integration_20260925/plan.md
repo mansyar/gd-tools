@@ -103,17 +103,17 @@
 
 **Purpose:** Provide a deterministic per-attempt scene tree and named-resource API.
 
-- [~] Task: Add failing native integration E2E tests
-  - [ ] Add fixture scenes with stable node paths and emitted signals.
-  - [ ] Add named `.tres`/`.res` fixture resources.
-  - [ ] Cover suite-default scenes and per-test scene overrides.
-  - [ ] Cover suite-default resources, per-test resource overrides, and `null` removal.
-  - [ ] Cover resource-only tests and scenes without resources.
-  - [ ] Cover root, relative node, pattern lookup, and bounded signal-wait helpers.
-  - [ ] Cover missing nodes/resources with structured diagnostics.
-  - [ ] Prove resources are not assigned to node properties automatically.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement `GdToolsTestContext`
+- [x] Task: Add failing native integration E2E tests [commit: `95f0ecc`]
+  - [x] Add fixture scenes with stable node paths and emitted signals.
+  - [x] Add named `.tres`/`.res` fixture resources.
+  - [x] Cover suite-default scenes and per-test scene overrides.
+  - [x] Cover suite-default resources, per-test resource overrides, and `null` removal.
+  - [x] Cover resource-only tests and scenes without resources.
+  - [x] Cover root, relative node, pattern lookup, and bounded signal-wait helpers.
+  - [x] Cover missing nodes/resources with structured diagnostics.
+  - [x] Prove resources are not assigned to node properties automatically.
+  - [x] Confirm the expected Red phase.
+- [~] Task: Implement `GdToolsTestContext`
   - [ ] Add the minimal bundled context type.
   - [ ] Expose the primary scene root and effective metadata.
   - [ ] Add explicit node lookup, pattern lookup, resource lookup, and signal-wait helpers.
