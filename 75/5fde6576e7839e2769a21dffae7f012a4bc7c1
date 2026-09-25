@@ -1,0 +1,3 @@
+Task: Implement suite-scoped process orchestration
+
+Added the native Python orchestrator with one manifest and Godot process per suite, atomic per-suite artifacts, result parsing, process error/timeout conversion, aggregation, and continuation after infrastructure failures. Added three unit tests for per-suite launches, failure continuation, and process timeouts. Verified with native unit/E2E tests, Ruff, Black, and whitespace checks.
