@@ -149,21 +149,21 @@
 
 **Purpose:** Add explicit windowed rendering, failure screenshots, and predictable latest-run artifact retention.
 
-- [~] Task: Add failing artifact-management tests
-  - [ ] Verify run-scoped suite directories and stable artifact names.
-  - [ ] Verify manifest, result, event, and log paths are recorded.
-  - [ ] Verify failed infrastructure runs still leave useful diagnostics.
-  - [ ] Verify older run directories are pruned only after the latest run is recorded.
-  - [ ] Verify paths are safe and machine-readable on supported platforms.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement run-scoped artifact management
-  - [ ] Create the minimal artifact path/retention helpers.
-  - [ ] Write suite artifacts below `.gd-tools/artifacts/<run_id>/`.
-  - [ ] Atomically publish final artifacts where required.
-  - [ ] Prune older runs after successful publication.
-  - [ ] Keep coverage shards under their existing coverage output boundary.
-  - [ ] Run artifact unit tests to Green.
-- [ ] Task: Add failing windowed and screenshot tests
+- [x] Task: Add failing artifact-management tests [commit: `8da3685`, `9d7f003`]
+  - [x] Verify run-scoped suite directories and stable artifact names.
+  - [x] Verify manifest, result, event, and log paths are recorded.
+  - [x] Verify failed infrastructure runs still leave useful diagnostics.
+  - [x] Verify older run directories are pruned only after the latest run is recorded.
+  - [x] Verify paths are safe and machine-readable on supported platforms.
+  - [x] Confirm the expected Red phase.
+- [x] Task: Implement run-scoped artifact management [commit: `bd5a344`]
+  - [x] Create the minimal artifact path/retention helpers.
+  - [x] Write suite artifacts below `.gd-tools/artifacts/<run_id>/`.
+  - [x] Atomically publish final artifacts where required.
+  - [x] Prune older runs after successful publication.
+  - [x] Keep coverage shards under their existing coverage output boundary.
+  - [x] Run artifact unit tests to Green.
+- [~] Task: Add failing windowed and screenshot tests
   - [ ] Verify windowed suites omit headless mode.
   - [ ] Verify no hidden headless fallback occurs.
   - [ ] Verify display/renderer initialization failure returns `2`.
