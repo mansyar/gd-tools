@@ -1,0 +1,22 @@
+Phase 4 verification report
+
+Automated commands:
+- CI=true .venv\Scripts\python.exe -m pytest tests/unit tests/e2e/test_native_runtime.py tests/e2e/test_coverage_e2e.py -q
+  Result: 872 passed; total coverage 96.13%.
+- .venv\Scripts\python.exe -m ruff check src/ tests/
+  Result: passed.
+- .venv\Scripts\python.exe -m black --check src/ tests/
+  Result: passed.
+
+Changed source files were checked against corresponding tests:
+- src/gd_tools/addons/gd-tools-test/gd_tools_native_coverage.gd -> native coverage E2E
+- src/gd_tools/addons/gd-tools-test/gd_tools_test_runner.gd -> native E2E
+- src/gd_tools/native_test/orchestrator.py -> orchestrator unit and native E2E tests
+- coverage regression tests verify existing plan exclusions and reporter schema
+
+Manual verification confirmed by user:
+- Native line and branch coverage is written without GUT or a permanent coverage autoload.
+- Per-suite coverage shards merge into the configured final output.
+- Managed addons/test directories remain excluded.
+- Legacy GUT coverage E2E remains green.
+- Public CLI coverage/report dispatch remains deferred to Phase 5.
