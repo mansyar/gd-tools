@@ -1,0 +1,8 @@
+Implemented the native scene/resource context foundation.
+
+- Added bundled GdToolsTestContext with explicit scene root, effective metadata, relative/pattern node lookup, named resources, bounded signal waits, and owning-test diagnostics.
+- Added get_test_context() plus internal attach/clear hooks to GdToolsTest.
+- Runner now loads declared resources, instantiates at most one primary scene, attaches the context before before_each, and adds the scene beneath the fresh test context.
+- Added a real Godot E2E contract covering suite defaults, per-test overrides, resource-only tests, scenes without resources, signal waits, lifecycle visibility, no automatic property assignment, and missing lookup diagnostics.
+- Fixed the inherited runner lint blockers while touching the integration path (definition order and unused private argument).
+- Verification: native integration E2E passed; Black, Ruff, gdformat, gdlint, and diff checks passed.
