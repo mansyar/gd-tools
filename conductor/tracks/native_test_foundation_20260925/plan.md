@@ -65,7 +65,7 @@
   - [ ] Create a fresh test instance per method.
   - [ ] Attempt cleanup after failures.
   - [ ] Add GDScript-level tests for each lifecycle path.
-- [ ] Task: Implement core assertions and structured failure records
+- [x] Task: Implement core assertions and structured failure records [53eb437]
   - [ ] Add `assert_true`, `assert_false`, `assert_eq`, `assert_ne`.
   - [ ] Add `assert_null`, `assert_not_null`, and `fail`.
   - [ ] Record actual/expected values, messages, source context, and category.
