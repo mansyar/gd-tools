@@ -3,6 +3,6 @@
   "type": "feature",
   "status": "in_progress",
   "created_at": "2026-09-25T10:29:39Z",
-  "updated_at": "2026-09-25T12:14:58Z",
+  "updated_at": "2026-09-25T12:37:30Z",
   "description": "Add declarative scene and resource integration, mode-aware execution, explicit test context, and bounded failure artifacts to the native GdToolsTest runtime."
 }

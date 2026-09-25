@@ -93,11 +93,11 @@
   - [x] Verify assertions, selectors, retries, timeout behavior, and coverage remain valid.
   - [x] Verify no windowed behavior is activated accidentally.
   - [x] Run focused regression tests to Green.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run native command, orchestrator, and non-integration E2E tests.
-  - [ ] Verify no second GDScript metadata parser or per-suite preflight was introduced.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Run native command, orchestrator, and non-integration E2E tests.
+  - [x] Verify no second GDScript metadata parser or per-suite preflight was introduced.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 4 — Scene/resource integration context
 
