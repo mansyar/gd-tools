@@ -137,7 +137,9 @@ def test_cache_hit_on_second_run(coverage_project):
     runner = CliRunner()
 
     # First run -- cache miss (no plan.json yet)
-    result1 = runner.invoke(cli, ["--verbose", "test", "--coverage"])
+    result1 = runner.invoke(
+        cli, ["--verbose", "test", "--runtime", "gut", "--coverage"]
+    )
     assert result1.exit_code == 0
     assert "cache miss" in result1.output
 
@@ -145,7 +147,9 @@ def test_cache_hit_on_second_run(coverage_project):
     assert plan_path.exists()
 
     # Second run -- cache hit (no files changed)
-    result2 = runner.invoke(cli, ["--verbose", "test", "--coverage"])
+    result2 = runner.invoke(
+        cli, ["--verbose", "test", "--runtime", "gut", "--coverage"]
+    )
     assert result2.exit_code == 0
     assert "cache hit" in result2.output
 
@@ -160,7 +164,9 @@ def test_cache_miss_on_file_modified(coverage_project):
     runner = CliRunner()
 
     # First run -- cache miss
-    result1 = runner.invoke(cli, ["--verbose", "test", "--coverage"])
+    result1 = runner.invoke(
+        cli, ["--verbose", "test", "--runtime", "gut", "--coverage"]
+    )
     assert result1.exit_code == 0
     assert "cache miss" in result1.output
 
@@ -170,7 +176,9 @@ def test_cache_miss_on_file_modified(coverage_project):
     gd_file.write_text(original + "\n# modified\n")
 
     # Second run -- cache miss (file modified)
-    result2 = runner.invoke(cli, ["--verbose", "test", "--coverage"])
+    result2 = runner.invoke(
+        cli, ["--verbose", "test", "--runtime", "gut", "--coverage"]
+    )
     assert result2.exit_code == 0
     assert "cache miss" in result2.output
 
@@ -185,18 +193,23 @@ def test_no_cache_forces_regeneration(coverage_project):
     runner = CliRunner()
 
     # First run -- cache miss, plan.json generated
-    result1 = runner.invoke(cli, ["--verbose", "test", "--coverage"])
+    result1 = runner.invoke(
+        cli, ["--verbose", "test", "--runtime", "gut", "--coverage"]
+    )
     assert result1.exit_code == 0
     assert "cache miss" in result1.output
 
     # Second run with --no-cache -- should be cache miss (forced)
     result2 = runner.invoke(
-        cli, ["--verbose", "test", "--coverage", "--no-cache"]
+        cli,
+        ["--verbose", "test", "--runtime", "gut", "--coverage", "--no-cache"],
     )
     assert result2.exit_code == 0
     assert "cache miss" in result2.output
 
     # Third run without --no-cache -- should be cache hit (no changes)
-    result3 = runner.invoke(cli, ["--verbose", "test", "--coverage"])
+    result3 = runner.invoke(
+        cli, ["--verbose", "test", "--runtime", "gut", "--coverage"]
+    )
     assert result3.exit_code == 0
     assert "cache hit" in result3.output

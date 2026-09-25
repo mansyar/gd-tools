@@ -62,7 +62,7 @@ def test_init_help_shows_non_interactive():
 def test_test_help_shows_options():
     """Test test --help shows all required options."""
     runner = CliRunner()
-    result = runner.invoke(cli, ["test", "--help"])
+    result = runner.invoke(cli, ["test", "--runtime", "gut", "--help"])
     assert result.exit_code == 0
     for opt in [
         "--coverage",
@@ -137,7 +137,7 @@ def test_test_config_error_exit_code_2():
         "gd_tools.cli.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
-        result = runner.invoke(cli, ["test"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut"])
     assert result.exit_code == 2
 
 
@@ -161,7 +161,7 @@ def test_test_calls_run_tests_with_correct_args():
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
     ):
-        result = runner.invoke(cli, ["test"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut"])
     assert result.exit_code == 0
     mock_run.assert_called_once_with(
         mock_config,
@@ -196,7 +196,9 @@ def test_test_suite_flag():
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
     ):
-        result = runner.invoke(cli, ["test", "--suite", "MySuite"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--suite", "MySuite"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_run.call_args
     assert kwargs["suite"] == "MySuite"
@@ -222,7 +224,9 @@ def test_test_name_flag():
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
     ):
-        result = runner.invoke(cli, ["test", "--test", "MyTest"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--test", "MyTest"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_run.call_args
     assert kwargs["test_name"] == "MyTest"
@@ -251,7 +255,7 @@ def test_test_coverage_calls_orchestrator():
             return_value=mock_result,
         ) as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--coverage"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
     assert result.exit_code == 0
     mock_orch.assert_called_once()
 
@@ -277,7 +281,7 @@ def test_test_min_without_coverage_warns():
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
         patch("gd_tools.cli.run_coverage_test") as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--min", "80"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--min", "80"])
     assert result.exit_code == 0
     assert "--min is only valid with --coverage" in result.output
     mock_run.assert_called_once()
@@ -307,7 +311,9 @@ def test_test_coverage_min_passed_to_orchestrator():
             return_value=mock_result,
         ) as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--coverage", "--min", "80"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--coverage", "--min", "80"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_orch.call_args
     assert kwargs["min_percent"] == 80
@@ -334,7 +340,7 @@ def test_test_no_coverage_calls_run_tests_directly():
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
         patch("gd_tools.cli.run_coverage_test") as mock_orch,
     ):
-        result = runner.invoke(cli, ["test"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut"])
     assert result.exit_code == 0
     mock_run.assert_called_once()
     mock_orch.assert_not_called()
@@ -351,7 +357,7 @@ def test_test_coverage_test_failure_exit_1():
             side_effect=TestFailureError("2 test(s) failed"),
         ),
     ):
-        result = runner.invoke(cli, ["test", "--coverage"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
     assert result.exit_code == 1
 
 
@@ -366,7 +372,7 @@ def test_test_coverage_threshold_error_exit_1():
             side_effect=CoverageThresholdError("Coverage below threshold"),
         ),
     ):
-        result = runner.invoke(cli, ["test", "--coverage"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
     assert result.exit_code == 1
 
 
@@ -381,7 +387,7 @@ def test_test_coverage_plan_error_exit_2():
             side_effect=CoveragePlanError("Missing plan"),
         ),
     ):
-        result = runner.invoke(cli, ["test", "--coverage"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
     assert result.exit_code == 2
 
 
@@ -408,7 +414,9 @@ def test_test_coverage_no_exit_code_propagated():
             return_value=mock_result,
         ) as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--coverage", "--no-exit-code"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--coverage", "--no-exit-code"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_orch.call_args
     assert kwargs["no_exit_code"] is True
@@ -437,7 +445,9 @@ def test_test_coverage_show_uncovered_passed_to_orchestrator():
             return_value=mock_result,
         ) as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--coverage", "--show-uncovered"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--coverage", "--show-uncovered"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_orch.call_args
     assert kwargs["show_uncovered"] is True
@@ -466,7 +476,7 @@ def test_test_coverage_without_show_uncovered_defaults_false():
             return_value=mock_result,
         ) as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--coverage"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
     assert result.exit_code == 0
     _, kwargs = mock_orch.call_args
     assert kwargs["show_uncovered"] is False
@@ -493,7 +503,9 @@ def test_test_show_uncovered_without_coverage_warns():
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
         patch("gd_tools.cli.run_coverage_test") as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--show-uncovered"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--show-uncovered"]
+        )
     assert result.exit_code == 0
     assert "--show-uncovered is only valid with --coverage" in result.output
     mock_run.assert_called_once()
@@ -523,7 +535,9 @@ def test_test_coverage_no_cache_passed_to_orchestrator():
             return_value=mock_result,
         ) as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--coverage", "--no-cache"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--coverage", "--no-cache"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_orch.call_args
     assert kwargs["no_cache"] is True
@@ -552,7 +566,7 @@ def test_test_coverage_default_no_cache_false():
             return_value=mock_result,
         ) as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--coverage"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
     assert result.exit_code == 0
     _, kwargs = mock_orch.call_args
     assert kwargs["no_cache"] is False
@@ -579,7 +593,7 @@ def test_test_no_cache_without_coverage_accepted():
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
         patch("gd_tools.cli.run_coverage_test") as mock_orch,
     ):
-        result = runner.invoke(cli, ["test", "--no-cache"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut", "--no-cache"])
     assert result.exit_code == 0
     mock_run.assert_called_once()
     mock_orch.assert_not_called()
@@ -605,7 +619,9 @@ def test_test_junit_xml_flag():
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
     ):
-        result = runner.invoke(cli, ["test", "--junit-xml", "/path/to.xml"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--junit-xml", "/path/to.xml"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_run.call_args
     assert kwargs["junit_xml"] == "/path/to.xml"
@@ -631,7 +647,9 @@ def test_test_no_exit_code_flag():
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
     ):
-        result = runner.invoke(cli, ["test", "--no-exit-code"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "--no-exit-code"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_run.call_args
     assert kwargs["no_exit_code"] is True
@@ -657,7 +675,7 @@ def test_test_all_pass_exit_code_0():
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result),
     ):
-        result = runner.invoke(cli, ["test"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut"])
     assert result.exit_code == 0
 
 
@@ -672,7 +690,7 @@ def test_test_failures_exit_code_1():
             side_effect=TestFailureError("2 test(s) failed"),
         ),
     ):
-        result = runner.invoke(cli, ["test"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut"])
     assert result.exit_code == 1
 
 
@@ -687,7 +705,7 @@ def test_test_gut_not_installed_exit_code_2():
             side_effect=GUTNotInstalledError("GUT is not installed"),
         ),
     ):
-        result = runner.invoke(cli, ["test"])
+        result = runner.invoke(cli, ["test", "--runtime", "gut"])
     assert result.exit_code == 2
 
 
@@ -1002,7 +1020,7 @@ def test_cli_init_passes_non_interactive_flag():
     with patch("gd_tools.cli.run_init") as mock_run:
         result = runner.invoke(cli, ["init", "--non-interactive"])
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(non_interactive=True)
+    mock_run.assert_called_once_with(non_interactive=True, with_gut=False)
 
 
 def test_cli_init_exits_zero_on_success():
@@ -1473,7 +1491,9 @@ def test_test_paths_arg():
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
     ):
-        result = runner.invoke(cli, ["test", "dir_a", "dir_b"])
+        result = runner.invoke(
+            cli, ["test", "--runtime", "gut", "dir_a", "dir_b"]
+        )
     assert result.exit_code == 0
     _, kwargs = mock_run.call_args
     assert kwargs["paths"] == ["dir_a", "dir_b"]

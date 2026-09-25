@@ -3,15 +3,15 @@
 This module implements the ``gd-tools init`` command, which bootstraps
 a Godot project by:
 - Detecting the project root and Godot version
-- Installing GUT (Godot Unit Test) if not present
-- Deploying the coverage addon as placeholder stubs
-- Creating configuration files (``.gutconfig.json``, ``gd-tools.toml``,
-  ``gdlintrc``, ``gdformatrc``)
+- Deploying the bundled native test and coverage addons
+- Optionally installing and enabling the legacy GUT runtime
+- Creating native/default configuration files and optional legacy files
 - Creating the ``.gd-tools/`` data directory
 - Printing a summary of actions taken
 
 The command is idempotent: running it multiple times produces the
-same end state without duplicating entries.
+same end state without duplicating entries. Managed addon files preserve
+user modifications in per-addon ``.backups/`` directories before replacement.
 """
 
 import configparser
@@ -65,6 +65,12 @@ COVERAGE_ADDON_FILES = [
     "coverage.gd",
     "pre_run_hook.gd",
     "post_run_hook.gd",
+]
+
+NATIVE_TEST_ADDON_FILES = [
+    "gd_tools_test.gd",
+    "gd_tools_test_runner.gd",
+    "gd_tools_native_coverage.gd",
 ]
 
 COVERAGE_AUTOLOAD_PATH = "res://addons/gd-tools-coverage/coverage.gd"
@@ -362,6 +368,36 @@ def install_coverage_addon(project_root: Path) -> None:
     version_file.write_text(f"{__version__}\n", encoding="utf-8")
 
 
+def install_native_test_addon(project_root: Path) -> None:
+    """Copy the bundled native runtime with managed-file backups.
+
+    Args:
+        project_root: Path to the Godot project root.
+    """
+    source_dir = Path(__file__).parent / "addons" / "gd-tools-test"
+    target_dir = project_root / "addons" / "gd-tools-test"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    backups_dir = target_dir / ".backups"
+    for file_name in NATIVE_TEST_ADDON_FILES:
+        source_file = source_dir / file_name
+        target_file = target_dir / file_name
+        if (
+            target_file.exists()
+            and target_file.read_bytes() != source_file.read_bytes()
+        ):
+            backups_dir.mkdir(parents=True, exist_ok=True)
+            backup_path = backups_dir / f"{file_name}.bak"
+            shutil.copy2(target_file, backup_path)
+            console.print(
+                f"[yellow]Warning: {file_name} was modified. "
+                f"Backed up to {backup_path} before overwriting.[/yellow]"
+            )
+        shutil.copy2(source_file, target_file)
+    (target_dir / "_version.txt").write_text(
+        f"{__version__}\n", encoding="utf-8"
+    )
+
+
 def register_coverage_autoload(project_root: Path) -> None:
     """Register the coverage tracker autoload in ``project.godot``.
 
@@ -615,67 +651,54 @@ def print_summary(project_root: Path, actions: list[str]) -> None:
     )
 
 
-def run_init(non_interactive: bool = False) -> None:
-    """Run the full init flow to bootstrap a Godot project.
-
-    Orchestrates all initialization steps:
-    1. Detect project root
-    2. Load or create config
-    3. Detect Godot version
-    4. Resolve GUT version
-    5. Check if GUT is installed
-    6. Install GUT if needed
-    7. Enable GUT plugin in project.godot
-    8. Deploy coverage addon
-    9. Create/update .gutconfig.json
-    10. Create gd-tools.toml if missing
-    11. Generate gdlintrc and gdformatrc
-    12. Create .gd-tools/ data directory
-    13. Print summary
-
-    Args:
-        non_interactive: If True, skip all interactive prompts
-            and assume defaults.
-    """
+def run_init(
+    non_interactive: bool = False,
+    with_gut: bool = False,
+) -> None:
+    """Bootstrap a project for the native runtime and optional GUT bridge."""
     project_root = find_project_root()
     config = load_config(project_root)
+    with_gut = with_gut or config.test.runtime == "gut"
 
     actions: list[str] = []
-
     godot_version = detect_godot_version(config)
-    gut_version = get_gut_version_for_godot(godot_version)
 
-    is_installed = is_gut_installed(project_root)
-    if is_installed:
-        installed = get_installed_gut_version(project_root)
-        if installed:
-            actions.append(f"GUT already installed (v{installed})")
+    install_native_test_addon(project_root)
+    actions.append("Deployed native test addon")
+
+    if with_gut:
+        gut_version = get_gut_version_for_godot(godot_version)
+        is_installed = is_gut_installed(project_root)
+        if is_installed:
+            installed = get_installed_gut_version(project_root)
+            if installed:
+                actions.append(f"GUT already installed (v{installed})")
+            else:
+                actions.append("GUT already installed (version unknown)")
         else:
-            actions.append("GUT already installed (version unknown)")
+            actions.append(f"Installing GUT v{gut_version}")
+
+        if not install_gut(
+            project_root, godot_version, non_interactive=non_interactive
+        ):
+            console.print(
+                "\n[yellow]Init aborted: GUT was not installed.[/yellow]\n"
+                "Install GUT manually, then re-run 'gd-tools init --with-gut'."
+            )
+            sys.exit(1)
+
+        enable_gut_plugin(project_root)
+        actions.append("Enabled GUT plugin in project.godot")
+        register_coverage_autoload(project_root)
+        actions.append("Registered _GDTCoverage autoload")
+        update_gutconfig(project_root, config)
+        actions.append("Created/updated .gutconfig.json")
     else:
-        actions.append(f"Installing GUT v{gut_version}")
-
-    if not install_gut(
-        project_root, godot_version, non_interactive=non_interactive
-    ):
-        console.print(
-            "\n[yellow]Init aborted: GUT was not installed.[/yellow]\n"
-            "Install GUT manually, then re-run 'gd-tools init'."
-        )
-        sys.exit(1)
-
-    enable_gut_plugin(project_root)
-    actions.append("Enabled GUT plugin in project.godot")
+        actions.append("GUT left uninstalled (legacy runtime is opt-in)")
 
     install_coverage_addon(project_root)
     actions.append("Deployed coverage addon")
     actions.append(f"Wrote addon version file (v{__version__})")
-
-    register_coverage_autoload(project_root)
-    actions.append("Registered _GDTCoverage autoload")
-
-    update_gutconfig(project_root, config)
-    actions.append("Created/updated .gutconfig.json")
 
     create_config_file(project_root, config)
     actions.append("Ensured gd-tools.toml exists")

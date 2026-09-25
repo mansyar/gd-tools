@@ -8,3 +8,8 @@ _Archived tracks live in `./archive/`._
 
 - [x] **Track: GDScript AST Edge Cases** (archived → `./archive/ast_edge_cases_20260718/`)
 
+---
+
+- [x] **Track: Native Test Runtime Foundation**
+  *Link: [native_test_foundation_20260925](./tracks/native_test_foundation_20260925/index.md)*
+

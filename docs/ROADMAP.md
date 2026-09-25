@@ -2,7 +2,7 @@
 
 **Version:** 0.2.0 (draft)
 **Date:** 2026-07-14
-**Status:** Post-v1.0 -- Planning v0.4.0+ improvements
+**Status:** Native Test Runtime Foundation completed (transition path active)
 **Related docs:** [PRD.md](./PRD.md), [ROADMAP_v1.md](./ROADMAP_v1.md) (archived v1 roadmap, Tracks 0-22), [AUDIT_REPORT.md](./AUDIT_REPORT.md), [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
@@ -22,6 +22,30 @@ CI/CD pipeline, documentation, and PyPI release. See
 This roadmap focuses on **incremental improvements** that increase the
 tool's day-to-day value, close UX gaps, and expand the feature set into
 new differentiating territory. The phasing is designed so that:
+
+## Native Runtime Transition (Completed Foundation)
+
+**Track:** `native_test_foundation_20260925`
+**Status:** Completed; the temporary GUT compatibility path remains available.
+
+The native Godot test runtime is now the default path for `gd-tools test`.
+It provides a bundled `GdToolsTest` base class, async helpers, per-suite
+process isolation, native JSON/NDJSON/JUnit results, and transient line/branch
+coverage. `gd-tools init` deploys the native addon without downloading GUT.
+Review hardening also covers lifecycle failures, engine diagnostics, managed-file
+backups, native addon version checks, and public tag/file/timeout selectors.
+
+GUT remains a supported compatibility path during the transition:
+
+```bash
+gd-tools init --with-gut       # opt into legacy bootstrap files
+gd-tools test --runtime gut    # use the existing GUT runner
+```
+
+The foundation intentionally defers scene/resource integration, broad mocking,
+parameterized tests, parallel execution, editor UI, automatic migration, and
+GUT removal to follow-up tracks. The compatibility bridge is limited to the
+core subset required for the transition and is not a long-term public API.
 
 - **Quick wins ship first** -- low-effort, high-impact improvements that
   users feel immediately.
@@ -1520,3 +1544,90 @@ Each Conductor track should produce:
 | AST edge case coverage | 0 known untracked GDScript patterns | Fixture tests |
 | PyPI download growth | 2x monthly downloads vs v1.0 | PyPI stats |
 | Community contributions | 5+ external PRs | GitHub metrics |
+
+---
+
+## 8. Temporary: Native Test Runtime Migration Roadmap
+
+**Status:** Planning
+**Purpose:** Replace the permanent GUT dependency with the native
+`GdToolsTest` runtime while preserving a bounded migration path.
+**Retirement condition:** Remove this temporary section after native tests
+are the supported default, the GUT bridge has completed its migration
+period, and all follow-up documentation/CI/release work is complete.
+
+The durable product decision is recorded in
+[`conductor/product.md`](../conductor/product.md#9-native-test-runtime-direction).
+
+### Phase 0 — Decision and Contract
+
+- [x] Confirm native-first architecture
+- [x] Select `GdToolsTest` / `GdToolsTestRunner` naming
+- [x] Define Python discovery / Godot execution boundary
+- [x] Define versioned manifest and result protocols
+- [x] Define coverage, exit-code, and migration boundaries
+- [x] Approve the first vertical slice
+
+### Phase 1 — Native Foundation Vertical Slice
+
+- [ ] Build a clean GUT-free Godot fixture
+- [ ] Implement Python test discovery and manifest generation
+- [ ] Implement the transient Godot runner
+- [ ] Implement `GdToolsTest extends Node`
+- [ ] Implement suite/test lifecycle hooks
+- [ ] Implement synchronous and asynchronous test execution
+- [ ] Implement core assertions and structured failures
+- [ ] Implement tags and path/suite/test selectors
+- [ ] Implement native JSON, NDJSON events, and JUnit XML
+- [ ] Prove native line and branch coverage
+- [ ] Preserve the legacy GUT path behind explicit runtime selection
+- [ ] Add performance benchmark and layered dogfood tests
+
+**Exit gate:** A clean project without GUT passes a native async unit-test
+run with line/branch coverage and stable exit codes.
+
+### Phase 2 — Scene/Resource Integration
+
+- [ ] Add suite-declared integration scenes
+- [ ] Add focused node/resource/signal helpers
+- [ ] Add configurable autoload policy
+- [ ] Add headless/windowed execution modes
+- [ ] Add optional failure artifacts
+- [ ] Add scene-tree cleanup and integration diagnostics
+
+**Exit gate:** Scene/resource integration tests are deterministic, isolated,
+and supported on the Godot 4.5+ matrix.
+
+### Phase 3 — GUT Compatibility Bridge
+
+- [ ] Add `GutTest` compatibility base
+- [ ] Add core GUT assertion aliases
+- [ ] Add lifecycle and async helper aliases
+- [ ] Normalize bridge results into native results
+- [ ] Replace the legacy GUT subprocess path with the bridge
+- [ ] Emit deprecation and migration diagnostics
+
+**Exit gate:** Supported legacy GUT suites run through the native protocol
+and produce the same user-facing result contract.
+
+### Phase 4 — Migration Tooling
+
+- [ ] Add dry-run migration reports
+- [ ] Add opt-in rewrites for supported GUT constructs
+- [ ] Add unsupported-construct diagnostics
+- [ ] Add reviewable diffs and migration verification
+- [ ] Preserve `.gutconfig.json` while translating supported settings
+
+**Exit gate:** A representative GUT project can migrate without silent data
+loss or manual reconstruction of configuration.
+
+### Phase 5 — Hardening and Release
+
+- [ ] Add crash recovery and diagnostics hardening
+- [ ] Add optional parallel execution
+- [ ] Integrate native runtime caching
+- [ ] Update `init`, `doctor`, CI, packaging, and documentation
+- [ ] Run the Godot 4.5+ compatibility matrix
+- [ ] Publish the native runtime release
+- [ ] Remove the temporary bridge after its migration period
+- [ ] Fold durable decisions into the main roadmap and remove this section

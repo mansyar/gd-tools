@@ -1,0 +1,8 @@
+{
+  "track_id": "native_test_foundation_20260925",
+  "type": "feature_architecture",
+  "status": "completed",
+  "created_at": "2026-09-25T01:49:12Z",
+  "updated_at": "2026-09-25T08:53:47Z",
+  "description": "Native Test Runtime Foundation - introduce a Godot-native GdToolsTest runtime, async execution, native results, and line/branch coverage with a bounded GUT fallback."
+}

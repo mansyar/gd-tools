@@ -881,6 +881,31 @@ class TestFullWorkflow:
 
 ---
 
+## 6.1 Native Runtime Performance Benchmark
+
+The native-versus-legacy benchmark is opt-in so ordinary CI runs do not inherit
+startup noise from shared workers:
+
+```bash
+GD_TOOLS_RUN_BENCHMARK=1 pytest tests/performance/test_native_vs_gut_benchmark.py -q -s
+```
+
+It compares one small native suite against the existing small GUT suite on the
+same Godot binary, in headless mode, with update checks disabled. The test
+records time-to-first-output (startup) and total wall time for each runtime and
+uses the median of two runs by default. Set
+`GD_TOOLS_BENCHMARK_ITERATIONS` to change the sample count.
+
+The acceptance budget is a maximum 2x total-time regression:
+
+```text
+native_total / legacy_total <= 2.0
+```
+
+Results vary with CPU frequency, filesystem caching, Godot version, and other
+processes on the machine; use the median and compare runs on the same host.
+The benchmark is a guardrail, not a guarantee for large projects.
+
 ## 7. Test Fixtures
 
 ### 7.1 GDScript Sample Files

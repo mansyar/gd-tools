@@ -22,7 +22,8 @@ from pathlib import Path
 import pytest
 
 from conftest import find_godot_binary
-from gd_tools.init import install_coverage_addon
+from gd_tools.godot import get_godot_version, get_gut_version_for_godot
+from gd_tools.init import install_coverage_addon, install_native_test_addon
 
 pytestmark = pytest.mark.e2e
 
@@ -57,7 +58,15 @@ def _setup_project_with_godot(tmp_path: Path) -> Path:
         tmp_path / "addons" / "gut",
         dirs_exist_ok=True,
     )
+    godot_binary = find_godot_binary()
+    assert godot_binary is not None
+    godot_version = get_godot_version(godot_binary)
+    gut_version = get_gut_version_for_godot(godot_version)
+    (tmp_path / "addons" / "gut" / "plugin.cfg").write_text(
+        f'[plugin]\nname="Gut"\nversion="{gut_version}"\n', encoding="utf-8"
+    )
     install_coverage_addon(tmp_path)
+    install_native_test_addon(tmp_path)
     (tmp_path / ".gutconfig.json").write_text(
         json.dumps(
             {
@@ -67,7 +76,9 @@ def _setup_project_with_godot(tmp_path: Path) -> Path:
         ),
         encoding="utf-8",
     )
-    (tmp_path / "gd-tools.toml").write_text("", encoding="utf-8")
+    (tmp_path / "gd-tools.toml").write_text(
+        '[test]\nruntime = "gut"\n', encoding="utf-8"
+    )
     return tmp_path
 
 
@@ -101,7 +112,13 @@ def _setup_fresh_project(tmp_path: Path) -> Path:
 
 def _run_cli(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
     """Run gd-tools CLI with *args* in *cwd*."""
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    env = {
+        **os.environ,
+        "PYTHONIOENCODING": "utf-8",
+        "PATH": str(Path(sys.executable).parent)
+        + os.pathsep
+        + os.environ.get("PATH", ""),
+    }
     return subprocess.run(
         [_gd_tools_bin(), *args],
         cwd=str(cwd),
@@ -163,7 +180,14 @@ def test_test_coverage_command(tmp_path):
     """gd-tools test --coverage runs tests and generates coverage artifacts."""
     project = _setup_project_with_godot(tmp_path)
     result = _run_cli(
-        ["test", "--coverage", "--suite", "res://test/test_calculator.gd"],
+        [
+            "test",
+            "--runtime",
+            "gut",
+            "--coverage",
+            "--suite",
+            "res://test/test_calculator.gd",
+        ],
         cwd=project,
     )
     assert result.returncode == 0
@@ -217,7 +241,14 @@ def test_full_workflow_sequence(tmp_path):
 
     # 4. Test --coverage
     result = _run_cli(
-        ["test", "--coverage", "--suite", "res://test/test_calculator.gd"],
+        [
+            "test",
+            "--runtime",
+            "gut",
+            "--coverage",
+            "--suite",
+            "res://test/test_calculator.gd",
+        ],
         cwd=project,
     )
     assert result.returncode == 0, f"test --coverage failed: {result.stderr}"

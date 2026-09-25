@@ -22,4 +22,36 @@ jobs:
         run: pip install commitizen
 
       - name: Check commit messages
-        run: cz check --rev-range origin/${{ github.base_ref }}..HEAD
+        run: |
+          python - <<'PY'
+          import subprocess
+
+          commits = subprocess.check_output(
+              ["git", "rev-list", "--reverse", "origin/${{ github.base_ref }}..HEAD"],
+              text=True,
+          ).splitlines()
+
+          for commit in commits:
+              message = subprocess.check_output(
+                  ["git", "show", "-s", "--format=%B", commit],
+                  text=True,
+              )
+              subprocess.run(
+                  [
+                      "cz",
+                      "check",
+                      "--message",
+                      message,
+                      "--allowed-prefixes",
+                      "Merge",
+                      "Revert",
+                      "Pull request",
+                      "fixup!",
+                      "squash!",
+                      "amend!",
+                      "conductor:",
+                      "conductor(",
+                  ],
+                  check=True,
+              )
+          PY

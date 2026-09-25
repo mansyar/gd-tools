@@ -66,12 +66,21 @@ def _setup_autoload_coverage_project(tmp_path: Path) -> Path:
     )
     install_coverage_addon(tmp_path)
     register_coverage_autoload(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        '[test]\nruntime = "gut"\n', encoding="utf-8"
+    )
     return tmp_path
 
 
 def _run_cli(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
     """Run gd-tools CLI with *args* in *cwd*."""
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    env = {
+        **os.environ,
+        "PYTHONIOENCODING": "utf-8",
+        "PATH": str(Path(sys.executable).parent)
+        + os.pathsep
+        + os.environ.get("PATH", ""),
+    }
     return subprocess.run(
         [_gd_tools_bin(), *args],
         cwd=str(cwd),
@@ -108,7 +117,14 @@ def test_autoload_instantiated_script_gets_coverage(tmp_path):
     """
     project = _setup_autoload_coverage_project(tmp_path)
     result = _run_cli(
-        ["test", "--coverage", "--suite", "res://tests/test_chimera_data.gd"],
+        [
+            "test",
+            "--runtime",
+            "gut",
+            "--coverage",
+            "--suite",
+            "res://tests/test_chimera_data.gd",
+        ],
         cwd=project,
     )
     assert result.returncode == 0, f"CLI failed: {result.stderr}"
@@ -155,7 +171,14 @@ def test_autoload_init_code_not_recorded(tmp_path):
     """
     project = _setup_autoload_coverage_project(tmp_path)
     result = _run_cli(
-        ["test", "--coverage", "--suite", "res://tests/test_chimera_data.gd"],
+        [
+            "test",
+            "--runtime",
+            "gut",
+            "--coverage",
+            "--suite",
+            "res://tests/test_chimera_data.gd",
+        ],
         cwd=project,
     )
     assert result.returncode == 0, f"CLI failed: {result.stderr}"
@@ -198,7 +221,14 @@ def test_coverage_system_regression(tmp_path):
     """
     project = _setup_autoload_coverage_project(tmp_path)
     result = _run_cli(
-        ["test", "--coverage", "--suite", "res://tests/test_chimera_data.gd"],
+        [
+            "test",
+            "--runtime",
+            "gut",
+            "--coverage",
+            "--suite",
+            "res://tests/test_chimera_data.gd",
+        ],
         cwd=project,
     )
     assert result.returncode == 0, f"CLI failed: {result.stderr}"

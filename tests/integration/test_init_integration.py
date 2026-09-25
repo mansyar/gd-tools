@@ -63,7 +63,7 @@ def test_init_fresh_project(tmp_path):
         ),
         patch("gd_tools.init.requests.get", return_value=mock_response),
     ):
-        run_init(non_interactive=True)
+        run_init(non_interactive=True, with_gut=True)
 
     # GUT addon files
     assert (tmp_path / "addons" / "gut" / "gut.gd").exists()
@@ -124,7 +124,7 @@ def test_init_project_with_existing_gut(tmp_path):
             "gd_tools.init.requests.get", return_value=mock_response
         ) as mock_get,
     ):
-        run_init(non_interactive=True)
+        run_init(non_interactive=True, with_gut=True)
 
     # GUT was NOT downloaded
     mock_get.assert_not_called()
@@ -158,8 +158,8 @@ def test_init_idempotent(tmp_path):
         ),
         patch("gd_tools.init.requests.get", return_value=mock_response),
     ):
-        run_init(non_interactive=True)
-        run_init(non_interactive=True)
+        run_init(non_interactive=True, with_gut=True)
+        run_init(non_interactive=True, with_gut=True)
 
     # project.godot: no duplicate plugin entries
     project_godot = (tmp_path / "project.godot").read_text()
@@ -176,4 +176,21 @@ def test_init_idempotent(tmp_path):
     assert "pre_run_script" in gutconfig
 
     # gd-tools.toml: exists and not duplicated
+    assert (tmp_path / "gd-tools.toml").exists()
+
+
+def test_init_native_project_does_not_install_gut(tmp_path):
+    """Native initialization deploys the test addon without legacy GUT."""
+    _setup_project(tmp_path)
+    godot_info = GodotInfo(path="/fake/godot", version="4.5.1", is_valid=True)
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.find_godot", return_value=godot_info),
+    ):
+        run_init(non_interactive=True, with_gut=False)
+
+    assert (tmp_path / "addons" / "gd-tools-test" / "gd_tools_test.gd").exists()
+    assert not (tmp_path / "addons" / "gut").exists()
+    assert not (tmp_path / ".gutconfig.json").exists()
     assert (tmp_path / "gd-tools.toml").exists()

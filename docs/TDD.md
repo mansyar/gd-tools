@@ -40,7 +40,12 @@ src/gd_tools/
 ├── init.py                   # `gd-tools init` bootstrap flow
 ├── doctor.py                 # `gd-tools doctor` diagnostics
 ├── file_discovery.py         # Shared .gd file discovery (hybrid exclude matching)
-├── test_runner.py            # `gd-tools test` — GUT orchestration
+├── test_runner.py            # `gd-tools test --runtime gut` — legacy GUT orchestration
+├── native_test/              # native runtime adapter, discovery, protocol, orchestration
+│   ├── command.py            # CLI-facing native test command
+│   ├── discovery.py          # GdToolsTest suite discovery and filters
+│   ├── orchestrator.py       # isolated one-Godot-process-per-suite execution
+│   └── protocol.py           # versioned manifest/result models
 ├── lint_runner.py            # `gd-tools lint` — gdlint wrapper
 ├── format_runner.py            # `gd-tools format` — gdformat wrapper
 ├── version.py                 # `gd-tools version` — component version detection
@@ -60,10 +65,14 @@ src/gd_tools/
 │       ├── index.html        # HTML report index page (Jinja2)
 │       └── file.html         # HTML per-file page (Jinja2)
 └── addons/
+    ├── gd-tools-test/
+    │   ├── gd_tools_test.gd
+    │   ├── gd_tools_test_runner.gd
+    │   └── gd_tools_native_coverage.gd
     └── gd-tools-coverage/
-        ├── coverage.gd       # Autoload singleton — instrumentation + hit tracking
-        ├── pre_run_hook.gd   # GUT pre-run hook — activates coverage tracker
-        └── post_run_hook.gd  # GUT post-run hook — saves coverage JSON
+        ├── coverage.gd       # legacy GUT autoload singleton
+        ├── pre_run_hook.gd   # legacy GUT pre-run hook
+        └── post_run_hook.gd  # legacy GUT post-run hook
 ```
 
 ### Dependency Graph
@@ -78,7 +87,11 @@ cli.py
 ├── godot.py
 ├── init.py (→ config, godot, output, verbosity)
 ├── doctor.py (→ config, godot)
-├── test_runner.py (→ config, godot, output, verbosity, coverage/plan_generator, coverage/reporter)
+├── test_runner.py (→ config, godot, output, verbosity, coverage/plan_generator, coverage/reporter) — legacy GUT
+├── native_test/command.py (→ config, godot, discovery, orchestrator, output, coverage)
+├── native_test/orchestrator.py (→ protocol, godot, subprocess)
+├── native_test/discovery.py (→ config, filesystem, regex)
+├── native_test/protocol.py (→ pydantic, atomic JSON)
 ├── lint_runner.py (→ config, output, verbosity)
 ├── format_runner.py (→ config, output, verbosity)
 ├── version.py (→ config, godot, init)
@@ -231,6 +244,7 @@ output), `init.py` (quiet-mode summary), `test_runner.py`,
 
 ```python
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -243,7 +257,11 @@ class GodotConfig(BaseModel):
 class TestConfig(BaseModel):
     __test__ = False  # Prevent pytest from collecting this as a test class
     model_config = ConfigDict(extra="forbid")
+    runtime: Literal["native", "gut"] = "native"
     test_dirs: list[str] = Field(default_factory=lambda: ["test", "tests"])
+    timeout_seconds: float = Field(default=5.0, gt=0)
+    retries: int = Field(default=0, ge=0)
+    tags: list[str] = Field(default_factory=list)
     prefix: str = "test_"
     suffix: str = ".gd"
     gutconfig: str = ".gutconfig.json"
@@ -451,24 +469,31 @@ def cli():
 
 @cli.command()
 @click.option("--non-interactive", is_flag=True, help="Skip prompts, use defaults")
-def init(non_interactive: bool):
-    """Bootstrap project: install GUT, coverage addon, generate configs."""
+@click.option("--with-gut", is_flag=True, help="Also install the legacy GUT runtime")
+def init(non_interactive: bool, with_gut: bool):
+    """Bootstrap the native runtime and optional legacy compatibility."""
 
 @cli.command()
 def doctor():
     """Diagnose environment and configuration."""
 
 @cli.command()
+@click.option("--runtime", type=click.Choice(["native", "gut"]), default=None,
+              help="Test runtime; defaults to [test].runtime (native)")
 @click.option("--coverage", is_flag=True, help="Enable coverage instrumentation")
 @click.option("--min", "min_percent", type=int, help="Min coverage % to pass")
 @click.option("--suite", type=str, help="Run only named suite")
 @click.option("--test", "test_name", type=str, help="Run tests matching name")
+@click.option("--tag", "tags", multiple=True, help="Run native suites matching a tag")
+@click.option("--test-timeout", type=float, help="Per-test timeout for native tests")
+@click.option("--timeout", type=int, help="Godot import/process timeout")
 @click.option("--junit-xml", type=str, help="JUnit XML output path")
 @click.option("--no-exit-code", is_flag=True, help="Always exit 0")
 @click.option("--show-uncovered", is_flag=True, help="Show uncovered lines and branches when coverage is below 100%")
 @click.argument("paths", nargs=-1)
-def test(coverage, min_percent, suite, test_name, junit_xml, no_exit_code, show_uncovered, paths):
-    """Run unit tests via GUT."""
+def test(runtime, coverage, min_percent, suite, test_name, tags, test_timeout,
+         timeout, junit_xml, no_exit_code, show_uncovered, paths):
+    """Run tests via the native runtime or explicit legacy GUT path."""
 
 @cli.command()
 @click.argument("paths", nargs=-1)
@@ -542,9 +567,11 @@ if __name__ == "__main__":
 ### 3.5 `init.py` — Project Bootstrapping
 
 ```python
-def run_init(non_interactive: bool = False) -> None:
+def run_init(non_interactive: bool = False, with_gut: bool = False) -> None:
     """Main entry point for `gd-tools init`.
-    Orchestrates the full bootstrap flow."""
+
+    Always deploys the native test and coverage addons. GUT, its config, and
+    the legacy autoload are opt-in during the transition."""
 
 def find_project_root(start: Path | None = None) -> Path:
     """Walk up to find project.godot. Raises ConfigError if not found."""
@@ -553,7 +580,11 @@ def detect_godot_version(config: GdToolsConfig) -> str:
     """Find Godot binary, run --version. Raises GodotNotFoundError."""
 
 def is_gut_installed(project_root: Path) -> bool:
-    """Check if addons/gut/gut.gd exists."""
+    """Check if addons/gut/gut.gd exists (legacy runtime only)."""
+
+
+def install_native_test_addon(project_root: Path) -> None:
+    """Copy the bundled gd-tools-test addon with modified-file backups."""
 
 def install_gut(project_root: Path, godot_version: str,
                 non_interactive: bool) -> bool:
@@ -600,21 +631,22 @@ def print_summary(project_root: Path, actions: list[str]) -> None:
 
 #### `project.godot` Modifications
 
-Two sections are modified by `init`:
+Native initialization does not modify editor plugin or autoload sections. The
+legacy path (`--with-gut` or configured GUT runtime) adds:
 
 ```ini
-# Plugin enabling (GUT)
+# Plugin enabling (legacy GUT)
 [editor_plugins]
 enabled=PackedStringArray("res://addons/gut/plugin.gd")
 
-# Autoload registration (coverage tracker)
+# Autoload registration (legacy GUT coverage)
 [autoload]
 _GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"
 ```
 
 Both are idempotent — `init` checks for existing entries before adding.
 
-#### `.gutconfig.json` Generation
+#### `.gutconfig.json` Generation (legacy only)
 
 ```python
 GUTCONFIG_TEMPLATE = {
@@ -683,7 +715,7 @@ When merging with existing config: preserve user's `dirs`, `prefix`, `suffix`,
 ```python
 def run_doctor() -> DoctorResult:
     """Main entry point for `gd-tools doctor`.
-    Runs all 9 checks, returns aggregated result.
+    Runs environment, native, and optional legacy checks.
     Never raises — all exceptions caught and converted to failed CheckResults.
     Exit code: 0 if all pass, 1 if any check fails (critical or warning)."""
 
@@ -706,18 +738,29 @@ def check_godot_binary(config: GdToolsConfig) -> CheckResult:
 def check_godot_version(config: GdToolsConfig) -> CheckResult:
     """Verify Godot version >= 4.5."""
 
+def check_native_test_addon(project_root: Path) -> CheckResult:
+    """Verify native addon files and deployed version are current."""
+
+
 def check_gut_installed(project_root: Path) -> CheckResult:
     """Verify addons/gut/gut.gd exists."""
 
-def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
-    """Verify GUT version matches Godot version."""
+def check_gut_version(
+    project_root: Path,
+    godot_version: str,
+    required: bool = True,
+) -> CheckResult:
+    """Verify GUT version; mismatches are optional warnings in native mode."""
 
 def check_coverage_addon(project_root: Path) -> CheckResult:
     """Verify addons/gd-tools-coverage/*.gd all exist and version
     is not stale."""
 
-def check_gutconfig(project_root: Path) -> CheckResult:
-    """Verify .gutconfig.json is valid JSON and has hook paths."""
+def check_gutconfig(
+    project_root: Path,
+    required: bool = True,
+) -> CheckResult:
+    """Verify optional/required GUT JSON and hook paths."""
 
 def check_gd_tools_toml(project_root: Path) -> CheckResult:
     """Verify gd-tools.toml exists and is valid."""
@@ -725,17 +768,26 @@ def check_gd_tools_toml(project_root: Path) -> CheckResult:
 def check_gdtoolkit() -> CheckResult:
     """Verify gdlint and gdformat are installed (run --version)."""
 
-def check_autoload(project_root: Path) -> CheckResult:
-    """Verify _GDTCoverage autoload registered in project.godot."""
+def check_autoload(
+    project_root: Path,
+    required: bool = True,
+) -> CheckResult:
+    """Verify the legacy autoload; optional in native mode."""
 ```
 
 Output format: `format_doctor_table(result: DoctorResult) -> Table` — Rich table
 with ✓/✗ per check, message, and fix hint. Status color-coded: green ✓ (pass),
 red ✗ (critical fail), yellow ⚠ (warning fail). Caption shows pass count.
 
+The native addon is always required and its `_version.txt` is checked for
+staleness. GUT, `.gutconfig.json`, and the coverage autoload are required only
+when the resolved runtime is `gut`; their failures are informational warnings
+for a native project. `check_gut_version()` and the optional config/autoload
+checks accept a `required` flag so native mode remains non-blocking.
+
 ---
 
-### 3.7 `test_runner.py` — GUT Orchestration
+### 3.7 `test_runner.py` — Legacy GUT Orchestration
 
 ```python
 def run_tests(
@@ -858,6 +910,38 @@ instrumentation and `_active` stays `false`).
   or empty, config `test_dirs` are used as before.
 - `run_coverage_test()` in `orchestrator.py` also accepts `paths` and
   passes it through to `run_tests()`.
+
+---
+
+### 3.7a `native_test/` — Native Runtime Foundation
+
+The native path is the default for `gd-tools test`. It is split into a Python
+orchestrator and a bundled GDScript runtime:
+
+- `protocol.py` defines protocol version `1` Pydantic models for manifests,
+  suites, tests, coverage settings, and results. Results include timestamps,
+  engine errors/warnings, process output, and structured diagnostics. It also
+  provides atomic JSON replacement.
+- `discovery.py` deterministically finds scripts extending `GdToolsTest`,
+  extracts `class_name`, tags, and no-argument `test_*` methods, and applies
+  suite/test/tag/path filters. Explicit file paths remain exact.
+- `orchestrator.py` writes one manifest per suite and launches one headless
+  Godot process per suite. A missing/timeout/crashed process becomes a
+  structured error result; later suites still run. Each suite receives a
+  Godot log path for engine diagnostics. Coverage shards are merged into the
+  configured plan-v1 output.
+- `command.py` resolves project/Godot/config, performs the import pass,
+  applies CLI/config tags and the per-test timeout, converts native results to
+  the existing `TestResult` model, writes JUnit XML, renders reports, and
+  preserves exit codes `0/1/2`. `--timeout` remains the import/process limit.
+- `gd_tools_test.gd` provides assertions, async waits, and suite state; the
+  runner handles lifecycle failures, bounded setup/body/cleanup timeouts,
+  configured retries with fresh instances, structured diagnostics, optional
+  NDJSON events, and atomic result output. Coverage is transient and does not
+  install a native autoload.
+
+The public CLI keeps `--runtime gut` as an explicit compatibility selector.
+There is no automatic GUT migration in this foundation.
 
 ---
 
@@ -2224,9 +2308,9 @@ CLI catches GdToolsError → prints to stderr → sys.exit(exit_code)
 
 | Error                    | Exit Code | When                                      |
 |--------------------------|-----------|-------------------------------------------|
-| `ConfigError`            | 2         | Invalid gd-tools.toml, missing project.godot |
+| `ConfigError`            | 2         | Invalid gd-tools.toml, missing project.godot, or no native suites |
 | `GodotNotFoundError`     | 2         | Godot binary not found                    |
-| `GUTNotInstalledError`  | 2         | GUT addon missing when running tests     |
+| `GUTNotInstalledError`  | 2         | GUT addon missing when explicitly running the legacy path |
 | `CoveragePlanError`      | 2         | Plan generation or parsing failed         |
 | `TestFailureError`       | 1         | One or more tests failed                  |
 | `CoverageThresholdError` | 1         | Coverage below --min threshold            |
@@ -2269,7 +2353,7 @@ def find_gdscript_files(
 | lint     | `gdlintrc` (generated by init)|
 | format   | `gdformatrc` (generated by init)|
 | coverage | Python file discovery (plan_generator) |
-| test     | GUT config `dirs` (test files are included, not excluded) |
+| test     | Native discovery (or legacy GUT config `dirs` for `--runtime gut`) |
 
 **Note:** gdlint and gdformat read their own config files for excludes. The
 Python wrappers don't filter paths — they pass the path to the tool and let
@@ -2278,7 +2362,11 @@ because it needs to parse each file individually.
 
 ---
 
-## 10. GUT Installation Details
+## 10. Legacy GUT Installation Details
+
+GUT installation is retained only as a compatibility path. Native projects do
+not download or enable it unless `gd-tools init --with-gut` is used or the
+resolved runtime is explicitly `gut`.
 
 ### Download & Extract
 
