@@ -1,0 +1,20 @@
+Phase 1 verification report
+
+Automated commands:
+- CI=true .venv\Scripts\python.exe -m pytest tests/unit -q
+  Result: 848 passed; total coverage 96.77% (required 80%).
+- .venv\Scripts\python.exe -m ruff check src/ tests/
+  Result: passed.
+- .venv\Scripts\python.exe -m black --check src/ tests/
+  Result: passed.
+
+Changed source files were checked against corresponding unit tests:
+- src/gd_tools/config.py -> tests/unit/test_native_config.py and tests/unit/test_config.py
+- src/gd_tools/native_test/protocol.py -> tests/unit/test_native_protocol.py
+- src/gd_tools/native_test/discovery.py -> tests/unit/test_native_discovery.py
+- src/gd_tools/native_test/__init__.py -> covered through package import tests
+
+Manual verification confirmed by user:
+- TestConfig defaults to native runtime, five-second timeout, and zero retries.
+- Native discovery works in a GUT-free temporary project.
+- Full Godot execution is intentionally deferred to later phases.
