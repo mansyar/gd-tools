@@ -1,0 +1,8 @@
+Red-phase lifecycle isolation contract.
+
+- Added real-Godot E2E fixtures for after_each/scene exit ordering across pass, failure, and timeout.
+- Added retry assertions for fresh scene/context identity and isolated named-resource state.
+- Added cleanup-failure coverage requiring infrastructure-error classification.
+- Initial Red execution exposed fixture API/timing issues and the expected cleanup-classification gap; corrected fixtures preserve the intended contract.
+- Final focused suite: 6 integration E2E tests passed after implementation.
+- Black, Ruff, and diff checks passed.
