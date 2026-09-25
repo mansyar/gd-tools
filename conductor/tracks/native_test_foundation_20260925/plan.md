@@ -14,7 +14,7 @@
   - [ ] Define tests for suite, test, tag, timeout, and coverage metadata.
   - [ ] Define tests for invalid paths, malformed manifests, and unsupported runtime modes.
   - [ ] Run the targeted tests and confirm the expected Red phase.
-- [ ] Task: Add failing tests for native discovery and filtering
+- [x] Task: Add failing tests for native discovery and filtering [5e17c02]
   - [ ] Test configured test-directory discovery.
   - [ ] Test path, suite, exact-test, and tag filters.
   - [ ] Test deterministic ordering and duplicate removal.
