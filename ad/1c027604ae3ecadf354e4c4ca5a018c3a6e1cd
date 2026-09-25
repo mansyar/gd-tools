@@ -1,0 +1,1 @@
+Added public executable E2E coverage for native init, default native execution, JUnit, failure and --no-exit-code exit behavior, empty-suite guidance, coverage artifacts, and explicit GUT fallback selection. New E2E file passed 6 tests in 31.42s.
