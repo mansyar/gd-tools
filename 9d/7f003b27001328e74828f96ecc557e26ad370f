@@ -1,0 +1,6 @@
+Extended the artifact contract to runtime boundaries.
+
+- Verifies orchestrator publication of the run index, suite paths, run ID, and latest-run pruning.
+- Verifies preflight infrastructure failures publish a useful error index before re-raising.
+- Focused native command/orchestrator/artifact tests: 25 passed.
+- Black, Ruff, and diff checks passed.
