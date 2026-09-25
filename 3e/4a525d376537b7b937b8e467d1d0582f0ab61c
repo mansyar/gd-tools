@@ -1,0 +1,10 @@
+Added a real-Godot regression for the preflight-aware command flow.
+
+- Runs a plain NativeFixtureSuite through run_native_test_command.
+- Verifies exact test and tag selection, JUnit output, protocol-v2 preflight defaults, shared artifact run identity, enriched headless metadata, and suite result forwarding.
+- Existing command, coverage, retry, timeout, and assertion E2E coverage was rerun successfully.
+
+Verification:
+- New focused test passed.
+- Six native command/coverage/retry/timeout/assertion regression tests passed.
+- Black, Ruff, and diff checks passed.
