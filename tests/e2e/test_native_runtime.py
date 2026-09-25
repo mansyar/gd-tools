@@ -388,6 +388,40 @@ def test_native_runner_marks_timed_out_tests(godot_bin, tmp_path):
     assert payload["tests"][0]["duration_seconds"] < 1.0
 
 
+def test_native_runner_retries_failed_test_with_fresh_instance(
+    godot_bin, tmp_path
+):
+    """Retry settings create a fresh attempt and report the attempt count."""
+    project = _prepare_project(tmp_path, godot_bin)
+    retry_script = project / "test" / "retry_suite.gd"
+    retry_script.write_text(
+        "extends GdToolsTest\n"
+        "static var _attempt_count := 0\n\n\n"
+        "func test_retry() -> void:\n"
+        "    _attempt_count += 1\n"
+        "    if _attempt_count < 2:\n"
+        "        assert_true(false, \"first attempt fails\")\n",
+        encoding="utf-8",
+    )
+    suite = NativeSuite(
+        name="NativeRetrySuite",
+        path="res://test/retry_suite.gd",
+        tests=[NativeTest(name="test_retry", retries=1)],
+    )
+
+    result = run_native_tests(
+        project,
+        [suite],
+        godot_bin,
+        work_dir=tmp_path / "retry-orchestrated",
+    )
+
+    assert result.status == "passed"
+    assert len(result.tests) == 1
+    assert result.tests[0].status == "passed"
+    assert result.tests[0].attempts == 2
+
+
 def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
     """Native tests can await process, physics, timer, and signal events."""
     project = _prepare_project(tmp_path, godot_bin)

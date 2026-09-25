@@ -69,6 +69,8 @@ def discover_native_suites(
     suite: str | None = None,
     test: str | None = None,
     tags: Iterable[str] | None = None,
+    timeout_seconds: float = 5.0,
+    retries: int = 0,
 ) -> list[NativeSuite]:
     """Discover native suites and apply path-independent selection filters.
 
@@ -78,6 +80,8 @@ def discover_native_suites(
         suite: Optional exact suite class-name filter.
         test: Optional exact test-method filter.
         tags: Optional tags; a suite is selected when it has at least one.
+        timeout_seconds: Default per-test timeout placed in the manifest.
+        retries: Default retry count placed in the manifest.
 
     Returns:
         Deterministically ordered native suites with selected test methods.
@@ -118,7 +122,14 @@ def discover_native_suites(
                 name=suite_name,
                 path=_resource_path(path, project_root),
                 tags=suite_tags,
-                tests=[NativeTest(name=name) for name in test_names],
+                tests=[
+                    NativeTest(
+                        name=name,
+                        timeout_seconds=timeout_seconds,
+                        retries=retries,
+                    )
+                    for name in test_names
+                ],
             )
         )
 

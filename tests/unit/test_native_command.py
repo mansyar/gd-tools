@@ -45,7 +45,9 @@ def _native_result(
 def _config() -> SimpleNamespace:
     return SimpleNamespace(
         godot=SimpleNamespace(),
-        test=SimpleNamespace(test_dirs=["test"]),
+        test=SimpleNamespace(
+            test_dirs=["test"], timeout_seconds=5.0, retries=0
+        ),
         coverage=SimpleNamespace(
             output_dir=".gd-tools/coverage",
             exclude=[],
@@ -147,6 +149,8 @@ def test_run_native_command_propagates_filters_and_timeout(tmp_path):
         ["test"],
         suite="ExampleSuite",
         test="test_ok",
+        timeout_seconds=5.0,
+        retries=0,
     )
     assert run.call_args.kwargs["process_timeout"] == 42.0
     assert run.call_args.kwargs["coverage"] is None

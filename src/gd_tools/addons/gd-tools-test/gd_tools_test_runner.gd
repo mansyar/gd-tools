@@ -101,17 +101,59 @@ func _run_suite(suite_data: Dictionary) -> void:
 func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> void:
 	var test_name := str(test_data.get("name", ""))
 	_emit_event({"event": "test_started", "suite": suite_name, "name": test_name})
-	var test_context = script.new()
-	if not (test_context is GdToolsTest):
-		_record_test_result(
+	var retry_count := max(int(test_data.get("retries", 0)), 0)
+	var attempt := 1
+	var total_duration := 0.0
+	var final_result: Dictionary = {}
+
+	while true:
+		var attempt_result: Dictionary = await _run_test_attempt(
+			script,
 			suite_name,
 			test_name,
-			"error",
-			0.0,
-			"Suite does not extend GdToolsTest",
-			{},
+			test_data,
 		)
-		return
+		total_duration += float(attempt_result.get("duration_seconds", 0.0))
+		final_result = attempt_result
+		var status := str(final_result.get("status", "error"))
+		var retryable := status == "failed" or status == "timeout"
+		if not retryable or attempt > retry_count:
+			break
+		attempt += 1
+
+	var final_status := str(final_result.get("status", "error"))
+	_record_test_result(
+		suite_name,
+		test_name,
+		final_status,
+		total_duration,
+		str(final_result.get("message", "")),
+		final_result.get("diagnostics", {}),
+		attempt,
+	)
+	_emit_event({
+		"event": "test_finished",
+		"suite": suite_name,
+		"name": test_name,
+		"status": final_status,
+		"attempts": attempt,
+	})
+
+
+func _run_test_attempt(
+		script: GDScript,
+		suite_name: String,
+		test_name: String,
+		test_data: Dictionary
+) -> Dictionary:
+	var test_context = script.new()
+	if not (test_context is GdToolsTest):
+		return {
+			"status": "error",
+			"duration_seconds": 0.0,
+			"message": "Suite does not extend GdToolsTest",
+			"diagnostics": {},
+		}
 
 	get_root().add_child(test_context)
 	var started_at := Time.get_ticks_msec()
@@ -127,9 +169,15 @@ func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> v
 		_invoke_test(test_context, test_name, _active_test_token)
 		await test_call_completed
 	else:
-		_record_suite_error(suite_name, "Test method not found: %s" % test_name)
-		_test_completed = true
-		test_call_completed.emit()
+		_active_test_token += 1
+		test_context.queue_free()
+		await process_frame
+		return {
+			"status": "error",
+			"duration_seconds": 0.0,
+			"message": "Test method not found: %s" % test_name,
+			"diagnostics": {},
+		}
 
 	if not _test_timeout_reached and test_context.has_method("after_each"):
 		await test_context.call("after_each")
@@ -140,23 +188,16 @@ func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> v
 	if _test_timeout_reached:
 		status = "timeout"
 		message = "Test timed out after %.3f seconds" % timeout_seconds
-	_record_test_result(
-		suite_name,
-		test_name,
-		status,
-		float(Time.get_ticks_msec() - started_at) / 1000.0,
-		message,
-		{"failures": failures},
-	)
-	_emit_event({
-		"event": "test_finished",
-		"suite": suite_name,
-		"name": test_name,
-		"status": status,
-	})
+	var duration := float(Time.get_ticks_msec() - started_at) / 1000.0
 	_active_test_token += 1
 	test_context.queue_free()
 	await process_frame
+	return {
+		"status": status,
+		"duration_seconds": duration,
+		"message": message,
+		"diagnostics": {"failures": failures},
+	}
 
 
 func _activate_coverage(coverage_data: Dictionary) -> bool:
@@ -216,7 +257,8 @@ func _record_test_result(
 		status: String,
 		duration: float,
 		message: String,
-		diagnostics: Dictionary
+		diagnostics: Dictionary,
+		attempts: int = 1
 ) -> void:
 	if status == "failed" or status == "timeout":
 		_run_status = "failed"
@@ -227,7 +269,7 @@ func _record_test_result(
 		"name": test_name,
 		"status": status,
 		"duration_seconds": duration,
-		"attempts": 1,
+		"attempts": attempts,
 		"message": message,
 		"diagnostics": diagnostics,
 	})

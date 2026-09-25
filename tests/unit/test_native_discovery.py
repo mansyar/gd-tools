@@ -50,6 +50,22 @@ def test_discovery_finds_native_suites_and_test_methods(tmp_path):
     ]
 
 
+def test_discovery_applies_configured_timeout_and_retries(tmp_path):
+    """Configured execution defaults are carried into every manifest test."""
+    (tmp_path / "project.godot").touch()
+    _native_suite(tmp_path / "test" / "example_test.gd")
+
+    suites = discover_native_suites(
+        tmp_path,
+        test_dirs=["test"],
+        timeout_seconds=1.25,
+        retries=2,
+    )
+
+    assert all(test.timeout_seconds == 1.25 for test in suites[0].tests)
+    assert all(test.retries == 2 for test in suites[0].tests)
+
+
 def test_discovery_applies_suite_and_test_filters(tmp_path):
     """Suite and exact test filters narrow the native manifest."""
     (tmp_path / "project.godot").touch()

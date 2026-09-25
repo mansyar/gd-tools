@@ -51,6 +51,8 @@ def run_native_test_command(
         test_dirs,
         suite=suite,
         test=test_name,
+        timeout_seconds=config.test.timeout_seconds,
+        retries=config.test.retries,
     )
     if not suites:
         raise ConfigError(
