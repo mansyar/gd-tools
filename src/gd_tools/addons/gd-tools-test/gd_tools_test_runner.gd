@@ -7,9 +7,12 @@ extends SceneTree
 ## one manifest and exits with 0 for passing tests, 1 for test failures, and
 ## 2 for protocol/runtime errors.
 
-const PROTOCOL_VERSION := 2
-
 signal test_call_completed
+
+const PROTOCOL_VERSION := 2
+const TEST_CONTEXT_SCRIPT = preload(
+	"res://addons/gd-tools-test/gd_tools_test_context.gd"
+)
 
 var _test_results: Array[Dictionary] = []
 var _run_status := "passed"
@@ -156,7 +159,6 @@ func _run_test(
 		var attempt_result: Dictionary = await _run_test_attempt(
 			suite_context,
 			script,
-			suite_name,
 			test_name,
 			test_data
 		)
@@ -192,7 +194,6 @@ func _run_test(
 func _run_test_attempt(
 		suite_context: GdToolsTest,
 		script: GDScript,
-		suite_name: String,
 		test_name: String,
 		test_data: Dictionary
 ) -> Dictionary:
@@ -210,6 +211,25 @@ func _run_test_attempt(
 	get_root().add_child(test_context)
 	var started_ticks := Time.get_ticks_msec()
 	var started_at := _timestamp()
+	var integration_result := _prepare_integration(
+			test_context,
+			test_data.get("integration", {})
+	)
+	if not bool(integration_result.get("ok", false)):
+		var setup_message := str(
+				integration_result.get("message", "Unable to prepare integration")
+		)
+		test_context._gd_tools_clear_test_context()
+		test_context.queue_free()
+		await process_frame
+		return {
+			"status": "error",
+			"duration_seconds": float(Time.get_ticks_msec() - started_ticks) / 1000.0,
+			"message": setup_message,
+			"diagnostics": {},
+			"started_at": started_at,
+			"finished_at": _timestamp(),
+		}
 	var timeout_seconds := max(
 			float(test_data.get("timeout_seconds", 5.0)),
 			0.001
@@ -290,6 +310,78 @@ func _run_test_attempt(
 		"started_at": started_at,
 		"finished_at": finished_at,
 	}
+
+
+func _prepare_integration(
+		test_context: GdToolsTest,
+		integration_value: Variant
+) -> Dictionary:
+	var integration: Dictionary = {}
+	if typeof(integration_value) == TYPE_DICTIONARY:
+		integration = integration_value
+	var resource_result := _load_integration_resources(
+			integration.get("resources", {})
+	)
+	if not bool(resource_result.get("ok", false)):
+		return resource_result
+	var scene_result := _load_integration_scene(integration.get("scene", null))
+	if not bool(scene_result.get("ok", false)):
+		return scene_result
+	var resources: Dictionary = resource_result.get("resources", {})
+	var scene_root := scene_result.get("root") as Node
+	var context = TEST_CONTEXT_SCRIPT.new()
+	context.initialize(test_context, integration, scene_root, resources)
+	test_context._gd_tools_set_test_context(context)
+	if scene_root != null:
+		test_context.add_child(scene_root)
+	return {"ok": true}
+
+
+func _load_integration_resources(resource_value: Variant) -> Dictionary:
+	if typeof(resource_value) != TYPE_DICTIONARY:
+		return _integration_error(
+			"Integration resources must be a logical-name to path dictionary"
+		)
+	var resources: Dictionary = {}
+	for logical_name_value in resource_value:
+		var logical_name := str(logical_name_value)
+		var resource_path := str(resource_value[logical_name_value])
+		if not ResourceLoader.exists(resource_path):
+			return _integration_error(
+				"Unable to load integration resource '%s' at '%s'"
+				% [logical_name, resource_path]
+			)
+		var resource := ResourceLoader.load(resource_path) as Resource
+		if resource == null:
+			return _integration_error(
+				"Integration resource '%s' did not load as Resource: %s"
+				% [logical_name, resource_path]
+			)
+		resources[logical_name] = resource
+	return {"ok": true, "resources": resources}
+
+
+func _load_integration_scene(scene_value: Variant) -> Dictionary:
+	if scene_value == null:
+		return {"ok": true, "root": null}
+	var scene_path := str(scene_value)
+	if not ResourceLoader.exists(scene_path):
+		return _integration_error("Unable to load integration scene: %s" % scene_path)
+	var packed_scene := ResourceLoader.load(scene_path) as PackedScene
+	if packed_scene == null:
+		return _integration_error(
+			"Integration scene did not load as PackedScene: %s" % scene_path
+		)
+	var scene_root := packed_scene.instantiate()
+	if scene_root == null:
+		return _integration_error(
+			"Integration scene could not be instantiated: %s" % scene_path
+		)
+	return {"ok": true, "root": scene_root}
+
+
+func _integration_error(message: String) -> Dictionary:
+	return {"ok": false, "message": message}
 
 
 func _new_test_context(

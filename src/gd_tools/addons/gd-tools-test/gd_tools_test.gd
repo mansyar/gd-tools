@@ -8,6 +8,7 @@ extends Node
 
 var _gd_tools_failures: Array[Dictionary] = []
 var _gd_tools_suite_state: Dictionary = {}
+var _gd_tools_test_context: GdToolsTestContext = null
 
 
 func _gd_tools_record_failure(
@@ -57,6 +58,23 @@ func _gd_tools_set_suite_state(state: Dictionary) -> void:
 func _gd_tools_get_suite_state() -> Dictionary:
 	## Return the suite-scoped state dictionary.
 	return _gd_tools_suite_state
+
+
+func get_test_context() -> GdToolsTestContext:
+	## Return the scene/resource context for the current test attempt.
+	return _gd_tools_test_context
+
+
+func _gd_tools_set_test_context(context: GdToolsTestContext) -> void:
+	## Attach an integration context before lifecycle hooks execute.
+	_gd_tools_test_context = context
+
+
+func _gd_tools_clear_test_context() -> void:
+	## Detach the completed attempt context before releasing its resources.
+	if _gd_tools_test_context != null:
+		_gd_tools_test_context.clear()
+	_gd_tools_test_context = null
 
 
 func assert_true(value: bool, message: String = "") -> void:

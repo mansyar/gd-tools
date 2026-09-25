@@ -102,6 +102,9 @@ def _integration_files() -> dict[str, str]:
             @export var configured_resource: Resource
 
             func _ready() -> void:
+                pass
+
+            func emit_pulse_after_delay() -> void:
                 await get_tree().create_timer(0.05).timeout
                 pulse.emit()
         """,
@@ -205,7 +208,7 @@ def _integration_files() -> dict[str, str]:
                 assert_not_null(settings)
                 assert_eq(settings.get("value"), 7)
                 assert_null(root.get("configured_resource"))
-                await wait_process_frame()
+                root.call("emit_pulse_after_delay")
                 assert_true(await context.wait_for_signal(root.pulse, 1.0))
 
             func test_scene_override_pass() -> void:
