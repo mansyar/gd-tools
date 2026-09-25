@@ -145,7 +145,7 @@
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 5 — Windowed execution and bounded artifacts
+## Phase 5 — Windowed execution and bounded artifacts (Checkpoint: `354a12e`)
 
 **Purpose:** Add explicit windowed rendering, failure screenshots, and predictable latest-run artifact retention.
 
@@ -192,42 +192,42 @@
 
 **Purpose:** Make integration behavior visible and installable through every existing product boundary.
 
-- [ ] Task: Add failing reporting and exit-code tests
-  - [ ] Verify scene, resource, lifecycle, and artifact diagnostics reach Rich output.
-  - [ ] Verify JUnit includes integration diagnostics and artifact references.
-  - [ ] Verify ordinary test failures remain `1`.
-  - [ ] Verify declaration, display, protocol, teardown, and artifact failures dominate as `2`.
-  - [ ] Verify later suites still run after an infrastructure failure.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Integrate native integration diagnostics with reporting
-  - [ ] Normalize protocol-v2 diagnostics through the existing `TestResult` model.
-  - [ ] Add concise actionable CLI messages without parsing engine prose.
-  - [ ] Preserve machine-readable result/JUnit data.
-  - [ ] Avoid new CLI flags or configuration for this track.
-  - [ ] Run reporting tests to Green.
-- [ ] Task: Add failing scene-coverage tests
-  - [ ] Activate native coverage before scene/resource setup.
-  - [ ] Collect line and branch hits from production scripts reached through a scene.
-  - [ ] Preserve the full-project denominator and existing exclusions.
-  - [ ] Verify per-suite shard merging remains deterministic.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Preserve native coverage through integration setup
-  - [ ] Keep transient activation ahead of project scene execution.
-  - [ ] Exclude preflight/context/runner support files automatically.
-  - [ ] Retain existing threshold and report formats.
-  - [ ] Run coverage unit and E2E tests to Green.
-- [ ] Task: Update doctor and package-data integration
-  - [ ] Add failing tests for new bundled GDScript files and protocol-v2 metadata.
-  - [ ] Include preflight/context files in wheel/sdist package data.
-  - [ ] Diagnose stale or mismatched managed native addons before execution.
-  - [ ] Preserve managed-file backup/update behavior.
-  - [ ] Keep optional GUT diagnostics non-blocking in native mode.
-  - [ ] Run doctor, init, packaging, and update tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run reporting, coverage, doctor, and packaging tests.
-  - [ ] Build package artifacts and inspect native addon contents.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+- [x] Task: Add failing reporting and exit-code tests [commit: `5e7e0cf`]
+  - [x] Verify scene, resource, lifecycle, and artifact diagnostics reach Rich output.
+  - [x] Verify JUnit includes integration diagnostics and artifact references.
+  - [x] Verify ordinary test failures remain `1`.
+  - [x] Verify declaration, display, protocol, teardown, and artifact failures dominate as `2`.
+  - [x] Verify later suites still run after an infrastructure failure.
+  - [x] Confirm the expected Red phase.
+- [x] Task: Integrate native integration diagnostics with reporting [commit: `0475edc`]
+  - [x] Normalize protocol-v2 diagnostics through the existing `TestResult` model.
+  - [x] Add concise actionable CLI messages without parsing engine prose.
+  - [x] Preserve machine-readable result/JUnit data.
+  - [x] Avoid new CLI flags or configuration for this track.
+  - [x] Run reporting tests to Green.
+- [x] Task: Add failing scene-coverage tests [commit: `f9d8561`]
+  - [x] Activate native coverage before scene/resource setup.
+  - [x] Collect line and branch hits from production scripts reached through a scene.
+  - [x] Preserve the full-project denominator and existing exclusions.
+  - [x] Verify per-suite shard merging remains deterministic.
+  - [x] Confirm the expected Red phase.
+- [x] Task: Preserve native coverage through integration setup [commit: `f9d8561`]
+  - [x] Keep transient activation ahead of project scene execution.
+  - [x] Exclude preflight/context/runner support files automatically.
+  - [x] Retain existing threshold and report formats.
+  - [x] Run coverage unit and E2E tests to Green.
+- [x] Task: Update doctor and package-data integration [commit: `f9d8561`, `03b7b37`]
+  - [x] Add failing tests for new bundled GDScript files and protocol-v2 metadata.
+  - [x] Include preflight/context files in wheel/sdist package data.
+  - [x] Diagnose stale or mismatched managed native addons before execution.
+  - [x] Preserve managed-file backup/update behavior.
+  - [x] Keep optional GUT diagnostics non-blocking in native mode.
+  - [x] Run doctor, init, packaging, and update tests to Green.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Run reporting, coverage, doctor, and packaging tests.
+  - [x] Build package artifacts and inspect native addon contents.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 7 — Acceptance E2E, documentation, and final gates
 
