@@ -16,6 +16,7 @@ var _run_status := "passed"
 var _active_test_token := 0
 var _test_timeout_reached := false
 var _test_completed := false
+var _coverage_enabled := false
 
 
 func _init() -> void:
@@ -31,6 +32,9 @@ func _run() -> void:
 		_finish_with_error(
 			"Unsupported native protocol version: %s" % manifest.get("protocol_version", "")
 		)
+		return
+
+	if not _activate_coverage(manifest.get("coverage", {})):
 		return
 
 	_emit_event({"event": "run_started", "protocol_version": PROTOCOL_VERSION})
@@ -155,6 +159,23 @@ func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> v
 	await process_frame
 
 
+func _activate_coverage(coverage_data: Dictionary) -> bool:
+	if not bool(coverage_data.get("enabled", false)):
+		return true
+	var plan_path := str(coverage_data.get("plan_path", ""))
+	var output_path := str(coverage_data.get("output_path", ""))
+	if plan_path.is_empty() or output_path.is_empty():
+		_finish_with_error(
+			"Native coverage requires both plan_path and output_path"
+		)
+		return false
+	if not GdToolsNativeCoverage.activate(plan_path, output_path):
+		_finish_with_error("Unable to activate native coverage")
+		return false
+	_coverage_enabled = true
+	return true
+
+
 func _begin_test_timeout(timeout_seconds: float) -> void:
 	_active_test_token += 1
 	_test_timeout_reached = false
@@ -233,9 +254,22 @@ func _finish_with_error(message: String) -> void:
 
 
 func _finish_with_status() -> void:
+	if _coverage_enabled and not GdToolsNativeCoverage.write():
+		_run_status = "error"
+		_record_test_result(
+			"<runner>",
+			"<coverage>",
+			"error",
+			0.0,
+			"Unable to write native coverage output",
+			{},
+		)
 	_emit_event({"event": "run_finished", "status": _run_status})
 	_write_result()
-	quit(0 if _run_status == "passed" else 1)
+	if _run_status == "error":
+		quit(2)
+	else:
+		quit(0 if _run_status == "passed" else 1)
 
 
 func _emit_event(event: Dictionary) -> void:

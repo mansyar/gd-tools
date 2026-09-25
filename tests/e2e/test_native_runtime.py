@@ -472,3 +472,109 @@ def test_native_orchestrator_runs_multiple_real_suites(godot_bin, tmp_path):
         "NativeAsyncHelpersSuite",
     }
     assert all(test.status == "passed" for test in result.tests)
+
+
+def test_native_runner_collects_line_and_branch_coverage(godot_bin, tmp_path):
+    """Native coverage records statement and branch hits without GUT."""
+    project = _prepare_project(tmp_path, godot_bin)
+    plan_path = tmp_path / "native-plan.json"
+    coverage_path = tmp_path / "native-coverage.json"
+    result_path = tmp_path / "coverage-result.json"
+    plan_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_by": "gd-tools-test",
+                "files": [
+                    {
+                        "file_id": 0,
+                        "path": "res://scripts/coverage_subject.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [
+                            {
+                                "line": 5,
+                                "id": 0,
+                                "type": "branch",
+                                "branch_type": "if_true",
+                            },
+                            {
+                                "line": 6,
+                                "id": 1,
+                                "type": "statement",
+                                "branch_type": None,
+                            },
+                            {
+                                "line": 7,
+                                "id": 2,
+                                "type": "branch",
+                                "branch_type": "if_false",
+                            },
+                            {
+                                "line": 8,
+                                "id": 3,
+                                "type": "statement",
+                                "branch_type": None,
+                            },
+                        ],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_path = tmp_path / "coverage-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 1,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeCoverageSuite",
+                        "path": "res://test/coverage_suite.gd",
+                        "tests": [
+                            {"name": "test_statement_and_branch_coverage"}
+                        ],
+                    }
+                ],
+                "coverage": {
+                    "enabled": True,
+                    "plan_path": str(plan_path),
+                    "output_path": str(coverage_path),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert coverage_path.is_file()
+    coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
+    assert coverage["version"] == 1
+    assert coverage["files"][0]["file_id"] == 0
+    hits = coverage["files"][0]["hits"]
+    assert hits["0"] > 0
+    assert hits["1"] > 0
+    assert hits["2"] > 0
+    assert hits["3"] > 0
