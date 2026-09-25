@@ -19,9 +19,17 @@ from gd_tools.errors import (
     TestFailureError,
 )
 from gd_tools.godot import find_godot, run_godot
+from gd_tools.native_test.artifacts import (
+    ArtifactPublishError,
+    NativeArtifactLayout,
+    publish_artifact_index,
+)
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
-from gd_tools.native_test.preflight import run_native_preflight
+from gd_tools.native_test.preflight import (
+    NativePreflightError,
+    run_native_preflight,
+)
 from gd_tools.native_test.protocol import (
     NativeCoverage,
     NativeManifest,
@@ -107,18 +115,31 @@ def run_native_test_command(
     _import_project(godot_info.path, project_root, timeout)
     process_timeout = float(timeout) if timeout is not None else 300.0
     run_id = uuid.uuid4().hex
-    artifact_dir = project_root / ".gd-tools" / "artifacts" / run_id
-    preflight_result = run_native_preflight(
-        project_root,
-        NativeManifest(
-            project_root=project_root,
-            runtime=RuntimeMode.NATIVE,
-            suites=suites,
-        ),
-        godot_binary=godot_info.path,
-        run_dir=artifact_dir / "preflight",
-        timeout_seconds=process_timeout,
-    )
+    artifact_layout = NativeArtifactLayout.create(project_root, run_id)
+    try:
+        preflight_result = run_native_preflight(
+            project_root,
+            NativeManifest(
+                project_root=project_root,
+                runtime=RuntimeMode.NATIVE,
+                suites=suites,
+            ),
+            godot_binary=godot_info.path,
+            run_dir=artifact_layout.preflight_dir,
+            timeout_seconds=process_timeout,
+        )
+    except NativePreflightError:
+        try:
+            publish_artifact_index(
+                artifact_layout,
+                status="error",
+                suite_names=[],
+                suite_paths=[],
+                preflight_paths=artifact_layout.preflight_paths(),
+            )
+        except ArtifactPublishError:
+            pass
+        raise
     suites = preflight_result.suites
     coverage_settings, _ = _prepare_coverage(
         config,
@@ -131,9 +152,10 @@ def run_native_test_command(
         suites,
         godot_info.path,
         coverage=coverage_settings,
-        work_dir=artifact_dir / "native",
+        work_dir=artifact_layout.native_dir,
         process_timeout=process_timeout,
         run_id=run_id,
+        artifact_layout=artifact_layout,
     )
     _raise_for_native_error(native_result)
     failed_count = sum(

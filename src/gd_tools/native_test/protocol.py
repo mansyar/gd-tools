@@ -159,6 +159,7 @@ class NativeRunResult(BaseModel):
     status: Literal["passed", "failed", "error", "cancelled"]
     tests: list[NativeTestResult] = Field(default_factory=list)
     coverage_data_path: Path | None = None
+    artifact_index_path: Path | None = None
     diagnostics: dict[str, Any] = Field(default_factory=dict)
     started_at: str | None = None
     finished_at: str | None = None
