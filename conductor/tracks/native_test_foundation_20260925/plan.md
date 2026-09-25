@@ -37,10 +37,10 @@
   - [ ] Add defaults for native timeout, runtime, retries, and coverage paths.
   - [ ] Preserve existing GUT configuration behavior for legacy execution.
   - [ ] Add configuration serialization/validation tests.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run targeted unit tests and static checks.
-  - [ ] Review the manifest contract for forward compatibility.
-  - [ ] Create the phase checkpoint commit and record its SHA.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 1b82bf5]
+  - [x] Run targeted unit tests and static checks.
+  - [x] Review the manifest contract for forward compatibility.
+  - [x] Create the phase checkpoint commit and record its SHA.
 
 ## Phase 2 — Native GDScript runtime
 
