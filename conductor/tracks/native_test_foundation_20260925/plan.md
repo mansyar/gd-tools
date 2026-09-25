@@ -244,19 +244,11 @@
   - [x] Preserve exact file selectors or reject unsupported file inputs.
   - [x] Separate per-test timeout from process/import timeout semantics.
   - [x] Add CLI, discovery, and E2E selector tests (29 unit and 2 E2E passed).
-- [~] Task: Synchronize status and transition documentation
-  - [ ] Mark the review findings and completed foundation accurately.
-  - [ ] Correct stale GUT-first module/status documentation.
-  - [ ] Update user-facing diagnostics and timeout/tag documentation.
-  - [ ] Expose tag filtering through CLI/config/discovery.
-  - [ ] Preserve exact file selectors or reject unsupported file inputs.
-  - [ ] Separate per-test timeout from process/import timeout semantics.
-  - [ ] Add CLI, discovery, and E2E selector tests.
-- [ ] Task: Synchronize status and transition documentation
-  - [ ] Mark the review findings and completed foundation accurately.
-  - [ ] Correct stale GUT-first module/status documentation.
-  - [ ] Update user-facing diagnostics and timeout/tag documentation.
-- [ ] Task: Review-fix verification & checkpoint (Refer to `workflow.md`)
+- [x] Task: Synchronize status and transition documentation [8d35c68]
+  - [x] Mark the review findings and completed foundation accurately.
+  - [x] Correct stale GUT-first module/status documentation.
+  - [x] Update user-facing diagnostics and timeout/tag documentation.
+- [~] Task: Review-fix verification & checkpoint (Refer to `workflow.md`)
   - [ ] Run focused unit, integration, and native E2E tests.
   - [ ] Run full automated verification and style checks.
   - [ ] Perform manual CLI/GUT/native transition verification.
