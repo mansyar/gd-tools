@@ -234,12 +234,16 @@
   - [x] Capture engine errors and warnings in the native result protocol.
   - [x] Preserve process output and diagnostics through Python adapters.
   - [x] Add result, JUnit, and CLI regression coverage.
-- [ ] Task: Protect managed addon updates and doctor behavior
-  - [ ] Back up modified native addon files before replacement.
-  - [ ] Make optional GUT diagnostics non-blocking in native mode.
-  - [ ] Detect stale native addon versions.
-  - [ ] Add init and doctor regression tests.
-- [ ] Task: Complete public selector and timeout plumbing
+- [x] Task: Protect managed addon updates and doctor behavior [b388fd1]
+  - [x] Back up modified native addon files before replacement.
+  - [x] Make optional GUT diagnostics non-blocking in native mode.
+  - [x] Detect stale native addon versions.
+  - [x] Add init and doctor regression tests (Red: 4 failed, 7 passed; Green: 13 passed).
+- [~] Task: Complete public selector and timeout plumbing
+  - [ ] Expose tag filtering through CLI/config/discovery.
+  - [ ] Preserve exact file selectors or reject unsupported file inputs.
+  - [ ] Separate per-test timeout from process/import timeout semantics.
+  - [ ] Add CLI, discovery, and E2E selector tests.
   - [ ] Expose tag filtering through CLI/config/discovery.
   - [ ] Preserve exact file selectors or reject unsupported file inputs.
   - [ ] Separate per-test timeout from process/import timeout semantics.
