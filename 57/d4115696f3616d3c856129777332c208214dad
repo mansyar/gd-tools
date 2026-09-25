@@ -1,0 +1,3 @@
+Task: Integrate native coverage with the test runner
+
+Updated the Python orchestrator to assign unique per-suite coverage outputs, merge hit dictionaries into the configured final path, and expose the merged artifact on NativeRunResult. Added shard-merging regression coverage and verified it with native unit/E2E tests, Ruff, Black, and whitespace checks.
