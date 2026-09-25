@@ -1,0 +1,3 @@
+Task: Add failure-policy tests
+
+Added process-result consistency validation so return codes and native status cannot disagree, plus regression coverage for that infrastructure failure alongside existing process-error and timeout policies. Verified with four orchestrator unit tests, seven native E2E tests, Ruff, Black, and whitespace checks.
