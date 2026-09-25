@@ -1,0 +1,9 @@
+Documentation for the scene and resource integration track.
+
+- USER_GUIDE: INTEGRATION authoring example, declaration rules, the GdToolsTestContext API table, per-attempt ordering, windowed requirements, screenshot behavior, the artifact tree, and a new troubleshooting entry for protocol/addon mismatch and windowed-without-display exit 2.
+- PRD: scene and resource integration section with the preflight, merge rules, context API, isolation, and artifact contract; limits updated to the delivered scope.
+- ROADMAP: Phase 2 marked delivered with the autoload-policy decision recorded; Phase 1 checkboxes corrected, which were already implemented by the foundation track but still shown as open.
+- product.md: scene and resource integration requirements including the no-proxy, no-automatic-assignment, production-faithful autoload, retry isolation, and latest-run retention decisions.
+- tech-stack.md: the five managed native addon scripts plus protocol v2, execution modes, and artifact layout.
+
+Broader README, CHANGELOG, and release alignment stay in their separate track as planned.
