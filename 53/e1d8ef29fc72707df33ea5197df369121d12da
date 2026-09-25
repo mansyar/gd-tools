@@ -1,0 +1,17 @@
+Task: Add failing Python preflight-adapter tests
+
+Summary:
+- Added eight unit tests for one-process invocation, manifest/result/log paths, environment isolation, stale/missing output, timeout, malformed JSON, protocol mismatch, structured errors, and status/exit-code disagreement.
+- Asserted stdout is retained only as attached diagnostics and never treated as the result API.
+- Confirmed the Red phase fails because the preflight adapter module does not exist.
+
+Files:
+- tests/unit/test_native_preflight.py
+
+Why:
+- Python must convert Godot preflight failures into deterministic exit-code-2 diagnostics before selecting per-suite process modes.
+
+Verification:
+- .venv\Scripts\python.exe -m pytest tests/unit/test_native_preflight.py --no-cov -q
+  Result: expected collection failure: ModuleNotFoundError for gd_tools.native_test.preflight.
+- Ruff, Black, and git diff checks passed.
