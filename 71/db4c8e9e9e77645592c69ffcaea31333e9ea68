@@ -1,0 +1,19 @@
+Task: Add failing protocol-v2 unit tests
+
+Summary:
+- Defined the protocol-v2 suite integration and per-test effective metadata contract.
+- Added headless/windowed mode, res:// path, unknown-field, malformed-resource, and protocol-v1 rejection cases.
+- Added atomic JSON round-trip coverage for native preflight results and retained existing manifest/result coverage.
+
+Files:
+- tests/unit/test_native_protocol.py
+
+Why:
+- Locks the Python-side data contract before Godot preflight or runtime implementation is introduced.
+
+Verification:
+- .venv\Scripts\python.exe -m pytest tests/unit/test_native_protocol.py -q
+- Expected Red: collection fails because NativeExecutionMode and the v2 integration models do not exist yet.
+- .venv\Scripts\python.exe -m ruff check tests/unit/test_native_protocol.py
+- .venv\Scripts\python.exe -m black --check tests/unit/test_native_protocol.py
+- git diff --check
