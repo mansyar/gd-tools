@@ -137,7 +137,7 @@
   - [ ] Preserve the full application coverage denominator for filtered runs.
   - [ ] Reuse existing HTML, LCOV, Cobertura, and text report paths.
   - [ ] Preserve threshold behavior and exit-code mapping.
-- [ ] Task: Add coverage regression and exclusion tests
+- [x] Task: Add coverage regression and exclusion tests [d35e36b]
   - [ ] Verify generated harness and test files are excluded automatically.
   - [ ] Verify user exclusions remain honored.
   - [ ] Verify line and branch metrics remain stable for the clean fixture.
