@@ -72,16 +72,16 @@
 
 **Purpose:** Launch each suite with the correct Godot display mode while preserving existing process isolation and GUT routing.
 
-- [~] Task: Add failing command/orchestrator tests
-  - [ ] Verify default headless suites retain `--headless`.
-  - [ ] Verify windowed suites omit the headless display-driver flag.
-  - [ ] Verify one preflight occurs before all suite processes.
-  - [ ] Verify one isolated process still runs per selected suite.
-  - [ ] Verify non-integration native suites require no migration.
-  - [ ] Verify process timeouts, result mismatches, and later-suite continuation.
-  - [ ] Verify explicit GUT routing bypasses native preflight unchanged.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement preflight-aware command flow
+- [x] Task: Add failing command/orchestrator tests [commit: `ad5d6a4`]
+  - [x] Verify default headless suites retain `--headless`.
+  - [x] Verify windowed suites omit the headless display-driver flag.
+  - [x] Verify one preflight occurs before all suite processes.
+  - [x] Verify one isolated process still runs per selected suite.
+  - [x] Verify non-integration native suites require no migration.
+  - [x] Verify process timeouts, result mismatches, and later-suite continuation.
+  - [x] Verify explicit GUT routing bypasses native preflight unchanged.
+  - [x] Confirm the expected Red phase.
+- [~] Task: Implement preflight-aware command flow
   - [ ] Keep discovery and selection in Python.
   - [ ] Run Godot import before loading suite integration metadata.
   - [ ] Pass enriched metadata into the existing suite orchestrator.
