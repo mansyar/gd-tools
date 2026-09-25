@@ -753,6 +753,70 @@ def test_native_command_runs_real_suite_and_writes_junit(
     assert "test_pass" in junit_path.read_text(encoding="utf-8")
 
 
+def test_native_command_runs_plain_suite_through_preflight(
+    godot_bin, tmp_path, monkeypatch
+):
+    """Plain native suites pass through preflight with default headless mode."""
+    project = _prepare_project(tmp_path, godot_bin)
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+    junit_path = tmp_path / "plain-results.xml"
+
+    result = run_native_test_command(
+        config,
+        suite="NativeFixtureSuite",
+        test_name="test_pass",
+        tags=["smoke"],
+        junit_xml=str(junit_path),
+        timeout=30,
+    )
+
+    assert (result.total, result.passed, result.failed) == (1, 1, 0)
+    junit = junit_path.read_text(encoding="utf-8")
+    assert "test_pass" in junit
+    assert "test_async" not in junit
+
+    run_dirs = [
+        path
+        for path in (project / ".gd-tools" / "artifacts").iterdir()
+        if path.is_dir()
+    ]
+    assert len(run_dirs) == 1
+    run_dir = run_dirs[0]
+    preflight_result = json.loads(
+        (run_dir / "preflight" / "preflight.result.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert preflight_result["status"] == "ok"
+    assert preflight_result["suites"][0]["integration"] == {
+        "scene": None,
+        "resources": {},
+        "mode": "headless",
+    }
+    assert preflight_result["suites"][0]["tests"][0]["integration"] == {
+        "scene": None,
+        "resources": {},
+    }
+
+    suite_manifest = json.loads(
+        (run_dir / "native" / "suite-0000.manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert suite_manifest["suites"][0]["integration"]["mode"] == "headless"
+    suite_result = json.loads(
+        (run_dir / "native" / "suite-0000.result.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert suite_result["run_id"] == run_dir.name
+    assert [test["name"] for test in suite_result["tests"]] == ["test_pass"]
+
+
 def test_native_command_runs_real_coverage(godot_bin, tmp_path, monkeypatch):
     """The native CLI adapter reuses the existing coverage report pipeline."""
     project = _prepare_project(tmp_path, godot_bin)
