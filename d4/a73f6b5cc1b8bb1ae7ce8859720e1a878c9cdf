@@ -1,0 +1,3 @@
+Task: Add native configuration fields and validation
+
+Added native/gut runtime selection, positive async timeout validation, non-negative retry validation, and TOML round-trip coverage while preserving existing GUT fields. Verified with native and existing config unit tests, Ruff, and Black.
