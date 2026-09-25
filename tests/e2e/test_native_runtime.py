@@ -50,6 +50,48 @@ def _prepare_project(tmp_path: Path, godot_bin: str) -> Path:
     return project
 
 
+def _run_native_manifest(
+    project: Path,
+    godot_bin: str,
+    manifest: dict,
+    result_path: Path,
+    *,
+    events_path: Path | None = None,
+    log_path: Path | None = None,
+):
+    """Run the native Godot runner with optional event and log artifacts."""
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(result_path.with_suffix(".manifest.json"))
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    if events_path is not None:
+        env["GD_TOOLS_NATIVE_EVENTS"] = str(events_path)
+    if log_path is not None:
+        env["GD_TOOLS_NATIVE_LOG"] = str(log_path)
+    result_path.with_suffix(".manifest.json").write_text(
+        json.dumps(manifest),
+        encoding="utf-8",
+    )
+    command = [
+        godot_bin,
+        "--headless",
+        "--path",
+        str(project),
+        "--script",
+        "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+    ]
+    if log_path is not None:
+        command.extend(["--log-file", str(log_path)])
+    return subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+
 def test_native_fixture_loads_without_gut(godot_bin, tmp_path):
     """A native fixture must load without a GUT installation."""
     project = tmp_path / "native_test_project"
@@ -217,7 +259,130 @@ def test_native_runner_runs_lifecycle_hooks_after_failure(godot_bin, tmp_path):
     ]
 
 
-def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
+def test_native_runner_reports_lifecycle_failures_and_preserves_suite_state(
+    godot_bin, tmp_path
+):
+    """Setup/teardown failures and suite state affect the native result."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = {
+        "protocol_version": 1,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": "NativeBeforeAllFailureSuite",
+                "path": "res://test/review_before_all_suite.gd",
+                "tests": [{"name": "test_never_reports_green"}],
+            },
+            {
+                "name": "NativeAfterAllFailureSuite",
+                "path": "res://test/review_after_all_suite.gd",
+                "tests": [{"name": "test_pass"}],
+            },
+            {
+                "name": "NativeReviewStateSuite",
+                "path": "res://test/review_state_suite.gd",
+                "tests": [{"name": "test_uses_suite_state"}],
+            },
+        ],
+        "coverage": {"enabled": False},
+    }
+    result_path = tmp_path / "review-lifecycle-result.json"
+
+    process = _run_native_manifest(project, godot_bin, manifest, result_path)
+
+    assert process.returncode == 1, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    results = {test["suite"]: test for test in payload["tests"]}
+    assert results["NativeBeforeAllFailureSuite"]["status"] == "failed"
+    assert results["NativeBeforeAllFailureSuite"]["name"] == "before_all"
+    assert results["NativeAfterAllFailureSuite"]["status"] == "failed"
+    assert results["NativeAfterAllFailureSuite"]["name"] == "after_all"
+    assert results["NativeReviewStateSuite"]["status"] == "passed"
+
+
+def test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup(
+    godot_bin, tmp_path
+):
+    """A hanging setup hook is bounded and cleanup still runs."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = {
+        "protocol_version": 1,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": "NativeReviewTimeoutCleanupSuite",
+                "path": "res://test/review_timeout_cleanup_suite.gd",
+                "tests": [
+                    {
+                        "name": "test_pass",
+                        "timeout_seconds": 0.05,
+                    }
+                ],
+            }
+        ],
+        "coverage": {"enabled": False},
+    }
+    result_path = tmp_path / "review-timeout-result.json"
+    log_path = tmp_path / "godot-timeout.log"
+
+    process = _run_native_manifest(
+        project,
+        godot_bin,
+        manifest,
+        result_path,
+        log_path=log_path,
+    )
+
+    assert process.returncode == 1, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    test = payload["tests"][0]
+    assert test["status"] == "timeout"
+    assert test["duration_seconds"] < 0.5
+    assert (project / "review-timeout.log").read_text(
+        encoding="utf-8"
+    ).splitlines() == ["after_each"]
+
+
+def test_native_runner_captures_engine_errors_and_warnings(
+    godot_bin, tmp_path
+):
+    """Godot engine diagnostics fail the run and appear in native JSON."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = {
+        "protocol_version": 1,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": "NativeEngineDiagnosticsSuite",
+                "path": "res://test/engine_diagnostics_suite.gd",
+                "tests": [{"name": "test_engine_diagnostics"}],
+            }
+        ],
+        "coverage": {"enabled": False},
+    }
+    result_path = tmp_path / "engine-diagnostics-result.json"
+    log_path = tmp_path / "godot-engine.log"
+
+    process = _run_native_manifest(
+        project,
+        godot_bin,
+        manifest,
+        result_path,
+        log_path=log_path,
+    )
+
+    assert process.returncode == 2, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "error"
+    assert any("native engine error" in item for item in payload["engine_errors"])
+    assert any(
+        "native engine warning" in item for item in payload["engine_warnings"]
+    )
+
     """Assertion failures include values, message, and source location."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest_path = tmp_path / "assertion-manifest.json"

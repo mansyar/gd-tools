@@ -127,6 +127,26 @@ def test_run_result_serializes_test_status_and_attempts(tmp_path):
     assert loaded.tests[0].message == "Expected 2, got 3"
 
 
+def test_run_result_serializes_engine_diagnostics_and_timestamps(tmp_path):
+    """Native results retain engine diagnostics and lifecycle timestamps."""
+    result = NativeRunResult(
+        run_id="run-diagnostics",
+        status="error",
+        started_at="2026-09-25T07:00:00",
+        finished_at="2026-09-25T07:00:01",
+        engine_errors=["native engine error"],
+        engine_warnings=["native engine warning"],
+    )
+
+    path = write_json_atomic(tmp_path / "diagnostics.json", result)
+    loaded = NativeRunResult.model_validate(json.loads(path.read_text()))
+
+    assert loaded.started_at == "2026-09-25T07:00:00"
+    assert loaded.finished_at == "2026-09-25T07:00:01"
+    assert loaded.engine_errors == ["native engine error"]
+    assert loaded.engine_warnings == ["native engine warning"]
+
+
 def test_write_json_atomic_replaces_existing_file(tmp_path):
     """Atomic serialization replaces a previous result without extra files."""
     path = tmp_path / "result.json"

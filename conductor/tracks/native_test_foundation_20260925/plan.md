@@ -222,10 +222,10 @@
 **Purpose:** Correct the confirmed review findings without expanding the native foundation into the deferred GUT bridge, scene integration, or migration-tooling tracks.
 
 - [~] Task: Add regression tests for lifecycle and engine diagnostics
-  - [ ] Reproduce ignored `before_all`/`after_all` failures and lost suite state.
-  - [ ] Reproduce lifecycle-hook timeout and cleanup behavior.
-  - [ ] Reproduce engine error/warning result handling.
-  - [ ] Run the focused tests and confirm the expected Red phase.
+  - [x] Reproduce ignored `before_all`/`after_all` failures and lost suite state.
+  - [x] Reproduce lifecycle-hook timeout and cleanup behavior.
+  - [x] Reproduce engine error/warning result handling.
+  - [x] Run the focused tests and confirm the expected Red phase (`4 failed, 19 passed`).
 - [ ] Task: Fix native lifecycle and timeout semantics
   - [ ] Preserve suite-scoped state/resources while keeping fresh test instances.
   - [ ] Include setup and cleanup in the bounded lifecycle timeout.
