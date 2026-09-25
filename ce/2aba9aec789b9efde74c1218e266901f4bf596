@@ -1,0 +1,15 @@
+Phase 2 checkpoint: Godot metadata preflight
+
+Automated verification:
+- .venv\Scripts\python.exe -m pytest tests/unit/test_native_preflight.py tests/e2e/test_native_preflight.py --no-cov -q
+  Result: 21 passed.
+- Targeted preflight adapter coverage: 91% line coverage and 78% branch coverage.
+- Ruff, Black, gdformat, gdlint, and git diff checks passed.
+- Exact source search found no Python-side INTEGRATION parser; GDScript remains the sole integration-metadata parser.
+
+Manual verification:
+- User confirmed review and verification of the preflight GDScript, Python adapter, and E2E contract.
+
+Checkpoint scope:
+- Protocol-v2 Godot preflight resolves suite metadata without suite construction or lifecycle execution.
+- Python adapter provides one isolated subprocess boundary and structured exit-code-2 errors.
