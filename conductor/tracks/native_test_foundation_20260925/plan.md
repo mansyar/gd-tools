@@ -131,7 +131,7 @@
   - [ ] Collect coverage data without requiring `_GDTCoverage` as a native permanent autoload.
   - [ ] Keep existing GUT hook/autoload behavior unchanged for legacy execution.
   - [ ] Write coverage data atomically.
-- [ ] Task: Integrate native coverage with the test runner
+- [x] Task: Integrate native coverage with the test runner [57d4115]
   - [ ] Pass plan/output paths through the manifest/runtime boundary.
   - [ ] Merge suite coverage shards in the Python orchestrator.
   - [ ] Preserve the full application coverage denominator for filtered runs.
