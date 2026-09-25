@@ -141,3 +141,72 @@ def test_native_runner_executes_manifest(godot_bin, tmp_path):
         "test_async",
     ]
     assert all(test["status"] == "passed" for test in payload["tests"])
+
+
+def test_native_runner_runs_lifecycle_hooks_after_failure(godot_bin, tmp_path):
+    """Lifecycle hooks run in order and cleanup follows a failed test."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "lifecycle-manifest.json"
+    result_path = tmp_path / "lifecycle-result.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 1,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeLifecycleSuite",
+                        "path": "res://test/lifecycle_suite.gd",
+                        "tests": [
+                            {"name": "test_pass"},
+                            {"name": "test_fail"},
+                        ],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    events = (
+        (project / "lifecycle.log").read_text(encoding="utf-8").splitlines()
+    )
+    assert events == [
+        "before_all",
+        "before_each",
+        "test_pass",
+        "after_each",
+        "before_each",
+        "test_fail",
+        "after_each",
+        "after_all",
+    ]
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert [test["status"] for test in payload["tests"]] == [
+        "passed",
+        "failed",
+    ]
