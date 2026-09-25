@@ -75,11 +75,11 @@
   - [ ] Emit optional structured progress events.
   - [ ] Ensure final result writes are atomic and recoverable after partial execution.
   - [ ] Add result serialization tests.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run native GDScript fixture tests headlessly.
-  - [ ] Verify no GUT files or GUT hooks are required.
-  - [ ] Review the public API for consistency with the approved specification.
-  - [ ] Create the phase checkpoint commit and record its SHA.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: bdf2531]
+  - [x] Run native GDScript fixture tests headlessly.
+  - [x] Verify no GUT files or GUT hooks are required.
+  - [x] Review the public API for consistency with the approved specification.
+  - [x] Create the phase checkpoint commit and record its SHA.
 
 ## Phase 3 — Async execution and failure isolation
 
