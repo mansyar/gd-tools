@@ -109,10 +109,10 @@
   - [ ] Verify infrastructure failures map to exit code `2`.
   - [ ] Verify test/coverage failures map to exit code `1`.
   - [ ] Verify later suites still report after an earlier crash.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run async, timeout, and crash tests.
-  - [ ] Run the full existing Python unit suite for regressions.
-  - [ ] Create the phase checkpoint commit and record its SHA.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 1015a05]
+  - [x] Run async, timeout, and crash tests.
+  - [x] Run the full existing Python unit suite for regressions.
+  - [x] Create the phase checkpoint commit and record its SHA.
 
 ## Phase 4 — Native coverage integration
 
