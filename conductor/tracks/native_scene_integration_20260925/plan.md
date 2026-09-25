@@ -140,9 +140,9 @@
   - [x] Preserve existing suite state and lifecycle-hook behavior.
   - [x] Run lifecycle, timeout, retry, and integration tests to Green.
 - [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run all headless scene/resource integration tests.
-  - [ ] Inspect scene ownership and teardown for leaks or cross-test state.
-  - [ ] Perform the workflow's manual verification.
+  - [x] Run all headless scene/resource integration tests.
+  - [x] Inspect scene ownership and teardown for leaks or cross-test state.
+  - [x] Perform the workflow's manual verification.
   - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 5 — Windowed execution and bounded artifacts
