@@ -343,16 +343,39 @@ def test_check_native_test_addon_requires_integration_files(tmp_path):
     assert "gd-tools init" in result.fix_hint
 
 
+@patch("gd_tools.doctor.__version__", "0.3.0")
 def test_check_native_test_addon_passes_with_full_runtime(tmp_path):
     """Doctor passes when every managed native runtime file is deployed."""
     addon = tmp_path / "addons" / "gd-tools-test"
     addon.mkdir(parents=True)
     for name in NATIVE_TEST_ADDON_FILES:
         (addon / name).touch()
+    (addon / "_version.txt").write_text("0.3.0\n", encoding="utf-8")
 
     result = check_native_test_addon(tmp_path)
 
     assert result.passed is True
+    # The check must have inspected the deployment: it reports the version it
+    # read and names no absent or outdated file, so an unconditional pass
+    # cannot satisfy this test.
+    assert "0.3.0" in result.message
+    assert "missing" not in result.message.lower()
+    assert "outdated" not in result.message.lower()
+
+
+def test_check_native_test_addon_rejects_one_missing_runtime_file(tmp_path):
+    """A single absent managed file is critical, not a warning."""
+    addon = tmp_path / "addons" / "gd-tools-test"
+    addon.mkdir(parents=True)
+    for name in NATIVE_TEST_ADDON_FILES:
+        (addon / name).touch()
+    (addon / "gd_tools_test_context.gd").unlink()
+
+    result = check_native_test_addon(tmp_path)
+
+    assert result.passed is False
+    assert result.severity == "critical"
+    assert "gd_tools_test_context.gd" in result.message
 
 
 # --- check_gut_version ---

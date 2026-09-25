@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import import_godot_project
+
 from gd_tools.config import GdToolsConfig, GodotConfig, TestConfig
 from gd_tools.native_test.command import run_native_test_command
 from gd_tools.native_test.orchestrator import run_native_tests
@@ -36,17 +38,7 @@ def _prepare_project(tmp_path: Path, godot_bin: str) -> Path:
     shutil.copytree(NATIVE_FIXTURE, project)
     shutil.copytree(NATIVE_ADDON, project / "addons" / "gd-tools-test")
 
-    import_result = subprocess.run(
-        [godot_bin, "--headless", "--path", str(project), "--import"],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=30,
-    )
-    assert import_result.returncode == 0, (
-        import_result.stdout + import_result.stderr
-    )
+    import_godot_project(godot_bin, project)
     return project
 
 
@@ -100,17 +92,7 @@ def test_native_fixture_loads_without_gut(godot_bin, tmp_path):
     shutil.copytree(NATIVE_FIXTURE, project)
     shutil.copytree(NATIVE_ADDON, project / "addons" / "gd-tools-test")
 
-    import_result = subprocess.run(
-        [godot_bin, "--headless", "--path", str(project), "--import"],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=30,
-    )
-    assert import_result.returncode == 0, (
-        import_result.stdout + import_result.stderr
-    )
+    import_godot_project(godot_bin, project)
 
     result = subprocess.run(
         [

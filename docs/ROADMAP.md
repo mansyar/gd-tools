@@ -42,10 +42,11 @@ gd-tools init --with-gut       # opt into legacy bootstrap files
 gd-tools test --runtime gut    # use the existing GUT runner
 ```
 
-The foundation intentionally defers scene/resource integration, broad mocking,
-parameterized tests, parallel execution, editor UI, automatic migration, and
-GUT removal to follow-up tracks. The compatibility bridge is limited to the
-core subset required for the transition and is not a long-term public API.
+The foundation defers broad mocking, parameterized tests, parallel execution,
+editor UI, automatic migration, and GUT removal to follow-up tracks. Scene and
+resource integration shipped with the native scene-integration track. The
+compatibility bridge is limited to the core subset required for the
+transition and is not a long-term public API.
 
 - **Quick wins ship first** -- low-effort, high-impact improvements that
   users feel immediately.

@@ -166,12 +166,10 @@ func _test_method_names(script: Script) -> Dictionary:
 		var arguments: Variant = method.get("args", [])
 		if typeof(arguments) != TYPE_ARRAY:
 			continue
-		var requires_arguments := false
-		for argument: Variant in arguments:
-			if typeof(argument) == TYPE_DICTIONARY and not (argument as Dictionary).has("default"):
-				requires_arguments = true
-				break
-		if not requires_arguments:
+		# Discovery only selects no-argument test methods, so a parameterized
+		# method is not a runnable test here either. Treating it as known would
+		# let an override validate for a test that is never executed.
+		if (arguments as Array).is_empty():
 			names[method_name] = true
 	return names
 

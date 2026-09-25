@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
+
+from conftest import import_godot_project
 
 from gd_tools.config import GdToolsConfig, GodotConfig, TestConfig
 from gd_tools.native_test.command import run_native_test_command
@@ -18,7 +21,11 @@ from gd_tools.native_test.preflight import (
     NativePreflightError,
     run_native_preflight,
 )
-from gd_tools.native_test.protocol import NativeManifest, RuntimeMode
+from gd_tools.native_test.protocol import (
+    NativeManifest,
+    NativeRunResult,
+    RuntimeMode,
+)
 
 pytestmark = pytest.mark.e2e
 
@@ -49,17 +56,7 @@ def _prepare_project(
         path.write_text(dedent(content), encoding="utf-8")
     shutil.copytree(NATIVE_ADDON, project / "addons" / "gd-tools-test")
 
-    import_result = subprocess.run(
-        [godot_bin, "--headless", "--path", str(project), "--import"],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=30,
-    )
-    assert import_result.returncode == 0, (
-        import_result.stdout + import_result.stderr
-    )
+    import_godot_project(godot_bin, project)
     return project
 
 
@@ -287,9 +284,14 @@ def test_native_integration_context_supports_scenes_resources_and_diagnostics(
 
     missing = details["test_missing_lookups"]
     assert missing.status == "failed"
-    diagnostics = json.dumps(missing.diagnostics, sort_keys=True)
-    assert "MissingNode" in diagnostics
-    assert "missing_resource" in diagnostics
+    # Assert the structured kind and the requested identifier separately, so
+    # a diagnostic that loses the path cannot still pass on a stray substring.
+    failures = missing.diagnostics["failures"]
+    kinds = {failure["assertion"]: failure for failure in failures}
+    assert set(kinds) == {"integration_node", "integration_resource"}
+    assert "MissingNode" in kinds["integration_node"]["message"]
+    assert "missing_resource" in kinds["integration_resource"]["message"]
+    assert kinds["integration_resource"]["actual"] == "missing_resource"
 
     suite = preflight.suites[0]
     assert suite.integration is not None
@@ -363,6 +365,12 @@ def test_native_runner_reports_runtime_scene_load_failure(tmp_path, godot_bin):
     assert preflight.status == "ok"
     assert result.status == "error"
     assert len(result.tests) == 1
+    failure = result.tests[0]
+    # The diagnostic must name the offending asset, not just report a failure.
+    assert failure.status == "error"
+    assert "PackedScene" in failure.message, failure.message
+    assert "not_scene.tres" in failure.message, failure.message
+    assert failure.suite == "InvalidIntegrationSuite"
     failure = result.tests[0]
     assert failure.name == "test_not_run"
     assert failure.status == "error"
@@ -604,16 +612,109 @@ def _windowed_files(mode: str, failing: bool) -> dict[str, str]:
     }
 
 
+def _run_runner_headless(project: Path, godot_bin: str, suites):
+    """Drive the bundled runner itself with a headless display server.
+
+    The orchestrator omits ``--headless`` for a windowed suite, so this
+    reproduces the case the runner's own display guard exists for: a windowed
+    suite running on a headless renderer.
+    """
+    artifact_dir = project / ".gd-tools" / "artifacts" / "direct"
+    manifest_path = artifact_dir / "suite-0000.manifest.json"
+    result_path = artifact_dir / "suite-0000.result.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest = NativeManifest(
+        project_root=project, runtime=RuntimeMode.NATIVE, suites=suites
+    )
+    manifest_path.write_text(manifest.model_dump_json(), encoding="utf-8")
+    env = {
+        **os.environ,
+        "GD_TOOLS_NATIVE_MANIFEST": str(manifest_path),
+        "GD_TOOLS_NATIVE_RESULT": str(result_path),
+        "GD_TOOLS_NATIVE_EVENTS": str(artifact_dir / "events.ndjson"),
+        "GD_TOOLS_NATIVE_LOG": str(artifact_dir / "runner.log"),
+        "GD_TOOLS_NATIVE_SCREENSHOT": str(artifact_dir / "suite-0000"),
+        "GD_TOOLS_NATIVE_RUN_ID": "direct",
+    }
+    completed = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+            "--log-file",
+            str(artifact_dir / "godot.log"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=60,
+        env=env,
+        check=False,
+    )
+    result = NativeRunResult.model_validate_json(
+        result_path.read_text(encoding="utf-8")
+    )
+    return completed.returncode, result
+
+
+def test_native_windowed_suite_without_a_display_is_an_explicit_error(
+    tmp_path, godot_bin
+):
+    """A windowed suite on a headless renderer fails explicitly, never falls back."""
+    project = _prepare_project(
+        tmp_path, godot_bin, _windowed_files("windowed", False)
+    )
+    suites = discover_native_suites(
+        project, [str(project / "test" / "windowed_suite.gd")]
+    )
+    preflight = run_native_preflight(
+        project,
+        NativeManifest(
+            project_root=project, runtime=RuntimeMode.NATIVE, suites=suites
+        ),
+        godot_binary=godot_bin,
+        run_dir=project / ".gd-tools" / "artifacts" / "direct" / "preflight",
+        timeout_seconds=30,
+    )
+    assert preflight.status == "ok"
+    assert preflight.suites[0].integration.mode.value == "windowed"
+
+    returncode, result = _run_runner_headless(
+        project, godot_bin, preflight.suites
+    )
+
+    assert result.status == "error"
+    assert returncode == 2, result.tests
+    # No test may have run: the guard is a suite-level infrastructure failure.
+    assert [test.name for test in result.tests] == ["<suite>"]
+    assert "requires a display" in result.tests[0].message
+    assert not list(
+        (project / ".gd-tools" / "artifacts" / "direct" / "native").glob(
+            "*.failure.png"
+        )
+    )
+
+
 def _skip_without_display(result):
-    if result.tests and result.tests[0].name == "<process>":
-        message = result.tests[0].message.lower()
+    """Skip a windowed assertion when the host cannot open a display.
+
+    Only a process- or engine-level failure is treated as a missing display.
+    A test failure that merely mentions a window is a real failure, so it is
+    never converted into a skip.
+    """
+    for test in result.tests:
+        if test.name not in ("<process>", "<engine>"):
+            continue
+        message = test.message.lower()
         if any(
             marker in message
-            for marker in ("display", "renderer", "x11", "wayland", "window")
+            for marker in ("display", "renderer", "x11", "wayland")
         ):
-            pytest.skip(
-                f"Godot display is unavailable: {result.tests[0].message}"
-            )
+            pytest.skip(f"Godot display is unavailable: {test.message}")
 
 
 def test_native_windowed_failure_captures_screenshot_after_each(
@@ -867,11 +968,13 @@ def test_native_context_screenshot_write_failure_is_infrastructure(
     _skip_without_display(result)
     assert result.status == "error"
     engine_result = next(
-        test for test in result.tests if test.name == "<engine>"
+        (test for test in result.tests if test.name == "<engine>"), None
     )
-    assert "Can't save PNG" in "\n".join(
-        engine_result.diagnostics.get("engine_errors", [])
-    )
+    assert engine_result is not None, [t.name for t in result.tests]
+    # Assert the structured engine error rather than Godot's English text,
+    # which is version and locale specific.
+    engine_errors = engine_result.diagnostics.get("engine_errors", [])
+    assert any("failure.png" in error for error in engine_errors), engine_errors
 
 
 def _retain_resource_files() -> dict[str, str]:
@@ -966,4 +1069,4 @@ def test_native_screenshot_failure_keeps_original_failure_message(
     test = next(t for t in result.tests if t.name == "test_windowed")
     assert test.status == "error"
     assert "windowed failure" in test.message, test.message
-    assert "Screenshot capture failed" in test.message, test.message
+    assert "screenshot capture failed" in test.message.lower(), test.message

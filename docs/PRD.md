@@ -196,11 +196,13 @@ logical name, and `null` removes an inherited entry. Unknown fields, invalid
 modes, and overrides for non-test methods are configuration errors and exit `2`.
 
 The runtime exposes an explicit `GdToolsTestContext` from `get_test_context()`
-for the scene root, relative and recursive glob node lookup, named resources,
-bounded signal waits, effective metadata, and screenshot capture. Resources are
-never assigned to nodes automatically. The context is live in `before_each`, the
-test, and `after_each`; every attempt rebuilds the scene, context, and resources
-so retries are isolated. Project autoloads run exactly as in production.
+for the scene root, relative node lookup, recursive name-substring node lookup,
+named resources, bounded signal waits, effective metadata, and screenshot
+capture. Resources are never assigned to nodes automatically. The context is
+live in `before_each`, the test, and `after_each`; every attempt rebuilds the
+scene, context, and a private copy of each resource so retries are isolated even
+when a previous attempt kept and mutated a reference. Project autoloads run
+exactly as in production.
 
 Windowed suites require a real display and fail with exit `2` instead of falling
 back to headless. Failed, timed-out, and errored attempts in a windowed suite

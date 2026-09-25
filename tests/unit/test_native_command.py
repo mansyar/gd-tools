@@ -477,16 +477,28 @@ def test_run_native_command_raises_infrastructure_error(tmp_path):
 # --- Phase 6: reporting and exit codes for integration runs ---
 
 
-def test_to_test_result_exposes_artifact_index_path(tmp_path):
-    """The CLI result model carries the published artifact index."""
+def test_run_native_command_surfaces_the_published_artifact_index(tmp_path):
+    """A completed run reports the index path it actually received."""
     from gd_tools.native_test.command import _to_test_result
 
-    native = _native_result()
-    native.artifact_index_path = tmp_path / "artifacts.json"
+    index_path = tmp_path / "run-1" / "artifacts.json"
+    native = _native_result(
+        status="passed",
+        tests=[{"name": "test_pass", "status": "passed", "suite": "S"}],
+    )
+    native = native.model_copy(update={"artifact_index_path": index_path})
 
     result = _to_test_result(native, tmp_path, str(tmp_path / "results.xml"))
 
-    assert result.artifact_index_path == tmp_path / "artifacts.json"
+    assert result.artifact_index_path == index_path
+    junit = (tmp_path / "results.xml").read_text(encoding="utf-8")
+    assert f'name="artifact_index" value="{index_path}"' in junit
+    # A run with no published index reports none rather than a placeholder.
+    without = _native_result(
+        status="passed",
+        tests=[{"name": "test_pass", "status": "passed", "suite": "S"}],
+    )
+    assert _to_test_result(without, tmp_path, None).artifact_index_path is None
 
 
 def test_run_native_command_reports_infrastructure_error_before_raising(

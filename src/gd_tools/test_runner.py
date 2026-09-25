@@ -301,6 +301,14 @@ def format_test_results(result: TestResult) -> None:
     )
     output.print_table(table)
 
+    if result.artifact_index_path is not None:
+        output.console.print(
+            Text.assemble(
+                ("Run artifacts: ", "dim"),
+                (str(result.artifact_index_path), "cyan"),
+            )
+        )
+
     if result.failed == 0:
         output.print_success(f"All {result.total} test(s) passed.")
         return

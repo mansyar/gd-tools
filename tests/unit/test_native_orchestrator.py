@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from subprocess import CompletedProcess
+from subprocess import CompletedProcess, TimeoutExpired
 from unittest.mock import patch
 
 import pytest
@@ -28,7 +28,9 @@ def _suite(name: str) -> NativeSuite:
     )
 
 
-def _write_result(result_path: Path, status: str = "passed") -> None:
+def _write_result(
+    result_path: Path, status: str = "passed", diagnostics: dict | None = None
+) -> None:
     result_path.write_text(
         json.dumps(
             {
@@ -39,11 +41,11 @@ def _write_result(result_path: Path, status: str = "passed") -> None:
                     {
                         "suite": "ExampleSuite",
                         "name": "test_example",
-                        "status": "passed",
+                        "status": status,
                         "duration_seconds": 0.01,
                         "attempts": 1,
                         "message": "",
-                        "diagnostics": {},
+                        "diagnostics": diagnostics or {},
                     }
                 ],
             }
@@ -128,10 +130,10 @@ def test_run_native_tests_passes_screenshot_base_and_indexes_captures(
         assert kwargs["env"]["GD_TOOLS_NATIVE_SCREENSHOT"] == str(
             layout.suite_paths(0)["screenshot_base"]
         )
-        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
-        _write_result(result_path)
         captured.parent.mkdir(parents=True, exist_ok=True)
         captured.write_bytes(b"png")
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        _write_result(result_path, diagnostics={"screenshot": str(captured)})
         return CompletedProcess(args, 0, "", "")
 
     with patch(
@@ -178,7 +180,7 @@ def test_run_native_tests_republishes_index_when_retention_fails(tmp_path):
     index = json.loads(layout.index_path.read_text(encoding="utf-8"))
     assert result.status == "error"
     assert index["status"] == "error"
-    assert "retention" in result.tests[-1].message.lower()
+    assert "prune" in result.tests[-1].message.lower()
 
 
 def test_run_native_tests_omits_headless_for_windowed_suite(tmp_path):
@@ -328,3 +330,22 @@ def test_run_native_tests_records_subprocess_timeout(tmp_path):
     assert result.status == "error"
     assert result.tests[0].status == "error"
     assert "process timeout" in result.tests[0].message
+
+
+def test_run_native_tests_records_expired_process_timeout(tmp_path):
+    """A real subprocess.TimeoutExpired is an infrastructure result too."""
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=TimeoutExpired(
+            cmd=["godot"], timeout=5.0, output="partial", stderr="err"
+        ),
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("TimeoutSuite")],
+            godot_binary="godot",
+        )
+
+    assert result.status == "error"
+    assert result.tests[0].status == "error"
+    assert "Godot process failed" in result.tests[0].message

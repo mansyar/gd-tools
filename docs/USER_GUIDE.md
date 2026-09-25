@@ -520,11 +520,22 @@ Declaration rules:
 | --- | --- |
 | `get_scene_root()` | Root node of the loaded primary scene, or `null` |
 | `find_node("Panel/Icon")` | Relative node lookup; records a structured `integration_node` failure when missing |
-| `find_nodes("Item*")` | Recursive glob lookup returning every match |
+| `find_nodes("Item*")` | Recursive lookup of nodes whose name contains the text; a trailing `*` is accepted so `Item*` reads as a prefix. Records `integration_node_pattern` when nothing matches |
 | `get_resource("balance")` | Named resource lookup; records `integration_resource` on failure |
-| `get_integration()` | Effective scene, resources, and mode for the current test |
-| `wait_for_signal(sig, timeout)` | Bounded signal wait returning `false` on timeout |
-| `capture_screenshot(path)` | Atomically writes a PNG of the viewport |
+| `get_integration()` | Effective scene and resources for the current test. `mode` is suite-level and is not part of the per-test metadata |
+| `wait_for_signal(sig, timeout)` | Bounded signal wait returning `false` on timeout and recording `integration_signal` |
+| `capture_screenshot(path)` | Atomically writes a PNG of the viewport to an absolute path; returns `{"ok", "path", "message"}` |
+
+Failure kinds recorded by the context: `integration_scene` (no primary scene
+for this test), `integration_node` (missing or invalid node path),
+`integration_node_pattern` (empty, invalid, or unmatched pattern),
+`integration_resource` (missing or non-`Resource` value), `integration_signal`
+(signal wait timed out), and `integration_context` (no active test for a
+context-level operation).
+
+Only no-argument `test_*` methods are discovered and run, so a method declared
+as `func test_x(value: int = 1)` is not a runnable test; an `INTEGRATION` entry
+targeting it is reported as an unknown test rather than silently accepted.
 
 Integration behavior:
 
@@ -533,7 +544,8 @@ Integration behavior:
 - The test context is available in `before_each`, the test, and
   `after_each`, so lifecycle hooks can inspect the live scene.
 - Each attempt builds a fresh scene, context, and resource set, so retries
-  never observe state from a previous attempt.
+  never observe state from a previous attempt, including a resource that a
+  previous attempt mutated and kept a reference to.
 - Project autoloads behave exactly as they do in production and are never
   replaced by test-only autoloads.
 - Order per attempt: metadata validation, resource loading, scene
@@ -546,6 +558,10 @@ suite requires a display; when the renderer is headless the run fails with
 exit `2` and no silent fallback occurs. Failed, timed-out, and errored tests
 in a windowed suite capture a screenshot after `after_each` and before
 teardown, and the path is reported in the test diagnostics and JUnit XML.
+Each failing test writes its own capture, so several failures in one suite
+are all retained. A capture that cannot be written turns the attempt into an
+infrastructure error, and the original failure message is preserved alongside
+the capture error.
 
 Every run publishes its artifacts under `.gd-tools/artifacts/<run_id>/`:
 
@@ -553,11 +569,15 @@ Every run publishes its artifacts under `.gd-tools/artifacts/<run_id>/`:
 .gd-tools/artifacts/<run_id>/
 ├── artifacts.json          # machine-readable index of the run
 ├── preflight/              # manifest, result, and log
-└── native/                 # per-suite manifest, result, events, log, screenshot
+└── native/                 # per-suite manifest, result, events, log, screenshots
 ```
 
-Only the latest run is retained; older run directories are pruned after the
-new index is published.
+The index is printed at the end of the run and recorded as an
+`artifact_index` property on the JUnit `<testsuite>`. It lists only the
+artifacts that were actually written, and `screenshots` lists the realized
+captures for a suite. Only the latest run is retained; older run directories
+are pruned after the new index is published, and only directories carrying
+this tool's own run markers are pruned.
 
 **Plan Caching:**
 
@@ -1436,8 +1456,9 @@ configuration failure rather than being guessed at.
    locally modified copies into `addons/gd-tools-test/.backups/`, and rewrites
    `_version.txt`.
 3. Confirm with `gd-tools doctor` that the "Native Test Addon" check passes.
-4. Remove `.gd-tools/artifacts/` if a stale preflight result is ever
-   reported; runs are keyed by directory and only the latest is retained.
+   A deployed addon that is merely older than the CLI is reported as a
+   passing warning, so an outdated `_version.txt` means step 2 is still
+   needed even when the check is not failing.
 
 If a windowed suite reports exit `2` with a display or renderer message, the
 suite declared `"mode": "windowed"` but the process has no display. Run it on a

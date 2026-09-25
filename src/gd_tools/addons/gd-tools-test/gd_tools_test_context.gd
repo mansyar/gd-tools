@@ -69,7 +69,8 @@ func find_node(relative_path: String) -> Node:
 
 
 func find_nodes(pattern: String) -> Array[Node]:
-	## Recursively find nodes whose names match a glob pattern.
+	## Recursively find nodes whose names contain the given text.
+	## A trailing "*" is accepted and ignored, so "Target*" reads as a prefix.
 	var matches: Array[Node] = []
 	if _scene_root == null:
 		_record_failure(
@@ -88,10 +89,33 @@ func find_nodes(pattern: String) -> Array[Node]:
 		)
 		return matches
 
+	# String.match applies the pattern as a regular expression, not a glob, so
+	# a leading "Target*" searches for a literal "Target" rather than a prefix.
+	# Matching on the name substring keeps both spellings behaving the way the
+	# documented prefix example reads.
+	var matcher := RegEx.new()
+	var literal := pattern.trim_suffix("*")
+	if literal.is_empty():
+		_record_failure(
+			"integration_node_pattern",
+			"Scene node pattern must name at least one character: %s" % pattern,
+			pattern,
+			"a node name pattern"
+		)
+		return matches
+	if matcher.compile(literal) != OK:
+		_record_failure(
+			"integration_node_pattern",
+			"Scene node pattern is not a valid search pattern: %s" % pattern,
+			pattern,
+			"a plain node name or prefix"
+		)
+		return matches
+
 	var pending: Array[Node] = [_scene_root]
 	while not pending.is_empty():
 		var node := pending.pop_back()
-		if str(node.name).match(pattern):
+		if matcher.search(str(node.name)) != null:
 			matches.append(node)
 		pending.append_array(node.get_children())
 
@@ -152,7 +176,13 @@ func wait_for_signal(target_signal: Signal, timeout_seconds: float) -> bool:
 	if _wait_timed_out:
 		_record_failure(
 			"integration_signal",
-			"Signal wait timed out after %.3f seconds" % timeout_seconds,
+			(
+				"Signal %s timed out after %.3f seconds"
+				% [
+					_wait_signal.get_name(),
+					timeout_seconds,
+				]
+			),
 			timeout_seconds,
 			"a signal before timeout"
 		)
@@ -176,6 +206,8 @@ func capture_screenshot(path: String) -> Dictionary:
 			var image := texture.get_image()
 			if image == null or image.is_empty():
 				message = "Viewport image is empty"
+			elif path.is_relative_path():
+				message = "Screenshot path must be absolute: %s" % path
 			else:
 				var directory := path.get_base_dir()
 				if not DirAccess.dir_exists_absolute(directory):
@@ -192,6 +224,7 @@ func capture_screenshot(path: String) -> Dictionary:
 					temporary_path = path + ".tmp"
 					var save_error := image.save_png(temporary_path)
 					if save_error != OK:
+						DirAccess.remove_absolute(temporary_path)
 						message = (
 							"Unable to write screenshot %s (error %s)"
 							% [

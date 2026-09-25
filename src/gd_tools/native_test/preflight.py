@@ -185,11 +185,38 @@ def _read_preflight_result(
         ) from exc
 
 
+def _bounded_output(text: str | None, limit: int = 5_000) -> str:
+    """Return process output bounded so one noisy run cannot flood a report.
+
+    Args:
+        text: Captured process output, which may be absent.
+        limit: Maximum characters retained from the end of the output.
+
+    Returns:
+        The tail of the output, marked when characters were dropped.
+    """
+    if not text:
+        return ""
+    if len(text) <= limit:
+        return text
+    return f"[truncated {len(text) - limit} characters]\n{text[-limit:]}"
+
+
 def _append_process_output(message: str, stdout: str, stderr: str) -> str:
+    """Append bounded process output to an error message.
+
+    Args:
+        message: Actionable error prefix.
+        stdout: Captured standard output.
+        stderr: Captured standard error.
+
+    Returns:
+        The message with any bounded process output appended.
+    """
     if stdout.strip():
-        message = f"{message}; stdout: {stdout.strip()}"
+        message = f"{message}; stdout: {_bounded_output(stdout.strip())}"
     if stderr.strip():
-        message = f"{message}; stderr: {stderr.strip()}"
+        message = f"{message}; stderr: {_bounded_output(stderr.strip())}"
     return message
 
 

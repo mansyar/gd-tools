@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import uuid
 from pathlib import Path
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -81,7 +82,7 @@ def run_native_tests(
     has_error = False
     process_stdout: list[str] = []
     process_stderr: list[str] = []
-    suite_artifact_paths: list[dict[str, Path]] = []
+    suite_artifact_paths: list[dict[str, Any]] = []
 
     for index, suite in enumerate(suites):
         if artifact_layout is not None:
@@ -90,14 +91,14 @@ def run_native_tests(
             result_path = suite_paths["result"]
             events_path = suite_paths["events"]
             log_path = suite_paths["log"]
-            screenshot_path = suite_paths["screenshot"]
+            screenshot_path = suite_paths["screenshot_base"]
             suite_artifact_paths.append(suite_paths)
         else:
             manifest_path = output_dir / f"suite-{index:04d}.manifest.json"
             result_path = output_dir / f"suite-{index:04d}.result.json"
             events_path = output_dir / f"suite-{index:04d}.events.ndjson"
             log_path = output_dir / f"suite-{index:04d}.log"
-            screenshot_path = output_dir / f"suite-{index:04d}.failure.png"
+            screenshot_path = output_dir / f"suite-{index:04d}"
         result_path.unlink(missing_ok=True)
         events_path.unlink(missing_ok=True)
         log_path.unlink(missing_ok=True)
@@ -201,6 +202,12 @@ def run_native_tests(
                 }
             )
             all_tests.extend(parsed_result.tests)
+            if artifact_layout is not None:
+                suite_artifact_paths[-1]["screenshots"] = [
+                    Path(test.diagnostics["screenshot"])
+                    for test in parsed_result.tests
+                    if test.diagnostics.get("screenshot")
+                ]
             if parsed_result.status == "failed":
                 has_failure = True
             elif parsed_result.status == "error":
@@ -252,6 +259,19 @@ def run_native_tests(
         except ArtifactPublishError as exc:
             has_error = True
             all_tests.append(_process_error("<artifacts>", str(exc)))
+            # Retention runs after the index is written, so a retention-only
+            # failure leaves an index that disagrees with the reported status.
+            # Republish so the recorded status always matches the exit code.
+            try:
+                artifact_index_path = publish_artifact_index(
+                    artifact_layout,
+                    status="error",
+                    suite_names=[suite.name for suite in suites],
+                    suite_paths=suite_artifact_paths,
+                    preflight_paths=artifact_layout.preflight_paths(),
+                )
+            except ArtifactPublishError:
+                pass
             status = "error"
 
     return NativeRunResult(

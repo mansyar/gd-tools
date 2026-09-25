@@ -9,6 +9,8 @@ from textwrap import dedent
 
 import pytest
 
+from conftest import import_godot_project
+
 pytestmark = pytest.mark.e2e
 
 NATIVE_FIXTURE = (
@@ -74,15 +76,7 @@ def _prepare_project(
         destination.write_text(dedent(content).lstrip(), encoding="utf-8")
     shutil.copytree(NATIVE_ADDON, project / "addons" / "gd-tools-test")
 
-    process = subprocess.run(
-        [godot_bin, "--headless", "--path", str(project), "--import"],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=30,
-    )
-    assert process.returncode == 0, process.stdout + process.stderr
+    import_godot_project(godot_bin, project)
     return project
 
 

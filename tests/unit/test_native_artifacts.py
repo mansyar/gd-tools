@@ -40,6 +40,12 @@ def test_layout_rejects_unsafe_run_ids(tmp_path, run_id):
         NativeArtifactLayout.create(tmp_path, run_id)
 
 
+def _touch(path: Path) -> None:
+    """Create a placeholder artifact file with its parent directory."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}", encoding="utf-8")
+
+
 def _write_run(path: Path, marker: str) -> Path:
     """Create a run-shaped artifact directory for retention tests."""
     path.mkdir(parents=True)
@@ -54,7 +60,7 @@ def test_publish_records_paths_and_prunes_only_after_publication(tmp_path):
     layout = NativeArtifactLayout.create(tmp_path, "run-1")
     suite_paths = layout.suite_paths(0)
     for key in ("manifest", "result", "events", "log"):
-        suite_paths[key].write_text("{}", encoding="utf-8")
+        _touch(suite_paths[key])
 
     index_path = publish_artifact_index(
         layout,
@@ -87,8 +93,8 @@ def test_publish_omits_artifacts_that_were_never_written(tmp_path):
     """The index lists only artifact paths that exist on disk."""
     layout = NativeArtifactLayout.create(tmp_path, "run-1")
     suite_paths = layout.suite_paths(0)
-    suite_paths["result"].write_text("{}", encoding="utf-8")
-    suite_paths["coverage"].write_text("{}", encoding="utf-8")
+    _touch(suite_paths["result"])
+    _touch(suite_paths["coverage"])
 
     index_path = publish_artifact_index(
         layout,
@@ -109,8 +115,9 @@ def test_publish_records_only_screenshots_that_exist(tmp_path):
     """Per-test screenshot lists contain realized captures only."""
     layout = NativeArtifactLayout.create(tmp_path, "run-1")
     suite_paths = layout.suite_paths(0)
-    suite_paths["result"].write_text("{}", encoding="utf-8")
+    _touch(suite_paths["result"])
     captured = layout.native_dir / "suite-0000.test_one.failure.png"
+    captured.parent.mkdir(parents=True, exist_ok=True)
     captured.write_bytes(b"png")
     suite_paths["screenshots"] = [
         captured,

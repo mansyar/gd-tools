@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -19,7 +20,30 @@ from pydantic import (
 
 NATIVE_PROTOCOL_VERSION = 2
 
-_ResourcePath = Annotated[str, StringConstraints(pattern=r"^res://.+")]
+
+def _reject_relative_segments(value: str) -> str:
+    """Reject a resource path that walks out of the project root.
+
+    Args:
+        value: A ``res://`` path declared by a suite.
+
+    Returns:
+        The unchanged path when every segment is a real project segment.
+
+    Raises:
+        ValueError: If a segment is ``.`` or ``..``.
+    """
+    segments = value.removeprefix("res://").split("/")
+    if any(segment in {".", ".."} for segment in segments):
+        raise ValueError("path segments must not be '.' or '..': " f"{value!r}")
+    return value
+
+
+_ResourcePath = Annotated[
+    str,
+    StringConstraints(pattern=r"^res://.+$"),
+    AfterValidator(_reject_relative_segments),
+]
 
 
 class RuntimeMode(str, Enum):

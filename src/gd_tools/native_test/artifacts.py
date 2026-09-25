@@ -92,7 +92,7 @@ class NativeArtifactLayout:
             "events": Path(f"{prefix}.events.ndjson"),
             "log": Path(f"{prefix}.log"),
             "coverage": Path(f"{prefix}.coverage.json"),
-            "screenshot": Path(f"{prefix}.failure.png"),
+            "screenshot_base": Path(f"{prefix}"),
         }
 
 
@@ -101,19 +101,23 @@ def publish_artifact_index(
     *,
     status: str,
     suite_names: list[str],
-    suite_paths: list[dict[str, Path]],
+    suite_paths: list[dict[str, Any]],
     preflight_paths: dict[str, Path],
 ) -> Path:
     """Atomically publish one run index, then prune older run directories.
 
     The index is written before retention runs. If publication fails, the
-    previous run remains available for diagnosis.
+    previous run remains available for diagnosis. Only the directories this
+    tool created are treated as runs, so unrelated directories kept beside
+    them are left untouched.
 
     Args:
         layout: Run-scoped artifact layout.
         status: Terminal native result status.
         suite_names: Suite names in process order.
         suite_paths: Stable artifact paths in the same order as suite_names.
+            Entries that were never written are omitted, and a ``screenshots``
+            sequence lists only realized captures.
         preflight_paths: Stable preflight artifact paths.
 
     Returns:
@@ -132,12 +136,7 @@ def publish_artifact_index(
     for suite_name, paths in zip(suite_names, suite_paths):
         if not suite_name:
             raise ValueError("suite_names cannot contain empty names")
-        suites.append(
-            {
-                "suite": suite_name,
-                **{key: str(path) for key, path in paths.items()},
-            }
-        )
+        suites.append({"suite": suite_name, **_realized(paths)})
 
     payload = {
         "protocol_version": NATIVE_PROTOCOL_VERSION,
@@ -163,6 +162,29 @@ def publish_artifact_index(
             f"could not prune older runs under {layout.artifact_root}"
         ) from exc
     return layout.index_path
+
+
+def _realized(paths: dict[str, Any]) -> dict[str, Any]:
+    """Stringify only the artifact entries that exist on disk.
+
+    An index is a machine-readable record of what a run produced, so an
+    artifact that was never written must be absent rather than advertised as
+    a dangling path. Sequence values are realized per element so a partially
+    written capture list is still accurate.
+    """
+    realized: dict[str, Any] = {}
+    for key, value in paths.items():
+        if isinstance(value, (list, tuple)):
+            items = [
+                str(item)
+                for item in value
+                if isinstance(item, Path) and item.is_file()
+            ]
+            if items:
+                realized[key] = items
+        elif not isinstance(value, Path) or value.is_file():
+            realized[key] = str(value)
+    return realized
 
 
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
@@ -191,10 +213,23 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _prune_old_runs(artifact_root: Path, current_run_dir: Path) -> None:
-    """Remove direct child run directories except the current run."""
+    """Remove direct child run directories except the current run.
+
+    Only directories that carry this tool's own run markers are removed, so a
+    directory a user placed under the artifact root is never deleted.
+    """
     if not artifact_root.is_dir():
         return
     for child in artifact_root.iterdir():
         if child == current_run_dir or not child.is_dir() or child.is_symlink():
             continue
+        if not _is_run_directory(child):
+            continue
         shutil.rmtree(child)
+
+
+def _is_run_directory(path: Path) -> bool:
+    """Report whether a directory was produced by a previous native run."""
+    if (path / "artifacts.json").exists():
+        return True
+    return (path / "native").is_dir() or (path / "preflight").is_dir()

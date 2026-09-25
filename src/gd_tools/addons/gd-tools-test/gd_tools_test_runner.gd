@@ -319,20 +319,37 @@ func _run_test_attempt(
 	var message := _failure_message(failures)
 	if not cleanup_failures.is_empty() or cleanup_timed_out:
 		status = "error"
-		if cleanup_timed_out:
-			message = "after_each timed out after %.3f seconds" % timeout_seconds
-		else:
-			message = "after_each failed: %s" % _failure_message(cleanup_failures)
+		# A cleanup failure is infrastructure, but the assertion that failed
+		# first is the actionable part, so both are reported.
+		var cleanup_message := (
+			"after_each timed out after %.3f seconds" % timeout_seconds
+			if cleanup_timed_out
+			else "after_each failed: %s" % _failure_message(cleanup_failures)
+		)
+		message = (
+			"%s; %s" % [message, cleanup_message]
+			if not message.is_empty()
+			else cleanup_message
+		)
 	elif timed_out:
 		status = "timeout"
 		message = "Test timed out after %.3f seconds" % timeout_seconds
 	var diagnostics := {"failures": failures}
 	if _current_windowed and status in ["failed", "timeout", "error"]:
-		var screenshot_result := await _capture_failure_screenshot(test_context)
+		var screenshot_result := await _capture_failure_screenshot(
+			test_context, test_name
+		)
 		if not bool(screenshot_result.get("ok", false)):
 			status = "error"
-			message = "Screenshot capture failed: %s" % str(
+			# Keep the real cause visible: a missing screenshot must not erase
+			# the assertion or cleanup failure that actually failed the test.
+			var detail := str(
 				screenshot_result.get("message", "unknown screenshot error")
+			)
+			message = (
+				"%s (screenshot capture failed: %s)" % [message, detail]
+				if not message.is_empty()
+				else "Screenshot capture failed: %s" % detail
 			)
 			diagnostics["screenshot_error"] = screenshot_result
 		elif not str(screenshot_result.get("path", "")).is_empty():
@@ -398,7 +415,9 @@ func _load_integration_resources(resource_value: Variant) -> Dictionary:
 				"Integration resource '%s' did not load as Resource: %s"
 				% [logical_name, resource_path]
 			)
-		resources[logical_name] = resource
+		# ResourceLoader caches instances, so a per-attempt duplicate is what
+		# keeps a retained, mutated resource from leaking into a retry.
+		resources[logical_name] = resource.duplicate(true)
 	return {"ok": true, "resources": resources}
 
 
@@ -425,22 +444,27 @@ func _integration_error(message: String) -> Dictionary:
 	return {"ok": false, "message": message}
 
 
-func _capture_failure_screenshot(test_context: GdToolsTest) -> Dictionary:
+func _capture_failure_screenshot(
+		test_context: GdToolsTest, test_name: String
+) -> Dictionary:
 	if _screenshot_path.is_empty():
 		return {
 			"ok": false,
 			"path": "",
 			"message": "Windowed failure screenshot path was not provided",
 		}
+	# One capture per failing test, so a later failure cannot overwrite the
+	# evidence for an earlier one in the same suite.
+	var path := "%s.%s.failure.png" % [_screenshot_path, test_name]
 	await RenderingServer.frame_post_draw
 	var context = test_context.get_test_context()
 	if context == null:
 		return {
 			"ok": false,
-			"path": _screenshot_path,
+			"path": path,
 			"message": "Integration context is unavailable for screenshot capture",
 		}
-	return context.capture_screenshot(_screenshot_path)
+	return context.capture_screenshot(path)
 
 
 func _teardown_integration(test_context: GdToolsTest) -> void:
