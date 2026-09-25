@@ -1,0 +1,7 @@
+Implemented run-scoped native artifact publication.
+
+- Added NativeArtifactLayout with safe run IDs, fixed .gd-tools/artifacts/<run_id> paths, stable preflight/suite/index names, and machine-readable absolute path records.
+- Added atomic artifact-index publication and latest-run pruning only after successful publication; publication failures become infrastructure errors.
+- Integrated the layout into the native command and orchestrator, including preflight-failure indexes and NativeRunResult.artifact_index_path.
+- Preserved coverage shard placement and existing per-suite process behavior.
+- Focused unit suite: 25 passed; Black, Ruff, and diff checks passed.
