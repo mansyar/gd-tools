@@ -1,0 +1,13 @@
+Implemented mode-aware native suite orchestration.
+
+- Added shared run_id support so preflight and suite artifacts belong to one command run.
+- Command now imports the project, executes exactly one native preflight, and forwards enriched suite metadata to the orchestrator.
+- Headless remains the default; suites with effective mode=windowed omit Godot's --headless flag.
+- Preserved the existing explicit GUT runtime bypass.
+- Added regression coverage for run ordering, shared run identity/artifact paths, mode selection, and preflight failure propagation.
+
+Verification:
+- 16 focused command/orchestrator/CLI tests passed.
+- 15 native command/orchestrator tests passed.
+- 107 CLI tests passed.
+- Ruff, Black, and diff checks passed.
