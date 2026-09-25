@@ -16,13 +16,13 @@
   - [x] Reject protocol v1, unknown fields, unsupported modes, and malformed metadata.
   - [x] Verify JSON round trips and atomic preflight-result writes.
   - [x] Run the targeted tests and confirm the expected Red phase.
-- [ ] Task: Implement the protocol-v2 Python models
-  - [ ] Increment `NATIVE_PROTOCOL_VERSION` to `2`.
-  - [ ] Add minimal models for effective integration configuration.
-  - [ ] Extend suite/test/preflight contracts without adding speculative fields.
-  - [ ] Reuse the existing atomic JSON writer.
-  - [ ] Update existing fixtures and unit tests to the intentional protocol bump.
-  - [ ] Run the targeted protocol tests to Green.
+- [x] Task: Implement the protocol-v2 Python models [commit: `4158871`]
+  - [x] Increment `NATIVE_PROTOCOL_VERSION` to `2`.
+  - [x] Add minimal models for effective integration configuration.
+  - [x] Extend suite/test/preflight contracts without adding speculative fields.
+  - [x] Reuse the existing atomic JSON writer.
+  - [x] Update existing fixtures and unit tests to the intentional protocol bump.
+  - [x] Run the targeted protocol tests to Green.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run targeted Python unit tests and static checks.
   - [ ] Validate protocol compatibility and actionable error behavior.
