@@ -52,7 +52,7 @@
   - [ ] Add lifecycle-hook cases.
   - [ ] Add malformed-suite and unsupported-contract cases.
   - [ ] Confirm the fixture cannot pass through the existing GUT path.
-- [ ] Task: Implement the bundled native addon package data
+- [x] Task: Implement the bundled native addon package data [5b84c40]
   - [ ] Add `src/gd_tools/addons/gd-tools-test/` package files.
   - [ ] Add package-data entries to `pyproject.toml`.
   - [ ] Add the `GdToolsTest` base class extending `Node`.
