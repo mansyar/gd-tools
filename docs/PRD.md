@@ -10,9 +10,10 @@
 ## 1. Overview
 
 `gd-tools` is a Python CLI that brings a modern development workflow to GDScript
-projects in Godot 4.5+. It wraps mature, community-trusted tools for unit
-testing, linting, and formatting, and fills the one remaining gap — **code
-coverage** — with a custom hybrid instrumentation system.
+projects in Godot 4.5+. It provides a project-owned native Godot test runtime,
+while retaining a temporary compatibility path to GUT, and wraps mature,
+community-trusted tools for linting and formatting. It also provides **line and
+branch coverage** with a custom hybrid instrumentation system.
 
 The tool is designed to feel familiar to developers coming from JavaScript
 (Jest), Python (pytest + coverage.py), or Go (`go test -cover`), while
@@ -20,8 +21,8 @@ respecting the realities of the Godot/GDScript ecosystem.
 
 ### Design Philosophy
 
-- **Wrap, don't reinvent.** GUT, gdlint, and gdformat are battle-tested. We
-  orchestrate them; we do not replace them.
+- **Native-first testing.** The bundled `GdToolsTest` runtime is the default;
+  the legacy GUT integration remains available during migration.
 - **Build only what's missing.** No production-quality GDScript line/branch
   coverage tool exists for Godot 4. This is the unique value of `gd-tools`.
 - **Convention over configuration.** Sensible defaults out of the box; config
@@ -38,8 +39,9 @@ respecting the realities of the Godot/GDScript ecosystem.
 
 1. **Unified CLI** for test, lint, format, and coverage — one install, one
    config, one mental model.
-2. **Zero-friction bootstrap** — `gd-tools init` gets a project fully set up in
-   under a minute (GUT installed, coverage addon deployed, configs generated).
+2. **Zero-friction bootstrap** — `gd-tools init` deploys the native test and
+   coverage addons and generates project configuration in under a minute;
+   GUT remains available through an explicit compatibility option.
 3. **Production-quality coverage** — line and branch coverage for GDScript,
    with HTML and LCOV/Cobertura reports that integrate with CI and code
    review tools.
@@ -51,11 +53,14 @@ respecting the realities of the Godot/GDScript ecosystem.
 
 ### Non-Goals
 
-1. **Not a test framework.** We use GUT. We do not write our own test runner.
+1. **Not a general-purpose mocking or editor test framework.** The native
+   foundation provides focused assertions, async waits, and lifecycle hooks;
+   broader mocking, scene/resource integration, and editor tooling are future
+   work. GUT remains an explicit legacy fallback during migration.
 2. **Not a linter/formatter engine.** We use gdtoolkit. We do not implement
    our own static analysis or code formatting rules.
-3. **Not a Godot plugin manager.** We bootstrap GUT and our own coverage addon.
-   We do not manage arbitrary addons.
+3. **Not a Godot plugin manager.** We bootstrap our own native and coverage
+   addons; we do not manage arbitrary addons.
 4. **No C# support.** GDScript only. C# projects should use coverlet + GoDotTest.
 5. **No Godot < 4.5 support.** The coverage instrumentation relies on Godot 4.x
    Script APIs. Older versions are out of scope.
@@ -83,8 +88,8 @@ respecting the realities of the Godot/GDScript ecosystem.
 │                                                         │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌────────────┐  │
 │  │  test   │  │  lint   │  │ format  │  │  coverage  │  │
-│  │ (GUT    │  │(gdlint  │  │(gdformat│  │ (custom    │  │
-│  │ wrapper)│  │ wrapper)│  │ wrapper)│  │ Arch. C)   │  │
+│  │ (native │  │(gdlint  │  │(gdformat│  │ (custom    │  │
+│  │ / GUT)  │  │ wrapper)│  │ wrapper)│  │ Arch. C)   │  │
 │  └────┬────┘  └─────────┘  └─────────┘  └─────┬──────┘  │
 │       │                                      │         │
 │       │     ┌──────────────────────┐          │         │
@@ -92,8 +97,9 @@ respecting the realities of the Godot/GDScript ecosystem.
 │             └──────────┬──────────┘                    │
 │                        │                                 │
 │             ┌──────────▼──────────┐                      │
-│             │  GUT + coverage     │                      │
-│             │  addon (GDScript)   │                      │
+│             │  Native runner or    │                      │
+│             │  GUT + coverage      │                      │
+│             │  addons (GDScript)   │                      │
 │             └─────────────────────┘                      │
 │                                                        │
 │  ┌──────────────────────────────────────────────────┐   │
@@ -107,7 +113,7 @@ respecting the realities of the Godot/GDScript ecosystem.
 
 | Feature    | Underlying Tool      | Our Role                                      |
 |------------|----------------------|-----------------------------------------------|
-| Test       | GUT (GDScript)       | Orchestrate Godot CLI, parse JUnit XML        |
+| Test       | Native `GdToolsTest` or legacy GUT | Discover suites, isolate Godot processes, normalize results, and write JUnit XML |
 | Lint       | gdlint (Python)      | Wrap CLI, manage config, apply excludes       |
 | Format     | gdformat (Python)    | Wrap CLI, manage config, apply excludes       |
 | Coverage   | Custom (Arch. C)     | Full implementation — plan gen + report gen    |
@@ -117,9 +123,9 @@ respecting the realities of the Godot/GDScript ecosystem.
 ## 5. CLI Command Surface
 
 ```
-gd-tools init                    Bootstrap project (GUT, coverage addon, configs)
+gd-tools init                    Bootstrap native runtime (add `--with-gut` for legacy)
 gd-tools doctor                  Diagnose environment and configuration
-gd-tools test [options] [paths]   Run unit tests via GUT
+gd-tools test [options] [paths]   Run tests via native runtime (or `--runtime gut`)
 gd-tools lint [paths]...           Lint GDScript files via gdlint
 gd-tools format [options] [paths]...  Format GDScript files via gdformat
 gd-tools coverage report          Generate report from last coverage run
@@ -134,13 +140,14 @@ gd-tools completion [shell]      Generate shell completion script (bash, zsh, fi
 ### `gd-tools test`
 
 ```
-gd-tools test [paths]... [--coverage] [--min N] [--suite NAME] [--test NAME]
-              [--junit-xml PATH] [--no-exit-code] [--show-uncovered]
+gd-tools test [paths]... [--runtime native|gut] [--coverage] [--min N] [--suite NAME]
+              [--test NAME] [--junit-xml PATH] [--no-exit-code] [--show-uncovered]
 ```
 
 | Flag/Arg         | Description                                              |
 |------------------|----------------------------------------------------------|
 | `paths`          | One or more test directories to run (default: config test_dirs) |
+| `--runtime`      | `native` (default) or `gut` (explicit legacy compatibility path) |
 | `--coverage`     | Enable coverage instrumentation during test run         |
 | `--min N`        | Fail if coverage falls below N% (requires `--coverage`) |
 | `--suite NAME`   | Run only the named test suite                            |
@@ -149,10 +156,29 @@ gd-tools test [paths]... [--coverage] [--min N] [--suite NAME] [--test NAME]
 | `--no-exit-code` | Always exit 0 regardless of test failures               |
 | `--show-uncovered` | Show uncovered lines and branches when coverage < 100% (requires `--coverage`) |
 
-When `paths` are provided, they override `test_dirs` from config. Each path
-is formatted as `res://path/` and passed to GUT's `-gdir` flag.
+When `paths` are provided, they override `test_dirs` from config. The native
+runtime discovers `GdToolsTest` suites beneath those directories; the legacy
+runtime formats them as `res://path/` for GUT's `-gdir` flag.
 
 **Exit codes:** 0 = pass, 1 = test failures, 2 = environment/config error.
+
+#### Native runtime (default)
+
+Native suites are GDScript classes extending the bundled `GdToolsTest` node.
+Each `test_*` method runs in a fresh suite instance. Python discovers suites,
+writes a versioned manifest, starts one headless Godot process per suite, and
+normalizes the result into the same CLI table and JUnit format as the legacy
+runner. Async tests may await process frames, physics frames, timers, and
+signals; each test has a configurable timeout (five seconds by default).
+
+Native coverage is activated transiently for the run and merged from per-suite
+shards into the existing plan-v1 coverage data. It does not require a permanent
+autoload. The legacy GUT path remains selectable with `--runtime gut` until the
+compatibility bridge is retired.
+
+**Current foundation limits:** native scene/resource integration, broad mocking,
+parameterized tests, parallel execution, editor UI, and automatic GUT migration
+are not included in this release.
 
 ### `gd-tools lint`
 
@@ -321,12 +347,17 @@ Single source of truth, located at project root.
 # binary = "/usr/local/bin/godot"
 
 [test]
+# Test runtime: native (default) or gut (legacy transition path).
+runtime = "native"
 # Directories containing test files.
 test_dirs = ["test", "tests"]
-# Test file prefix/suffix (GUT convention).
+# Native async test timeout and retry defaults.
+timeout_seconds = 5.0
+retries = 0
+# Test file prefix/suffix (GUT convention retained for the legacy runtime).
 prefix = "test_"
 suffix = ".gd"
-# GUT config file path (default: .gutconfig.json in project root).
+# GUT config file path (used only by --runtime gut).
 gutconfig = ".gutconfig.json"
 
 [lint]
@@ -367,13 +398,14 @@ test_dirs = ["test", "tests"]
 1. **Detect project root** — walk up from CWD to find `project.godot`.
 2. **Detect Godot version** — run `godot --version`, parse output.
    - Require 4.5+. Error with instructions if older.
-3. **Check GUT installation** — does `addons/gut/gut.gd` exist?
-   - **YES** → verify version compatibility → warn if mismatch.
-   - **NO** → prompt: *"GUT not found. Install automatically? [Y/n]"*
-     - **Y** → download correct GUT version from GitHub releases → extract →
-       copy `addons/gut/` → enable plugin in `project.godot`.
-     - **n** → print manual install instructions (Asset Library link + zip URL).
-4. **Install coverage addon** — copy bundled GDScript files to
+3. **Deploy native test addon** — copy the bundled
+   `addons/gd-tools-test/` files; no editor plugin or permanent autoload is
+   required.
+4. **Optional legacy setup** — GUT is installed and enabled only with
+   `gd-tools init --with-gut` (or when the resolved configuration selects the
+   legacy runtime). In that mode, `.gutconfig.json` and the legacy coverage
+   autoload are also managed.
+5. **Install coverage addon** — copy bundled GDScript files to
    `addons/gd-tools-coverage/` (always, idempotent — overwrites if stale).
    Before overwriting, each existing file is compared byte-for-byte to the
    bundled version; if they differ (indicating user modification), the
@@ -381,17 +413,15 @@ test_dirs = ["test", "tests"]
    and a yellow warning is printed. Unchanged files are overwritten silently.
    Writes a `_version.txt` file recording the package version for
    staleness detection.
-5. **Create/update `.gutconfig.json`** — add coverage hook paths
-   (`pre_run_script`, `post_run_script`). Merge with existing config if present.
-6. **Create `gd-tools.toml`** — generate with defaults, preserving existing
-   values if file already exists.
+6. **Create/update configuration** — write `gd-tools.toml`, and create or merge
+   `.gutconfig.json` only for the legacy path.
 7. **Generate `gdlintrc` and `gdformatrc`** — from `[lint]`/`[format]` exclude
    lists, so gdlint/gdformat work standalone.
 8. **Create `.gd-tools/` directory** — add to `.gitignore` if not already
    present.
 9. **Print summary** — what was installed/configured, next steps.
 
-### GUT Version Mapping
+### Legacy GUT Version Mapping
 
 Hardcoded table in `gd-tools` (updated per release):
 
@@ -403,16 +433,23 @@ Hardcoded table in `gd-tools` (updated per release):
 
 Download URL: `https://github.com/bitwes/Gut/archive/refs/tags/v{VERSION}.zip`
 
-### Plugin Enabling in `project.godot`
+### Legacy GUT compatibility
+
+GUT remains a migration path, not the default runtime. Use
+`gd-tools init --with-gut` to install and enable it, or select
+`--runtime gut` on an already configured project. The native runtime does not
+register a GUT editor plugin, `.gutconfig.json`, or the `_GDTCoverage` autoload.
+
+### Plugin Enabling in `project.godot` (legacy only)
 
 ```ini
 [editor_plugins]
 enabled=PackedStringArray("res://addons/gut/plugin.gd")
 ```
 
+- Added only by `gd-tools init --with-gut` or legacy configuration.
 - Idempotent: check if already present before adding.
-- The coverage addon does **not** need to be enabled as a plugin — it's
-  invoked by GUT hooks, not the editor.
+- The native runtime is headless and does not require an editor plugin.
 
 ### Coverage Addon Bundling
 
@@ -422,10 +459,14 @@ distribution:
 ```
 gd_tools/
   addons/
+    gd-tools-test/
+      gd_tools_test.gd           # GdToolsTest base class
+      gd_tools_test_runner.gd    # transient native runner
+      gd_tools_native_coverage.gd # transient native coverage
     gd-tools-coverage/
-      coverage.gd           # Core instrumentation + tracking
-      pre_run_hook.gd       # GUT pre-run hook — activates coverage tracker
-      post_run_hook.gd      # GUT post-run hook — saves coverage JSON
+      coverage.gd           # legacy GUT instrumentation + tracking
+      pre_run_hook.gd       # legacy GUT pre-run hook
+      post_run_hook.gd      # legacy GUT post-run hook
 ```
 
 - On `gd-tools init`, these are copied to the project's `addons/gd-tools-coverage/`.
@@ -453,13 +494,14 @@ Runs a series of checks and reports status:
 |--------------------------------|---------------------------------------------------|
 | Godot binary accessible        | Binary found via detection chain, runs without error |
 | Godot version                   | 4.5 or higher                                     |
-| GUT installed                   | `addons/gut/gut.gd` exists                        |
-| GUT version compatible          | Matches Godot version per mapping table           |
+| Native test addon present       | `addons/gd-tools-test/*.gd` exists                |
+| GUT installed (legacy only)     | Required when runtime is `gut`; optional otherwise |
+| GUT version compatible (legacy) | Required for legacy runtime                        |
 | Coverage addon files present   | `addons/gd-tools-coverage/*.gd` all exist; version not stale  |
-| `.gutconfig.json` valid        | Parseable JSON, has coverage hook paths           |
+| `.gutconfig.json` valid (legacy)| Required for legacy runtime; optional otherwise    |
 | `gd-tools.toml` exists & valid | File present, parseable TOML                      |
 | gdtoolkit installed            | `gdlint --version` and `gdformat --version` succeed |
-| `_GDTCoverage` autoload        | `project.godot` has `_GDTCoverage=` autoload entry |
+| `_GDTCoverage` autoload (legacy)| Required for the GUT coverage path; native coverage is transient |
 
 Output: table with ✓/✗ per check, plus actionable fix suggestions for failures.
 

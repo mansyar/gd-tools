@@ -2,7 +2,7 @@
 
 **Version:** 0.2.0 (draft)
 **Date:** 2026-07-14
-**Status:** Post-v1.0 -- Planning v0.4.0+ improvements
+**Status:** Native Test Runtime Foundation in progress (transition track)
 **Related docs:** [PRD.md](./PRD.md), [ROADMAP_v1.md](./ROADMAP_v1.md) (archived v1 roadmap, Tracks 0-22), [AUDIT_REPORT.md](./AUDIT_REPORT.md), [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
@@ -22,6 +22,27 @@ CI/CD pipeline, documentation, and PyPI release. See
 This roadmap focuses on **incremental improvements** that increase the
 tool's day-to-day value, close UX gaps, and expand the feature set into
 new differentiating territory. The phasing is designed so that:
+
+## Native Runtime Transition (Current Track)
+
+**Track:** `native_test_foundation_20260925`
+
+The native Godot test runtime is now the default path for `gd-tools test`.
+It provides a bundled `GdToolsTest` base class, async helpers, per-suite
+process isolation, native JSON/NDJSON/JUnit results, and transient line/branch
+coverage. `gd-tools init` deploys the native addon without downloading GUT.
+
+GUT remains a supported compatibility path during the transition:
+
+```bash
+gd-tools init --with-gut       # opt into legacy bootstrap files
+gd-tools test --runtime gut    # use the existing GUT runner
+```
+
+The foundation intentionally defers scene/resource integration, broad mocking,
+parameterized tests, parallel execution, editor UI, automatic migration, and
+GUT removal to follow-up tracks. The compatibility bridge is limited to the
+core subset required for the transition and is not a long-term public API.
 
 - **Quick wins ship first** -- low-effort, high-impact improvements that
   users feel immediately.

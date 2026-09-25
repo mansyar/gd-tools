@@ -24,7 +24,7 @@ For deep technical command surface details, see the [PRD](./PRD.md) section 5.
 |---|---|---|
 | Python | 3.10 | Required for modern type hints and tomllib support. |
 | Godot Engine | 4.5 | Must be accessible via PATH or a GODOT_BIN environment variable. |
-| GUT (Godot Unit Test) | 9.5.0 | Installed automatically by `gd-tools init`. |
+| GUT (Godot Unit Test) | 9.5.0 | Optional legacy compatibility runtime; not installed by default. |
 
 The `gdtoolkit` package (providing `gdlint` and `gdformat`) is installed as
 a dependency of `gd-tools` -- no separate installation is needed.
@@ -55,17 +55,17 @@ The `init` command performs the following steps:
 
 1. Detects the project root by walking up from the current directory to
    find `project.godot`.
-2. Detects the installed Godot version and maps it to the compatible GUT
-   release.
-3. Downloads and installs GUT into `addons/gut/`.
-4. Enables the GUT plugin in `project.godot`.
-5. Deploys the `gd-tools-coverage` addon into `addons/gd-tools-coverage/`
+2. Detects the installed Godot version.
+3. Deploys the bundled `addons/gd-tools-test/` native test addon.
+4. Deploys the `gd-tools-coverage` addon into `addons/gd-tools-coverage/`
    (including a `_version.txt` file for staleness detection).
-6. Registers the `_GDTCoverage` autoload in `project.godot`.
-7. Creates or updates `.gutconfig.json` with pre- and post-run hook scripts.
-8. Creates `gd-tools.toml` with default configuration if absent.
-9. Generates `gdlintrc` and `gdformatrc` exclude files.
-10. Creates the `.gd-tools/` working directory.
+5. Creates `gd-tools.toml` with native runtime defaults if absent.
+6. Generates `gdlintrc` and `gdformatrc` exclude files.
+7. Creates the `.gd-tools/` working directory.
+8. Leaves GUT, `.gutconfig.json`, and the legacy coverage autoload uninstalled.
+
+Use `gd-tools init --with-gut` when maintaining a legacy GUT project. That
+option also installs/enables GUT and creates the compatibility configuration.
 
 The `init` command is idempotent -- running it again updates components
 to the expected state without duplicating files.
@@ -127,7 +127,10 @@ root. This file is created by `gd-tools init` with sensible defaults.
 binary = ""
 
 [test]
+runtime = "native"
 test_dirs = ["test", "tests"]
+timeout_seconds = 5.0
+retries = 0
 prefix = "test_"
 suffix = ".gd"
 gutconfig = ".gutconfig.json"
@@ -175,7 +178,10 @@ binary = "/usr/local/bin/godot"
 
 | Key | Type | Default | Description |
 |---|---|---|---|
+| `runtime` | string | `"native"` | Test runtime: `native` or legacy `gut`. |
 | `test_dirs` | list of strings | `["test", "tests"]` | Directories scanned for test files. |
+| `timeout_seconds` | number | `5.0` | Default native per-test async timeout in seconds. |
+| `retries` | integer | `0` | Default native retry count. |
 | `prefix` | string | `"test_"` | Filename prefix for test scripts (GUT convention). |
 | `suffix` | string | `".gd"` | Filename suffix for test scripts. |
 | `gutconfig` | string | `".gutconfig.json"` | Path to the GUT configuration file. |
@@ -262,7 +268,7 @@ Initialize or update the `gd-tools` configuration in a Godot project.
 **Usage:**
 
 ```bash
-gd-tools init [--non-interactive]
+gd-tools init [--non-interactive] [--with-gut]
 ```
 
 **Flags:**
@@ -270,6 +276,7 @@ gd-tools init [--non-interactive]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--non-interactive` | flag | `false` | Run without interactive prompts. |
+| `--with-gut` | flag | `false` | Also install/enable the legacy GUT runtime and compatibility files. |
 
 **Examples:**
 
@@ -286,7 +293,7 @@ gd-tools init --non-interactive
 | Code | Condition |
 |---|---|
 | 0 | Initialization completed successfully. |
-| 1 | User declined GUT installation when prompted. |
+| 1 | User declined an optional legacy GUT installation when prompted. |
 | 2 | Configuration or environment error (e.g., Godot not found). |
 
 **Smart Backup of Modified Addon Files:**
@@ -318,13 +325,14 @@ gd-tools doctor
 |---|---|---|---|
 | 1 | Godot Binary | critical | Godot binary is found via the detection chain. |
 | 2 | Godot Version | critical | Godot version is >= 4.5.0. |
-| 3 | GUT Installed | critical | GUT is present in `addons/gut/`. |
-| 4 | GUT Version | warning | Installed GUT version matches the expected version for the detected Godot. |
-| 5 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present and not stale. |
-| 6 | GUT Config | warning | `.gutconfig.json` exists, is valid JSON, and contains hook script keys. |
-| 7 | gd-tools.toml | critical | `gd-tools.toml` exists and is valid TOML. |
-| 8 | GD Toolkit | critical | `gdlint` and `gdformat` CLI tools are installed. |
-| 9 | Autoload | critical | `_GDTCoverage` autoload is registered in `project.godot`. |
+| 3 | Native Test Addon | critical | Bundled `gd-tools-test` files are present. |
+| 4 | GUT Installed | conditional | GUT is present when runtime is `gut`; optional for native projects. |
+| 5 | GUT Version | conditional | Legacy GUT version matches the detected Godot. |
+| 6 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present and not stale. |
+| 7 | GUT Config | conditional | `.gutconfig.json` is required only for the legacy runtime. |
+| 8 | gd-tools.toml | critical | `gd-tools.toml` exists and is valid TOML. |
+| 9 | GD Toolkit | critical | `gdlint` and `gdformat` CLI tools are installed. |
+| 10 | Autoload | conditional | `_GDTCoverage` is required only for the legacy GUT path. |
 
 **Output:**
 
@@ -342,7 +350,8 @@ symbol.
 
 ### 3.4 gd-tools test
 
-Run GDScript tests using GUT (Godot Unit Test).
+Run GDScript tests using the bundled native runtime by default. GUT remains
+available explicitly with `--runtime gut` for projects being migrated.
 
 **Usage:**
 
@@ -355,6 +364,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | Argument | Required | Default | Description |
 |---|---|---|---|
 | `paths` | no | Config `[test].test_dirs` | One or more directories to scan for test files. Overrides `test_dirs` from config for this invocation only. |
+| `--runtime` | choice | Config `[test].runtime` (`native`) | Select `native` or legacy `gut`. |
 
 **Flags:**
 
@@ -373,8 +383,14 @@ gd-tools test [PATHS]... [OPTIONS]
 **Examples:**
 
 ```bash
-# Run all tests (uses config test_dirs)
+# Run all native tests (default; uses config test_dirs)
 gd-tools test
+
+# Explicitly use the legacy GUT compatibility path
+gd-tools test --runtime gut
+
+# Run a native suite and write JUnit XML
+gd-tools test --suite NativeFixtureSuite --junit-xml .gd-tools/native.xml
 
 # Run tests with coverage
 gd-tools test --coverage
@@ -403,6 +419,21 @@ gd-tools test tests/unit
 # Run tests from multiple directories
 gd-tools test tests/unit tests/integration
 ```
+
+**Native runtime notes:**
+
+- Native suites extend `GdToolsTest` and expose no-argument `test_*` methods.
+- Python starts one headless Godot process per suite and creates a fresh suite
+  instance for each test.
+- Native runs write structured result JSON under `.gd-tools/native/` and the
+  requested JUnit XML; `--coverage` adds plan-v1 data and a merged report.
+- Async tests may await process frames, physics frames, timers, and signals.
+  The default per-test timeout is `5.0` seconds (`[test].timeout_seconds`);
+  failed or timed-out tests are retried according to `[test].retries`.
+- If native discovery finds no suites, the error suggests `--runtime gut` for
+  a legacy project.
+- The foundation does not yet provide scene/resource integration, broad
+  mocking, parameterized tests, parallel execution, or an editor UI.
 
 **Plan Caching:**
 
