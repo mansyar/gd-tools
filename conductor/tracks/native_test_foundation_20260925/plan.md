@@ -46,7 +46,7 @@
 
 **Purpose:** Add the smallest real Godot-native execution engine that can load and run class-based suites.
 
-- [ ] Task: Add failing native GDScript fixture tests
+- [x] Task: Add failing native GDScript fixture tests [f7acc85]
   - [ ] Add a clean fixture with `extends GdToolsTest`.
   - [ ] Add synchronous passing and failing test cases.
   - [ ] Add lifecycle-hook cases.
