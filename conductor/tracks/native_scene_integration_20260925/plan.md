@@ -249,16 +249,16 @@
   - [x] Mark Phase 2 complete in `docs/ROADMAP.md`.
   - [x] Synchronize `docs/PRD.md`, `conductor/product.md`, and `conductor/tech-stack.md`.
   - [x] Keep broader README/changelog/release alignment in its separate track.
-- [~] Task: Complete final quality gates
-  - [ ] Run the full unit and integration suites.
-  - [ ] Run headless and display-capable E2E verification.
-  - [ ] Run `ruff check src/ tests/`.
-  - [ ] Run `black --check src/ tests/`.
-  - [ ] Run branch coverage and confirm more than 80% line and 70% branch coverage for new source modules.
-  - [ ] Build package artifacts and verify all bundled addon files.
-  - [ ] Confirm no new runtime dependency or configuration surface was introduced.
-  - [ ] Inspect the final implementation diff for security, performance, and unrequested changes.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Complete final quality gates
+  - [x] Run the full unit and integration suites.
+  - [x] Run headless and display-capable E2E verification.
+  - [x] Run `ruff check src/ tests/`.
+  - [x] Run `black --check src/ tests/`.
+  - [x] Run branch coverage and confirm more than 80% line and 70% branch coverage for new source modules.
+  - [x] Build package artifacts and verify all bundled addon files.
+  - [x] Confirm no new runtime dependency or configuration surface was introduced.
+  - [x] Inspect the final implementation diff for security, performance, and unrequested changes.
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run the complete automated verification suite.
   - [ ] Perform manual headless, windowed, failure-artifact, and exit-code verification.
   - [ ] Obtain explicit user confirmation.
