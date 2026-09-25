@@ -151,29 +151,29 @@
 
 **Purpose:** Make native execution the default without removing the working GUT path.
 
-- [ ] Task: Add failing CLI/runtime-selection tests
+- [x] Task: Add failing CLI/runtime-selection tests [9644576]
   - [ ] Test default native selection.
   - [ ] Test `--runtime native`.
   - [ ] Test `--runtime gut`.
   - [ ] Test invalid runtime values.
   - [ ] Test native-empty/GUT-present migration guidance.
   - [ ] Test `--no-exit-code` and existing output flags.
-- [ ] Task: Implement runtime dispatch
+- [x] Task: Implement runtime dispatch [9644576]
   - [ ] Extend the test command with explicit runtime selection.
   - [ ] Route native execution through the new discovery/runner path.
   - [ ] Route `--runtime gut` through the existing implementation.
   - [ ] Keep GUT installation checks scoped to the legacy path.
-- [ ] Task: Integrate native result reporting
+- [x] Task: Integrate native result reporting [9644576]
   - [ ] Adapt native results to the existing CLI-facing `TestResult` model where practical.
   - [ ] Generate JUnit XML from normalized native results.
   - [ ] Preserve Rich output and machine-readable behavior.
   - [ ] Add structured diagnostics to failure output without parsing Godot stdout.
-- [ ] Task: Update init/doctor/package integration where required
+- [x] Task: Update init/doctor/package integration where required [9644576]
   - [ ] Ensure native addon package data is installed and discoverable.
   - [ ] Keep GUT installation opt-in for the transition.
   - [ ] Update doctor/version checks without removing legacy diagnostics.
   - [ ] Add tests for native and GUT project states.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run CLI unit and integration tests for both runtime modes.
   - [ ] Verify existing command examples and exit codes.
   - [ ] Create the phase checkpoint commit and record its SHA.
