@@ -1,0 +1,15 @@
+Task: Add failing command/orchestrator tests
+
+Summary:
+- Added Red tests for headless defaults, windowed flag omission, one shared preflight after import, enriched suite forwarding, isolated process continuation, and GUT routing bypass.
+- Added a CLI regression test confirming explicit GUT execution does not call the native preflight boundary.
+
+Files:
+- tests/unit/test_native_orchestrator.py
+- tests/unit/test_native_command.py
+- tests/unit/test_cli.py
+
+Verification:
+- .venv\Scripts\python.exe -m pytest tests/unit/test_native_orchestrator.py tests/unit/test_native_command.py tests/unit/test_cli.py::test_test_gut_runtime_bypasses_native_preflight --no-cov -q
+  Result: expected Red phase: 2 failures for missing mode handling and missing command preflight import; 13 existing/contract tests passed.
+- Black, Ruff, and git diff checks passed.
