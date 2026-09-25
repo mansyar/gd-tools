@@ -3,15 +3,15 @@
 This module implements the ``gd-tools init`` command, which bootstraps
 a Godot project by:
 - Detecting the project root and Godot version
-- Installing GUT (Godot Unit Test) if not present
-- Deploying the coverage addon as placeholder stubs
-- Creating configuration files (``.gutconfig.json``, ``gd-tools.toml``,
-  ``gdlintrc``, ``gdformatrc``)
+- Deploying the bundled native test and coverage addons
+- Optionally installing and enabling the legacy GUT runtime
+- Creating native/default configuration files and optional legacy files
 - Creating the ``.gd-tools/`` data directory
 - Printing a summary of actions taken
 
 The command is idempotent: running it multiple times produces the
-same end state without duplicating entries.
+same end state without duplicating entries. Managed addon files preserve
+user modifications in per-addon ``.backups/`` directories before replacement.
 """
 
 import configparser

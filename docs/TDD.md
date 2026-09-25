@@ -261,6 +261,7 @@ class TestConfig(BaseModel):
     test_dirs: list[str] = Field(default_factory=lambda: ["test", "tests"])
     timeout_seconds: float = Field(default=5.0, gt=0)
     retries: int = Field(default=0, ge=0)
+    tags: list[str] = Field(default_factory=list)
     prefix: str = "test_"
     suffix: str = ".gd"
     gutconfig: str = ".gutconfig.json"
@@ -483,11 +484,15 @@ def doctor():
 @click.option("--min", "min_percent", type=int, help="Min coverage % to pass")
 @click.option("--suite", type=str, help="Run only named suite")
 @click.option("--test", "test_name", type=str, help="Run tests matching name")
+@click.option("--tag", "tags", multiple=True, help="Run native suites matching a tag")
+@click.option("--test-timeout", type=float, help="Per-test timeout for native tests")
+@click.option("--timeout", type=int, help="Godot import/process timeout")
 @click.option("--junit-xml", type=str, help="JUnit XML output path")
 @click.option("--no-exit-code", is_flag=True, help="Always exit 0")
 @click.option("--show-uncovered", is_flag=True, help="Show uncovered lines and branches when coverage is below 100%")
 @click.argument("paths", nargs=-1)
-def test(runtime, coverage, min_percent, suite, test_name, junit_xml, no_exit_code, show_uncovered, paths):
+def test(runtime, coverage, min_percent, suite, test_name, tags, test_timeout,
+         timeout, junit_xml, no_exit_code, show_uncovered, paths):
     """Run tests via the native runtime or explicit legacy GUT path."""
 
 @cli.command()
@@ -579,7 +584,7 @@ def is_gut_installed(project_root: Path) -> bool:
 
 
 def install_native_test_addon(project_root: Path) -> None:
-    """Copy the bundled gd-tools-test addon into the project."""
+    """Copy the bundled gd-tools-test addon with modified-file backups."""
 
 def install_gut(project_root: Path, godot_version: str,
                 non_interactive: bool) -> bool:
@@ -734,21 +739,28 @@ def check_godot_version(config: GdToolsConfig) -> CheckResult:
     """Verify Godot version >= 4.5."""
 
 def check_native_test_addon(project_root: Path) -> CheckResult:
-    """Verify the bundled native test addon files are present."""
+    """Verify native addon files and deployed version are current."""
 
 
 def check_gut_installed(project_root: Path) -> CheckResult:
     """Verify addons/gut/gut.gd exists."""
 
-def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
-    """Verify GUT version matches Godot version."""
+def check_gut_version(
+    project_root: Path,
+    godot_version: str,
+    required: bool = True,
+) -> CheckResult:
+    """Verify GUT version; mismatches are optional warnings in native mode."""
 
 def check_coverage_addon(project_root: Path) -> CheckResult:
     """Verify addons/gd-tools-coverage/*.gd all exist and version
     is not stale."""
 
-def check_gutconfig(project_root: Path) -> CheckResult:
-    """Verify .gutconfig.json is valid JSON and has hook paths."""
+def check_gutconfig(
+    project_root: Path,
+    required: bool = True,
+) -> CheckResult:
+    """Verify optional/required GUT JSON and hook paths."""
 
 def check_gd_tools_toml(project_root: Path) -> CheckResult:
     """Verify gd-tools.toml exists and is valid."""
@@ -756,17 +768,22 @@ def check_gd_tools_toml(project_root: Path) -> CheckResult:
 def check_gdtoolkit() -> CheckResult:
     """Verify gdlint and gdformat are installed (run --version)."""
 
-def check_autoload(project_root: Path) -> CheckResult:
-    """Verify _GDTCoverage autoload registered in project.godot."""
+def check_autoload(
+    project_root: Path,
+    required: bool = True,
+) -> CheckResult:
+    """Verify the legacy autoload; optional in native mode."""
 ```
 
 Output format: `format_doctor_table(result: DoctorResult) -> Table` — Rich table
 with ✓/✗ per check, message, and fix hint. Status color-coded: green ✓ (pass),
 red ✗ (critical fail), yellow ⚠ (warning fail). Caption shows pass count.
 
-The native addon is always required. GUT, `.gutconfig.json`, and the coverage
-autoload are required only when the resolved runtime is `gut`; they are
-informational optional checks for a native project.
+The native addon is always required and its `_version.txt` is checked for
+staleness. GUT, `.gutconfig.json`, and the coverage autoload are required only
+when the resolved runtime is `gut`; their failures are informational warnings
+for a native project. `check_gut_version()` and the optional config/autoload
+checks accept a `required` flag so native mode remains non-blocking.
 
 ---
 
@@ -902,22 +919,26 @@ The native path is the default for `gd-tools test`. It is split into a Python
 orchestrator and a bundled GDScript runtime:
 
 - `protocol.py` defines protocol version `1` Pydantic models for manifests,
-  suites, tests, coverage settings, and results. It also provides atomic JSON
-  replacement.
+  suites, tests, coverage settings, and results. Results include timestamps,
+  engine errors/warnings, process output, and structured diagnostics. It also
+  provides atomic JSON replacement.
 - `discovery.py` deterministically finds scripts extending `GdToolsTest`,
   extracts `class_name`, tags, and no-argument `test_*` methods, and applies
-  suite/test/tag/path filters.
+  suite/test/tag/path filters. Explicit file paths remain exact.
 - `orchestrator.py` writes one manifest per suite and launches one headless
   Godot process per suite. A missing/timeout/crashed process becomes a
-  structured error result; later suites still run. Coverage shards are merged
-  into the configured plan-v1 output.
+  structured error result; later suites still run. Each suite receives a
+  Godot log path for engine diagnostics. Coverage shards are merged into the
+  configured plan-v1 output.
 - `command.py` resolves project/Godot/config, performs the import pass,
-  converts native results to the existing `TestResult` model, writes JUnit XML,
-  renders reports, and preserves exit codes `0/1/2`.
-- `gd_tools_test.gd` provides assertions and async waits; the runner handles
-  lifecycle hooks, per-test timeouts, configured retries with fresh instances,
-  structured diagnostics, optional NDJSON events, and atomic result output.
-  Coverage is transient and does not install a native autoload.
+  applies CLI/config tags and the per-test timeout, converts native results to
+  the existing `TestResult` model, writes JUnit XML, renders reports, and
+  preserves exit codes `0/1/2`. `--timeout` remains the import/process limit.
+- `gd_tools_test.gd` provides assertions, async waits, and suite state; the
+  runner handles lifecycle failures, bounded setup/body/cleanup timeouts,
+  configured retries with fresh instances, structured diagnostics, optional
+  NDJSON events, and atomic result output. Coverage is transient and does not
+  install a native autoload.
 
 The public CLI keeps `--runtime gut` as an explicit compatibility selector.
 There is no automatic GUT migration in this foundation.

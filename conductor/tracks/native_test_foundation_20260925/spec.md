@@ -2,7 +2,7 @@
 
 - **Track ID:** native_test_foundation_20260925
 - **Type:** Feature / Architecture
-- **Status:** New
+- **Status:** Completed (review fixes applied)
 - **Related decision:** `d04c1ae` — docs: Define native test runtime direction
 
 ## Overview

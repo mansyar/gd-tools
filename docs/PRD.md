@@ -141,23 +141,27 @@ gd-tools completion [shell]      Generate shell completion script (bash, zsh, fi
 
 ```
 gd-tools test [paths]... [--runtime native|gut] [--coverage] [--min N] [--suite NAME]
-              [--test NAME] [--junit-xml PATH] [--no-exit-code] [--show-uncovered]
+              [--test NAME] [--tag TAG] [--test-timeout SECONDS] [--timeout SECONDS]
+              [--junit-xml PATH] [--no-exit-code] [--show-uncovered]
 ```
 
 | Flag/Arg         | Description                                              |
 |------------------|----------------------------------------------------------|
-| `paths`          | One or more test directories to run (default: config test_dirs) |
+| `paths`          | One or more test files/directories to run (files are exact) |
 | `--runtime`      | `native` (default) or `gut` (explicit legacy compatibility path) |
 | `--coverage`     | Enable coverage instrumentation during test run         |
 | `--min N`        | Fail if coverage falls below N% (requires `--coverage`) |
 | `--suite NAME`   | Run only the named test suite                            |
 | `--test NAME`    | Run only tests matching the name substring              |
+| `--tag TAG`      | Run native suites with a matching class-level tag (repeatable) |
+| `--test-timeout` | Per-test timeout override for native tests               |
+| `--timeout`      | Godot import and per-suite process timeout               |
 | `--junit-xml P`  | Write JUnit XML to path (default: `.gd-tools/results.xml`)|
 | `--no-exit-code` | Always exit 0 regardless of test failures               |
 | `--show-uncovered` | Show uncovered lines and branches when coverage < 100% (requires `--coverage`) |
 
 When `paths` are provided, they override `test_dirs` from config. The native
-runtime discovers `GdToolsTest` suites beneath those directories; the legacy
+runtime accepts exact files or recursively scanned directories; the legacy
 runtime formats them as `res://path/` for GUT's `-gdir` flag.
 
 **Exit codes:** 0 = pass, 1 = test failures, 2 = environment/config error.
@@ -170,6 +174,9 @@ writes a versioned manifest, starts one headless Godot process per suite, and
 normalizes the result into the same CLI table and JUnit format as the legacy
 runner. Async tests may await process frames, physics frames, timers, and
 signals; each test has a configurable timeout (five seconds by default).
+Lifecycle hook failures and suite state are preserved, cleanup runs after
+ordinary failures and timeouts, and native JSON/JUnit output carries structured
+assertion diagnostics plus Godot engine errors/warnings.
 
 Native coverage is activated transiently for the run and merged from per-suite
 shards into the existing plan-v1 coverage data. It does not require a permanent

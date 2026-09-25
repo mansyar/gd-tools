@@ -32,6 +32,8 @@ The native Godot test runtime is now the default path for `gd-tools test`.
 It provides a bundled `GdToolsTest` base class, async helpers, per-suite
 process isolation, native JSON/NDJSON/JUnit results, and transient line/branch
 coverage. `gd-tools init` deploys the native addon without downloading GUT.
+Review hardening also covers lifecycle failures, engine diagnostics, managed-file
+backups, native addon version checks, and public tag/file/timeout selectors.
 
 GUT remains a supported compatibility path during the transition:
 

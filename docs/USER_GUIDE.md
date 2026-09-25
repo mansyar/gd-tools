@@ -131,6 +131,7 @@ runtime = "native"
 test_dirs = ["test", "tests"]
 timeout_seconds = 5.0
 retries = 0
+tags = []
 prefix = "test_"
 suffix = ".gd"
 gutconfig = ".gutconfig.json"
@@ -182,6 +183,7 @@ binary = "/usr/local/bin/godot"
 | `test_dirs` | list of strings | `["test", "tests"]` | Directories scanned for test files. |
 | `timeout_seconds` | number | `5.0` | Default native per-test async timeout in seconds. |
 | `retries` | integer | `0` | Default native retry count. |
+| `tags` | list of strings | `[]` | Native class-level tag filters; an empty list matches all tags. |
 | `prefix` | string | `"test_"` | Filename prefix for test scripts (GUT convention). |
 | `suffix` | string | `".gd"` | Filename suffix for test scripts. |
 | `gutconfig` | string | `".gutconfig.json"` | Path to the GUT configuration file. |
@@ -298,13 +300,12 @@ gd-tools init --non-interactive
 
 **Smart Backup of Modified Addon Files:**
 
-When re-running `gd-tools init` on a project where coverage addon files
-(`coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd`) have been modified
-by the user, the modified file is backed up to
-`addons/gd-tools-coverage/.backups/<filename>.bak` before being
-overwritten with the bundled version. A yellow warning is printed naming
-the file and its backup path. Unmodified files are overwritten silently.
-The `.backups/` directory is auto-created on the first backup.
+When re-running `gd-tools init` on a project where native or coverage addon
+files have been modified by the user, the modified file is backed up under
+that addon's `.backups/<filename>.bak` before being overwritten with the
+bundled version. A yellow warning is printed naming the file and its backup
+path. Unmodified files are overwritten silently. The `.backups/` directory
+is auto-created on the first backup.
 
 This protects user customizations from being silently destroyed during
 re-init (e.g., after upgrading `gd-tools` via pip).
@@ -325,14 +326,18 @@ gd-tools doctor
 |---|---|---|---|
 | 1 | Godot Binary | critical | Godot binary is found via the detection chain. |
 | 2 | Godot Version | critical | Godot version is >= 4.5.0. |
-| 3 | Native Test Addon | critical | Bundled `gd-tools-test` files are present. |
+| 3 | Native Test Addon | critical/warning | Bundled `gd-tools-test` files are present and the deployed version is current. |
 | 4 | GUT Installed | conditional | GUT is present when runtime is `gut`; optional for native projects. |
-| 5 | GUT Version | conditional | Legacy GUT version matches the detected Godot. |
+| 5 | GUT Version | conditional | Legacy GUT version matches the detected Godot when `runtime = "gut"`; native-mode mismatches are informational warnings. |
 | 6 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present and not stale. |
 | 7 | GUT Config | conditional | `.gutconfig.json` is required only for the legacy runtime. |
 | 8 | gd-tools.toml | critical | `gd-tools.toml` exists and is valid TOML. |
 | 9 | GD Toolkit | critical | `gdlint` and `gdformat` CLI tools are installed. |
 | 10 | Autoload | conditional | `_GDTCoverage` is required only for the legacy GUT path. |
+
+In native mode, missing or mismatched legacy GUT files are reported as
+informational warnings and do not make `doctor` fail. In GUT mode they remain
+blocking checks.
 
 **Output:**
 
@@ -363,7 +368,7 @@ gd-tools test [PATHS]... [OPTIONS]
 
 | Argument | Required | Default | Description |
 |---|---|---|---|
-| `paths` | no | Config `[test].test_dirs` | One or more directories to scan for test files. Overrides `test_dirs` from config for this invocation only. |
+| `paths` | no | Config `[test].test_dirs` | One or more test files or directories to scan. File paths are selected exactly; directories are scanned recursively. |
 | `--runtime` | choice | Config `[test].runtime` (`native`) | Select `native` or legacy `gut`. |
 
 **Flags:**
@@ -374,9 +379,11 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--min` | integer | None | Minimum coverage percentage threshold. Fails if coverage is below this value. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
 | `--suite` | string | None | Run only the specified test suite. |
 | `--test` | string | None | Run only the specified test. |
+| `--tag` | string, repeatable | Config `[test].tags` | Run native suites matching a class-level tag. |
+| `--test-timeout` | number | Config `[test].timeout_seconds` | Per-test timeout in seconds for native tests. |
 | `--junit-xml` | string | None | Path to write a JUnit XML report. |
 | `--no-exit-code` | flag | `false` | Do not exit with non-zero on test failure. |
-| `--timeout` | integer | None | Timeout in seconds for the test run. |
+| `--timeout` | integer | None | Godot import and per-suite process timeout in seconds. |
 | `--show-uncovered` | flag | `false` | Show uncovered lines and branches as Rich panels when coverage is below 100%. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
 | `--no-cache` | flag | `false` | Force plan regeneration, bypassing the coverage plan cache. Only effective with `--coverage`; has no effect without it. |
 
@@ -410,6 +417,9 @@ gd-tools test --suite PlayerTests
 # Run a specific test and write JUnit XML
 gd-tools test --test test_movement --junit-xml report.xml
 
+# Run native suites with a class tag and a one-second per-test limit
+gd-tools test --tag smoke --test-timeout 1.0
+
 # Run tests without exit code (useful in CI pre-steps)
 gd-tools test --no-exit-code
 
@@ -418,18 +428,31 @@ gd-tools test tests/unit
 
 # Run tests from multiple directories
 gd-tools test tests/unit tests/integration
+
+# Run exactly one native test file
+gd-tools test tests/unit/test_player.gd
 ```
 
 **Native runtime notes:**
 
 - Native suites extend `GdToolsTest` and expose no-argument `test_*` methods.
-- Python starts one headless Godot process per suite and creates a fresh suite
-  instance for each test.
+- Python starts one headless Godot process per suite, retains suite-scoped
+  state for the suite, and creates a fresh test instance for each test.
+- `before_all`, `before_each`, `after_each`, and `after_all` failures appear
+  in the native result and affect the run status; cleanup hooks are attempted
+  after test timeouts.
 - Native runs write structured result JSON under `.gd-tools/native/` and the
   requested JUnit XML; `--coverage` adds plan-v1 data and a merged report.
+- Results include timestamps, assertion diagnostics, and Godot engine
+  errors/warnings. Engine errors are infrastructure failures (exit `2`).
 - Async tests may await process frames, physics frames, timers, and signals.
   The default per-test timeout is `5.0` seconds (`[test].timeout_seconds`);
-  failed or timed-out tests are retried according to `[test].retries`.
+  `--test-timeout` overrides it for one invocation, while `--timeout` limits
+  Godot import and suite processes. Failed or timed-out tests are retried
+  according to `[test].retries`.
+- Class-level tags can be configured with `[test].tags` or selected with
+  repeatable `--tag` options. Explicit file paths are never broadened to
+  sibling suites.
 - If native discovery finds no suites, the error suggests `--runtime gut` for
   a legacy project.
 - The foundation does not yet provide scene/resource integration, broad

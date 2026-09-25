@@ -109,7 +109,7 @@ Supporting success metrics (measured but not gating):
 
 ## 9. Native Test Runtime Direction
 
-**Status:** Decision accepted; implementation pending
+**Status:** Foundation completed; broader migration gates remain
 **Scope:** Post-v0.4 native testing initiative
 
 ### Decision
@@ -129,7 +129,10 @@ bounded compatibility path.
   scene-tree interaction, and native coverage activation.
 - Native suites are class-based and extend `GdToolsTest`, which extends
   `Node`.
-- Tests are discovered by configured directories and `test_*` methods.
+- Tests are discovered by configured directories or exact file selectors, with
+  class-level tag filters and `test_*` method discovery.
+- The default per-test timeout is configurable independently from the Godot
+  process/import timeout.
 - Suites run in isolated Godot processes by default.
 - Tests run sequentially by default; optional parallelism is deferred.
 - Headless execution is the default; windowed execution is explicit.
@@ -138,6 +141,8 @@ bounded compatibility path.
 ### Results and coverage
 
 - Native results use a versioned JSON protocol and JUnit XML output.
+- Results include timestamps, lifecycle assertion diagnostics, and captured
+  Godot engine errors/warnings; engine errors map to infrastructure exit `2`.
 - Godot progress events use structured NDJSON when enabled.
 - Existing exit-code semantics remain:
   - `0`: pass
