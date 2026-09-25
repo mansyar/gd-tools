@@ -23,3 +23,5 @@ def test_native_test_addon_is_bundled():
     assert (addon / "gd_tools_test.gd").is_file()
     assert (addon / "gd_tools_test_runner.gd").is_file()
     assert (addon / "gd_tools_native_coverage.gd").is_file()
+    assert (addon / "gd_tools_test_preflight.gd").is_file()
+    assert (addon / "gd_tools_test_context.gd").is_file()

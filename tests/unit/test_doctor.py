@@ -30,6 +30,7 @@ from gd_tools.doctor import (
 )
 from gd_tools.errors import GodotNotFoundError
 from gd_tools.godot import GodotInfo
+from gd_tools.init import NATIVE_TEST_ADDON_FILES
 
 # --- CheckResult dataclass ---
 
@@ -299,11 +300,7 @@ def test_check_native_test_addon_passes_when_files_exist(tmp_path):
     """Doctor detects the bundled native test runtime."""
     addon = tmp_path / "addons" / "gd-tools-test"
     addon.mkdir(parents=True)
-    for name in (
-        "gd_tools_test.gd",
-        "gd_tools_test_runner.gd",
-        "gd_tools_native_coverage.gd",
-    ):
+    for name in NATIVE_TEST_ADDON_FILES:
         (addon / name).touch()
 
     result = check_native_test_addon(tmp_path)
@@ -317,11 +314,7 @@ def test_check_native_test_addon_warns_when_stale(tmp_path):
     """Doctor reports an outdated native runtime without failing the project."""
     addon = tmp_path / "addons" / "gd-tools-test"
     addon.mkdir(parents=True)
-    for name in (
-        "gd_tools_test.gd",
-        "gd_tools_test_runner.gd",
-        "gd_tools_native_coverage.gd",
-    ):
+    for name in NATIVE_TEST_ADDON_FILES:
         (addon / name).touch()
     (addon / "_version.txt").write_text("0.2.0\n", encoding="utf-8")
 
@@ -332,6 +325,34 @@ def test_check_native_test_addon_warns_when_stale(tmp_path):
     assert "0.2.0" in result.message
     assert "0.3.0" in result.message
     assert "gd-tools init" in result.fix_hint
+
+
+def test_check_native_test_addon_requires_integration_files(tmp_path):
+    """Doctor fails when the preflight and context scripts are missing."""
+    addon = tmp_path / "addons" / "gd-tools-test"
+    addon.mkdir(parents=True)
+    for name in ("gd_tools_test.gd", "gd_tools_test_runner.gd"):
+        (addon / name).touch()
+
+    result = check_native_test_addon(tmp_path)
+
+    assert result.passed is False
+    assert result.severity == "critical"
+    assert "gd_tools_test_preflight.gd" in result.message
+    assert "gd_tools_test_context.gd" in result.message
+    assert "gd-tools init" in result.fix_hint
+
+
+def test_check_native_test_addon_passes_with_full_runtime(tmp_path):
+    """Doctor passes when every managed native runtime file is deployed."""
+    addon = tmp_path / "addons" / "gd-tools-test"
+    addon.mkdir(parents=True)
+    for name in NATIVE_TEST_ADDON_FILES:
+        (addon / name).touch()
+
+    result = check_native_test_addon(tmp_path)
+
+    assert result.passed is True
 
 
 # --- check_gut_version ---

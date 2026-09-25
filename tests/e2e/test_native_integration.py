@@ -10,6 +10,8 @@ from textwrap import dedent
 
 import pytest
 
+from gd_tools.config import GdToolsConfig, GodotConfig, TestConfig
+from gd_tools.native_test.command import run_native_test_command
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.preflight import (
@@ -638,6 +640,92 @@ def test_native_windowed_failure_captures_screenshot_after_each(
     assert result.tests[0].diagnostics["screenshot"] == str(screenshot)
     assert screenshot.is_file()
     assert screenshot.stat().st_size > 0
+
+
+def _scene_coverage_files() -> dict[str, str]:
+    """Return a scene whose exercised code lives outside the suite script."""
+    return {
+        "scripts/scene_covered.gd": """
+            extends Node
+            class_name SceneCovered
+
+
+            func covered_label() -> String:
+                if is_ready():
+                    return "ready"
+                return "pending"
+
+
+            func is_ready() -> bool:
+                return true
+
+
+            func uncovered_branch() -> String:
+                if false:
+                    return "never"
+                return "always"
+            """,
+        "scenes/covered.tscn": """
+            [gd_scene load_steps=2 format=3]
+
+            [ext_resource type="Script" path="res://scripts/scene_covered.gd" id="1"]
+
+            [node name="Covered" type="Node"]
+            script = ExtResource("1")
+            """,
+        "test/scene_coverage_suite.gd": """
+            extends GdToolsTest
+            class_name SceneCoverageSuite
+
+            const INTEGRATION := {"scene": "res://scenes/covered.tscn"}
+
+
+            func test_scene_code_is_covered() -> void:
+                var root := get_test_context().get_scene_root()
+                assert_not_null(root, "scene root")
+                assert_eq(root.covered_label(), "ready")
+            """,
+    }
+
+
+def test_native_coverage_reaches_scripts_driven_by_scenes(
+    tmp_path, godot_bin, monkeypatch
+):
+    """Scene-executed production code contributes to the coverage report."""
+    project = _prepare_project(tmp_path, godot_bin, _scene_coverage_files())
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+
+    result = run_native_test_command(
+        config,
+        suite="SceneCoverageSuite",
+        coverage=True,
+        timeout=30,
+    )
+
+    assert result.failed == 0
+    assert result.coverage_data_path is not None
+    coverage_data = json.loads(
+        result.coverage_data_path.read_text(encoding="utf-8")
+    )
+    plan = json.loads(
+        (project / ".gd-tools" / "coverage" / "plan.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    path_by_id = {entry["file_id"]: entry["path"] for entry in plan["files"]}
+    hits_by_path: dict[str, int] = {}
+    for entry in coverage_data["files"]:
+        path = path_by_id.get(entry["file_id"])
+        assert path is not None, f"unknown file_id {entry['file_id']}"
+        hits_by_path[path] = sum(entry["hits"].values())
+    assert hits_by_path.get("res://scripts/scene_covered.gd", 0) > 0
+    planned = set(path_by_id.values())
+    assert "res://scripts/scene_covered.gd" in planned
+    assert not any(path.startswith("res://addons/") for path in planned)
 
 
 def test_native_windowed_pass_and_headless_failure_skip_screenshots(
