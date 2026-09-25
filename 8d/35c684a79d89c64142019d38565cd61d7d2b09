@@ -1,0 +1,1 @@
+Task: Synchronize status and transition documentation. Updated product/spec/roadmap status, native runtime architecture, tag/file/timeout options, lifecycle and engine diagnostics, managed-file backups, doctor transition behavior, and the init module contract across PRD, TDD, and USER_GUIDE.
