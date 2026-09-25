@@ -1,0 +1,3 @@
+Task: Add coverage regression and exclusion tests
+
+Added regression coverage proving generated plans exclude managed addons/test directories, native v1 coverage data remains readable by the existing reporter, and missing-data errors stay actionable. The existing GUT coverage E2E suite also passed (7 tests).
