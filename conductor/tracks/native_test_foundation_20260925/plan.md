@@ -182,35 +182,35 @@
 
 **Purpose:** Prove the complete workflow and close the track with measurable quality gates.
 
-- [ ] Task: Add clean GUT-free E2E fixture
-  - [ ] Create a standalone Godot project with no GUT addon.
-  - [ ] Add a synchronous native test.
-  - [ ] Add an asynchronous native test.
-  - [ ] Add a failing-test project/fixture.
-  - [ ] Add a timeout project/fixture.
-- [ ] Task: Add full-workflow E2E tests
-  - [ ] Run `gd-tools test` on the clean fixture.
-  - [ ] Verify native JSON, JUnit XML, and coverage artifacts.
-  - [ ] Verify exit codes `0`, `1`, and `2`.
-  - [ ] Verify a crashed suite does not hide later suites.
-  - [ ] Verify `--runtime gut` remains callable.
-- [ ] Task: Add performance benchmark
-  - [ ] Measure native and legacy GUT execution on a representative small suite.
-  - [ ] Record startup and total runtime.
-  - [ ] Assert the approved approximately 2x regression target.
-  - [ ] Document benchmark conditions and known variance.
-- [ ] Task: Update implementation documentation
-  - [ ] Update `docs/PRD.md`, `docs/TDD.md`, and `docs/USER_GUIDE.md` for native default/runtime selection.
-  - [ ] Document the temporary GUT fallback and current limitations.
-  - [ ] Update the temporary roadmap phase status.
-- [ ] Task: Final quality gates
-  - [ ] Run the full unit suite.
-  - [ ] Run the full integration suite.
-  - [ ] Run headless E2E tests.
-  - [ ] Run Ruff and Black checks.
-  - [ ] Verify the full project coverage threshold behavior.
-  - [ ] Verify no new runtime dependencies were added.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Add clean GUT-free E2E fixture [ad1c027]
+  - [x] Create a standalone Godot project with no GUT addon.
+  - [x] Add a synchronous native test.
+  - [x] Add an asynchronous native test.
+  - [x] Add a failing-test project/fixture.
+  - [x] Add a timeout project/fixture.
+- [x] Task: Add full-workflow E2E tests [b99fd3c]
+  - [x] Run `gd-tools test` on the clean fixture.
+  - [x] Verify native JSON, JUnit XML, and coverage artifacts.
+  - [x] Verify exit codes `0`, `1`, and `2`.
+  - [x] Verify a crashed suite does not hide later suites.
+  - [x] Verify `--runtime gut` remains callable.
+- [x] Task: Add performance benchmark [b99fd3c]
+  - [x] Measure native and legacy GUT execution on a representative small suite.
+  - [x] Record startup and total runtime.
+  - [x] Assert the approved approximately 2x regression target.
+  - [x] Document benchmark conditions and known variance.
+- [x] Task: Update implementation documentation [16dc9c6]
+  - [x] Update `docs/PRD.md`, `docs/TDD.md`, and `docs/USER_GUIDE.md` for native default/runtime selection.
+  - [x] Document the temporary GUT fallback and current limitations.
+  - [x] Update the temporary roadmap phase status.
+- [x] Task: Final quality gates [59595a5]
+  - [x] Run the full unit suite.
+  - [x] Run the full integration suite.
+  - [x] Run headless E2E tests.
+  - [x] Run Ruff and Black checks.
+  - [x] Verify the full project coverage threshold behavior.
+  - [x] Verify no new runtime dependencies were added.
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run the complete automated verification suite.
   - [ ] Perform the manual CLI verification steps.
   - [ ] Obtain explicit user confirmation of the verification results.
