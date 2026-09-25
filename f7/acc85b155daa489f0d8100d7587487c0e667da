@@ -1,0 +1,3 @@
+Task: Add failing native GDScript fixture tests
+
+Added a clean GUT-free Godot project, a real subprocess fixture that loads and instantiates GdToolsTest, and the initial GdToolsTest base class with structured assertions and async wait helpers. The Red phase was confirmed with Godot's missing-base-class diagnostic; the Green fixture passed after the base class and import step were added. Verified with the native E2E test, Ruff, Black, and git diff checks.
