@@ -142,7 +142,7 @@
   - [ ] Verify user exclusions remain honored.
   - [ ] Verify line and branch metrics remain stable for the clean fixture.
   - [ ] Verify legacy GUT coverage tests continue to pass.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run native coverage unit, integration, and E2E checks.
   - [ ] Compare native output with the existing coverage plan/reporter contract.
   - [ ] Create the phase checkpoint commit and record its SHA.
