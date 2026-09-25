@@ -1,0 +1,20 @@
+Phase 3 verification report
+
+Automated commands:
+- CI=true .venv\Scripts\python.exe -m pytest tests/unit tests/e2e/test_native_runtime.py -q
+  Result: 860 passed; total coverage 96.61%.
+- .venv\Scripts\python.exe -m ruff check src/ tests/
+  Result: passed.
+- .venv\Scripts\python.exe -m black --check src/ tests/
+  Result: passed.
+
+Changed source files were checked against corresponding tests:
+- src/gd_tools/addons/gd-tools-test/gd_tools_test.gd -> native E2E fixtures
+- src/gd_tools/addons/gd-tools-test/gd_tools_test_runner.gd -> native E2E fixtures
+- src/gd_tools/native_test/orchestrator.py -> tests/unit/test_native_orchestrator.py and native E2E
+
+Manual verification confirmed by user:
+- Timeout tests produce distinct timeout results and fail with the test-failure code.
+- Real multi-suite orchestration launches isolated Godot processes and aggregates results.
+- Async process, physics, timer, and signal helpers work.
+- Public CLI dispatch, native coverage activation, and parallelism remain deferred to later phases.
