@@ -9,10 +9,14 @@ from pydantic import ValidationError
 from gd_tools.native_test.protocol import (
     NATIVE_PROTOCOL_VERSION,
     NativeCoverage,
+    NativeExecutionMode,
     NativeManifest,
+    NativePreflightResult,
     NativeRunResult,
     NativeSuite,
+    NativeSuiteIntegration,
     NativeTest,
+    NativeTestIntegration,
     NativeTestResult,
     RuntimeMode,
     write_json_atomic,
@@ -31,11 +35,22 @@ def _manifest(**overrides) -> NativeManifest:
                 name="ExampleSuite",
                 path="res://test/example_test.gd",
                 tags=["smoke"],
+                integration=NativeSuiteIntegration(
+                    scene="res://tests/fixtures/player.tscn",
+                    resources={"stats": "res://tests/fixtures/stats.tres"},
+                    mode=NativeExecutionMode.WINDOWED,
+                ),
                 tests=[
                     NativeTest(
                         name="test_example",
                         tags=["fast"],
                         timeout_seconds=1.5,
+                        integration=NativeTestIntegration(
+                            scene="res://tests/fixtures/player_damaged.tscn",
+                            resources={
+                                "stats": "res://tests/fixtures/damaged_stats.tres"
+                            },
+                        ),
                     )
                 ],
             )
@@ -62,12 +77,29 @@ def test_manifest_serializes_suite_test_and_coverage_metadata(tmp_path):
     path = write_json_atomic(tmp_path / "manifest.json", manifest)
     loaded = NativeManifest.model_validate(json.loads(path.read_text()))
 
+    assert loaded.protocol_version == 2
     assert loaded.project_root == Path("project")
     assert loaded.runtime is RuntimeMode.NATIVE
     assert loaded.suites[0].name == "ExampleSuite"
+    assert loaded.suites[0].integration is not None
+    assert (
+        loaded.suites[0].integration.scene == "res://tests/fixtures/player.tscn"
+    )
+    assert loaded.suites[0].integration.mode is NativeExecutionMode.WINDOWED
+    assert loaded.suites[0].integration.resources == {
+        "stats": "res://tests/fixtures/stats.tres"
+    }
     assert loaded.suites[0].tests[0].name == "test_example"
     assert loaded.suites[0].tests[0].tags == ["fast"]
     assert loaded.suites[0].tests[0].timeout_seconds == 1.5
+    assert loaded.suites[0].tests[0].integration is not None
+    assert (
+        loaded.suites[0].tests[0].integration.scene
+        == "res://tests/fixtures/player_damaged.tscn"
+    )
+    assert loaded.suites[0].tests[0].integration.resources == {
+        "stats": "res://tests/fixtures/damaged_stats.tres"
+    }
     assert loaded.coverage.enabled is True
     assert loaded.coverage.plan_path == Path("coverage/plan.json")
 
@@ -156,3 +188,124 @@ def test_write_json_atomic_replaces_existing_file(tmp_path):
 
     assert json.loads(path.read_text())["project_root"] == "project"
     assert sorted(item.name for item in tmp_path.iterdir()) == ["result.json"]
+
+
+def test_protocol_v2_is_current():
+    """Python and Godot share the intentionally incremented protocol version."""
+    assert NATIVE_PROTOCOL_VERSION == 2
+
+
+def test_integration_defaults_to_headless_without_assets():
+    """A suite without declarations remains an ordinary headless suite."""
+    integration = NativeSuiteIntegration()
+
+    assert integration.scene is None
+    assert integration.resources == {}
+    assert integration.mode is NativeExecutionMode.HEADLESS
+
+
+@pytest.mark.parametrize(
+    ("model", "metadata"),
+    [
+        (NativeSuiteIntegration, {"mode": "offscreen"}),
+        (NativeSuiteIntegration, {"unexpected": True}),
+        (NativeSuiteIntegration, {"resources": []}),
+        (NativeSuiteIntegration, {"scene": 42}),
+        (NativeTestIntegration, {"mode": "headless"}),
+        (NativeTestIntegration, {"unexpected": True}),
+        (NativeTestIntegration, {"resources": []}),
+        (NativeTestIntegration, {"scene": 42}),
+    ],
+)
+def test_integration_metadata_rejects_invalid_schema(model, metadata):
+    """Unknown, malformed, and per-test mode metadata are rejected."""
+    with pytest.raises(ValidationError):
+        model(**metadata)
+
+
+@pytest.mark.parametrize(
+    "model", [NativeSuiteIntegration, NativeTestIntegration]
+)
+def test_integration_metadata_requires_res_scene_paths(model):
+    """Primary scenes must use a non-empty res:// path."""
+    with pytest.raises(ValidationError):
+        model(scene="tests/fixtures/player.tscn")
+
+
+@pytest.mark.parametrize(
+    "model", [NativeSuiteIntegration, NativeTestIntegration]
+)
+def test_integration_metadata_requires_res_resource_paths(model):
+    """Named resources must use non-empty res:// paths."""
+    with pytest.raises(ValidationError):
+        model(resources={"stats": "tests/fixtures/stats.tres"})
+
+
+def test_manifest_rejects_protocol_v1():
+    """Protocol-v1 manifests are rejected after the v2 migration."""
+    with pytest.raises(ValidationError):
+        NativeManifest(
+            protocol_version=1,
+            project_root=Path("project"),
+            runtime=RuntimeMode.NATIVE,
+        )
+
+
+def test_run_result_rejects_protocol_v1():
+    """Protocol-v1 run results are rejected after the v2 migration."""
+    with pytest.raises(ValidationError):
+        NativeRunResult(
+            protocol_version=1,
+            run_id="run-v1",
+            status="passed",
+        )
+
+
+def test_preflight_result_rejects_protocol_v1():
+    """Protocol-v1 preflight results are rejected after the v2 migration."""
+    with pytest.raises(ValidationError):
+        NativePreflightResult(protocol_version=1, status="ok")
+
+
+def test_preflight_result_round_trips_integration_metadata(tmp_path):
+    """Preflight output atomically preserves effective suite/test metadata."""
+    result = NativePreflightResult(
+        status="ok",
+        suites=[_manifest().suites[0]],
+    )
+
+    path = write_json_atomic(tmp_path / "preflight.json", result)
+    loaded = NativePreflightResult.model_validate(json.loads(path.read_text()))
+
+    assert loaded.protocol_version == 2
+    assert loaded.status == "ok"
+    assert loaded.error is None
+    assert loaded.suites[0].integration is not None
+    assert loaded.suites[0].integration.mode is NativeExecutionMode.WINDOWED
+    assert loaded.suites[0].tests[0].integration is not None
+    assert loaded.suites[0].tests[0].integration.resources == {
+        "stats": "res://tests/fixtures/damaged_stats.tres"
+    }
+    assert sorted(item.name for item in tmp_path.iterdir()) == [
+        "preflight.json"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("status", "error"),
+    [
+        ("ok", "unexpected error"),
+        ("error", None),
+        ("error", ""),
+    ],
+)
+def test_preflight_result_requires_status_error_consistency(status, error):
+    """Preflight status and error text must describe the same outcome."""
+    with pytest.raises(ValidationError):
+        NativePreflightResult(status=status, error=error)
+
+
+def test_preflight_result_rejects_unknown_status():
+    """Only successful and failed preflight states are accepted."""
+    with pytest.raises(ValidationError):
+        NativePreflightResult(status="partial")
