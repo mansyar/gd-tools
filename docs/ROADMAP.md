@@ -25,7 +25,7 @@ new differentiating territory. The phasing is designed so that:
 
 ## Native Runtime Transition (Completed Foundation)
 
-**Track:** `native_test_foundation_20260925`  
+**Track:** `native_test_foundation_20260925`
 **Status:** Completed; the temporary GUT compatibility path remains available.
 
 The native Godot test runtime is now the default path for `gd-tools test`.
