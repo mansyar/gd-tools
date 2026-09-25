@@ -249,8 +249,8 @@
   - [x] Correct stale GUT-first module/status documentation.
   - [x] Update user-facing diagnostics and timeout/tag documentation.
 - [~] Task: Review-fix verification & checkpoint (Refer to `workflow.md`)
-  - [ ] Run focused unit, integration, and native E2E tests.
-  - [ ] Run full automated verification and style checks.
+  - [x] Run focused unit, integration, and native E2E tests.
+  - [x] Run full automated verification and style checks.
   - [ ] Perform manual CLI/GUT/native transition verification.
   - [ ] Create the review-fix checkpoint commit and record its SHA.
   - [ ] Restore the track and project documentation to completed status.
