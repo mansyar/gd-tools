@@ -472,3 +472,160 @@ def test_run_native_command_raises_infrastructure_error(tmp_path):
     ):
         with pytest.raises(GdToolsError, match="infrastructure"):
             run_native_test_command(_config())
+
+
+# --- Phase 6: reporting and exit codes for integration runs ---
+
+
+def test_to_test_result_exposes_artifact_index_path(tmp_path):
+    """The CLI result model carries the published artifact index."""
+    from gd_tools.native_test.command import _to_test_result
+
+    native = _native_result()
+    native.artifact_index_path = tmp_path / "artifacts.json"
+
+    result = _to_test_result(native, tmp_path, str(tmp_path / "results.xml"))
+
+    assert result.artifact_index_path == tmp_path / "artifacts.json"
+
+
+def test_run_native_command_reports_infrastructure_error_before_raising(
+    tmp_path,
+):
+    """Infrastructure failures still publish JUnit, artifacts, and CLI output."""
+    junit_path = tmp_path / "results.xml"
+    artifact_index = (
+        tmp_path / ".gd-tools" / "artifacts" / "run-1" / "artifacts.json"
+    )
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    native = _native_result(
+        "error",
+        [
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="<suite>",
+                status="error",
+                message="Suite could not load",
+                diagnostics={"screenshot": "suite-0000.failure.png"},
+            ),
+            NativeTestResult(
+                suite="LaterSuite",
+                name="test_ok",
+                status="passed",
+            ),
+        ],
+    )
+    native.artifact_index_path = artifact_index
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests", return_value=native
+        ),
+        patch("gd_tools.native_test.command._generate_native_report") as report,
+        patch(
+            "gd_tools.native_test.command.format_test_results"
+        ) as format_results,
+    ):
+        with pytest.raises(GdToolsError, match="Suite could not load"):
+            run_native_test_command(_config(), junit_xml=str(junit_path))
+
+    report.assert_called_once()
+    format_results.assert_called_once()
+    assert junit_path.is_file()
+    root = ET.parse(junit_path).getroot()
+    assert root.find("testsuite").attrib["tests"] == "2"
+    failures = root.findall("testsuite/testcase/failure")
+    assert len(failures) == 1
+    assert "screenshot" in failures[0].text
+    assert (
+        root.find("testsuite/testcase[2]").attrib["classname"] == "LaterSuite"
+    )
+    artifact_property = root.find("testsuite/properties/property")
+    assert artifact_property is not None
+    assert artifact_property.attrib["name"] == "artifact_index"
+    assert artifact_property.attrib["value"] == str(artifact_index)
+
+
+def test_run_native_command_infrastructure_error_dominates_test_failure(
+    tmp_path,
+):
+    """Infrastructure failures stay exit-2 beside test and coverage failures."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    native = _native_result(
+        "error",
+        [
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_fail",
+                status="failed",
+                message="assertion failed",
+            ),
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="<process>",
+                status="error",
+                message="windowed display unavailable",
+            ),
+        ],
+    )
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests", return_value=native
+        ),
+        patch(
+            "gd_tools.native_test.command._generate_native_report",
+            side_effect=CoverageThresholdError("below threshold"),
+        ),
+    ):
+        with pytest.raises(GdToolsError, match="windowed display unavailable"):
+            run_native_test_command(_config(), coverage=True, min_percent=100)
+
+    junit_path = tmp_path / ".gd-tools" / "results.xml"
+    assert junit_path.is_file()
+    root = ET.parse(junit_path).getroot()
+    assert root.find("testsuite").attrib["tests"] == "2"
