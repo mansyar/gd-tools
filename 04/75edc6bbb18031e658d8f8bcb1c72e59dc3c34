@@ -1,0 +1,9 @@
+Made integration failures visible before the process exits.
+
+- run_native_test_command now generates the coverage report, converts results, and prints the Rich table before raising an infrastructure error.
+- Infrastructure errors dominate both ordinary test failures and coverage threshold failures, preserving exit 2.
+- TestResult gained an optional artifact_index_path, populated from the native run result.
+- JUnit now records the artifact index as a machine-readable testsuite property.
+- No new CLI flags or configuration were added.
+
+Verification: tests/unit/test_native_command.py + tests/unit/test_test_runner.py 79 passed. Black, Ruff, and diff checks passed.
