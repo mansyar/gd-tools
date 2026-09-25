@@ -68,6 +68,22 @@ class DoctorResult:
     all_passed: bool
 
 
+def _legacy_optional_result(
+    result: CheckResult,
+    required: bool,
+) -> CheckResult:
+    """Downgrade an optional legacy diagnostic to a non-blocking warning."""
+    if required:
+        return result
+    return CheckResult(
+        name=result.name,
+        passed=True,
+        message=f"{result.message} (optional for native runtime)",
+        fix_hint=result.fix_hint,
+        severity="warning",
+    )
+
+
 # --- Godot and External Tool Checks ---
 
 
@@ -215,12 +231,17 @@ def check_gut_installed(
     )
 
 
-def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
+def check_gut_version(
+    project_root: Path,
+    godot_version: str,
+    required: bool = True,
+) -> CheckResult:
     """Check that the installed GUT version matches the expected version.
 
     Args:
         project_root: Path to the Godot project root.
         godot_version: The detected Godot version string.
+        required: Whether a mismatch should block a native-mode doctor run.
 
     Returns:
         CheckResult indicating whether the GUT version is compatible.
@@ -239,16 +260,20 @@ def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
             passed=True,
             message=f"GUT version {installed} matches expected {expected}",
         )
-    return CheckResult(
-        name="GUT Version",
-        passed=False,
-        message=(
-            f"GUT version {installed} does not match " f"expected {expected}"
+    return _legacy_optional_result(
+        CheckResult(
+            name="GUT Version",
+            passed=False,
+            message=(
+                f"GUT version {installed} does not match "
+                f"expected {expected}"
+            ),
+            fix_hint=(
+                f"Install GUT version {expected} for Godot {godot_version}"
+            ),
+            severity="warning",
         ),
-        fix_hint=(
-            f"Install GUT version {expected} " f"for Godot {godot_version}"
-        ),
-        severity="warning",
+        required,
     )
 
 
@@ -313,7 +338,14 @@ def check_coverage_addon(project_root: Path) -> CheckResult:
 
 
 def check_native_test_addon(project_root: Path) -> CheckResult:
-    """Check that the bundled native test runtime is present."""
+    """Check that the bundled native test runtime is present and current.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        CheckResult indicating whether the native addon is usable.
+    """
     addon_dir = project_root / "addons" / "gd-tools-test"
     missing = [
         name
@@ -328,10 +360,36 @@ def check_native_test_addon(project_root: Path) -> CheckResult:
             fix_hint="Run `gd-tools init` to deploy the native test addon.",
             severity="critical",
         )
+    version_file = addon_dir / "_version.txt"
+    if not version_file.exists():
+        return CheckResult(
+            name="Native Test Addon",
+            passed=True,
+            message="Native test addon installed (version file missing)",
+            fix_hint="Run `gd-tools init` to create the version file.",
+            severity="warning",
+        )
+    addon_version = version_file.read_text(encoding="utf-8").strip()
+    is_stale = True
+    try:
+        is_stale = parse_version(addon_version) < parse_version(__version__)
+    except (TypeError, ValueError):
+        pass
+    if is_stale:
+        return CheckResult(
+            name="Native Test Addon",
+            passed=True,
+            message=(
+                f"Native test addon is outdated (v{addon_version} deployed, "
+                f"v{__version__} available)"
+            ),
+            fix_hint="Run `gd-tools init` to update.",
+            severity="warning",
+        )
     return CheckResult(
         name="Native Test Addon",
         passed=True,
-        message="Native test addon is installed",
+        message=f"Native test addon installed (v{addon_version})",
     )
 
 
@@ -367,12 +425,18 @@ def check_gutconfig(
     try:
         content = json.loads(gutconfig_path.read_text())
     except ValueError as exc:
-        return CheckResult(
-            name="GUT Config",
-            passed=False,
-            message=f".gutconfig.json is invalid JSON: {exc}",
-            fix_hint="Fix the JSON syntax in .gutconfig.json or run `gd-tools init`.",
-            severity="warning",
+        return _legacy_optional_result(
+            CheckResult(
+                name="GUT Config",
+                passed=False,
+                message=f".gutconfig.json is invalid JSON: {exc}",
+                fix_hint=(
+                    "Fix the JSON syntax in .gutconfig.json or run "
+                    "`gd-tools init`."
+                ),
+                severity="warning",
+            ),
+            required,
         )
     missing_keys = [
         key
@@ -380,12 +444,18 @@ def check_gutconfig(
         if key not in content
     ]
     if missing_keys:
-        return CheckResult(
-            name="GUT Config",
-            passed=False,
-            message=f"Missing keys: {', '.join(missing_keys)}",
-            fix_hint="Run `gd-tools init` to regenerate .gutconfig.json with hook scripts.",
-            severity="warning",
+        return _legacy_optional_result(
+            CheckResult(
+                name="GUT Config",
+                passed=False,
+                message=f"Missing keys: {', '.join(missing_keys)}",
+                fix_hint=(
+                    "Run `gd-tools init` to regenerate .gutconfig.json with "
+                    "hook scripts."
+                ),
+                severity="warning",
+            ),
+            required,
         )
     return CheckResult(
         name="GUT Config",
@@ -447,12 +517,15 @@ def check_autoload(
     """
     project_godot = project_root / "project.godot"
     if not project_godot.exists():
-        return CheckResult(
-            name="Autoload",
-            passed=False,
-            message="project.godot not found",
-            fix_hint="Run `gd-tools init` to deploy coverage addon.",
-            severity="critical",
+        return _legacy_optional_result(
+            CheckResult(
+                name="Autoload",
+                passed=False,
+                message="project.godot not found",
+                fix_hint="Run `gd-tools init` to deploy coverage addon.",
+                severity="critical",
+            ),
+            required,
         )
     content = project_godot.read_text()
     in_autoload = False
@@ -530,7 +603,11 @@ def run_doctor() -> DoctorResult:
         ),
         (
             "GUT Version",
-            lambda: check_gut_version(project_root, godot_version),
+            lambda: check_gut_version(
+                project_root,
+                godot_version,
+                required=legacy_required,
+            ),
         ),
         ("Coverage Addon", lambda: check_coverage_addon(project_root)),
         (

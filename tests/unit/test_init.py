@@ -1073,6 +1073,55 @@ def test_print_summary_quiet_shows_one_line_status(tmp_path: Path, capsys):
     assert "Initialized" in captured.out
 
 
+# --- install_native_test_addon ---
+
+
+def test_install_native_test_addon_copies_bundled_files(tmp_path: Path):
+    """Native initialization deploys all managed runtime files."""
+    install_native_test_addon(tmp_path)
+
+    target_dir = tmp_path / "addons" / "gd-tools-test"
+    assert (target_dir / "gd_tools_test.gd").is_file()
+    assert (target_dir / "gd_tools_test_runner.gd").is_file()
+    assert (target_dir / "gd_tools_native_coverage.gd").is_file()
+    assert (target_dir / "_version.txt").is_file()
+
+
+def test_install_native_test_addon_backs_up_modified_files(tmp_path: Path):
+    """Reinitializing preserves user-modified native files before replacement."""
+    install_native_test_addon(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-test"
+    modified = "# user customization\n"
+    (target_dir / "gd_tools_test.gd").write_text(modified, encoding="utf-8")
+
+    with patch("gd_tools.init.console.print") as mock_print:
+        install_native_test_addon(tmp_path)
+
+    backup = target_dir / ".backups" / "gd_tools_test.gd.bak"
+    assert backup.read_text(encoding="utf-8") == modified
+    assert (target_dir / "gd_tools_test.gd").read_text(
+        encoding="utf-8"
+    ) != modified
+    assert "Backed up" in " ".join(
+        str(call.args[0]) for call in mock_print.call_args_list
+    )
+
+
+def test_install_native_test_addon_does_not_backup_unchanged_files(
+    tmp_path: Path,
+):
+    """A repeated native install does not create unnecessary backups."""
+    install_native_test_addon(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-test"
+    backups_dir = target_dir / ".backups"
+    if backups_dir.exists():
+        shutil.rmtree(backups_dir)
+
+    install_native_test_addon(tmp_path)
+
+    assert not backups_dir.exists() or not any(backups_dir.iterdir())
+
+
 def test_run_init_defaults_to_native_and_keeps_gut_opt_in(tmp_path: Path):
     """Native initialization does not download or enable legacy GUT."""
     (tmp_path / "project.godot").write_text("config_version=5\n")

@@ -369,12 +369,30 @@ def install_coverage_addon(project_root: Path) -> None:
 
 
 def install_native_test_addon(project_root: Path) -> None:
-    """Copy the bundled native test runtime into a Godot project."""
+    """Copy the bundled native runtime with managed-file backups.
+
+    Args:
+        project_root: Path to the Godot project root.
+    """
     source_dir = Path(__file__).parent / "addons" / "gd-tools-test"
     target_dir = project_root / "addons" / "gd-tools-test"
     target_dir.mkdir(parents=True, exist_ok=True)
+    backups_dir = target_dir / ".backups"
     for file_name in NATIVE_TEST_ADDON_FILES:
-        shutil.copy2(source_dir / file_name, target_dir / file_name)
+        source_file = source_dir / file_name
+        target_file = target_dir / file_name
+        if (
+            target_file.exists()
+            and target_file.read_bytes() != source_file.read_bytes()
+        ):
+            backups_dir.mkdir(parents=True, exist_ok=True)
+            backup_path = backups_dir / f"{file_name}.bak"
+            shutil.copy2(target_file, backup_path)
+            console.print(
+                f"[yellow]Warning: {file_name} was modified. "
+                f"Backed up to {backup_path} before overwriting.[/yellow]"
+            )
+        shutil.copy2(source_file, target_file)
     (target_dir / "_version.txt").write_text(
         f"{__version__}\n", encoding="utf-8"
     )

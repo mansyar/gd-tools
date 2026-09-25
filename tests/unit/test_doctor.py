@@ -312,6 +312,28 @@ def test_check_native_test_addon_passes_when_files_exist(tmp_path):
     assert result.name == "Native Test Addon"
 
 
+@patch("gd_tools.doctor.__version__", "0.3.0")
+def test_check_native_test_addon_warns_when_stale(tmp_path):
+    """Doctor reports an outdated native runtime without failing the project."""
+    addon = tmp_path / "addons" / "gd-tools-test"
+    addon.mkdir(parents=True)
+    for name in (
+        "gd_tools_test.gd",
+        "gd_tools_test_runner.gd",
+        "gd_tools_native_coverage.gd",
+    ):
+        (addon / name).touch()
+    (addon / "_version.txt").write_text("0.2.0\n", encoding="utf-8")
+
+    result = check_native_test_addon(tmp_path)
+
+    assert result.passed is True
+    assert result.severity == "warning"
+    assert "0.2.0" in result.message
+    assert "0.3.0" in result.message
+    assert "gd-tools init" in result.fix_hint
+
+
 # --- check_gut_version ---
 
 
@@ -369,6 +391,22 @@ def test_check_gut_version_passes_when_version_unknown(
     mock_get_expected.return_value = "9.5.0"
     result = check_gut_version(Path("/fake"), "4.5.0")
     assert result.passed is True
+
+
+@patch("gd_tools.doctor.get_gut_version_for_godot")
+@patch("gd_tools.doctor.get_installed_gut_version")
+def test_optional_gut_version_mismatch_is_non_blocking(
+    mock_get_installed, mock_get_expected, tmp_path
+):
+    """Native mode does not fail doctor for an installed GUT mismatch."""
+    mock_get_installed.return_value = "9.4.0"
+    mock_get_expected.return_value = "9.5.0"
+
+    result = check_gut_version(tmp_path, "4.5.0", required=False)
+
+    assert result.passed is True
+    assert result.severity == "warning"
+    assert "optional" in result.message.lower()
 
 
 # --- check_coverage_addon ---
@@ -519,6 +557,16 @@ def test_check_gutconfig_warning_severity(tmp_path):
     result = check_gutconfig(tmp_path)
     assert result.severity == "warning"
     assert "gd-tools init" in result.fix_hint
+
+
+def test_optional_invalid_gutconfig_is_non_blocking(tmp_path):
+    """Native mode does not fail doctor for an invalid optional GUT config."""
+    (tmp_path / ".gutconfig.json").write_text("{invalid", encoding="utf-8")
+
+    result = check_gutconfig(tmp_path, required=False)
+
+    assert result.passed is True
+    assert result.severity == "warning"
 
 
 # --- check_gd_tools_toml ---
@@ -699,6 +747,45 @@ def test_run_doctor_all_passed_false_when_any_fails(_mock_doctor_deps):
 
 
 @pytest.mark.unit
+def test_run_doctor_ignores_optional_legacy_warning(_mock_doctor_deps):
+    """Native doctor succeeds when optional GUT diagnostics are warnings."""
+    _mock_doctor_deps["gut_ver"].return_value = CheckResult(
+        name="GUT Version",
+        passed=True,
+        message="GUT version mismatch (optional)",
+        severity="warning",
+    )
+
+    result = run_doctor()
+
+    assert result.all_passed is True
+    _mock_doctor_deps["gut_ver"].assert_called_once_with(
+        Path("/fake/project"), "4.6.2", required=False
+    )
+
+
+@pytest.mark.unit
+def test_run_doctor_still_reports_legacy_warning_as_failure(
+    _mock_doctor_deps,
+):
+    """GUT runtime still treats its version diagnostic as blocking."""
+    _mock_doctor_deps["config"].return_value.test.runtime = "gut"
+    _mock_doctor_deps["gut_ver"].return_value = CheckResult(
+        name="GUT Version",
+        passed=False,
+        message="GUT version mismatch",
+        severity="warning",
+    )
+
+    result = run_doctor()
+
+    assert result.all_passed is False
+    _mock_doctor_deps["gut_ver"].assert_called_once_with(
+        Path("/fake/project"), "4.6.2", required=True
+    )
+
+
+@pytest.mark.unit
 def test_run_doctor_never_raises_on_check_exception(_mock_doctor_deps):
     """Test run_doctor catches exceptions and converts to failed CheckResult."""
     _mock_doctor_deps["binary"].side_effect = RuntimeError("boom")
@@ -740,6 +827,14 @@ def test_run_doctor_handles_godot_not_found_for_version(_mock_doctor_deps):
     result = run_doctor()
     assert isinstance(result, DoctorResult)
     assert len(result.checks) == 10
+
+
+def test_optional_missing_autoload_is_non_blocking(tmp_path):
+    """Native mode does not fail doctor for the optional legacy autoload."""
+    result = check_autoload(tmp_path, required=False)
+
+    assert result.passed is True
+    assert result.severity == "warning"
 
 
 # --- format_doctor_table ---
