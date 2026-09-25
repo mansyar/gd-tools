@@ -22,6 +22,7 @@ from pathlib import Path
 import pytest
 
 from conftest import find_godot_binary
+from gd_tools.godot import get_godot_version, get_gut_version_for_godot
 from gd_tools.init import install_coverage_addon, install_native_test_addon
 
 pytestmark = pytest.mark.e2e
@@ -57,10 +58,12 @@ def _setup_project_with_godot(tmp_path: Path) -> Path:
         tmp_path / "addons" / "gut",
         dirs_exist_ok=True,
     )
-    # The local compatibility fixture runs on Godot 4.7; expose the
-    # mapped version expected by doctor while retaining the fixture code.
+    godot_binary = find_godot_binary()
+    assert godot_binary is not None
+    godot_version = get_godot_version(godot_binary)
+    gut_version = get_gut_version_for_godot(godot_version)
     (tmp_path / "addons" / "gut" / "plugin.cfg").write_text(
-        '[plugin]\nname="Gut"\nversion="9.7.0"\n', encoding="utf-8"
+        f'[plugin]\nname="Gut"\nversion="{gut_version}"\n', encoding="utf-8"
     )
     install_coverage_addon(tmp_path)
     install_native_test_addon(tmp_path)
