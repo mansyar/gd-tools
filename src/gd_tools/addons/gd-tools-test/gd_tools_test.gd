@@ -16,11 +16,25 @@ func _gd_tools_record_failure(
 		expected = null
 ) -> void:
 	## Record one structured assertion failure for the current test.
+	var source := ""
+	var line := 0
+	var stack: Array[Dictionary] = get_stack()
+	for frame in stack:
+		var frame_source := str(frame.get("source", ""))
+		if frame_source.ends_with("gd_tools_test.gd") or frame_source.ends_with(
+				"gd_tools_test_runner.gd"
+		):
+			continue
+		source = frame_source
+		line = int(frame.get("line", 0))
+		break
 	_gd_tools_failures.append({
 		"assertion": assertion,
 		"message": message,
 		"actual": str(actual),
 		"expected": str(expected),
+		"source": source,
+		"line": line,
 	})
 
 

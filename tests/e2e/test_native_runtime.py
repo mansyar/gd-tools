@@ -210,3 +210,58 @@ def test_native_runner_runs_lifecycle_hooks_after_failure(godot_bin, tmp_path):
         "passed",
         "failed",
     ]
+
+
+def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
+    """Assertion failures include values, message, and source location."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "assertion-manifest.json"
+    result_path = tmp_path / "assertion-result.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 1,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeAssertionSuite",
+                        "path": "res://test/assertion_suite.gd",
+                        "tests": [{"name": "test_structured_failure"}],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    failure = payload["tests"][0]["diagnostics"]["failures"][0]
+    assert failure["assertion"] == "assert_eq"
+    assert failure["actual"] == "1"
+    assert failure["expected"] == "2"
+    assert failure["message"] == "values differ"
+    assert "assertion_suite.gd" in failure["source"]
+    assert failure["line"] > 0
