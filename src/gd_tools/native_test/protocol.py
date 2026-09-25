@@ -85,6 +85,10 @@ class NativeTestResult(BaseModel):
     attempts: int = Field(default=1, ge=1)
     message: str = ""
     diagnostics: dict[str, Any] = Field(default_factory=dict)
+    started_at: str | None = None
+    finished_at: str | None = None
+    engine_errors: list[str] = Field(default_factory=list)
+    engine_warnings: list[str] = Field(default_factory=list)
 
 
 class NativeRunResult(BaseModel):
@@ -98,6 +102,12 @@ class NativeRunResult(BaseModel):
     tests: list[NativeTestResult] = Field(default_factory=list)
     coverage_data_path: Path | None = None
     diagnostics: dict[str, Any] = Field(default_factory=dict)
+    started_at: str | None = None
+    finished_at: str | None = None
+    engine_errors: list[str] = Field(default_factory=list)
+    engine_warnings: list[str] = Field(default_factory=list)
+    stdout: str = ""
+    stderr: str = ""
 
 
 def write_json_atomic(path: Path, value: BaseModel) -> Path:

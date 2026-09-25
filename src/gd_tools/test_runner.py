@@ -8,9 +8,11 @@ returns a :class:`TestResult`.
 
 import os
 import subprocess
+import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from junitparser import JUnitXml
 from rich.table import Table
@@ -45,6 +47,7 @@ class TestDetail:
     status: str
     message: str
     duration: float
+    diagnostics: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -308,6 +311,14 @@ def format_test_results(result: TestResult) -> None:
             ]
             if detail.message:
                 parts.append((f": {detail.message}", ""))
+            if detail.diagnostics:
+                parts.append(
+                    (
+                        "\nDiagnostics: "
+                        + json.dumps(detail.diagnostics, sort_keys=True),
+                        "dim",
+                    )
+                )
             output.console.print(Text.assemble(*parts))
 
     # Surface GUT stdout/stderr for debugging.

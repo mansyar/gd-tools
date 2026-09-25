@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -253,6 +254,7 @@ def _to_test_result(
                 status=status,
                 message=test.message,
                 duration=test.duration_seconds,
+                diagnostics=test.diagnostics,
             )
         )
 
@@ -270,8 +272,8 @@ def _to_test_result(
         duration=duration,
         junit_xml_path=junit_path,
         coverage_data_path=native_result.coverage_data_path,
-        stdout="",
-        stderr="",
+        stdout=native_result.stdout,
+        stderr=native_result.stderr,
         test_details=details,
     )
 
@@ -306,7 +308,13 @@ def _write_junit_xml(
                 "failure",
                 message=detail.message or "Test failed",
             )
-            failure.text = detail.message
+            failure_text = detail.message
+            if detail.diagnostics:
+                failure_text += "\nDiagnostics: " + json.dumps(
+                    detail.diagnostics,
+                    sort_keys=True,
+                )
+            failure.text = failure_text
         elif detail.status == "skip":
             ET.SubElement(case, "skipped", message=detail.message)
     ET.ElementTree(root).write(path, encoding="utf-8", xml_declaration=True)

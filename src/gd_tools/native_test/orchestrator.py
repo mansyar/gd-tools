@@ -62,13 +62,17 @@ def run_native_tests(
     )
     has_failure = False
     has_error = False
+    process_stdout: list[str] = []
+    process_stderr: list[str] = []
 
     for index, suite in enumerate(suites):
         manifest_path = output_dir / f"suite-{index:04d}.manifest.json"
         result_path = output_dir / f"suite-{index:04d}.result.json"
         events_path = output_dir / f"suite-{index:04d}.events.ndjson"
+        log_path = output_dir / f"suite-{index:04d}.log"
         result_path.unlink(missing_ok=True)
         events_path.unlink(missing_ok=True)
+        log_path.unlink(missing_ok=True)
 
         suite_coverage = coverage or NativeCoverage()
         if coverage and coverage.enabled:
@@ -92,6 +96,7 @@ def run_native_tests(
                 "GD_TOOLS_NATIVE_MANIFEST": str(manifest_path),
                 "GD_TOOLS_NATIVE_RESULT": str(result_path),
                 "GD_TOOLS_NATIVE_EVENTS": str(events_path),
+                "GD_TOOLS_NATIVE_LOG": str(log_path),
                 "GD_TOOLS_NATIVE_RUN_ID": run_id,
             }
         )
@@ -102,6 +107,8 @@ def run_native_tests(
             str(project_root),
             "--script",
             runner_script,
+            "--log-file",
+            str(log_path),
         ]
 
         try:
@@ -125,6 +132,10 @@ def run_native_tests(
             )
             continue
 
+        if completed.stdout:
+            process_stdout.append(completed.stdout)
+        if completed.stderr:
+            process_stderr.append(completed.stderr)
         parsed_result = _read_native_result(result_path)
         if parsed_result is not None:
             expected_returncode = {
@@ -144,6 +155,12 @@ def run_native_tests(
                     )
                 )
                 continue
+            parsed_result = parsed_result.model_copy(
+                update={
+                    "stdout": completed.stdout,
+                    "stderr": completed.stderr,
+                }
+            )
             all_tests.extend(parsed_result.tests)
             if parsed_result.status == "failed":
                 has_failure = True
@@ -188,6 +205,8 @@ def run_native_tests(
         status=status,
         tests=all_tests,
         coverage_data_path=merged_coverage_path,
+        stdout="\n".join(process_stdout),
+        stderr="\n".join(process_stderr),
     )
 
 

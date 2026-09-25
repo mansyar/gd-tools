@@ -7,6 +7,7 @@ extends Node
 ## the assertion surface and Godot-specific waits needed by a test suite.
 
 var _gd_tools_failures: Array[Dictionary] = []
+var _gd_tools_suite_state: Dictionary = {}
 
 
 func _gd_tools_record_failure(
@@ -46,6 +47,16 @@ func get_failures() -> Array[Dictionary]:
 func clear_failures() -> void:
 	## Clear assertion state before reusing a test instance.
 	_gd_tools_failures.clear()
+
+
+func _gd_tools_set_suite_state(state: Dictionary) -> void:
+	## Share the suite-scoped state dictionary with a fresh test instance.
+	_gd_tools_suite_state = state
+
+
+func _gd_tools_get_suite_state() -> Dictionary:
+	## Return the suite-scoped state dictionary.
+	return _gd_tools_suite_state
 
 
 func assert_true(value: bool, message: String = "") -> void:

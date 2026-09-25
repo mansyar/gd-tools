@@ -61,7 +61,9 @@ def _run_native_manifest(
 ):
     """Run the native Godot runner with optional event and log artifacts."""
     env = os.environ.copy()
-    env["GD_TOOLS_NATIVE_MANIFEST"] = str(result_path.with_suffix(".manifest.json"))
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(
+        result_path.with_suffix(".manifest.json")
+    )
     env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
     if events_path is not None:
         env["GD_TOOLS_NATIVE_EVENTS"] = str(events_path)
@@ -294,12 +296,19 @@ def test_native_runner_reports_lifecycle_failures_and_preserves_suite_state(
     assert process.returncode == 1, process.stdout + process.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert payload["status"] == "failed"
-    results = {test["suite"]: test for test in payload["tests"]}
-    assert results["NativeBeforeAllFailureSuite"]["status"] == "failed"
-    assert results["NativeBeforeAllFailureSuite"]["name"] == "before_all"
-    assert results["NativeAfterAllFailureSuite"]["status"] == "failed"
-    assert results["NativeAfterAllFailureSuite"]["name"] == "after_all"
-    assert results["NativeReviewStateSuite"]["status"] == "passed"
+    results = payload["tests"]
+    before_result = next(
+        test for test in results if test["name"] == "before_all"
+    )
+    after_result = next(test for test in results if test["name"] == "after_all")
+    state_result = next(
+        test for test in results if test["name"] == "test_uses_suite_state"
+    )
+    assert before_result["status"] == "failed"
+    assert before_result["suite"] == "NativeBeforeAllFailureSuite"
+    assert after_result["status"] == "failed"
+    assert after_result["suite"] == "NativeAfterAllFailureSuite"
+    assert state_result["status"] == "passed"
 
 
 def test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup(
@@ -346,9 +355,7 @@ def test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup(
     ).splitlines() == ["after_each"]
 
 
-def test_native_runner_captures_engine_errors_and_warnings(
-    godot_bin, tmp_path
-):
+def test_native_runner_captures_engine_errors_and_warnings(godot_bin, tmp_path):
     """Godot engine diagnostics fail the run and appear in native JSON."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
@@ -378,11 +385,15 @@ def test_native_runner_captures_engine_errors_and_warnings(
     assert process.returncode == 2, process.stdout + process.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert payload["status"] == "error"
-    assert any("native engine error" in item for item in payload["engine_errors"])
+    assert any(
+        "native engine error" in item for item in payload["engine_errors"]
+    )
     assert any(
         "native engine warning" in item for item in payload["engine_warnings"]
     )
 
+
+def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
     """Assertion failures include values, message, and source location."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest_path = tmp_path / "assertion-manifest.json"
