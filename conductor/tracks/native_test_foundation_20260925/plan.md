@@ -152,31 +152,31 @@
 **Purpose:** Make native execution the default without removing the working GUT path.
 
 - [x] Task: Add failing CLI/runtime-selection tests [9644576]
-  - [ ] Test default native selection.
-  - [ ] Test `--runtime native`.
-  - [ ] Test `--runtime gut`.
-  - [ ] Test invalid runtime values.
-  - [ ] Test native-empty/GUT-present migration guidance.
-  - [ ] Test `--no-exit-code` and existing output flags.
+  - [x] Test default native selection.
+  - [x] Test `--runtime native`.
+  - [x] Test `--runtime gut`.
+  - [x] Test invalid runtime values.
+  - [x] Test native-empty/GUT-present migration guidance.
+  - [x] Test `--no-exit-code` and existing output flags.
 - [x] Task: Implement runtime dispatch [9644576]
-  - [ ] Extend the test command with explicit runtime selection.
-  - [ ] Route native execution through the new discovery/runner path.
-  - [ ] Route `--runtime gut` through the existing implementation.
-  - [ ] Keep GUT installation checks scoped to the legacy path.
+  - [x] Extend the test command with explicit runtime selection.
+  - [x] Route native execution through the new discovery/runner path.
+  - [x] Route `--runtime gut` through the existing implementation.
+  - [x] Keep GUT installation checks scoped to the legacy path.
 - [x] Task: Integrate native result reporting [9644576]
-  - [ ] Adapt native results to the existing CLI-facing `TestResult` model where practical.
-  - [ ] Generate JUnit XML from normalized native results.
-  - [ ] Preserve Rich output and machine-readable behavior.
-  - [ ] Add structured diagnostics to failure output without parsing Godot stdout.
+  - [x] Adapt native results to the existing CLI-facing `TestResult` model where practical.
+  - [x] Generate JUnit XML from normalized native results.
+  - [x] Preserve Rich output and machine-readable behavior.
+  - [x] Add structured diagnostics to failure output without parsing Godot stdout.
 - [x] Task: Update init/doctor/package integration where required [9644576]
-  - [ ] Ensure native addon package data is installed and discoverable.
-  - [ ] Keep GUT installation opt-in for the transition.
-  - [ ] Update doctor/version checks without removing legacy diagnostics.
-  - [ ] Add tests for native and GUT project states.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run CLI unit and integration tests for both runtime modes.
-  - [ ] Verify existing command examples and exit codes.
-  - [ ] Create the phase checkpoint commit and record its SHA.
+  - [x] Ensure native addon package data is installed and discoverable.
+  - [x] Keep GUT installation opt-in for the transition.
+  - [x] Update doctor/version checks without removing legacy diagnostics.
+  - [x] Add tests for native and GUT project states.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 6416f9e]
+  - [x] Run CLI unit and integration tests for both runtime modes.
+  - [x] Verify existing command examples and exit codes.
+  - [x] Create the phase checkpoint commit and record its SHA.
 
 ## Phase 6 — E2E, performance, and documentation
 
