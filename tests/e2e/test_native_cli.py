@@ -125,6 +125,43 @@ def test_native_cli_defaults_to_native_and_writes_junit(tmp_path, godot_bin):
 
 
 @skip_if_no_godot
+def test_native_cli_enforces_tag_selection(tmp_path, godot_bin):
+    """A tag with no matching suites produces native migration guidance."""
+    project = _setup_project(tmp_path)
+    assert (
+        _run_cli(["init", "--non-interactive"], project, godot_bin).returncode
+        == 0
+    )
+
+    result = _run_cli(
+        ["--quiet", "test", "--tag", "does-not-exist"],
+        project,
+        godot_bin,
+    )
+
+    assert result.returncode == 2
+    assert "--runtime gut" in result.stdout + result.stderr
+
+
+@skip_if_no_godot
+def test_native_cli_preserves_exact_file_selector(tmp_path, godot_bin):
+    """Selecting one file does not execute failing sibling suites."""
+    project = _setup_project(tmp_path)
+    assert (
+        _run_cli(["init", "--non-interactive"], project, godot_bin).returncode
+        == 0
+    )
+
+    result = _run_cli(
+        ["--quiet", "test", "test/native_suite.gd"],
+        project,
+        godot_bin,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@skip_if_no_godot
 def test_native_cli_preserves_failure_and_no_exit_exit_codes(
     tmp_path, godot_bin
 ):

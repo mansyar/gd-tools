@@ -33,11 +33,36 @@ def run_native_test_command(
     junit_xml: str | None = None,
     no_exit_code: bool = False,
     timeout: int | None = 300,
+    tags: list[str] | None = None,
+    test_timeout: float | None = None,
     paths: list[str] | None = None,
     show_uncovered: bool = False,
     no_cache: bool = False,
 ) -> TestResult:
-    """Run native tests and return the existing CLI-facing result model."""
+    """Run native tests and return the existing CLI-facing result model.
+
+    Args:
+        config: Project configuration.
+        coverage: Whether to collect and report native coverage.
+        min_percent: Optional coverage threshold.
+        suite: Optional exact suite filter.
+        test_name: Optional exact test filter.
+        junit_xml: Optional JUnit XML output path.
+        no_exit_code: Return test failures instead of raising them.
+        timeout: Godot import and per-suite process timeout in seconds.
+        tags: Optional native suite tag filters; defaults to configured tags.
+        test_timeout: Optional per-test timeout override in seconds.
+        paths: Optional test file or directory selectors.
+        show_uncovered: Include uncovered lines in the coverage summary.
+        no_cache: Bypass the coverage plan cache.
+
+    Returns:
+        The normalized CLI-facing test result.
+
+    Raises:
+        GdToolsError: For environment, protocol, process, or runtime errors.
+        TestFailureError: When tests fail and ``no_exit_code`` is false.
+    """
     project_root = find_project_root()
     godot_info = find_godot(config.godot)
     if not godot_info.is_valid:
@@ -47,12 +72,23 @@ def run_native_test_command(
         )
 
     test_dirs = _test_directories(project_root, paths, config)
+    selected_tags = (
+        list(tags)
+        if tags is not None
+        else list(getattr(config.test, "tags", []))
+    )
+    effective_test_timeout = (
+        test_timeout
+        if test_timeout is not None
+        else config.test.timeout_seconds
+    )
     suites = discover_native_suites(
         project_root,
         test_dirs,
         suite=suite,
         test=test_name,
-        timeout_seconds=config.test.timeout_seconds,
+        tags=selected_tags,
+        timeout_seconds=effective_test_timeout,
         retries=config.test.retries,
     )
     if not suites:
@@ -126,9 +162,7 @@ def _test_directories(
         candidate = Path(path)
         if not candidate.is_absolute():
             candidate = project_root / candidate
-        directories.append(
-            str(candidate.parent if candidate.is_file() else candidate)
-        )
+        directories.append(str(candidate))
     return directories
 
 

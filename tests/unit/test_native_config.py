@@ -17,6 +17,7 @@ def test_native_test_config_defaults_to_native_runtime():
     assert config.runtime == "native"
     assert config.timeout_seconds == 5.0
     assert config.retries == 0
+    assert config.tags == []
 
 
 def test_native_test_config_accepts_migration_and_execution_overrides():
@@ -55,6 +56,7 @@ def test_native_test_config_round_trips_through_toml(tmp_path):
             runtime="gut",
             timeout_seconds=2.5,
             retries=1,
+            tags=["smoke", "native"],
         )
     )
 
@@ -64,4 +66,5 @@ def test_native_test_config_round_trips_through_toml(tmp_path):
     assert loaded.test.runtime == "gut"
     assert loaded.test.timeout_seconds == 2.5
     assert loaded.test.retries == 1
+    assert loaded.test.tags == ["smoke", "native"]
     assert Path(tmp_path / "gd-tools.toml").is_file()

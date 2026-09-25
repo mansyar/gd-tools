@@ -50,6 +50,19 @@ def test_discovery_finds_native_suites_and_test_methods(tmp_path):
     ]
 
 
+def test_discovery_preserves_explicit_file_selector(tmp_path):
+    """An explicit file selector does not broaden to sibling suites."""
+    (tmp_path / "project.godot").touch()
+    selected = tmp_path / "test" / "selected.gd"
+    _native_suite(selected)
+    _native_suite(tmp_path / "test" / "sibling.gd")
+
+    suites = discover_native_suites(tmp_path, test_dirs=[str(selected)])
+
+    assert [suite.name for suite in suites] == ["ExampleSuite"]
+    assert suites[0].path == "res://test/selected.gd"
+
+
 def test_discovery_applies_configured_timeout_and_retries(tmp_path):
     """Configured execution defaults are carried into every manifest test."""
     (tmp_path / "project.godot").touch()

@@ -297,6 +297,17 @@ def version(as_json):
 @click.option("--min", type=int, help="Minimum coverage threshold.")
 @click.option("--suite", help="Specify which test suite to run.")
 @click.option("--test", help="Specify which test to run.")
+@click.option(
+    "--tag",
+    "tags",
+    multiple=True,
+    help="Run native suites matching this class tag (repeatable).",
+)
+@click.option(
+    "--test-timeout",
+    type=float,
+    help="Per-test timeout in seconds for native tests.",
+)
 @click.option("--junit-xml", help="Path to write JUnit XML report.")
 @click.option(
     "--no-exit-code",
@@ -326,6 +337,8 @@ def test(
     min,
     suite,
     test,
+    tags,
+    test_timeout,
     junit_xml,
     no_exit_code,
     timeout,
@@ -371,6 +384,8 @@ def test(
                 junit_xml=junit_xml,
                 no_exit_code=no_exit_code,
                 timeout=timeout,
+                tags=list(tags) if tags else None,
+                test_timeout=test_timeout,
                 paths=list(paths) if paths else None,
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,

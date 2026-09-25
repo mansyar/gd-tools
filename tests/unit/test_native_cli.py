@@ -49,6 +49,8 @@ def test_test_help_exposes_native_runtime_selector():
 
     assert result.exit_code == 0
     assert "--runtime" in result.output
+    assert "--tag" in result.output
+    assert "--test-timeout" in result.output
     assert "native" in result.output
     assert "gut" in result.output
 
@@ -87,6 +89,34 @@ def test_test_explicit_native_and_no_exit_dispatch_native_options():
 
     assert result.exit_code == 0
     assert native_run.call_args.kwargs["no_exit_code"] is True
+
+
+def test_test_forwards_native_tags_and_test_timeout():
+    """Native tag and per-test timeout options reach the adapter."""
+    config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=config),
+        patch(
+            "gd_tools.cli.run_native_test_command",
+            return_value=_result(),
+        ) as native_run,
+    ):
+        result = CliRunner().invoke(
+            cli,
+            [
+                "test",
+                "--tag",
+                "smoke",
+                "--tag",
+                "fast",
+                "--test-timeout",
+                "1.5",
+            ],
+        )
+
+    assert result.exit_code == 0
+    assert native_run.call_args.kwargs["tags"] == ["smoke", "fast"]
+    assert native_run.call_args.kwargs["test_timeout"] == 1.5
 
 
 def test_test_runtime_gut_dispatches_legacy_runner():

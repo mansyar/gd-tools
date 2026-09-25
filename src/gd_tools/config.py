@@ -56,6 +56,7 @@ class TestConfig(BaseModel):
         runtime: Test execution runtime (native or legacy GUT).
         timeout_seconds: Default per-test timeout for native async tests.
         retries: Number of explicit opt-in retries per native test.
+        tags: Optional native suite tag filters.
     """
 
     __test__ = False
@@ -69,6 +70,7 @@ class TestConfig(BaseModel):
     runtime: Literal["native", "gut"] = "native"
     timeout_seconds: float = Field(default=5.0, gt=0)
     retries: int = Field(default=0, ge=0)
+    tags: list[str] = Field(default_factory=list)
 
 
 class LintConfig(BaseModel):

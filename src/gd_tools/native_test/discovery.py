@@ -55,9 +55,11 @@ def _iter_test_files(
         directory = Path(test_dir)
         if not directory.is_absolute():
             directory = project_root / directory
-        if not directory.is_dir():
-            continue
-        candidates.update(directory.rglob("*.gd"))
+        if directory.is_file():
+            if directory.suffix == ".gd":
+                candidates.add(directory)
+        elif directory.is_dir():
+            candidates.update(directory.rglob("*.gd"))
 
     return sorted(candidates, key=lambda path: path.as_posix())
 

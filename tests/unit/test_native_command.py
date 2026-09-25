@@ -12,7 +12,10 @@ from gd_tools.errors import (
     GdToolsError,
     TestFailureError,
 )
-from gd_tools.native_test.command import run_native_test_command
+from gd_tools.native_test.command import (
+    _test_directories,
+    run_native_test_command,
+)
 from gd_tools.native_test.protocol import (
     NativeRunResult,
     NativeSuite,
@@ -46,7 +49,10 @@ def _config() -> SimpleNamespace:
     return SimpleNamespace(
         godot=SimpleNamespace(),
         test=SimpleNamespace(
-            test_dirs=["test"], timeout_seconds=5.0, retries=0
+            test_dirs=["test"],
+            timeout_seconds=5.0,
+            retries=0,
+            tags=[],
         ),
         coverage=SimpleNamespace(
             output_dir=".gd-tools/coverage",
@@ -55,6 +61,17 @@ def _config() -> SimpleNamespace:
             format="text",
         ),
     )
+
+
+def test_test_directories_preserves_explicit_file_selector(tmp_path):
+    """The adapter keeps an explicit file path exact for discovery."""
+    selected = tmp_path / "test" / "selected.gd"
+    selected.parent.mkdir(parents=True)
+    selected.touch()
+
+    assert _test_directories(tmp_path, [str(selected)], _config()) == [
+        str(selected)
+    ]
 
 
 def test_to_test_result_normalizes_statuses_and_writes_junit(tmp_path):
@@ -140,6 +157,8 @@ def test_run_native_command_propagates_filters_and_timeout(tmp_path):
             _config(),
             suite="ExampleSuite",
             test_name="test_ok",
+            tags=["smoke"],
+            test_timeout=1.5,
             timeout=42,
         )
 
@@ -149,7 +168,8 @@ def test_run_native_command_propagates_filters_and_timeout(tmp_path):
         ["test"],
         suite="ExampleSuite",
         test="test_ok",
-        timeout_seconds=5.0,
+        tags=["smoke"],
+        timeout_seconds=1.5,
         retries=0,
     )
     assert run.call_args.kwargs["process_timeout"] == 42.0
