@@ -142,10 +142,10 @@
   - [ ] Verify user exclusions remain honored.
   - [ ] Verify line and branch metrics remain stable for the clean fixture.
   - [ ] Verify legacy GUT coverage tests continue to pass.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run native coverage unit, integration, and E2E checks.
-  - [ ] Compare native output with the existing coverage plan/reporter contract.
-  - [ ] Create the phase checkpoint commit and record its SHA.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 120193e]
+  - [x] Run native coverage unit, integration, and E2E checks.
+  - [x] Compare native output with the existing coverage plan/reporter contract.
+  - [x] Create the phase checkpoint commit and record its SHA.
 
 ## Phase 5 — CLI integration and legacy fallback
 
