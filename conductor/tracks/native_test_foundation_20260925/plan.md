@@ -70,7 +70,7 @@
   - [ ] Add `assert_null`, `assert_not_null`, and `fail`.
   - [ ] Record actual/expected values, messages, source context, and category.
   - [ ] Verify assertion failures do not depend on GDScript release-mode behavior.
-- [ ] Task: Implement native result/event emission
+- [x] Task: Implement native result/event emission [5ba241e]
   - [ ] Emit versioned native result data.
   - [ ] Emit optional structured progress events.
   - [ ] Ensure final result writes are atomic and recoverable after partial execution.
