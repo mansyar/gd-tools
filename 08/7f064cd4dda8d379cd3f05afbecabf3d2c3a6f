@@ -1,0 +1,8 @@
+Implemented windowed failure evidence.
+
+- Added GdToolsTestContext.capture_screenshot with actionable validation and atomic PNG publication.
+- Added explicit headless-renderer rejection for windowed suites with no display.
+- The runner now passes suite screenshot paths, captures after after_each and before teardown for failed/timed-out/error attempts, and records screenshot diagnostics.
+- Headless and passing tests do not capture screenshots.
+- Added a real-Godot write-failure infrastructure contract.
+- Unit native suite: 25 passed; integration E2E: 9 passed; gdlint, context gdformat, Ruff, Black, and diff checks passed.
