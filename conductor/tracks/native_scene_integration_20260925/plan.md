@@ -5,7 +5,7 @@
 - **Status:** In Progress
 - **Specification:** [`spec.md`](./spec.md)
 
-## Phase 1 — Protocol v2 and integration metadata contract
+## Phase 1 — Protocol v2 and integration metadata contract [checkpoint: `25297e0`]
 
 **Purpose:** Establish the Python-owned data contract before adding Godot preflight or runtime behavior.
 
@@ -23,11 +23,11 @@
   - [x] Reuse the existing atomic JSON writer.
   - [x] Update existing fixtures and unit tests to the intentional protocol bump.
   - [x] Run the targeted protocol tests to Green.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [commit: `25297e0`]
   - [x] Run targeted Python unit tests and static checks.
   - [x] Validate protocol compatibility and actionable error behavior.
   - [x] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 2 — Godot metadata preflight
 
