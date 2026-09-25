@@ -1,0 +1,15 @@
+Phase 6 checkpoint — reporting, coverage, doctor, and packaging.
+
+Delivered
+- Infrastructure failures now publish JUnit, artifact references, and Rich output before exiting 2, and dominate ordinary test and coverage-threshold failures.
+- TestResult exposes artifact_index_path; JUnit records it as a machine-readable testsuite property.
+- gd-tools init deploys gd_tools_test_context.gd and gd_tools_test_preflight.gd, and the managed file list now covers every bundled addon script.
+- Doctor reports a partially deployed managed addon as critical with the gd-tools init fix hint.
+- Scene-executed production code is proven to reach the coverage report with addon support files excluded from the denominator.
+
+Verification
+- Full unit suite: 940 passed, total coverage 94.78% (gate 80%).
+- New native modules: artifacts 83%/75% branch, command 81%/89% branch, orchestrator 85%/83% branch, preflight 91%/78% branch, protocol 95%/100% branch.
+- Godot E2E: 40 passed (runtime 17, preflight 13, integration 10).
+- Wheel build inspected: all five native addon scripts are bundled.
+- Ruff, Black, gdlint, and git diff --check pass across src and tests.
