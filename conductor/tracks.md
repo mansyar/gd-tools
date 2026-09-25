@@ -15,6 +15,6 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Native Scene and Resource Integration**
+- [~] **Track: Native Scene and Resource Integration**
   *Link: [native_scene_integration_20260925](./tracks/native_scene_integration_20260925/index.md)*
 
