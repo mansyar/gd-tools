@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+from gd_tools.native_test.artifacts import NativeArtifactLayout
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.protocol import (
     NativeCoverage,
@@ -79,6 +80,37 @@ def test_run_native_tests_uses_one_process_per_suite(tmp_path):
     assert result.status == "passed"
     assert len(result.tests) == 2
     assert all("--headless" in call[0] for call in calls)
+
+
+def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
+    """A completed run records suite paths before retaining the latest run."""
+    old_run = tmp_path / ".gd-tools" / "artifacts" / "old-run"
+    old_run.mkdir(parents=True)
+    (old_run / "old.txt").write_text("old", encoding="utf-8")
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    def fake_run(args, **kwargs):
+        _write_result(Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]))
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("ExampleSuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+        )
+
+    index = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert result.status == "passed"
+    assert result.artifact_index_path == layout.index_path
+    assert index["run_id"] == "run-1"
+    assert index["suites"][0]["suite"] == "ExampleSuite"
+    assert index["suites"][0]["result"] == str(layout.suite_paths(0)["result"])
+    assert not old_run.exists()
 
 
 def test_run_native_tests_omits_headless_for_windowed_suite(tmp_path):

@@ -1,5 +1,6 @@
 """Unit tests for the native test CLI adapter."""
 
+import json
 import xml.etree.ElementTree as ET
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -302,6 +303,13 @@ def test_run_native_command_propagates_preflight_failure(tmp_path):
             run_native_test_command(_config())
 
     run.assert_not_called()
+    indexes = list(
+        (tmp_path / ".gd-tools" / "artifacts").glob("*/artifacts.json")
+    )
+    assert len(indexes) == 1
+    index = json.loads(indexes[0].read_text(encoding="utf-8"))
+    assert index["status"] == "error"
+    assert index["preflight"]["result"].endswith("preflight.result.json")
 
 
 def test_run_native_command_empty_suites_gives_gut_guidance(tmp_path):
