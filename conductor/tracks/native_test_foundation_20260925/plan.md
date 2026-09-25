@@ -98,13 +98,13 @@
   - [ ] Enforce the five-second default timeout.
   - [ ] Add per-suite/test and CLI timeout overrides.
   - [ ] Record timeout as a distinct result status.
-- [ ] Task: Implement suite-scoped process orchestration
+- [x] Task: Implement suite-scoped process orchestration [755fde6]
   - [ ] Launch one Godot process per suite.
   - [ ] Pass the manifest and coverage settings through a controlled boundary.
   - [ ] Capture process stdout/stderr separately from structured results.
   - [ ] Preserve diagnostics after crashes.
   - [ ] Continue subsequent suites after a process crash.
-- [ ] Task: Add failure-policy tests
+- [x] Task: Add failure-policy tests [852a24c]
   - [ ] Verify ordinary assertion failures continue within a suite.
   - [ ] Verify infrastructure failures map to exit code `2`.
   - [ ] Verify test/coverage failures map to exit code `1`.
