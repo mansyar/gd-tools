@@ -10,6 +10,6 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Native Test Runtime Foundation**
+- [~] **Track: Native Test Runtime Foundation**
   *Link: [native_test_foundation_20260925](./tracks/native_test_foundation_20260925/index.md)*
 
