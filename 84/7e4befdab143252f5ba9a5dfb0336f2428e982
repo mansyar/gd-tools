@@ -1,0 +1,6 @@
+Defined the windowed screenshot Red contract.
+
+- Covers failed windowed captures, passing/headless no-capture behavior, and screenshot path plumbing.
+- Adds a real-Godot context test for actionable screenshot write failures.
+- The initial windowed capture test failed before implementation with a missing screenshot diagnostic; subsequent contract refinements passed.
+- Black, Ruff, and focused E2E checks passed.
