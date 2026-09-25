@@ -1,0 +1,3 @@
+Task: Add failing tests for native discovery and filtering
+
+Implemented deterministic native GDScript suite discovery, class/tag/test extraction, selector filtering, duplicate-directory handling, and an actionable GUT-only migration error. Added five unit tests covering discovery, filters, tags, ignored scripts, and legacy-project guidance. Verified with the combined native protocol/discovery tests, Ruff, and Black.
