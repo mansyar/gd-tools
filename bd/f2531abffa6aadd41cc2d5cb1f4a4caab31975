@@ -1,0 +1,22 @@
+Phase 2 verification report
+
+Automated commands:
+- CI=true .venv\Scripts\python.exe -m pytest tests/unit tests/e2e/test_native_runtime.py tests/unit/test_package.py -q
+  Result: 853 passed; total coverage 96.77%.
+- .venv\Scripts\python.exe -m ruff check src/ tests/
+  Result: passed.
+- .venv\Scripts\python.exe -m black --check src/ tests/
+  Result: passed.
+
+Changed source files were checked against corresponding tests:
+- src/gd_tools/addons/gd-tools-test/gd_tools_test.gd -> tests/e2e/test_native_runtime.py
+- src/gd_tools/addons/gd-tools-test/gd_tools_test_runner.gd -> tests/e2e/test_native_runtime.py
+- pyproject.toml -> tests/e2e/test_native_runtime.py and tests/unit/test_package.py
+
+Manual verification confirmed by user:
+- A clean GUT-free fixture loads GdToolsTest after an explicit Godot import.
+- The manifest runner executes synchronous and asynchronous tests.
+- Lifecycle hooks run in order and cleanup follows a failed test.
+- Structured assertion failures include values, message, source, and line.
+- NDJSON progress events are emitted in order.
+- Public CLI native dispatch and coverage integration remain intentionally deferred to later phases.
