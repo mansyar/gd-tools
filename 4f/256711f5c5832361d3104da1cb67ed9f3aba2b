@@ -1,0 +1,3 @@
+Task: Implement native coverage activation and collection
+
+Added GdToolsNativeCoverage, a transient plan-v1 instrumentation/collection runtime with no permanent _GDTCoverage autoload. Wired coverage plan/output paths through the native manifest and added a real subject/branch fixture proving statement and branch hits. Verified with nine native runtime E2E tests, Ruff, Black, and whitespace checks.
