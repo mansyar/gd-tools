@@ -455,8 +455,107 @@ gd-tools test tests/unit/test_player.gd
   sibling suites.
 - If native discovery finds no suites, the error suggests `--runtime gut` for
   a legacy project.
-- The foundation does not yet provide scene/resource integration, broad
-  mocking, parameterized tests, parallel execution, or an editor UI.
+- The foundation does not yet provide broad mocking, parameterized tests,
+  parallel execution, or an editor UI.
+
+**Scene and resource integration:**
+
+Suites may declare scenes and named resources with a class-level
+`INTEGRATION` constant. `gd-tools` reads the declaration through Godot
+metadata before any suite is constructed, then runs one process per suite
+using the merged metadata:
+
+```gdscript
+class_name PlayerSceneSuite
+
+extends GdToolsTest
+
+const INTEGRATION := {
+    "scene": "res://scenes/player.tscn",
+    "resources": {"balance": "res://data/balance.tres"},
+    "mode": "headless",
+    "tests": {
+        "test_damage_flash": {"scene": "res://scenes/player_hit.tscn"},
+        "test_stats_only": {"scene": null, "resources": {"stats": "res://data/stats.tres"}},
+    },
+}
+
+
+func test_default_scene_loads() -> void:
+    var context := get_test_context()
+    var player := context.find_node("Player")
+    assert_not_null(player, "Player node missing")
+    assert_eq(context.get_integration()["scene"], "res://scenes/player.tscn")
+
+
+func test_damage_flash() -> void:
+    var context := get_test_context()
+    assert_not_null(context.find_node("HitFlash"), "HitFlash node missing")
+
+
+func test_stats_only() -> void:
+    var context := get_test_context()
+    assert_null(context.get_scene_root(), "this test declares no scene")
+    assert_eq(context.get_resource("stats").level, 3)
+```
+
+Declaration rules:
+
+- All paths are `res://` paths that must resolve at load time; a missing
+  scene or resource is a configuration error and exits `2`.
+- `mode` is `headless` (default) or `windowed` and is a suite-level setting
+  because one process represents one suite. A `mode` inside a `tests` entry
+  is rejected.
+- Test entries override suite defaults field by field. Omitted fields are
+  inherited, resource maps merge by logical name, and `null` removes an
+  inherited scene or resource.
+- Unknown fields, invalid modes, and overrides for methods that are not
+  `test_*` methods are reported with the suite path and the expected shape.
+
+**Test context API** (`get_test_context()` returns a `GdToolsTestContext`):
+
+| Member | Behavior |
+| --- | --- |
+| `get_scene_root()` | Root node of the loaded primary scene, or `null` |
+| `find_node("Panel/Icon")` | Relative node lookup; records a structured `integration_node` failure when missing |
+| `find_nodes("Item*")` | Recursive glob lookup returning every match |
+| `get_resource("balance")` | Named resource lookup; records `integration_resource` on failure |
+| `get_integration()` | Effective scene, resources, and mode for the current test |
+| `wait_for_signal(sig, timeout)` | Bounded signal wait returning `false` on timeout |
+| `capture_screenshot(path)` | Atomically writes a PNG of the viewport |
+
+Integration behavior:
+
+- Resources are loaded by logical name and are never assigned to nodes
+  automatically; assign them explicitly in the test.
+- The test context is available in `before_each`, the test, and
+  `after_each`, so lifecycle hooks can inspect the live scene.
+- Each attempt builds a fresh scene, context, and resource set, so retries
+  never observe state from a previous attempt.
+- Project autoloads behave exactly as they do in production and are never
+  replaced by test-only autoloads.
+- Order per attempt: metadata validation, resource loading, scene
+  instantiation, `before_each`, test, `after_each`, failure evidence, teardown.
+
+**Windowed suites and failure artifacts:**
+
+Declare `"mode": "windowed"` to run a suite with a real display. A windowed
+suite requires a display; when the renderer is headless the run fails with
+exit `2` and no silent fallback occurs. Failed, timed-out, and errored tests
+in a windowed suite capture a screenshot after `after_each` and before
+teardown, and the path is reported in the test diagnostics and JUnit XML.
+
+Every run publishes its artifacts under `.gd-tools/artifacts/<run_id>/`:
+
+```
+.gd-tools/artifacts/<run_id>/
+├── artifacts.json          # machine-readable index of the run
+├── preflight/              # manifest, result, and log
+└── native/                 # per-suite manifest, result, events, log, screenshot
+```
+
+Only the latest run is retained; older run directories are pruned after the
+new index is published.
 
 **Plan Caching:**
 
@@ -1304,6 +1403,43 @@ registered, or the coverage environment variables are not set.
    ```bash
    gd-tools test --coverage
    ```
+
+### 5.5 Native Runtime or Protocol Mismatch
+
+**Symptom:** `gd-tools test` exits `2` with a message mentioning
+`protocol version`, or `gd-tools doctor` reports the "Native Test Addon"
+check as failing.
+
+**Cause:** The deployed `addons/gd-tools-test/` scripts were written by a
+different `gd-tools` version than the one running the command. Python and
+Godot exchange a versioned protocol; the current version is `2`, which adds
+scene and resource integration metadata. A protocol-v1 payload, malformed
+integration metadata, or a partially deployed addon is rejected as a
+configuration failure rather than being guessed at.
+
+**Resolution:**
+
+1. Check what is deployed and how it compares:
+   ```bash
+   cat addons/gd-tools-test/_version.txt
+   gd-tools version
+   ```
+2. Redeploy the managed runtime from the current version:
+   ```bash
+   gd-tools init --non-interactive
+   ```
+   `gd-tools init` installs all five managed scripts
+   (`gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`,
+   `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd`), backs up
+   locally modified copies into `addons/gd-tools-test/.backups/`, and rewrites
+   `_version.txt`.
+3. Confirm with `gd-tools doctor` that the "Native Test Addon" check passes.
+4. Remove `.gd-tools/artifacts/` if a stale preflight result is ever
+   reported; runs are keyed by directory and only the latest is retained.
+
+If a windowed suite reports exit `2` with a display or renderer message, the
+suite declared `"mode": "windowed"` but the process has no display. Run it on a
+machine with a display, or switch the suite back to the headless default.
 
 
 ## 6. Shell Completion

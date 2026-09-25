@@ -135,8 +135,29 @@ bounded compatibility path.
   process/import timeout.
 - Suites run in isolated Godot processes by default.
 - Tests run sequentially by default; optional parallelism is deferred.
-- Headless execution is the default; windowed execution is explicit.
+- Headless execution is the default; windowed execution is explicit and
+  requires a real display; there is no automatic fallback to headless.
 - The runtime has no new third-party runtime dependency.
+
+### Scene and resource integration
+
+- Suites declare at most one primary scene, any number of named resources, a
+  suite-level execution mode, and per-test overrides through a class-level
+  `INTEGRATION` constant.
+- Declaration metadata is read through Godot, never by parsing GDScript in
+  Python, and is validated once per command in a headless preflight before any
+  suite is constructed.
+- Overrides merge field by field: omitted fields are inherited, resource maps
+  merge by logical name, and `null` removes an inherited scene or resource.
+- Invalid paths, modes, fields, or override targets are configuration failures
+  that exit `2` with the suite path and the expected shape.
+- Tests reach the scene through an explicit context object rather than
+  proxied scene methods; resources are never assigned to nodes automatically.
+- Project autoloads run exactly as in production; the runtime installs no
+  test-only autoloads and mutates no project autoload.
+- Every attempt rebuilds the scene, context, and resources so retries are
+  isolated, and each run publishes a machine-readable artifact index retaining
+  only the latest run.
 
 ### Results and coverage
 
