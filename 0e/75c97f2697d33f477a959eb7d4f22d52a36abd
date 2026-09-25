@@ -1,0 +1,3 @@
+Task: Implement suite-scoped process orchestration
+
+Added a real-Godot E2E test that invokes the Python orchestrator across two native suites in separate processes and verifies aggregate status and suite identity. The test passes alongside four orchestrator unit tests and the native runtime E2E suite.
