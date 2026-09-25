@@ -111,6 +111,23 @@ def run_native_tests(
 
         parsed_result = _read_native_result(result_path)
         if parsed_result is not None:
+            expected_returncode = {
+                "passed": 0,
+                "failed": 1,
+                "error": 2,
+                "cancelled": 1,
+            }[parsed_result.status]
+            if completed.returncode != expected_returncode:
+                has_error = True
+                all_tests.append(
+                    _process_error(
+                        suite.name,
+                        "Native result status "
+                        f"{parsed_result.status} disagrees with process exit "
+                        f"code {completed.returncode}",
+                    )
+                )
+                continue
             all_tests.extend(parsed_result.tests)
             if parsed_result.status == "failed":
                 has_failure = True

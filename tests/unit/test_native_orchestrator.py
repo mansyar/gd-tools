@@ -104,6 +104,29 @@ def test_run_native_tests_continues_after_process_failure(tmp_path):
     assert "startup failed" in result.tests[0].message
 
 
+def test_run_native_tests_rejects_inconsistent_process_result(tmp_path):
+    """A nonzero process code cannot be masked by a passing result file."""
+
+    def fake_run(args, **kwargs):
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        _write_result(result_path)
+        return CompletedProcess(args, 1, "test failed", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("InconsistentSuite")],
+            godot_binary="godot",
+        )
+
+    assert result.status == "error"
+    assert result.tests[0].status == "error"
+    assert "process exit code 1" in result.tests[0].message
+
+
 def test_run_native_tests_records_subprocess_timeout(tmp_path):
     """A subprocess timeout becomes an infrastructure result."""
     with patch(
