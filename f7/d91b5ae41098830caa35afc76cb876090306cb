@@ -1,0 +1,3 @@
+Task: Add failing unit tests for native manifest models and validation
+
+Implemented the versioned native protocol models, runtime/coverage metadata, result models, and atomic JSON serialization. Added seven unit tests covering schema validation, metadata round-trips, timeout/runtime rejection, result serialization, and atomic replacement. Verified with .venv\Scripts\python.exe -m pytest tests/unit/test_native_protocol.py -q --no-cov, Ruff, and Black.
