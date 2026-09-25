@@ -1,0 +1,3 @@
+Task: Implement the bundled native addon package data
+
+Added the transient GdToolsTestRunner SceneTree entrypoint, manifest/result environment contract, suite lifecycle execution, sync/async test invocation, structured native results, and setuptools package-data coverage for gd-tools-test. Added a manifest-driven E2E test and verified both native fixture tests plus package tests. The pyproject.toml file retains the repository's CRLF convention; whitespace validation passed with Git's cr-at-eol mode.
