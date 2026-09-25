@@ -98,7 +98,7 @@
   - [ ] Enforce the five-second default timeout.
   - [ ] Add per-suite/test and CLI timeout overrides.
   - [ ] Record timeout as a distinct result status.
-- [x] Task: Implement suite-scoped process orchestration [755fde6]
+- [x] Task: Implement suite-scoped process orchestration [0e75c97]
   - [ ] Launch one Godot process per suite.
   - [ ] Pass the manifest and coverage settings through a controlled boundary.
   - [ ] Capture process stdout/stderr separately from structured results.
