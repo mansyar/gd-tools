@@ -210,12 +210,12 @@
   - [x] Run Ruff and Black checks.
   - [x] Verify the full project coverage threshold behavior.
   - [x] Verify no new runtime dependencies were added.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run the complete automated verification suite.
-  - [ ] Perform the manual CLI verification steps.
-  - [ ] Obtain explicit user confirmation of the verification results.
-  - [ ] Create the final checkpoint commit and record its SHA.
-  - [ ] Update the track registry/status and prepare the implementation handoff.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 72bf713]
+  - [x] Run the complete automated verification suite.
+  - [x] Perform the manual CLI verification steps.
+  - [x] Obtain explicit user confirmation of the verification results.
+  - [x] Create the final checkpoint commit and record its SHA.
+  - [x] Update the track registry/status and prepare the implementation handoff.
 
 ## Plan Boundaries
 

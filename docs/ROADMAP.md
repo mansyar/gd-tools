@@ -2,7 +2,7 @@
 
 **Version:** 0.2.0 (draft)
 **Date:** 2026-07-14
-**Status:** Native Test Runtime Foundation in progress (transition track)
+**Status:** Native Test Runtime Foundation completed (transition path active)
 **Related docs:** [PRD.md](./PRD.md), [ROADMAP_v1.md](./ROADMAP_v1.md) (archived v1 roadmap, Tracks 0-22), [AUDIT_REPORT.md](./AUDIT_REPORT.md), [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
@@ -23,9 +23,10 @@ This roadmap focuses on **incremental improvements** that increase the
 tool's day-to-day value, close UX gaps, and expand the feature set into
 new differentiating territory. The phasing is designed so that:
 
-## Native Runtime Transition (Current Track)
+## Native Runtime Transition (Completed Foundation)
 
-**Track:** `native_test_foundation_20260925`
+**Track:** `native_test_foundation_20260925`  
+**Status:** Completed; the temporary GUT compatibility path remains available.
 
 The native Godot test runtime is now the default path for `gd-tools test`.
 It provides a bundled `GdToolsTest` base class, async helpers, per-suite
