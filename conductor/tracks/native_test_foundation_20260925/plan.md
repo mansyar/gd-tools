@@ -226,14 +226,14 @@
   - [x] Reproduce lifecycle-hook timeout and cleanup behavior.
   - [x] Reproduce engine error/warning result handling.
   - [x] Run the focused tests and confirm the expected Red phase (`4 failed, 19 passed`).
-- [~] Task: Fix native lifecycle and timeout semantics
-  - [ ] Preserve suite-scoped state/resources while keeping fresh test instances.
-  - [ ] Include setup and cleanup in the bounded lifecycle timeout.
-  - [ ] Run the lifecycle and async runtime tests to Green.
-- [ ] Task: Add structured native engine diagnostics
-  - [ ] Capture engine errors and warnings in the native result protocol.
-  - [ ] Preserve process output and diagnostics through Python adapters.
-  - [ ] Add result, JUnit, and CLI regression coverage.
+- [x] Task: Fix native lifecycle and timeout semantics [dc55220]
+  - [x] Preserve suite-scoped state/resources while keeping fresh test instances.
+  - [x] Include setup and cleanup in the bounded lifecycle timeout.
+  - [x] Run the lifecycle and async runtime tests to Green (`24 passed`).
+- [x] Task: Add structured native engine diagnostics [dc55220]
+  - [x] Capture engine errors and warnings in the native result protocol.
+  - [x] Preserve process output and diagnostics through Python adapters.
+  - [x] Add result, JUnit, and CLI regression coverage.
 - [ ] Task: Protect managed addon updates and doctor behavior
   - [ ] Back up modified native addon files before replacement.
   - [ ] Make optional GUT diagnostics non-blocking in native mode.
