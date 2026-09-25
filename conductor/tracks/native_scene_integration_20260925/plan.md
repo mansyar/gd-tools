@@ -9,13 +9,13 @@
 
 **Purpose:** Establish the Python-owned data contract before adding Godot preflight or runtime behavior.
 
-- [ ] Task: Add failing protocol-v2 unit tests
-  - [ ] Define valid suite defaults and per-test integration metadata.
-  - [ ] Define `headless` and `windowed` execution modes.
-  - [ ] Define named-resource and optional primary-scene fields.
-  - [ ] Reject protocol v1, unknown fields, unsupported modes, and malformed metadata.
-  - [ ] Verify JSON round trips and atomic preflight-result writes.
-  - [ ] Run the targeted tests and confirm the expected Red phase.
+- [x] Task: Add failing protocol-v2 unit tests [commit: `71db4c8`]
+  - [x] Define valid suite defaults and per-test integration metadata.
+  - [x] Define `headless` and `windowed` execution modes.
+  - [x] Define named-resource and optional primary-scene fields.
+  - [x] Reject protocol v1, unknown fields, unsupported modes, and malformed metadata.
+  - [x] Verify JSON round trips and atomic preflight-result writes.
+  - [x] Run the targeted tests and confirm the expected Red phase.
 - [ ] Task: Implement the protocol-v2 Python models
   - [ ] Increment `NATIVE_PROTOCOL_VERSION` to `2`.
   - [ ] Add minimal models for effective integration configuration.
