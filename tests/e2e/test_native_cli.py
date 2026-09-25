@@ -1,5 +1,6 @@
 """Public CLI E2E coverage for the native test runtime."""
 
+import json
 import os
 import shutil
 import subprocess
@@ -110,6 +111,17 @@ def test_native_cli_defaults_to_native_and_writes_junit(tmp_path, godot_bin):
     content = junit.read_text(encoding="utf-8")
     assert "test_pass" in content
     assert "test_async" in content
+
+    native_results = list(
+        (project / ".gd-tools" / "native").glob("*.result.json")
+    )
+    assert len(native_results) == 1
+    native_payload = json.loads(native_results[0].read_text(encoding="utf-8"))
+    assert native_payload["status"] == "passed"
+    assert {test["name"] for test in native_payload["tests"]} == {
+        "test_pass",
+        "test_async",
+    }
 
 
 @skip_if_no_godot

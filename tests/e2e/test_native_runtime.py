@@ -476,6 +476,47 @@ def test_native_orchestrator_runs_multiple_real_suites(godot_bin, tmp_path):
     assert all(test.status == "passed" for test in result.tests)
 
 
+def test_native_orchestrator_continues_after_process_crash(godot_bin, tmp_path):
+    """A crashed suite is recorded without hiding later suite results."""
+    project = _prepare_project(tmp_path, godot_bin)
+    crash_script = project / "test" / "native_crash_suite.gd"
+    crash_script.write_text(
+        "extends GdToolsTest\n\n\n"
+        "func test_crashes_process() -> void:\n"
+        '    OS.crash("intentional native crash")\n',
+        encoding="utf-8",
+    )
+    suites = [
+        NativeSuite(
+            name="NativeCrashSuite",
+            path="res://test/native_crash_suite.gd",
+            tests=[NativeTest(name="test_crashes_process")],
+        ),
+        NativeSuite(
+            name="NativeFixtureSuite",
+            path="res://test/native_suite.gd",
+            tests=[NativeTest(name="test_pass")],
+        ),
+    ]
+
+    result = run_native_tests(
+        project,
+        suites,
+        godot_bin,
+        work_dir=tmp_path / "crash-orchestrated",
+    )
+
+    assert result.status == "error"
+    assert any(
+        test.suite == "NativeCrashSuite" and test.status == "error"
+        for test in result.tests
+    )
+    assert any(
+        test.suite == "NativeFixtureSuite" and test.status == "passed"
+        for test in result.tests
+    )
+
+
 def test_native_command_runs_real_suite_and_writes_junit(
     godot_bin, tmp_path, monkeypatch
 ):
