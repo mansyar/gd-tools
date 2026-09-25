@@ -127,19 +127,19 @@
   - [x] Make the context available to the test and cleanup hooks.
   - [x] Reject runtime scene/resource load failures with actionable paths.
   - [x] Run scene/resource E2E tests to Green.
-- [~] Task: Add failing cleanup and retry-isolation tests
-  - [ ] Prove `after_each` can inspect the live scene.
-  - [ ] Prove teardown occurs after `after_each` on pass, failure, and timeout.
-  - [ ] Prove retries start with fresh scene/resource/context state.
-  - [ ] Prove teardown errors become infrastructure failures.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement deterministic teardown
-  - [ ] Disconnect/clear context-owned signal waits.
-  - [ ] Remove and free the primary scene after `after_each`.
-  - [ ] Release resource and context references before retry/next test.
-  - [ ] Preserve existing suite state and lifecycle-hook behavior.
-  - [ ] Run lifecycle, timeout, retry, and integration tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Add failing cleanup and retry-isolation tests [commit: `9b55914`]
+  - [x] Prove `after_each` can inspect the live scene.
+  - [x] Prove teardown occurs after `after_each` on pass, failure, and timeout.
+  - [x] Prove retries start with fresh scene/resource/context state.
+  - [x] Prove teardown errors become infrastructure failures.
+  - [x] Confirm the expected Red phase.
+- [x] Task: Implement deterministic teardown [commit: `c3e4c52`]
+  - [x] Disconnect/clear context-owned signal waits.
+  - [x] Remove and free the primary scene after `after_each`.
+  - [x] Release resource and context references before retry/next test.
+  - [x] Preserve existing suite state and lifecycle-hook behavior.
+  - [x] Run lifecycle, timeout, retry, and integration tests to Green.
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run all headless scene/resource integration tests.
   - [ ] Inspect scene ownership and teardown for leaks or cross-test state.
   - [ ] Perform the workflow's manual verification.
