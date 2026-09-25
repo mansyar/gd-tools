@@ -239,11 +239,15 @@
   - [x] Make optional GUT diagnostics non-blocking in native mode.
   - [x] Detect stale native addon versions.
   - [x] Add init and doctor regression tests (Red: 4 failed, 7 passed; Green: 13 passed).
-- [~] Task: Complete public selector and timeout plumbing
-  - [ ] Expose tag filtering through CLI/config/discovery.
-  - [ ] Preserve exact file selectors or reject unsupported file inputs.
-  - [ ] Separate per-test timeout from process/import timeout semantics.
-  - [ ] Add CLI, discovery, and E2E selector tests.
+- [x] Task: Complete public selector and timeout plumbing [87d064e]
+  - [x] Expose tag filtering through CLI/config/discovery.
+  - [x] Preserve exact file selectors or reject unsupported file inputs.
+  - [x] Separate per-test timeout from process/import timeout semantics.
+  - [x] Add CLI, discovery, and E2E selector tests (29 unit and 2 E2E passed).
+- [~] Task: Synchronize status and transition documentation
+  - [ ] Mark the review findings and completed foundation accurately.
+  - [ ] Correct stale GUT-first module/status documentation.
+  - [ ] Update user-facing diagnostics and timeout/tag documentation.
   - [ ] Expose tag filtering through CLI/config/discovery.
   - [ ] Preserve exact file selectors or reject unsupported file inputs.
   - [ ] Separate per-test timeout from process/import timeout semantics.
