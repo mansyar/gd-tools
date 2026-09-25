@@ -28,6 +28,7 @@ func _run() -> void:
 		)
 		return
 
+	_emit_event({"event": "run_started", "protocol_version": PROTOCOL_VERSION})
 	for suite_data in manifest.get("suites", []):
 		await _run_suite(suite_data)
 
@@ -90,6 +91,7 @@ func _run_suite(suite_data: Dictionary) -> void:
 
 func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> void:
 	var test_name := str(test_data.get("name", ""))
+	_emit_event({"event": "test_started", "suite": suite_name, "name": test_name})
 	var test_context = script.new()
 	if not (test_context is GdToolsTest):
 		_record_test_result(
@@ -126,6 +128,12 @@ func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> v
 		message,
 		{"failures": failures},
 	)
+	_emit_event({
+		"event": "test_finished",
+		"suite": suite_name,
+		"name": test_name,
+		"status": status,
+	})
 	test_context.queue_free()
 	await process_frame
 
@@ -173,13 +181,34 @@ func _failure_message(failures: Array[Dictionary]) -> String:
 func _finish_with_error(message: String) -> void:
 	_run_status = "error"
 	_record_test_result("<runner>", "<runner>", "error", 0.0, message, {})
+	_emit_event({"event": "run_finished", "status": _run_status})
 	_write_result()
 	quit(2)
 
 
 func _finish_with_status() -> void:
+	_emit_event({"event": "run_finished", "status": _run_status})
 	_write_result()
 	quit(0 if _run_status == "passed" else 1)
+
+
+func _emit_event(event: Dictionary) -> void:
+	var events_path := OS.get_environment("GD_TOOLS_NATIVE_EVENTS")
+	if events_path.is_empty():
+		return
+
+	var directory := events_path.get_base_dir()
+	if not directory.is_empty() and not DirAccess.dir_exists_absolute(directory):
+		DirAccess.make_dir_recursive_absolute(directory)
+	var file := FileAccess.open(events_path, FileAccess.READ_WRITE)
+	if file == null:
+		file = FileAccess.open(events_path, FileAccess.WRITE)
+	if file == null:
+		push_error("Unable to write native event stream: %s" % events_path)
+		return
+	file.seek_end()
+	file.store_line(JSON.stringify(event))
+	file.close()
 
 
 func _write_result() -> void:

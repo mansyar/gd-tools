@@ -265,3 +265,63 @@ def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
     assert failure["message"] == "values differ"
     assert "assertion_suite.gd" in failure["source"]
     assert failure["line"] > 0
+
+
+def test_native_runner_emits_structured_events(godot_bin, tmp_path):
+    """The runner writes parseable NDJSON lifecycle events when requested."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "event-manifest.json"
+    result_path = tmp_path / "event-result.json"
+    events_path = tmp_path / "events.ndjson"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 1,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeFixtureSuite",
+                        "path": "res://test/native_suite.gd",
+                        "tests": [{"name": "test_pass"}],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    env["GD_TOOLS_NATIVE_EVENTS"] = str(events_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    events = [
+        json.loads(line)
+        for line in events_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert [event["event"] for event in events] == [
+        "run_started",
+        "test_started",
+        "test_finished",
+        "run_finished",
+    ]
+    assert events[2]["status"] == "passed"
