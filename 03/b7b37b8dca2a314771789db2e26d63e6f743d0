@@ -1,0 +1,7 @@
+Deployed the new native integration scripts.
+
+- Added gd_tools_test_context.gd and gd_tools_test_preflight.gd to NATIVE_TEST_ADDON_FILES so gd-tools init copies them into projects.
+- Doctor reuses the same list, so a partially deployed managed addon is now reported as critical instead of failing later at runtime.
+- Existing managed-file backup and _version.txt behavior are unchanged.
+
+Verification: tests/unit/test_init.py + test_doctor.py + test_package.py 145 passed. Black, Ruff, and diff checks passed.
