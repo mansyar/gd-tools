@@ -68,7 +68,7 @@
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 3 — Mode-aware suite orchestration
+## Phase 3 — Mode-aware suite orchestration [checkpoint: `9382627`]
 
 **Purpose:** Launch each suite with the correct Godot display mode while preserving existing process isolation and GUT routing.
 
@@ -93,7 +93,7 @@
   - [x] Verify assertions, selectors, retries, timeout behavior, and coverage remain valid.
   - [x] Verify no windowed behavior is activated accidentally.
   - [x] Run focused regression tests to Green.
-- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [commit: `9382627`]
   - [x] Run native command, orchestrator, and non-integration E2E tests.
   - [x] Verify no second GDScript metadata parser or per-suite preflight was introduced.
   - [x] Perform the workflow's manual verification.
@@ -103,7 +103,7 @@
 
 **Purpose:** Provide a deterministic per-attempt scene tree and named-resource API.
 
-- [ ] Task: Add failing native integration E2E tests
+- [~] Task: Add failing native integration E2E tests
   - [ ] Add fixture scenes with stable node paths and emitted signals.
   - [ ] Add named `.tres`/`.res` fixture resources.
   - [ ] Cover suite-default scenes and per-test scene overrides.
