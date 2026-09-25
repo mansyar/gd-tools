@@ -56,17 +56,17 @@
   - [x] Verify timeout, malformed result, missing result, and exit-code handling.
   - [x] Verify actionable configuration errors rather than parsed stdout.
   - [x] Confirm the expected Red phase.
-- [~] Task: Implement the Python preflight adapter
-  - [ ] Add the smallest preflight command/result boundary required by the protocol.
-  - [ ] Invoke it exactly once per native command.
-  - [ ] Capture stdout/stderr separately from the structured result.
-  - [ ] Convert preflight failures to exit-code `2` diagnostics.
-  - [ ] Run adapter and E2E tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run preflight unit and E2E tests.
-  - [ ] Verify GDScript remains the only integration-metadata parser.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+- [x] Task: Implement the Python preflight adapter [commit: `4a98908`]
+  - [x] Add the smallest preflight command/result boundary required by the protocol.
+  - [x] Invoke it exactly once per native command.
+  - [x] Capture stdout/stderr separately from the structured result.
+  - [x] Convert preflight failures to exit-code `2` diagnostics.
+  - [x] Run adapter and E2E tests to Green.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Run preflight unit and E2E tests.
+  - [x] Verify GDScript remains the only integration-metadata parser.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 3 — Mode-aware suite orchestration
 
