@@ -50,13 +50,13 @@
   - [x] Write an atomic protocol-v2 preflight result.
   - [x] Do not instantiate the scene or execute lifecycle/test methods.
   - [x] Run the preflight E2E tests to Green.
-- [ ] Task: Add failing Python preflight-adapter tests
-  - [ ] Verify one preflight process runs after project import.
-  - [ ] Verify manifest/result paths and environment isolation.
-  - [ ] Verify timeout, malformed result, missing result, and exit-code handling.
-  - [ ] Verify actionable configuration errors rather than parsed stdout.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement the Python preflight adapter
+- [x] Task: Add failing Python preflight-adapter tests [commit: `53e1d8e`]
+  - [x] Verify one preflight process runs after project import.
+  - [x] Verify manifest/result paths and environment isolation.
+  - [x] Verify timeout, malformed result, missing result, and exit-code handling.
+  - [x] Verify actionable configuration errors rather than parsed stdout.
+  - [x] Confirm the expected Red phase.
+- [~] Task: Implement the Python preflight adapter
   - [ ] Add the smallest preflight command/result boundary required by the protocol.
   - [ ] Invoke it exactly once per native command.
   - [ ] Capture stdout/stderr separately from the structured result.
