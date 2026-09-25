@@ -49,7 +49,7 @@ Documentation = "https://github.com/mansyar/gd-tools#readme"
 dev = [
     "pytest",
     "pytest-cov",
-    "ruff",
+    "ruff==0.15.21",
     "black",
     "commitizen",
 ]
@@ -104,3 +104,4 @@ version_files = ["pyproject.toml:version"]
 changelog_file = "CHANGELOG.md"
 tag_format = "v$version"
 update_changelog_on_bump = true
+allowed_prefixes = ["Merge", "Revert", "Pull request", "fixup!", "squash!", "conductor:", "conductor("]
