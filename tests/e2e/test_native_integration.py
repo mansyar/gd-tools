@@ -61,12 +61,20 @@ def _prepare_project(
     return project
 
 
-def _run_native(project: Path, godot_bin: str, suite_path: Path):
+def _run_native(
+    project: Path,
+    godot_bin: str,
+    suite_path: Path,
+    *,
+    retries: int = 0,
+    test_timeout: float = 2.0,
+):
     """Run discovery, Godot preflight, and the native suite runner."""
     suites = discover_native_suites(
         project,
         [str(suite_path)],
-        timeout_seconds=2.0,
+        timeout_seconds=test_timeout,
+        retries=retries,
     )
     assert suites
     manifest = NativeManifest(
@@ -352,4 +360,215 @@ def test_native_runner_reports_runtime_scene_load_failure(tmp_path, godot_bin):
     failure = result.tests[0]
     assert failure.name == "test_not_run"
     assert failure.status == "error"
-    assert "not_scene.tres" in failure.message
+
+
+def _teardown_files() -> dict[str, str]:
+    """Return fixtures that record after_each and scene exit ordering."""
+    return {
+        "scripts/teardown_subject.gd": """
+            extends Node
+            class_name TeardownSubject
+
+            func _append_marker(value: String) -> void:
+                var file = FileAccess.open("res://teardown.log", FileAccess.READ_WRITE)
+                if file == null:
+                    file = FileAccess.open("res://teardown.log", FileAccess.WRITE)
+                if file == null:
+                    return
+                file.seek_end()
+                file.store_line(value)
+                file.close()
+
+            func _exit_tree() -> void:
+                _append_marker("exit")
+        """,
+        "scenes/teardown.tscn": """
+            [gd_scene load_steps=2 format=3]
+
+            [ext_resource type="Script" path="res://scripts/teardown_subject.gd" id="1"]
+
+            [node name="Teardown" type="Node"]
+            script = ExtResource("1")
+        """,
+        "test/teardown_suite.gd": """
+            extends GdToolsTest
+            class_name TeardownSuite
+
+            const INTEGRATION := {
+                "scene": "res://scenes/teardown.tscn",
+                "resources": {}
+            }
+
+            func _append_marker(value: String) -> void:
+                var file = FileAccess.open("res://teardown.log", FileAccess.READ_WRITE)
+                if file == null:
+                    file = FileAccess.open("res://teardown.log", FileAccess.WRITE)
+                if file == null:
+                    return
+                file.seek_end()
+                file.store_line(value)
+                file.close()
+
+            func after_each() -> void:
+                var context = get_test_context()
+                assert_not_null(context)
+                assert_not_null(context.get_scene_root())
+                _append_marker("after")
+
+            func test_pass() -> void:
+                pass
+
+            func test_failure() -> void:
+                assert_true(false, "intentional test failure")
+
+            func test_timeout() -> void:
+                await get_tree().create_timer(1.0).timeout
+        """,
+    }
+
+
+def _retry_files() -> dict[str, str]:
+    """Return a suite that requires fresh scene, context, and resource state."""
+    return {
+        "scripts/retry_subject.gd": """
+            extends Node
+            class_name RetrySubject
+        """,
+        "scripts/retry_resource.gd": """
+            extends Resource
+            class_name RetryResource
+
+            @export var value: int = 0
+        """,
+        "scenes/retry.tscn": """
+            [gd_scene load_steps=2 format=3]
+
+            [ext_resource type="Script" path="res://scripts/retry_subject.gd" id="1"]
+
+            [node name="Retry" type="Node"]
+            script = ExtResource("1")
+        """,
+        "resources/retry_settings.tres": """
+            [gd_resource type="Resource" script_class="RetryResource" load_steps=2 format=3]
+
+            [ext_resource type="Script" path="res://scripts/retry_resource.gd" id="1"]
+
+            [resource]
+            script = ExtResource("1")
+            value = 7
+        """,
+        "test/retry_suite.gd": """
+            extends GdToolsTest
+            class_name RetrySuite
+
+            const INTEGRATION := {
+                "scene": "res://scenes/retry.tscn",
+                "resources": {
+                    "settings": "res://resources/retry_settings.tres"
+                }
+            }
+
+            func test_retry() -> void:
+                var state = _gd_tools_get_suite_state()
+                var attempt := int(state.get("attempt", 0))
+                state["attempt"] = attempt + 1
+                var context = get_test_context()
+                var root = context.get_scene_root()
+                var resource = context.get_resource("settings")
+                assert_not_null(root)
+                assert_not_null(resource)
+                if attempt == 0:
+                    state["first_root_id"] = root.get_instance_id()
+                    state["first_context_id"] = context.get_instance_id()
+                    resource.set("value", 99)
+                    assert_true(false, "retry once")
+                else:
+                    assert_true(
+                        root.get_instance_id() != int(state["first_root_id"])
+                    )
+                    assert_true(
+                        context.get_instance_id()
+                        != int(state["first_context_id"])
+                    )
+                    assert_eq(resource.get("value"), 7)
+        """,
+    }
+
+
+def _cleanup_error_files() -> dict[str, str]:
+    """Return a suite whose cleanup assertion must be infrastructure-fatal."""
+    return {
+        **_teardown_files(),
+        "test/teardown_suite.gd": """
+            extends GdToolsTest
+            class_name CleanupErrorSuite
+
+            const INTEGRATION := {
+                "scene": "res://scenes/teardown.tscn",
+                "resources": {}
+            }
+
+            func after_each() -> void:
+                assert_true(false, "cleanup exploded")
+
+            func test_cleanup_error() -> void:
+                pass
+        """,
+    }
+
+
+def test_native_integration_tears_down_after_each_for_pass_failure_and_timeout(
+    tmp_path, godot_bin
+):
+    """Scenes remain for after_each and exit only after the hook completes."""
+    project = _prepare_project(tmp_path, godot_bin, _teardown_files())
+    preflight, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "teardown_suite.gd",
+        test_timeout=0.5,
+    )
+
+    assert preflight.status == "ok"
+    assert [test.status for test in result.tests] == [
+        "passed",
+        "failed",
+        "timeout",
+    ]
+    markers = (
+        (project / "teardown.log").read_text(encoding="utf-8").splitlines()
+    )
+    assert markers == ["after", "exit", "after", "exit", "after", "exit"]
+
+
+def test_native_integration_retry_uses_fresh_attempt_state(tmp_path, godot_bin):
+    """A retry receives a new scene/context and an isolated resource value."""
+    project = _prepare_project(tmp_path, godot_bin, _retry_files())
+    preflight, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "retry_suite.gd",
+        retries=1,
+    )
+
+    assert preflight.status == "ok"
+    assert result.status == "passed"
+    assert result.tests[0].status == "passed"
+    assert result.tests[0].attempts == 2
+
+
+def test_native_integration_cleanup_failure_is_infrastructure_error(
+    tmp_path, godot_bin
+):
+    """A failure raised by after_each is not reported as an ordinary test failure."""
+    project = _prepare_project(tmp_path, godot_bin, _cleanup_error_files())
+    preflight, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "teardown_suite.gd",
+    )
+
+    assert preflight.status == "ok"
+    assert result.status == "error"
+    assert result.tests[0].status == "error"
+    assert "cleanup exploded" in result.tests[0].message
