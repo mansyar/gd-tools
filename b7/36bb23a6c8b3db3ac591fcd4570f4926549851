@@ -1,0 +1,22 @@
+Task: Implement the bundled Godot preflight entrypoint
+
+Summary:
+- Added a protocol-v2 SceneTree preflight that reads INTEGRATION through Godot script metadata and emits an enriched suite/test manifest.
+- Validates the complete no-argument suite method set, declaration shape, modes, res:// paths, resource existence, and test override names.
+- Applies field-wise suite/test scene and resource merges, including null removal, without constructing suites or running lifecycle methods.
+- Produces structured exit-code-2 errors and atomically finalized preflight JSON.
+- Corrected the E2E suite fixture to define the real methods referenced by merge cases.
+
+Files:
+- src/gd_tools/addons/gd-tools-test/gd_tools_test_preflight.gd
+- tests/e2e/test_native_preflight.py
+
+Why:
+- Godot must resolve suite-owned metadata before Python can choose headless or windowed process arguments.
+
+Verification:
+- .venv\Scripts\python.exe -m pytest tests/e2e/test_native_preflight.py --no-cov -q
+  Result: 13 passed.
+- .venv\Scripts\python.exe -m pytest tests/unit/test_package.py --no-cov -q
+  Result: 2 passed; addon package data includes the new script.
+- gdformat --check, gdlint, Ruff, Black, and git diff checks passed.
