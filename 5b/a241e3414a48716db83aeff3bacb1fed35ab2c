@@ -1,0 +1,3 @@
+Task: Implement native result/event emission
+
+Added optional NDJSON progress events for run start, test start, test completion, and run completion while preserving the atomic native JSON result. Added an E2E test that parses the event stream and verifies ordering/status. Verified with all native runtime E2E tests, Ruff, Black, and whitespace checks.
