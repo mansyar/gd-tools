@@ -8,6 +8,9 @@ from pathlib import Path
 
 import pytest
 
+from gd_tools.native_test.orchestrator import run_native_tests
+from gd_tools.native_test.protocol import NativeSuite, NativeTest
+
 pytestmark = pytest.mark.e2e
 
 NATIVE_FIXTURE = (
@@ -437,3 +440,35 @@ def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
     assert payload["status"] == "passed"
     assert len(payload["tests"]) == 4
     assert all(test["status"] == "passed" for test in payload["tests"])
+
+
+def test_native_orchestrator_runs_multiple_real_suites(godot_bin, tmp_path):
+    """The Python orchestrator aggregates isolated real Godot processes."""
+    project = _prepare_project(tmp_path, godot_bin)
+    suites = [
+        NativeSuite(
+            name="NativeFixtureSuite",
+            path="res://test/native_suite.gd",
+            tests=[NativeTest(name="test_pass")],
+        ),
+        NativeSuite(
+            name="NativeAsyncHelpersSuite",
+            path="res://test/async_helpers_suite.gd",
+            tests=[NativeTest(name="test_process_frame")],
+        ),
+    ]
+
+    result = run_native_tests(
+        project,
+        suites,
+        godot_bin,
+        work_dir=tmp_path / "orchestrated",
+    )
+
+    assert result.status == "passed"
+    assert len(result.tests) == 2
+    assert {test.suite for test in result.tests} == {
+        "NativeFixtureSuite",
+        "NativeAsyncHelpersSuite",
+    }
+    assert all(test.status == "passed" for test in result.tests)
