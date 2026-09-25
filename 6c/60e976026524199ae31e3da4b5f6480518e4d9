@@ -1,0 +1,12 @@
+Phase 4 checkpoint completed.
+
+Automated verification:
+- 6 native scene/resource integration E2E tests passed.
+- 17 existing native runtime E2E regression tests passed.
+- Combined Phase 4 run: 23 passed.
+- gdlint passed for context, base, and runner GDScript.
+- Black and Ruff passed for the integration E2E contract.
+- git diff --check passed.
+- Manual verification confirmed scene/resource lifecycle visibility, after_each ordering, teardown, and retry isolation.
+
+Phase 4 scope is complete; Phase 5 windowed execution and bounded artifacts is next.
