@@ -103,3 +103,9 @@ func wait_physics_frames(frame_count: int = 1) -> void:
 func wait_seconds(seconds: float) -> void:
 	## Wait for a scene-tree timer.
 	await get_tree().create_timer(seconds).timeout
+
+
+func wait_for_signal(target_signal: Signal) -> bool:
+	## Wait until a signal is emitted and return true.
+	await target_signal
+	return true

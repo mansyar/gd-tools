@@ -325,3 +325,115 @@ def test_native_runner_emits_structured_events(godot_bin, tmp_path):
         "run_finished",
     ]
     assert events[2]["status"] == "passed"
+
+
+def test_native_runner_marks_timed_out_tests(godot_bin, tmp_path):
+    """A test exceeding its manifest timeout gets a timeout result."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "timeout-manifest.json"
+    result_path = tmp_path / "timeout-result.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 1,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeTimeoutSuite",
+                        "path": "res://test/timeout_suite.gd",
+                        "tests": [
+                            {
+                                "name": "test_hangs",
+                                "timeout_seconds": 0.05,
+                            }
+                        ],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    assert payload["tests"][0]["status"] == "timeout"
+    assert payload["tests"][0]["duration_seconds"] < 1.0
+
+
+def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
+    """Native tests can await process, physics, timer, and signal events."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "async-manifest.json"
+    result_path = tmp_path / "async-result.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 1,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeAsyncHelpersSuite",
+                        "path": "res://test/async_helpers_suite.gd",
+                        "tests": [
+                            {"name": "test_process_frame"},
+                            {"name": "test_physics_frames"},
+                            {"name": "test_timer"},
+                            {"name": "test_signal"},
+                        ],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "passed"
+    assert len(payload["tests"]) == 4
+    assert all(test["status"] == "passed" for test in payload["tests"])

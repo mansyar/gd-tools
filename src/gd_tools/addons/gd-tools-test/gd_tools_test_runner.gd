@@ -9,8 +9,13 @@ extends SceneTree
 
 const PROTOCOL_VERSION := 1
 
+signal test_call_completed
+
 var _test_results: Array[Dictionary] = []
 var _run_status := "passed"
+var _active_test_token := 0
+var _test_timeout_reached := false
+var _test_completed := false
 
 
 func _init() -> void:
@@ -109,17 +114,28 @@ func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> v
 	if test_context.has_method("before_each"):
 		await test_context.call("before_each")
 
+	var timeout_seconds := max(
+			float(test_data.get("timeout_seconds", 5.0)),
+			0.001
+	)
+	_begin_test_timeout(timeout_seconds)
 	if test_context.has_method(test_name):
-		await test_context.call(test_name)
+		_invoke_test(test_context, test_name, _active_test_token)
+		await test_call_completed
 	else:
 		_record_suite_error(suite_name, "Test method not found: %s" % test_name)
+		_test_completed = true
+		test_call_completed.emit()
 
-	if test_context.has_method("after_each"):
+	if not _test_timeout_reached and test_context.has_method("after_each"):
 		await test_context.call("after_each")
 
 	var failures: Array[Dictionary] = test_context.get_failures()
 	var status := "failed" if not failures.is_empty() else "passed"
 	var message := _failure_message(failures)
+	if _test_timeout_reached:
+		status = "timeout"
+		message = "Test timed out after %.3f seconds" % timeout_seconds
 	_record_test_result(
 		suite_name,
 		test_name,
@@ -134,8 +150,38 @@ func _run_test(script: GDScript, suite_name: String, test_data: Dictionary) -> v
 		"name": test_name,
 		"status": status,
 	})
+	_active_test_token += 1
 	test_context.queue_free()
 	await process_frame
+
+
+func _begin_test_timeout(timeout_seconds: float) -> void:
+	_active_test_token += 1
+	_test_timeout_reached = false
+	_test_completed = false
+	var timer := create_timer(timeout_seconds)
+	timer.timeout.connect(
+			_on_test_timeout.bind(_active_test_token),
+			CONNECT_ONE_SHOT
+	)
+
+
+func _on_test_timeout(token: int) -> void:
+	if token != _active_test_token or _test_completed:
+		return
+	_test_timeout_reached = true
+	test_call_completed.emit()
+
+
+func _invoke_test(context: GdToolsTest, test_name: String, token: int) -> void:
+	await process_frame
+	if token != _active_test_token:
+		return
+	await context.call(test_name)
+	if token != _active_test_token or _test_timeout_reached:
+		return
+	_test_completed = true
+	test_call_completed.emit()
 
 
 func _record_suite_error(suite_name: String, message: String) -> void:
@@ -151,7 +197,7 @@ func _record_test_result(
 		message: String,
 		diagnostics: Dictionary
 ) -> void:
-	if status == "failed":
+	if status == "failed" or status == "timeout":
 		_run_status = "failed"
 	elif status == "error" and _run_status != "failed":
 		_run_status = "error"
