@@ -2,7 +2,7 @@
 
 - **Track ID:** native_test_foundation_20260925
 - **Type:** Feature / Architecture
-- **Status:** New
+- **Status:** In Progress
 - **Specification:** [`spec.md`](./spec.md)
 
 ## Phase 1 — Protocol, configuration, and discovery
@@ -216,6 +216,44 @@
   - [x] Obtain explicit user confirmation of the verification results.
   - [x] Create the final checkpoint commit and record its SHA.
   - [x] Update the track registry/status and prepare the implementation handoff.
+
+## Phase 7 — Review fixes
+
+**Purpose:** Correct the confirmed review findings without expanding the native foundation into the deferred GUT bridge, scene integration, or migration-tooling tracks.
+
+- [~] Task: Add regression tests for lifecycle and engine diagnostics
+  - [ ] Reproduce ignored `before_all`/`after_all` failures and lost suite state.
+  - [ ] Reproduce lifecycle-hook timeout and cleanup behavior.
+  - [ ] Reproduce engine error/warning result handling.
+  - [ ] Run the focused tests and confirm the expected Red phase.
+- [ ] Task: Fix native lifecycle and timeout semantics
+  - [ ] Preserve suite-scoped state/resources while keeping fresh test instances.
+  - [ ] Include setup and cleanup in the bounded lifecycle timeout.
+  - [ ] Run the lifecycle and async runtime tests to Green.
+- [ ] Task: Add structured native engine diagnostics
+  - [ ] Capture engine errors and warnings in the native result protocol.
+  - [ ] Preserve process output and diagnostics through Python adapters.
+  - [ ] Add result, JUnit, and CLI regression coverage.
+- [ ] Task: Protect managed addon updates and doctor behavior
+  - [ ] Back up modified native addon files before replacement.
+  - [ ] Make optional GUT diagnostics non-blocking in native mode.
+  - [ ] Detect stale native addon versions.
+  - [ ] Add init and doctor regression tests.
+- [ ] Task: Complete public selector and timeout plumbing
+  - [ ] Expose tag filtering through CLI/config/discovery.
+  - [ ] Preserve exact file selectors or reject unsupported file inputs.
+  - [ ] Separate per-test timeout from process/import timeout semantics.
+  - [ ] Add CLI, discovery, and E2E selector tests.
+- [ ] Task: Synchronize status and transition documentation
+  - [ ] Mark the review findings and completed foundation accurately.
+  - [ ] Correct stale GUT-first module/status documentation.
+  - [ ] Update user-facing diagnostics and timeout/tag documentation.
+- [ ] Task: Review-fix verification & checkpoint (Refer to `workflow.md`)
+  - [ ] Run focused unit, integration, and native E2E tests.
+  - [ ] Run full automated verification and style checks.
+  - [ ] Perform manual CLI/GUT/native transition verification.
+  - [ ] Create the review-fix checkpoint commit and record its SHA.
+  - [ ] Restore the track and project documentation to completed status.
 
 ## Plan Boundaries
 
