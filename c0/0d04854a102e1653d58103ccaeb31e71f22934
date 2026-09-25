@@ -1,0 +1,64 @@
+Green phase for the Conductor review of native_scene_integration_20260925.
+Applies every High, Medium, and Low finding raised in review.
+
+Correctness
+- Declared resources are duplicated per attempt, so a retry no longer
+  inherits a resource a previous attempt mutated and retained. The shipped
+  retry E2E passed only because nothing retained the reference; a probe that
+  retained it in suite state proved the leak, and the new E2E pins the fix.
+- Screenshot capture keeps the original failure message and appends the
+  capture error, instead of replacing it and turning exit 1 into a bare
+  exit 2. A cleanup failure now reports the assertion that failed first
+  alongside the cleanup error.
+- Each failing windowed test writes its own capture, so several failures in
+  one suite no longer overwrite each other.
+- A retention failure republishes the index with status error, so the
+  recorded status can no longer disagree with the exit code.
+- find_nodes matches a name substring, so the documented 'Target*' example
+  works and an empty or invalid pattern reports integration_node_pattern
+  instead of silently matching nothing.
+- A test method with parameters is no longer treated as a runnable test, so
+  an INTEGRATION override targeting it is reported instead of silently
+  validating for a test that never runs.
+- Bounded preflight process output, so a chatty engine cannot flood the CLI
+  error or JUnit. Exit code is unchanged.
+
+Artifacts
+- The index lists only artifacts that exist, and 'screenshots' lists only
+  realized captures, so it no longer advertises dangling paths.
+- Retention removes only directories carrying this tool's run markers, so a
+  user directory kept under the artifact root is never deleted.
+- The artifact index location is printed in CLI output, so it is
+  discoverable without reading JUnit.
+
+Tests
+- Added AC6 coverage: a windowed suite on a headless renderer is an
+  explicit suite-level error with exit 2 and no test execution.
+- Strengthened weak assertions: the scene-load diagnostic now asserts the
+  message names the asset and type; missing-lookup diagnostics assert the
+  structured kind and identifier instead of a JSON substring; the artifact
+  index test asserts real behavior instead of round-tripping a value the
+  test itself wrote; the doctor pass test asserts the version it read; the
+  TimeoutExpired branch is covered alongside TimeoutError.
+- The screenshot write-failure test asserts the structured engine error
+  rather than Godot's English text, and uses a guarded lookup.
+- The display guard no longer treats a windowed assertion failure as a
+  missing display.
+- Godot project import retries once: it intermittently exits non-zero after
+  a completed filesystem scan under load, which failed an unrelated test in
+  two consecutive full runs.
+
+Docs
+- find_nodes and get_integration rows corrected; the full context failure
+  list added; the parameterized-method rule documented; per-test captures,
+  the capture-failure behavior, index discoverability, and real index
+  contents documented; the doctor staleness warning and the inert artifact
+  step corrected; the stale ROADMAP deferral of scene/resource integration
+  removed.
+
+Verification: 1093 unit/integration and 75 E2E tests pass; Ruff, Black,
+gdlint, gdformat, and git diff --check clean.
+
+Deferred, disclosed: the ~150 duplicated E2E helper lines across four
+modules are still drifted, and two pre-existing tight wall-clock assertions
+in test_native_runtime.py were left alone.
