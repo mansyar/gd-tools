@@ -1,0 +1,1 @@
+Phase 5 verification confirmed by user. Automated: 875 unit tests passed with 94.90% coverage; 66 integration tests passed with --no-cov; 11 native E2E tests passed; Ruff and Black passed. Manual: native init leaves GUT opt-in, native test/JUnit/coverage paths work, and --runtime gut preserves the legacy path.
