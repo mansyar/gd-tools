@@ -1,0 +1,3 @@
+Task: Implement suite loading and lifecycle management
+
+The runner implementation from 5b84c40 now loads GdToolsTest suites, creates fresh test instances, runs before_all/before_each/test/after_each/after_all, and records failures. Added an E2E regression fixture proving hook order and cleanup after a failed test. Verified with all three native runtime E2E tests, Ruff, and Black.
