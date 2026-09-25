@@ -1,0 +1,24 @@
+Task: Implement the protocol-v2 Python models
+
+Summary:
+- Incremented the native Python/Godot protocol from v1 to v2 without changing the independent coverage schema.
+- Added strict suite-level and per-test integration models, execution-mode validation, res:// path validation, and structured preflight results.
+- Extended native suite/test manifests and public package exports while reusing the existing atomic JSON writer.
+- Updated native unit/E2E fixtures to the intentional protocol bump.
+
+Files:
+- src/gd_tools/native_test/protocol.py
+- src/gd_tools/native_test/__init__.py
+- src/gd_tools/addons/gd-tools-test/gd_tools_test_runner.gd
+- tests/unit/test_native_orchestrator.py
+- tests/e2e/test_native_runtime.py
+
+Why:
+- Establishes the validated Python-side contract required before Godot preflight and scene/resource execution are implemented.
+
+Verification:
+- Protocol tests: 30 passed; protocol.py measured 95% coverage in the focused run.
+- Native unit selection: 76 passed.
+- Native runtime E2E: 16 passed.
+- Native CLI E2E: 8 passed.
+- Ruff, Black, and git diff checks passed.
