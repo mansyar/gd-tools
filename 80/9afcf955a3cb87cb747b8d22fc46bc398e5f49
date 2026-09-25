@@ -1,0 +1,25 @@
+Red phase for the Conductor review of native_scene_integration_20260925.
+
+Contracts added (14 failing, each for the intended missing behavior):
+- test_native_artifacts: suite_paths exposes screenshot_base (per-test
+  screenshots); publish_artifact_index lists only artifacts that exist on
+  disk; only realized screenshots are indexed; retention skips directories
+  that are not prior runs.
+- test_native_orchestrator: runner receives the per-suite screenshot base;
+  captured screenshots reach the index; a retention failure republishes the
+  index with status error so the index cannot disagree with the exit code.
+- test_native_preflight: a chatty Godot process cannot flood the CLI error
+  or JUnit output (bounded, marked truncated).
+- test_native_protocol: res:// prefix alone is insufficient; traversal
+  paths are rejected by the protocol models.
+- test_test_runner: the published artifact index location is discoverable
+  from CLI output, and absent without an index.
+- test_native_integration (E2E): find_nodes asserts which nodes are
+  returned rather than a count; a retained declared resource stays pristine
+  on retry; each failing windowed test keeps its own screenshot; an
+  unwritable screenshot keeps the original assertion message.
+- test_native_preflight (E2E): a test method with parameters is not a
+  runnable test, so an override targeting it is reported as unknown,
+  matching Python discovery.
+
+Red run: 14 failed, 121 passed. Black and Ruff clean; git diff --check clean.
