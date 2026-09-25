@@ -219,7 +219,7 @@ func _run_test_attempt(
 		var setup_message := str(
 				integration_result.get("message", "Unable to prepare integration")
 		)
-		test_context._gd_tools_clear_test_context()
+		await _teardown_integration(test_context)
 		test_context.queue_free()
 		await process_frame
 		return {
@@ -269,10 +269,14 @@ func _run_test_attempt(
 				"started_at": started_at,
 				"finished_at": _timestamp(),
 			}
+			await _teardown_integration(test_context)
 			test_context.queue_free()
 			await process_frame
 			return missing_result
 
+	var cleanup_failure_start: int = test_context.get_failures().size()
+	var cleanup_failures: Array[Dictionary] = []
+	var cleanup_timed_out := false
 	if test_context.has_method("after_each"):
 		if timed_out:
 			await _run_cleanup(
@@ -288,18 +292,30 @@ func _run_test_attempt(
 				_active_test_token
 			)
 			await test_call_completed
-		if _test_timeout_reached:
+		cleanup_timed_out = _test_timeout_reached
+		if cleanup_timed_out:
 			timed_out = true
+		cleanup_failures = _failures_since(
+				test_context,
+				cleanup_failure_start
+		)
 
 	var failures: Array[Dictionary] = test_context.get_failures()
 	var status := "failed" if not failures.is_empty() else "passed"
 	var message := _failure_message(failures)
-	if timed_out:
+	if not cleanup_failures.is_empty() or cleanup_timed_out:
+		status = "error"
+		if cleanup_timed_out:
+			message = "after_each timed out after %.3f seconds" % timeout_seconds
+		else:
+			message = "after_each failed: %s" % _failure_message(cleanup_failures)
+	elif timed_out:
 		status = "timeout"
 		message = "Test timed out after %.3f seconds" % timeout_seconds
 	var duration := float(Time.get_ticks_msec() - started_ticks) / 1000.0
 	var finished_at := _timestamp()
 	_active_test_token += 1
+	await _teardown_integration(test_context)
 	test_context.queue_free()
 	await process_frame
 	return {
@@ -382,6 +398,19 @@ func _load_integration_scene(scene_value: Variant) -> Dictionary:
 
 func _integration_error(message: String) -> Dictionary:
 	return {"ok": false, "message": message}
+
+
+func _teardown_integration(test_context: GdToolsTest) -> void:
+	var context = test_context.get_test_context()
+	if context != null:
+		var scene_root = context.get_scene_root() as Node
+		if scene_root != null and is_instance_valid(scene_root):
+			var parent := scene_root.get_parent()
+			if parent != null:
+				parent.remove_child(scene_root)
+			scene_root.queue_free()
+	test_context._gd_tools_clear_test_context()
+	await process_frame
 
 
 func _new_test_context(

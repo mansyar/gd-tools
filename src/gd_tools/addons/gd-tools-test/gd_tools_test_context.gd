@@ -11,6 +11,12 @@ var _resources: Dictionary = {}
 var _integration: Dictionary = {}
 var _wait_signal_received := false
 var _wait_timed_out := false
+var _wait_signal = null
+var _wait_timer = null
+var _wait_signal_callback = null
+var _wait_timer_callback = null
+var _wait_signal_connected := false
+var _wait_timer_connected := false
 
 
 func initialize(
@@ -133,14 +139,16 @@ func wait_for_signal(target_signal: Signal, timeout_seconds: float) -> bool:
 
 	_wait_signal_received = false
 	_wait_timed_out = false
-	var signal_callback := _on_wait_signal
-	var timeout_callback := _on_wait_timeout
-	target_signal.connect(signal_callback, CONNECT_ONE_SHOT)
-	var timer := _test.get_tree().create_timer(max(timeout_seconds, 0.001))
-	timer.timeout.connect(timeout_callback, CONNECT_ONE_SHOT)
+	_wait_signal = target_signal
+	_wait_signal_callback = _on_wait_signal
+	_wait_timer_callback = _on_wait_timeout
+	target_signal.connect(_wait_signal_callback, CONNECT_ONE_SHOT)
+	_wait_signal_connected = true
+	_wait_timer = _test.get_tree().create_timer(max(timeout_seconds, 0.001))
+	_wait_timer.timeout.connect(_wait_timer_callback, CONNECT_ONE_SHOT)
+	_wait_timer_connected = true
 	await wait_resolved
-	if target_signal.is_connected(signal_callback):
-		target_signal.disconnect(signal_callback)
+	_disconnect_wait()
 	if _wait_timed_out:
 		_record_failure(
 			"integration_signal",
@@ -153,10 +161,29 @@ func wait_for_signal(target_signal: Signal, timeout_seconds: float) -> bool:
 
 func clear() -> void:
 	## Release references owned by the completed attempt.
+	if _wait_signal_connected or _wait_timer_connected:
+		_wait_timed_out = true
+		wait_resolved.emit()
+	_disconnect_wait()
 	_test = null
 	_scene_root = null
 	_resources.clear()
 	_integration.clear()
+
+
+func _disconnect_wait() -> void:
+	if _wait_signal_connected:
+		if _wait_signal.is_connected(_wait_signal_callback):
+			_wait_signal.disconnect(_wait_signal_callback)
+		_wait_signal_connected = false
+	if _wait_timer_connected:
+		if _wait_timer.timeout.is_connected(_wait_timer_callback):
+			_wait_timer.timeout.disconnect(_wait_timer_callback)
+		_wait_timer_connected = false
+	_wait_signal = null
+	_wait_timer = null
+	_wait_signal_callback = null
+	_wait_timer_callback = null
 
 
 func _on_wait_signal() -> void:
