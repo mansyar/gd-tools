@@ -157,7 +157,7 @@ def run_native_test_command(
         run_id=run_id,
         artifact_layout=artifact_layout,
     )
-    _raise_for_native_error(native_result)
+    infrastructure_error = native_result.status == "error"
     failed_count = sum(
         test.status in {"failed", "timeout", "error", "crashed"}
         for test in native_result.tests
@@ -178,9 +178,12 @@ def run_native_test_command(
             no_cache=no_cache,
         )
     except CoverageThresholdError:
-        if test_failure is not None:
+        if infrastructure_error:
+            pass
+        elif test_failure is not None:
             raise test_failure
-        raise
+        else:
+            raise
 
     result = _to_test_result(
         native_result,
@@ -188,6 +191,8 @@ def run_native_test_command(
         junit_xml,
     )
     format_test_results(result)
+    if infrastructure_error:
+        _raise_for_native_error(native_result)
     if test_failure is not None:
         raise test_failure
     return result
@@ -340,7 +345,12 @@ def _to_test_result(
     else:
         junit_path = project_root / ".gd-tools" / "results.xml"
     duration = sum(test.duration_seconds for test in native_result.tests)
-    _write_junit_xml(junit_path, details, duration)
+    _write_junit_xml(
+        junit_path,
+        details,
+        duration,
+        artifact_index_path=native_result.artifact_index_path,
+    )
     return TestResult(
         total=len(details),
         passed=passed,
@@ -352,6 +362,7 @@ def _to_test_result(
         stdout=native_result.stdout,
         stderr=native_result.stderr,
         test_details=details,
+        artifact_index_path=native_result.artifact_index_path,
     )
 
 
@@ -359,6 +370,7 @@ def _write_junit_xml(
     path: Path,
     details: list[TestDetail],
     duration: float,
+    artifact_index_path: Path | None = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     root = ET.Element("testsuites")
@@ -371,6 +383,14 @@ def _write_junit_xml(
         skipped=str(sum(detail.status == "skip" for detail in details)),
         time=f"{duration:.6f}",
     )
+    if artifact_index_path is not None:
+        properties = ET.SubElement(suite, "properties")
+        ET.SubElement(
+            properties,
+            "property",
+            name="artifact_index",
+            value=str(artifact_index_path),
+        )
     for detail in details:
         case = ET.SubElement(
             suite,

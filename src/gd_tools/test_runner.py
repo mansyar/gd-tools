@@ -63,6 +63,8 @@ class TestResult:
         junit_xml_path: Path to the JUnit XML file, or None.
         coverage_data_path: Path to coverage data, or None when
             ``--coverage`` not used.
+        artifact_index_path: Path to the published native run artifact index,
+            or None for runtimes without run artifacts.
         stdout: GUT stdout (for debugging/surfacing on failure).
         stderr: GUT stderr (for debugging/surfacing on failure).
         test_details: Per-test breakdown.
@@ -80,6 +82,7 @@ class TestResult:
     stdout: str
     stderr: str
     test_details: list[TestDetail] = field(default_factory=list)
+    artifact_index_path: Path | None = None
 
 
 def build_gut_args(
