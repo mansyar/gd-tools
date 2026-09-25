@@ -1,0 +1,37 @@
+Captures the two open items surfaced by the Conductor review of
+native_scene_integration_20260925, so a later session can pick them up
+without re-deriving the analysis.
+
+Registered a new unchecked track, coverage_target_contract_20260926, whose
+spec records the contradiction: the coverage addon skips a file it cannot
+instrument (coverage.gd:94-101, return false) but push_error escalates the
+process exit code, and test_runner.py:484 turns any returncode > 1 into a
+hard exit 2. The native runtime behaves the same way
+(gd_tools_native_coverage.gd:92-95 plus the engine-error mapping), so this
+is one decision applied twice, not two.
+
+Records the verified trigger scope so the next session does not assume it is
+common: plan_generator.py:501 invalidates the cache when files are deleted,
+and plan_generator.py:138 raises if a file is missing at generation time, so
+a generated plan cannot reference a nonexistent file. The realistic triggers
+are a mid-run deletion, or a file that exists but does not compile.
+
+Lays out three options (fail, skip silently, warn and continue) with the
+trade-off table, recommends warn-and-continue because silently under-reported
+coverage is the failure mode that survives review, and records four open
+questions: which surfaces report the omission, whether --min compares against
+the total or instrumented set, whether nonexistent and uncompilable paths
+should diverge, and whether the coverage data schema needs a version bump.
+
+Deliberately no plan.md: the chosen option determines the scope, so planning
+before the decision would encode a guess.
+
+Also added known_flakes.md, covering item 2. Three full-suite runs each failed
+one test out of ~1100 and a different one each time, all passing in isolation
+(5/5 and 12/12 repeats). Documents the verbatim -1 exit code after a
+push_error, the two vectors (upstream Godot behavior versus our helper
+assumptions), the already-fixed import retry, why a blanket retry was
+rejected, and the three suggested next steps in value order.
+
+Metadata status is new. Registry links, index links, and metadata JSON all
+verified. git diff --check clean.
