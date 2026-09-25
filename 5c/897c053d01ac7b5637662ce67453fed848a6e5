@@ -1,0 +1,3 @@
+Task: Implement async helpers and timeout handling
+
+Added process-frame, physics-frame, timer, and signal waits; raced each test coroutine against a configurable SceneTreeTimer; emitted distinct timeout results; and added E2E coverage for async helpers and a deliberately hanging test. Verified with seven native runtime E2E tests, Ruff, Black, and whitespace checks.
