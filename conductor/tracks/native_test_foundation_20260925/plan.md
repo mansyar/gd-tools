@@ -58,7 +58,7 @@
   - [ ] Add the `GdToolsTest` base class extending `Node`.
   - [ ] Add the `GdToolsTestRunner` entrypoint.
   - [ ] Add version/provenance metadata consistent with the existing addon packaging.
-- [ ] Task: Implement suite loading and lifecycle management
+- [x] Task: Implement suite loading and lifecycle management [62a40b9]
   - [ ] Load and validate `GdToolsTest` suites.
   - [ ] Discover `test_*` methods.
   - [ ] Run `before_all`, `before_each`, `after_each`, and `after_all`.
