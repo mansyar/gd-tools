@@ -441,8 +441,10 @@ gd-tools test tests/unit/test_player.gd
 - `before_all`, `before_each`, `after_each`, and `after_all` failures appear
   in the native result and affect the run status; cleanup hooks are attempted
   after test timeouts.
-- Native runs write structured result JSON under `.gd-tools/native/` and the
-  requested JUnit XML; `--coverage` adds plan-v1 data and a merged report.
+- Native runs write structured result JSON under the run's artifact directory
+  (`.gd-tools/artifacts/<run_id>/native/`, indexed by
+  `.gd-tools/artifacts/<run_id>/artifacts.json`) and the requested JUnit XML;
+  `--coverage` adds plan-v1 data and a merged report.
 - Results include timestamps, assertion diagnostics, and Godot engine
   errors/warnings. Engine errors are infrastructure failures (exit `2`).
 - Async tests may await process frames, physics frames, timers, and signals.
