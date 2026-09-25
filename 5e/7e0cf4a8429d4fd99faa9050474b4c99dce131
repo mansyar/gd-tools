@@ -1,0 +1,10 @@
+Defined the Phase 6 reporting Red contract.
+
+- Infrastructure failures must still publish JUnit, artifact references, and CLI output before exiting 2.
+- JUnit must record the artifact index as a machine-readable suite property.
+- TestResult must expose artifact_index_path.
+- Infrastructure errors must dominate ordinary test failures and coverage threshold failures.
+- Later suites must remain visible in the report after an infrastructure failure.
+
+Red run: 3 failed, 9 passed. Failures were the missing TestResult.artifact_index_path field, no JUnit written for infrastructure errors, and the infrastructure error being raised before reporting.
+Black, Ruff, and diff checks passed.
