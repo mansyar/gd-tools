@@ -81,14 +81,14 @@
   - [x] Verify process timeouts, result mismatches, and later-suite continuation.
   - [x] Verify explicit GUT routing bypasses native preflight unchanged.
   - [x] Confirm the expected Red phase.
-- [~] Task: Implement preflight-aware command flow
-  - [ ] Keep discovery and selection in Python.
-  - [ ] Run Godot import before loading suite integration metadata.
-  - [ ] Pass enriched metadata into the existing suite orchestrator.
-  - [ ] Select process flags from the validated suite execution mode.
-  - [ ] Preserve `0/1/2` precedence and existing CLI options.
-  - [ ] Run command/orchestrator tests to Green.
-- [ ] Task: Add a non-integration regression E2E test
+- [x] Task: Implement preflight-aware command flow [commit: `8d362cc`]
+  - [x] Keep discovery and selection in Python.
+  - [x] Run Godot import before loading suite integration metadata.
+  - [x] Pass enriched metadata into the existing suite orchestrator.
+  - [x] Select process flags from the validated suite execution mode.
+  - [x] Preserve `0/1/2` precedence and existing CLI options.
+  - [x] Run command/orchestrator tests to Green.
+- [~] Task: Add a non-integration regression E2E test
   - [ ] Run an existing plain `GdToolsTest` suite through the new flow.
   - [ ] Verify assertions, selectors, retries, timeout behavior, and coverage remain valid.
   - [ ] Verify no windowed behavior is activated accidentally.
