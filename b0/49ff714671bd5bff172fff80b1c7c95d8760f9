@@ -1,0 +1,1 @@
+Track completed: native Godot runtime is the default, with explicit temporary GUT compatibility, native results/JUnit/coverage, async retries/timeouts, docs, E2E coverage, and a measured 2x performance budget. Follow-up bridge, migration, scene integration, parallelism, and GUT removal remain out of scope.
