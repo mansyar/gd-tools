@@ -1,0 +1,6 @@
+Added runtime integration setup diagnostics coverage.
+
+- Missing named resources are rejected by Godot preflight with the logical name and res:// path.
+- An existing non-PackedScene resource declared as the primary scene reaches the runner and produces a structured infrastructure error with the offending path.
+- The main scene/resource context E2E remains Green.
+- Verification: 3 integration E2E tests passed; Black, Ruff, and diff checks passed.
