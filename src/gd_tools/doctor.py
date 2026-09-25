@@ -28,7 +28,11 @@ from .godot import (
     find_godot,
     get_gut_version_for_godot,
 )
-from .init import COVERAGE_ADDON_FILES, get_installed_gut_version
+from .init import (
+    COVERAGE_ADDON_FILES,
+    NATIVE_TEST_ADDON_FILES,
+    get_installed_gut_version,
+)
 from .test_runner import is_gut_installed
 
 
@@ -174,7 +178,10 @@ def check_gdtoolkit() -> CheckResult:
 # --- GUT and Project Configuration Checks ---
 
 
-def check_gut_installed(project_root: Path) -> CheckResult:
+def check_gut_installed(
+    project_root: Path,
+    required: bool = True,
+) -> CheckResult:
     """Check that GUT is installed in the project.
 
     Args:
@@ -190,12 +197,18 @@ def check_gut_installed(project_root: Path) -> CheckResult:
             passed=True,
             message="GUT is installed",
         )
+    if not required:
+        return CheckResult(
+            name="GUT Installed",
+            passed=True,
+            message="GUT is not installed (optional for native runtime)",
+        )
     return CheckResult(
         name="GUT Installed",
         passed=False,
         message="GUT is not installed",
         fix_hint=(
-            "Run `gd-tools init` to install GUT, "
+            "Run `gd-tools init --with-gut` to install GUT, "
             "or see https://github.com/bitwes/Gut."
         ),
         severity="critical",
@@ -299,7 +312,33 @@ def check_coverage_addon(project_root: Path) -> CheckResult:
     )
 
 
-def check_gutconfig(project_root: Path) -> CheckResult:
+def check_native_test_addon(project_root: Path) -> CheckResult:
+    """Check that the bundled native test runtime is present."""
+    addon_dir = project_root / "addons" / "gd-tools-test"
+    missing = [
+        name
+        for name in NATIVE_TEST_ADDON_FILES
+        if not (addon_dir / name).is_file()
+    ]
+    if missing:
+        return CheckResult(
+            name="Native Test Addon",
+            passed=False,
+            message=f"Missing native test files: {', '.join(missing)}",
+            fix_hint="Run `gd-tools init` to deploy the native test addon.",
+            severity="critical",
+        )
+    return CheckResult(
+        name="Native Test Addon",
+        passed=True,
+        message="Native test addon is installed",
+    )
+
+
+def check_gutconfig(
+    project_root: Path,
+    required: bool = True,
+) -> CheckResult:
     """Check that .gutconfig.json is valid JSON with hook script keys.
 
     Args:
@@ -312,11 +351,17 @@ def check_gutconfig(project_root: Path) -> CheckResult:
     """
     gutconfig_path = project_root / ".gutconfig.json"
     if not gutconfig_path.exists():
+        if not required:
+            return CheckResult(
+                name="GUT Config",
+                passed=True,
+                message=".gutconfig.json not found (optional for native runtime)",
+            )
         return CheckResult(
             name="GUT Config",
             passed=False,
             message=".gutconfig.json not found",
-            fix_hint="Run `gd-tools init` to generate .gutconfig.json.",
+            fix_hint="Run `gd-tools init --with-gut` to generate .gutconfig.json.",
             severity="warning",
         )
     try:
@@ -386,7 +431,10 @@ def check_gd_tools_toml(project_root: Path) -> CheckResult:
     )
 
 
-def check_autoload(project_root: Path) -> CheckResult:
+def check_autoload(
+    project_root: Path,
+    required: bool = True,
+) -> CheckResult:
     """Check that _GDTCoverage autoload is registered in project.godot.
 
     Args:
@@ -419,13 +467,18 @@ def check_autoload(project_root: Path) -> CheckResult:
                 passed=True,
                 message="_GDTCoverage autoload is registered",
             )
+    if not required:
+        return CheckResult(
+            name="Autoload",
+            passed=True,
+            message="_GDTCoverage autoload is not registered (optional for native runtime)",
+        )
     return CheckResult(
         name="Autoload",
         passed=False,
         message="_GDTCoverage autoload is not registered",
         fix_hint=(
-            "Run `gd-tools init` to deploy coverage addon "
-            "(autoload registration in Phase 3)."
+            "Run `gd-tools init --with-gut` to deploy the legacy coverage autoload."
         ),
         severity="critical",
     )
@@ -463,19 +516,33 @@ def run_doctor() -> DoctorResult:
     except GodotNotFoundError:
         pass
 
+    legacy_required = config.test.runtime == "gut"
     check_specs = [
         ("Godot Binary", lambda: check_godot_binary(config)),
         ("Godot Version", lambda: check_godot_version(config)),
-        ("GUT Installed", lambda: check_gut_installed(project_root)),
+        (
+            "Native Test Addon",
+            lambda: check_native_test_addon(project_root),
+        ),
+        (
+            "GUT Installed",
+            lambda: check_gut_installed(project_root, required=legacy_required),
+        ),
         (
             "GUT Version",
             lambda: check_gut_version(project_root, godot_version),
         ),
         ("Coverage Addon", lambda: check_coverage_addon(project_root)),
-        ("GUT Config", lambda: check_gutconfig(project_root)),
+        (
+            "GUT Config",
+            lambda: check_gutconfig(project_root, required=legacy_required),
+        ),
         ("gd-tools.toml", lambda: check_gd_tools_toml(project_root)),
         ("GD Toolkit", lambda: check_gdtoolkit()),
-        ("Autoload", lambda: check_autoload(project_root)),
+        (
+            "Autoload",
+            lambda: check_autoload(project_root, required=legacy_required),
+        ),
     ]
 
     for name, fn in check_specs:

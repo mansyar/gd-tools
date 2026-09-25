@@ -19,6 +19,7 @@ from gd_tools.doctor import (
     check_godot_version,
     check_gdtoolkit,
     check_gut_installed,
+    check_native_test_addon,
     check_gut_version,
     check_coverage_addon,
     check_gutconfig,
@@ -284,6 +285,31 @@ def test_check_gut_installed_critical_severity(tmp_path):
     assert result.severity == "critical"
     assert "gd-tools init" in result.fix_hint
     assert "github.com/bitwes/Gut" in result.fix_hint
+
+
+def test_check_gut_installed_is_optional_for_native_runtime(tmp_path):
+    """Native projects do not fail doctor solely because GUT is absent."""
+    result = check_gut_installed(tmp_path, required=False)
+
+    assert result.passed is True
+    assert "optional" in result.message.lower()
+
+
+def test_check_native_test_addon_passes_when_files_exist(tmp_path):
+    """Doctor detects the bundled native test runtime."""
+    addon = tmp_path / "addons" / "gd-tools-test"
+    addon.mkdir(parents=True)
+    for name in (
+        "gd_tools_test.gd",
+        "gd_tools_test_runner.gd",
+        "gd_tools_native_coverage.gd",
+    ):
+        (addon / name).touch()
+
+    result = check_native_test_addon(tmp_path)
+
+    assert result.passed is True
+    assert result.name == "Native Test Addon"
 
 
 # --- check_gut_version ---
@@ -592,6 +618,7 @@ def _mock_doctor_deps():
         patch("gd_tools.doctor.find_godot") as mock_godot,
         patch("gd_tools.doctor.check_godot_binary") as mock_bin,
         patch("gd_tools.doctor.check_godot_version") as mock_ver,
+        patch("gd_tools.doctor.check_native_test_addon") as mock_native_addon,
         patch("gd_tools.doctor.check_gut_installed") as mock_gut_inst,
         patch("gd_tools.doctor.check_gut_version") as mock_gut_ver,
         patch("gd_tools.doctor.check_coverage_addon") as mock_cov,
@@ -609,6 +636,7 @@ def _mock_doctor_deps():
         pass_result = CheckResult(name="test", passed=True, message="OK")
         mock_bin.return_value = pass_result
         mock_ver.return_value = pass_result
+        mock_native_addon.return_value = pass_result
         mock_gut_inst.return_value = pass_result
         mock_gut_ver.return_value = pass_result
         mock_cov.return_value = pass_result
@@ -623,6 +651,7 @@ def _mock_doctor_deps():
             "godot": mock_godot,
             "binary": mock_bin,
             "version": mock_ver,
+            "native_addon": mock_native_addon,
             "gut_inst": mock_gut_inst,
             "gut_ver": mock_gut_ver,
             "cov": mock_cov,
@@ -644,7 +673,7 @@ def test_run_doctor_returns_doctor_result(_mock_doctor_deps):
 def test_run_doctor_runs_all_9_checks(_mock_doctor_deps):
     """Test run_doctor runs exactly 9 checks."""
     result = run_doctor()
-    assert len(result.checks) == 9
+    assert len(result.checks) == 10
 
 
 @pytest.mark.unit
@@ -675,7 +704,7 @@ def test_run_doctor_never_raises_on_check_exception(_mock_doctor_deps):
     _mock_doctor_deps["binary"].side_effect = RuntimeError("boom")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 9
+    assert len(result.checks) == 10
     failed = [c for c in result.checks if not c.passed]
     assert len(failed) == 1
     assert "boom" in failed[0].message
@@ -690,7 +719,7 @@ def test_run_doctor_handles_project_root_not_found(_mock_doctor_deps):
     _mock_doctor_deps["root"].side_effect = ConfigError("not found")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 9
+    assert len(result.checks) == 10
 
 
 @pytest.mark.unit
@@ -701,7 +730,7 @@ def test_run_doctor_handles_config_load_failure(_mock_doctor_deps):
     _mock_doctor_deps["config"].side_effect = ConfigError("bad config")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 9
+    assert len(result.checks) == 10
 
 
 @pytest.mark.unit
@@ -710,7 +739,7 @@ def test_run_doctor_handles_godot_not_found_for_version(_mock_doctor_deps):
     _mock_doctor_deps["godot"].side_effect = GodotNotFoundError("no godot")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 9
+    assert len(result.checks) == 10
 
 
 # --- format_doctor_table ---

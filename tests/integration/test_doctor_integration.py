@@ -66,7 +66,7 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
         result = run_doctor()
 
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 9
+    assert len(result.checks) == 10
     assert not result.all_passed
 
     check_map = {c.name: c for c in result.checks}
@@ -75,10 +75,14 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
     assert check_map["Godot Binary"].passed
     assert check_map["Godot Version"].passed
 
-    # GUT not installed
-    assert not check_map["GUT Installed"].passed
+    # Native addon is required in the default runtime.
+    assert not check_map["Native Test Addon"].passed
+    assert check_map["Native Test Addon"].severity == "critical"
+
+    # GUT is optional in the native runtime.
+    assert check_map["GUT Installed"].passed
     assert check_map["GUT Installed"].severity == "critical"
-    assert "gd-tools init" in check_map["GUT Installed"].fix_hint
+    assert "optional" in check_map["GUT Installed"].message.lower()
 
     # GUT Version passes (version unknown - cannot verify)
     assert check_map["GUT Version"].passed
@@ -87,9 +91,9 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
     assert not check_map["Coverage Addon"].passed
     assert check_map["Coverage Addon"].severity == "warning"
 
-    # .gutconfig.json missing
-    assert not check_map["GUT Config"].passed
-    assert check_map["GUT Config"].severity == "warning"
+    # .gutconfig.json is optional in the native runtime.
+    assert check_map["GUT Config"].passed
+    assert check_map["GUT Config"].severity == "critical"
 
     # gd-tools.toml missing
     assert not check_map["gd-tools.toml"].passed
@@ -98,8 +102,8 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
     # GD Toolkit passes (mocked)
     assert check_map["GD Toolkit"].passed
 
-    # Autoload not registered
-    assert not check_map["Autoload"].passed
+    # The legacy coverage autoload is optional in the native runtime.
+    assert check_map["Autoload"].passed
     assert check_map["Autoload"].severity == "critical"
 
 
@@ -125,7 +129,7 @@ def test_doctor_after_init(tmp_path, monkeypatch):
         patch("gd_tools.init.find_godot", return_value=godot_info),
         patch("gd_tools.init.requests.get", return_value=mock_response),
     ):
-        run_init(non_interactive=True)
+        run_init(non_interactive=True, with_gut=True)
 
     # Run doctor with Godot and gdtoolkit mocked
     with (
@@ -135,7 +139,7 @@ def test_doctor_after_init(tmp_path, monkeypatch):
         result = run_doctor()
 
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 9
+    assert len(result.checks) == 10
     assert result.all_passed  # All checks pass after init
 
     check_map = {c.name: c for c in result.checks}
@@ -153,3 +157,28 @@ def test_doctor_after_init(tmp_path, monkeypatch):
     # Autoload passes (registered during init)
     assert check_map["Autoload"].passed
     assert check_map["Autoload"].severity == "critical"
+
+
+def test_doctor_after_native_init_does_not_require_gut(tmp_path, monkeypatch):
+    """Native init produces a healthy project without legacy GUT files."""
+    _setup_project(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    godot_info = GodotInfo(path="/fake/godot", version="4.5.1", is_valid=True)
+
+    with patch("gd_tools.init.find_godot", return_value=godot_info):
+        run_init(non_interactive=True)
+
+    with (
+        patch("gd_tools.doctor.find_godot", return_value=godot_info),
+        patch("subprocess.run"),
+    ):
+        result = run_doctor()
+
+    assert result.all_passed
+    assert not (tmp_path / "addons" / "gut").exists()
+    assert not (tmp_path / ".gutconfig.json").exists()
+    check_map = {check.name: check for check in result.checks}
+    assert check_map["Native Test Addon"].passed
+    assert check_map["GUT Installed"].passed
+    assert check_map["GUT Config"].passed
+    assert check_map["Autoload"].passed

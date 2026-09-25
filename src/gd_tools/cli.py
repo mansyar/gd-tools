@@ -44,6 +44,7 @@ from .errors import (
 from .format_runner import run_format
 from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
+from .native_test.command import run_native_test_command
 from .test_runner import run_tests
 from .update_check import check_for_update
 from .addon_check import check_addon_version
@@ -223,10 +224,15 @@ def cli(verbose: bool, quiet: bool):
     is_flag=True,
     help="Run without interactive prompts.",
 )
-def init(non_interactive):
+@click.option(
+    "--with-gut",
+    is_flag=True,
+    help="Also install and enable the legacy GUT runtime.",
+)
+def init(non_interactive, with_gut):
     """Initialize a new gd-tools configuration."""
     try:
-        run_init(non_interactive=non_interactive)
+        run_init(non_interactive=non_interactive, with_gut=with_gut)
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
@@ -281,6 +287,12 @@ def version(as_json):
 
 @cli.command()
 @click.argument("paths", nargs=-1)
+@click.option(
+    "--runtime",
+    type=click.Choice(["native", "gut"]),
+    default=None,
+    help="Select the test runtime (default: native).",
+)
 @click.option("--coverage", is_flag=True, help="Generate coverage report.")
 @click.option("--min", type=int, help="Minimum coverage threshold.")
 @click.option("--suite", help="Specify which test suite to run.")
@@ -309,6 +321,7 @@ def version(as_json):
 )
 def test(
     paths,
+    runtime,
     coverage,
     min,
     suite,
@@ -319,7 +332,7 @@ def test(
     show_uncovered,
     no_cache,
 ):
-    """Run GDScript tests using GUT."""
+    """Run GDScript tests using the native runtime or legacy GUT."""
     try:
         config = load_config()
     except ConfigError as e:
@@ -341,8 +354,28 @@ def test(
             "--coverage; ignoring.[/yellow]"
         )
 
+    selected_runtime = runtime
+    if selected_runtime is None:
+        selected_runtime = getattr(config.test, "runtime", "native")
+    if selected_runtime not in {"native", "gut"}:
+        selected_runtime = "native"
+
     try:
-        if coverage:
+        if selected_runtime == "native":
+            run_native_test_command(
+                config,
+                coverage=coverage,
+                min_percent=min,
+                suite=suite,
+                test_name=test,
+                junit_xml=junit_xml,
+                no_exit_code=no_exit_code,
+                timeout=timeout,
+                paths=list(paths) if paths else None,
+                show_uncovered=show_uncovered,
+                no_cache=no_cache,
+            )
+        elif coverage:
             run_coverage_test(
                 config,
                 suite=suite,

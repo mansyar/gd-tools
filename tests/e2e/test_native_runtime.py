@@ -8,6 +8,8 @@ from pathlib import Path
 
 import pytest
 
+from gd_tools.config import GdToolsConfig, GodotConfig, TestConfig
+from gd_tools.native_test.command import run_native_test_command
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.protocol import NativeSuite, NativeTest
 
@@ -472,6 +474,54 @@ def test_native_orchestrator_runs_multiple_real_suites(godot_bin, tmp_path):
         "NativeAsyncHelpersSuite",
     }
     assert all(test.status == "passed" for test in result.tests)
+
+
+def test_native_command_runs_real_suite_and_writes_junit(
+    godot_bin, tmp_path, monkeypatch
+):
+    """The native CLI adapter runs a real suite and produces JUnit output."""
+    project = _prepare_project(tmp_path, godot_bin)
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+    junit_path = tmp_path / "native-results.xml"
+
+    result = run_native_test_command(
+        config,
+        suite="NativeFixtureSuite",
+        junit_xml=str(junit_path),
+        timeout=30,
+    )
+
+    assert result.total == 2
+    assert result.failed == 0
+    assert result.junit_xml_path == junit_path
+    assert junit_path.is_file()
+    assert "test_pass" in junit_path.read_text(encoding="utf-8")
+
+
+def test_native_command_runs_real_coverage(godot_bin, tmp_path, monkeypatch):
+    """The native CLI adapter reuses the existing coverage report pipeline."""
+    project = _prepare_project(tmp_path, godot_bin)
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+
+    result = run_native_test_command(
+        config,
+        suite="NativeCoverageSuite",
+        coverage=True,
+        timeout=30,
+    )
+
+    assert result.failed == 0
+    assert result.coverage_data_path is not None
+    assert result.coverage_data_path.is_file()
+    assert (project / ".gd-tools" / "coverage" / "plan.json").is_file()
 
 
 def test_native_runner_collects_line_and_branch_coverage(godot_bin, tmp_path):
