@@ -12,7 +12,10 @@ import pytest
 
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
-from gd_tools.native_test.preflight import run_native_preflight
+from gd_tools.native_test.preflight import (
+    NativePreflightError,
+    run_native_preflight,
+)
 from gd_tools.native_test.protocol import NativeManifest, RuntimeMode
 
 pytestmark = pytest.mark.e2e
@@ -288,4 +291,65 @@ def test_native_integration_context_supports_scenes_resources_and_diagnostics(
         "res://resources/extra.tres"
     )
     assert test_metadata["test_resource_only_pass"].scene is None
-    assert test_metadata["test_scene_without_resources_pass"].resources == {}
+
+
+def _invalid_integration_files(
+    *, scene_path: str | None, resource_path: str | None
+) -> dict[str, str]:
+    """Build a suite whose declared asset is missing at runtime."""
+    resources = {} if resource_path is None else {"missing": resource_path}
+    integration = {"scene": scene_path, "resources": resources}
+    return {"test/invalid_integration_suite.gd": dedent(f"""
+            extends GdToolsTest
+            class_name InvalidIntegrationSuite
+
+            const INTEGRATION := {json.dumps(integration)}
+
+            func test_not_run() -> void:
+                pass
+            """).strip() + "\n"}
+
+
+def test_native_preflight_rejects_missing_resource(tmp_path, godot_bin):
+    """Missing declared resources fail before the suite process starts."""
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        _invalid_integration_files(
+            scene_path=None,
+            resource_path="res://resources/missing.tres",
+        ),
+    )
+    with pytest.raises(NativePreflightError, match="missing.tres"):
+        _run_native(
+            project,
+            godot_bin,
+            project / "test" / "invalid_integration_suite.gd",
+        )
+
+
+def test_native_runner_reports_runtime_scene_load_failure(tmp_path, godot_bin):
+    """A valid non-scene resource fails the runner's scene type check."""
+    files = _invalid_integration_files(
+        scene_path="res://resources/not_scene.tres",
+        resource_path=None,
+    )
+    files["resources/not_scene.tres"] = dedent("""
+        [gd_resource type="Resource" format=3]
+
+        [resource]
+        """).lstrip()
+    project = _prepare_project(tmp_path, godot_bin, files)
+    preflight, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "invalid_integration_suite.gd",
+    )
+
+    assert preflight.status == "ok"
+    assert result.status == "error"
+    assert len(result.tests) == 1
+    failure = result.tests[0]
+    assert failure.name == "test_not_run"
+    assert failure.status == "error"
+    assert "not_scene.tres" in failure.message
