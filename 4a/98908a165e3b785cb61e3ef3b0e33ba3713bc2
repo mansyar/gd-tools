@@ -1,0 +1,19 @@
+Task: Implement the Python preflight adapter
+
+Summary:
+- Added a single-process adapter around the bundled Godot preflight script.
+- Atomically writes the protocol-v2 discovery manifest, removes stale result/log files, and injects isolated preflight environment variables.
+- Validates structured JSON, protocol status, and process exit-code agreement; converts every failure into NativePreflightError with attached stdout/stderr diagnostics.
+- Preserves exit-code-2 semantics without treating human Godot output as the result API.
+
+Files:
+- src/gd_tools/native_test/preflight.py
+
+Why:
+- The command layer needs a deterministic, machine-readable preflight boundary before selecting headless or windowed suite processes.
+
+Verification:
+- .venv\Scripts\python.exe -m pytest tests/unit/test_native_preflight.py --no-cov -q
+  Result: 8 passed.
+- Targeted branch coverage: preflight.py 91% line coverage and 78% branch coverage.
+- Ruff, Black, and git diff checks passed.
