@@ -9,6 +9,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import tomli_w
 import yaml
@@ -52,6 +53,9 @@ class TestConfig(BaseModel):
         prefix: Test file prefix (GUT convention).
         suffix: Test file suffix.
         gutconfig: Path to the GUT config file.
+        runtime: Test execution runtime (native or legacy GUT).
+        timeout_seconds: Default per-test timeout for native async tests.
+        retries: Number of explicit opt-in retries per native test.
     """
 
     __test__ = False
@@ -62,6 +66,9 @@ class TestConfig(BaseModel):
     prefix: str = "test_"
     suffix: str = ".gd"
     gutconfig: str = ".gutconfig.json"
+    runtime: Literal["native", "gut"] = "native"
+    timeout_seconds: float = Field(default=5.0, gt=0)
+    retries: int = Field(default=0, ge=0)
 
 
 class LintConfig(BaseModel):
