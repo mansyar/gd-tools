@@ -51,6 +51,9 @@ def _setup_project_with_godot(tmp_path: Path) -> Path:
         dirs_exist_ok=True,
     )
     install_coverage_addon(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        '[test]\nruntime = "gut"\n', encoding="utf-8"
+    )
     return tmp_path
 
 
@@ -82,7 +85,13 @@ def _setup_project_with_data(
 
 def _run_cli(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
     """Run gd-tools CLI with *args* in *cwd*."""
-    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    env = {
+        **os.environ,
+        "PYTHONIOENCODING": "utf-8",
+        "PATH": str(Path(sys.executable).parent)
+        + os.pathsep
+        + os.environ.get("PATH", ""),
+    }
     return subprocess.run(
         [_gd_tools_bin(), *args],
         cwd=str(cwd),
@@ -105,7 +114,14 @@ def test_e2e_test_coverage_full_flow(tmp_path):
     """gd-tools test --coverage runs tests and generates coverage artifacts."""
     project = _setup_project_with_godot(tmp_path)
     result = _run_cli(
-        ["test", "--coverage", "--suite", "res://test/test_calculator.gd"],
+        [
+            "test",
+            "--runtime",
+            "gut",
+            "--coverage",
+            "--suite",
+            "res://test/test_calculator.gd",
+        ],
         cwd=project,
     )
     assert result.returncode == 0
@@ -122,6 +138,8 @@ def test_e2e_test_coverage_min_threshold_exit_1(tmp_path):
     result = _run_cli(
         [
             "test",
+            "--runtime",
+            "gut",
             "--coverage",
             "--min",
             "100",

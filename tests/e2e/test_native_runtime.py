@@ -400,7 +400,7 @@ def test_native_runner_retries_failed_test_with_fresh_instance(
         "func test_retry() -> void:\n"
         "    _attempt_count += 1\n"
         "    if _attempt_count < 2:\n"
-        "        assert_true(false, \"first attempt fails\")\n",
+        '        assert_true(false, "first attempt fails")\n',
         encoding="utf-8",
     )
     suite = NativeSuite(
