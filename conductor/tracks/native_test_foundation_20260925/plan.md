@@ -32,7 +32,7 @@
   - [ ] Apply layered selectors and tags.
   - [ ] Emit stable suite/test identifiers for later result aggregation.
   - [ ] Run discovery and protocol tests to Green.
-- [ ] Task: Add native configuration fields and validation
+- [x] Task: Add native configuration fields and validation [d4a73f6]
   - [ ] Extend `TestConfig`/related config models only with foundation settings.
   - [ ] Add defaults for native timeout, runtime, retries, and coverage paths.
   - [ ] Preserve existing GUT configuration behavior for legacy execution.
