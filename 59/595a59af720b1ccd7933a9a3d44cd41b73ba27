@@ -1,0 +1,1 @@
+Final E2E compatibility correction: legacy coverage/full-workflow fixtures now select --runtime gut, include the native addon for doctor checks, use mapped GUT metadata, and prepend the venv Scripts directory to spawned CLI PATH. Complete E2E suite: 37 passed; benchmark: 1 passed.
