@@ -1,0 +1,1 @@
+Phase 6 E2E/benchmark slice: public native CLI workflow tests passed (including native JSON/JUnit/coverage artifacts, exit codes 0/1/2, explicit GUT selector); real crashed-suite continuation passed; opt-in native-vs-GUT benchmark passed with native/legacy total ratio 0.52 on the validation machine. Combined native E2E set: 18 passed.
