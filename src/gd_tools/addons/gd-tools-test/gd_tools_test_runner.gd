@@ -7,9 +7,12 @@ extends SceneTree
 ## one manifest and exits with 0 for passing tests, 1 for test failures, and
 ## 2 for protocol/runtime errors.
 
-const PROTOCOL_VERSION := 1
-
 signal test_call_completed
+
+const PROTOCOL_VERSION := 2
+const TEST_CONTEXT_SCRIPT = preload(
+	"res://addons/gd-tools-test/gd_tools_test_context.gd"
+)
 
 var _test_results: Array[Dictionary] = []
 var _run_status := "passed"
@@ -22,6 +25,8 @@ var _run_finished_at := ""
 var _engine_errors: Array[String] = []
 var _engine_warnings: Array[String] = []
 var _log_path := ""
+var _current_windowed := false
+var _screenshot_path := ""
 
 
 func _init() -> void:
@@ -76,6 +81,18 @@ func _load_manifest() -> Dictionary:
 func _run_suite(suite_data: Dictionary) -> void:
 	var suite_name := str(suite_data.get("name", ""))
 	var suite_path := str(suite_data.get("path", ""))
+	var integration: Variant = suite_data.get("integration", {})
+	_current_windowed = (
+		typeof(integration) == TYPE_DICTIONARY
+		and integration.get("mode", "headless") == "windowed"
+	)
+	_screenshot_path = OS.get_environment("GD_TOOLS_NATIVE_SCREENSHOT")
+	if _current_windowed and DisplayServer.get_name() == "headless":
+		_record_suite_error(
+			suite_name,
+			"Windowed execution requires a display; the renderer is headless",
+		)
+		return
 	var script := load(suite_path) as GDScript
 	if script == null:
 		_record_suite_error(suite_name, "Unable to load suite: %s" % suite_path)
@@ -156,7 +173,6 @@ func _run_test(
 		var attempt_result: Dictionary = await _run_test_attempt(
 			suite_context,
 			script,
-			suite_name,
 			test_name,
 			test_data
 		)
@@ -192,7 +208,6 @@ func _run_test(
 func _run_test_attempt(
 		suite_context: GdToolsTest,
 		script: GDScript,
-		suite_name: String,
 		test_name: String,
 		test_data: Dictionary
 ) -> Dictionary:
@@ -210,6 +225,25 @@ func _run_test_attempt(
 	get_root().add_child(test_context)
 	var started_ticks := Time.get_ticks_msec()
 	var started_at := _timestamp()
+	var integration_result := _prepare_integration(
+			test_context,
+			test_data.get("integration", {})
+	)
+	if not bool(integration_result.get("ok", false)):
+		var setup_message := str(
+				integration_result.get("message", "Unable to prepare integration")
+		)
+		await _teardown_integration(test_context)
+		test_context.queue_free()
+		await process_frame
+		return {
+			"status": "error",
+			"duration_seconds": float(Time.get_ticks_msec() - started_ticks) / 1000.0,
+			"message": setup_message,
+			"diagnostics": {},
+			"started_at": started_at,
+			"finished_at": _timestamp(),
+		}
 	var timeout_seconds := max(
 			float(test_data.get("timeout_seconds", 5.0)),
 			0.001
@@ -249,10 +283,14 @@ func _run_test_attempt(
 				"started_at": started_at,
 				"finished_at": _timestamp(),
 			}
+			await _teardown_integration(test_context)
 			test_context.queue_free()
 			await process_frame
 			return missing_result
 
+	var cleanup_failure_start: int = test_context.get_failures().size()
+	var cleanup_failures: Array[Dictionary] = []
+	var cleanup_timed_out := false
 	if test_context.has_method("after_each"):
 		if timed_out:
 			await _run_cleanup(
@@ -268,28 +306,178 @@ func _run_test_attempt(
 				_active_test_token
 			)
 			await test_call_completed
-		if _test_timeout_reached:
+		cleanup_timed_out = _test_timeout_reached
+		if cleanup_timed_out:
 			timed_out = true
+		cleanup_failures = _failures_since(
+				test_context,
+				cleanup_failure_start
+		)
 
 	var failures: Array[Dictionary] = test_context.get_failures()
 	var status := "failed" if not failures.is_empty() else "passed"
 	var message := _failure_message(failures)
-	if timed_out:
+	if not cleanup_failures.is_empty() or cleanup_timed_out:
+		status = "error"
+		# A cleanup failure is infrastructure, but the assertion that failed
+		# first is the actionable part, so both are reported.
+		var cleanup_message := (
+			"after_each timed out after %.3f seconds" % timeout_seconds
+			if cleanup_timed_out
+			else "after_each failed: %s" % _failure_message(cleanup_failures)
+		)
+		message = (
+			"%s; %s" % [message, cleanup_message]
+			if not message.is_empty()
+			else cleanup_message
+		)
+	elif timed_out:
 		status = "timeout"
 		message = "Test timed out after %.3f seconds" % timeout_seconds
+	var diagnostics := {"failures": failures}
+	if _current_windowed and status in ["failed", "timeout", "error"]:
+		var screenshot_result := await _capture_failure_screenshot(
+			test_context, test_name
+		)
+		if not bool(screenshot_result.get("ok", false)):
+			status = "error"
+			# Keep the real cause visible: a missing screenshot must not erase
+			# the assertion or cleanup failure that actually failed the test.
+			var detail := str(
+				screenshot_result.get("message", "unknown screenshot error")
+			)
+			message = (
+				"%s (screenshot capture failed: %s)" % [message, detail]
+				if not message.is_empty()
+				else "Screenshot capture failed: %s" % detail
+			)
+			diagnostics["screenshot_error"] = screenshot_result
+		elif not str(screenshot_result.get("path", "")).is_empty():
+			diagnostics["screenshot"] = screenshot_result["path"]
 	var duration := float(Time.get_ticks_msec() - started_ticks) / 1000.0
 	var finished_at := _timestamp()
 	_active_test_token += 1
+	await _teardown_integration(test_context)
 	test_context.queue_free()
 	await process_frame
 	return {
 		"status": status,
 		"duration_seconds": duration,
 		"message": message,
-		"diagnostics": {"failures": failures},
+		"diagnostics": diagnostics,
 		"started_at": started_at,
 		"finished_at": finished_at,
 	}
+
+
+func _prepare_integration(
+		test_context: GdToolsTest,
+		integration_value: Variant
+) -> Dictionary:
+	var integration: Dictionary = {}
+	if typeof(integration_value) == TYPE_DICTIONARY:
+		integration = integration_value
+	var resource_result := _load_integration_resources(
+			integration.get("resources", {})
+	)
+	if not bool(resource_result.get("ok", false)):
+		return resource_result
+	var scene_result := _load_integration_scene(integration.get("scene", null))
+	if not bool(scene_result.get("ok", false)):
+		return scene_result
+	var resources: Dictionary = resource_result.get("resources", {})
+	var scene_root := scene_result.get("root") as Node
+	var context = TEST_CONTEXT_SCRIPT.new()
+	context.initialize(test_context, integration, scene_root, resources)
+	test_context._gd_tools_set_test_context(context)
+	if scene_root != null:
+		test_context.add_child(scene_root)
+	return {"ok": true}
+
+
+func _load_integration_resources(resource_value: Variant) -> Dictionary:
+	if typeof(resource_value) != TYPE_DICTIONARY:
+		return _integration_error(
+			"Integration resources must be a logical-name to path dictionary"
+		)
+	var resources: Dictionary = {}
+	for logical_name_value in resource_value:
+		var logical_name := str(logical_name_value)
+		var resource_path := str(resource_value[logical_name_value])
+		if not ResourceLoader.exists(resource_path):
+			return _integration_error(
+				"Unable to load integration resource '%s' at '%s'"
+				% [logical_name, resource_path]
+			)
+		var resource := ResourceLoader.load(resource_path) as Resource
+		if resource == null:
+			return _integration_error(
+				"Integration resource '%s' did not load as Resource: %s"
+				% [logical_name, resource_path]
+			)
+		# ResourceLoader caches instances, so a per-attempt duplicate is what
+		# keeps a retained, mutated resource from leaking into a retry.
+		resources[logical_name] = resource.duplicate(true)
+	return {"ok": true, "resources": resources}
+
+
+func _load_integration_scene(scene_value: Variant) -> Dictionary:
+	if scene_value == null:
+		return {"ok": true, "root": null}
+	var scene_path := str(scene_value)
+	if not ResourceLoader.exists(scene_path):
+		return _integration_error("Unable to load integration scene: %s" % scene_path)
+	var packed_scene := ResourceLoader.load(scene_path) as PackedScene
+	if packed_scene == null:
+		return _integration_error(
+			"Integration scene did not load as PackedScene: %s" % scene_path
+		)
+	var scene_root := packed_scene.instantiate()
+	if scene_root == null:
+		return _integration_error(
+			"Integration scene could not be instantiated: %s" % scene_path
+		)
+	return {"ok": true, "root": scene_root}
+
+
+func _integration_error(message: String) -> Dictionary:
+	return {"ok": false, "message": message}
+
+
+func _capture_failure_screenshot(
+		test_context: GdToolsTest, test_name: String
+) -> Dictionary:
+	if _screenshot_path.is_empty():
+		return {
+			"ok": false,
+			"path": "",
+			"message": "Windowed failure screenshot path was not provided",
+		}
+	# One capture per failing test, so a later failure cannot overwrite the
+	# evidence for an earlier one in the same suite.
+	var path := "%s.%s.failure.png" % [_screenshot_path, test_name]
+	await RenderingServer.frame_post_draw
+	var context = test_context.get_test_context()
+	if context == null:
+		return {
+			"ok": false,
+			"path": path,
+			"message": "Integration context is unavailable for screenshot capture",
+		}
+	return context.capture_screenshot(path)
+
+
+func _teardown_integration(test_context: GdToolsTest) -> void:
+	var context = test_context.get_test_context()
+	if context != null:
+		var scene_root = context.get_scene_root() as Node
+		if scene_root != null and is_instance_valid(scene_root):
+			var parent := scene_root.get_parent()
+			if parent != null:
+				parent.remove_child(scene_root)
+			scene_root.queue_free()
+	test_context._gd_tools_clear_test_context()
+	await process_frame
 
 
 func _new_test_context(

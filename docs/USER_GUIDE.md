@@ -441,8 +441,10 @@ gd-tools test tests/unit/test_player.gd
 - `before_all`, `before_each`, `after_each`, and `after_all` failures appear
   in the native result and affect the run status; cleanup hooks are attempted
   after test timeouts.
-- Native runs write structured result JSON under `.gd-tools/native/` and the
-  requested JUnit XML; `--coverage` adds plan-v1 data and a merged report.
+- Native runs write structured result JSON under the run's artifact directory
+  (`.gd-tools/artifacts/<run_id>/native/`, indexed by
+  `.gd-tools/artifacts/<run_id>/artifacts.json`) and the requested JUnit XML;
+  `--coverage` adds plan-v1 data and a merged report.
 - Results include timestamps, assertion diagnostics, and Godot engine
   errors/warnings. Engine errors are infrastructure failures (exit `2`).
 - Async tests may await process frames, physics frames, timers, and signals.
@@ -455,8 +457,127 @@ gd-tools test tests/unit/test_player.gd
   sibling suites.
 - If native discovery finds no suites, the error suggests `--runtime gut` for
   a legacy project.
-- The foundation does not yet provide scene/resource integration, broad
-  mocking, parameterized tests, parallel execution, or an editor UI.
+- The foundation does not yet provide broad mocking, parameterized tests,
+  parallel execution, or an editor UI.
+
+**Scene and resource integration:**
+
+Suites may declare scenes and named resources with a class-level
+`INTEGRATION` constant. `gd-tools` reads the declaration through Godot
+metadata before any suite is constructed, then runs one process per suite
+using the merged metadata:
+
+```gdscript
+class_name PlayerSceneSuite
+
+extends GdToolsTest
+
+const INTEGRATION := {
+    "scene": "res://scenes/player.tscn",
+    "resources": {"balance": "res://data/balance.tres"},
+    "mode": "headless",
+    "tests": {
+        "test_damage_flash": {"scene": "res://scenes/player_hit.tscn"},
+        "test_stats_only": {"scene": null, "resources": {"stats": "res://data/stats.tres"}},
+    },
+}
+
+
+func test_default_scene_loads() -> void:
+    var context := get_test_context()
+    var player := context.find_node("Player")
+    assert_not_null(player, "Player node missing")
+    assert_eq(context.get_integration()["scene"], "res://scenes/player.tscn")
+
+
+func test_damage_flash() -> void:
+    var context := get_test_context()
+    assert_not_null(context.find_node("HitFlash"), "HitFlash node missing")
+
+
+func test_stats_only() -> void:
+    var context := get_test_context()
+    assert_null(context.get_scene_root(), "this test declares no scene")
+    assert_eq(context.get_resource("stats").level, 3)
+```
+
+Declaration rules:
+
+- All paths are `res://` paths that must resolve at load time; a missing
+  scene or resource is a configuration error and exits `2`.
+- `mode` is `headless` (default) or `windowed` and is a suite-level setting
+  because one process represents one suite. A `mode` inside a `tests` entry
+  is rejected.
+- Test entries override suite defaults field by field. Omitted fields are
+  inherited, resource maps merge by logical name, and `null` removes an
+  inherited scene or resource.
+- Unknown fields, invalid modes, and overrides for methods that are not
+  `test_*` methods are reported with the suite path and the expected shape.
+
+**Test context API** (`get_test_context()` returns a `GdToolsTestContext`):
+
+| Member | Behavior |
+| --- | --- |
+| `get_scene_root()` | Root node of the loaded primary scene, or `null` |
+| `find_node("Panel/Icon")` | Relative node lookup; records a structured `integration_node` failure when missing |
+| `find_nodes("Item*")` | Recursive lookup of nodes whose name contains the text; a trailing `*` is accepted so `Item*` reads as a prefix. Records `integration_node_pattern` when nothing matches |
+| `get_resource("balance")` | Named resource lookup; records `integration_resource` on failure |
+| `get_integration()` | Effective scene and resources for the current test. `mode` is suite-level and is not part of the per-test metadata |
+| `wait_for_signal(sig, timeout)` | Bounded signal wait returning `false` on timeout and recording `integration_signal` |
+| `capture_screenshot(path)` | Atomically writes a PNG of the viewport to an absolute path; returns `{"ok", "path", "message"}` |
+
+Failure kinds recorded by the context: `integration_scene` (no primary scene
+for this test), `integration_node` (missing or invalid node path),
+`integration_node_pattern` (empty, invalid, or unmatched pattern),
+`integration_resource` (missing or non-`Resource` value), `integration_signal`
+(signal wait timed out), and `integration_context` (no active test for a
+context-level operation).
+
+Only no-argument `test_*` methods are discovered and run, so a method declared
+as `func test_x(value: int = 1)` is not a runnable test; an `INTEGRATION` entry
+targeting it is reported as an unknown test rather than silently accepted.
+
+Integration behavior:
+
+- Resources are loaded by logical name and are never assigned to nodes
+  automatically; assign them explicitly in the test.
+- The test context is available in `before_each`, the test, and
+  `after_each`, so lifecycle hooks can inspect the live scene.
+- Each attempt builds a fresh scene, context, and resource set, so retries
+  never observe state from a previous attempt, including a resource that a
+  previous attempt mutated and kept a reference to.
+- Project autoloads behave exactly as they do in production and are never
+  replaced by test-only autoloads.
+- Order per attempt: metadata validation, resource loading, scene
+  instantiation, `before_each`, test, `after_each`, failure evidence, teardown.
+
+**Windowed suites and failure artifacts:**
+
+Declare `"mode": "windowed"` to run a suite with a real display. A windowed
+suite requires a display; when the renderer is headless the run fails with
+exit `2` and no silent fallback occurs. Failed, timed-out, and errored tests
+in a windowed suite capture a screenshot after `after_each` and before
+teardown, and the path is reported in the test diagnostics and JUnit XML.
+Each failing test writes its own capture, so several failures in one suite
+are all retained. A capture that cannot be written turns the attempt into an
+infrastructure error, and the original failure message is preserved alongside
+the capture error.
+
+Every run publishes its artifacts under `.gd-tools/artifacts/<run_id>/`:
+
+```
+.gd-tools/artifacts/<run_id>/
+├── artifacts.json          # machine-readable index of the run
+├── preflight/              # manifest, result, and log
+└── native/                 # per-suite manifest, result, events, log, screenshots
+```
+
+The index is printed at the end of the run and recorded as an
+`artifact_index` property on the JUnit `<testsuite>`. It lists only the
+artifacts that were actually written, and `screenshots` lists the realized
+captures for a suite. Only the latest run is retained; older run directories
+are pruned after the new index is published, and only directories carrying
+this tool's own run markers are pruned.
 
 **Plan Caching:**
 
@@ -1304,6 +1425,44 @@ registered, or the coverage environment variables are not set.
    ```bash
    gd-tools test --coverage
    ```
+
+### 5.5 Native Runtime or Protocol Mismatch
+
+**Symptom:** `gd-tools test` exits `2` with a message mentioning
+`protocol version`, or `gd-tools doctor` reports the "Native Test Addon"
+check as failing.
+
+**Cause:** The deployed `addons/gd-tools-test/` scripts were written by a
+different `gd-tools` version than the one running the command. Python and
+Godot exchange a versioned protocol; the current version is `2`, which adds
+scene and resource integration metadata. A protocol-v1 payload, malformed
+integration metadata, or a partially deployed addon is rejected as a
+configuration failure rather than being guessed at.
+
+**Resolution:**
+
+1. Check what is deployed and how it compares:
+   ```bash
+   cat addons/gd-tools-test/_version.txt
+   gd-tools version
+   ```
+2. Redeploy the managed runtime from the current version:
+   ```bash
+   gd-tools init --non-interactive
+   ```
+   `gd-tools init` installs all five managed scripts
+   (`gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`,
+   `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd`), backs up
+   locally modified copies into `addons/gd-tools-test/.backups/`, and rewrites
+   `_version.txt`.
+3. Confirm with `gd-tools doctor` that the "Native Test Addon" check passes.
+   A deployed addon that is merely older than the CLI is reported as a
+   passing warning, so an outdated `_version.txt` means step 2 is still
+   needed even when the check is not failing.
+
+If a windowed suite reports exit `2` with a display or renderer message, the
+suite declared `"mode": "windowed"` but the process has no display. Run it on a
+machine with a display, or switch the suite back to the headless default.
 
 
 ## 6. Shell Completion

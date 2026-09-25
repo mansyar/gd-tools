@@ -8,11 +8,18 @@ import subprocess
 import tempfile
 import uuid
 from pathlib import Path
+from typing import Any
 
 from pydantic import ValidationError
 
+from gd_tools.native_test.artifacts import (
+    ArtifactPublishError,
+    NativeArtifactLayout,
+    publish_artifact_index,
+)
 from gd_tools.native_test.protocol import (
     NativeCoverage,
+    NativeExecutionMode,
     NativeManifest,
     NativeRunResult,
     NativeSuite,
@@ -33,6 +40,8 @@ def run_native_tests(
     runner_script: str = DEFAULT_RUNNER_SCRIPT,
     process_timeout: float = 60.0,
     work_dir: Path | None = None,
+    run_id: str | None = None,
+    artifact_layout: NativeArtifactLayout | None = None,
 ) -> NativeRunResult:
     """Run each native suite in an isolated Godot process.
 
@@ -45,15 +54,24 @@ def run_native_tests(
         process_timeout: Maximum seconds allowed for each Godot process.
         work_dir: Directory for per-suite manifests and results. Defaults to
             ``<project_root>/.gd-tools/native``.
+        run_id: Optional identifier shared with the integration preflight.
+        artifact_layout: Optional run-scoped layout for publishing an artifact
+            index and retaining only the latest run.
 
     Returns:
         Aggregated native result. A process-level failure is represented as
         an error test and does not prevent later suites from running.
     """
     project_root = project_root.resolve()
-    output_dir = work_dir or project_root / ".gd-tools" / "native"
+    if artifact_layout is not None:
+        if run_id is not None and run_id != artifact_layout.run_id:
+            raise ValueError("run_id does not match artifact layout")
+        run_id = artifact_layout.run_id
+        output_dir = artifact_layout.native_dir
+    else:
+        run_id = run_id or uuid.uuid4().hex
+        output_dir = work_dir or project_root / ".gd-tools" / "native"
     output_dir.mkdir(parents=True, exist_ok=True)
-    run_id = uuid.uuid4().hex
     all_tests: list[NativeTestResult] = []
     coverage_shards: list[Path] = []
     coverage_output = _resolve_path(
@@ -64,19 +82,34 @@ def run_native_tests(
     has_error = False
     process_stdout: list[str] = []
     process_stderr: list[str] = []
+    suite_artifact_paths: list[dict[str, Any]] = []
 
     for index, suite in enumerate(suites):
-        manifest_path = output_dir / f"suite-{index:04d}.manifest.json"
-        result_path = output_dir / f"suite-{index:04d}.result.json"
-        events_path = output_dir / f"suite-{index:04d}.events.ndjson"
-        log_path = output_dir / f"suite-{index:04d}.log"
+        if artifact_layout is not None:
+            suite_paths = artifact_layout.suite_paths(index)
+            manifest_path = suite_paths["manifest"]
+            result_path = suite_paths["result"]
+            events_path = suite_paths["events"]
+            log_path = suite_paths["log"]
+            screenshot_path = suite_paths["screenshot_base"]
+            suite_artifact_paths.append(suite_paths)
+        else:
+            manifest_path = output_dir / f"suite-{index:04d}.manifest.json"
+            result_path = output_dir / f"suite-{index:04d}.result.json"
+            events_path = output_dir / f"suite-{index:04d}.events.ndjson"
+            log_path = output_dir / f"suite-{index:04d}.log"
+            screenshot_path = output_dir / f"suite-{index:04d}"
         result_path.unlink(missing_ok=True)
         events_path.unlink(missing_ok=True)
         log_path.unlink(missing_ok=True)
 
         suite_coverage = coverage or NativeCoverage()
         if coverage and coverage.enabled:
-            shard_path = output_dir / f"suite-{index:04d}.coverage.json"
+            shard_path = (
+                suite_paths["coverage"]
+                if artifact_layout is not None
+                else output_dir / f"suite-{index:04d}.coverage.json"
+            )
             shard_path.unlink(missing_ok=True)
             coverage_shards.append(shard_path)
             suite_coverage = coverage.model_copy(
@@ -97,19 +130,26 @@ def run_native_tests(
                 "GD_TOOLS_NATIVE_RESULT": str(result_path),
                 "GD_TOOLS_NATIVE_EVENTS": str(events_path),
                 "GD_TOOLS_NATIVE_LOG": str(log_path),
+                "GD_TOOLS_NATIVE_SCREENSHOT": str(screenshot_path),
                 "GD_TOOLS_NATIVE_RUN_ID": run_id,
             }
         )
-        command = [
-            godot_binary,
-            "--headless",
-            "--path",
-            str(project_root),
-            "--script",
-            runner_script,
-            "--log-file",
-            str(log_path),
-        ]
+        command = [godot_binary]
+        if (
+            suite.integration is None
+            or suite.integration.mode == NativeExecutionMode.HEADLESS
+        ):
+            command.append("--headless")
+        command.extend(
+            [
+                "--path",
+                str(project_root),
+                "--script",
+                runner_script,
+                "--log-file",
+                str(log_path),
+            ]
+        )
 
         try:
             completed = subprocess.run(
@@ -162,6 +202,12 @@ def run_native_tests(
                 }
             )
             all_tests.extend(parsed_result.tests)
+            if artifact_layout is not None:
+                suite_artifact_paths[-1]["screenshots"] = [
+                    Path(test.diagnostics["screenshot"])
+                    for test in parsed_result.tests
+                    if test.diagnostics.get("screenshot")
+                ]
             if parsed_result.status == "failed":
                 has_failure = True
             elif parsed_result.status == "error":
@@ -200,11 +246,40 @@ def run_native_tests(
     else:
         status = "passed"
 
+    artifact_index_path: Path | None = None
+    if artifact_layout is not None:
+        try:
+            artifact_index_path = publish_artifact_index(
+                artifact_layout,
+                status=status,
+                suite_names=[suite.name for suite in suites],
+                suite_paths=suite_artifact_paths,
+                preflight_paths=artifact_layout.preflight_paths(),
+            )
+        except ArtifactPublishError as exc:
+            has_error = True
+            all_tests.append(_process_error("<artifacts>", str(exc)))
+            # Retention runs after the index is written, so a retention-only
+            # failure leaves an index that disagrees with the reported status.
+            # Republish so the recorded status always matches the exit code.
+            try:
+                artifact_index_path = publish_artifact_index(
+                    artifact_layout,
+                    status="error",
+                    suite_names=[suite.name for suite in suites],
+                    suite_paths=suite_artifact_paths,
+                    preflight_paths=artifact_layout.preflight_paths(),
+                )
+            except ArtifactPublishError:
+                pass
+            status = "error"
+
     return NativeRunResult(
         run_id=run_id,
         status=status,
         tests=all_tests,
         coverage_data_path=merged_coverage_path,
+        artifact_index_path=artifact_index_path,
         stdout="\n".join(process_stdout),
         stderr="\n".join(process_stderr),
     )

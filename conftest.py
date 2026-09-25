@@ -13,6 +13,7 @@ conftest files override the fixture to auto-skip when Godot is absent.
 
 import os
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,40 @@ def find_godot_binary() -> str | None:
     if env_bin and Path(env_bin).is_file():
         return env_bin
     return shutil.which("godot") or shutil.which("godot4")
+
+
+def import_godot_project(godot_bin: str, project: Path) -> None:
+    """Import a generated Godot project, retrying one transient failure.
+
+    Godot's first project import occasionally exits non-zero after reporting a
+    completed filesystem scan, typically when the host is under load. The
+    scan is idempotent, so a single retry removes that flakiness without
+    hiding a genuine import failure, which fails again and is reported here.
+
+    Args:
+        godot_bin: Godot executable.
+        project: Project directory to import.
+
+    Raises:
+        AssertionError: If the import still fails after one retry.
+    """
+    command = [godot_bin, "--headless", "--path", str(project), "--import"]
+
+    def run() -> "subprocess.CompletedProcess[str]":
+        return subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=120,
+            check=False,
+        )
+
+    completed = run()
+    if completed.returncode != 0:
+        completed = run()
+    assert completed.returncode == 0, completed.stdout + completed.stderr
 
 
 @pytest.fixture(scope="session")

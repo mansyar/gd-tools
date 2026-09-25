@@ -112,9 +112,13 @@ def test_native_cli_defaults_to_native_and_writes_junit(tmp_path, godot_bin):
     assert "test_pass" in content
     assert "test_async" in content
 
-    native_results = list(
-        (project / ".gd-tools" / "native").glob("*.result.json")
+    indexes = sorted(
+        (project / ".gd-tools" / "artifacts").glob("*/artifacts.json")
     )
+    assert len(indexes) == 1
+    index = json.loads(indexes[0].read_text(encoding="utf-8"))
+    assert index["status"] == "passed"
+    native_results = [Path(entry["result"]) for entry in index["suites"]]
     assert len(native_results) == 1
     native_payload = json.loads(native_results[0].read_text(encoding="utf-8"))
     assert native_payload["status"] == "passed"

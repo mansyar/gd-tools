@@ -54,9 +54,10 @@ respecting the realities of the Godot/GDScript ecosystem.
 ### Non-Goals
 
 1. **Not a general-purpose mocking or editor test framework.** The native
-   foundation provides focused assertions, async waits, and lifecycle hooks;
-   broader mocking, scene/resource integration, and editor tooling are future
-   work. GUT remains an explicit legacy fallback during migration.
+   runtime provides focused assertions, async waits, lifecycle hooks, and
+   declarative scene/resource integration; broader mocking, parameterized
+   tests, and editor tooling are future work. GUT remains an explicit legacy
+   fallback during migration.
 2. **Not a linter/formatter engine.** We use gdtoolkit. We do not implement
    our own static analysis or code formatting rules.
 3. **Not a Godot plugin manager.** We bootstrap our own native and coverage
@@ -183,9 +184,36 @@ shards into the existing plan-v1 coverage data. It does not require a permanent
 autoload. The legacy GUT path remains selectable with `--runtime gut` until the
 compatibility bridge is retired.
 
-**Current foundation limits:** native scene/resource integration, broad mocking,
-parameterized tests, parallel execution, editor UI, and automatic GUT migration
-are not included in this release.
+### Scene and resource integration
+
+Suites may declare `const INTEGRATION` with a `res://` scene, a map of logical
+names to `res://` resources, a suite-level `headless`/`windowed` mode, and
+per-test overrides. One headless preflight per command reads the declaration
+through Godot metadata — Python never parses GDScript — validates paths, modes,
+and override targets, and publishes an enriched protocol-v2 manifest. Overrides
+merge field by field; omitted fields are inherited, resource maps merge by
+logical name, and `null` removes an inherited entry. Unknown fields, invalid
+modes, and overrides for non-test methods are configuration errors and exit `2`.
+
+The runtime exposes an explicit `GdToolsTestContext` from `get_test_context()`
+for the scene root, relative node lookup, recursive name-substring node lookup,
+named resources, bounded signal waits, effective metadata, and screenshot
+capture. Resources are never assigned to nodes automatically. The context is
+live in `before_each`, the test, and `after_each`; every attempt rebuilds the
+scene, context, and a private copy of each resource so retries are isolated even
+when a previous attempt kept and mutated a reference. Project autoloads run
+exactly as in production.
+
+Windowed suites require a real display and fail with exit `2` instead of falling
+back to headless. Failed, timed-out, and errored attempts in a windowed suite
+capture a screenshot after `after_each` and before teardown, and the path appears
+in the test diagnostics and JUnit XML. Each run publishes a machine-readable
+index under `.gd-tools/artifacts/<run_id>/` covering preflight and per-suite
+artifacts, and retains only the latest run.
+
+**Current runtime limits:** broad mocking, parameterized tests, multiple primary
+scenes, automatic resource assignment, parallel execution, editor UI, and
+automatic GUT migration are not included.
 
 ### `gd-tools lint`
 

@@ -15,6 +15,7 @@ from gd_tools.errors import GdToolsError, GodotNotFoundError
 from gd_tools.godot import GodotInfo
 from gd_tools.test_runner import is_gut_installed
 from gd_tools.init import (
+    NATIVE_TEST_ADDON_FILES,
     create_config_file,
     create_data_dir,
     detect_godot_version,
@@ -1452,6 +1453,31 @@ def test_install_native_test_addon_copies_runtime_files(tmp_path: Path):
     assert (addon_dir / "gd_tools_test_runner.gd").is_file()
     assert (addon_dir / "gd_tools_native_coverage.gd").is_file()
     assert (addon_dir / "_version.txt").read_text(encoding="utf-8")
+
+
+def test_install_native_test_addon_deploys_integration_files(
+    tmp_path: Path,
+):
+    """Native init deploys the preflight and integration context scripts."""
+    install_native_test_addon(tmp_path)
+
+    addon_dir = tmp_path / "addons" / "gd-tools-test"
+    assert (addon_dir / "gd_tools_test_preflight.gd").is_file()
+    assert (addon_dir / "gd_tools_test_context.gd").is_file()
+
+
+def test_install_native_test_addon_lists_every_bundled_script() -> None:
+    """Every bundled native addon script is part of the managed file list."""
+    addon_source = Path(__file__).parent.parent.parent.joinpath(
+        "src", "gd_tools", "addons", "gd-tools-test"
+    )
+    bundled = {
+        path.name
+        for path in addon_source.glob("*.gd")
+        if not path.name.startswith("_")
+    }
+
+    assert bundled == set(NATIVE_TEST_ADDON_FILES)
 
 
 # --- run_init version file action summary ---

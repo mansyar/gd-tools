@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -18,9 +19,23 @@ from gd_tools.errors import (
     TestFailureError,
 )
 from gd_tools.godot import find_godot, run_godot
+from gd_tools.native_test.artifacts import (
+    ArtifactPublishError,
+    NativeArtifactLayout,
+    publish_artifact_index,
+)
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
-from gd_tools.native_test.protocol import NativeCoverage, NativeRunResult
+from gd_tools.native_test.preflight import (
+    NativePreflightError,
+    run_native_preflight,
+)
+from gd_tools.native_test.protocol import (
+    NativeCoverage,
+    NativeManifest,
+    NativeRunResult,
+    RuntimeMode,
+)
 from gd_tools.test_runner import TestDetail, TestResult, format_test_results
 
 
@@ -98,7 +113,35 @@ def run_native_test_command(
         )
 
     _import_project(godot_info.path, project_root, timeout)
-    coverage_settings, coverage_output_dir = _prepare_coverage(
+    process_timeout = float(timeout) if timeout is not None else 300.0
+    run_id = uuid.uuid4().hex
+    artifact_layout = NativeArtifactLayout.create(project_root, run_id)
+    try:
+        preflight_result = run_native_preflight(
+            project_root,
+            NativeManifest(
+                project_root=project_root,
+                runtime=RuntimeMode.NATIVE,
+                suites=suites,
+            ),
+            godot_binary=godot_info.path,
+            run_dir=artifact_layout.preflight_dir,
+            timeout_seconds=process_timeout,
+        )
+    except NativePreflightError:
+        try:
+            publish_artifact_index(
+                artifact_layout,
+                status="error",
+                suite_names=[],
+                suite_paths=[],
+                preflight_paths=artifact_layout.preflight_paths(),
+            )
+        except ArtifactPublishError:
+            pass
+        raise
+    suites = preflight_result.suites
+    coverage_settings, _ = _prepare_coverage(
         config,
         project_root,
         coverage=coverage,
@@ -109,12 +152,12 @@ def run_native_test_command(
         suites,
         godot_info.path,
         coverage=coverage_settings,
-        work_dir=(
-            coverage_output_dir / "native" if coverage_output_dir else None
-        ),
-        process_timeout=float(timeout) if timeout is not None else 300.0,
+        work_dir=artifact_layout.native_dir,
+        process_timeout=process_timeout,
+        run_id=run_id,
+        artifact_layout=artifact_layout,
     )
-    _raise_for_native_error(native_result)
+    infrastructure_error = native_result.status == "error"
     failed_count = sum(
         test.status in {"failed", "timeout", "error", "crashed"}
         for test in native_result.tests
@@ -135,9 +178,12 @@ def run_native_test_command(
             no_cache=no_cache,
         )
     except CoverageThresholdError:
-        if test_failure is not None:
+        if infrastructure_error:
+            pass
+        elif test_failure is not None:
             raise test_failure
-        raise
+        else:
+            raise
 
     result = _to_test_result(
         native_result,
@@ -145,6 +191,8 @@ def run_native_test_command(
         junit_xml,
     )
     format_test_results(result)
+    if infrastructure_error:
+        _raise_for_native_error(native_result)
     if test_failure is not None:
         raise test_failure
     return result
@@ -297,7 +345,12 @@ def _to_test_result(
     else:
         junit_path = project_root / ".gd-tools" / "results.xml"
     duration = sum(test.duration_seconds for test in native_result.tests)
-    _write_junit_xml(junit_path, details, duration)
+    _write_junit_xml(
+        junit_path,
+        details,
+        duration,
+        artifact_index_path=native_result.artifact_index_path,
+    )
     return TestResult(
         total=len(details),
         passed=passed,
@@ -309,6 +362,7 @@ def _to_test_result(
         stdout=native_result.stdout,
         stderr=native_result.stderr,
         test_details=details,
+        artifact_index_path=native_result.artifact_index_path,
     )
 
 
@@ -316,6 +370,7 @@ def _write_junit_xml(
     path: Path,
     details: list[TestDetail],
     duration: float,
+    artifact_index_path: Path | None = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     root = ET.Element("testsuites")
@@ -328,6 +383,14 @@ def _write_junit_xml(
         skipped=str(sum(detail.status == "skip" for detail in details)),
         time=f"{duration:.6f}",
     )
+    if artifact_index_path is not None:
+        properties = ET.SubElement(suite, "properties")
+        ET.SubElement(
+            properties,
+            "property",
+            name="artifact_index",
+            value=str(artifact_index_path),
+        )
     for detail in details:
         case = ET.SubElement(
             suite,

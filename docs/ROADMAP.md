@@ -42,10 +42,11 @@ gd-tools init --with-gut       # opt into legacy bootstrap files
 gd-tools test --runtime gut    # use the existing GUT runner
 ```
 
-The foundation intentionally defers scene/resource integration, broad mocking,
-parameterized tests, parallel execution, editor UI, automatic migration, and
-GUT removal to follow-up tracks. The compatibility bridge is limited to the
-core subset required for the transition and is not a long-term public API.
+The foundation defers broad mocking, parameterized tests, parallel execution,
+editor UI, automatic migration, and GUT removal to follow-up tracks. Scene and
+resource integration shipped with the native scene-integration track. The
+compatibility bridge is limited to the core subset required for the
+transition and is not a long-term public API.
 
 - **Quick wins ship first** -- low-effort, high-impact improvements that
   users feel immediately.
@@ -1570,33 +1571,48 @@ The durable product decision is recorded in
 
 ### Phase 1 — Native Foundation Vertical Slice
 
-- [ ] Build a clean GUT-free Godot fixture
-- [ ] Implement Python test discovery and manifest generation
-- [ ] Implement the transient Godot runner
-- [ ] Implement `GdToolsTest extends Node`
-- [ ] Implement suite/test lifecycle hooks
-- [ ] Implement synchronous and asynchronous test execution
-- [ ] Implement core assertions and structured failures
-- [ ] Implement tags and path/suite/test selectors
-- [ ] Implement native JSON, NDJSON events, and JUnit XML
-- [ ] Prove native line and branch coverage
-- [ ] Preserve the legacy GUT path behind explicit runtime selection
-- [ ] Add performance benchmark and layered dogfood tests
+- [x] Build a clean GUT-free Godot fixture
+- [x] Implement Python test discovery and manifest generation
+- [x] Implement the transient Godot runner
+- [x] Implement `GdToolsTest extends Node`
+- [x] Implement suite/test lifecycle hooks
+- [x] Implement synchronous and asynchronous test execution
+- [x] Implement core assertions and structured failures
+- [x] Implement tags and path/suite/test selectors
+- [x] Implement native JSON, NDJSON events, and JUnit XML
+- [x] Prove native line and branch coverage
+- [x] Preserve the legacy GUT path behind explicit runtime selection
+- [x] Add performance benchmark and layered dogfood tests
 
 **Exit gate:** A clean project without GUT passes a native async unit-test
 run with line/branch coverage and stable exit codes.
 
 ### Phase 2 — Scene/Resource Integration
 
-- [ ] Add suite-declared integration scenes
-- [ ] Add focused node/resource/signal helpers
-- [ ] Add configurable autoload policy
-- [ ] Add headless/windowed execution modes
-- [ ] Add optional failure artifacts
-- [ ] Add scene-tree cleanup and integration diagnostics
+- [x] Add suite-declared integration scenes
+- [x] Add focused node/resource/signal helpers
+- [x] Add configurable autoload policy
+- [x] Add headless/windowed execution modes
+- [x] Add optional failure artifacts
+- [x] Add scene-tree cleanup and integration diagnostics
 
 **Exit gate:** Scene/resource integration tests are deterministic, isolated,
 and supported on the Godot 4.5+ matrix.
+
+**Delivered:** Suites declare `const INTEGRATION` with a `res://` scene,
+named resources, a suite-level `headless`/`windowed` mode, and per-test field
+overrides resolved field by field (`null` removes an inherited entry). One
+headless preflight per command reads the declaration through Godot metadata
+and publishes an enriched manifest; the runtime exposes an explicit
+`GdToolsTestContext` for scene root, relative and glob node lookup, named
+resources, bounded signal waits, and screenshot capture. Autoload policy
+resolved deliberately in the opposite direction from the original item:
+project autoloads run exactly as in production and the runtime never installs
+test-only autoloads. Windowed suites require a real display and fail with
+exit `2` rather than falling back to headless; failed attempts capture a
+screenshot after `after_each` and before teardown. Every run publishes a
+machine-readable index under `.gd-tools/artifacts/<run_id>/` and retains only
+the latest run.
 
 ### Phase 3 — GUT Compatibility Bridge
 

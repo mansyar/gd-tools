@@ -1190,6 +1190,54 @@ def test_format_test_results_truncates_long_output(capsys):
 
 
 @pytest.mark.unit
+def test_format_test_results_reports_artifact_location(capsys):
+    """The run artifact index location is discoverable from CLI output."""
+    result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        artifact_index_path=Path(
+            "C:/project/.gd-tools/artifacts/run-1/artifacts.json"
+        ),
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+
+    format_test_results(result)
+
+    output = capsys.readouterr().out
+    assert "artifacts.json" in output
+    assert "run-1" in output
+
+
+@pytest.mark.unit
+def test_format_test_results_omits_artifact_line_without_index(capsys):
+    """Runs without a published index print no artifact line."""
+    result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.1,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        artifact_index_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+
+    format_test_results(result)
+
+    assert "artifacts.json" not in capsys.readouterr().out
+
+
+@pytest.mark.unit
 def test_format_test_results_zero_tests(capsys):
     """format_test_results with zero tests shows 0/0/0/0 and [OK] message."""
     result = TestResult(

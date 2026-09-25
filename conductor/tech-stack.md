@@ -46,7 +46,7 @@
 | Component | Purpose |
 |-----------|---------|
 | **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
-| **Native Test Addon** (`addons/gd-tools-test/`) | `GdToolsTest` base class, transient native runner, assertions, lifecycle management, and native coverage integration. Ships as package data; no new runtime dependency. |
+| **Native Test Addon** (`addons/gd-tools-test/`) | `GdToolsTest` base class, transient native runner, assertions, lifecycle management, and native coverage integration. Ships as package data; no new runtime dependency. Files: `gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`, `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd` — all five are managed by `gd-tools init` and verified by `gd-tools doctor`. |
 | **GUT** (optional migration bridge) | GDScript test framework downloaded by `gd-tools init` only when requested. Not a native runtime dependency. Version-mapped to Godot version during the migration period (4.5→9.5.0, 4.6→9.6.0, 4.7→9.7.0). |
 
 ---
@@ -121,10 +121,13 @@
 
 ## 9. Native Test Runtime Migration
 
-- **Public API:** `GdToolsTest` / `GdToolsTestRunner`
+- **Public API:** `GdToolsTest` / `GdToolsTestRunner`, plus `GdToolsTestContext` returned by `get_test_context()`
 - **Runtime mode:** Native execution is the default; the existing GUT subprocess path remains a temporary migration option.
 - **Packaging:** One bundled native test addon with the Python distribution.
 - **Execution:** Suite-scoped Godot processes, fresh test instances, async-first test methods, and sequential execution by default.
+- **Integration protocol:** Native protocol v2. One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
+- **Execution modes:** Headless by default; `windowed` suites run without `--headless`, require a real display, and fail with exit `2` when the renderer is headless.
+- **Artifacts:** `.gd-tools/artifacts/<run_id>/` holds a machine-readable index plus preflight and per-suite artifacts; only the latest run is retained.
 - **Coverage:** Native runtime owns activation; existing coverage plan schema v1 is reused where possible for line and branch metrics.
 - **Dependencies:** No new third-party GDScript runtime dependency. GUT is optional during the bounded migration period.
 - **Compatibility:** `.gutconfig.json` is translated and preserved; `gd-tools.toml` is canonical.
