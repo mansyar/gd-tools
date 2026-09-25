@@ -572,3 +572,158 @@ def test_native_integration_cleanup_failure_is_infrastructure_error(
     assert result.status == "error"
     assert result.tests[0].status == "error"
     assert "cleanup exploded" in result.tests[0].message
+
+
+def _windowed_files(mode: str, failing: bool) -> dict[str, str]:
+    assertion = "assert_true(false, 'windowed failure')" if failing else "pass"
+    return {
+        "scenes/window.tscn": """
+            [gd_scene format=3]
+
+            [node name="Window" type="Node"]
+        """,
+        "test/windowed_suite.gd": f"""
+            extends GdToolsTest
+            class_name WindowedSuite
+
+            const INTEGRATION := {{
+                "scene": "res://scenes/window.tscn",
+                "mode": "{mode}",
+                "tests": {{}}
+            }}
+
+            func test_windowed() -> void:
+                {assertion}
+        """,
+    }
+
+
+def _skip_without_display(result):
+    if result.tests and result.tests[0].name == "<process>":
+        message = result.tests[0].message.lower()
+        if any(
+            marker in message
+            for marker in ("display", "renderer", "x11", "wayland", "window")
+        ):
+            pytest.skip(
+                f"Godot display is unavailable: {result.tests[0].message}"
+            )
+
+
+def test_native_windowed_failure_captures_screenshot_after_each(
+    tmp_path, godot_bin
+):
+    """A failed windowed test records an atomic screenshot artifact."""
+    project = _prepare_project(
+        tmp_path, godot_bin, _windowed_files("windowed", True)
+    )
+    preflight, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "windowed_suite.gd",
+    )
+    _skip_without_display(result)
+
+    screenshot = (
+        project
+        / ".gd-tools"
+        / "artifacts"
+        / "integration"
+        / "native"
+        / "suite-0000.failure.png"
+    )
+    assert preflight.status == "ok"
+    assert result.status == "failed"
+    assert result.tests[0].status == "failed"
+    assert result.tests[0].diagnostics["screenshot"] == str(screenshot)
+    assert screenshot.is_file()
+    assert screenshot.stat().st_size > 0
+
+
+def test_native_windowed_pass_and_headless_failure_skip_screenshots(
+    tmp_path, godot_bin
+):
+    """Only failed or timed-out windowed tests create screenshot artifacts."""
+    passing_project = _prepare_project(
+        tmp_path / "passing", godot_bin, _windowed_files("windowed", False)
+    )
+    _, passing = _run_native(
+        passing_project,
+        godot_bin,
+        passing_project / "test" / "windowed_suite.gd",
+    )
+    _skip_without_display(passing)
+    assert passing.status == "passed"
+    assert not (
+        passing_project
+        / ".gd-tools"
+        / "artifacts"
+        / "integration"
+        / "native"
+        / "suite-0000.failure.png"
+    ).exists()
+
+    headless_project = _prepare_project(
+        tmp_path / "headless", godot_bin, _windowed_files("headless", True)
+    )
+    _, headless = _run_native(
+        headless_project,
+        godot_bin,
+        headless_project / "test" / "windowed_suite.gd",
+    )
+    assert headless.status == "failed"
+    assert not (
+        headless_project
+        / ".gd-tools"
+        / "artifacts"
+        / "integration"
+        / "native"
+        / "suite-0000.failure.png"
+    ).exists()
+
+
+def test_native_context_screenshot_write_failure_is_infrastructure(
+    tmp_path, godot_bin
+):
+    """A screenshot write error is surfaced as an infrastructure failure."""
+    files = {
+        "scenes/window.tscn": """
+            [gd_scene format=3]
+
+            [node name="Window" type="Node"]
+        """,
+        "screenshot-blocker": "not a directory",
+        "test/windowed_suite.gd": """
+            extends GdToolsTest
+            class_name WindowedScreenshotFailureSuite
+
+            const INTEGRATION := {
+                "scene": "res://scenes/window.tscn",
+                "mode": "windowed"
+            }
+
+            func test_invalid_screenshot_path() -> void:
+                var result = get_test_context().capture_screenshot(
+                    "res://screenshot-blocker/failure.png"
+                )
+                assert_false(result.get("ok", true))
+                assert_true(
+                    "screenshot" in result.get("message", "").to_lower(),
+                    "screenshot failure should be actionable"
+                )
+        """,
+    }
+    project = _prepare_project(tmp_path, godot_bin, files)
+    _, result = _run_native(
+        project,
+        godot_bin,
+        project / "test" / "windowed_suite.gd",
+    )
+    _skip_without_display(result)
+    assert result.status == "error"
+    engine_result = next(
+        test for test in result.tests if test.name == "<engine>"
+    )
+    assert "Can't save PNG" in "\n".join(
+        engine_result.diagnostics.get("engine_errors", [])
+    )

@@ -91,6 +91,9 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
 
     def fake_run(args, **kwargs):
         _write_result(Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]))
+        assert kwargs["env"]["GD_TOOLS_NATIVE_SCREENSHOT"] == str(
+            layout.suite_paths(0)["screenshot"]
+        )
         return CompletedProcess(args, 0, "", "")
 
     with patch(
@@ -110,6 +113,9 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
     assert index["run_id"] == "run-1"
     assert index["suites"][0]["suite"] == "ExampleSuite"
     assert index["suites"][0]["result"] == str(layout.suite_paths(0)["result"])
+    assert index["suites"][0]["screenshot"] == str(
+        layout.suite_paths(0)["screenshot"]
+    )
     assert not old_run.exists()
 
 
