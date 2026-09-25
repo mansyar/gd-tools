@@ -33,15 +33,15 @@
 
 **Purpose:** Resolve GDScript integration declarations in Godot before Python chooses a suite's display mode.
 
-- [ ] Task: Add failing preflight E2E tests
-  - [ ] Cover suites without an `INTEGRATION` declaration.
-  - [ ] Cover default scenes, named resources, and headless defaults.
-  - [ ] Cover per-test scene/resource overrides and field-wise merging.
-  - [ ] Cover explicit removal of inherited values with `null`.
-  - [ ] Cover resource-only suites and per-test scene clearing.
-  - [ ] Reject malformed declarations, invalid paths, unsupported modes, unknown fields, and unknown test names.
-  - [ ] Prove that filtering to one valid test does not invalidate declarations for other real suite tests.
-  - [ ] Confirm the expected Red phase.
+- [x] Task: Add failing preflight E2E tests [commit: `eea4185`]
+  - [x] Cover suites without an `INTEGRATION` declaration.
+  - [x] Cover default scenes, named resources, and headless defaults.
+  - [x] Cover per-test scene/resource overrides and field-wise merging.
+  - [x] Cover explicit removal of inherited values with `null`.
+  - [x] Cover resource-only suites and per-test scene clearing.
+  - [x] Reject malformed declarations, invalid paths, unsupported modes, unknown fields, and unknown test names.
+  - [x] Prove that filtering to one valid test does not invalidate declarations for other real suite tests.
+  - [x] Confirm the expected Red phase.
 - [ ] Task: Implement the bundled Godot preflight entrypoint
   - [ ] Add a preflight `SceneTree` script under the managed native addon.
   - [ ] Read suite constants through Godot script metadata rather than Python source parsing.
