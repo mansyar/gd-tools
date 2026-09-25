@@ -20,13 +20,13 @@
   - [ ] Test deterministic ordering and duplicate removal.
   - [ ] Test detection of a GUT-only project when native discovery finds no suites.
   - [ ] Run the targeted tests and confirm the expected Red phase.
-- [ ] Task: Implement the Python native protocol module
+- [x] Task: Implement the Python native protocol module [f7d91b5]
   - [ ] Add `src/gd_tools/native_test/` package.
   - [ ] Define internal manifest and native-result models.
   - [ ] Add schema/version validation and serialization helpers.
   - [ ] Add atomic JSON writing for manifests and results.
   - [ ] Run the new unit tests to Green.
-- [ ] Task: Implement discovery and selection
+- [x] Task: Implement discovery and selection [5e17c02]
   - [ ] Read native test settings from `gd-tools.toml`.
   - [ ] Discover configured native test candidates.
   - [ ] Apply layered selectors and tags.
