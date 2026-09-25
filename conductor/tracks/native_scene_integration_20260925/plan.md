@@ -2,7 +2,7 @@
 
 - **Track ID:** native_scene_integration_20260925
 - **Type:** Feature
-- **Status:** In Progress
+- **Status:** Complete
 - **Specification:** [`spec.md`](./spec.md)
 
 ## Phase 1 — Protocol v2 and integration metadata contract [checkpoint: `25297e0`]
@@ -229,7 +229,7 @@
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 7 — Acceptance E2E, documentation, and final gates
+## Phase 7 — Acceptance E2E, documentation, and final gates (Checkpoint: `553d316`)
 
 **Purpose:** Prove the complete user workflow and close implementation against the approved specification.
 
@@ -258,11 +258,11 @@
   - [x] Build package artifacts and verify all bundled addon files.
   - [x] Confirm no new runtime dependency or configuration surface was introduced.
   - [x] Inspect the final implementation diff for security, performance, and unrequested changes.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run the complete automated verification suite.
-  - [ ] Perform manual headless, windowed, failure-artifact, and exit-code verification.
-  - [ ] Obtain explicit user confirmation.
-  - [ ] Create the final implementation checkpoint commit, git note, and recorded SHA.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) `[commit: 553d316]`
+  - [x] Run the complete automated verification suite.
+  - [x] Perform manual headless, windowed, failure-artifact, and exit-code verification.
+  - [x] Obtain explicit user confirmation.
+  - [x] Create the final implementation checkpoint commit, git note, and recorded SHA.
 
 ## Plan Boundaries
 

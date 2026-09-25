@@ -1,8 +1,8 @@
 {
   "track_id": "native_scene_integration_20260925",
   "type": "feature",
-  "status": "in_progress",
+  "status": "completed",
   "created_at": "2026-09-25T10:29:39Z",
-  "updated_at": "2026-09-25T20:59:33Z",
+  "updated_at": "2026-09-25T21:00:18Z",
   "description": "Add declarative scene and resource integration, mode-aware execution, explicit test context, and bounded failure artifacts to the native GdToolsTest runtime."
 }
