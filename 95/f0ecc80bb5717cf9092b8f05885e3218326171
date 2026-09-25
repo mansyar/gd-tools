@@ -1,0 +1,6 @@
+Red-phase native scene/resource integration contract.
+
+- Added real Godot E2E fixture scenes, named .tres resources, and an integration suite.
+- Covers suite defaults, per-test scene/resource overrides, resource-only execution, no automatic resource assignment, relative/pattern node lookup, bounded signal waiting, lifecycle visibility, and structured missing node/resource diagnostics.
+- The test currently fails because GdToolsTest has no get_test_context() API yet; Godot reports the intended missing-function parse errors.
+- Black, Ruff, and diff checks passed.
