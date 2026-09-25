@@ -139,17 +139,17 @@
   - [x] Release resource and context references before retry/next test.
   - [x] Preserve existing suite state and lifecycle-hook behavior.
   - [x] Run lifecycle, timeout, retry, and integration tests to Green.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: `6c60e97`]
   - [x] Run all headless scene/resource integration tests.
   - [x] Inspect scene ownership and teardown for leaks or cross-test state.
   - [x] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 5 — Windowed execution and bounded artifacts
 
 **Purpose:** Add explicit windowed rendering, failure screenshots, and predictable latest-run artifact retention.
 
-- [ ] Task: Add failing artifact-management tests
+- [~] Task: Add failing artifact-management tests
   - [ ] Verify run-scoped suite directories and stable artifact names.
   - [ ] Verify manifest, result, event, and log paths are recorded.
   - [ ] Verify failed infrastructure runs still leave useful diagnostics.
