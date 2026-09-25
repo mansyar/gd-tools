@@ -1,0 +1,20 @@
+Final implementation checkpoint for native scene and resource integration.
+
+Delivered
+- Protocol v2 with strict integration metadata models and a versioned preflight result.
+- Bundled Godot preflight that reads suite INTEGRATION constants through Godot metadata, validates paths, modes, fields, and override targets, and merges defaults with per-test overrides field by field. Python never parses GDScript.
+- Mode-aware orchestration: headless by default, windowed suites run without --headless and fail with exit 2 when no display exists.
+- GdToolsTestContext for scene root, relative and glob node lookup, named resources, effective metadata, bounded signal waits, and atomic screenshot capture, plus per-attempt scene/context/resource setup and teardown with retry isolation and cleanup-failure classification.
+- Run-scoped artifacts under .gd-tools/artifacts/<run_id>/ with a machine-readable index, published atomically before older runs are pruned, including preflight-failure indexes.
+- Reporting, doctor, init, and packaging alignment: infrastructure failures report before exiting, JUnit carries the artifact index, init deploys all five managed addon scripts, and doctor verifies them.
+
+Verification
+- Full suite: 1076 passed, 1 skipped, total coverage 95.94% (gate 80%).
+- New modules: artifacts 83% line / 75% branch, command 92% / 89%, orchestrator 87% / 89%, preflight 91% / 78%, protocol 95% / 100%.
+- Headless and display-capable Godot E2E included in the run; windowed screenshot capture verified on a real display.
+- Wheel build verified to bundle all five native addon scripts.
+- No new runtime dependency and no new CLI flag or configuration key: pyproject.toml and config.py are unchanged since the track base.
+- Ruff, Black, gdlint, gdformat, and git diff --check pass. Final diff is 34 files, +4702/-314.
+- One regression was found and fixed by these gates: a CLI E2E test still read the retired .gd-tools/native/ path.
+
+User confirmed the manual verification of headless overrides, the context API, windowed failure screenshots, the artifact index and retention, and the 0/1/2 exit codes.
