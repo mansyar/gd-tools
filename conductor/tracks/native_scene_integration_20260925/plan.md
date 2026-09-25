@@ -113,18 +113,18 @@
   - [x] Cover missing nodes/resources with structured diagnostics.
   - [x] Prove resources are not assigned to node properties automatically.
   - [x] Confirm the expected Red phase.
-- [~] Task: Implement `GdToolsTestContext`
-  - [ ] Add the minimal bundled context type.
-  - [ ] Expose the primary scene root and effective metadata.
-  - [ ] Add explicit node lookup, pattern lookup, resource lookup, and signal-wait helpers.
-  - [ ] Record integration lookup failures through the owning test instance.
-  - [ ] Keep all context state private to the current test attempt.
-  - [ ] Run focused GDScript fixture tests to Green.
-- [ ] Task: Implement per-attempt scene/resource setup
-  - [ ] Load and validate named resources before the test starts.
-  - [ ] Instantiate and add at most one primary scene.
-  - [ ] Attach the context before `before_each`.
-  - [ ] Make the context available to the test and cleanup hooks.
+- [x] Task: Implement `GdToolsTestContext` [commit: `fc9fb8f`]
+  - [x] Add the minimal bundled context type.
+  - [x] Expose the primary scene root and effective metadata.
+  - [x] Add explicit node lookup, pattern lookup, resource lookup, and signal-wait helpers.
+  - [x] Record integration lookup failures through the owning test instance.
+  - [x] Keep all context state private to the current test attempt.
+  - [x] Run focused GDScript fixture tests to Green.
+- [~] Task: Implement per-attempt scene/resource setup
+  - [x] Load and validate named resources before the test starts.
+  - [x] Instantiate and add at most one primary scene.
+  - [x] Attach the context before `before_each`.
+  - [x] Make the context available to the test and cleanup hooks.
   - [ ] Reject runtime scene/resource load failures with actionable paths.
   - [ ] Run scene/resource E2E tests to Green.
 - [ ] Task: Add failing cleanup and retry-isolation tests
