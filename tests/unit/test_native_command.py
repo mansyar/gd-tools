@@ -17,8 +17,12 @@ from gd_tools.native_test.command import (
     run_native_test_command,
 )
 from gd_tools.native_test.protocol import (
+    NativeExecutionMode,
+    NativePreflightResult,
     NativeRunResult,
     NativeSuite,
+    NativeSuiteIntegration,
+    NativeTest,
     NativeTestResult,
 )
 from gd_tools.test_runner import TestResult
@@ -61,6 +65,10 @@ def _config() -> SimpleNamespace:
             format="text",
         ),
     )
+
+
+def _preflight(suites: list[NativeSuite]) -> NativePreflightResult:
+    return NativePreflightResult(status="ok", suites=suites)
 
 
 def test_test_directories_preserves_explicit_file_selector(tmp_path):
@@ -174,6 +182,90 @@ def test_run_native_command_propagates_filters_and_timeout(tmp_path):
     )
     assert run.call_args.kwargs["process_timeout"] == 42.0
     assert run.call_args.kwargs["coverage"] is None
+
+
+def test_run_native_command_preflights_once_before_suite_processes(
+    tmp_path,
+):
+    """Import, one preflight, and isolated suite execution stay ordered."""
+    plain = NativeSuite(
+        name="PlainSuite",
+        path="res://test/plain.gd",
+        tests=[NativeTest(name="test_ok")],
+    )
+    windowed = NativeSuite(
+        name="WindowedSuite",
+        path="res://test/windowed.gd",
+        tests=[NativeTest(name="test_ok")],
+        integration=NativeSuiteIntegration(mode=NativeExecutionMode.WINDOWED),
+    )
+    native = _native_result()
+    events = []
+
+    def fake_import(*args, **kwargs):
+        events.append("import")
+
+    def fake_preflight(project_root, manifest, **kwargs):
+        events.append("preflight")
+        assert manifest.suites == [plain, windowed]
+        assert kwargs["godot_binary"] == "godot"
+        assert kwargs["timeout_seconds"] == 42.0
+        return _preflight([windowed, plain])
+
+    def fake_run(project_root, suites, godot_binary, **kwargs):
+        events.append("suites")
+        assert suites == [windowed, plain]
+        assert suites[0].integration.mode == NativeExecutionMode.WINDOWED
+        assert kwargs["run_id"]
+        assert kwargs["work_dir"] == (
+            tmp_path / ".gd-tools" / "artifacts" / kwargs["run_id"] / "native"
+        )
+        return native
+
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch(
+            "gd_tools.native_test.command._import_project",
+            side_effect=fake_import,
+        ),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[plain, windowed],
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            side_effect=fake_preflight,
+        ) as preflight,
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            side_effect=fake_run,
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+    ):
+        result = run_native_test_command(_config(), timeout=42)
+
+    assert result.failed == 0
+    assert events == ["import", "preflight", "suites"]
+    preflight.assert_called_once()
+    run.assert_called_once()
+    run_id = run.call_args.kwargs["run_id"]
+    assert preflight.call_args.kwargs["run_dir"] == (
+        tmp_path / ".gd-tools" / "artifacts" / run_id / "preflight"
+    )
 
 
 def test_run_native_command_empty_suites_gives_gut_guidance(tmp_path):

@@ -176,6 +176,33 @@ def test_test_calls_run_tests_with_correct_args():
     )
 
 
+def test_test_gut_runtime_bypasses_native_preflight():
+    """Explicit GUT routing remains on the legacy path without preflight."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = TestResult(
+        total=0,
+        passed=0,
+        failed=0,
+        skipped=0,
+        duration=0.0,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_tests", return_value=mock_result),
+        patch("gd_tools.cli.run_native_test_command") as native,
+    ):
+        result = runner.invoke(cli, ["test", "--runtime", "gut"])
+
+    assert result.exit_code == 0
+    native.assert_not_called()
+
+
 def test_test_suite_flag():
     """Test --suite passes suite to run_tests."""
     runner = CliRunner()

@@ -10,7 +10,9 @@ import pytest
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.protocol import (
     NativeCoverage,
+    NativeExecutionMode,
     NativeSuite,
+    NativeSuiteIntegration,
     NativeTest,
 )
 
@@ -76,6 +78,37 @@ def test_run_native_tests_uses_one_process_per_suite(tmp_path):
     assert len(calls) == 2
     assert result.status == "passed"
     assert len(result.tests) == 2
+    assert all("--headless" in call[0] for call in calls)
+
+
+def test_run_native_tests_omits_headless_for_windowed_suite(tmp_path):
+    """A windowed suite uses the same runner without the headless flag."""
+    suite = _suite("WindowedSuite").model_copy(
+        update={
+            "integration": NativeSuiteIntegration(
+                mode=NativeExecutionMode.WINDOWED
+            )
+        }
+    )
+
+    def fake_run(args, **kwargs):
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        _write_result(result_path)
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ) as run:
+        result = run_native_tests(
+            tmp_path,
+            [suite],
+            godot_binary="godot",
+        )
+
+    command = run.call_args.args[0]
+    assert "--headless" not in command
+    assert result.status == "passed"
 
 
 def test_run_native_tests_continues_after_process_failure(tmp_path):
