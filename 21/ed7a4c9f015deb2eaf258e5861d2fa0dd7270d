@@ -1,0 +1,1 @@
+Correctness fix: native discovery now propagates [test].timeout_seconds and retries into manifests; the Godot runner retries failed or timed-out tests with fresh instances and reports final attempt counts. Focused unit/native E2E suite passed: 25 tests.
