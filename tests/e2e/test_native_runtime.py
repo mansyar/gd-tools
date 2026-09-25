@@ -141,7 +141,7 @@ def test_native_runner_executes_manifest(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -183,7 +183,7 @@ def test_native_runner_executes_manifest(godot_bin, tmp_path):
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert payload["protocol_version"] == 1
+    assert payload["protocol_version"] == 2
     assert payload["status"] == "passed"
     assert [test["name"] for test in payload["tests"]] == [
         "test_pass",
@@ -200,7 +200,7 @@ def test_native_runner_runs_lifecycle_hooks_after_failure(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -267,7 +267,7 @@ def test_native_runner_reports_lifecycle_failures_and_preserves_suite_state(
     """Setup/teardown failures and suite state affect the native result."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 1,
+        "protocol_version": 2,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -317,7 +317,7 @@ def test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup(
     """A hanging setup hook is bounded and cleanup still runs."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 1,
+        "protocol_version": 2,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -359,7 +359,7 @@ def test_native_runner_captures_engine_errors_and_warnings(godot_bin, tmp_path):
     """Godot engine diagnostics fail the run and appear in native JSON."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 1,
+        "protocol_version": 2,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -401,7 +401,7 @@ def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -457,7 +457,7 @@ def test_native_runner_emits_structured_events(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -516,7 +516,7 @@ def test_native_runner_marks_timed_out_tests(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -606,7 +606,7 @@ def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -827,7 +827,7 @@ def test_native_runner_collects_line_and_branch_coverage(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [

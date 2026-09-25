@@ -7,7 +7,7 @@ extends SceneTree
 ## one manifest and exits with 0 for passing tests, 1 for test failures, and
 ## 2 for protocol/runtime errors.
 
-const PROTOCOL_VERSION := 1
+const PROTOCOL_VERSION := 2
 
 signal test_call_completed
 

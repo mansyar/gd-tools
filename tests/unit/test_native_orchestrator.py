@@ -29,7 +29,7 @@ def _write_result(result_path: Path, status: str = "passed") -> None:
     result_path.write_text(
         json.dumps(
             {
-                "protocol_version": 1,
+                "protocol_version": 2,
                 "run_id": "test-run",
                 "status": status,
                 "tests": [
