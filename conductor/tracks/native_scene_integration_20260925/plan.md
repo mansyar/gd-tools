@@ -29,7 +29,7 @@
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 2 — Godot metadata preflight
+## Phase 2 — Godot metadata preflight [checkpoint: `ce2aba9`]
 
 **Purpose:** Resolve GDScript integration declarations in Godot before Python chooses a suite's display mode.
 
@@ -62,7 +62,7 @@
   - [x] Capture stdout/stderr separately from the structured result.
   - [x] Convert preflight failures to exit-code `2` diagnostics.
   - [x] Run adapter and E2E tests to Green.
-- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [commit: `ce2aba9`]
   - [x] Run preflight unit and E2E tests.
   - [x] Verify GDScript remains the only integration-metadata parser.
   - [x] Perform the workflow's manual verification.
@@ -72,7 +72,7 @@
 
 **Purpose:** Launch each suite with the correct Godot display mode while preserving existing process isolation and GUT routing.
 
-- [ ] Task: Add failing command/orchestrator tests
+- [~] Task: Add failing command/orchestrator tests
   - [ ] Verify default headless suites retain `--headless`.
   - [ ] Verify windowed suites omit the headless display-driver flag.
   - [ ] Verify one preflight occurs before all suite processes.
