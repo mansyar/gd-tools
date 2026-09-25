@@ -47,6 +47,14 @@ def _suite_source(
             "\tpass",
             "func test_other() -> void:",
             "\tpass",
+            "func test_replace_scene() -> void:",
+            "\tpass",
+            "func test_add_resource() -> void:",
+            "\tpass",
+            "func test_remove() -> void:",
+            "\tpass",
+            "func test_unselected() -> void:",
+            "\tpass",
         ]
     )
     return "\n".join(lines) + "\n"
