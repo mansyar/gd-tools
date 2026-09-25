@@ -1,0 +1,12 @@
+Acceptance coverage for the real gd-tools CLI on a clean GUT-free project.
+
+Coverage
+- gd-tools init deploys the managed runtime and the suite then runs through the public test command.
+- Default and per-test scene/resource metadata is verified from the published preflight artifact.
+- A missing node lookup exits 1 with the structured integration diagnostic in JUnit.
+- An unresolvable scene declaration exits 2 with the suite path and offending path, and publishes an error artifact index.
+- Tag and test selectors narrow scene tests without leaking sibling tests.
+
+Result: all four tests passed on the first run. The feature was already implemented in Phases 1-6, so this task adds boundary regression coverage rather than a failing contract; that is recorded in the plan.
+
+Verification: tests/e2e/test_native_integration_cli.py 4 passed. Black, Ruff, and diff checks passed.
