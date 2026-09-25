@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -20,7 +21,13 @@ from gd_tools.errors import (
 from gd_tools.godot import find_godot, run_godot
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
-from gd_tools.native_test.protocol import NativeCoverage, NativeRunResult
+from gd_tools.native_test.preflight import run_native_preflight
+from gd_tools.native_test.protocol import (
+    NativeCoverage,
+    NativeManifest,
+    NativeRunResult,
+    RuntimeMode,
+)
 from gd_tools.test_runner import TestDetail, TestResult, format_test_results
 
 
@@ -98,7 +105,22 @@ def run_native_test_command(
         )
 
     _import_project(godot_info.path, project_root, timeout)
-    coverage_settings, coverage_output_dir = _prepare_coverage(
+    process_timeout = float(timeout) if timeout is not None else 300.0
+    run_id = uuid.uuid4().hex
+    artifact_dir = project_root / ".gd-tools" / "artifacts" / run_id
+    preflight_result = run_native_preflight(
+        project_root,
+        NativeManifest(
+            project_root=project_root,
+            runtime=RuntimeMode.NATIVE,
+            suites=suites,
+        ),
+        godot_binary=godot_info.path,
+        run_dir=artifact_dir / "preflight",
+        timeout_seconds=process_timeout,
+    )
+    suites = preflight_result.suites
+    coverage_settings, _ = _prepare_coverage(
         config,
         project_root,
         coverage=coverage,
@@ -109,10 +131,9 @@ def run_native_test_command(
         suites,
         godot_info.path,
         coverage=coverage_settings,
-        work_dir=(
-            coverage_output_dir / "native" if coverage_output_dir else None
-        ),
-        process_timeout=float(timeout) if timeout is not None else 300.0,
+        work_dir=artifact_dir / "native",
+        process_timeout=process_timeout,
+        run_id=run_id,
     )
     _raise_for_native_error(native_result)
     failed_count = sum(

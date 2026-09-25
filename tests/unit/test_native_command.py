@@ -16,6 +16,7 @@ from gd_tools.native_test.command import (
     _test_directories,
     run_native_test_command,
 )
+from gd_tools.native_test.preflight import NativePreflightError
 from gd_tools.native_test.protocol import (
     NativeExecutionMode,
     NativePreflightResult,
@@ -156,6 +157,10 @@ def test_run_native_command_propagates_filters_and_timeout(tmp_path):
             return_value=(None, None),
         ),
         patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
             "gd_tools.native_test.command.run_native_tests", return_value=native
         ) as run,
         patch("gd_tools.native_test.command._generate_native_report"),
@@ -268,6 +273,37 @@ def test_run_native_command_preflights_once_before_suite_processes(
     )
 
 
+def test_run_native_command_propagates_preflight_failure(tmp_path):
+    """Preflight infrastructure failures stop before suite execution."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            side_effect=NativePreflightError("invalid integration declaration"),
+        ),
+        patch("gd_tools.native_test.command.run_native_tests") as run,
+    ):
+        with pytest.raises(NativePreflightError, match="invalid integration"):
+            run_native_test_command(_config())
+
+    run.assert_not_called()
+
+
 def test_run_native_command_empty_suites_gives_gut_guidance(tmp_path):
     """A GUT-only or empty project gets actionable runtime guidance."""
     with (
@@ -322,6 +358,10 @@ def test_run_native_command_raises_failure_unless_no_exit_code(tmp_path):
             return_value=(None, None),
         ),
         patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
             "gd_tools.native_test.command.run_native_tests", return_value=native
         ),
         patch("gd_tools.native_test.command._generate_native_report"),
@@ -368,6 +408,10 @@ def test_run_native_command_prioritizes_test_failure_over_coverage_threshold(
             return_value=(None, None),
         ),
         patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
             "gd_tools.native_test.command.run_native_tests", return_value=native
         ),
         patch(
@@ -409,6 +453,10 @@ def test_run_native_command_raises_infrastructure_error(tmp_path):
         patch(
             "gd_tools.native_test.command._prepare_coverage",
             return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
         ),
         patch(
             "gd_tools.native_test.command.run_native_tests", return_value=native

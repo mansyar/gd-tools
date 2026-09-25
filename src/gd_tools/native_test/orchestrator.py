@@ -13,6 +13,7 @@ from pydantic import ValidationError
 
 from gd_tools.native_test.protocol import (
     NativeCoverage,
+    NativeExecutionMode,
     NativeManifest,
     NativeRunResult,
     NativeSuite,
@@ -33,6 +34,7 @@ def run_native_tests(
     runner_script: str = DEFAULT_RUNNER_SCRIPT,
     process_timeout: float = 60.0,
     work_dir: Path | None = None,
+    run_id: str | None = None,
 ) -> NativeRunResult:
     """Run each native suite in an isolated Godot process.
 
@@ -45,6 +47,7 @@ def run_native_tests(
         process_timeout: Maximum seconds allowed for each Godot process.
         work_dir: Directory for per-suite manifests and results. Defaults to
             ``<project_root>/.gd-tools/native``.
+        run_id: Optional identifier shared with the integration preflight.
 
     Returns:
         Aggregated native result. A process-level failure is represented as
@@ -53,7 +56,7 @@ def run_native_tests(
     project_root = project_root.resolve()
     output_dir = work_dir or project_root / ".gd-tools" / "native"
     output_dir.mkdir(parents=True, exist_ok=True)
-    run_id = uuid.uuid4().hex
+    run_id = run_id or uuid.uuid4().hex
     all_tests: list[NativeTestResult] = []
     coverage_shards: list[Path] = []
     coverage_output = _resolve_path(
@@ -100,16 +103,22 @@ def run_native_tests(
                 "GD_TOOLS_NATIVE_RUN_ID": run_id,
             }
         )
-        command = [
-            godot_binary,
-            "--headless",
-            "--path",
-            str(project_root),
-            "--script",
-            runner_script,
-            "--log-file",
-            str(log_path),
-        ]
+        command = [godot_binary]
+        if (
+            suite.integration is None
+            or suite.integration.mode == NativeExecutionMode.HEADLESS
+        ):
+            command.append("--headless")
+        command.extend(
+            [
+                "--path",
+                str(project_root),
+                "--script",
+                runner_script,
+                "--log-file",
+                str(log_path),
+            ]
+        )
 
         try:
             completed = subprocess.run(
