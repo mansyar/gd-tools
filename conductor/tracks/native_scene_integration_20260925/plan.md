@@ -88,12 +88,12 @@
   - [x] Select process flags from the validated suite execution mode.
   - [x] Preserve `0/1/2` precedence and existing CLI options.
   - [x] Run command/orchestrator tests to Green.
-- [~] Task: Add a non-integration regression E2E test
-  - [ ] Run an existing plain `GdToolsTest` suite through the new flow.
-  - [ ] Verify assertions, selectors, retries, timeout behavior, and coverage remain valid.
-  - [ ] Verify no windowed behavior is activated accidentally.
-  - [ ] Run focused regression tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Add a non-integration regression E2E test [commit: `3e4a525`]
+  - [x] Run an existing plain `GdToolsTest` suite through the new flow.
+  - [x] Verify assertions, selectors, retries, timeout behavior, and coverage remain valid.
+  - [x] Verify no windowed behavior is activated accidentally.
+  - [x] Run focused regression tests to Green.
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] Run native command, orchestrator, and non-integration E2E tests.
   - [ ] Verify no second GDScript metadata parser or per-suite preflight was introduced.
   - [ ] Perform the workflow's manual verification.
