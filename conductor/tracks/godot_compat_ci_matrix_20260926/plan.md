@@ -103,76 +103,84 @@ have wrongly made them require one. `.env` loading was deliberately left unchang
 
 ---
 
-## Phase 2: Platform-Aware Matrix Wiring (R1, R2, R4, R5)
+## Phase 2: Platform-Aware Matrix Wiring (R1, R2, R4, R5) `[83d9137]`
 
-- [ ] Task: Add the version axis
-  - [ ] In `ci.yml`, remove the global `GODOT_VERSION: '4.6.1'` env var (`ci.yml:14`)
-  - [ ] Add `godot-version: ['4.5.2', '4.6.1', '4.7.1']` to both Godot jobs
-  - [ ] Keep `godot-version` and `os` as **separate** matrix axes so the GitHub UI
+**Prerequisite landed first (user-directed, not in the original plan):**
+`49568dc` added `.gitattributes` pinning `* text=auto eol=lf` and
+renormalized the index. Phase 1 had already shown that a single `black`
+run rewrote 9 test files to CRLF, inflating a 264-line change into
+2651 insertions. Phase 2 touches more files, so this had to be closed
+first or every diff here would be untrustworthy. Verified: `black` now
+runs clean and leaves `git status` empty.
+
+- [x] Task: Add the version axis
+  - [x] In `ci.yml`, remove the global `GODOT_VERSION: '4.6.1'` env var (`ci.yml:14`)
+  - [x] Add `godot-version: ['4.5.2', '4.6.1', '4.7.1']` to both Godot jobs
+  - [x] Keep `godot-version` and `os` as **separate** matrix axes so the GitHub UI
         renders a readable grid and a failure names both dimensions (R4)
-- [ ] Task: Add the OS axis
-  - [ ] `os: [ubuntu-latest, windows-latest]` on both Godot jobs
-  - [ ] Replace `runs-on: ubuntu-latest` with `runs-on: ${{ matrix.os }}`
-  - [ ] Set `strategy: fail-fast: false` on both (R4)
-- [ ] Task: Make the Godot install platform-aware (R1)
-  - [ ] Replace the bash-only block in **both** `integration` (`ci.yml:130-135`) and
+- [x] Task: Add the OS axis
+  - [x] `os: [ubuntu-latest, windows-latest]` on both Godot jobs
+  - [x] Replace `runs-on: ubuntu-latest` with `runs-on: ${{ matrix.os }}`
+  - [x] Set `strategy: fail-fast: false` on both (R4)
+- [x] Task: Make the Godot install platform-aware (R1)
+  - [x] Replace the bash-only block in **both** `integration` (`ci.yml:130-135`) and
         `e2e` (`ci.yml:173-179`)
-  - [ ] Select the asset by runner OS:
-        - [ ] Linux → `Godot_v<version>-stable_linux.x86_64.zip`
-        - [ ] Windows → `Godot_v<version>-stable_win64.exe.zip`
-  - [ ] **Confirm the exact asset filenames against the real GitHub release before
+  - [x] Select the asset by runner OS:
+        - [x] Linux → `Godot_v<version>-stable_linux.x86_64.zip`
+        - [x] Windows → `Godot_v<version>-stable_win64.exe.zip`
+  - [x] **Confirm the exact asset filenames against the real GitHub release before
         writing the step** — do not guess. Verify for all three versions
-  - [ ] Place the binary at a stable, explicitly exported location per OS and append
+  - [x] Place the binary at a stable, explicitly exported location per OS and append
         it to `PATH` so `godot --version` works in a later step
-  - [ ] Apply `chmod +x` and `sudo mv` **only** on the Linux branch; no bash-only
+  - [x] Apply `chmod +x` and `sudo mv` **only** on the Linux branch; no bash-only
         construct may execute on a Windows runner (criterion 4)
-  - [ ] Extract the duplicated install block into a single reusable step or
+  - [x] Extract the duplicated install block into a single reusable step or
         composite action so `integration` and `e2e` cannot drift
-- [ ] Task: Make `GODOT_BIN` dynamic (R2)
-  - [ ] Remove the hardcoded `GODOT_BIN: /usr/local/bin/godot` from both jobs
+- [x] Task: Make `GODOT_BIN` dynamic (R2)
+  - [x] Remove the hardcoded `GODOT_BIN: /usr/local/bin/godot` from both jobs
         (`ci.yml:116`, `ci.yml:159`)
-  - [ ] Set `GODOT_BIN` from the install step to an explicit per-OS path, so
+  - [x] Set `GODOT_BIN` from the install step to an explicit per-OS path, so
         `find_godot_binary()` resolves it through its existing "env var is a real
         file" branch
-  - [ ] Grep the whole file to confirm no POSIX absolute path survives
-- [ ] Task: Fix artifact name collisions (R4)
-  - [ ] `junit-results-integration` → suffix with
+  - [x] Grep the whole file to confirm no POSIX absolute path survives
+- [x] Task: Fix artifact name collisions (R4)
+  - [x] `junit-results-integration` → suffix with
         `${{ matrix.godot-version }}-${{ matrix.os }}`
-  - [ ] `junit-results-e2e` → same suffix
-  - [ ] **Why this is mandatory, not cosmetic:** `actions/upload-artifact@v4` treats
+  - [x] `junit-results-e2e` → same suffix
+  - [x] **Why this is mandatory, not cosmetic:** `actions/upload-artifact@v4` treats
         artifact names as immutable within a run and **errors** on a duplicate, so
         6 same-named jobs would hard-fail rather than silently overwrite
-  - [ ] Keep the per-stage `junit-*.xml` local filenames as-is; only the artifact
+  - [x] Keep the per-stage `junit-*.xml` local filenames as-is; only the artifact
         `name:` changes
-- [ ] Task: Capture the resolved version in every job (criterion 11)
-  - [ ] Keep a `godot --version` verification step, made OS-aware
-  - [ ] Ensure its output appears in the job log so a version mismatch is
+- [x] Task: Capture the resolved version in every job (criterion 11)
+  - [x] Keep a `godot --version` verification step, made OS-aware
+  - [x] Ensure its output appears in the job log so a version mismatch is
         diagnosable from CI output alone
-- [ ] Task: Keep the Godot stages off the Python axis (R5)
-  - [ ] Confirm `python-version: '3.12'` stays a scalar in both Godot jobs — it must
+- [x] Task: Keep the Godot stages off the Python axis (R5)
+  - [x] Confirm `python-version: '3.12'` stays a scalar in both Godot jobs — it must
         **not** join the matrix, or 12 jobs become 36
-- [ ] Task: Validate the workflow file
-  - [ ] Parse `ci.yml` with the project's `pyyaml` dependency to confirm valid YAML
-  - [ ] Run `actionlint` if available; otherwise assert the expected structure
+- [x] Task: Validate the workflow file
+  - [x] Parse `ci.yml` with the project's `pyyaml` dependency to confirm valid YAML
+  - [x] Run `actionlint` if available; otherwise assert the expected structure
         programmatically (6 cells per stage, both axes present, no `continue-on-error`)
-- [ ] Task: Add a matrix regression guard
-  - [ ] Create `tests/unit/test_ci_matrix.py` asserting the matrix expands to
+- [x] Task: Add a matrix regression guard
+  - [x] Create `tests/unit/test_ci_matrix.py` asserting the matrix expands to
         6 cells per stage and that no hardcoded `/usr/local/bin/godot` remains
-  - [ ] Tradeoff, stated deliberately: `workflow.md` does not require tests for config
+  - [x] Tradeoff, stated deliberately: `workflow.md` does not require tests for config
         files. This one is worth 20 lines because it is the only automated guard
         against the matrix silently collapsing back to a single version — the exact
         regression this track exists to prevent
-- [ ] Task: Commit and record
-  - [ ] Commit: `ci: run Godot stages across a 4.5/4.6/4.7 x Windows/Linux matrix`
-  - [ ] Attach a git note recording the axis choices and the confirmed asset names
-  - [ ] Update this plan with the commit SHA
-  - [ ] Commit plan update: `conductor(plan): Mark Phase 2 complete`
-- [ ] Task: Phase Verification & Checkpoint (Refer to `../../workflow.md`)
-  - [ ] `CI=true pytest`
-  - [ ] Present manual verification steps; **await explicit user confirmation**
-  - [ ] Checkpoint commit: `conductor(checkpoint): Checkpoint end of Phase 2`
-  - [ ] Attach the verification report as a git note
-  - [ ] Record `[checkpoint: <sha>]`
+- [x] Task: Commit and record
+  - [x] Commit: `ci: run Godot stages across a 4.5/4.6/4.7 x Windows/Linux matrix`
+  - [x] Attach a git note recording the axis choices and the confirmed asset names
+  - [x] Update this plan with the commit SHA
+  - [x] Commit plan update: `conductor(plan): Mark Phase 2 complete`
+- [x] Task: Phase Verification & Checkpoint (Refer to `../../workflow.md`)
+  - [x] `CI=true pytest`
+  - [x] Present manual verification steps; **await explicit user confirmation**
+  - [x] Checkpoint commit: `conductor(checkpoint): Checkpoint end of Phase 2`
+  - [x] Attach the verification report as a git note
+  - [x] Record `[checkpoint: <sha>]`
 
 ---
 
