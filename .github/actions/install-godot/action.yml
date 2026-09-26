@@ -1,0 +1,73 @@
+name: Install Godot
+description: >-
+  Download a pinned Godot release, put it on PATH, and export GODOT_BIN.
+  Shared by the integration and e2e stages so the two cannot drift.
+
+inputs:
+  version:
+    description: Godot version to install, e.g. "4.5.2".
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # bash is available on both ubuntu and windows runners (Git Bash on the
+    # latter), so one script covers both. chmod/sudo are Linux-only concerns
+    # and are guarded below.
+    - name: Download and install Godot ${{ inputs.version }}
+      id: install
+      shell: bash
+      env:
+        GODOT_VERSION: ${{ inputs.version }}
+        RUNNER_OS: ${{ runner.os }}
+      run: |
+        set -euo pipefail
+
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          asset="Godot_v${GODOT_VERSION}-stable_win64.exe.zip"
+          target_name="godot.exe"
+        else
+          asset="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          target_name="godot"
+        fi
+        url="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/${asset}"
+
+        echo "Downloading ${url}"
+        curl -fsSL --retry 3 -o godot.zip "$url"
+        unzip -q godot.zip -d godot-dist
+
+        # Glob for the extracted binary rather than hardcoding its name, so a
+        # change in Godot's packaging cannot silently break CI.
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          extracted=$(find godot-dist -maxdepth 1 -type f -name '*.exe' | head -n 1)
+        else
+          extracted=$(find godot-dist -maxdepth 1 -type f ! -name '*.zip' | head -n 1)
+          chmod +x "$extracted"
+        fi
+        if [ -z "$extracted" ]; then
+          echo "::error::No Godot binary found inside ${asset}"
+          exit 1
+        fi
+
+        install_dir="$GITHUB_WORKSPACE/.godot-bin"
+        mkdir -p "$install_dir"
+        cp "$extracted" "${install_dir}/${target_name}"
+
+        # Later steps resolve Godot through PATH on both platforms.
+        echo "${install_dir}" >> "$GITHUB_PATH"
+
+        # GODOT_BIN must be a path the *Windows* Python can open. Git Bash
+        # reports /d/a/... which native Python cannot resolve, so convert.
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          godot_bin=$(cygpath -w "${install_dir}/${target_name}")
+        else
+          godot_bin="${install_dir}/${target_name}"
+        fi
+        echo "GODOT_BIN=${godot_bin}" >> "$GITHUB_ENV"
+        echo "godot-bin=${godot_bin}" >> "$GITHUB_OUTPUT"
+
+        echo "Installed Godot ${GODOT_VERSION} at ${godot_bin}"
+
+    - name: Verify Godot installation
+      shell: bash
+      run: godot --version
