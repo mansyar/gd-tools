@@ -16,6 +16,12 @@ from gd_tools.native_test.protocol import NATIVE_PROTOCOL_VERSION
 _SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _VALID_STATUSES = {"passed", "failed", "error", "cancelled"}
 
+# Written the moment a run starts, before any artifact directory exists, so a
+# run that dies before publishing its index is still recognizable to retention.
+# It is deliberately a name this tool invents rather than a directory layout a
+# user might plausibly have of their own.
+RUN_MARKER_NAME = ".gdtools-run"
+
 
 class ArtifactPublishError(RuntimeError):
     """Raised when a native artifact index cannot be safely published."""
@@ -94,6 +100,26 @@ class NativeArtifactLayout:
             "coverage": Path(f"{prefix}.coverage.json"),
             "screenshot_base": Path(f"{prefix}"),
         }
+
+
+def mark_run_started(layout: NativeArtifactLayout) -> Path:
+    """Claim a run directory before the run produces any artifact.
+
+    The marker is what lets retention tell this tool's runs apart from a
+    directory a user placed under the artifact root. It has to be written here,
+    at the start, rather than at publication time -- otherwise a run that dies
+    midway leaves a directory no later run can identify and prune.
+
+    Args:
+        layout: Run-scoped artifact layout for the starting run.
+
+    Returns:
+        The path of the run marker that was written.
+    """
+    layout.run_dir.mkdir(parents=True, exist_ok=True)
+    marker = layout.run_dir / RUN_MARKER_NAME
+    marker.write_text("", encoding="utf-8")
+    return marker
 
 
 def publish_artifact_index(
@@ -229,7 +255,14 @@ def _prune_old_runs(artifact_root: Path, current_run_dir: Path) -> None:
 
 
 def _is_run_directory(path: Path) -> bool:
-    """Report whether a directory was produced by a previous native run."""
-    if (path / "artifacts.json").exists():
-        return True
-    return (path / "native").is_dir() or (path / "preflight").is_dir()
+    """Report whether a directory was produced by a previous native run.
+
+    ``artifacts.json`` counts as well as the marker because runs published
+    before the marker existed still have to be pruned, and stranding them would
+    leave the artifact root growing without bound. A plain ``native/`` or
+    ``preflight/`` subdirectory is not evidence of anything: a user directory
+    may contain either by coincidence, and pruning it would destroy their data.
+    """
+    return (path / RUN_MARKER_NAME).exists() or (
+        path / "artifacts.json"
+    ).exists()

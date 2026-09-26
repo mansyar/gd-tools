@@ -53,6 +53,13 @@ def _write_run(path: Path, marker: str) -> Path:
     return path
 
 
+# The run marker is a user-visible on-disk name -- it appears inside
+# .gd-tools/artifacts/ -- so retention tests pin the literal rather than
+# importing the production constant, which would assert the implementation
+# against itself.
+_RUN_MARKER = ".gdtools-run"
+
+
 def test_publish_records_paths_and_prunes_only_after_publication(tmp_path):
     """The latest index is complete before older run directories are removed."""
     artifact_root = tmp_path / ".gd-tools" / "artifacts"
@@ -155,6 +162,115 @@ def test_prune_keeps_directories_that_are_not_runs(tmp_path):
 
     assert (user_dir / "notes.txt").read_text(encoding="utf-8") == "keep me"
     assert not (artifact_root / "old-run").exists()
+
+
+def test_prune_keeps_user_directory_holding_a_native_subdirectory(tmp_path):
+    """A user directory's own native/ folder is not mistaken for a run."""
+    artifact_root = tmp_path / ".gd-tools" / "artifacts"
+    user_dir = artifact_root / "user-data"
+    (user_dir / "native").mkdir(parents=True)
+    (user_dir / "native" / "notes.json").write_text("{}", encoding="utf-8")
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=[],
+        suite_paths=[],
+        preflight_paths=layout.preflight_paths(),
+    )
+
+    assert (user_dir / "native" / "notes.json").read_text(
+        encoding="utf-8"
+    ) == "{}"
+
+
+def test_prune_keeps_user_directory_holding_a_preflight_subdirectory(tmp_path):
+    """A user directory's own preflight/ folder is not mistaken for a run."""
+    artifact_root = tmp_path / ".gd-tools" / "artifacts"
+    user_dir = artifact_root / "user-data"
+    (user_dir / "preflight").mkdir(parents=True)
+    (user_dir / "preflight" / "result.json").write_text("{}", encoding="utf-8")
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=[],
+        suite_paths=[],
+        preflight_paths=layout.preflight_paths(),
+    )
+
+    assert (user_dir / "preflight" / "result.json").exists()
+
+
+def test_prune_removes_a_run_marked_at_start_before_its_index_exists(tmp_path):
+    """A run that crashed before publishing its index is still prunable."""
+    artifact_root = tmp_path / ".gd-tools" / "artifacts"
+    crashed = artifact_root / "crashed-run"
+    crashed.mkdir(parents=True)
+    (crashed / _RUN_MARKER).write_text("", encoding="utf-8")
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=[],
+        suite_paths=[],
+        preflight_paths=layout.preflight_paths(),
+    )
+
+    assert not crashed.exists()
+
+
+def test_prune_removes_a_legacy_run_published_before_the_marker_existed(
+    tmp_path,
+):
+    """Runs identified only by artifacts.json remain prunable."""
+    artifact_root = tmp_path / ".gd-tools" / "artifacts"
+    legacy = _write_run(artifact_root / "legacy-run", "old")
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=[],
+        suite_paths=[],
+        preflight_paths=layout.preflight_paths(),
+    )
+
+    assert not legacy.exists()
+
+
+def test_prune_keeps_the_current_run_symlinks_and_plain_files(tmp_path):
+    """Retention never removes the current run, a symlink, or a stray file."""
+    artifact_root = tmp_path / ".gd-tools" / "artifacts"
+    artifact_root.mkdir(parents=True)
+    (artifact_root / "stray.txt").write_text("keep me", encoding="utf-8")
+    (tmp_path / "elsewhere").mkdir()
+    link = artifact_root / "linked-run"
+    try:
+        link.symlink_to(tmp_path / "elsewhere", target_is_directory=True)
+    except OSError as exc:  # Windows without symlink privileges
+        pytest.skip(f"symlink creation unavailable: {exc}")
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    marker = layout.run_dir / _RUN_MARKER
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("", encoding="utf-8")
+
+    publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=[],
+        suite_paths=[],
+        preflight_paths=layout.preflight_paths(),
+    )
+
+    assert (artifact_root / "stray.txt").read_text(
+        encoding="utf-8"
+    ) == "keep me"
+    assert link.is_symlink()
+    assert (layout.run_dir / _RUN_MARKER).exists()
 
 
 def test_failed_publication_keeps_older_runs(tmp_path):
