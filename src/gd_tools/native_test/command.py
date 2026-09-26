@@ -22,6 +22,7 @@ from gd_tools.godot import find_godot, run_godot
 from gd_tools.native_test.artifacts import (
     ArtifactPublishError,
     NativeArtifactLayout,
+    mark_run_started,
     publish_artifact_index,
 )
 from gd_tools.native_test.discovery import discover_native_suites
@@ -116,6 +117,13 @@ def run_native_test_command(
     process_timeout = float(timeout) if timeout is not None else 300.0
     run_id = uuid.uuid4().hex
     artifact_layout = NativeArtifactLayout.create(project_root, run_id)
+    try:
+        mark_run_started(artifact_layout)
+    except OSError as exc:
+        raise GdToolsError(
+            f"Could not create the native run directory at "
+            f"{artifact_layout.run_dir}: {exc}"
+        ) from exc
     try:
         preflight_result = run_native_preflight(
             project_root,

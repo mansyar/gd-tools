@@ -1,15 +1,23 @@
-# Architecture: Coverage System
+# Architecture
 
-This document describes the internal architecture of the `gd-tools`
-code coverage system --- the component that fills the gap left by the
-absence of native GDScript coverage tooling in the Godot ecosystem.
+This document describes the internal architecture of `gd-tools`. It covers two
+subsystems, each documented in its own part:
+
+| Part | Subsystem | Sections |
+|------|-----------|----------|
+| I | Coverage system --- the hybrid instrumentation architecture that fills the gap left by the absence of native GDScript coverage tooling in the Godot ecosystem | 1-7 |
+| II | Native test runtime --- the Godot-native GDScript test runtime that replaced the GUT bridge | 8-13 |
 
 For the full product specification, see [PRD Section
 10](./PRD.md#10-coverage-architecture). For the original proof-of-concept
 spike, see [SPIKE: Coverage
-Instrumentation](./SPIKE_coverage_instrumentation.md).
+Instrumentation](./SPIKE_coverage_instrumentation.md). For the native runtime
+migration roadmap, see [ROADMAP Section
+8](./ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap).
 
 ---
+
+## Part I --- Coverage System
 
 ## 1. Overview
 
@@ -645,3 +653,474 @@ instrumentation is skipped and the tracker stays inactive.
 | CLI command reference | [User Guide](./USER_GUIDE.md) | Command Reference |
 | Coverage configuration keys | [User Guide](./USER_GUIDE.md) | Configuration |
 | Contributing to the coverage system | [Contributing Guide](./CONTRIBUTING.md) | Project Structure |
+
+---
+
+## Part II --- Native Test Runtime
+
+## 8. Overview
+
+`gd-tools test` runs a GDScript test runtime that lives inside the Godot project
+itself. A suite is an ordinary GDScript class extending `GdToolsTest`, which
+extends `Node`. The test methods run in the real engine, against the real scene
+tree, in the same project the code under test ships in.
+
+The alternative --- driving an external framework over a subprocess boundary ---
+cannot express assertions that need a live scene tree. A test that waits for a
+signal from an animated `CharacterBody2D`, or that instantiates a scene and
+inspects a child's exported state, has nothing to assert against unless the test
+code is in the engine with the code under test.
+
+The runtime is a **hybrid** design. Neither half is sufficient alone:
+
+| Concern | Owner | Why |
+|---------|-------|-----|
+| Configuration, discovery, filtering, process orchestration, reporting, exit codes | Python | Pure logic, far easier to test and evolve off-engine |
+| Test loading, lifecycle, assertions, async waits, scene-tree interaction, coverage activation | Godot | Requires a live engine and a live scene tree |
+
+Python never parses GDScript to decide semantics. It reads *text* to find
+candidate files (see [11.4](#114-discoverypy)), then delegates every semantic
+question to Godot through a preflight process (see
+[11.7](#117-gd_tools_test_preflightgd)).
+
+### 8.1 Full Flow
+
+```
+gd-tools test
+     |
+     v
+ +------------------+  discovery.py   find suites extending GdToolsTest
+ |  Python          |  protocol.py    validate the version-2 contracts
+ |                  |  command.py     import project, then preflight
+ +------------------+
+     |  writes suite-manifest.json
+     v
+ +------------------+  gd_tools_test_preflight.gd
+ |  Godot           |  reads each suite's INTEGRATION constant
+ |  (one preflight) |  through engine metadata, never text
+ +------------------+
+     |  preflight/result.json  (enriched, validated integration)
+     v
+ +------------------+  orchestrator.py  one process per suite
+ |  Python          |  serial by default; merge coverage shards
+ +------------------+
+     |  GD_TOOLS_NATIVE_MANIFEST / _RESULT / _EVENTS / _LOG
+     v
+ +-----------------------------------------+
+ |  Godot: gd_tools_test_runner.gd         |
+ |    load suite -> before_all             |
+ |    per test: context -> before_each     |
+ |               -> test -> after_each     |
+ |               -> failure evidence       |
+ |    -> after_all -> write result         |
+ +-----------------------------------------+
+     |
+     |  result.json + events.ndjson + coverage.json
+     v
+ +------------------+  reporter.py / terminal_reporter.py
+ |  Python          |  JUnit XML, HTML/LCOV/Cobertura
+ +------------------+  exit 0 pass, 1 failure, 2 environment
+```
+
+### 8.2 Isolation Model
+
+Each suite runs in its **own Godot process**. This is not an optimization
+detail --- it is what makes the run reproducible:
+
+- A suite that leaks autoload state, adds nodes to the tree, or crashes the
+  engine cannot affect any other suite.
+- A crashed suite produces a distinguishable process outcome rather than
+  corrupting the results of suites that already passed.
+- Each process gets a fresh `ProjectSettings` load and a fresh engine, so
+  ordering between suites cannot become a hidden dependency.
+
+Suites run **sequentially** by default. Parallel execution is deliberately
+deferred: concurrent Godot processes contend over the shared `.godot/` import
+cache, and that contention is already a known source of intermittent failures
+under load. The coverage shard merge ([11.2](#112-orchestratorpy)) is
+order-independent, so it is already parallel-safe if that decision is revisited.
+
+## 9. Data Formats
+
+All cross-process data is versioned. `NATIVE_PROTOCOL_VERSION` is `2` in
+`protocol.py`, mirrored by `PROTOCOL_VERSION := 2` in both GDScript entrypoints.
+A mismatch is a protocol error, which surfaces as exit `2` --- never as a
+silently mis-parsed result.
+
+Every model is a Pydantic `BaseModel` with `extra='forbid'`, so an unknown key
+is a hard error rather than a silently dropped field.
+
+### 9.1 Suite Manifest (`preflight/suite-manifest.json`)
+
+Written by Python, read by Godot. One file per suite.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `protocol_version` | `2` | Wire contract version |
+| `project_root` | path | Absolute project root, for `res://` resolution |
+| `runtime` | `native` \| `gut` | Runtime selector, echoed for clarity |
+| `suite.name` | string | Class name, used for reporting and selection |
+| `suite.path` | `res://` string | Suite script path |
+| `suite.tests[]` | objects | `name`, `timeout_seconds`, `retries` |
+| `suite.tags[]` | strings | Class-level tags, from `const TAGS` |
+| `suite.integration` | object\|null | `scene`, `resources`, `mode` |
+
+### 9.2 Integration Metadata
+
+The result of merging suite defaults with per-test overrides. `null` for a
+field means *remove an inherited entry*; an omitted field means *inherit*.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `integration.scene` | `res://` path\|null | At most one primary scene |
+| `integration.resources` | map | Logical name to `res://` resource path |
+| `integration.mode` | `headless` \| `windowed` | Execution mode for this suite |
+
+`mode` is validated once per command, in the preflight, before any suite is
+constructed. An invalid path, mode, or field is a **configuration** failure and
+exits `2` naming the suite and the expected shape --- it is not left to fail
+mid-test.
+
+### 9.3 Preflight Result (`preflight/result.json`)
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `status` | `ok` \| `error` | Whether validation succeeded |
+| `suites[]` | objects | Enriched integration per suite, ready to execute |
+| `error` | string\|null | Actionable failure message |
+
+### 9.4 Per-Suite Result (`native/suite-NNNN.result.json`)
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `status` | `passed` \| `failed` \| `error` | Suite outcome |
+| `tests[]` | objects | `name`, `status`, `duration_seconds`, `attempts`, `message`, `diagnostics` |
+| `coverage_data_path` | path\|null | Shard written by `GdToolsNativeCoverage` |
+| `artifact_index_path` | path\|null | This run's artifact index |
+| `engine_errors[]` | strings | Captured Godot errors |
+| `engine_warnings[]` | strings | Captured Godot warnings |
+| `started_at` / `finished_at` | ISO-8601 | Wall-clock bounds |
+
+A test `status` may be `passed`, `failed`, `error`, `skipped`, or `pending`. The
+protocol models `skipped` and `pending` and Python maps them
+([11.1](#111-commandpy)), but the shipped assertion surface has no
+`skip_test()` call yet, so no GDScript currently emits them.
+
+### 9.5 Artifact Index (`artifacts.json`)
+
+The machine-readable record of what a run produced. It lists only artifacts
+that actually exist on disk, and `screenshots` lists only captures that were
+realized.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `protocol_version` | `2` | Wire contract version |
+| `run_id` | string | Run identifier |
+| `status` | `passed` \| `failed` \| `error` \| `cancelled` | Terminal run status |
+| `artifact_root` / `run_dir` | paths | Where the run wrote |
+| `preflight` | map | Preflight artifact paths |
+| `suites[]` | objects | Suite name plus its realized artifact paths |
+
+### 9.6 Progress Events (`native/suite-NNNN.events.ndjson`)
+
+One JSON object per line, appended as the run progresses. Streaming, so a run
+can be observed while it executes.
+
+### 9.7 Exit Codes
+
+The exit code is the contract. It is stable across runtimes.
+
+| Code | Meaning |
+|------|---------|
+| `0` | All selected tests passed, and any configured coverage threshold was met |
+| `1` | A test failed, or coverage fell below `--min` |
+| `2` | Environment, configuration, protocol, engine, or process failure |
+
+Exit `2` is reserved for conditions where the run could not be trusted. A test
+assertion failure is never exit `2` --- it is exit `1`. A windowed suite
+requested on a headless renderer is exit `2`, because the suite did not run and
+reporting it as a pass would be a lie.
+
+## 10. Environment Contract
+
+Python passes paths to Godot through the process environment rather than
+command-line arguments, so long paths and `res://` values survive intact.
+
+| Variable | Set by | Consumed by |
+|----------|--------|-------------|
+| `GD_TOOLS_NATIVE_MANIFEST` | orchestrator | runner --- manifest to execute |
+| `GD_TOOLS_NATIVE_RESULT` | orchestrator | runner --- where to write the result |
+| `GD_TOOLS_NATIVE_EVENTS` | orchestrator | runner --- NDJSON progress stream |
+| `GD_TOOLS_NATIVE_LOG` | orchestrator | runner --- captured engine log |
+| `GD_TOOLS_NATIVE_SCREENSHOT` | orchestrator | runner --- failure capture path |
+| `GD_TOOLS_NATIVE_RUN_ID` | orchestrator | runner --- run identifier |
+| `GD_TOOLS_NATIVE_PREFLIGHT_MANIFEST` | preflight | preflight script |
+| `GD_TOOLS_NATIVE_PREFLIGHT_RESULT` | preflight | preflight script |
+
+The preflight adapter clears every `_RUNNER_ENVIRONMENT_KEYS` entry before
+launching. Without that, a preflight process would inherit a stale manifest
+path from the environment and could execute the wrong suite.
+
+## 11. Component Details
+
+### 11.1 command.py
+
+CLI-facing adapter. Owns the sequence Python controls end to end: resolve test
+directories, discover suites, import the project, run the preflight, prepare
+coverage, execute, then translate the run result into an exit code.
+
+`run_native_test_command()` raises `ConfigError` when discovery finds nothing,
+naming both remedies: add a suite extending `GdToolsTest`, or use
+`--runtime gut` for a legacy project. The most useful error is the one that
+tells you what to do next.
+
+`_raise_for_native_error()` maps a terminal `error` status onto exit `2` before
+any coverage threshold is evaluated --- an infrastructure failure must not be
+reported as a coverage shortfall.
+
+### 11.2 orchestrator.py
+
+Runs one Godot process per suite, in a loop, and merges what comes back.
+
+Per suite it writes a manifest, unlinks any stale shard before the run so a
+crash cannot leave last run's coverage looking current, launches the process
+with a bounded timeout, then reads the result file. A suite whose result file is
+missing or unparseable becomes an `error` test result rather than a silent
+omission.
+
+`_merge_coverage_shards()` is order-independent by design, so coverage results
+do not depend on suite order. That is also what makes the deferred parallelism
+decision cheap to revisit.
+
+`DEFAULT_RUNNER_SCRIPT` pins the runner to
+`res://addons/gd-tools-test/gd_tools_test_runner.gd`.
+
+### 11.3 preflight.py
+
+Python adapter for the single headless preflight process. Writes a preflight
+manifest, launches Godot once, and reads back the enriched result.
+
+`_bounded_output()` truncates captured process output before it enters an error
+message, so a Godot process that emits megabytes of diagnostics produces a
+readable error instead of a wall of text.
+
+### 11.4 discovery.py
+
+Finds candidate suites. This is the one place where Python reads GDScript as
+**text**, and it is deliberately limited to identifying *candidates*:
+
+- `_EXTENDS_RE` matches a suite that extends `GdToolsTest`
+- `_GUT_EXTENDS_RE` detects legacy `GutTest` suites so the error message can
+  point at `--runtime gut`
+- `_TEST_FUNC_RE` matches `test_*` methods with an empty parameter list
+- `_TAG_RE` reads a class-level `const TAGS`
+
+Anything semantic is deferred to the preflight. `NativeDiscoveryError` is a
+`ConfigError`, so discovery problems exit `2` as configuration failures.
+
+Because the test-method pattern requires no parameters, a parameterized test
+method is not discovered as runnable. This is intentional, not an oversight ---
+it is pinned by a test, because silently running a method that expects
+arguments would be worse than not running it.
+
+### 11.5 protocol.py
+
+Every cross-process contract, as Pydantic models: `NativeSuite`, `NativeTest`,
+`NativeSuiteIntegration`, `NativeTestIntegration`, `NativeCoverage`,
+`NativeManifest`, `NativePreflightResult`, `NativeTestResult`, and
+`NativeRunResult`.
+
+`_ResourcePath` validates that a path is a `res://` path with no relative
+segments, so a traversal attempt is rejected at the model boundary rather than
+by a later filesystem call.
+
+`write_json_atomic()` writes via a neighbouring temporary file and
+`os.replace()`, so a reader never observes a half-written result.
+
+### 11.6 artifacts.py
+
+Run-scoped artifact layout and retention.
+
+`NativeArtifactLayout` is a frozen dataclass and a **pure constructor** --- it
+computes paths and touches no disk, which is what lets its behaviour be tested
+without filesystem setup. `mark_run_started()` is the separate function that
+creates the run directory and writes the marker.
+
+Retention recognizes a run by a marker `gd-tools` itself wrote --- either
+`.gdtools-run`, written the moment a run starts, or `artifacts.json`, the
+published index. Everything else under the artifact root is left alone. Both
+markers are required: the run-start marker means a run that dies before
+publishing is still prunable, and accepting `artifacts.json` means runs from
+earlier versions are not stranded forever.
+
+The index is published **before** older runs are pruned. If publication fails,
+nothing is deleted --- losing the ability to record a run is preferable to
+losing a run's evidence.
+
+### 11.7 gd_tools_test_preflight.gd
+
+Headless entrypoint for validation. Loads each suite script through the engine
+and reads its `INTEGRATION` constant as **metadata**, so integration
+declarations are never parsed from source by Python.
+
+It resolves suite-level defaults, merges per-test overrides field by field,
+validates every `res://` path and the execution mode, and confirms that the
+methods listed in the manifest actually exist on the loaded script
+(`_test_method_names`). Method discovery uses `get_script_method_list()` ---
+the engine's own view --- rather than a text pattern.
+
+Any validation failure produces an `error` result, which Python turns into exit
+`2` naming the suite and the expected shape. Because this runs once per command
+before any suite is constructed, a bad declaration costs zero test execution.
+
+### 11.8 gd_tools_test_runner.gd
+
+The suite executor. One manifest, one suite, one process.
+
+Per test, the order is fixed: build integration context, `before_each`, the test
+body, `after_each`, then failure evidence, then teardown. Failure evidence is
+captured *before* teardown, because after teardown the scene is gone and a
+screenshot would be worthless.
+
+Hooks are all optional, checked with `has_method`, so a suite defines only what
+it needs. Retries rebuild the context from scratch per attempt, so a retry
+cannot inherit mutated resources or a half-torn-down scene.
+
+`_capture_engine_diagnostics()` collects Godot errors and warnings into the
+result, so an engine-level complaint becomes structured test output instead of
+a line in a log nobody reads. An engine error escalates the suite to `error`,
+which is exit `2`.
+
+### 11.9 gd_tools_test.gd
+
+The base class a suite extends. It provides the assertion surface and the
+engine-specific waits, and nothing else --- the runner owns lifecycle and
+process management.
+
+| Group | Functions |
+|-------|-----------|
+| Assertions | `assert_true`, `assert_false`, `assert_eq`, `assert_ne`, `assert_null`, `assert_not_null`, `fail` |
+| Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal` |
+| Context | `get_test_context()` |
+| Suite state | suite-scoped storage for sharing fixtures across tests |
+
+Assertions **record** failures rather than aborting, so one test reports every
+assertion that failed instead of only the first. `_gd_tools_record_failure()`
+attributes a failure to user code by skipping `gd_tools_test.gd` and
+`gd_tools_test_runner.gd` stack frames --- a stack trace pointing at the
+framework instead of the test is not a useful failure message.
+
+### 11.10 gd_tools_test_context.gd
+
+Explicit access to the scene tree and named resources for one test attempt.
+Reached through `get_test_context()`.
+
+| Method | Purpose |
+|--------|---------|
+| `get_scene_root()` | The instantiated primary scene |
+| `find_node(relative_path)` | One node by relative path |
+| `find_nodes(pattern)` | Nodes matching a name pattern |
+| `get_resource(logical_name)` | A resource by its declared logical name |
+| `get_integration()` | Effective resolved metadata for this test |
+| `wait_for_signal(signal, timeout)` | Bounded wait |
+| `capture_screenshot(path)` | Atomic capture |
+| `clear()` | Release the scene and resources |
+
+Resources are never assigned to nodes automatically. The context is a lookup
+surface, not a proxy --- tests that want a node wired up wire it up
+themselves, because a framework that silently mutates a scene tree makes test
+setup invisible.
+
+### 11.11 gd_tools_native_coverage.gd
+
+Transient coverage collector for the native runner. It consumes the **same
+version-1 instrumentation plan** the legacy path uses, so there is one plan
+format rather than two.
+
+Instrumentation happens in memory through the Script API. The tracker is reached
+through a static callable, so instrumented code pays no lookup cost per hit.
+On completion it writes the same `coverage.json` shape the Python reporter
+already consumes.
+
+This component is the bridge between the two halves of `gd-tools`: it is the
+native runtime activating the coverage system described in Part I.
+
+## 12. Design Decisions
+
+### 12.1 Integration Metadata Is Read Through Godot, Never Parsed
+
+Python reads `INTEGRATION` declarations by asking the engine for them
+(`get_script_method_list()`, script constants) rather than by parsing GDScript
+text. Parsing would make every formatting change, every syntax Godot adds, and
+every conditional declaration a source of silent misreading. Asking the engine
+cannot disagree with the engine.
+
+The cost is one extra headless process per command, which is why validation
+happens exactly once per command rather than once per suite.
+
+### 12.2 Project Autoloads Run As In Production
+
+The runtime installs **no test-only autoloads** and mutates no project
+autoload. A suite that passes under a synthetic autoload the production build
+does not have is a test that proves nothing.
+
+This resolves in the opposite direction from the original roadmap item, which
+contemplated an injectable autoload policy. The deciding argument was that
+divergence between test and production autoloads is exactly the class of bug
+this runtime exists to catch.
+
+### 12.3 Windowed Execution Fails, It Does Not Fall Back
+
+A `windowed` suite requires a real display. On a headless renderer it exits
+`2` with no test executed, and never silently falls back to headless.
+
+Automatic fallback would convert a configuration problem into a passing run
+whose rendering was never exercised. Silence here is the failure mode that
+matters most: the user believes they tested something they did not.
+
+### 12.4 Per-Attempt Rebuild For Retry Isolation
+
+Every attempt rebuilds the scene, context, and resources from scratch. A retry
+that reused a mutated context would test state the first attempt had already
+corrupted, and the second failure would say nothing about the code.
+
+### 12.5 Run-Scoped Artifacts, Latest Run Only
+
+Each run writes under `.gd-tools/artifacts/<run_id>/` with a machine-readable
+index, and only the latest run is retained. The index is published before
+pruning, so a failed publish never costs a run its evidence.
+
+See [11.6](#116-artifactspy) for the retention marker rules, which exist to
+make that guarantee true rather than merely intended.
+
+### 12.6 One Godot Process Per Suite
+
+Isolation over throughput. See [8.2](#82-isolation-model).
+
+## 13. Cross-References
+
+| Topic | Document | Section |
+|-------|----------|---------|
+| Coverage system architecture | This document | Part I, Sections 1-7 |
+| Native runtime migration roadmap | [ROADMAP](./ROADMAP.md) | Section 8 |
+| Native product decisions | [Conductor product definition](../conductor/product.md) | Section 9 |
+| `gd-tools test` command reference | [User Guide](./USER_GUIDE.md) | Section 3.4 |
+| Native runtime configuration keys | [User Guide](./USER_GUIDE.md) | Section 2.3 |
+| Instrumentation plan and coverage data formats | This document | Sections 4.1, 4.2 |
+| Runtime protocol and exit codes | This document | Sections 9, 11 |
+
+### Known Limitations
+
+Stated so they are not discovered by surprise:
+
+- **No mocking or stubbing.** There is no double, spy, or stub facility.
+- **No parameterized tests.** Test methods must take no parameters; a
+  parameterized method is not discovered as runnable.
+- **No parallel execution.** Suites run sequentially (see
+  [8.2](#82-isolation-model)).
+- **No `skip_test()`.** The protocol reserves `skipped` and `pending`, but the
+  assertion surface cannot yet emit them.
+- **Thin assertion surface.** Seven assertions (`gd_tools_test.gd`), which is
+  considerably narrower than the GUT assertion set the migration bridge is
+  being measured against.
+- **No editor integration.** The runtime is headless and script-driven only.

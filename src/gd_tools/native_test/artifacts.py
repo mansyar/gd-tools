@@ -16,6 +16,12 @@ from gd_tools.native_test.protocol import NATIVE_PROTOCOL_VERSION
 _SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _VALID_STATUSES = {"passed", "failed", "error", "cancelled"}
 
+# Written the moment a run starts, before any artifact directory exists, so a
+# run that dies before publishing its index is still recognizable to retention.
+# It is deliberately a name this tool invents rather than a directory layout a
+# user might plausibly have of their own.
+RUN_MARKER_NAME = ".gdtools-run"
+
 
 class ArtifactPublishError(RuntimeError):
     """Raised when a native artifact index cannot be safely published."""
@@ -96,6 +102,26 @@ class NativeArtifactLayout:
         }
 
 
+def mark_run_started(layout: NativeArtifactLayout) -> Path:
+    """Claim a run directory before the run produces any artifact.
+
+    The marker is what lets retention tell this tool's runs apart from a
+    directory a user placed under the artifact root. It has to be written here,
+    at the start, rather than at publication time -- otherwise a run that dies
+    midway leaves a directory no later run can identify and prune.
+
+    Args:
+        layout: Run-scoped artifact layout for the starting run.
+
+    Returns:
+        The path of the run marker that was written.
+    """
+    layout.run_dir.mkdir(parents=True, exist_ok=True)
+    marker = layout.run_dir / RUN_MARKER_NAME
+    marker.write_text("", encoding="utf-8")
+    return marker
+
+
 def publish_artifact_index(
     layout: NativeArtifactLayout,
     *,
@@ -107,9 +133,10 @@ def publish_artifact_index(
     """Atomically publish one run index, then prune older run directories.
 
     The index is written before retention runs. If publication fails, the
-    previous run remains available for diagnosis. Only the directories this
-    tool created are treated as runs, so unrelated directories kept beside
-    them are left untouched.
+    previous run remains available for diagnosis. Retention recognizes a run
+    only by a marker this tool wrote -- ``.gdtools-run`` or ``artifacts.json``
+    -- so a directory a user placed under the artifact root is never deleted.
+    See ``_is_run_directory`` for the accepted markers.
 
     Args:
         layout: Run-scoped artifact layout.
@@ -215,8 +242,10 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
 def _prune_old_runs(artifact_root: Path, current_run_dir: Path) -> None:
     """Remove direct child run directories except the current run.
 
-    Only directories that carry this tool's own run markers are removed, so a
-    directory a user placed under the artifact root is never deleted.
+    A child counts as a run only when it carries a marker this tool wrote --
+    ``.gdtools-run`` or ``artifacts.json``. Plain files, symlinks, and any
+    other directory are left in place, including one that happens to contain
+    ``native/`` or ``preflight/`` subdirectories of its own.
     """
     if not artifact_root.is_dir():
         return
@@ -229,7 +258,14 @@ def _prune_old_runs(artifact_root: Path, current_run_dir: Path) -> None:
 
 
 def _is_run_directory(path: Path) -> bool:
-    """Report whether a directory was produced by a previous native run."""
-    if (path / "artifacts.json").exists():
-        return True
-    return (path / "native").is_dir() or (path / "preflight").is_dir()
+    """Report whether a directory was produced by a previous native run.
+
+    ``artifacts.json`` counts as well as the marker because runs published
+    before the marker existed still have to be pruned, and stranding them would
+    leave the artifact root growing without bound. A plain ``native/`` or
+    ``preflight/`` subdirectory is not evidence of anything: a user directory
+    may contain either by coincidence, and pruning it would destroy their data.
+    """
+    return (path / RUN_MARKER_NAME).exists() or (
+        path / "artifacts.json"
+    ).exists()
