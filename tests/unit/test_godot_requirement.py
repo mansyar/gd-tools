@@ -21,6 +21,7 @@ import conftest
 from conftest import (
     VENDORED_GUT_DIR,
     gut_required_godot_minor,
+    require_gut_compatible,
     require_godot_binary,
 )
 
@@ -168,3 +169,46 @@ def test_vendored_gut_cannot_run_on_the_project_minimum_godot():
     hiding an untested engine -- which is worth knowing.
     """
     assert gut_required_godot_minor(VENDORED_GUT_DIR) == 6
+
+
+def test_require_gut_compatible_skips_when_engine_is_older(monkeypatch):
+    """An engine older than the vendored GUT must skip, not run and fail.
+
+    This is the decision the guard actually makes, so it needs its own
+    coverage: the helper above only proves the floor can be *read*.
+    """
+    monkeypatch.setattr(
+        "gd_tools.godot.get_godot_version", lambda _binary: "4.5.2"
+    )
+
+    with pytest.raises(BaseException) as excinfo:
+        require_gut_compatible("/opt/godot/godot")
+
+    message = str(excinfo.value)
+    assert isinstance(excinfo.value, Skipped)
+    assert "4.5.2" in message
+    # The gap must stay visible in -rs output rather than reading as a pass.
+    assert "UNVERIFIED" in message
+
+
+def test_require_gut_compatible_does_not_skip_on_a_supported_engine(
+    monkeypatch,
+):
+    """An engine the vendored GUT supports must not skip."""
+    monkeypatch.setattr(
+        "gd_tools.godot.get_godot_version", lambda _binary: "4.7.1"
+    )
+
+    assert require_gut_compatible("/opt/godot/godot") is None
+
+
+def test_require_gut_compatible_does_not_skip_without_vendored_gut(
+    tmp_path, monkeypatch
+):
+    """An absent GUT is not an incompatibility, so it must not skip."""
+    monkeypatch.setattr("conftest.VENDORED_GUT_DIR", tmp_path)
+    monkeypatch.setattr(
+        "gd_tools.godot.get_godot_version", lambda _binary: "4.5.2"
+    )
+
+    assert require_gut_compatible("/opt/godot/godot") is None

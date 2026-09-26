@@ -25,10 +25,13 @@ from conftest import find_godot_binary
 from gd_tools.godot import get_godot_version, get_gut_version_for_godot
 from gd_tools.init import install_coverage_addon, install_native_test_addon
 
-pytestmark = [
-    pytest.mark.e2e,
-    pytest.mark.usefixtures("godot_bin", "compatible_gut"),
-]
+pytestmark = pytest.mark.e2e
+# Applied per test rather than as part of ``pytestmark``: only the tests that
+# build a Godot project are gated. The doctor-on-fresh-project and both
+# coverage-data tests are pure Python, and a module-level gate would stop them
+# running on a machine with no Godot -- and on the Godot 4.5 matrix cells,
+# where the GUT-backed suites skip.
+needs_godot = pytest.mark.usefixtures("godot_bin", "compatible_gut")
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
@@ -142,6 +145,7 @@ def test_doctor_on_fresh_project(tmp_path):
     assert "gut" in output or "coverage" in output
 
 
+@needs_godot
 def test_doctor_after_init(tmp_path):
     """gd-tools doctor after init → all checks pass."""
     project = _setup_project_with_godot(tmp_path)
@@ -154,6 +158,7 @@ def test_doctor_after_init(tmp_path):
 # ---------------------------------------------------------------------------
 
 
+@needs_godot
 def test_lint_command(tmp_path):
     """gd-tools lint on sample project exits 0."""
     project = _setup_project_with_godot(tmp_path)
@@ -161,6 +166,7 @@ def test_lint_command(tmp_path):
     assert result.returncode == 0
 
 
+@needs_godot
 def test_format_command(tmp_path):
     """gd-tools format --check on sample project exits 0."""
     project = _setup_project_with_godot(tmp_path)
@@ -168,6 +174,7 @@ def test_format_command(tmp_path):
     assert result.returncode == 0
 
 
+@needs_godot
 def test_test_coverage_command(tmp_path):
     """gd-tools test --coverage runs tests and generates coverage artifacts."""
     project = _setup_project_with_godot(tmp_path)
@@ -213,6 +220,7 @@ def test_coverage_report_command(tmp_path):
 # ---------------------------------------------------------------------------
 
 
+@needs_godot
 @pytest.mark.slow
 def test_full_workflow_sequence(tmp_path):
     """Complete user journey: doctor → lint → format → test --coverage → show → report."""

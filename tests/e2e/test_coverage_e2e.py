@@ -21,7 +21,12 @@ from gd_tools.init import install_coverage_addon
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-pytestmark = pytest.mark.usefixtures("godot_bin", "compatible_gut")
+# Applied per test rather than as a module-level ``pytestmark``: only the
+# ``gd-tools test --coverage`` tests below actually launch Godot. The
+# report/merge/show tests are pure Python, and a module-level gate would stop
+# them running on a machine with no Godot -- and on the Godot 4.5 matrix cells,
+# where the GUT-backed suites skip.
+needs_godot = pytest.mark.usefixtures("godot_bin", "compatible_gut")
 
 
 def _gd_tools_bin() -> str:
@@ -105,6 +110,7 @@ def _run_cli(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 
+@needs_godot
 @pytest.mark.e2e
 def test_e2e_test_coverage_full_flow(tmp_path):
     """gd-tools test --coverage runs tests and generates coverage artifacts."""
@@ -126,6 +132,7 @@ def test_e2e_test_coverage_full_flow(tmp_path):
     assert (coverage_dir / "coverage.json").exists()
 
 
+@needs_godot
 @pytest.mark.e2e
 def test_e2e_test_coverage_min_threshold_exit_1(tmp_path):
     """gd-tools test --coverage --min 100 exits 1 when below 100%."""

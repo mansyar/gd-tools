@@ -42,11 +42,15 @@ runs:
           extracted=$(find godot-dist -maxdepth 1 -type f -name '*.exe' | head -n 1)
         else
           extracted=$(find godot-dist -maxdepth 1 -type f ! -name '*.zip' | head -n 1)
-          chmod +x "$extracted"
         fi
+        # Check before chmod: under `set -e` a chmod on an empty path aborts
+        # the script, which would hide the diagnostic below.
         if [ -z "$extracted" ]; then
           echo "::error::No Godot binary found inside ${asset}"
           exit 1
+        fi
+        if [ "$RUNNER_OS" != "Windows" ]; then
+          chmod +x "$extracted"
         fi
 
         install_dir="$GITHUB_WORKSPACE/.godot-bin"
