@@ -8,7 +8,6 @@ All tests are marked ``@pytest.mark.integration`` and are automatically
 skipped when the Godot binary is not available on PATH.
 """
 
-import os
 import shutil
 from pathlib import Path
 from unittest.mock import patch
@@ -22,10 +21,7 @@ from gd_tools.test_runner import run_tests
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-skip_if_no_godot = pytest.mark.skipif(
-    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-)
+pytestmark = pytest.mark.usefixtures("godot_bin", "compatible_gut")
 
 
 def _setup_project(tmp_path: Path, with_coverage: bool = False) -> Path:
@@ -58,7 +54,6 @@ def _setup_project(tmp_path: Path, with_coverage: bool = False) -> Path:
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_tests_executes_gut_and_produces_junit(tmp_path):
     """run_tests() runs GUT and produces JUnit XML output."""
     project = _setup_project(tmp_path)
@@ -77,7 +72,6 @@ def test_run_tests_executes_gut_and_produces_junit(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_tests_all_passing_exit_code_0(tmp_path):
     """All-passing tests -> no TestFailureError, TestResult.failed == 0."""
     project = _setup_project(tmp_path)
@@ -95,7 +89,6 @@ def test_run_tests_all_passing_exit_code_0(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_tests_failing_exit_code_1(tmp_path):
     """Failing test -> TestFailureError raised, TestResult.failed > 0."""
     project = _setup_project(tmp_path)
@@ -111,7 +104,6 @@ def test_run_tests_failing_exit_code_1(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_tests_suite_filter(tmp_path):
     """--suite filter -> only the named suite runs."""
     project = _setup_project(tmp_path)
@@ -130,7 +122,6 @@ def test_run_tests_suite_filter(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_tests_test_name_filter(tmp_path):
     """--test filter -> only matching tests run."""
     project = _setup_project(tmp_path)
@@ -152,7 +143,6 @@ def test_run_tests_test_name_filter(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_tests_no_exit_code_true(tmp_path):
     """--no-exit-code -> no exception even with failing tests."""
     project = _setup_project(tmp_path)
@@ -173,7 +163,6 @@ def test_run_tests_no_exit_code_true(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_tests_coverage_flag(tmp_path):
     """--coverage -> coverage_data_path set, tests still run."""
     project = _setup_project(tmp_path, with_coverage=True)

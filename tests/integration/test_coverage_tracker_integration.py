@@ -4,11 +4,10 @@ Tests the GDScript coverage tracker (_GDTCoverage autoload) by running
 GUT tests inside a real Godot project. Requires Godot 4.5+ binary in
 PATH and the GUT addon.
 
-All tests are marked ``@pytest.mark.integration`` and are automatically
-skipped when the Godot binary is not available on PATH.
+All tests are marked ``@pytest.mark.integration``.  A missing Godot skips
+locally but *fails* under CI -- see ``require_godot_binary``.
 """
 
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -16,6 +15,7 @@ from unittest.mock import patch
 
 import pytest
 
+from conftest import find_godot_binary
 from gd_tools.config import GdToolsConfig
 from gd_tools.init import install_coverage_addon, register_coverage_autoload
 from gd_tools.test_runner import run_tests
@@ -23,15 +23,19 @@ from gd_tools.test_runner import run_tests
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-skip_if_no_godot = pytest.mark.skipif(
-    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-)
+pytestmark = pytest.mark.usefixtures("godot_bin", "compatible_gut")
 
 
 def _find_godot_binary() -> str:
-    """Find the Godot binary path (GODOT_BIN env var or PATH lookup)."""
-    return os.environ.get("GODOT_BIN") or shutil.which("godot") or ""
+    """Find the Godot binary path.
+
+    Delegates to the shared resolver so a ``GODOT_BIN`` value is validated
+    as a real file rather than trusted blindly.  ``pytestmark`` already
+    guarantees a Godot is present.
+    """
+    binary = find_godot_binary()
+    assert binary is not None, "pytestmark requires a Godot binary"
+    return binary
 
 
 def _import_project(project_path: Path) -> None:
@@ -77,7 +81,6 @@ def _setup_coverage_project(tmp_path: Path) -> Path:
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_coverage_tracker_gut_tests_pass(tmp_path):
     """GUT tests for _GDTCoverage tracker all pass."""
     project = _setup_coverage_project(tmp_path)

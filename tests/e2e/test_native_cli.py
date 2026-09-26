@@ -9,20 +9,15 @@ from pathlib import Path
 
 import pytest
 
-from conftest import find_godot_binary
-
-pytestmark = pytest.mark.e2e
-
+pytestmark = [
+    pytest.mark.e2e,
+    pytest.mark.usefixtures("godot_bin"),
+]
 NATIVE_FIXTURE = (
     Path(__file__).parent.parent
     / "fixtures"
     / "projects"
     / "native_test_project"
-)
-
-skip_if_no_godot = pytest.mark.skipif(
-    find_godot_binary() is None,
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
 )
 
 
@@ -65,7 +60,6 @@ def _run_cli(
     )
 
 
-@skip_if_no_godot
 def test_native_cli_init_installs_native_runtime_without_gut(
     tmp_path, godot_bin
 ):
@@ -83,7 +77,6 @@ def test_native_cli_init_installs_native_runtime_without_gut(
     )
 
 
-@skip_if_no_godot
 def test_native_cli_defaults_to_native_and_writes_junit(tmp_path, godot_bin):
     """The default test command runs native suites and emits JUnit XML."""
     project = _setup_project(tmp_path)
@@ -128,7 +121,6 @@ def test_native_cli_defaults_to_native_and_writes_junit(tmp_path, godot_bin):
     }
 
 
-@skip_if_no_godot
 def test_native_cli_enforces_tag_selection(tmp_path, godot_bin):
     """A tag with no matching suites produces native migration guidance."""
     project = _setup_project(tmp_path)
@@ -147,7 +139,6 @@ def test_native_cli_enforces_tag_selection(tmp_path, godot_bin):
     assert "--runtime gut" in result.stdout + result.stderr
 
 
-@skip_if_no_godot
 def test_native_cli_preserves_exact_file_selector(tmp_path, godot_bin):
     """Selecting one file does not execute failing sibling suites."""
     project = _setup_project(tmp_path)
@@ -165,7 +156,6 @@ def test_native_cli_preserves_exact_file_selector(tmp_path, godot_bin):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-@skip_if_no_godot
 def test_native_cli_preserves_failure_and_no_exit_exit_codes(
     tmp_path, godot_bin
 ):
@@ -197,7 +187,6 @@ def test_native_cli_preserves_failure_and_no_exit_exit_codes(
     assert suppressed.returncode == 0, suppressed.stdout + suppressed.stderr
 
 
-@skip_if_no_godot
 def test_native_cli_empty_selection_gives_legacy_guidance(tmp_path, godot_bin):
     """A missing native selection explains how to use the GUT fallback."""
     project = _setup_project(tmp_path)
@@ -216,7 +205,6 @@ def test_native_cli_empty_selection_gives_legacy_guidance(tmp_path, godot_bin):
     assert "--runtime gut" in result.stdout + result.stderr
 
 
-@skip_if_no_godot
 @pytest.mark.slow
 def test_native_cli_writes_coverage_artifacts(tmp_path, godot_bin):
     """The public native command produces plan, data, and report artifacts."""
@@ -244,7 +232,6 @@ def test_native_cli_writes_coverage_artifacts(tmp_path, godot_bin):
     assert (coverage_dir / "coverage.json").is_file()
 
 
-@skip_if_no_godot
 def test_native_cli_explicit_gut_runtime_remains_selectable(
     tmp_path, godot_bin
 ):

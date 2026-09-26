@@ -1,34 +1,29 @@
 """Shared fixtures for integration tests.
 
 Integration tests run against a real Godot 4.5+ binary.  The
-``godot_bin`` fixture auto-skips the entire test when the binary is
-not available (no ``GODOT_BIN`` env var and not on ``PATH``).
+``godot_bin`` fixture delegates to :func:`require_godot_binary`, which
+skips when the binary is absent locally but *fails* when it is absent
+in CI -- a skip there would report a green run that executed nothing.
 """
 
 from pathlib import Path
 
 import pytest
 
-from conftest import find_godot_binary
+from conftest import require_godot_binary
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
 
 @pytest.fixture(scope="session")
 def godot_bin():
-    """Return the Godot binary path or skip the test.
+    """Return the Godot binary path, skipping locally or failing in CI.
 
     This overrides the root conftest's ``godot_bin`` fixture (which
-    returns ``None``) to auto-skip integration tests when Godot is
-    not available.
+    returns ``None``) so that a missing Godot is an explicit error
+    rather than a silent no-op.
     """
-    binary = find_godot_binary()
-    if binary is None:
-        pytest.skip(
-            "Godot binary not found — set GODOT_BIN or add to PATH "
-            "to run integration tests"
-        )
-    return binary
+    return require_godot_binary("integration tests")
 
 
 @pytest.fixture(scope="session")
