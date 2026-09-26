@@ -58,7 +58,8 @@ Covers spec §2 R1 and acceptance criteria 1–4. The only phase that modifies p
   - [x] Record the 7-character SHA against each Phase 1 task and flip `[ ]` to `[x]`
   - [x] Commit the plan update as `conductor(plan): Mark Phase 1 complete`
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [checkpoint: b3501a7]
 
 ### Phase 1 deviation
 
