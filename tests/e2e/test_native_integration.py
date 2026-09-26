@@ -700,12 +700,9 @@ def test_native_windowed_suite_without_a_display_is_an_explicit_error(
 
 
 # Godot's wording when it cannot open a window is not stable across
-# platforms, which is why this list is longer than it looks.  On Linux the
-# engine talks about the display server ("x11", "wayland"), so the original
-# four markers were enough and these tests skipped.  On a Windows host with
-# no GPU the same condition is reported as a rendering-backend or video-card
-# failure and mentions none of those four -- so the identical situation
-# skipped on Linux and failed on Windows.
+# platforms, which is why this list spans both vocabularies.  Linux talks
+# about the display server ("x11", "wayland"); a Windows host with no GPU
+# reports a rendering-backend or video-card failure instead.
 _DISPLAY_MARKERS = (
     "display",
     "renderer",
@@ -720,17 +717,20 @@ _DISPLAY_MARKERS = (
 
 
 def _engine_detail(result) -> str:
-    """Engine- and process-level messages for use as an assertion message.
+    """Engine- and process-level detail for use as an assertion message.
 
-    Without this a mismatch here reports only the status, and the actual
-    Godot wording has to be recovered from a CI log to understand it.
+    The ``<engine>`` entry's own message is deliberately generic
+    ("Godot engine errors were reported"), so the useful text has to come
+    from its diagnostics.  Without this a mismatch reports only a status
+    and the actual Godot wording must be recovered from a CI log.
     """
-    detail = "; ".join(
-        f"{test.name}: {test.message}"
-        for test in result.tests
-        if test.name in ("<process>", "<engine>")
-    )
-    return detail or "no engine-level error reported"
+    parts = []
+    for test in result.tests:
+        if test.name not in ("<process>", "<engine>"):
+            continue
+        errors = test.diagnostics.get("engine_errors") or []
+        parts.append(f"{test.name}: {'; '.join(errors) or test.message}")
+    return "; ".join(parts) or "no engine-level error reported"
 
 
 def _skip_without_display(result):
@@ -739,13 +739,21 @@ def _skip_without_display(result):
     Only a process- or engine-level failure is treated as a missing display.
     A test failure that merely mentions a window is a real failure, so it is
     never converted into a skip.
+
+    The evidence is read from ``diagnostics["engine_errors"]`` as well as
+    the message.  Searching the message alone could never work: the
+    ``<engine>`` message is a fixed string, so for any platform whose
+    wording is absent from :data:`_DISPLAY_MARKERS` the identical
+    condition skipped on Linux and failed on Windows.
     """
     for test in result.tests:
         if test.name not in ("<process>", "<engine>"):
             continue
-        message = test.message.lower()
-        if any(marker in message for marker in _DISPLAY_MARKERS):
-            pytest.skip(f"Godot display is unavailable: {test.message}")
+        haystack = " ".join(
+            [test.message or "", *(test.diagnostics.get("engine_errors") or [])]
+        ).lower()
+        if any(marker in haystack for marker in _DISPLAY_MARKERS):
+            pytest.skip(f"Godot display is unavailable: {haystack.strip()}")
 
 
 def test_native_windowed_failure_captures_screenshot_after_each(
