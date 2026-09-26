@@ -135,7 +135,8 @@ Covers spec §2 R3 and acceptance criteria 6, 7, 8. Documentation only.
   - [x] Record the 7-character SHA against each Phase 3 task and flip `[ ]` to `[x]`
   - [x] Commit the plan update as `conductor(plan): Mark Phase 3 complete`
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [checkpoint: 828956f]
 
 ### Phase 3 correction log
 
