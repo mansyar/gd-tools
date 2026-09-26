@@ -20,6 +20,7 @@ hand-edited copies cannot drift apart.
 """
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -101,6 +102,70 @@ def require_godot_binary(purpose: str) -> str:
     )
 
 
+VENDORED_GUT_DIR = Path(__file__).parent / "spike" / "addons" / "gut"
+
+
+def gut_required_godot_minor(gut_dir: Path) -> int | None:
+    """The Godot minor version the vendored GUT release requires.
+
+    GUT 9.5.x targets Godot 4.5, 9.6.x targets 4.6, and so on -- the same
+    relationship ``gd_tools.godot.GUT_VERSION_MAP`` encodes in the other
+    direction.  GUT enforces this itself ("GUT 9.6.0 requires Godot 4.6 or
+    greater") and also uses engine APIs absent from older releases, so a
+    mismatch is a hard incompatibility rather than a runtime error to
+    debug.
+
+    Args:
+        gut_dir: Directory expected to contain GUT's ``plugin.cfg``.
+
+    Returns:
+        The required Godot minor version, or ``None`` when GUT is absent
+        or its version cannot be read.  ``None`` deliberately does not
+        skip: an unreadable version is not evidence of incompatibility.
+    """
+    plugin_cfg = gut_dir / "plugin.cfg"
+    if not plugin_cfg.is_file():
+        return None
+    match = re.search(
+        r'version\s*=\s*"\d+\.(\d+)\.',
+        plugin_cfg.read_text(encoding="utf-8"),
+    )
+    return int(match.group(1)) if match else None
+
+
+def require_gut_compatible(godot_bin: str) -> None:
+    """Skip when the vendored GUT cannot run on the detected Godot.
+
+    The repository vendors a single GUT release, but the Godot matrix
+    spans several engine versions.  On an engine older than that release
+    supports, every GUT-backed test fails on a parse error inside GUT
+    itself -- noise that buries real failures and, worse, makes the
+    engine look broken when it is not.
+
+    This is a *skip* rather than a *failure* even under CI, because
+    unlike a missing binary this is a known, understood limitation of the
+    fixture, not a broken pipeline.  The message names the cause so the
+    gap stays visible in ``-rs`` output instead of quietly disappearing.
+    """
+    required = gut_required_godot_minor(VENDORED_GUT_DIR)
+    if required is None:
+        return
+    from gd_tools.godot import get_godot_version
+
+    detected = get_godot_version(godot_bin)
+    detected_minor = int(detected.split(".")[1])
+    if detected_minor >= required:
+        return
+    version = (VENDORED_GUT_DIR / "plugin.cfg").read_text(encoding="utf-8")
+    gut_version = re.search(r'version\s*=\s*"([^"]+)"', version)
+    pytest.skip(
+        f"The vendored GUT {gut_version.group(1) if gut_version else '?'} "
+        f"requires Godot 4.{required} or newer, but this job runs Godot "
+        f"{detected}. The legacy GUT bridge is therefore UNVERIFIED on "
+        f"Godot {detected} -- only the native runtime is covered there."
+    )
+
+
 def import_godot_project(godot_bin: str, project: Path) -> None:
     """Import a generated Godot project, retrying one transient failure.
 
@@ -144,3 +209,15 @@ def godot_bin() -> str | None:
     binary is not available.
     """
     return find_godot_binary()
+
+
+@pytest.fixture(scope="session")
+def compatible_gut(godot_bin: str) -> None:
+    """Skip GUT-backed tests when the vendored GUT predates the engine.
+
+    Requested alongside ``godot_bin`` by the suites that copy
+    :data:`VENDORED_GUT_DIR` into a fixture project.  Depends on
+    ``godot_bin`` so the engine version is detected once per session and
+    the directory-local overrides of that fixture are honoured.
+    """
+    require_gut_compatible(godot_bin)

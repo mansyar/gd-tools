@@ -23,7 +23,7 @@ from gd_tools.test_runner import run_tests
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-pytestmark = pytest.mark.usefixtures("godot_bin")
+pytestmark = pytest.mark.usefixtures("godot_bin", "compatible_gut")
 
 
 def _find_godot_binary() -> str:

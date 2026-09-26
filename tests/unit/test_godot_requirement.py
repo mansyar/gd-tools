@@ -18,7 +18,11 @@ import pytest
 from _pytest.outcomes import Failed, Skipped
 
 import conftest
-from conftest import require_godot_binary
+from conftest import (
+    VENDORED_GUT_DIR,
+    gut_required_godot_minor,
+    require_godot_binary,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -127,3 +131,40 @@ def test_require_godot_binary_treats_empty_ci_var_as_not_ci(monkeypatch):
         require_godot_binary("integration tests")
 
     assert isinstance(excinfo.value, Skipped)
+
+
+# --- Vendored GUT engine compatibility ---
+
+
+def test_gut_required_minor_reads_the_plugin_version(tmp_path):
+    """The engine floor is derived from GUT's own declared version."""
+    (tmp_path / "plugin.cfg").write_text(
+        '[plugin]\nname="Gut"\nversion="9.6.0"\n', encoding="utf-8"
+    )
+
+    assert gut_required_godot_minor(tmp_path) == 6
+
+
+def test_gut_required_minor_returns_none_without_a_plugin_cfg(tmp_path):
+    """An absent GUT is not a compatibility problem, just an absent addon."""
+    assert gut_required_godot_minor(tmp_path) is None
+
+
+def test_gut_required_minor_returns_none_for_an_unparseable_version(tmp_path):
+    """A version we cannot read must not be guessed into a hard skip."""
+    (tmp_path / "plugin.cfg").write_text(
+        '[plugin]\nname="Gut"\nversion="nightly"\n', encoding="utf-8"
+    )
+
+    assert gut_required_godot_minor(tmp_path) is None
+
+
+def test_vendored_gut_cannot_run_on_the_project_minimum_godot():
+    """Guard the premise this track was created on.
+
+    The legacy GUT bridge is documented for Godot 4.5, but the vendored
+    copy is a single fixed version.  If that version ever moved down to
+    9.5.x this assertion would fail and the skip would be dead code
+    hiding an untested engine -- which is worth knowing.
+    """
+    assert gut_required_godot_minor(VENDORED_GUT_DIR) == 6

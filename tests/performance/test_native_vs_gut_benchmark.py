@@ -26,7 +26,7 @@ pytestmark = [
         os.environ.get("GD_TOOLS_RUN_BENCHMARK") != "1",
         reason="set GD_TOOLS_RUN_BENCHMARK=1 to run the performance benchmark",
     ),
-    pytest.mark.usefixtures("godot_bin"),
+    pytest.mark.usefixtures("godot_bin", "compatible_gut"),
 ]
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"

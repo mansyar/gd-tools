@@ -24,7 +24,7 @@ from gd_tools.init import install_coverage_addon
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-pytestmark = pytest.mark.usefixtures("godot_bin")
+pytestmark = pytest.mark.usefixtures("godot_bin", "compatible_gut")
 
 
 def _setup_project(tmp_path: Path) -> Path:

@@ -30,7 +30,7 @@ from gd_tools.init import install_coverage_addon, register_coverage_autoload
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-pytestmark = pytest.mark.usefixtures("godot_bin")
+pytestmark = pytest.mark.usefixtures("godot_bin", "compatible_gut")
 
 
 def _gd_tools_bin() -> str:
