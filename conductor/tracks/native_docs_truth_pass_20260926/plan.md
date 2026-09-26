@@ -161,38 +161,58 @@ once Phase 4 lands. Noted in the commit.
 
 Covers spec §2 R4 and acceptance criterion 9. Documentation only.
 
-- [ ] Task: Survey the components to be documented
-  - [ ] Read all five GDScript addon scripts: `gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`, `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd`
-  - [ ] Read all six Python modules: `command.py`, `orchestrator.py`, `preflight.py`, `discovery.py`, `protocol.py`, `artifacts.py`
-  - [ ] Note the existing coverage section's structure to mirror — overview, three phases, data formats, per-component detail, design decisions, cross-references
+- [x] Task: Survey the components to be documented
+  - [x] Read all five GDScript addon scripts: `gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`, `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd`
+  - [x] Read all six Python modules: `command.py`, `orchestrator.py`, `preflight.py`, `discovery.py`, `protocol.py`, `artifacts.py`
+  - [x] Note the existing coverage section's structure to mirror — overview, three phases, data formats, per-component detail, design decisions, cross-references
 
-- [ ] Task: Write the overview and responsibility boundary
-  - [ ] State the Python/Godot split as `tech-stack.md` §9 defines it: Python owns config, discovery, process orchestration, reporting, and exit codes; Godot owns test loading, lifecycle, assertions, async waits, scene-tree interaction, and coverage activation
-  - [ ] Include an ASCII diagram of the native run flow, within 80 columns per `product-guidelines.md` §1
+- [x] Task: Write the overview and responsibility boundary
+  - [x] State the Python/Godot split as `tech-stack.md` §9 defines it: Python owns config, discovery, process orchestration, reporting, and exit codes; Godot owns test loading, lifecycle, assertions, async waits, scene-tree interaction, and coverage activation
+  - [x] Include an ASCII diagram of the native run flow, within 80 columns per `product-guidelines.md` §1
 
-- [ ] Task: Document protocol v2 data formats
-  - [ ] Document the suite manifest, the preflight result, the per-suite result, and the artifact index
-  - [ ] Document the NDJSON progress event stream
-  - [ ] State the exit code contract — 0 pass, 1 test or coverage failure, 2 environment, config, protocol, engine, or process failure
+- [x] Task: Document protocol v2 data formats
+  - [x] Document the suite manifest, the preflight result, the per-suite result, and the artifact index
+  - [x] Document the NDJSON progress event stream
+  - [x] State the exit code contract — 0 pass, 1 test or coverage failure, 2 environment, config, protocol, engine, or process failure
 
-- [ ] Task: Write per-component detail
-  - [ ] One subsection per GDScript script and per Python module, each covering responsibility, key interfaces, and where it sits in the flow
-  - [ ] Cross-reference the existing coverage section where the two systems meet, rather than duplicating it
+- [x] Task: Write per-component detail
+  - [x] One subsection per GDScript script and per Python module, each covering responsibility, key interfaces, and where it sits in the flow
+  - [x] Cross-reference the existing coverage section where the two systems meet, rather than duplicating it
 
-- [ ] Task: Write design decisions
-  - [ ] Record the decisions already durable in `product.md` §9 and `ROADMAP.md` §8: the GDScript-metadata preflight so Python never parses GDScript; project autoloads running exactly as in production with no test-only autoload installed; windowed suites failing with exit 2 rather than falling back to headless; per-attempt rebuild for retry isolation; run-scoped artifacts retaining only the latest run
-  - [ ] Update the cross-references section to link the new section from the coverage material and vice versa
+- [x] Task: Write design decisions
+  - [x] Record the decisions already durable in `product.md` §9 and `ROADMAP.md` §8: the GDScript-metadata preflight so Python never parses GDScript; project autoloads running exactly as in production with no test-only autoload installed; windowed suites failing with exit 2 rather than falling back to headless; per-attempt rebuild for retry isolation; run-scoped artifacts retaining only the latest run
+  - [x] Update the cross-references section to link the new section from the coverage material and vice versa
 
-- [ ] Task: Verify and commit
-  - [ ] Confirm the section contains per-component detail for all eleven modules, per acceptance criterion 9
-  - [ ] Confirm no ASCII diagram exceeds 80 columns
-  - [ ] Confirm the existing coverage content is unaltered — the section is additive
-  - [ ] Commit as `docs(architecture): document the native test runtime`
-  - [ ] Attach a git note recording the section structure and which components remain undocumented, if any
-  - [ ] Record the 7-character SHA against each Phase 4 task and flip `[ ]` to `[x]`
-  - [ ] Commit the plan update as `conductor(plan): Mark Phase 4 complete`
+- [x] Task: Verify and commit
+  - [x] Confirm the section contains per-component detail for all eleven modules, per acceptance criterion 9
+  - [x] Confirm no ASCII diagram exceeds 80 columns
+  - [x] Confirm the existing coverage content is unaltered — the section is additive
+  - [x] Commit as `docs(architecture): document the native test runtime` — `aca751d`
+  - [x] Attach a git note recording the section structure and which components remain undocumented, if any
+  - [x] Record the 7-character SHA against each Phase 4 task and flip `[ ]` to `[x]`
+  - [x] Commit the plan update as `conductor(plan): Mark Phase 4 complete`
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+### Phase 4 notes
+
+The section is **Part II** rather than a continuation of Part I's numbering.
+Part I covers the coverage system and Part II the native runtime, so renumbering
+Part I would have touched every heading and cross-reference for no reader
+benefit. The whole-file diff is four hunks in lines 1-13 (title and intro) plus
+one pure-append hunk at the end; Part I's body is byte-identical to `HEAD`.
+
+Two checks during this phase reported Part I as changed when it was not. Both
+were PowerShell read artifacts — `git show` and `Get-Content` rendered a
+pre-existing em-dash differently — and `git diff`'s hunk list is authoritative.
+Recorded because the next reader may hit the same false signal.
+
+One unverified claim was caught before commit. A limitations bullet originally
+read "roughly ten times that in GUT", a ratio not verifiable from this
+repository. It now states only that seven assertions is considerably narrower
+than the GUT assertion set, with no invented number. Shipping a specific ratio
+would have been the failure mode this track exists to fix.
+
 
 ## Final Verification
 
