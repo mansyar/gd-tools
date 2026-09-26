@@ -18,47 +18,56 @@ Phases 2 through 4 are documentation. Per `workflow.md`, tests are required only
 
 Covers spec §2 R1 and acceptance criteria 1–4. The only phase that modifies production code.
 
-- [ ] Task: Establish test conventions
-  - [ ] Read `tests/unit/test_native_artifacts.py` in full (181 lines) to confirm naming, docstring, and arrange/act/assert style before adding tests
-  - [ ] Read `_write_run` (line 49) and `test_prune_keeps_directories_that_are_not_runs` (line 139) and note precisely what the existing retention coverage does and does not assert
-  - [ ] Confirm the current Red cause is the retention predicate and not an unrelated import or fixture error
+- [x] Task: Establish test conventions
+  - [x] Read `tests/unit/test_native_artifacts.py` in full (181 lines) to confirm naming, docstring, and arrange/act/assert style before adding tests
+  - [x] Read `_write_run` (line 49) and `test_prune_keeps_directories_that_are_not_runs` (line 139) and note precisely what the existing retention coverage does and does not assert
+  - [x] Confirm the current Red cause is the retention predicate and not an unrelated import or fixture error
 
-- [ ] Task: Red — write failing tests
-  - [ ] Add a test proving a user directory containing a `native/` subdirectory and no run marker survives retention
-  - [ ] Add a test proving a user directory containing a `preflight/` subdirectory and no run marker survives retention
-  - [ ] Add a test proving a run directory carrying the start-of-run sentinel but no published `artifacts.json` is pruned — this is the constraint that rules out an index-only fix
-  - [ ] Add a test proving a pre-marker run directory carrying only `artifacts.json` is still pruned — this is the constraint that rules out a sentinel-only fix
-  - [ ] Add a test proving the current run, a symlink, and a plain file under the artifact root all remain unpruned, pinning existing behavior so the fix cannot regress it
-  - [ ] Update the `_write_run` helper so a run-shaped directory reflects a real run's on-disk shape once the sentinel exists
-  - [ ] Run `CI=true pytest tests/unit/test_native_artifacts.py` and confirm the new tests fail for the intended reason — the prune predicate, not a typo or import error
+- [x] Task: Red — write failing tests
+  - [x] Add a test proving a user directory containing a `native/` subdirectory and no run marker survives retention
+  - [x] Add a test proving a user directory containing a `preflight/` subdirectory and no run marker survives retention
+  - [x] Add a test proving a run directory carrying the start-of-run sentinel but no published `artifacts.json` is pruned — this is the constraint that rules out an index-only fix
+  - [x] Add a test proving a pre-marker run directory carrying only `artifacts.json` is still pruned — this is the constraint that rules out a sentinel-only fix
+  - [x] Add a test proving the current run, a symlink, and a plain file under the artifact root all remain unpruned, pinning existing behavior so the fix cannot regress it
+  - [x] Update the `_write_run` helper so a run-shaped directory reflects a real run's on-disk shape once the sentinel exists — **superseded**: the `artifacts.json`-only shape is the more valuable fixture, because it is what a pre-marker run looks like on disk. `_write_run` was left unchanged and a dedicated test covers the sentinel-only shape
+  - [x] Run `CI=true pytest tests/unit/test_native_artifacts.py` and confirm the new tests fail for the intended reason — the prune predicate, not a typo or import error
 
-- [ ] Task: Green — minimum implementation
-  - [ ] Add a module-level sentinel filename constant to `src/gd_tools/native_test/artifacts.py`
-  - [ ] Write the sentinel at run start in `src/gd_tools/native_test/command.py`, after `NativeArtifactLayout.create` at line 118 and before `run_native_preflight` at line 120
-  - [ ] Do not write the sentinel inside `NativeArtifactLayout.create` — it is a pure constructor exercised by `test_layout_uses_safe_run_scoped_stable_names` at line 18 with no filesystem setup, and adding a side effect would make that test depend on disk state
-  - [ ] Narrow `_is_run_directory` (line 231) to accept only the sentinel or `artifacts.json`, dropping the `native/` and `preflight/` checks
-  - [ ] Preserve the existing guards in `_prune_old_runs` (line 224) for the current run, non-directories, and symlinks
-  - [ ] Run `CI=true pytest tests/unit/test_native_artifacts.py` and confirm Green
+- [x] Task: Green — minimum implementation
+  - [x] Add a module-level sentinel filename constant to `src/gd_tools/native_test/artifacts.py`
+  - [x] Write the sentinel at run start in `src/gd_tools/native_test/command.py`, after `NativeArtifactLayout.create` at line 118 and before `run_native_preflight` at line 120
+  - [x] Do not write the sentinel inside `NativeArtifactLayout.create` — it is a pure constructor exercised by `test_layout_uses_safe_run_scoped_stable_names` at line 18 with no filesystem setup, and adding a side effect would make that test depend on disk state
+  - [x] Narrow `_is_run_directory` (line 231) to accept only the sentinel or `artifacts.json`, dropping the `native/` and `preflight/` checks
+  - [x] Preserve the existing guards in `_prune_old_runs` (line 224) for the current run, non-directories, and symlinks
+  - [x] Run `CI=true pytest tests/unit/test_native_artifacts.py` and confirm Green
 
-- [ ] Task: Refactor
-  - [ ] Re-read the changed functions and confirm naming, docstring presence, and type hints match the surrounding module
-  - [ ] Confirm no orphan imports or names were created by the change
-  - [ ] Re-run `CI=true pytest tests/unit/test_native_artifacts.py`
+- [x] Task: Refactor
+  - [x] Re-read the changed functions and confirm naming, docstring presence, and type hints match the surrounding module
+  - [x] Confirm no orphan imports or names were created by the change
+  - [x] Re-run `CI=true pytest tests/unit/test_native_artifacts.py`
 
-- [ ] Task: Verify quality gates
-  - [ ] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` and confirm `artifacts.py` has not dropped below the 83% line / 75% branch recorded at the Phase 7 checkpoint of `native_scene_integration_20260925`
-  - [ ] Run `ruff check src/ tests/`
-  - [ ] Run `black --check src/ tests/`
-  - [ ] Run `gdlint` and `gdformat --check` if either file was touched — neither is expected to be
-  - [ ] Run `git diff --check`
+- [x] Task: Verify quality gates
+  - [x] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` and confirm `artifacts.py` has not dropped below the 83% line / 75% branch recorded at the Phase 7 checkpoint of `native_scene_integration_20260925` — **88% line / 93% branch**, improved on both
+  - [x] Run `ruff check src/ tests/`
+  - [x] Run `black --check src/ tests/`
+  - [x] Run `gdlint` and `gdformat --check` if either file was touched — neither is expected to be
+  - [x] Run `git diff --check`
 
-- [ ] Task: Commit and record
-  - [ ] Commit as `fix(native): prune only directories carrying a gd-tools run marker`
-  - [ ] Attach a git note recording why the sentinel is written at run start and why `artifacts.json` remains accepted, since both constraints are non-obvious and a future reader would otherwise "simplify" the predicate back into a defect
-  - [ ] Record the 7-character SHA against each Phase 1 task and flip `[ ]` to `[x]`
-  - [ ] Commit the plan update as `conductor(plan): Mark Phase 1 complete`
+- [x] Task: Commit and record
+  - [x] Commit as `fix(native): prune only directories carrying a gd-tools run marker` — `a36cb0b`
+  - [x] Attach a git note recording why the sentinel is written at run start and why `artifacts.json` remains accepted, since both constraints are non-obvious and a future reader would otherwise "simplify" the predicate back into a defect
+  - [x] Record the 7-character SHA against each Phase 1 task and flip `[ ]` to `[x]`
+  - [x] Commit the plan update as `conductor(plan): Mark Phase 1 complete`
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+### Phase 1 deviation
+
+Two deviations from the plan as written, recorded rather than absorbed:
+
+1. **`_write_run` was not updated.** The plan had it write the sentinel, but the `artifacts.json`-only shape is the more valuable fixture because it is exactly what a run published by v0.4.x looks like on disk. A dedicated test now covers the sentinel-only shape, and `_write_run` keeps representing the legacy shape.
+2. **`PYTHONPATH` is required to run the suite in this worktree.** The editable install at `__editable__.gd_tools_cli-0.4.0.pth` points at `C:\Users\Ansyar\Documents\Upskilling\cli\gd-tools\src` — a different checkout. Without `PYTHONPATH=<repo>\src`, `pytest` silently tests that other tree and source changes appear to have no effect. This invalidated the first Red and Green runs, which were redone against the correct source. The cause is environmental, not a defect in this track.
+
+Additionally, 18 tests in `tests/e2e/` fail on Windows with `FileNotFoundError` because `_run_cli()` puts `Path(sys.executable).parent` on `PATH` while Windows console scripts live in `Scripts\`. Confirmed identical on unmodified `main`, so it is pre-existing and out of scope here.
 
 ## Phase 2 — Guarantee Documentation (R2, R5, R6)
 
