@@ -74,28 +74,28 @@ Additionally, 18 tests in `tests/e2e/` fail on Windows with `FileNotFoundError` 
 
 Covers spec §2 R2, R5, R6 and acceptance criteria 5 and 10. Documentation only.
 
-- [ ] Task: Correct the retention guarantee in the user guide
-  - [ ] Update `docs/USER_GUIDE.md:578-580` so the pruning statement matches the Phase 1 behavior
-  - [ ] State positively what retention touches and what it never touches, per `product-guidelines.md` §4's requirement that messages be actionable and specific
-  - [ ] Leave the rest of `docs/USER_GUIDE.md` untouched — R6. It is accurate and is the model Phase 3 copies from
-  - [ ] Re-read the full artifact section at lines 554-595 to confirm no other sentence repeats the old claim
+- [x] Task: Correct the retention guarantee in the user guide
+  - [x] Update `docs/USER_GUIDE.md:578-580` so the pruning statement matches the Phase 1 behavior
+  - [x] State positively what retention touches and what it never touches, per `product-guidelines.md` §4's requirement that messages be actionable and specific
+  - [x] Leave the rest of `docs/USER_GUIDE.md` untouched — R6. It is accurate and is the model Phase 3 copies from
+  - [x] Re-read the full artifact section at lines 554-595 to confirm no other sentence repeats the old claim
 
-- [ ] Task: Correct the two `artifacts.py` docstrings
-  - [ ] Update `publish_artifact_index`'s docstring at lines 111-112 to describe the actual marker set
-  - [ ] Update `_prune_old_runs`'s docstring at lines 218-219 to match
-  - [ ] Confirm both now describe the sentinel and `artifacts.json`, and neither implies the `native/`/`preflight/` heuristic remains
+- [x] Task: Correct the two `artifacts.py` docstrings
+  - [x] Update `publish_artifact_index`'s docstring at lines 111-112 to describe the actual marker set
+  - [x] Update `_prune_old_runs`'s docstring at lines 218-219 to match
+  - [x] Confirm both now describe the sentinel and `artifacts.json`, and neither implies the `native/`/`preflight/` heuristic remains
 
-- [ ] Task: Refresh stale status headers
-  - [ ] Update `docs/ROADMAP.md:3-5` — version and date to current, status to reflect that the native runtime foundation and scene/resource integration are both delivered
-  - [ ] Update `docs/ROADMAP.md:1553` — §8's "Status: Planning" contradicts its own checked-off, Delivered Phases 1 and 2
-  - [ ] Update `docs/TESTING_STRATEGY.md:3-5` — the "Phase 4 In Progress (Track 14)" line predates ~1,033 tests and the native runtime entirely
-  - [ ] Confirm no correction advances a roadmap item's completion status. Phases 3–5 remain unstarted and must read that way
+- [x] Task: Refresh stale status headers
+  - [x] Update `docs/ROADMAP.md:3-5` — version and date to current, status to reflect that the native runtime foundation and scene/resource integration are both delivered
+  - [x] Update `docs/ROADMAP.md:1553` — §8's "Status: Planning" contradicts its own checked-off, Delivered Phases 1 and 2
+  - [x] Update `docs/TESTING_STRATEGY.md:3-5` — the "Phase 4 In Progress (Track 14)" line predates ~1,033 tests and the native runtime entirely
+  - [x] Confirm no correction advances a roadmap item's completion status. Phases 3–5 remain unstarted and must read that way
 
-- [ ] Task: Commit and record
-  - [ ] Commit as `docs: correct the artifact retention guarantee and stale status headers`
-  - [ ] Attach a git note recording that the docstring edits are in a `.py` file, so this phase is covered by the Python quality gates even though its content is prose
-  - [ ] Record the 7-character SHA against each Phase 2 task and flip `[ ]` to `[x]`
-  - [ ] Commit the plan update as `conductor(plan): Mark Phase 2 complete`
+- [x] Task: Commit and record
+  - [x] Commit as `docs: correct the artifact retention guarantee and stale status headers` — `444b7ce`
+  - [x] Attach a git note recording that the docstring edits are in a `.py` file, so this phase is covered by the Python quality gates even though its content is prose
+  - [x] Record the 7-character SHA against each Phase 2 task and flip `[ ]` to `[x]`
+  - [x] Commit the plan update as `conductor(plan): Mark Phase 2 complete`
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
