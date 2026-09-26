@@ -18,9 +18,33 @@
 
 Covers spec R1, R2, R3, and the R7 no-protocol-change verification.
 
+**Implementation note — committed as `abbb5de`.** Tasks 1.1 and 1.2 were executed
+differently from how they are written below, and the difference is deliberate. The
+plan listed five separately-spawned e2e tests and a second fixture,
+`skip_interactions_suite.gd`, holding `test_ordinary_passing_test`. What shipped is
+three batched tests over a single `skip_suite.gd`, and no second fixture.
+
+Guiding constraint 2 of this plan is the reason: each Godot spawn costs seconds and
+adds flake surface per `known_flakes.md`, and the five behaviours are all provable
+from one manifest's `payload["tests"]`. The retry and no-escalation behaviours the
+second fixture was meant to pin are provable from `skip_suite.gd` plus manifest
+config — `retries: 2` on a skipping test proves retries are unconsumed, and the
+all-skipped manifest proves the run does not escalate. The task text below is left
+as written so the divergence stays visible rather than being edited into agreement.
+
+One test-name change worth noting: the plan's
+`test_native_skip_reports_skipped_status_with_reason` shipped as
+`test_native_skipped_tests_report_status_and_reason`, because it asserts the reason
+across three methods rather than one.
+
+Verification for this phase: full suite `1152 passed, 2 skipped, 0 failed` in 7m35s
+across two separate runs, with no flakes; coverage `96.15%` total against a `80%`
+gate (`Required test coverage of 80.0% reached`), branch coverage included.
+`protocol.py` and `command.py` are untouched, per spec R7.
+
 ### Task 1.1: Write the failing tests (Red)
 
-- [ ] Task: Add fixture suites for the skip surface
+- [x] Task: Add fixture suites for the skip surface [abbb5de]
   - [ ] Create `tests/fixtures/projects/native_test_project/test/skip_suite.gd` with a `NativeSkipSuite` (`class_name`) containing these methods:
     - `test_skips_with_reason` — calls `skip_test("no network in sandbox")` and nothing else
     - [ ] `test_skips_without_reason` — calls `skip_test()` with no argument, covering spec R1's default-reason requirement
@@ -34,7 +58,7 @@ Covers spec R1, R2, R3, and the R7 no-protocol-change verification.
 
 ### Task 1.2: Add the e2e tests (Red)
 
-- [ ] Task: Add skip tests to `tests/e2e/test_native_runtime.py`
+- [x] Task: Add skip tests to `tests/e2e/test_native_runtime.py` [abbb5de]
   - [ ] `test_native_skip_reports_skipped_status_with_reason` — one Godot spawn over `skip_suite.gd`. Assert `returncode == 0`, the entry for `test_skips_with_reason` has `status == "skipped"` and `message == "no network in sandbox"`, and the run carries no `failed`/`error` entry.
   - [ ] `test_native_skip_without_reason_supplies_default` — asserts `message` is non-empty for `test_skips_without_reason`.
   - [ ] `test_native_assertions_after_skip_are_discarded` — one spawn; both post-skip methods report `skipped` with **empty** `diagnostics.failures`, proving the guard.
@@ -46,7 +70,7 @@ Covers spec R1, R2, R3, and the R7 no-protocol-change verification.
 
 ### Task 1.3: Implement the skip surface (Green)
 
-- [ ] Task: Add skip state and emission to `src/gd_tools/addons/gd-tools-test/gd_tools_test.gd`
+- [x] Task: Add skip state and emission to `src/gd_tools/addons/gd-tools-test/gd_tools_test.gd` [abbb5de]
   - [ ] Add a per-instance skip flag and a skip reason string. State must live on the **test** instance, not the suite instance — `_new_test_context` (`gd_tools_test_runner.gd:483-495`) builds a fresh instance per attempt, which is what keeps a skip from leaking across retries.
   - [ ] Add public `skip_test(reason := "")`. When `reason` is empty, substitute a default so `message` is never blank (spec R1) — JUnit `<skipped message=...>` and the terminal table both render it.
   - [ ] Add public `pending_test(reason := "")` as a direct alias delegating to `skip_test` (spec R1, decision 2 in spec §6). It must not be a second code path.
@@ -55,7 +79,7 @@ Covers spec R1, R2, R3, and the R7 no-protocol-change verification.
 
 ### Task 1.4: Implement the three-way status in the runner (Green)
 
-- [ ] Task: Report `skipped` from `gd_tools_test_runner.gd`
+- [x] Task: Report `skipped` from `gd_tools_test_runner.gd` [abbb5de]
   - [ ] Read `_run_test_attempt` before editing. The single decision point is the status computation at `:317-318` — `var status := "failed" if not failures.is_empty() else "passed"`.
   - [ ] Make it three-way: no failures **and** a recorded skip → `status = "skipped"` with the skip reason as `message`. Failures still take precedence, so the existing `failed` branch is unchanged in behavior.
   - [ ] Put the reason in the returned `message` (`:363-370`). Do **not** route it through `diagnostics` — spec R6 keeps that structure unchanged.
@@ -65,19 +89,19 @@ Covers spec R1, R2, R3, and the R7 no-protocol-change verification.
 
 ### Task 1.5: Refactor (optional)
 
-- [ ] Task: Clean up only if Phase 1 tests are Green
+- [x] Task: Clean up only if Phase 1 tests are Green [abbb5de] - no duplication introduced; nothing to refactor
   - [ ] Remove any duplication the implementation introduced.
   - [ ] Do not reorganize the seven existing assertions or touch unrelated runner code, per `workflow.md`'s surgical-changes principle.
 
 ### Task 1.6: Verify coverage
 
-- [ ] Task: Check the self-coverage gate
+- [x] Task: Check the self-coverage gate [abbb5de]
   - [ ] `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
   - [ ] Target: >80% line, >70% branch on new source. The ≥80%/>70% gate must be unchanged or better.
 
 ### Task 1.7: Commit and record
 
-- [ ] Task: Commit Phase 1
+- [x] Task: Commit Phase 1 [abbb5de]
   - [ ] Stage the `.gd`, fixture, and test changes.
   - [ ] Commit: `feat(native-test): Add skip_test and pending_test to the native runtime`
   - [ ] Attach a `git notes` summary per `workflow.md` step 9.
@@ -85,7 +109,7 @@ Covers spec R1, R2, R3, and the R7 no-protocol-change verification.
 
 ### Task 1.8: Phase Verification & Checkpoint
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
+- [~] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
   - [ ] Run `git diff --name-only <previous_checkpoint_sha> HEAD`; for every changed `.py`/`.gd`, confirm a corresponding test exists.
   - [ ] Announce and run the full `CI=true pytest` suite. If it fails, propose at most two fixes, then stop and ask.
   - [ ] Present manual verification steps for the user and **await explicit confirmation** before checkpointing:
@@ -263,3 +287,55 @@ Covers spec R8 and the track's Definition of Done.
 | Retrying a skipped test wastes a retry | Low | Already correct at `:182`; Task 1.4 verifies rather than edits. |
 | Scope creep into mocking / parameterized / parallel | Medium | All three are in `spec.md` §5 Out of Scope and stay "Not yet" in `README.md:143-147`. |
 | Docs overclaim | Medium | Task 3.1 forbids touching the four §13 limitations that remain true. |
+
+---
+
+## Follow-ups found during implementation
+
+Recorded here rather than in `spec.md`, which is approved. Neither is in scope for
+this track; both are candidates for their own track.
+
+### A suite that fails to load is silently dropped and the run passes
+
+Found during Task 1.2 while confirming the Red phase. Not a flake and not caused by
+this track's changes.
+
+`gd_tools_test_runner.gd` `_run_suite` loads a suite script and calls `script.new()`
+on it. When the script has a parse error, `load()` returns a null `GDScript`, and the
+`new()` call at `:101` raises `Invalid call. Nonexistent function 'new' in base
+'GDScript'`. That error is swallowed rather than escalated, the suite is dropped, and
+the run finishes with:
+
+```
+status: "passed"
+tests:  []
+returncode: 0
+```
+
+So a typo in any suite file — a bad `extends`, a missing method, a syntax error —
+produces a green run that executed nothing. This is the same shape as the
+uninstrumentable-target problem in `coverage_target_contract_20260926`: a failure
+that reports as success.
+
+Observed with a `Function "pending_test()" not found in base self` parse error, which
+is precisely the error this track's Red phase was supposed to produce. The test meant
+to catch it passed vacuously, because `all(test["status"] == "skipped" for ...)` over
+an empty list is `True`. `test_native_all_skipped_suite_exits_zero` now asserts
+`len(payload["tests"]) == 5` first, so it cannot pass that way again.
+
+Two things a future track should weigh:
+
+- The runner already has the vocabulary. A load failure is `error`, and `error` is not
+  retryable, does not escalate silently, and exits 2. A suite that cannot load is an
+  environment problem, exactly the class `spec.md`'s exit code 2 reserves.
+- The engine error *was* captured. It reached stderr and the run's engine diagnostics;
+  the escalation at `:717-724` that turns any captured `ERROR:` into exit 2 did not
+  fire, which suggests the capture or the escalation has a gap worth reading before
+  choosing where to fix this.
+
+### Blanket test-count assertion
+
+Independent of the bug above, e2e tests that assert over `payload["tests"]` should
+assert the expected count before the content. A dropped suite turns content
+assertions vacuously true, and the same class of false pass could reach any of the
+existing tests in this file.
