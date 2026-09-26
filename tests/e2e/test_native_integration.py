@@ -699,6 +699,40 @@ def test_native_windowed_suite_without_a_display_is_an_explicit_error(
     )
 
 
+# Godot's wording when it cannot open a window is not stable across
+# platforms, which is why this list is longer than it looks.  On Linux the
+# engine talks about the display server ("x11", "wayland"), so the original
+# four markers were enough and these tests skipped.  On a Windows host with
+# no GPU the same condition is reported as a rendering-backend or video-card
+# failure and mentions none of those four -- so the identical situation
+# skipped on Linux and failed on Windows.
+_DISPLAY_MARKERS = (
+    "display",
+    "renderer",
+    "x11",
+    "wayland",
+    "rendering",
+    "video card",
+    "vulkan",
+    "opengl",
+    "d3d12",
+)
+
+
+def _engine_detail(result) -> str:
+    """Engine- and process-level messages for use as an assertion message.
+
+    Without this a mismatch here reports only the status, and the actual
+    Godot wording has to be recovered from a CI log to understand it.
+    """
+    detail = "; ".join(
+        f"{test.name}: {test.message}"
+        for test in result.tests
+        if test.name in ("<process>", "<engine>")
+    )
+    return detail or "no engine-level error reported"
+
+
 def _skip_without_display(result):
     """Skip a windowed assertion when the host cannot open a display.
 
@@ -710,10 +744,7 @@ def _skip_without_display(result):
         if test.name not in ("<process>", "<engine>"):
             continue
         message = test.message.lower()
-        if any(
-            marker in message
-            for marker in ("display", "renderer", "x11", "wayland")
-        ):
+        if any(marker in message for marker in _DISPLAY_MARKERS):
             pytest.skip(f"Godot display is unavailable: {test.message}")
 
 
@@ -740,7 +771,7 @@ def test_native_windowed_failure_captures_screenshot_after_each(
         / "suite-0000.test_windowed.failure.png"
     )
     assert preflight.status == "ok"
-    assert result.status == "failed"
+    assert result.status == "failed", _engine_detail(result)
     assert result.tests[0].status == "failed"
     assert result.tests[0].diagnostics["screenshot"] == str(screenshot)
     assert screenshot.is_file()
@@ -789,7 +820,10 @@ def test_native_windowed_failures_keep_one_screenshot_each(tmp_path, godot_bin):
     screenshots = {
         test.name: test.diagnostics.get("screenshot") for test in result.tests
     }
-    assert set(screenshots) == {"test_first_failure", "test_second_failure"}
+    assert set(screenshots) == {
+        "test_first_failure",
+        "test_second_failure",
+    }, _engine_detail(result)
     assert len(set(screenshots.values())) == 2, screenshots
     for test_name, path in screenshots.items():
         expected = native_dir / f"suite-0000.{test_name}.failure.png"
@@ -897,7 +931,7 @@ def test_native_windowed_pass_and_headless_failure_skip_screenshots(
         passing_project / "test" / "windowed_suite.gd",
     )
     _skip_without_display(passing)
-    assert passing.status == "passed"
+    assert passing.status == "passed", _engine_detail(passing)
     assert not list(
         (
             passing_project
