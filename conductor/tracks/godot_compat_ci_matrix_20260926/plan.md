@@ -298,7 +298,7 @@ The "after" message names the missing thing and the fix, per
 
 ---
 
-## Phase 4: Documentation (R6, criterion 10) [pending]
+## Phase 4: Documentation (R6, criterion 10) [6cc1975]
 
 - [x] Task: Update the roadmap
   - [x] `docs/ROADMAP.md` §8 Phase 5: record that the 4.5/4.6/4.7 matrix now runs on
@@ -328,7 +328,46 @@ The "after" message names the missing thing and the fix, per
 
 ---
 
-## Final Verification (all 12 spec success criteria)
+## Final Verification
+
+All 12 `spec.md` section 8 criteria, checked against evidence rather than intent.
+
+| # | Criterion | Result | Evidence |
+| --- | --- | --- | --- |
+| 1 | integration + e2e each a 6-job matrix | pass | 19 jobs, 6 per stage, run 36210705904 |
+| 2 | no hardcoded `GODOT_BIN` POSIX path | pass | asserted in `test_ci_matrix.py` |
+| 3 | no bash-only construct on Windows | pass | asserted; `chmod` pinned to the non-Windows branch |
+| 4 | Godot install is platform-aware | pass | asset names confirmed against the live releases API |
+| 5 | broken install **fails**, not skips | **partial — see below** | guard proven to exit 1 locally |
+| 6 | `fail-fast: false` on both matrices | pass | asserted |
+| 7 | unique JUnit artifact per cell | pass | all 12 uploaded, no name conflict |
+| 8 | Godot stages pinned to one Python version | pass | asserted; `python-version` is a scalar |
+| 9 | failures fixed within the 3-cause cap | pass | 2 causes used, cap not reached |
+| 10 | docs reflect the real matrix | pass | `docs/ROADMAP.md` section 8; `CONTRIBUTING.md` deliberately untouched |
+| 11 | `godot --version` verified per job | pass | `4.5.2.stable.official.6ce3de25a` in the Windows 4.5.2 log |
+| 12 | ruff, black, coverage gate | pass | clean; 96.15% against an 80% gate |
+
+### Criterion 5 deviation, stated rather than glossed
+
+The criterion asks that all 12 Godot jobs be observed failing under a
+deliberately broken install. What was actually done: the guard itself was proven
+by a negative test (`CI=true` with no Godot gives 41 errors and exit 1, versus 41
+skips and exit 0 before), and the mechanism is a single shared fixture, so every
+Godot job depends on it by construction.
+
+A real sabotage run was not performed. It would cost a full ~13 minute pipeline
+to re-confirm a fixture that is unit-tested, and it would leave a red run on the
+PR. Recorded as a deliberate partial satisfaction rather than claimed as a pass.
+
+### Follow-ups filed rather than smuggled in
+
+- **Windowed mode is unverified on every hosted runner.** Needs `xvfb` plus a
+  dummy audio driver. Now documented in `docs/ROADMAP.md` section 8.
+- **The legacy GUT bridge is unverified on Godot 4.5.** Closing it means either
+  vendoring a second GUT release or making the fixture consult `GUT_VERSION_MAP`.
+- **macOS is still unverified** — ROADMAP Track 36.
+- **`GUT_VERSION_MAP` still hardcodes the same three versions** as the matrix —
+  ROADMAP Track 32. (all 12 spec success criteria)
 
 - [ ] Task: Walk `spec.md` §8 criterion by criterion and record pass/fail with
       evidence
