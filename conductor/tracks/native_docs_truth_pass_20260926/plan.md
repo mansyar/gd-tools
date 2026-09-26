@@ -104,38 +104,57 @@ Covers spec §2 R2, R5, R6 and acceptance criteria 5 and 10. Documentation only.
 
 Covers spec §2 R3 and acceptance criteria 6, 7, 8. Documentation only.
 
-- [ ] Task: Correct the incorrect test command
-  - [ ] Fix `README.md:230` — `pytest --cov=src/gd_tools` conflicts with `workflow.md` and with `pyproject.toml`'s `addopts`, which already pass `--cov=gd_tools`. Running it as written measures two different source roots
-  - [ ] Add the `CI=true` prefix the project workflow documents, which is what makes Godot-absent fail rather than skip
+- [x] Task: Correct the incorrect test command
+  - [x] Fix `README.md:230` — `pytest --cov=src/gd_tools` conflicts with `workflow.md` and with `pyproject.toml`'s `addopts`, which already pass `--cov=gd_tools`. Running it as written measures two different source roots
+  - [x] Add the `CI=true` prefix the project workflow documents, which is what makes Godot-absent fail rather than skip
 
-- [ ] Task: Rewrite the overview and features
-  - [ ] Update `README.md:16-20` so the native runtime is named as the default and GUT as a selectable legacy path
-  - [ ] Update the features table at `README.md:26-32` — the "Zero-friction bootstrap" row claims `gd-tools init` installs GUT, and "Standalone compatibility" frames GUT as a peer of gdlint and gdformat rather than a migration bridge
-  - [ ] Keep the phased-reveal ordering from `product.md` §4: familiar capabilities lead, coverage differentiates
+- [x] Task: Rewrite the overview and features
+  - [x] Update `README.md:16-20` so the native runtime is named as the default and GUT as a selectable legacy path
+  - [x] Update the features table at `README.md:26-32` — the "Zero-friction bootstrap" row claims `gd-tools init` installs GUT, and "Standalone compatibility" frames GUT as a peer of gdlint and gdformat rather than a migration bridge
+  - [x] Keep the phased-reveal ordering from `product.md` §4: familiar capabilities lead, coverage differentiates
 
-- [ ] Task: Correct the quick start and command summary
-  - [ ] Update `README.md:44-71` so the quick start reflects native-first bootstrap and mentions what `gd-tools init` actually deploys
-  - [ ] Update the command table at `README.md:75-85` — the `init`, `doctor`, `test`, and `version` rows all describe GUT as the default
-  - [ ] Mention `GdToolsTest`, `--runtime`, `--tag`, `--test-timeout`, `--with-gut`, and the artifact system, per acceptance criterion 6
+- [x] Task: Correct the quick start and command summary
+  - [x] Update `README.md:44-71` so the quick start reflects native-first bootstrap and mentions what `gd-tools init` actually deploys
+  - [x] Update the command table at `README.md:75-85` — the `init`, `doctor`, `test`, and `version` rows all describe GUT as the default
+  - [x] Mention `GdToolsTest`, `--runtime`, `--tag`, `--test-timeout`, `--with-gut`, and the artifact system, per acceptance criterion 6
 
-- [ ] Task: Add the native vs. GUT capability matrix
-  - [ ] Build a Markdown table comparing the two runtimes across discovery, lifecycle hooks, assertions, async waits, tags, selectors, scene/resource integration, coverage, and JUnit XML
-  - [ ] Source every cell from `docs/USER_GUIDE.md` §3.4 and the native runtime source — not from memory. A capability claimed here that the code lacks is a new inaccuracy
-  - [ ] Mark the GUT path as a migration bridge with a bounded support window, per `product.md` §9
-  - [ ] State the real limitations — no mocking, no parameterized tests, no parallel execution, no editor plugin — following the precedent `USER_GUIDE.md:554-580` already sets
+- [x] Task: Add the native vs. GUT capability matrix
+  - [x] Build a Markdown table comparing the two runtimes across discovery, lifecycle hooks, assertions, async waits, tags, selectors, scene/resource integration, coverage, and JUnit XML
+  - [x] Source every cell from `docs/USER_GUIDE.md` §3.4 and the native runtime source — not from memory. A capability claimed here that the code lacks is a new inaccuracy
+  - [x] Mark the GUT path as a migration bridge with a bounded support window, per `product.md` §9
+  - [x] State the real limitations — no mocking, no parameterized tests, no parallel execution, no editor plugin — following the precedent `USER_GUIDE.md:554-580` already sets
 
-- [ ] Task: Correct the configuration sample and acknowledgements
-  - [ ] Add `runtime`, `timeout_seconds`, `retries`, and `tags` to the `[test]` sample at `README.md:172-195`, matching `config.py:48-73`
-  - [ ] Update `README.md:247` — GUT is currently credited as "the GDScript test framework that `gd-tools test` drives"
-  - [ ] Update the documentation table at `README.md:206`, which describes ARCHITECTURE.md as coverage-system-only. Phase 4 changes that
+- [x] Task: Correct the configuration sample and acknowledgements
+  - [x] Add `runtime`, `timeout_seconds`, `retries`, and `tags` to the `[test]` sample at `README.md:172-195`, matching `config.py:48-73`
+  - [x] Update `README.md:247` — GUT is currently credited as "the GDScript test framework that `gd-tools test` drives"
+  - [x] Update the documentation table at `README.md:206`, which describes ARCHITECTURE.md as coverage-system-only. Phase 4 changes that — **done in advance**, so this row now depends on Phase 4 landing
 
-- [ ] Task: Commit and record
-  - [ ] Commit as `docs: rewrite the README around the native test runtime`
-  - [ ] Attach a git note recording that the capability matrix was sourced from `USER_GUIDE.md` and the runtime source, so a later reader knows it is verified rather than aspirational
-  - [ ] Record the 7-character SHA against each Phase 3 task and flip `[ ]` to `[x]`
-  - [ ] Commit the plan update as `conductor(plan): Mark Phase 3 complete`
+- [x] Task: Commit and record
+  - [x] Commit as `docs: rewrite the README around the native test runtime` — `9129d53`
+  - [x] Attach a git note recording that the capability matrix was sourced from `USER_GUIDE.md` and the runtime source, so a later reader knows it is verified rather than aspirational
+  - [x] Record the 7-character SHA against each Phase 3 task and flip `[ ]` to `[x]`
+  - [x] Commit the plan update as `conductor(plan): Mark Phase 3 complete`
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+### Phase 3 correction log
+
+Three inaccuracies were introduced and caught during the phase, recorded because
+each is the failure mode this track exists to prevent:
+
+1. `--suite test_player.gd` was wrong. `--suite` takes a class name, not a
+   file path; file selection is by positional path argument. Corrected to
+   `--suite PlayerTests`.
+2. Removing GUT from the `gd-tools version` row made it *less* accurate.
+   `version.py` still collects a `gut` key. Restored, phrased as "and GUT when
+   installed".
+3. `Retries | Per-suite configurable` contradicted `config.py`, which documents
+   `retries` as per test. Changed to "Configurable per test".
+
+One dependency was created in advance: the documentation table's Architecture
+row now claims ARCHITECTURE.md covers the native runtime, which is true only
+once Phase 4 lands. Noted in the commit.
+
 
 ## Phase 4 — ARCHITECTURE.md Native Section (R4)
 
