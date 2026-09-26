@@ -97,7 +97,8 @@ Covers spec §2 R2, R5, R6 and acceptance criteria 5 and 10. Documentation only.
   - [x] Record the 7-character SHA against each Phase 2 task and flip `[ ]` to `[x]`
   - [x] Commit the plan update as `conductor(plan): Mark Phase 2 complete`
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [checkpoint: 8d9964b]
 
 ## Phase 3 — README Rewrite (R3)
 
