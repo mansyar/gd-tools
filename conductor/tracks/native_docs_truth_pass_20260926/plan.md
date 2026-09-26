@@ -229,6 +229,10 @@ would have been the failure mode this track exists to fix.
   - [x] State that retention matches on the name rather than implying provenance
   - [x] Tell the reader what to avoid doing
 - [x] Task: Full quality gate
+  - [x] `CI=true pytest` — 1086 passed, 2 skipped, 18 failed (up three from 1083; the three new tests)
+  - [x] The 18 remain the pre-existing Windows `_run_cli()` `PATH` defect, identical test-for-test
+  - [x] Total coverage 96.15% against the 80% gate; `command.py` holds at 93% with the new branch covered
+  - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean
 
 ### The review's central finding, proved rather than asserted
 
