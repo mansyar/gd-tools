@@ -26,10 +26,7 @@ pytestmark = [
         os.environ.get("GD_TOOLS_RUN_BENCHMARK") != "1",
         reason="set GD_TOOLS_RUN_BENCHMARK=1 to run the performance benchmark",
     ),
-    pytest.mark.skipif(
-        find_godot_binary() is None,
-        reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-    ),
+    pytest.mark.usefixtures("godot_bin", "compatible_gut"),
 ]
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"

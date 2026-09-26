@@ -1643,7 +1643,41 @@ loss or manual reconstruction of configuration.
 - [ ] Add optional parallel execution
 - [ ] Integrate native runtime caching
 - [ ] Update `init`, `doctor`, CI, packaging, and documentation
-- [ ] Run the Godot 4.5+ compatibility matrix
+- [x] Run the Godot 4.5+ compatibility matrix
 - [ ] Publish the native runtime release
 - [ ] Remove the temporary bridge after its migration period
 - [ ] Fold durable decisions into the main roadmap and remove this section
+
+#### Verified compatibility matrix
+
+`gd-tools test` and `gd-tools test --coverage` are verified in CI on every
+combination below. The axes live in `.github/workflows/ci.yml` and are the one
+place to edit them; `GUT_VERSION_MAP` in `src/gd_tools/godot.py` lists the same
+versions and must be updated alongside (see Track 32).
+
+| Godot | Linux | Windows |
+| --- | --- | --- |
+| 4.5.2 | integration + e2e | integration + e2e |
+| 4.6.1 | integration + e2e | integration + e2e |
+| 4.7.1 | integration + e2e | integration + e2e |
+
+**macOS is not covered** and remains Track 36 — this matrix is not the full
+support claim in `conductor/product.md`.
+
+Three limits of this matrix are known and deliberate:
+
+1. **The legacy GUT bridge is unverified on Godot 4.5.** The repository vendors
+   a single GUT release (9.6.0), and GUT itself refuses to run below Godot 4.6.
+   Production resolves the right version per engine through `GUT_VERSION_MAP`,
+   but the test fixture does not consult it. Only the native runtime — the
+   default — is covered on 4.5.
+2. **Windowed suites are unverified on every hosted runner.** GitHub runners are
+   Server containers: Linux has no display server, and Windows has neither a GPU
+   nor an audio endpoint, so a windowed Godot start-up fails before any test
+   runs. Those tests skip with an explicit reason rather than reporting a pass.
+   Closing this needs `xvfb` plus a dummy audio driver.
+3. **The full pipeline takes about 13 minutes**, above the sub-10-minute target
+   in `conductor/product.md`. `timeout-minutes` is a per-job cap, not a workflow
+   budget, and the two Godot stages run in series. Verifying the matrix was
+   judged worth the duration; a nightly schedule for the widest axes is the
+   lever if that becomes a problem.

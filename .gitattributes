@@ -1,0 +1,28 @@
+# Normalize text files to LF in the repository and in checkouts on every
+# platform, Windows included.
+#
+# Without this, tools that rewrite line endings (notably black on Windows,
+# and some editors) silently convert files to CRLF, which turns a small
+# logical change into a whole-file diff. During Phase 1 of the Godot
+# compatibility matrix track, a single black run inflated a 264-line
+# change into 2651 insertions and 2526 deletions of pure line-ending
+# noise. Pinning eol=lf makes the index authoritative: git normalizes on
+# `git add`, so the working tree may be CRLF but the diff stays truthful.
+* text=auto eol=lf
+
+# Binary assets. `text=auto` already auto-detects these, but naming them
+# explicitly removes any dependence on that heuristic.
+*.ttf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.whl binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary

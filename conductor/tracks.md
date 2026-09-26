@@ -27,5 +27,9 @@ _Archived tracks live in `./archive/`._
 
 ---
 
+- [x] **Track: Godot 4.5+ Compatibility Matrix in CI** (archived → `./archive/godot_compat_ci_matrix_20260926/`)
+
+---
+
 - [x] **Track: Native Documentation Truth Pass** (archived → `./archive/native_docs_truth_pass_20260926/`)
 

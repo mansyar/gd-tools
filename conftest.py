@@ -8,10 +8,19 @@ modifying system environment variables.
 Provides a :func:`godot_bin` fixture that resolves the Godot binary
 path from ``GODOT_BIN`` or ``PATH``.  Returns ``None`` when not found
 so that unit tests can use it without skipping; integration and e2e
-conftest files override the fixture to auto-skip when Godot is absent.
+conftest files override the fixture to use :func:`require_godot_binary`.
+
+Godot-dependent suites must not treat a missing Godot the same way in
+every environment.  Locally it is a *skip* -- a developer without Godot
+installed should not see failures.  In CI it is a *failure*, because
+skipping there would report a green run that executed zero tests, which
+is strictly worse than a red one.  That split lives in
+:func:`require_godot_binary`, shared by both suites, so the two
+hand-edited copies cannot drift apart.
 """
 
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -42,6 +51,119 @@ def find_godot_binary() -> str | None:
     if env_bin and Path(env_bin).is_file():
         return env_bin
     return shutil.which("godot") or shutil.which("godot4")
+
+
+def require_godot_binary(purpose: str) -> str:
+    """Resolve the Godot binary, failing in CI but skipping locally.
+
+    Shared by the integration and e2e suites.  The behaviour intentionally
+    diverges on the ``CI`` environment variable:
+
+    - ``CI`` unset: a missing Godot *skips*. A developer without Godot
+      installed should not see their run go red.
+    - ``CI`` set: a missing Godot *fails*. A skip would be reported as a
+      passing run that exercised nothing, masking a broken pipeline --
+      most dangerously once CI resolves ``GODOT_BIN`` per-OS and a
+      silent install failure would turn every matrix job green.
+
+    An empty ``CI`` is treated as unset, since ``CI=`` is exported by some
+    shells without a value and must not break local runs.
+
+    Args:
+        purpose: What the caller is running, e.g. ``"integration tests"``,
+            used in the skip and failure messages.
+
+    Returns:
+        The resolved Godot binary path.
+
+    Raises:
+        pytest.fail.Exception: If ``CI`` is set and no Godot is found.
+        pytest.skip.Exception: If ``CI`` is unset and no Godot is found.
+    """
+    binary = find_godot_binary()
+    if binary is not None:
+        return binary
+
+    if os.environ.get("CI"):
+        pytest.fail(
+            "[Error] Godot binary not found while running "
+            f"{purpose}\n"
+            "Cause: no Godot was resolved from GODOT_BIN, PATH, or a "
+            "platform install location. In CI this is a broken pipeline, "
+            "not a reason to skip -- skipping reports a green run that "
+            "executed zero tests.\n"
+            "Fix: check the Godot install step for this job, then make "
+            "the binary reachable by setting GODOT_BIN or adding it to "
+            "PATH."
+        )
+    pytest.skip(
+        f"Godot binary not found - set GODOT_BIN or add to PATH to run "
+        f"{purpose}"
+    )
+
+
+VENDORED_GUT_DIR = Path(__file__).parent / "spike" / "addons" / "gut"
+
+
+def gut_required_godot_minor(gut_dir: Path) -> int | None:
+    """The Godot minor version the vendored GUT release requires.
+
+    GUT 9.5.x targets Godot 4.5, 9.6.x targets 4.6, and so on -- the same
+    relationship ``gd_tools.godot.GUT_VERSION_MAP`` encodes in the other
+    direction.  GUT enforces this itself ("GUT 9.6.0 requires Godot 4.6 or
+    greater") and also uses engine APIs absent from older releases, so a
+    mismatch is a hard incompatibility rather than a runtime error to
+    debug.
+
+    Args:
+        gut_dir: Directory expected to contain GUT's ``plugin.cfg``.
+
+    Returns:
+        The required Godot minor version, or ``None`` when GUT is absent
+        or its version cannot be read.  ``None`` deliberately does not
+        skip: an unreadable version is not evidence of incompatibility.
+    """
+    plugin_cfg = gut_dir / "plugin.cfg"
+    if not plugin_cfg.is_file():
+        return None
+    match = re.search(
+        r'version\s*=\s*"\d+\.(\d+)\.',
+        plugin_cfg.read_text(encoding="utf-8"),
+    )
+    return int(match.group(1)) if match else None
+
+
+def require_gut_compatible(godot_bin: str) -> None:
+    """Skip when the vendored GUT cannot run on the detected Godot.
+
+    The repository vendors a single GUT release, but the Godot matrix
+    spans several engine versions.  On an engine older than that release
+    supports, every GUT-backed test fails on a parse error inside GUT
+    itself -- noise that buries real failures and, worse, makes the
+    engine look broken when it is not.
+
+    This is a *skip* rather than a *failure* even under CI, because
+    unlike a missing binary this is a known, understood limitation of the
+    fixture, not a broken pipeline.  The message names the cause so the
+    gap stays visible in ``-rs`` output instead of quietly disappearing.
+    """
+    required = gut_required_godot_minor(VENDORED_GUT_DIR)
+    if required is None:
+        return
+    from gd_tools.godot import get_godot_version
+
+    detected = get_godot_version(godot_bin)
+    detected_minor = int(detected.split(".")[1])
+    if detected_minor >= required:
+        return
+    version = (VENDORED_GUT_DIR / "plugin.cfg").read_text(encoding="utf-8")
+    gut_version = re.search(r'version\s*=\s*"([^"]+)"', version)
+    pytest.skip(
+        f"The vendored GUT {gut_version.group(1) if gut_version else '?'} "
+        f"requires Godot 4.{required} or newer, but this job runs Godot "
+        f"{detected}. The legacy GUT bridge is therefore UNVERIFIED on "
+        f"Godot {detected} -- only the native runtime is covered there."
+    )
 
 
 def import_godot_project(godot_bin: str, project: Path) -> None:
@@ -87,3 +209,15 @@ def godot_bin() -> str | None:
     binary is not available.
     """
     return find_godot_binary()
+
+
+@pytest.fixture(scope="session")
+def compatible_gut(godot_bin: str) -> None:
+    """Skip GUT-backed tests when the vendored GUT predates the engine.
+
+    Requested alongside ``godot_bin`` by the suites that copy
+    :data:`VENDORED_GUT_DIR` into a fixture project.  Depends on
+    ``godot_bin`` so the engine version is detected once per session and
+    the directory-local overrides of that fixture are honoured.
+    """
+    require_gut_compatible(godot_bin)

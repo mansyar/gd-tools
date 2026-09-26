@@ -17,20 +17,15 @@ from textwrap import dedent
 
 import pytest
 
-from conftest import find_godot_binary
-
-pytestmark = pytest.mark.e2e
-
+pytestmark = [
+    pytest.mark.e2e,
+    pytest.mark.usefixtures("godot_bin"),
+]
 NATIVE_FIXTURE = (
     Path(__file__).parent.parent
     / "fixtures"
     / "projects"
     / "native_test_project"
-)
-
-skip_if_no_godot = pytest.mark.skipif(
-    find_godot_binary() is None,
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
 )
 
 SUBJECT_SCRIPT = """
@@ -223,7 +218,6 @@ def _junit_failures(junit: Path) -> str:
     )
 
 
-@skip_if_no_godot
 def test_native_cli_runs_scene_suite_with_default_and_overridden_metadata(
     tmp_path: Path, godot_bin: str
 ) -> None:
@@ -280,7 +274,6 @@ def test_native_cli_runs_scene_suite_with_default_and_overridden_metadata(
     }
 
 
-@skip_if_no_godot
 def test_native_cli_scene_failure_exits_one_with_diagnostics(
     tmp_path: Path, godot_bin: str
 ) -> None:
@@ -311,7 +304,6 @@ def test_native_cli_scene_failure_exits_one_with_diagnostics(
     assert "Ghost" in failures
 
 
-@skip_if_no_godot
 def test_native_cli_missing_scene_declaration_exits_two(
     tmp_path: Path, godot_bin: str
 ) -> None:
@@ -338,7 +330,6 @@ def test_native_cli_missing_scene_declaration_exits_two(
     assert index["suites"] == []
 
 
-@skip_if_no_godot
 def test_native_cli_tag_selection_skips_unmatched_scene_tests(
     tmp_path: Path, godot_bin: str
 ) -> None:
