@@ -378,6 +378,58 @@ PR. Recorded as a deliberate partial satisfaction rather than claimed as a pass.
 
 ---
 
+---
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions 3bd232a
+
+Conductor review of the branch found 5 Medium and 7 Low issues. Three were
+fixed here; two were deliberately deferred (see below) and the Low issues were
+left as optional polish.
+
+- [x] **Medium 1 - module-wide Godot gating regressed 7 Godot-free tests.**
+  Phase 1 replaced per-test `skip_if_no_godot` decorators with a module-level
+  `usefixtures`, which applies to every test in a module. Measured with
+  `GODOT_BIN=""`: 15/15 tests in `test_coverage_e2e.py` + `test_full_workflow.py`
+  skipped, where 8 previously did. The 7 affected are pure-Python
+  `coverage report/merge/show` and `doctor` tests, so they also stopped running
+  on the Godot 4.5 matrix cells - reducing what the minimum engine verifies.
+  Fixed by applying a `needs_godot` marker per test instead of at module level.
+  After: 8 passed / 7 skipped with no Godot; 15 passed with Godot; and with
+  `CI=true` and no Godot, 8 passed / 7 errors / exit 1, so R3 is unchanged.
+- [x] **Medium 2 - the install action's error guard was unreachable on Linux.**
+  `chmod +x "$extracted"` ran before the `[ -z "$extracted" ]` check, so under
+  `set -euo pipefail` an empty result aborted at chmod and the
+  `::error::No Godot binary found` diagnostic never printed. Verified in Git
+  Bash: `chmod: cannot access ''`, exit 1, guard line never reached. Fixed by
+  moving the check above the chmod; the same simulation now prints the
+  diagnostic and exits 1.
+- [x] **Medium 3 - `require_gut_compatible` had no automated test.** The first
+  root-cause fix received 7 unit tests; the second, which decides whether CI
+  skips or runs, received none. Added 3 tests covering skip-on-older-engine,
+  no-skip-on-supported-engine, and no-skip-when-GUT-absent.
+
+### Deferred review findings
+
+Recorded rather than silently dropped, since both are real and neither is
+tracked anywhere else:
+
+- **Medium 4 - the GUT engine floor is re-derived by regex instead of read from
+  the authority.** `gut_required_godot_minor` parses `9.6.0` -> `6`, re-asserting
+  the "GUT 9.N targets Godot 4.N" relationship that `GUT_VERSION_MAP` in
+  `src/gd_tools/godot.py` already owns. Inverting that map removes the duplicate
+  assertion, but it touches `src/`, which this spec scoped out as Track 32.
+- **Medium 5 - the windowed skip can mask real failures.**
+  `_WINDOWED_UNSUPPORTED_MARKERS` matches bare `"audio"` and `"display"` against
+  all `engine_errors`, and the `<engine>` entry exists whenever Godot logs any
+  error - so an unrelated error containing "audio" turns three assertions into
+  skips. These three tests are the only coverage of windowed screenshot
+  behavior and now skip on every hosted runner, so this is the steady state
+  rather than a recurrence. The durable fix is a capability probe, which belongs
+  to the already-filed windowed-coverage follow-up.
+
+---
+
 ## Risks
 
 | Risk | Likelihood | Mitigation |
