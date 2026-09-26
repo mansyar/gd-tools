@@ -27,6 +27,5 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Native Documentation Truth Pass**
-  *Link: [native_docs_truth_pass_20260926](./tracks/native_docs_truth_pass_20260926/index.md)*
+- [x] **Track: Native Documentation Truth Pass** (archived → `./archive/native_docs_truth_pass_20260926/`)
 
