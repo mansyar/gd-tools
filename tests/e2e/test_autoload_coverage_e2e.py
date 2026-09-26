@@ -30,10 +30,7 @@ from gd_tools.init import install_coverage_addon, register_coverage_autoload
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-skip_if_no_godot = pytest.mark.skipif(
-    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-)
+pytestmark = pytest.mark.usefixtures("godot_bin")
 
 
 def _gd_tools_bin() -> str:
@@ -106,7 +103,6 @@ def _find_file_id(plan: dict, path_fragment: str) -> int | None:
 
 
 @pytest.mark.e2e
-@skip_if_no_godot
 def test_autoload_instantiated_script_gets_coverage(tmp_path):
     """Scripts instantiated by autoloads show non-zero coverage.
 
@@ -161,7 +157,6 @@ def test_autoload_instantiated_script_gets_coverage(tmp_path):
 
 
 @pytest.mark.e2e
-@skip_if_no_godot
 def test_autoload_init_code_not_recorded(tmp_path):
     """Autoload _ready() code is NOT recorded as coverage.
 
@@ -212,7 +207,6 @@ def test_autoload_init_code_not_recorded(tmp_path):
 
 
 @pytest.mark.e2e
-@skip_if_no_godot
 def test_coverage_system_regression(tmp_path):
     """Coverage system produces valid output on the autoload fixture.
 

@@ -25,15 +25,12 @@ from conftest import find_godot_binary
 from gd_tools.godot import get_godot_version, get_gut_version_for_godot
 from gd_tools.init import install_coverage_addon, install_native_test_addon
 
-pytestmark = pytest.mark.e2e
-
+pytestmark = [
+    pytest.mark.e2e,
+    pytest.mark.usefixtures("godot_bin"),
+]
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
-
-skip_if_no_godot = pytest.mark.skipif(
-    find_godot_binary() is None,
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-)
 
 
 def _gd_tools_bin() -> str:
@@ -135,7 +132,6 @@ def _run_cli(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
 # ---------------------------------------------------------------------------
 
 
-@skip_if_no_godot
 def test_doctor_on_fresh_project(tmp_path):
     """gd-tools doctor before init → reports missing components."""
     project = _setup_fresh_project(tmp_path)
@@ -146,7 +142,6 @@ def test_doctor_on_fresh_project(tmp_path):
     assert "gut" in output or "coverage" in output
 
 
-@skip_if_no_godot
 def test_doctor_after_init(tmp_path):
     """gd-tools doctor after init → all checks pass."""
     project = _setup_project_with_godot(tmp_path)
@@ -159,7 +154,6 @@ def test_doctor_after_init(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-@skip_if_no_godot
 def test_lint_command(tmp_path):
     """gd-tools lint on sample project exits 0."""
     project = _setup_project_with_godot(tmp_path)
@@ -167,7 +161,6 @@ def test_lint_command(tmp_path):
     assert result.returncode == 0
 
 
-@skip_if_no_godot
 def test_format_command(tmp_path):
     """gd-tools format --check on sample project exits 0."""
     project = _setup_project_with_godot(tmp_path)
@@ -175,7 +168,6 @@ def test_format_command(tmp_path):
     assert result.returncode == 0
 
 
-@skip_if_no_godot
 def test_test_coverage_command(tmp_path):
     """gd-tools test --coverage runs tests and generates coverage artifacts."""
     project = _setup_project_with_godot(tmp_path)
@@ -221,7 +213,6 @@ def test_coverage_report_command(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-@skip_if_no_godot
 @pytest.mark.slow
 def test_full_workflow_sequence(tmp_path):
     """Complete user journey: doctor → lint → format → test --coverage → show → report."""

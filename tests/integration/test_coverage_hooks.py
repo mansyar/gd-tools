@@ -4,8 +4,8 @@ Tests the full coverage instrumentation pipeline by running GUT tests
 inside a real Godot project with the coverage hooks configured. Requires
 Godot 4.5+ binary in PATH and the GUT addon.
 
-All tests are marked ``@pytest.mark.integration`` and are automatically
-skipped when the Godot binary is not available on PATH.
+All tests are marked ``@pytest.mark.integration``.  A missing Godot skips
+locally but *fails* under CI -- see ``require_godot_binary``.
 """
 
 import json
@@ -18,6 +18,7 @@ from unittest.mock import patch
 
 import pytest
 
+from conftest import find_godot_binary
 from gd_tools.config import GdToolsConfig
 from gd_tools.init import install_coverage_addon, register_coverage_autoload
 from gd_tools.test_runner import run_tests
@@ -25,15 +26,19 @@ from gd_tools.test_runner import run_tests
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-skip_if_no_godot = pytest.mark.skipif(
-    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-)
+pytestmark = pytest.mark.usefixtures("godot_bin")
 
 
 def _find_godot_binary() -> str:
-    """Find the Godot binary path (GODOT_BIN env var or PATH lookup)."""
-    return os.environ.get("GODOT_BIN") or shutil.which("godot") or ""
+    """Find the Godot binary path.
+
+    Delegates to the shared resolver so a ``GODOT_BIN`` value is validated
+    as a real file rather than trusted blindly.  ``pytestmark`` already
+    guarantees a Godot is present.
+    """
+    binary = find_godot_binary()
+    assert binary is not None, "pytestmark requires a Godot binary"
+    return binary
 
 
 def _import_project(project_path: Path) -> None:
@@ -87,7 +92,6 @@ def _clear_coverage_env() -> None:
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_pre_run_hook_gut_tests_pass(tmp_path):
     """GUT tests for simplified pre_run_hook.gd (set_active only) pass."""
     project = _setup_hooks_project(tmp_path)
@@ -100,7 +104,6 @@ def test_pre_run_hook_gut_tests_pass(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_coverage_instrumentation_gut_tests_pass(tmp_path):
     """GUT tests for coverage.gd instrumentation methods pass.
 
@@ -117,7 +120,6 @@ def test_coverage_instrumentation_gut_tests_pass(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_post_run_hook_gut_tests_pass(tmp_path):
     """GUT tests for post_run_hook.gd data collection all pass."""
     project = _setup_hooks_project(tmp_path)
@@ -130,7 +132,6 @@ def test_post_run_hook_gut_tests_pass(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_end_to_end_flow(tmp_path):
     """Full coverage pipeline: plan loading -> instrumentation -> output."""
     project = _setup_hooks_project(tmp_path)
@@ -193,7 +194,6 @@ def test_hooks_end_to_end_flow(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_missing_plan_env_var(tmp_path):
     """Missing GD_TOOLS_COVERAGE_PLAN -> no instrumentation, tests still pass.
 
@@ -237,7 +237,6 @@ def test_hooks_missing_plan_env_var(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_malformed_plan_json(tmp_path):
     """Malformed plan JSON -> error logged, instrumentation aborted."""
     project = _setup_hooks_project(tmp_path)
@@ -274,7 +273,6 @@ def test_hooks_malformed_plan_json(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_missing_output_env_var(tmp_path):
     """Missing GD_TOOLS_COVERAGE_OUTPUT -> error logged."""
     project = _setup_hooks_project(tmp_path)
@@ -323,7 +321,6 @@ def test_hooks_missing_output_env_var(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_nonexistent_script_in_plan(tmp_path):
     """Plan references non-existent script -> error logged, file skipped."""
     project = _setup_hooks_project(tmp_path)
@@ -385,7 +382,6 @@ def test_hooks_nonexistent_script_in_plan(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_headless_mode(tmp_path):
     """Full flow works with --headless flag and exits cleanly with -gexit."""
     project = _setup_hooks_project(tmp_path)
@@ -434,7 +430,6 @@ def test_hooks_headless_mode(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_performance_50_files(tmp_path):
     """Instrumentation of 50 files completes in reasonable time (NFR-2: <5s)."""
     project = _setup_hooks_project(tmp_path)
@@ -516,7 +511,6 @@ def test_hooks_performance_50_files(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_empty_plan(tmp_path):
     """Empty plan (no files) -> no errors, no instrumentation."""
     project = _setup_hooks_project(tmp_path)
@@ -556,7 +550,6 @@ def test_hooks_empty_plan(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_hooks_unloadable_script(tmp_path):
     """Script that fails to load -> error logged, file skipped, others instrumented.
 

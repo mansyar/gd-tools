@@ -21,10 +21,7 @@ from gd_tools.init import install_coverage_addon
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-skip_if_no_godot = pytest.mark.skipif(
-    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-)
+pytestmark = pytest.mark.usefixtures("godot_bin")
 
 
 def _gd_tools_bin() -> str:
@@ -109,7 +106,6 @@ def _run_cli(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
 
 
 @pytest.mark.e2e
-@skip_if_no_godot
 def test_e2e_test_coverage_full_flow(tmp_path):
     """gd-tools test --coverage runs tests and generates coverage artifacts."""
     project = _setup_project_with_godot(tmp_path)
@@ -131,7 +127,6 @@ def test_e2e_test_coverage_full_flow(tmp_path):
 
 
 @pytest.mark.e2e
-@skip_if_no_godot
 def test_e2e_test_coverage_min_threshold_exit_1(tmp_path):
     """gd-tools test --coverage --min 100 exits 1 when below 100%."""
     project = _setup_project_with_godot(tmp_path)

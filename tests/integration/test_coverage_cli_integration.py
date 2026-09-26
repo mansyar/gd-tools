@@ -10,7 +10,6 @@ skipped when the Godot binary is not available on PATH.
 """
 
 import json
-import os
 import shutil
 from pathlib import Path
 from unittest.mock import patch
@@ -25,10 +24,7 @@ from gd_tools.init import install_coverage_addon
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 SPIKE_DIR = Path(__file__).parent.parent.parent / "spike"
 
-skip_if_no_godot = pytest.mark.skipif(
-    not (os.environ.get("GODOT_BIN") or shutil.which("godot")),
-    reason="Godot binary not found (set GODOT_BIN or add to PATH)",
-)
+pytestmark = pytest.mark.usefixtures("godot_bin")
 
 
 def _setup_project(tmp_path: Path) -> Path:
@@ -54,7 +50,6 @@ def _setup_project(tmp_path: Path) -> Path:
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_coverage_test_generates_plan_json(tmp_path):
     """run_coverage_test() generates plan.json in .gd-tools/coverage/."""
     project = _setup_project(tmp_path)
@@ -84,7 +79,6 @@ def test_run_coverage_test_generates_plan_json(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_coverage_test_generates_coverage_json(tmp_path):
     """run_coverage_test() generates coverage.json in .gd-tools/coverage/."""
     project = _setup_project(tmp_path)
@@ -114,7 +108,6 @@ def test_run_coverage_test_generates_coverage_json(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_coverage_test_generates_html_report(tmp_path):
     """run_coverage_test() generates HTML report in .gd-tools/coverage/."""
     project = _setup_project(tmp_path)
@@ -142,7 +135,6 @@ def test_run_coverage_test_generates_html_report(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_coverage_test_generates_junit_xml(tmp_path):
     """run_coverage_test() generates JUnit XML alongside coverage."""
     project = _setup_project(tmp_path)
@@ -171,7 +163,6 @@ def test_run_coverage_test_generates_junit_xml(tmp_path):
 
 
 @pytest.mark.integration
-@skip_if_no_godot
 def test_run_coverage_test_min_threshold_raises(tmp_path):
     """run_coverage_test() with min_percent=100 raises CoverageThresholdError."""
     project = _setup_project(tmp_path)
