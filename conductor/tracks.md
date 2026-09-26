@@ -27,7 +27,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Native Documentation Truth Pass** — artifact retention prunes
+- [~] **Track: Native Documentation Truth Pass** — artifact retention prunes
   any directory containing a `native/` or `preflight/` subfolder, so a
   user-created directory can be deleted while `USER_GUIDE.md` promises
   otherwise. Fix the marker predicate with TDD, then bring `README.md`,
