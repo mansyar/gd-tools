@@ -1,8 +1,8 @@
 # ROADMAP: gd-tools Development Plan
 
-**Version:** 0.2.0 (draft)
-**Date:** 2026-07-14
-**Status:** Native Test Runtime Foundation completed (transition path active)
+**Version:** 0.4.0
+**Date:** 2026-09-26
+**Status:** Native Scene and Resource Integration completed; migration Phases 3-5 outstanding
 **Related docs:** [PRD.md](./PRD.md), [ROADMAP_v1.md](./ROADMAP_v1.md) (archived v1 roadmap, Tracks 0-22), [AUDIT_REPORT.md](./AUDIT_REPORT.md), [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
@@ -1550,7 +1550,7 @@ Each Conductor track should produce:
 
 ## 8. Temporary: Native Test Runtime Migration Roadmap
 
-**Status:** Planning
+**Status:** In progress — Phases 0-2 delivered, Phases 3-5 outstanding
 **Purpose:** Replace the permanent GUT dependency with the native
 `GdToolsTest` runtime while preserving a bounded migration path.
 **Retirement condition:** Remove this temporary section after native tests

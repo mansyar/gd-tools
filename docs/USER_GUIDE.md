@@ -567,6 +567,7 @@ Every run publishes its artifacts under `.gd-tools/artifacts/<run_id>/`:
 
 ```
 .gd-tools/artifacts/<run_id>/
+├── .gdtools-run            # written at run start, so a crashed run stays prunable
 ├── artifacts.json          # machine-readable index of the run
 ├── preflight/              # manifest, result, and log
 └── native/                 # per-suite manifest, result, events, log, screenshots
@@ -575,9 +576,18 @@ Every run publishes its artifacts under `.gd-tools/artifacts/<run_id>/`:
 The index is printed at the end of the run and recorded as an
 `artifact_index` property on the JUnit `<testsuite>`. It lists only the
 artifacts that were actually written, and `screenshots` lists the realized
-captures for a suite. Only the latest run is retained; older run directories
-are pruned after the new index is published, and only directories carrying
-this tool's own run markers are pruned.
+captures for a suite.
+
+Only the latest run is retained. Older run directories are pruned once the new
+index is published, and a directory counts as a run only when it carries a
+marker `gd-tools` itself wrote: `.gdtools-run`, created at the start of every
+run, or `artifacts.json`, the published index. `artifacts.json` still counts so
+that runs from gd-tools 0.4.x and earlier are pruned rather than accumulating
+forever.
+
+Everything else under the artifact root is left alone: plain files, symlinks,
+and any other directory, including one that happens to contain `native/` or
+`preflight/` subdirectories of its own.
 
 **Plan Caching:**
 

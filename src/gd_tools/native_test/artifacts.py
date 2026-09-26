@@ -133,9 +133,10 @@ def publish_artifact_index(
     """Atomically publish one run index, then prune older run directories.
 
     The index is written before retention runs. If publication fails, the
-    previous run remains available for diagnosis. Only the directories this
-    tool created are treated as runs, so unrelated directories kept beside
-    them are left untouched.
+    previous run remains available for diagnosis. Retention recognizes a run
+    only by a marker this tool wrote -- ``.gdtools-run`` or ``artifacts.json``
+    -- so a directory a user placed under the artifact root is never deleted.
+    See :func:`_is_run_directory` for the accepted markers.
 
     Args:
         layout: Run-scoped artifact layout.
@@ -241,8 +242,10 @@ def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
 def _prune_old_runs(artifact_root: Path, current_run_dir: Path) -> None:
     """Remove direct child run directories except the current run.
 
-    Only directories that carry this tool's own run markers are removed, so a
-    directory a user placed under the artifact root is never deleted.
+    A child counts as a run only when it carries a marker this tool wrote --
+    ``.gdtools-run`` or ``artifacts.json``. Plain files, symlinks, and any
+    other directory are left in place, including one that happens to contain
+    ``native/`` or ``preflight/`` subdirectories of its own.
     """
     if not artifact_root.is_dir():
         return
