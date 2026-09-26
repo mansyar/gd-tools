@@ -699,11 +699,21 @@ def test_native_windowed_suite_without_a_display_is_an_explicit_error(
     )
 
 
-# Godot's wording when it cannot open a window is not stable across
-# platforms, which is why this list spans both vocabularies.  Linux talks
-# about the display server ("x11", "wayland"); a Windows host with no GPU
-# reports a rendering-backend or video-card failure instead.
-_DISPLAY_MARKERS = (
+# Evidence that the host cannot run a windowed Godot process at all.
+#
+# A GitHub-hosted runner is a Server container with neither a GPU nor an
+# audio endpoint, and a windowed Godot start-up dies on whichever it
+# reaches first.  Both platforms and both failure modes are listed because
+# the wording is Godot's, not ours:
+#
+#   linux    "x11"/"wayland" display-server wording
+#   windows  WASAPI audio initialisation, reported as
+#            'WASAPI: init_output_device error' -> ERR_CANT_OPEN
+#
+# The list is intentionally evidence-based rather than exhaustive; the
+# structural guard in the helper below is what makes it safe, since only
+# <process> and <engine> entries are ever considered.
+_WINDOWED_UNSUPPORTED_MARKERS = (
     "display",
     "renderer",
     "x11",
@@ -713,6 +723,10 @@ _DISPLAY_MARKERS = (
     "vulkan",
     "opengl",
     "d3d12",
+    "wasapi",
+    "init_output_device",
+    "audio",
+    "err_cant_open",
 )
 
 
@@ -733,18 +747,19 @@ def _engine_detail(result) -> str:
     return "; ".join(parts) or "no engine-level error reported"
 
 
-def _skip_without_display(result):
-    """Skip a windowed assertion when the host cannot open a display.
+def _skip_without_windowed_support(result):
+    """Skip a windowed assertion when the host cannot run a windowed Godot.
 
-    Only a process- or engine-level failure is treated as a missing display.
-    A test failure that merely mentions a window is a real failure, so it is
-    never converted into a skip.
+    Only a process- or engine-level failure is treated as an environment
+    limitation.  A test failure that merely mentions a window is a real
+    failure, so it is never converted into a skip -- that is what keeps a
+    genuine engine bug from hiding behind a skip.
 
     The evidence is read from ``diagnostics["engine_errors"]`` as well as
     the message.  Searching the message alone could never work: the
     ``<engine>`` message is a fixed string, so for any platform whose
-    wording is absent from :data:`_DISPLAY_MARKERS` the identical
-    condition skipped on Linux and failed on Windows.
+    wording is absent from the marker list the identical condition skipped
+    on Linux and failed on Windows.
     """
     for test in result.tests:
         if test.name not in ("<process>", "<engine>"):
@@ -752,8 +767,12 @@ def _skip_without_display(result):
         haystack = " ".join(
             [test.message or "", *(test.diagnostics.get("engine_errors") or [])]
         ).lower()
-        if any(marker in haystack for marker in _DISPLAY_MARKERS):
-            pytest.skip(f"Godot display is unavailable: {haystack.strip()}")
+        if any(m in haystack for m in _WINDOWED_UNSUPPORTED_MARKERS):
+            pytest.skip(
+                "This host cannot run a windowed Godot process "
+                f"(windowed suites are therefore UNVERIFIED here): "
+                f"{haystack.strip()}"
+            )
 
 
 def test_native_windowed_failure_captures_screenshot_after_each(
@@ -768,7 +787,7 @@ def test_native_windowed_failure_captures_screenshot_after_each(
         godot_bin,
         project / "test" / "windowed_suite.gd",
     )
-    _skip_without_display(result)
+    _skip_without_windowed_support(result)
 
     screenshot = (
         project
@@ -822,7 +841,7 @@ def test_native_windowed_failures_keep_one_screenshot_each(tmp_path, godot_bin):
         godot_bin,
         project / "test" / "windowed_multi_suite.gd",
     )
-    _skip_without_display(result)
+    _skip_without_windowed_support(result)
 
     native_dir = project / ".gd-tools" / "artifacts" / "integration" / "native"
     screenshots = {
@@ -938,7 +957,7 @@ def test_native_windowed_pass_and_headless_failure_skip_screenshots(
         godot_bin,
         passing_project / "test" / "windowed_suite.gd",
     )
-    _skip_without_display(passing)
+    _skip_without_windowed_support(passing)
     assert passing.status == "passed", _engine_detail(passing)
     assert not list(
         (
@@ -1007,7 +1026,7 @@ def test_native_context_screenshot_write_failure_is_infrastructure(
         godot_bin,
         project / "test" / "windowed_suite.gd",
     )
-    _skip_without_display(result)
+    _skip_without_windowed_support(result)
     assert result.status == "error"
     engine_result = next(
         (test for test in result.tests if test.name == "<engine>"), None
@@ -1106,7 +1125,7 @@ def test_native_screenshot_failure_keeps_original_failure_message(
         godot_bin,
         project / "test" / "windowed_suite.gd",
     )
-    _skip_without_display(result)
+    _skip_without_windowed_support(result)
 
     test = next(t for t in result.tests if t.name == "test_windowed")
     assert test.status == "error"
