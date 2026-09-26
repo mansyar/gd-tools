@@ -9,6 +9,8 @@ extends Node
 var _gd_tools_failures: Array[Dictionary] = []
 var _gd_tools_suite_state: Dictionary = {}
 var _gd_tools_test_context: GdToolsTestContext = null
+var _gd_tools_skipped := false
+var _gd_tools_skip_reason := ""
 
 
 func _gd_tools_record_failure(
@@ -18,6 +20,12 @@ func _gd_tools_record_failure(
 		expected = null
 ) -> void:
 	## Record one structured assertion failure for the current test.
+	##
+	## Failures are discarded once the test has been skipped. The guard lives
+	## here rather than in each assertion so that every assertion, present and
+	## future, honours a skip without being modified.
+	if _gd_tools_skipped:
+		return
 	var source := ""
 	var line := 0
 	var stack: Array[Dictionary] = get_stack()
@@ -46,8 +54,10 @@ func get_failures() -> Array[Dictionary]:
 
 
 func clear_failures() -> void:
-	## Clear assertion state before reusing a test instance.
+	## Clear per-test assertion state before reusing a test instance.
 	_gd_tools_failures.clear()
+	_gd_tools_skipped = false
+	_gd_tools_skip_reason = ""
 
 
 func _gd_tools_set_suite_state(state: Dictionary) -> void:
@@ -116,6 +126,37 @@ func assert_not_null(value, message: String = "") -> void:
 func fail(message: String = "Test failed") -> void:
 	## Record an unconditional test failure.
 	_gd_tools_record_failure("fail", message)
+
+
+func skip_test(reason: String = "") -> void:
+	## Skip the current test.
+	##
+	## The runner reports the test as `skipped` rather than `passed`. Any
+	## assertion recorded after this call is discarded, so an early guard is
+	## safe mid-test:
+	##
+	##     if not client.is_connected():
+	##         skip_test("no socket in headless")
+	##
+	## A failure recorded *before* the skip still fails the test: a skip never
+	## masks a real failure.
+	_gd_tools_skipped = true
+	_gd_tools_skip_reason = "Test skipped." if reason.is_empty() else reason
+
+
+func pending_test(reason: String = "") -> void:
+	## Skip the current test. Alias for `skip_test`, matching the GUT spelling.
+	skip_test(reason)
+
+
+func is_skipped() -> bool:
+	## Return whether this test called `skip_test` or `pending_test`.
+	return _gd_tools_skipped
+
+
+func get_skip_reason() -> String:
+	## Return the reason given to `skip_test`. Never empty.
+	return _gd_tools_skip_reason
 
 
 func wait_process_frame() -> void:

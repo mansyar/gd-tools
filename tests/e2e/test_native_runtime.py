@@ -430,6 +430,133 @@ def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
     assert failure["line"] > 0
 
 
+def test_native_skipped_tests_report_status_and_reason(godot_bin, tmp_path):
+    """A skip reports `skipped` with its reason and does not consume a retry."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "skip-status-result.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        {
+            "protocol_version": 2,
+            "project_root": str(project),
+            "runtime": "native",
+            "suites": [
+                {
+                    "name": "NativeSkipSuite",
+                    "path": "res://test/skip_suite.gd",
+                    "tests": [
+                        {"name": "test_skips_with_reason", "retries": 2},
+                        {"name": "test_skips_without_reason"},
+                        {"name": "test_pending_test_alias"},
+                    ],
+                }
+            ],
+            "coverage": {"enabled": False},
+        },
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    by_name = {test["name"]: test for test in payload["tests"]}
+    with_reason = by_name["test_skips_with_reason"]
+    without_reason = by_name["test_skips_without_reason"]
+    pending = by_name["test_pending_test_alias"]
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert with_reason["status"] == "skipped"
+    assert with_reason["message"] == "no network in sandbox"
+    # A skip is terminal, so the configured retry is never consumed.
+    assert with_reason["attempts"] == 1
+    assert without_reason["status"] == "skipped"
+    assert without_reason["message"] != ""
+    assert pending["status"] == "skipped"
+    assert pending["message"] == "alias path"
+
+
+def test_native_post_skip_assertions_are_discarded(godot_bin, tmp_path):
+    """A failure recorded after a skip is discarded; one before it survives."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "skip-guard-result.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        {
+            "protocol_version": 2,
+            "project_root": str(project),
+            "runtime": "native",
+            "suites": [
+                {
+                    "name": "NativeSkipSuite",
+                    "path": "res://test/skip_suite.gd",
+                    "tests": [
+                        {"name": "test_assertion_after_skip_is_discarded"},
+                        {"name": "test_fail_after_skip_is_discarded"},
+                        {"name": "test_failure_before_skip_still_fails"},
+                    ],
+                }
+            ],
+            "coverage": {"enabled": False},
+        },
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    by_name = {test["name"]: test for test in payload["tests"]}
+    after_assert = by_name["test_assertion_after_skip_is_discarded"]
+    after_fail = by_name["test_fail_after_skip_is_discarded"]
+    before_skip = by_name["test_failure_before_skip_still_fails"]
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert after_assert["status"] == "skipped"
+    assert after_assert["diagnostics"]["failures"] == []
+    assert after_fail["status"] == "skipped"
+    assert after_fail["diagnostics"]["failures"] == []
+    assert before_skip["status"] == "failed"
+    assert (
+        before_skip["diagnostics"]["failures"][0]["message"] == "real failure"
+    )
+
+
+def test_native_all_skipped_suite_exits_zero(godot_bin, tmp_path):
+    """A suite whose every test skips does not escalate the run."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "all-skip-result.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        {
+            "protocol_version": 2,
+            "project_root": str(project),
+            "runtime": "native",
+            "suites": [
+                {
+                    "name": "NativeSkipSuite",
+                    "path": "res://test/skip_suite.gd",
+                    "tests": [
+                        {"name": "test_skips_with_reason"},
+                        {"name": "test_skips_without_reason"},
+                        {"name": "test_assertion_after_skip_is_discarded"},
+                        {"name": "test_fail_after_skip_is_discarded"},
+                        {"name": "test_pending_test_alias"},
+                    ],
+                }
+            ],
+            "coverage": {"enabled": False},
+        },
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    # Assert the suite actually ran: a suite that fails to load is dropped
+    # silently, which would satisfy `all()` over an empty test list.
+    assert len(payload["tests"]) == 5, payload["tests"]
+    assert all(test["status"] == "skipped" for test in payload["tests"])
+
+
 def test_native_runner_emits_structured_events(godot_bin, tmp_path):
     """The runner writes parseable NDJSON lifecycle events when requested."""
     project = _prepare_project(tmp_path, godot_bin)

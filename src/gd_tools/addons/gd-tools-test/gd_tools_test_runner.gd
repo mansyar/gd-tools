@@ -317,6 +317,12 @@ func _run_test_attempt(
 	var failures: Array[Dictionary] = test_context.get_failures()
 	var status := "failed" if not failures.is_empty() else "passed"
 	var message := _failure_message(failures)
+	if status == "passed" and test_context.is_skipped():
+		# A skip is only reported when nothing actually failed, so a recorded
+		# failure always outranks it. Cleanup failures and timeouts still
+		# escalate below: they are infrastructure, not the test's verdict.
+		status = "skipped"
+		message = test_context.get_skip_reason()
 	if not cleanup_failures.is_empty() or cleanup_timed_out:
 		status = "error"
 		# A cleanup failure is infrastructure, but the assertion that failed
