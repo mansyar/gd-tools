@@ -23,67 +23,83 @@ cycle; Phases 2–4 are verified by the CI run itself.
 
 ## Phase 1: CI-Aware Godot Requirement Guard (R3)
 
-- [ ] Task: Write the failing unit test for the guard
-  - [ ] Create `tests/unit/test_godot_requirement.py`
-  - [ ] Before writing, read `tests/unit/conftest.py` and one or two existing
+[5b00ffd]
+
+**Scope correction (agreed with user).** The plan originally scoped this phase to
+3 files, assuming the `godot_bin` fixture was the only Godot-availability gate.
+It is not. A module-level `skip_if_no_godot` mark in 9 test modules gated
+availability at **collection time**, so the fixture never ran and the guard could
+never fire. Measured before the fix: `CI=true` with no Godot produced
+`41 passed, 25 skipped, exit 0` — a false green, which is exactly the failure R3
+exists to prevent. Six of the nine marks also used a raw
+`os.environ.get("GODOT_BIN")` predicate that never validated the path was a real
+file. Resolved by consolidating to one mechanism: the marks were replaced with
+`@pytest.mark.usefixtures("godot_bin")`. `usefixtures` rather than a blanket
+autouse fixture, because 6 of the 10 integration files (doctor, format, init,
+lint, plan_cache, verbosity) legitimately need no Godot and an autouse guard would
+have wrongly made them require one. `.env` loading was deliberately left unchanged.
+
+- [x] Task: Write the failing unit test for the guard
+  - [x] Create `tests/unit/test_godot_requirement.py`
+  - [x] Before writing, read `tests/unit/conftest.py` and one or two existing
         `tests/unit/` files to match naming and style conventions
-  - [ ] Test the *plain function* `require_godot_binary(purpose)` directly rather
+  - [x] Test the *plain function* `require_godot_binary(purpose)` directly rather
         than through the pytest fixture, so it is assertable without `pytester`
-  - [ ] Cover exactly three cases:
-        - [ ] `CI` unset and no binary → raises `Skipped` (local stays graceful)
-        - [ ] `CI` set and no binary → raises `Failed`, **not** `Skipped`
+  - [x] Cover exactly three cases:
+        - [x] `CI` unset and no binary → raises `Skipped` (local stays graceful)
+        - [x] `CI` set and no binary → raises `Failed`, **not** `Skipped`
               *(this is the regression that matters)*
-        - [ ] `CI` set and binary present → returns the resolved path
-  - [ ] Monkeypatch `find_godot_binary` to return `None` / a path; do not depend on
+        - [x] `CI` set and binary present → returns the resolved path
+  - [x] Monkeypatch `find_godot_binary` to return `None` / a path; do not depend on
         whether a real Godot is installed on the machine
-  - [ ] Assert the `CI`-failure message names the missing thing and gives the fix
+  - [x] Assert the `CI`-failure message names the missing thing and gives the fix
         (`GODOT_BIN` / PATH), per `product-guidelines.md` error-message rules
-- [ ] Task: Confirm the Red phase
-  - [ ] Run `CI=true pytest tests/unit/test_godot_requirement.py`
-  - [ ] Confirm it fails for the expected reason — `require_godot_binary` does not
+- [x] Task: Confirm the Red phase
+  - [x] Run `CI=true pytest tests/unit/test_godot_requirement.py`
+  - [x] Confirm it fails for the expected reason — `require_godot_binary` does not
         exist yet — not from an import error or a typo
-- [ ] Task: Implement the guard
-  - [ ] Add `require_godot_binary(purpose: str) -> str` to the **root `conftest.py`**,
+- [x] Task: Implement the guard
+  - [x] Add `require_godot_binary(purpose: str) -> str` to the **root `conftest.py`**,
         next to the existing shared Godot helpers `find_godot_binary` and
         `import_godot_project`
-  - [ ] Rationale for a shared helper rather than editing both conftests in place:
+  - [x] Rationale for a shared helper rather than editing both conftests in place:
         the two sub-conftests are already near-identical, and the whole point of this
         guard is that CI and local behaviour must not diverge. Two hand-edited copies
         are exactly how they would drift
-  - [ ] Resolve via `find_godot_binary()`; on `None`, raise `pytest.fail(...)` when
+  - [x] Resolve via `find_godot_binary()`; on `None`, raise `pytest.fail(...)` when
         `CI` is set, else `pytest.skip(...)`
-  - [ ] Add a module docstring note explaining the CI/local split
-- [ ] Task: Wire both call sites
-  - [ ] Update `tests/integration/conftest.py` `godot_bin` fixture to delegate to
+  - [x] Add a module docstring note explaining the CI/local split
+- [x] Task: Wire both call sites
+  - [x] Update `tests/integration/conftest.py` `godot_bin` fixture to delegate to
         `require_godot_binary("integration tests")`
-  - [ ] Update `tests/e2e/conftest.py` `godot_bin` fixture to delegate to
+  - [x] Update `tests/e2e/conftest.py` `godot_bin` fixture to delegate to
         `require_godot_binary("E2E tests")`
-  - [ ] Preserve the existing `sample_project_path` fixtures untouched
-  - [ ] Remove the now-duplicated skip message from both files
-- [ ] Task: Confirm the Green phase
-  - [ ] `CI=true pytest tests/unit/test_godot_requirement.py` — all pass
-  - [ ] `CI=true pytest tests/unit/ -m unit --no-cov` — no regression
-  - [ ] Sanity-check the local path: with `CI` unset and no `GODOT_BIN`, an
+  - [x] Preserve the existing `sample_project_path` fixtures untouched
+  - [x] Remove the now-duplicated skip message from both files
+- [x] Task: Confirm the Green phase
+  - [x] `CI=true pytest tests/unit/test_godot_requirement.py` — all pass
+  - [x] `CI=true pytest tests/unit/ -m unit --no-cov` — no regression
+  - [x] Sanity-check the local path: with `CI` unset and no `GODOT_BIN`, an
         integration test still **skips** rather than errors
-- [ ] Task: Verify quality gates
-  - [ ] `ruff check src/ tests/`
-  - [ ] `black --check src/ tests/`
-  - [ ] Confirm project coverage gate is unaffected (root `conftest.py` is outside
+- [x] Task: Verify quality gates
+  - [x] `ruff check src/ tests/`
+  - [x] `black --check src/ tests/`
+  - [x] Confirm project coverage gate is unaffected (root `conftest.py` is outside
         `source=["gd_tools"]`, so it is not measured)
-- [ ] Task: Commit and record
-  - [ ] `git add` the three conftest/test files
-  - [ ] Commit: `test(ci): fail instead of skip when Godot is missing in CI`
-  - [ ] Attach a git note summarising the change and the skip/fail rationale
-  - [ ] Update this plan: mark Phase 1 tasks `[x]` with the 7-char commit SHA
-  - [ ] Commit plan update: `conductor(plan): Mark Phase 1 complete`
-- [ ] Task: Phase Verification & Checkpoint (Refer to `../../workflow.md`)
-  - [ ] Run the Phase Completion Verification and Checkpointing Protocol
-  - [ ] `git diff --name-only <prev-checkpoint-or-root> HEAD` to list changed files
-  - [ ] Announce and run: `CI=true pytest`
-  - [ ] Present manual verification steps; **await explicit user confirmation**
-  - [ ] Checkpoint commit: `conductor(checkpoint): Checkpoint end of Phase 1`
-  - [ ] Attach the verification report as a git note
-  - [ ] Record `[checkpoint: <sha>]` under the Phase 1 heading
+- [x] Task: Commit and record
+  - [x] `git add` the three conftest/test files
+  - [x] Commit: `test(ci): fail instead of skip when Godot is missing in CI`
+  - [x] Attach a git note summarising the change and the skip/fail rationale
+  - [x] Update this plan: mark Phase 1 tasks `[x]` with the 7-char commit SHA
+  - [x] Commit plan update: `conductor(plan): Mark Phase 1 complete`
+- [x] Task: Phase Verification & Checkpoint (Refer to `../../workflow.md`)
+  - [x] Run the Phase Completion Verification and Checkpointing Protocol
+  - [x] `git diff --name-only <prev-checkpoint-or-root> HEAD` to list changed files
+  - [x] Announce and run: `CI=true pytest`
+  - [x] Present manual verification steps; **await explicit user confirmation**
+  - [x] Checkpoint commit: `conductor(checkpoint): Checkpoint end of Phase 1`
+  - [x] Attach the verification report as a git note
+  - [x] Record `[checkpoint: <sha>]` under the Phase 1 heading
 
 ---
 
