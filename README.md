@@ -94,7 +94,7 @@ func test_health_starts_at_full() -> void:
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. Add `--with-gut` to also install the legacy GUT runtime. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, GUT (if installed), coverage addon, tooling. |
-| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Runs the native runtime by default; `--runtime gut` selects the legacy path. Accepts optional path arguments to override configured test directories. |
+| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Runs the native runtime by default; `--runtime gut` selects the legacy path. Accepts optional path arguments to override configured test directories. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
@@ -115,6 +115,12 @@ gd-tools test --runtime gut                # use the legacy GUT path
 
 `--tag` is repeatable, and `--test-timeout` (per test) is separate from
 `--timeout` (per suite process).
+
+Each run writes a machine-readable artifact index under
+`.gd-tools/artifacts/<run_id>/`, listing the manifest, result, event stream,
+engine log, coverage data, and any failure screenshots the run actually
+produced. Only the latest run is retained. See the
+[User Guide](./docs/USER_GUIDE.md#34-test) for the full artifact tree.
 
 ### Native Runtime vs. GUT
 
