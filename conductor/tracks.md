@@ -33,3 +33,7 @@ _Archived tracks live in `./archive/`._
 
 - [x] **Track: Native Documentation Truth Pass** (archived → `./archive/native_docs_truth_pass_20260926/`)
 
+---
+
+- [ ] **Track: Native Assertion Parity and `skip_test()`** - add runtime skipping (the protocol already reserves the statuses; no GDScript emits them) and nine GUT-core assertions. Closes two of the six Known Limitations in `ARCHITECTURE.md` and unblocks migration roadmap Phase 3.
+  *Link: [native_assertion_parity_skip_test_20260927](./tracks/native_assertion_parity_skip_test_20260927/index.md)*
