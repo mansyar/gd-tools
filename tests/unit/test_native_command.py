@@ -312,6 +312,80 @@ def test_run_native_command_propagates_preflight_failure(tmp_path):
     assert index["preflight"]["result"].endswith("preflight.result.json")
 
 
+def test_run_native_command_marks_the_run_before_preflight_runs(tmp_path):
+    """A run that dies before publishing an index is still prunable.
+
+    The marker is written before preflight, so a run that never reaches
+    ``publish_artifact_index`` still leaves a directory retention recognizes.
+    Without this, the write would be reachable only through pre-existing
+    prune tests, which hand-build the marker instead of calling the writer.
+    """
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            side_effect=RuntimeError("preflight process died"),
+        ),
+    ):
+        with pytest.raises(RuntimeError, match="preflight process died"):
+            run_native_test_command(_config())
+
+    run_dirs = [
+        path
+        for path in (tmp_path / ".gd-tools" / "artifacts").iterdir()
+        if path.is_dir()
+    ]
+    assert len(run_dirs) == 1
+    assert (run_dirs[0] / ".gdtools-run").exists()
+    assert not (run_dirs[0] / "artifacts.json").exists()
+
+
+def test_run_native_command_reports_a_failing_run_directory_creation(tmp_path):
+    """An unwritable artifact root is an environment error, not a traceback."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command.mark_run_started",
+            side_effect=OSError("no space left on device"),
+        ),
+    ):
+        with pytest.raises(GdToolsError, match="run directory") as excinfo:
+            run_native_test_command(_config())
+
+    assert excinfo.value.exit_code == 2
+    assert "no space left on device" in str(excinfo.value)
+
+
 def test_run_native_command_empty_suites_gives_gut_guidance(tmp_path):
     """A GUT-only or empty project gets actionable runtime guidance."""
     with (

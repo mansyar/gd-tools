@@ -9,6 +9,7 @@ import pytest
 from gd_tools.native_test.artifacts import (
     ArtifactPublishError,
     NativeArtifactLayout,
+    mark_run_started,
     publish_artifact_index,
 )
 
@@ -58,6 +59,22 @@ def _write_run(path: Path, marker: str) -> Path:
 # importing the production constant, which would assert the implementation
 # against itself.
 _RUN_MARKER = ".gdtools-run"
+
+
+def test_mark_run_started_creates_the_run_directory_and_marker(tmp_path):
+    """Starting a run claims its directory before any artifact exists.
+
+    Retention recognizes a run by this marker, so the write side needs its own
+    coverage: the prune tests below all hand-build the marker, which would let
+    a no-op ``mark_run_started`` pass every test in the file.
+    """
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    marker = mark_run_started(layout)
+
+    assert marker == layout.run_dir / _RUN_MARKER
+    assert marker.exists()
+    assert not layout.index_path.exists()
 
 
 def test_publish_records_paths_and_prunes_only_after_publication(tmp_path):

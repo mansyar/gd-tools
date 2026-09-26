@@ -215,6 +215,56 @@ than the GUT assertion set, with no invented number. Shipping a specific ratio
 would have been the failure mode this track exists to fix.
 
 
+## Phase: Review Fixes
+
+- [x] Task: High — pin the write side of the retention marker
+  - [x] Add `test_mark_run_started_creates_the_run_directory_and_marker` to `tests/unit/test_native_artifacts.py`
+  - [x] Add `test_run_native_command_marks_the_run_before_preflight_runs` to `tests/unit/test_native_command.py`
+  - [x] Confirm Red by removing the `mark_run_started` call, and confirm the 28 pre-existing tests still pass in that state
+- [x] Task: Medium — report a failing run-directory creation as an environment error
+  - [x] Wrap `mark_run_started` in `command.py` and translate `OSError` into `GdToolsError` (exit 2)
+  - [x] Add `test_run_native_command_reports_a_failing_run_directory_creation`
+- [x] Task: Low — correct the `:func:` cross-reference in `artifacts.py`
+- [x] Task: Low — reword the retention identification rule in `USER_GUIDE.md`
+  - [x] State that retention matches on the name rather than implying provenance
+  - [x] Tell the reader what to avoid doing
+- [x] Task: Full quality gate
+
+### The review's central finding, proved rather than asserted
+
+The High finding claimed no test would catch the wiring being deleted. That was
+verified instead of trusted. With `mark_run_started(artifact_layout)` removed
+from `command.py:120`:
+
+```
+28 passed, 1 skipped, 2 deselected
+```
+
+Every pre-existing test in both files passed with the fix gone. The six
+prune tests hand-build the marker; the one test that ran through the command
+path inspected the published index, which the marker does not affect. So the
+track's central guarantee — a crashed run stays prunable — rested entirely on
+one unwired line, and the regression would have been invisible.
+
+The new wiring test is the one that fails in that state, and it is scoped to
+the scenario the marker exists for: a preflight that dies with a non-protocol
+error, so no index is published and the marker is the only thing identifying
+the run.
+
+### Two findings were self-inflicted by this track
+
+The Low finding on `USER_GUIDE.md` is the uncomfortable one. The sentence
+claimed retention recognizes "a marker `gd-tools` itself wrote", but
+`_is_run_directory` matches the filename only — a user directory containing
+`artifacts.json` is still pruned. The code is right, because the legacy-run
+constraint requires accepting that name. The sentence was wrong, and it was
+written by this track to replace a different wrong sentence. Fixing a
+false guarantee by installing a subtler one is the same defect at lower
+fidelity, so the wording now describes the actual rule and tells the reader
+what not to do.
+
+---
+
 ## Final Verification
 
 - [x] Task: Walk all 12 acceptance criteria

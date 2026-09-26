@@ -136,7 +136,7 @@ def publish_artifact_index(
     previous run remains available for diagnosis. Retention recognizes a run
     only by a marker this tool wrote -- ``.gdtools-run`` or ``artifacts.json``
     -- so a directory a user placed under the artifact root is never deleted.
-    See :func:`_is_run_directory` for the accepted markers.
+    See ``_is_run_directory`` for the accepted markers.
 
     Args:
         layout: Run-scoped artifact layout.

@@ -579,11 +579,12 @@ artifacts that were actually written, and `screenshots` lists the realized
 captures for a suite.
 
 Only the latest run is retained. Older run directories are pruned once the new
-index is published, and a directory counts as a run only when it carries a
-marker `gd-tools` itself wrote: `.gdtools-run`, created at the start of every
-run, or `artifacts.json`, the published index. `artifacts.json` still counts so
-that runs from gd-tools 0.4.x and earlier are pruned rather than accumulating
-forever.
+index is published, and a directory counts as a run only when it is named the
+way this tool names them: it contains `.gdtools-run`, created at the start of
+every run, or `artifacts.json`, the published index. `artifacts.json` still
+counts so that runs from gd-tools 0.4.x and earlier are pruned rather than
+accumulating forever. Retention matches on the name, so avoid placing your own
+directory there if it would contain either file.
 
 Everything else under the artifact root is left alone: plain files, symlinks,
 and any other directory, including one that happens to contain `native/` or
