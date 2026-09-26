@@ -27,11 +27,6 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Native Documentation Truth Pass** — artifact retention prunes
-  any directory containing a `native/` or `preflight/` subfolder, so a
-  user-created directory can be deleted while `USER_GUIDE.md` promises
-  otherwise. Fix the marker predicate with TDD, then bring `README.md`,
-  `ARCHITECTURE.md`, `USER_GUIDE.md`, `ROADMAP.md`, and
-  `TESTING_STRATEGY.md` back in line with the shipped native runtime.
+- [x] **Track: Native Documentation Truth Pass**
   *Link: [native_docs_truth_pass_20260926](./tracks/native_docs_truth_pass_20260926/index.md)*
 

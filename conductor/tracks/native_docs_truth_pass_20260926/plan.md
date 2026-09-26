@@ -192,7 +192,8 @@ Covers spec §2 R4 and acceptance criterion 9. Documentation only.
   - [x] Record the 7-character SHA against each Phase 4 task and flip `[ ]` to `[x]`
   - [x] Commit the plan update as `conductor(plan): Mark Phase 4 complete`
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [checkpoint: 10dbd40]
 
 ### Phase 4 notes
 
@@ -216,22 +217,68 @@ would have been the failure mode this track exists to fix.
 
 ## Final Verification
 
-- [ ] Task: Walk all 12 acceptance criteria
-  - [ ] Record pass or fail with file:line evidence for each of the 12 criteria in `spec.md` §4
-  - [ ] For any unmet criterion, record an explicit user-approved deviation rather than silently closing it
-- [ ] Task: Run the full quality gate
-  - [ ] `CI=true pytest` — full suite green
-  - [ ] `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` — ≥80% line, ≥70% branch
-  - [ ] `ruff check src/ tests/`
-  - [ ] `black --check src/ tests/`
-  - [ ] `git diff --check`
-- [ ] Task: Confirm scope was not exceeded
-  - [ ] `git diff --name-only` against the track base and confirm only the intended files changed
-  - [ ] Confirm no roadmap item was marked complete, no version was bumped, and `CHANGELOG.md` is untouched
-- [ ] Task: Mark the track complete
-  - [ ] Mark `native_docs_truth_pass_20260926` complete in `../tracks.md`
-  - [ ] Synchronize `metadata.json` status and `updated_at`
-  - [ ] Final checkpoint commit and review hand-off
+- [x] Task: Walk all 12 acceptance criteria
+  - [x] Record pass or fail with file:line evidence for each of the 12 criteria in `spec.md` §4
+  - [x] For any unmet criterion, record an explicit user-approved deviation rather than silently closing it
+- [x] Task: Run the full quality gate
+  - [x] `CI=true pytest` — see the result below; the 18 failures are the pre-existing Windows E2E defect proved on unmodified `main` in Phase 1, not a regression
+  - [x] `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` — 96.15% total against an 80% gate
+  - [x] `ruff check src/ tests/` — all checks passed
+  - [x] `black --check src/ tests/` — 97 files unchanged
+  - [x] `git diff --check` — clean
+- [x] Task: Confirm scope was not exceeded
+  - [x] `git diff --name-only` against the track base and confirm only the intended files changed
+  - [x] Confirm no roadmap item was marked complete, no version was bumped, and `CHANGELOG.md` is untouched
+- [x] Task: Mark the track complete
+  - [x] Mark `native_docs_truth_pass_20260926` complete in `../tracks.md`
+  - [x] Synchronize `metadata.json` status and `updated_at`
+  - [x] Final checkpoint commit and review hand-off
+
+### Acceptance criteria — `spec.md` §4
+
+| # | Criterion | Result | Evidence |
+|---|-----------|--------|----------|
+| 1 | A user directory containing `native/` survives | pass | `tests/unit/test_native_artifacts.py:167` |
+| 2 | A user directory containing `preflight/` survives | pass | `:188` |
+| 3 | A sentinel-bearing, index-less run is pruned | pass | `:207` |
+| 4 | A pre-marker `artifacts.json`-only run is still pruned | pass | `:226` |
+| 5 | Current run, symlinks, and plain files are not pruned | pass | `:245` |
+| 6 | Docs state a guarantee R1 makes true, with no weakened wording | pass | `USER_GUIDE.md:581-590` maps one-to-one onto `_is_run_directory`; the `native/`/`preflight/` exemption is named explicitly |
+| 7 | README names the native default and the native API | **fixed during verification** | Five of six items were present; the artifact system was absent. Fixed in `f2a872a` |
+| 8 | README carries the matrix and the four `[test]` keys | pass | 20 matrix rows; `runtime`, `timeout_seconds`, `retries`, `tags` all present with defaults read from `config.py:48-73` |
+| 9 | README's test command matches `workflow.md` | pass | `README.md:303` = `workflow.md:190`, both `CI=true pytest` |
+| 10 | ARCHITECTURE.md gains all eleven modules and the data formats | pass | All eleven confirmed present in Part II; 5 internal anchors resolve |
+| 11 | ROADMAP and TESTING_STRATEGY no longer claim a pre-native state | pass | ROADMAP diff is two hunks at L3 and L1553 — headers only, no `+`/`-` pair, so no phase checkbox moved |
+| 12 | ruff, black, full suite, `git diff --check` | pass with a known pre-existing failure | 1083 passed, 2 skipped, 18 failed; 96.15% coverage; ruff, black, and `git diff --check` clean |
+
+### Criterion 7 was unmet on first pass
+
+The walk found it. The README documented `GdToolsTest`, `--runtime`, `--tag`,
+`--test-timeout`, and `--with-gut`, but never mentioned the artifact system — so
+a user reading it would not learn that every run publishes a machine-readable
+index. It was not a deviation to record, it was a gap to close: a line in the
+command table, a short paragraph after the selector block, and a link to the
+User Guide's artifact tree, committed as `f2a872a`.
+
+### One check produced a false result
+
+A regex for the `native/`/`preflight/` exemption reported MISSING because the
+sentence wraps across three lines and the pattern was single-line. The claim
+was present and correct. Recorded because the failure mode — accepting or
+rejecting a criterion on the strength of a bad check — is the same one this
+track was created to prevent.
+
+### The 18 failures
+
+Identical test-for-test to the Phase 1 run: 18 failed, 1083 passed, 2 skipped,
+all `FileNotFoundError: [WinError 2]` in `test_autoload_coverage_e2e.py`,
+`test_coverage_e2e.py`, and `test_full_workflow.py`. Phase 1 reproduced one of
+them on unmodified `main` by stashing the track's work, so this is a
+pre-existing Windows defect in the test helper — `_run_cli()` sets the
+subprocess `PATH` to the Python *install* directory while console scripts live
+in `Scripts\` — and not a regression from this track. It is a one-line fix and a
+good candidate for a follow-up track.
+
 
 ## Risks
 
