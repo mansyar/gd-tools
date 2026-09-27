@@ -102,11 +102,39 @@ Consequently this track's Python surface is **tests only**. If implementation fi
 
 `docs/USER_GUIDE.md` is corrected only where it documents the assertion surface or the capability matrix. Its existing examples at `:489-501` remain accurate and are not rewritten.
 
+### R9: The terminal summary must not count skipped tests as passed
+
+**Added after Phase 1 verification, approved by the user. This is the one
+documented exception to R7.**
+
+R7 holds: the skip mechanism itself required no Python change, and the JUnit XML and
+terminal table were already correct. Manual verification in a real Godot project
+surfaced a separate pre-existing message that this feature falsifies.
+
+`test_runner.py` printed `All {result.total} test(s) passed.` whenever
+`result.failed == 0`. With 1 passing and 3 skipped tests, that reported **"All 4
+test(s) passed"** — claiming a fully green suite when most of it never ran. The
+message was correct only while no GDScript could emit a skipped status, which is
+precisely what R1 changed. It is a latent defect this track makes reachable, not a
+defect this track introduced.
+
+The constraint: the message must report passed and skipped separately whenever
+`result.skipped` is non-zero, and keep the existing `All {total} test(s) passed.`
+wording when nothing was skipped so that existing callers and users are unaffected.
+`result.skipped` is already on `TestResult`; the table, the JUnit writer, and the exit
+code are all correct and stay untouched.
+
+Why R7's hard stop did not forbid this: R7 exists to catch a design error in the
+GDScript skip mechanism — reaching for Python to *produce* a skip would mean the
+mechanism was wrong. This change makes an existing message honest about a status the
+mechanism now produces. It changes no protocol, no mapping, and no exit code. Shipping
+a known-false "All 4 test(s) passed" was judged the worse outcome.
+
 ## 3. Non-functional requirements
 
 | Requirement | Statement |
 |-------------|-----------|
-| Surgical | `protocol.py`, `command.py`, `orchestrator.py`, and the coverage reporters are untouched (R7). The diff is `gd_tools_test.gd`, `gd_tools_test_runner.gd`, fixture suites, tests, and the four documentation sites. |
+| Surgical | `protocol.py`, `command.py`, `orchestrator.py`, and the coverage reporters are untouched (R7). The diff is `gd_tools_test.gd`, `gd_tools_test_runner.gd`, fixture suites, tests, and the four documentation sites — plus `test_runner.py`, the single documented R9 exception, which changes one summary message and nothing else. |
 | Test-driven | Per `workflow.md`, both `.gd` changes carry a full Red/Green cycle. Asserting the surface from Python means asserting on the `diagnostics.failures` payload in the result JSON, so the plan must budget fixture suites that deliberately trip each of the nine assertions plus the skip path. |
 | Honest | `skip_test()` called in `before_all` is **not** supported and is documented as such. `before_all` runs on the suite instance (`gd_tools_test_runner.gd:110-114`), not the per-test instance, so the runner cannot attribute such a call to a test and it silently skips nothing. This is stated as a limitation rather than shipped silently; propagating suite-level skips is deliberately out of scope. |
 | No scope absorption | Mocking/stubbing, parameterized tests, and parallel execution remain deferred per `ARCHITECTURE.md` §13. The GUT bridge is Phase 3. |

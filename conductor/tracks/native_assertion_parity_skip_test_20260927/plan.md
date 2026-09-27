@@ -312,10 +312,20 @@ tests:  []
 returncode: 0
 ```
 
-So a typo in any suite file — a bad `extends`, a missing method, a syntax error —
-produces a green run that executed nothing. This is the same shape as the
-uninstrumentable-target problem in `coverage_target_contract_20260926`: a failure
-that reports as success.
+**Severity is narrower than it first looks, and Phase 1 verification established
+this.** Driving the runner through the normal CLI, a suite with a parse error is
+caught by the preflight instead:
+
+```
+$ gd-tools test --runtime native
+Error: Suite 'res://test/verify_suite.gd' references unknown test 'test_plain_passes'
+=== EXIT CODE: 2 ===
+```
+
+So `gd-tools test` is safe today. The false pass is reachable only when the runner is
+invoked **directly** — which is exactly what the e2e tests in
+`tests/e2e/test_native_runtime.py` do, bypassing preflight. The user-facing risk is
+therefore low, but the testing risk is real: an e2e test can silently assert nothing.
 
 Observed with a `Function "pending_test()" not found in base self` parse error, which
 is precisely the error this track's Red phase was supposed to produce. The test meant
@@ -328,10 +338,10 @@ Two things a future track should weigh:
 - The runner already has the vocabulary. A load failure is `error`, and `error` is not
   retryable, does not escalate silently, and exits 2. A suite that cannot load is an
   environment problem, exactly the class `spec.md`'s exit code 2 reserves.
-- The engine error *was* captured. It reached stderr and the run's engine diagnostics;
-  the escalation at `:717-724` that turns any captured `ERROR:` into exit 2 did not
-  fire, which suggests the capture or the escalation has a gap worth reading before
-  choosing where to fix this.
+- The engine error *was* captured — it reached stderr and the run's engine diagnostics —
+  yet the escalation at `:717-724` that turns any captured `ERROR:` into exit 2 did not
+  fire. Read that capture-or-escalate path before choosing a fix; patching `:101` alone
+  would address the symptom and leave the gap that makes the failure silent.
 
 ### Blanket test-count assertion
 
