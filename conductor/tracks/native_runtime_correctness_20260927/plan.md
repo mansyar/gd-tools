@@ -281,10 +281,10 @@ did.
    29 tests, no expectation edited. Per constraint 7 any differing expectation
    would have been a finding to report rather than a new expectation to write.
 
-**[checkpoint: b25c853]** — verified with the user's explicit yes, given a
+**[checkpoint: d66be91]** — verified with the user's explicit yes, given a
 `CI=true pytest` run of 1162 passed, 2 skipped, 0 failed in 9m47s at 96.15%
 coverage, unchanged from Phase 2 as expected for a GDScript-only
-behaviour-preserving refactor. Full report in the git note on `b25c853`.
+behaviour-preserving refactor. Full report in the git note on `d66be91`.
 
 
 ## Phase 4 — INVOKE COLLAPSE
