@@ -108,18 +108,43 @@ rather than being inlined.
 
 R6 makes exactly one bounded, deliberate exception, and R1 is where it lands.
 
-- [ ] Task: Document the bounded-wait behaviour change
-  - [ ] Add a `CHANGELOG.md` entry under the unreleased heading stating that a
+- [x] Task: Document the bounded-wait behaviour change
+  - [x] Add a `CHANGELOG.md` entry under the unreleased heading stating that a
         test waiting on a signal that never arrives now reports `false` at the
         `wait_for_signal` budget instead of running to the per-test timeout
-  - [ ] Update `docs/USER_GUIDE.md` where `wait_for_signal` is documented, if it
+  - [x] Update `docs/USER_GUIDE.md` where `wait_for_signal` is documented, if it
         is. Verify by search first — if it is not documented, record that and do
         not add a section for it
-  - [ ] Confirm `README.md` and `docs/ARCHITECTURE.md` need no change: the five
+  - [x] Confirm `README.md` and `docs/ARCHITECTURE.md` need no change: the five
         Known Limitations are mocking, parameterized tests, parallel execution,
         suite-level skip, and editor integration, and none is this
-  - [ ] Commit and record
+  - [x] Commit and record
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+**Implementation note.** Two plan assumptions did not survive contact with the
+files, and both are recorded rather than edited away.
+
+The plan said to update `USER_GUIDE.md` "where `wait_for_signal` is documented, if
+it is". It is documented at `USER_GUIDE.md:526` — but that is the
+`GdToolsTestContext` method, which was already correct. The **base-class** method,
+the one this task changed, was documented nowhere in the guide. Following the
+plan's own instruction not to invent a section, no guide section was added. The
+change was instead documented where the base-class surface is actually described:
+the `ARCHITECTURE.md` base-class async table, which now carries the signature and
+return value, plus a short note separating the two same-named methods. That
+disambiguation is the highest-value part of the edit, because the name collision
+is the root cause of the original defect — the guide and the architecture doc each
+described one of the two methods correctly and a reader could not tell they
+differed.
+
+The plan also predicted `README.md` and `ARCHITECTURE.md` would need no change,
+reasoning from the Known Limitations list. That reasoning was sound but the
+conclusion was not: both files carry a copy of the same base-class async-waits
+table, and both listed `wait_for_signal` bare. Leaving them stale while the
+underlying behaviour changed would have reintroduced exactly the documentation gap
+this task closed, so both rows were updated to carry the signature.
+
+`CHANGELOG.md` had no unreleased heading, so one was added.
 
 ## Phase 2 — SUITE TIMEOUT
 

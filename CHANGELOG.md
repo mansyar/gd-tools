@@ -1,3 +1,9 @@
+## Unreleased
+
+### Fix
+
+- **native-test**: `GdToolsTest.wait_for_signal` is bounded and returns whether the signal was emitted. It was declared `-> bool` but could only ever return `true`, so a guard such as `if not wait_for_signal(sig): fail(...)` never reached the `fail` — the await blocked to the per-test timeout and the test was reported as `timeout` rather than `failed`, discarding the reason. A test waiting on a signal that never arrives now receives `false` at the wait budget (default `5.0`, matching the per-test default) instead of running to the per-test timeout, and the wait resolves as soon as the signal fires rather than when the budget runs out. The wait records no failure of its own.
+
 ## v0.4.0 (2026-07-16)
 
 ### Feat
