@@ -6,11 +6,16 @@ extends Node
 ## The runner owns lifecycle and process management. This class only provides
 ## the assertion surface and Godot-specific waits needed by a test suite.
 
+signal _gd_tools_wait_resolved
+
 var _gd_tools_failures: Array[Dictionary] = []
 var _gd_tools_suite_state: Dictionary = {}
 var _gd_tools_test_context: GdToolsTestContext = null
 var _gd_tools_skipped := false
 var _gd_tools_skip_reason := ""
+var _gd_tools_wait_received := false
+var _gd_tools_wait_signal = null
+var _gd_tools_wait_timer = null
 
 
 func _gd_tools_record_failure(
@@ -477,7 +482,53 @@ func wait_seconds(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
 
 
-func wait_for_signal(target_signal: Signal) -> bool:
-	## Wait until a signal is emitted and return true.
-	await target_signal
-	return true
+func wait_for_signal(
+		target_signal: Signal,
+		timeout_seconds: float = 5.0
+	) -> bool:
+	## Wait for a signal with a bounded timeout; return whether it was emitted.
+	##
+	##     if not wait_for_signal(door.door_opened, 1.0):
+	##         fail("door never opened")
+	##
+	## Returns the moment the signal fires rather than when the budget runs
+	## out, so a generous budget does not become a mandatory wait. The default
+	## budget matches the runner's per-test default, so an unbounded wait that
+	## would hang now surfaces as a `false` instead of a test timeout.
+	##
+	## Records no failure of its own: whether a missed signal is a defect is the
+	## test's call to make. That is what distinguishes it from
+	## `GdToolsTestContext.wait_for_signal`, which is scoped to an integration
+	## context and records the miss for you.
+	_gd_tools_wait_received = false
+	_gd_tools_wait_signal = target_signal
+	_gd_tools_wait_signal.connect(_gd_tools_on_wait_signal, CONNECT_ONE_SHOT)
+	_gd_tools_wait_timer = get_tree().create_timer(max(timeout_seconds, 0.001))
+	_gd_tools_wait_timer.timeout.connect(
+			_gd_tools_wait_resolved.emit,
+			CONNECT_ONE_SHOT
+	)
+	await _gd_tools_wait_resolved
+	var received := _gd_tools_wait_received
+	_gd_tools_disconnect_wait()
+	return received
+
+
+func _gd_tools_on_wait_signal() -> void:
+	_gd_tools_wait_received = true
+	_gd_tools_wait_resolved.emit()
+
+
+func _gd_tools_disconnect_wait() -> void:
+	## Drop whichever side of the race did not win, so a later wait in the same
+	## test is not resolved by this one's leftover timer.
+	if _gd_tools_wait_signal != null and _gd_tools_wait_signal.is_connected(
+			_gd_tools_on_wait_signal
+	):
+		_gd_tools_wait_signal.disconnect(_gd_tools_on_wait_signal)
+	if _gd_tools_wait_timer != null and _gd_tools_wait_timer.timeout.is_connected(
+			_gd_tools_wait_resolved.emit
+	):
+		_gd_tools_wait_timer.timeout.disconnect(_gd_tools_wait_resolved.emit)
+	_gd_tools_wait_signal = null
+	_gd_tools_wait_timer = null

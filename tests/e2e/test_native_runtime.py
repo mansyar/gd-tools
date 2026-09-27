@@ -1110,6 +1110,79 @@ def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
     assert all(test["status"] == "passed" for test in payload["tests"])
 
 
+BOUNDED_WAIT_METHODS = [
+    "test_wait_for_signal_true_when_emitted",
+    "test_wait_for_signal_false_when_never_emitted",
+    "test_wait_for_signal_default_budget_when_emitted",
+    "test_wait_for_signal_records_no_own_failure",
+    "test_wait_for_signal_resolves_before_budget",
+]
+
+
+def test_native_wait_for_signal_is_bounded(godot_bin, tmp_path):
+    """A signal wait returns a real bool, resolves early, and records nothing."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "bounded-wait-manifest.json"
+    result_path = tmp_path / "bounded-wait-result.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 2,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeAsyncHelpersSuite",
+                        "path": "res://test/async_helpers_suite.gd",
+                        "tests": [
+                            # Generous per-test budget so a wait that blocked for
+                            # its whole 15s window would finish and be reported
+                            # rather than being cut short as a timeout.
+                            {"name": name, "timeout_seconds": 60.0}
+                            for name in BOUNDED_WAIT_METHODS
+                        ],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=120,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "passed"
+    assert len(payload["tests"]) == len(BOUNDED_WAIT_METHODS)
+    assert all(test["status"] == "passed" for test in payload["tests"])
+
+    by_name = {test["name"]: test for test in payload["tests"]}
+    early = by_name["test_wait_for_signal_resolves_before_budget"]
+    assert early["duration_seconds"] < 5.0, (
+        "wait_for_signal blocked for its whole budget instead of resolving "
+        f"when the signal fired: {early['duration_seconds']}s"
+    )
+
+
 def test_native_orchestrator_runs_multiple_real_suites(godot_bin, tmp_path):
     """The Python orchestrator aggregates isolated real Godot processes."""
     project = _prepare_project(tmp_path, godot_bin)
