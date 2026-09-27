@@ -139,10 +139,11 @@ Covers spec R3 (premise verification only).
 
 ### Task 1.2: Phase Verification & Checkpoint
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] Characterization tests pass
-  - [ ] The R3 premise is confirmed or refuted **in writing, in this file**
-  - [ ] Phase 2's Task 2.3 is adjusted if the premise was refuted
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Characterization tests pass
+  - [x] The R3 premise is confirmed or refuted **in writing, in this file**
+  - [x] Phase 2's Task 2.3 is adjusted if the premise was refuted — *not refuted;
+    Task 2.3 proceeds as written*
 
 ---
 
