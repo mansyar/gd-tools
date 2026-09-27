@@ -1,0 +1,8 @@
+{
+  "track_id": "gut_compat_bridge_20260928",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-09-28T00:00:00Z",
+  "updated_at": "2026-09-28T00:00:00Z",
+  "description": "Builds the GUT Compatibility Bridge (ROADMAP §8 Migration Phase 3): a GutTest-compatible shim base class shipped inside the gd-tools-test addon so legacy GUT suites run through the native protocol with the same user-facing result contract, without the GUT addon installed. The shim supports the documented core subset per product.md — six lifecycle hooks (incl. prerun_setup/postrun_teardown), the GUT value/comparison assertion family, the full signal-assertion family (watch_signals, emitted/parameters/count/has_signal/connected), bounded async helpers (wait_*/yield_* aliases), and skip helpers. Unsupported GUT constructs (mocking, parameterization, mock assertions, property/orphan/interactive checks, engine-error asserts) are detected by a preflight static scan and fail before execution with per-file actionable migration guidance. Suites are auto-routed per file: extends GdToolsTest → native, extends GutTest → bridge, unknown base → explicit error. Because the shim claims class_name GutTest, preflight requires addons/gut to be absent. The legacy GUT subprocess path is removed in this track (--runtime gut and test.runtime='gut' rejected with migration guidance), bridge suites normalize into the native protocol (statuses, JUnit XML, exit codes 0/1/2, artifact index) and work with --coverage via the same tracker and plan schema v1. Deprecation/migration diagnostics are emitted on bridge runs, doctor becomes GUT-optional/bridge-aware, and docs/gut-migration.md documents the subset and migration path. Phase 4 migration tooling and Phase 5 hardening are out of scope."
+}
