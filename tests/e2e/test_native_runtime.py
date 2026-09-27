@@ -1110,6 +1110,214 @@ def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
     assert all(test["status"] == "passed" for test in payload["tests"])
 
 
+BOUNDED_WAIT_METHODS = [
+    "test_wait_for_signal_true_when_emitted",
+    "test_wait_for_signal_false_when_never_emitted",
+    "test_wait_for_signal_default_budget_when_emitted",
+    "test_wait_for_signal_records_no_own_failure",
+    "test_wait_for_signal_resolves_before_budget",
+]
+
+
+def test_native_wait_for_signal_is_bounded(godot_bin, tmp_path):
+    """A signal wait returns a real bool, resolves early, and records nothing."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "bounded-wait-manifest.json"
+    result_path = tmp_path / "bounded-wait-result.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 2,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeAsyncHelpersSuite",
+                        "path": "res://test/async_helpers_suite.gd",
+                        "tests": [
+                            # Generous per-test budget so a wait that blocked for
+                            # its whole 15s window would finish and be reported
+                            # rather than being cut short as a timeout.
+                            {"name": name, "timeout_seconds": 60.0}
+                            for name in BOUNDED_WAIT_METHODS
+                        ],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=120,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "passed"
+    assert len(payload["tests"]) == len(BOUNDED_WAIT_METHODS)
+    assert all(test["status"] == "passed" for test in payload["tests"])
+
+    by_name = {test["name"]: test for test in payload["tests"]}
+    early = by_name["test_wait_for_signal_resolves_before_budget"]
+    assert early["duration_seconds"] < 5.0, (
+        "wait_for_signal blocked for its whole budget instead of resolving "
+        f"when the signal fired: {early['duration_seconds']}s"
+    )
+
+
+def _run_suite_timeout_manifest(project, godot_bin, tmp_path, tag, test_specs):
+    """Run one manifest over the suite-timeout fixture and return the payload."""
+    manifest_path = tmp_path / f"{tag}-manifest.json"
+    result_path = tmp_path / f"{tag}-result.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 2,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeSuiteTimeoutSuite",
+                        "path": "res://test/suite_timeout_suite.gd",
+                        "tests": [
+                            {"name": name, "timeout_seconds": timeout}
+                            for name, timeout in test_specs
+                        ],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=120,
+    )
+    # 0 pass, 1 test/coverage failure, 2 environment or engine failure. This
+    # helper must not require 0: a starved `before_all` legitimately produces
+    # exit 1, and treating that as an infrastructure error would hide the very
+    # failure the test is looking for.
+    assert result.returncode in (0, 1), result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    # The runner reports hook outcomes as synthetic entries in `tests`
+    # (`before_all` appears there with its own status), so the count is not
+    # the number of declared tests. Require every declared name instead --
+    # that still catches a suite that failed to load, which reports an empty
+    # list, without depending on how hooks are surfaced.
+    declared = {name for name, _ in test_specs}
+    reported = {test.get("name") for test in payload["tests"]}
+    assert (
+        declared <= reported
+    ), f"runner did not report every declared test: missing {declared - reported}"
+    return payload
+
+
+SUITE_TIMEOUT_PROBE = "test_before_all_really_completed"
+
+
+def test_native_suite_budget_ignores_declaration_order(godot_bin, tmp_path):
+    """The suite budget is the maximum declared timeout, not the first one."""
+    project = _prepare_project(tmp_path, godot_bin)
+
+    # Same multiset of timeouts, opposite order. `_suite_timeout` returns
+    # inside its first loop iteration, so the smallest-first run gets a
+    # budget too small for `before_all` and the largest-first run does not.
+    # Asserting the two agree is what distinguishes a real fix (max across
+    # all tests) from a re-ordering that merely moves the symptom.
+    small_first = _run_suite_timeout_manifest(
+        project,
+        godot_bin,
+        tmp_path,
+        "small-first",
+        [
+            ("test_first_short_budget", 0.2),
+            ("test_second_long_budget", 5.0),
+            (SUITE_TIMEOUT_PROBE, 5.0),
+        ],
+    )
+    large_first = _run_suite_timeout_manifest(
+        project,
+        godot_bin,
+        tmp_path,
+        "large-first",
+        [
+            ("test_second_long_budget", 5.0),
+            ("test_first_short_budget", 0.2),
+            (SUITE_TIMEOUT_PROBE, 5.0),
+        ],
+    )
+
+    def probe_outcome(payload):
+        by_name = {test["name"]: test for test in payload["tests"]}
+        return by_name[SUITE_TIMEOUT_PROBE]["status"]
+
+    assert probe_outcome(small_first) == "passed", (
+        "before_all was starved by the first test's declared budget; the "
+        "suite budget must be the maximum across all tests"
+    )
+    assert probe_outcome(small_first) == probe_outcome(large_first)
+
+
+def test_native_empty_suite_keeps_default_budget(godot_bin, tmp_path):
+    """An empty suite still gets the default budget, not a zero floor."""
+    project = _prepare_project(tmp_path, godot_bin)
+
+    payload = _run_suite_timeout_manifest(
+        project, godot_bin, tmp_path, "empty", []
+    )
+
+    # An empty suite produces no test results, so there is nothing in the
+    # payload to assert on. `before_all` sleeps past the 0.001 floor, so it
+    # only writes its marker if the empty-suite fallback is still the
+    # documented 5.0. Asserting on the marker is a real observation; a
+    # `status == "passed"` check here would pass either way.
+    assert payload["status"] == "passed"
+    # Only the synthetic `before_all` hook entry; no test method ran.
+    reported = {test.get("name") for test in payload["tests"]}
+    assert not any(
+        name.startswith("test_") for name in reported
+    ), f"an empty suite ran test methods: {reported}"
+    assert (
+        project / "suite_timeout_completed.log"
+    ).exists(), (
+        "before_all did not complete; the empty-suite budget is no longer 5.0"
+    )
+
+
 def test_native_orchestrator_runs_multiple_real_suites(godot_bin, tmp_path):
     """The Python orchestrator aggregates isolated real Godot processes."""
     project = _prepare_project(tmp_path, godot_bin)

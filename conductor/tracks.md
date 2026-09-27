@@ -40,3 +40,7 @@ _Archived tracks live in `./archive/`._
 ---
 
 - [x] **Track: Native Assertion Parity and `skip_test()`** (archived → `./archive/native_assertion_parity_skip_test_20260927/`) - add runtime skipping (the protocol already reserves the statuses; no GDScript emits them) and ten GUT-core assertions. Closes two of the six Known Limitations in `ARCHITECTURE.md` and unblocks migration roadmap Phase 3.
+
+---
+
+- [x] **Track: Native Runtime Correctness** (archived → `./archive/native_runtime_correctness_20260927/`) - make `wait_for_signal` bounded and honest, fix `_suite_timeout` to consider every test rather than the first, and make per-test timeout cancellation a named operation instead of a hand-maintained token.
