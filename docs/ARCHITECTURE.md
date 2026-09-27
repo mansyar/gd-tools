@@ -1006,9 +1006,17 @@ process management.
 | Comparison | `assert_gt`, `assert_gte`, `assert_lt`, `assert_lte`, `assert_between`, `assert_almost_eq` |
 | Membership | `assert_has`, `assert_in`, `assert_has_method`, `assert_is` |
 | Skipping | `skip_test`, `pending_test` (an alias of it), `is_skipped`, `get_skip_reason` |
-| Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal` |
+| Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal(signal, timeout)` (bounded, returns whether the signal was emitted) |
 | Context | `get_test_context()` |
 | Suite state | suite-scoped storage for sharing fixtures across tests |
+
+`wait_for_signal` on the base class and the one on `GdToolsTestContext` share a
+name but not a contract, which is worth stating because the collision is easy to
+miss when reading either table alone. The base-class method is a passive
+primitive: it returns whether the signal was emitted and **records nothing**,
+leaving the test to decide whether a miss is a defect. The context method is
+scoped to an integration context and records `integration_signal` itself. Use the
+base method unless the wait is part of a scene-integration assertion.
 
 Assertions **record** failures rather than aborting, so one test reports every
 assertion that failed instead of only the first. `_gd_tools_record_failure()`

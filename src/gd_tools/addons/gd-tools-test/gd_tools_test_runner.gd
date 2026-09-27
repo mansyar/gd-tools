@@ -151,9 +151,17 @@ func _run_suite(suite_data: Dictionary) -> void:
 
 
 func _suite_timeout(suite_data: Dictionary) -> float:
-	for test_data in suite_data.get("tests", []):
-		return max(float(test_data.get("timeout_seconds", 5.0)), 0.001)
-	return 5.0
+	# The maximum across every test, not the first. This budget is handed to
+	# `before_all` and `after_all`, so reading only the first entry made the
+	# setup allowance depend on declaration order -- a suite whose first test
+	# declared a short timeout starved its own setup.
+	var tests: Array = suite_data.get("tests", [])
+	if tests.is_empty():
+		return 5.0
+	var budget := 0.0
+	for test_data in tests:
+		budget = max(budget, float(test_data.get("timeout_seconds", 5.0)))
+	return max(budget, 0.001)
 
 
 func _run_test(
@@ -252,29 +260,17 @@ func _run_test_attempt(
 	var timed_out := false
 
 	if test_context.has_method("before_each"):
-		_test_completed = false
-		_invoke_test(
-				test_context,
-				"before_each",
-				_active_test_token
-			)
-		await test_call_completed
+		await _await_test_call(test_context, "before_each")
 		timed_out = _test_timeout_reached
 
 	if not timed_out:
 		if test_context.has_method(test_name):
-			_test_completed = false
-			_invoke_test(
-				test_context,
-				test_name,
-				_active_test_token
-			)
-			await test_call_completed
+			await _await_test_call(test_context, test_name)
 			if _test_timeout_reached:
 				timed_out = true
 		else:
 			timed_out = true
-			_active_test_token += 1
+			_cancel_timeout()
 			var missing_result := {
 				"status": "error",
 				"duration_seconds": float(Time.get_ticks_msec() - started_ticks) / 1000.0,
@@ -299,13 +295,7 @@ func _run_test_attempt(
 				timeout_seconds
 			)
 		else:
-			_test_completed = false
-			_invoke_test(
-				test_context,
-				"after_each",
-				_active_test_token
-			)
-			await test_call_completed
+			await _await_test_call(test_context, "after_each")
 		cleanup_timed_out = _test_timeout_reached
 		if cleanup_timed_out:
 			timed_out = true
@@ -362,7 +352,7 @@ func _run_test_attempt(
 			diagnostics["screenshot"] = screenshot_result["path"]
 	var duration := float(Time.get_ticks_msec() - started_ticks) / 1000.0
 	var finished_at := _timestamp()
-	_active_test_token += 1
+	_cancel_timeout()
 	await _teardown_integration(test_context)
 	test_context.queue_free()
 	await process_frame
@@ -532,10 +522,11 @@ func _run_cleanup(
 		method_name: String,
 		timeout_seconds: float
 ) -> void:
-	_begin_test_timeout(timeout_seconds)
-	_test_completed = false
-	_invoke_test(context, method_name, _active_test_token)
-	await test_call_completed
+	# A cleanup hook differs from a suite hook only in intent, not in
+	# mechanism: both arm a fresh timer and await it. The await is load
+	# bearing - without it this stops being a coroutine, and the caller's
+	# await would return at once instead of waiting out the cleanup.
+	await _run_optional_call(context, method_name, timeout_seconds)
 
 
 func _activate_coverage(coverage_data: Dictionary) -> bool:
@@ -555,8 +546,26 @@ func _activate_coverage(coverage_data: Dictionary) -> bool:
 	return true
 
 
-func _begin_test_timeout(timeout_seconds: float) -> void:
+func _invalidate_timeout() -> void:
+	# The only place _active_test_token is mutated. Every timer is bound
+	# to whatever token was current when it was armed, so advancing the
+	# token here makes all of them inert in _on_test_timeout and
+	# _invoke_test. That is what stops a timer left over from an earlier
+	# attempt from resolving a later attempt's test_call_completed.
 	_active_test_token += 1
+
+
+func _cancel_timeout() -> void:
+	# Every exit from a test attempt must call this, including the early
+	# returns. A timer that outlives its attempt does not break the test
+	# it belonged to; it fires into whatever runs next.
+	_invalidate_timeout()
+
+
+func _begin_test_timeout(timeout_seconds: float) -> void:
+	# Arming also invalidates, which is what makes the new timer the only
+	# live one. This is not a cancel and must not be described as one.
+	_invalidate_timeout()
 	_test_timeout_reached = false
 	_test_completed = false
 	var timer := create_timer(timeout_seconds)
@@ -571,6 +580,17 @@ func _on_test_timeout(token: int) -> void:
 		return
 	_test_timeout_reached = true
 	test_call_completed.emit()
+
+
+func _await_test_call(context: GdToolsTest, method_name: String) -> void:
+	# Awaits the timer already armed for this attempt. Deliberately does
+	# NOT arm one: re-arming here would hand every hook a fresh budget and
+	# change what a declared timeout_seconds means, since a test attempt
+	# gets one budget for before_each, the body and after_each together.
+	# Arming happens once per attempt, in _begin_test_timeout.
+	_test_completed = false
+	_invoke_test(context, method_name, _active_test_token)
+	await test_call_completed
 
 
 func _invoke_test(

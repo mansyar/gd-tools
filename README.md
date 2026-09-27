@@ -133,7 +133,7 @@ projects have moved. The native runtime is the default and the forward path.
 | Discovery | `test_*` methods, by directory or exact file selector | Gut convention |
 | Lifecycle hooks | `before_all`, `after_all`, `before_each`, `after_each` | Full hook set |
 | Assertions | 16 assertions plus `fail()`, covering truthiness, equality, ordering, numeric range, collection membership, and object introspection | Broad assertion library |
-| Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal` | Broader helpers |
+| Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal(signal, timeout)` | Broader helpers |
 | Tags | Class-level tags, filtered with `--tag` | Yes |
 | Test selectors | `--suite`, `--test`, `--test-timeout` | Via `.gutconfig.json` |
 | Scene and resource integration | `const INTEGRATION` plus `GdToolsTestContext` for scene root, node lookup, named resources, and bounded signal waits | Partial |
