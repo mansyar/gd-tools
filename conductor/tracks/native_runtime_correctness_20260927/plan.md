@@ -158,27 +158,55 @@ Touches `gd_tools_test_runner.gd:_suite_timeout` only.
 
 ### Task 2.1: Make the suite budget the maximum across all tests
 
-- [~] Task: Fix `_suite_timeout` to consider every test
-  - [ ] Red: add a test whose suite declares differing `timeout_seconds` in an
+- [x] Task: Fix `_suite_timeout` to consider every test [e848f3b]
+  - [x] Red: add a test whose suite declares differing `timeout_seconds` in an
         order placing the smallest first, and whose `before_all` needs more time
         than that smallest budget. It must fail by timing out under the current
         implementation and pass once the budget is the maximum
-  - [ ] Red: add the order-independence case. The same multiset of timeouts in a
+  - [x] Red: add the order-independence case. The same multiset of timeouts in a
         different order must yield the same budget, and therefore the same
         result. Order-independence is the property that actually distinguishes a
         fix from a re-ordering
-  - [ ] Red: assert a suite with no tests still receives `5.0`
-  - [ ] Run the new tests; confirm each fails for the right reason
-  - [ ] Green: compute the maximum `timeout_seconds` across all tests, floored at
+  - [x] Red: assert a suite with no tests still receives `5.0`
+  - [x] Run the new tests; confirm each fails for the right reason
+  - [x] Green: compute the maximum `timeout_seconds` across all tests, floored at
         `0.001`, falling back to `5.0` for an empty suite
-  - [ ] Confirm `test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup`
+  - [x] Confirm `test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup`
         still passes. It is the closest existing precedent and the regression
         guard for this change
-  - [ ] Refactor: not expected; if the maximum computation needs more than a
+  - [x] Refactor: not expected; if the maximum computation needs more than a
         straightforward accumulation, say so rather than restructuring
-  - [ ] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
-  - [ ] Commit and record
+  - [x] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
+  - [x] Commit and record
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+**Implementation note.** No refactor was needed — the maximum is a single
+accumulation, as the plan predicted.
+
+Two things surfaced while writing the Red that are worth carrying forward,
+because both produced a misleading signal rather than an honest failure. They
+are recorded here rather than in the task list, since they are properties of the
+test harness rather than of the defect.
+
+The shared manifest helper initially asserted `returncode == 0`. The runner
+correctly exits `1` on test failure, so a starved `before_all` surfaced as a
+Godot harness error and the real failure was hidden behind it. The helper now
+accepts `0` or `1` and leaves the judgement to the caller. A helper that
+assumes "the harness ran, therefore 0" cannot be used to test a harness-visible
+failure, which is precisely the class of bug this phase is about.
+
+The same helper asserted `len(payload["tests"]) == len(declared)`. The runner
+reports hook outcomes as synthetic entries in `tests` — `before_all` appears
+there with its own status — so three declared tests produced four entries. The
+count is now a subset check on declared names, which is both correct and still
+catches the empty-list result a suite load failure produces. That substitution
+is not cosmetic: an exact-count assertion was passing for the wrong reason, and
+had the count happened to line up it would have been asserting nothing.
+
+Neither is a defect. Hook surfacing in `tests[]` is a deliberate protocol
+choice, and `before_all` appearing as a `timeout` entry is the correct report
+of a starved hook. They are recorded so a future test does not rediscover them
+by misreading a harness failure as a product failure.
 
 ## Phase 3 — TOKEN CANCELLATION
 
