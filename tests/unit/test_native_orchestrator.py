@@ -18,6 +18,7 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     NativeSuiteIntegration,
     NativeTest,
+    RuntimeMode,
 )
 
 pytestmark = pytest.mark.unit
@@ -91,6 +92,42 @@ def test_run_native_tests_uses_one_process_per_suite(tmp_path):
     assert result.status == "passed"
     assert len(result.tests) == 2
     assert all("--headless" in call[0] for call in calls)
+
+
+def test_bridge_suite_manifest_declares_suite_runtime(tmp_path):
+    """Each per-suite manifest carries that suite's own runtime mode."""
+    manifests = []
+
+    def fake_run(args, **kwargs):
+        manifests.append(
+            json.loads(
+                Path(kwargs["env"]["GD_TOOLS_NATIVE_MANIFEST"]).read_text()
+            )
+        )
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        _write_result(result_path)
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    bridge = NativeSuite(
+        name="LegacySuite",
+        path="res://test/legacy_test.gd",
+        runtime=RuntimeMode.GUT,
+        tests=[NativeTest(name="test_example")],
+    )
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("NativeSuite"), bridge],
+            godot_binary="godot",
+        )
+
+    assert result.status == "passed"
+    assert manifests[0]["runtime"] == "native"
+    assert manifests[1]["runtime"] == "gut"
 
 
 def test_run_result_aggregates_engine_warnings_and_coverage_omissions(tmp_path):
