@@ -383,3 +383,6 @@ Candidates already known and deliberately excluded are listed in spec §5.
   in this spec's scope, and is not fixed here. Worth its own track — it is the
   same class of bug as the vacuous `assert engine_errors == []` a prior track
   found, and it is a trap for every future native test.
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions 062ec59
