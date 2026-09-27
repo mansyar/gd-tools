@@ -90,6 +90,7 @@ def reconcile_omissions(
     """
     instrumented = {fc.file_id for fc in data.files}
     reasons = {o.file_id: o for o in data.omitted}
+    plan_ids = [file_plan.file_id for file_plan in plan.files]
 
     omitted: list[OmittedTarget] = []
     for file_plan in plan.files:
@@ -110,7 +111,7 @@ def reconcile_omissions(
     return OmissionReport(
         omitted=omitted,
         plan_count=len(plan.files),
-        instrumented_count=len(instrumented & {f.file_id for f in plan.files}),
+        instrumented_count=len(instrumented & set(plan_ids)),
     )
 
 

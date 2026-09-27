@@ -148,6 +148,13 @@ def run_coverage_test(
             min_threshold=min_threshold,
         )
     except CoverageThresholdError as exc:
+        # The native seam (command.py) prefers the test failure over the
+        # coverage gate, and the two runtimes must not disagree about exit
+        # codes. A failed test is the more actionable signal, and the
+        # gate's anti-false-success purpose is moot once the run already
+        # failed -- so the test failure is raised before the gate here too.
+        if test_error is not None:
+            raise test_error
         if exc.report_result is not None:
             _report_coverage(
                 plan,

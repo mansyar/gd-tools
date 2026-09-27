@@ -333,6 +333,27 @@ def test_read_coverage_json_rejects_an_omission_without_a_reason(tmp_path):
         read_coverage_json(path)
 
 
+def test_read_coverage_json_rejects_a_non_integer_file_id(tmp_path):
+    """A non-integer file_id gets the structured error, not a raw ValueError."""
+    path = tmp_path / "coverage.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2026-09-28T00:00:00Z",
+                "files": [],
+                "omitted": [
+                    {"file_id": "not-a-number", "path": _ENEMY, "reason": "r"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CoveragePlanError, match="not an integer"):
+        read_coverage_json(path)
+
+
 # --- Report shape -----------------------------------------------------------
 
 
