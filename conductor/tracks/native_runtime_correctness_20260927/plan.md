@@ -51,6 +51,10 @@
 
 *Covers spec R1.*
 
+**[checkpoint: 852039b]** — verified with the user's explicit yes, given a
+`CI=true pytest` run of 1160 passed, 2 skipped, 0 failed in 9m22s at 96.15%
+coverage. Full report in the git note on `852039b`.
+
 Touches `src/gd_tools/addons/gd-tools-test/gd_tools_test.gd` only. No runner
 change is in scope, and constraint 1 is why.
 
