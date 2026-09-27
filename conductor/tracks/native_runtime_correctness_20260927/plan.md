@@ -178,7 +178,7 @@ Touches `gd_tools_test_runner.gd:_suite_timeout` only.
         straightforward accumulation, say so rather than restructuring
   - [x] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
   - [x] Commit and record
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 **Implementation note.** No refactor was needed — the maximum is a single
 accumulation, as the plan predicted.
