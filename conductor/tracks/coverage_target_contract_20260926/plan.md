@@ -434,7 +434,7 @@ Covers spec R3 (reconciliation), R5 (terminal report), R6, and R7.
 
 ### Task 3.4: Phase Verification & Checkpoint
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] AC 1, 2, 3, 5, 6 confirmed
   - [ ] A malformed plan still fails, still exit 2 (AC 6)
   - [ ] Coverage of new Python source above 80% line / 70% branch
