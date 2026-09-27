@@ -159,61 +159,119 @@ Covers spec R1, R2, R3 (seeding), and R4, in both runtimes.
 
 ### Task 2.1: Failing tests for the runtime contract (Red)
 
-- [ ] Task: Legacy runtime — write the failing tests
-  - [ ] In `tests/integration/test_coverage_hooks.py`, a plan naming a target that
+- [x] Task: Legacy runtime — write the failing tests [02724e8]
+  - [x] In `tests/integration/test_coverage_hooks.py`, a plan naming a target that
     cannot be loaded produces a **completed run**, not a `GdToolsError` (spec AC 1)
-  - [ ] A plan naming a target that loads but fails `reload(true)` also completes (AC 1)
-  - [ ] The remaining targets in the same plan still report coverage (spec R2)
-  - [ ] Group into as few Godot spawns as constraint 3 allows
-- [ ] Task: Native runtime — write the failing tests
-  - [ ] Using the `tests/e2e/test_native_runtime.py:378-430` template: a plan whose
+  - [x] A plan naming a target that loads but fails `reload(true)` also completes (AC 1)
+  - [x] The remaining targets in the same plan still report coverage (spec R2)
+  - [x] Group into as few Godot spawns as constraint 3 allows — **zero new spawns.**
+    The two existing tests already spawned Godot with exactly the scenarios needed, so
+    they were repinned rather than duplicated
+- [x] Task: Native runtime — write the failing tests [02724e8]
+  - [x] Using the `tests/e2e/test_native_runtime.py:378-430` template: a plan whose
     first target fails still instruments and reports the later targets — this is the
     abort defect at `gd_tools_native_coverage.gd:34-37` and it is the sharpest
     regression to pin (spec R2, AC 2)
-  - [ ] The run completes with a recorded omission rather than an error status
+  - [x] The run completes with a recorded omission rather than an error status
+  - [x] One spawn carries all three cases: an absent target, an instrumented-but-
+    never-executed target, and a normally executed one
 
 ### Task 2.2: Implement the warn-and-continue contract (Green)
 
-- [ ] Task: Legacy runtime — `addons/gd-tools-coverage/coverage.gd`
-  - [ ] R1: the per-target `_log_error` calls at `:96-100` (load failure) and
+- [x] Task: Legacy runtime — `addons/gd-tools-coverage/coverage.gd` [727877a]
+  - [x] R1: the per-target `_log_error` calls at `:96-100` (load failure) and
     `:108-112` (reload failure) become warning-level. `_log_error` itself is defined
     at `:278` — add a warning-level sibling rather than changing `_log_error`, so the
     fatal callers are untouched
-  - [ ] R1 carve-out: confirm no other `_log_error` caller changes. Missing/malformed
-    plan, unwritable output dir, missing tracker, unsupported version all stay fatal
-  - [ ] `:77-83` `_instrument_files` already continues past failures — verify, do not
-    change
+  - [x] R1 carve-out: confirm no other `_log_error` caller changes. Missing/malformed
+    plan, unwritable output dir, missing tracker, unsupported version all stay fatal —
+    **proven, not assumed:** seven pre-existing GDScript tests still expect
+    `push_error` for exactly these cases and all seven still pass
+  - [x] `:77-83` `_instrument_files` already continues past failures — verified, not
+    changed. Confirmed empirically: the legacy test passed `result.passed == 4` and
+    `0 not in by_id` before failing on R3
   - [ ] Accumulate each omitted `{path, reason}` where the legacy collector can expose
-    it to Python
-- [ ] Task: Native runtime — `addons/gd-tools-test/gd_tools_native_coverage.gd`
-  - [ ] R2: the loop at `:34-37` continues past a failed target instead of
+    it to Python — **deferred to Phase 3 Task 3.2, deliberately.** Adding an untested
+    accumulator here would be uncovered code shipped without a test, which is the same
+    mistake Phase 1 was built to prevent. The reason channel and the omission list
+    land together in Phase 3, where Task 3.1 pins them
+- [x] Task: Native runtime — `addons/gd-tools-test/gd_tools_native_coverage.gd` [727877a]
+  - [x] R2: the loop at `:34-37` continues past a failed target instead of
     `_active = false; return false`; `activate()` (`:15`) returns `true` when coverage
     was activated regardless of individual omissions
-  - [ ] R1: the `push_error` at `:94` and `:107` become warning-level
-  - [ ] R1 carve-out: the plan-version check at `:30-32` stays fatal
+  - [x] R1: the `push_error` at `:94` and `:107` become warning-level
+  - [x] R1 carve-out: the plan-version check at `:30-32` stays fatal
   - [ ] Accumulate each omitted `{path, reason}` in a static collection readable by the
-    runner
-- [ ] Task: R4 — distinct messages for a stale plan and a broken script
-  - [ ] Load failure: name the path, point at regenerating the plan (`--no-cache`, or a
+    runner — **deferred to Phase 3 Task 3.2**, for the same reason as the legacy
+    accumulator above. The runner's seam is already identified (it reads the
+    collector at `gd_tools_test_runner.gd:551` and emits `engine_errors`/
+    `engine_warnings` at `:738-739`/`:777-778`)
+- [x] Task: R4 — distinct messages for a stale plan and a broken script [727877a]
+  - [x] Load failure: name the path, point at regenerating the plan (`--no-cache`, or a
     run with no warm cache)
-  - [ ] Reload failure: name the path as a **broken script to fix**
-  - [ ] Correct the misleading text at `coverage.gd:111` — "Check tracker injection
+  - [x] Reload failure: name the path as a **broken script to fix**
+  - [x] Correct the misleading text at `coverage.gd:111` — "Check tracker injection
     logic for syntax errors" blames gd-tools' instrumentation for what is usually a
     defect in the user's script. It must not send a user into the wrong place (spec R4)
+  - [x] The two cases needed a real discriminator, not just two strings: `load()`
+    returns null for both a missing file and a broken one, so `FileAccess.file_exists`
+    is what separates them. Same control flow, distinct cause and fix
 
 ### Task 2.3: Seed the instrumented set (Green, conditional on Phase 1)
 
-- [ ] Task: Implement seeding in both runtimes
-  - [ ] R3: every successfully instrumented file gets an entry in the coverage data
+- [x] Task: Implement seeding in both runtimes [727877a]
+  - [x] R3: every successfully instrumented file gets an entry in the coverage data
     with an **empty** `hits` object, so `files[]` denotes the instrumented set and
     "instrumented but never executed" is distinguishable from "could not instrument"
-  - [ ] Legacy: seed in `coverage.gd` `_instrument_files` (`:77-83`)
-  - [ ] Native: seed in `gd_tools_native_coverage.gd` alongside the instrumentation loop
-  - [ ] **Skip this task and report back if Phase 1 refuted the premise.** Seeding
-    without a confirmed scoring baseline risks silently changing reported percentages
-- [ ] Task: Write the test for AC 7
-  - [ ] An instrumented-but-never-executed file reports as 0% covered and is **not**
+  - [x] Legacy: seed in `coverage.gd` `_instrument_files` (`:77-83`)
+  - [x] Native: seed in `gd_tools_native_coverage.gd` alongside the instrumentation loop
+  - [x] **Skip this task and report back if Phase 1 refuted the premise** — premise
+    confirmed, so the task proceeded as written
+- [x] Task: Write the test for AC 7 [02724e8, fe06562]
+  - [x] An instrumented-but-never-executed file reports as 0% covered and is **not**
     reported as uninstrumented
+  - [x] `test_merge_preserves_seeded_empty_hits_entries` additionally guards the
+    `merge_coverage_data` ordering the Phase 1 note flagged. This is a regression
+    guard on existing behavior, not a new contract
+
+> **Implementation note — Tasks 2.2 and 2.3 (2026-09-28).**
+>
+> **Why R1's carve-out is proven.** Seven pre-existing tests in
+> `test_coverage_instrumentation.gd` still assert `push_error` for the plan-level
+> failures — `load_plan_nonexistent_file`, `load_plan_malformed_json`, and five
+> `_validate_plan` cases. All seven pass unchanged, which is direct evidence that
+> weakening the two per-target call sites did not weaken anything else.
+>
+> **R2 was the worst defect in the track.** The native abort left `_active` false, so
+> `write()` bailed out and **no coverage file was written at all** — one broken script
+> cost the project its entire coverage, not one file's worth. The legacy collector
+> never had this defect.
+>
+> **A GUT finding worth recording.** GUT matches **one tracked warning per
+> assertion**. An initial attempt used two `assert_push_warning` calls against the
+> single `push_warning` that `_log_warning` emits; the first consumed it and the
+> second failed. One assertion per call site now, with full message text asserted
+> from Python in `test_hooks_nonexistent_script_in_plan`, where it already passes.
+> Relatedly, `test_instrument_file_invalid_path` asserted `engine_error_count(2)`
+> from `load()` opening a missing file; the existence check now runs *before*
+> `load()`, so the engine is never asked and the count is 0 — the test's own message
+> was describing behavior this change correctly removed.
+>
+> **Two deviations, both recorded rather than smoothed over.**
+> 1. The omitted-target accumulators are deferred to Phase 3 (above), because an
+>    untested accumulator shipped in Phase 2 would be exactly the risk Phase 1 exists
+>    to prevent. Phase 3 Task 3.1 pins the omission list, so the channel lands with
+>    its test.
+> 2. The two `test_hooks_*` tests were repinned in Task 2.1 rather than in Phase 4
+>    Task 4.3 as originally planned. Phase 2 *changes the behavior these tests
+>    observe*, so they could not keep asserting the old contract until Phase 4.
+>
+> **A gap found and deliberately not fixed.** A plan entry with an empty `lines`
+> array returns `false` with **no message** in both collectors, so it remains a
+> silent skip. It is pre-existing, not a regression, and no test covers it — fixing
+> it would mean adding an untested branch. Flagged for a follow-up rather than
+> smuggled into this phase.
+
 
 ### Task 2.4: Phase Verification & Checkpoint
 
