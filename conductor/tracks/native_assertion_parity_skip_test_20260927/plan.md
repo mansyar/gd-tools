@@ -130,6 +130,11 @@ gate (`Required test coverage of 80.0% reached`), branch coverage included.
 
 Covers spec R4, R5, R6.
 
+**[checkpoint: e13c272]** — phase complete. Manual verification
+confirmed by the user ("Yes, this meets expectations"). Full automated and
+manual evidence is recorded in the git note on `e13c272`. Phase commit:
+`60e12c0`.
+
 **Implementation note — probe findings that shaped the design.** Spec §7
 required verifying the Godot primitives rather than assuming them. A probe run
 against Godot 4.7.1 established four constraints, none of which were
@@ -257,7 +262,7 @@ only GDScript. `ruff` and `black` clean. `protocol.py`, `command.py` and
 
 ### Task 2.9: Phase Verification & Checkpoint
 
-- [~] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
+- [x] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
   - [ ] Run `git diff --name-only <phase_1_checkpoint_sha> HEAD`; confirm a test exists for every changed `.py`/`.gd`.
   - [ ] Announce and run the full `CI=true pytest` suite. On failure, propose at most two fixes, then stop and ask.
   - [ ] Present manual verification steps and **await explicit confirmation**:
