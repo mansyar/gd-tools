@@ -247,7 +247,7 @@ Touches `gd_tools_test_runner.gd`. The mutation sites are `:277`, `:365`, and
         unchanged by construction. Phase 2's checkpoint established that a
         GDScript-only change leaves the figure at 96.15%
   - [x] Commit and record
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 **Implementation note.** Three findings, none of which changed what the task
 did.
@@ -280,6 +280,11 @@ did.
    passed in 109.64s before the edit and 29 passed in 113.28s after — the same
    29 tests, no expectation edited. Per constraint 7 any differing expectation
    would have been a finding to report rather than a new expectation to write.
+
+**[checkpoint: b25c853]** — verified with the user's explicit yes, given a
+`CI=true pytest` run of 1162 passed, 2 skipped, 0 failed in 9m47s at 96.15%
+coverage, unchanged from Phase 2 as expected for a GDScript-only
+behaviour-preserving refactor. Full report in the git note on `b25c853`.
 
 
 ## Phase 4 — INVOKE COLLAPSE
