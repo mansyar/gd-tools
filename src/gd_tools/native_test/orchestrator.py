@@ -83,6 +83,8 @@ def run_native_tests(
     process_stdout: list[str] = []
     process_stderr: list[str] = []
     suite_artifact_paths: list[dict[str, Any]] = []
+    engine_warnings: list[str] = []
+    coverage_omissions: list[dict[str, Any]] = []
 
     for index, suite in enumerate(suites):
         if artifact_layout is not None:
@@ -202,6 +204,17 @@ def run_native_tests(
                 }
             )
             all_tests.extend(parsed_result.tests)
+            # R5: omissions and warnings ride the existing channels. Every
+            # suite instruments the whole plan, so the same omission arrives
+            # from each shard; dedupe to keep the aggregate honest.
+            for warning in parsed_result.engine_warnings:
+                if warning not in engine_warnings:
+                    engine_warnings.append(warning)
+            for omission in parsed_result.diagnostics.get(
+                "coverage_omissions", []
+            ):
+                if omission not in coverage_omissions:
+                    coverage_omissions.append(omission)
             if artifact_layout is not None:
                 suite_artifact_paths[-1]["screenshots"] = [
                     Path(test.diagnostics["screenshot"])
@@ -255,6 +268,7 @@ def run_native_tests(
                 suite_names=[suite.name for suite in suites],
                 suite_paths=suite_artifact_paths,
                 preflight_paths=artifact_layout.preflight_paths(),
+                omitted=coverage_omissions or None,
             )
         except ArtifactPublishError as exc:
             has_error = True
@@ -269,6 +283,7 @@ def run_native_tests(
                     suite_names=[suite.name for suite in suites],
                     suite_paths=suite_artifact_paths,
                     preflight_paths=artifact_layout.preflight_paths(),
+                    omitted=coverage_omissions or None,
                 )
             except ArtifactPublishError:
                 pass
@@ -280,6 +295,12 @@ def run_native_tests(
         tests=all_tests,
         coverage_data_path=merged_coverage_path,
         artifact_index_path=artifact_index_path,
+        engine_warnings=engine_warnings,
+        diagnostics=(
+            {"coverage_omissions": coverage_omissions}
+            if coverage_omissions
+            else {}
+        ),
         stdout="\n".join(process_stdout),
         stderr="\n".join(process_stderr),
     )
@@ -299,6 +320,7 @@ def _merge_coverage_shards(
 
     merged: dict[int, dict[int, int]] = {}
     generated_at = ""
+    omitted: list[dict[str, Any]] = []
     for shard_path in shard_paths:
         if not shard_path.is_file():
             continue
@@ -309,6 +331,12 @@ def _merge_coverage_shards(
         if not isinstance(data, dict) or data.get("version") != 1:
             return False
         generated_at = str(data.get("generated_at", generated_at))
+        # R5: carry the collector-reported omissions into the merged data so
+        # the terminal report keeps the real reasons instead of generic
+        # fallbacks. Every shard instruments the same plan, so dedupe.
+        for omission in data.get("omitted", []):
+            if isinstance(omission, dict) and omission not in omitted:
+                omitted.append(omission)
         for file_data in data.get("files", []):
             file_id = int(file_data.get("file_id", -1))
             if file_id < 0:
@@ -326,14 +354,14 @@ def _merge_coverage_shards(
         }
         for file_id, hits in sorted(merged.items())
     ]
-    return _write_json_atomic(
-        output_path,
-        {
-            "version": 1,
-            "generated_at": generated_at,
-            "files": files,
-        },
-    )
+    payload: dict[str, Any] = {
+        "version": 1,
+        "generated_at": generated_at,
+        "files": files,
+    }
+    if omitted:
+        payload["omitted"] = omitted
+    return _write_json_atomic(output_path, payload)
 
 
 def _write_json_atomic(path: Path, data: dict) -> bool:

@@ -16,6 +16,8 @@ var _active: bool = false
 
 var _plan: Dictionary = {}
 
+var _omitted: Array = []
+
 
 func _ready() -> void:
 	# Instrument files when GD_TOOLS_COVERAGE_PLAN is set.
@@ -59,8 +61,14 @@ func get_hits() -> Dictionary:
 	return _hits
 
 
+func get_omitted() -> Array:
+	## Targets that could not be instrumented, as {file_id, path, reason, fix}.
+	return _omitted
+
+
 func reset() -> void:
 	_hits.clear()
+	_omitted.clear()
 
 
 func set_active(active: bool) -> void:
@@ -91,12 +99,28 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 	if lines.is_empty():
 		return false
 
+	# R4: a path that does not exist and a file that will not load are the
+	# same control flow but different problems. One means the plan is stale;
+	# the other means the script is a real defect. FileAccess.file_exists is
+	# what separates them -- load() returns null for both.
+	if not FileAccess.file_exists(path):
+		_record_omission(
+			file_id,
+			path,
+			"Skipped uninstrumentable script.",
+			"The coverage plan references a file that no longer exists: " + path,
+			"The plan is stale. Re-run with --no-cache to regenerate it."
+		)
+		return false
+
 	var script = load(path) as GDScript
 	if script == null:
-		_log_error(
-			"Failed to instrument script.",
-			"Cannot load script: " + path,
-			"Verify the path in the plan exists and compiles."
+		_record_omission(
+			file_id,
+			path,
+			"Skipped uninstrumentable script.",
+			"The file exists but does not load as GDScript: " + path,
+			"Fix the script, or exclude it from the plan."
 		)
 		return false
 
@@ -105,15 +129,25 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 	script.source_code = instrumented
 	var err: int = script.reload(true)
 	if err != OK:
-		_log_error(
-			"Failed to reload instrumented script.",
-			"reload(true) failed for: " + path,
-			"Check tracker injection logic for syntax errors."
+		_record_omission(
+			file_id,
+			path,
+			"Skipped uninstrumentable script.",
+			"Trackers could not be injected, so the script did not reload: " + path,
+			"Fix the script's own syntax, or exclude it from the plan."
 		)
 		script.source_code = original_source
 		script.reload(true)
 		return false
 
+	# R3: seed an empty entry so files[] is the instrumented set rather than
+	# the hit set. Without it an instrumented-but-unexecuted file is absent
+	# from the output and cannot be told apart from one that failed to
+	# instrument at all. Phase 1 verified an empty hits object scores
+	# identically to an absent entry in every renderer, so this reports no
+	# change to any percentage.
+	if not _hits.has(file_id):
+		_hits[file_id] = {}
 	return true
 
 
@@ -279,3 +313,24 @@ func _log_error(what: String, cause: String, fix: String) -> void:
 	push_error(
 		"[gd-tools] [Error] " + what + "\n\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix
 	)
+
+
+func _log_warning(what: String, cause: String, fix: String) -> void:
+	# R1: report an uninstrumentable target as a warning, never an error.
+	# push_error escalates Godot to a non-zero exit, and test_runner.py turns
+	# any returncode above 1 into a hard failure -- so one unrelated broken
+	# script failed every test in the project. _log_error is deliberately left
+	# intact for the plan-level failures above, which really are fatal.
+	push_warning(
+		"[gd-tools] [Warning] " + what + "\n\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix
+	)
+
+
+func _record_omission(
+		file_id: int, path: String, what: String, cause: String, fix: String
+) -> void:
+	# R5: record the omission structurally so the additive `omitted` key in
+	# the coverage JSON carries the reason the collector derived, while the
+	# console keeps the same warning it has always printed.
+	_omitted.append({"file_id": file_id, "path": path, "reason": cause, "fix": fix})
+	_log_warning(what, cause, fix)

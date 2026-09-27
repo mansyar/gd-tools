@@ -450,8 +450,20 @@ func test_instrument_file_invalid_path():
 	}
 	var result = _GDTCoverage._instrument_file(file_entry)
 	assert_false(result, "should return false for invalid path")
-	assert_push_error("Failed to instrument script")
-	assert_engine_error_count(2, "load() generates engine errors for invalid path")
+	# R1 + R4: a path that does not exist means a stale plan, so it is reported
+	# as a warning rather than an error -- an error escalates Godot to a
+	# non-zero exit and failed every test in the project over one stale entry.
+	# One assertion only: GUT matches a single tracked warning per assertion,
+	# and this call site emits exactly one. The full message text, including
+	# the --no-cache guidance, is asserted from Python in
+	# test_hooks_nonexistent_script_in_plan.
+	assert_push_warning("no longer exists")
+	# The existence check now runs before load(), so the engine is never asked
+	# to open a missing file and emits no error of its own. Previously this
+	# count was 2 (one from load(), one from our push_error).
+	assert_engine_error_count(
+		0, "a nonexistent path is detected before load() is called"
+	)
 
 
 func test_instrument_file_no_tracked_lines():
@@ -517,7 +529,11 @@ func test_instrument_file_restores_source_on_reload_failure():
 		broken_source,
 		"source_code should be restored to original on reload failure"
 	)
-	assert_push_error("Failed to reload instrumented script")
+	# R1 + R4: reported as a warning, not an error, and the cause names the
+	# script's own reload rather than blaming gd-tools' tracker injection --
+	# which is what the old "Check tracker injection logic for syntax errors"
+	# message told users to go and look at.
+	assert_push_warning("did not reload")
 	assert_engine_error_count(
 		2, "instrumented source and restored broken source both fail to parse"
 	)

@@ -195,6 +195,39 @@ must not send a user into the wrong place.
 field. Bumping it would be a breaking change to a documented contract for no
 reporting benefit.
 
+**One correction to the above, resolved 2026-09-28 during Phase 3
+planning.** R3 makes the *identity* of an omission derivable, but not its
+**reason** — and the reason is the whole point. A stale plan and a broken
+script are different bugs with different fixes, and a plan-vs-data diff
+cannot distinguish them. The reason exists only in the collector, where the
+`FileAccess.file_exists` discriminator ran. So the coverage data JSON gains
+an **additive, optional `omitted` key**: a list of
+`{file_id, path, reason, fix}` entries, written by both collectors.
+
+This is additive evolution, not a format change, and the version stays `1`
+honestly because nothing that was valid before became invalid:
+
+- `read_coverage_json` reads only the keys it knows (`version`, `files`, and
+  per-entry `file_id`/`hits`) and **silently ignores unknown top-level
+  keys** (verified `reporter.py:167-200`). So a reader that predates this
+  change parses new data unchanged, and a newer reader parses old data that
+  lacks the key by defaulting to an empty list.
+- No collector's `write()` signature changes, no new artifact is created, and
+  nothing new needs discovering, pruning or cleaning up — which is what a
+  sidecar file would have cost.
+- A format gaining a *required* field would need a bump. A format gaining an
+  *optional* field that old readers ignore is the standard additive path.
+
+The key is authoritative for **reasons only**. Which targets were omitted
+is still derived from `plan.files - data.files`, because that is the
+definition that R3 made reliable; `omitted` supplies the explanation, and
+the reconciler falls back to a generic reason if a target is missing from
+the data yet absent from `omitted`, so the two can never silently disagree
+about *what* happened.
+
+`docs/ARCHITECTURE.md` §4.2 documents the coverage format and must be
+updated in Phase 4.
+
 ### R6 — `--min` measures the instrumented set, and omissions get their own gate
 
 Two separate conditions, deliberately not collapsed into one number:
@@ -218,6 +251,19 @@ Two separate conditions, deliberately not collapsed into one number:
 This keeps the two surfaces from fighting: the number stays trustworthy, and
 the incompleteness is never silent. Resolved 2026-09-27; the plan should treat
 it as binding, not reopen it.
+
+**Both figures are reported, not just the instrumented-set one.** Resolved
+2026-09-28, during Phase 3 planning. Reporting only the instrumented-set
+percentage has a specific failure mode: the denominator is chosen by which
+files happened to load, so a project can keep passing `--min 80` while its
+worst-covered files progressively fail to instrument and drop out of the
+measurement. The gate would report success over a set that is shrinking
+because the code most worth measuring is exactly the code that stopped
+being measured. So the terminal report shows the instrumented-set figure as
+the headline **and** the plan-wide figure beside it, and the gate states both.
+The headline answers "how well is the code we measured covered"; the
+plan-wide figure answers "how much of the project did we actually manage to
+look at". Resolved 2026-09-28; binding.
 
 ### R7 — The exit-code contract is unchanged
 

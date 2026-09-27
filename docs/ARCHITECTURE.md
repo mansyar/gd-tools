@@ -354,6 +354,14 @@ consumed by the Python reporter. It contains hit counts keyed by
         "2": 1
       }
     }
+  ],
+  "omitted": [
+    {
+      "file_id": 7,
+      "path": "res://scripts/broken.gd",
+      "reason": "The file exists but does not load as GDScript.",
+      "fix": "Fix the script, or exclude it from the plan."
+    }
   ]
 }
 ```
@@ -365,10 +373,19 @@ consumed by the Python reporter. It contains hit counts keyed by
 | `files` | array | One entry per file with hits recorded |
 | `files[].file_id` | int | Identifier matching the plan's `file_id` |
 | `files[].hits` | object | Map of `line_id` (string) to hit count (int) |
+| `omitted` | array\|absent | Optional. Targets the collector could not instrument, each `{file_id, path, reason, fix}` |
 
-Note: The coverage data does not include file paths --- path
-resolution happens at report-generation time via the plan. Files in
-the plan but absent from coverage data are treated as 0% covered.
+Note: The coverage data does not include file paths for hit entries ---
+path resolution happens at report-generation time via the plan. Every
+target the collector **successfully instrumented** appears in `files`
+with an empty `hits` object if it never executed, so the instrumented
+set is derivable as the complement of `plan.files - files[].file_id`.
+A plan target absent from both `files` and `omitted` was not
+instrumented either; the report derives which targets were omitted
+from that diff and takes the *reason* from `omitted` (falling back to
+a generic message if the two disagree). `omitted` is additive and
+optional: readers that predate it ignore it, and readers that expect
+it treat it as empty when absent --- the schema version stays `1`.
 
 ---
 
@@ -454,6 +471,16 @@ increments the count for the given pair.
   `load()` -> modify `source_code` -> `reload()`.
 - `_inject_trackers(source, file_id, lines)` --- injects tracker calls
   bottom-to-top to preserve line numbers.
+- `_record_omission(file_id, path, what, cause, fix)` --- records a
+  target the collector could not instrument and emits it as a
+  `push_warning` with `Cause:`/`Fix:` lines. Per-target failures are
+  warnings, never errors: the run continues past them so the remaining
+  targets still report (a stale plan and a broken script get distinct
+  messages, discriminated by `FileAccess.file_exists`). Plan-level
+  problems (missing or malformed plan, wrong version) remain fatal
+  `_log_error` paths.
+- `get_omitted()` --- returns the recorded omissions as structured
+  `{file_id, path, reason, fix}` entries for the post-run hook.
 
 ### 5.3 pre_run_hook.gd
 
@@ -499,9 +526,12 @@ method.
 1. Retrieve the `_GDTCoverage` autoload node from the scene tree.
 2. Check that the tracker is active; if not, return silently.
 3. Collect hits from the tracker via `get_hits()`.
-4. Build the coverage JSON object (version, generated_at, files).
-5. Write the JSON to the path from `GD_TOOLS_COVERAGE_OUTPUT`.
-6. Print a summary line with file count and line count.
+4. Collect recorded omissions via `get_omitted()`.
+5. Build the coverage JSON object (version, generated_at, files, and
+   the optional `omitted` key when any target could not be
+   instrumented).
+6. Write the JSON to the path from `GD_TOOLS_COVERAGE_OUTPUT`.
+7. Print a summary line with file count and line count.
 
 **JSON construction (`_build_coverage_json`):**
 
@@ -798,7 +828,8 @@ mid-test.
 | `coverage_data_path` | path\|null | Shard written by `GdToolsNativeCoverage` |
 | `artifact_index_path` | path\|null | This run's artifact index |
 | `engine_errors[]` | strings | Captured Godot errors |
-| `engine_warnings[]` | strings | Captured Godot warnings |
+| `engine_warnings[]` | strings | Captured Godot warnings (including one line per omitted coverage target) |
+| `diagnostics` | map | Run-level extras; carries `coverage_omissions` when targets could not be instrumented |
 | `started_at` / `finished_at` | ISO-8601 | Wall-clock bounds |
 
 A test `status` may be `passed`, `failed`, `error`, `skipped`, or `pending`. The
@@ -823,6 +854,7 @@ realized.
 | `artifact_root` / `run_dir` | paths | Where the run wrote |
 | `preflight` | map | Preflight artifact paths |
 | `suites[]` | objects | Suite name plus its realized artifact paths |
+| `omitted` | array\|absent | Present when coverage targets could not be instrumented; each `{file_id, path, reason, fix}` |
 
 ### 9.6 Progress Events (`native/suite-NNNN.events.ndjson`)
 
@@ -842,7 +874,11 @@ The exit code is the contract. It is stable across runtimes.
 Exit `2` is reserved for conditions where the run could not be trusted. A test
 assertion failure is never exit `2` --- it is exit `1`. A windowed suite
 requested on a headless renderer is exit `2`, because the suite did not run and
-reporting it as a pass would be a lie.
+reporting it as a pass would be a lie. A `--min` threshold evaluated over an
+**incomplete** measurement is exit `2` for the same reason: some plan targets
+could not be instrumented, so the reported percentage does not describe the
+whole project the threshold was written for. Without `--min`, the same
+condition is a prominent warning and does not change the exit code.
 
 ## 10. Environment Contract
 
@@ -1067,6 +1103,25 @@ Instrumentation happens in memory through the Script API. The tracker is reached
 through a static callable, so instrumented code pays no lookup cost per hit.
 On completion it writes the same `coverage.json` shape the Python reporter
 already consumes.
+
+A target the collector cannot instrument --- a stale plan referencing a
+deleted file, a script that fails `load()`, a script that rejects tracker
+injection --- is a **warning**, not an error: the collector continues past it
+so the remaining targets still report, records a structured
+`{file_id, path, reason, fix}` omission, and writes those under the additive
+optional `omitted` key in the coverage JSON (`version` stays `1`). The stale
+plan and the broken script get distinct messages, discriminated by
+`FileAccess.file_exists`. The runner surfaces each omission as an
+`engine_warnings` entry and in the run result's
+`diagnostics.coverage_omissions` --- never as an engine error, so a partial
+measurement cannot fail the run on its own (the `--min` threshold governs
+that separately). When a target fails to load, Godot itself prints
+`SCRIPT ERROR:`/`ERROR:` lines while the collector attempts instrumentation;
+the runner snapshots the log after activation and demotes exactly those
+activation-window errors to warnings, so they ride the omission's evidence
+channel instead of escalating the run --- while engine errors raised while
+tests execute still escalate. The artifact index records the same omissions
+for machine consumers.
 
 This component is the bridge between the two halves of `gd-tools`: it is the
 native runtime activating the coverage system described in Part I.

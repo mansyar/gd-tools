@@ -345,6 +345,50 @@ def test_merge_coverage_data_empty_list():
     assert merged.version == 1
 
 
+def test_merge_coverage_data_unions_omitted_targets(tmp_path):
+    """Omitted targets dedupe across shards; merged data keeps the reasons."""
+    data1 = {
+        "version": 1,
+        "files": [],
+        "omitted": [
+            {
+                "file_id": 1,
+                "path": "res://a.gd",
+                "reason": "stale",
+                "fix": "regen",
+            },
+        ],
+    }
+    data2 = {
+        "version": 1,
+        "files": [],
+        "omitted": [
+            {
+                "file_id": 1,
+                "path": "res://a.gd",
+                "reason": "stale",
+                "fix": "regen",
+            },
+            {
+                "file_id": 2,
+                "path": "res://b.gd",
+                "reason": "broken",
+                "fix": "repair",
+            },
+        ],
+    }
+    f1 = tmp_path / "shard1.json"
+    f2 = tmp_path / "shard2.json"
+    f1.write_text(json.dumps(data1))
+    f2.write_text(json.dumps(data2))
+
+    merged = merge_coverage_data([f1, f2])
+    assert [(o.file_id, o.reason) for o in merged.omitted] == [
+        (1, "stale"),
+        (2, "broken"),
+    ]
+
+
 def test_merge_coverage_data_single_file(tmp_path):
     """merge_coverage_data with a single file returns equivalent data."""
     data = {
@@ -586,6 +630,100 @@ def test_compute_summary_missing_file_in_coverage_data():
     assert summary.total_branches == 3
     assert summary.covered_branches == 2
     assert summary.branch_rate == pytest.approx(2 / 3)
+
+
+def test_empty_hits_entry_scores_identically_to_absent_entry(tmp_path):
+    """A seeded empty ``hits`` dict scores exactly like an absent entry.
+
+    Spec R3 seeds ``{"file_id": N, "hits": {}}`` for every file the runtime
+    successfully instrumented, which is what makes ``files[]`` the
+    instrumented set rather than the hit set.  This pins the premise that
+    seeding moves no reported number: ``read_coverage_json`` accepts an empty
+    dict, and ``compute_summary`` scores it identically to a file absent from
+    the coverage data entirely.  Compare the totals asserted by
+    ``test_compute_summary_missing_file_in_coverage_data`` above.
+    """
+    cov = tmp_path / "empty_hits.json"
+    cov.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2025-01-01",
+                "files": [
+                    {
+                        "file_id": 0,
+                        "hits": {"0": 3, "1": 2, "2": 1, "3": 1, "4": 3},
+                    },
+                    {"file_id": 1, "hits": {}},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    data = read_coverage_json(cov)
+    assert data.files[1].hits == {}
+
+    plan = read_plan_json(_PLAN_FIXTURE)
+    summary = compute_summary(plan, data)
+
+    # File 0: 5 lines all covered, 2 of its branches covered.
+    # File 1: present, 3 lines, nothing covered.
+    assert summary.total_lines == 8
+    assert summary.covered_lines == 5
+    assert summary.line_rate == pytest.approx(5 / 8)
+    assert summary.total_branches == 3
+    assert summary.covered_branches == 2
+    assert summary.branch_rate == pytest.approx(2 / 3)
+
+
+def test_merge_preserves_seeded_empty_hits_entries(tmp_path):
+    """A seeded empty ``hits`` entry survives a shard merge.
+
+    The native orchestrator shards coverage per suite and then merges, so an
+    entry with no hits must not be dropped on the way through. If it were,
+    the instrumented set R3 establishes would be destroyed by the merge and
+    the Phase 3 reconciliation would have nothing to reconcile on any
+    multi-suite run -- an instrumented-but-unexecuted file would go back to
+    being indistinguishable from one that could not be instrumented.
+
+    This is a regression guard on existing behavior rather than a new
+    contract: ``merge_coverage_data`` creates the ``file_id`` key *before*
+    iterating hits (``reporter.py:274-275``), which is what makes it work.
+    That ordering is load-bearing and must not be "optimized" away.
+    """
+    (tmp_path / "shard-a.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2025-01-01",
+                "files": [
+                    {"file_id": 0, "hits": {"1": 2}},
+                    {"file_id": 1, "hits": {}},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "shard-b.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2025-01-01",
+                "files": [{"file_id": 2, "hits": {}}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    merged = merge_coverage_data(
+        [tmp_path / "shard-a.json", tmp_path / "shard-b.json"]
+    )
+    by_id = {fc.file_id: fc.hits for fc in merged.files}
+
+    assert by_id[0] == {"1": 2}
+    assert by_id[1] == {}, "seeded empty entry dropped by the merge"
+    assert by_id[2] == {}, "seeded empty entry dropped by the merge"
 
 
 # --- Report dispatch and threshold (FR-3) ---

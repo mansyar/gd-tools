@@ -20,14 +20,14 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Coverage Target Contract** — a coverage target that cannot be
+- [x] **Track: Coverage Target Contract** (archived →
+  `./archive/coverage_target_contract_20260926/`) - a coverage target that cannot be
   instrumented now warns and continues instead of escalating a process-fatal
   error that contradicted the code's own `return false`. The omission is recorded
   in the run diagnostics, the terminal report, and the artifact index; `--min`
   evaluates against the instrumented set with a separate gate so an omission
   cannot be silently ignored. Covers both runtimes, and stops the native
   collector from aborting all instrumentation on the first failure.
-  *Link: [coverage_target_contract_20260926](./tracks/coverage_target_contract_20260926/index.md)*
 
 ---
 

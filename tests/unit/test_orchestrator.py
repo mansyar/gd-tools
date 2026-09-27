@@ -32,6 +32,7 @@ from gd_tools.coverage.reporter import (
     CoverageSummary,
     FileCoverage,
     FileSummary,
+    OmittedTarget,
     ReportResult,
 )
 from gd_tools.errors import (
@@ -250,6 +251,42 @@ def test_run_coverage_test_error_precedence_test_failure_first(mock_deps):
 
     with pytest.raises(TestFailureError):
         run_coverage_test(_make_config())
+
+
+@pytest.mark.unit
+def test_run_coverage_test_prefers_test_failure_over_omission_gate(mock_deps):
+    """A failed test outranks the omission gate, matching the native seam.
+
+    The threshold branch reports and gates before re-raising, but only when
+    the tests passed: command.py prefers test_failure over the gate, and the
+    two runtimes must not disagree about exit codes (review finding).
+    """
+    mock_deps["run_tests"].side_effect = TestFailureError("Tests failed")
+    mock_deps["read_coverage_json"].return_value = CoverageData(
+        version=1,
+        generated_at="2025-01-01T00:00:00",
+        files=[FileCoverage(file_id=0, hits={"0": 3})],
+        omitted=[
+            OmittedTarget(
+                file_id=99,
+                path="res://gone.gd",
+                reason="stale plan",
+                fix="regen",
+            )
+        ],
+    )
+    report_result = _make_report_result()
+    report_result.threshold_met = False
+    mock_deps["generate_report"].side_effect = CoverageThresholdError(
+        "Below threshold", report_result=report_result
+    )
+
+    with pytest.raises(TestFailureError):
+        run_coverage_test(_make_config(), min_percent=90)
+
+    # The gate must never fire over a failed test: no partial report, no
+    # exit-2 CoverageThresholdError.
+    mock_deps["compute_summary"].assert_not_called()
 
 
 @pytest.mark.unit

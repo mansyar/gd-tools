@@ -113,6 +113,55 @@ def test_publish_records_paths_and_prunes_only_after_publication(tmp_path):
     assert layout.run_dir.exists()
 
 
+def test_publish_records_omitted_coverage_targets(tmp_path):
+    """AC 4: a machine consumer can read the omissions from the index alone.
+
+    The terminal report dies with its process; the artifact index is the only
+    surface that outlives it. The payload has no version field of its own, so
+    the additive ``omitted`` key bumps nothing.
+    """
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    omitted = [
+        {
+            "file_id": 1,
+            "path": "res://scripts/missing_target.gd",
+            "reason": (
+                "The coverage plan references a file that no longer exists: "
+                "res://scripts/missing_target.gd"
+            ),
+            "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+        }
+    ]
+
+    index_path = publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=["ExampleSuite"],
+        suite_paths=[layout.suite_paths(0)],
+        preflight_paths=layout.preflight_paths(),
+        omitted=omitted,
+    )
+
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    assert index["omitted"] == omitted
+
+
+def test_publish_omits_the_omitted_key_when_nothing_was_omitted(tmp_path):
+    """The key is additive: a clean run writes the old shape exactly."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    index_path = publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=["ExampleSuite"],
+        suite_paths=[layout.suite_paths(0)],
+        preflight_paths=layout.preflight_paths(),
+    )
+
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    assert "omitted" not in index
+
+
 def test_publish_omits_artifacts_that_were_never_written(tmp_path):
     """The index lists only artifact paths that exist on disk."""
     layout = NativeArtifactLayout.create(tmp_path, "run-1")

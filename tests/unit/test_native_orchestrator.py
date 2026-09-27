@@ -8,7 +8,10 @@ from unittest.mock import patch
 import pytest
 
 from gd_tools.native_test.artifacts import NativeArtifactLayout
-from gd_tools.native_test.orchestrator import run_native_tests
+from gd_tools.native_test.orchestrator import (
+    _merge_coverage_shards,
+    run_native_tests,
+)
 from gd_tools.native_test.protocol import (
     NativeCoverage,
     NativeExecutionMode,
@@ -29,7 +32,11 @@ def _suite(name: str) -> NativeSuite:
 
 
 def _write_result(
-    result_path: Path, status: str = "passed", diagnostics: dict | None = None
+    result_path: Path,
+    status: str = "passed",
+    diagnostics: dict | None = None,
+    engine_warnings: list[str] | None = None,
+    run_diagnostics: dict | None = None,
 ) -> None:
     result_path.write_text(
         json.dumps(
@@ -37,6 +44,8 @@ def _write_result(
                 "protocol_version": 2,
                 "run_id": "test-run",
                 "status": status,
+                "engine_warnings": engine_warnings or [],
+                "diagnostics": run_diagnostics or {},
                 "tests": [
                     {
                         "suite": "ExampleSuite",
@@ -84,6 +93,90 @@ def test_run_native_tests_uses_one_process_per_suite(tmp_path):
     assert all("--headless" in call[0] for call in calls)
 
 
+def test_run_result_aggregates_engine_warnings_and_coverage_omissions(tmp_path):
+    """R5: omissions ride the existing channels into the aggregated result.
+
+    Every suite process instruments the whole plan, so the same omission is
+    reported by each shard; the aggregate must carry it once, not per suite.
+    """
+    omission = {
+        "file_id": 1,
+        "path": "res://scripts/missing_target.gd",
+        "reason": (
+            "The coverage plan references a file that no longer exists: "
+            "res://scripts/missing_target.gd"
+        ),
+        "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+    }
+    warning = "Skipped uninstrumentable coverage target: missing_target.gd"
+
+    def fake_run(args, **kwargs):
+        _write_result(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]),
+            engine_warnings=[warning],
+            run_diagnostics={"coverage_omissions": [omission]},
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+        )
+
+    assert result.engine_warnings == [warning]
+    assert result.diagnostics == {"coverage_omissions": [omission]}
+
+
+def test_merge_coverage_shards_unions_omitted_targets(tmp_path):
+    """Shard merging keeps the collector-reported omission reasons.
+
+    Every shard instruments the same plan, so the same omission appears in
+    each; the merged coverage data must carry it once, with the reason intact.
+    """
+    omission = {
+        "file_id": 1,
+        "path": "res://scripts/missing_target.gd",
+        "reason": "stale plan",
+        "fix": "re-run with --no-cache",
+    }
+    shard1 = tmp_path / "suite-0000.coverage.json"
+    shard1.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2026-01-01T00:00:00Z",
+                "files": [{"file_id": 0, "hits": {"0": 1}}],
+                "omitted": [omission],
+            }
+        ),
+        encoding="utf-8",
+    )
+    shard2 = tmp_path / "suite-0001.coverage.json"
+    shard2.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2026-01-01T00:00:01Z",
+                "files": [],
+                "omitted": [omission],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "merged.coverage.json"
+
+    assert _merge_coverage_shards([shard1, shard2], output)
+
+    merged = json.loads(output.read_text(encoding="utf-8"))
+    assert merged["omitted"] == [omission]
+    assert merged["files"] == [{"file_id": 0, "hits": {"0": 1}}]
+
+
 def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
     """A completed run records suite paths before retaining the latest run."""
     old_run = tmp_path / ".gd-tools" / "artifacts" / "old-run"
@@ -117,6 +210,49 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
     assert index["suites"][0]["result"] == str(layout.suite_paths(0)["result"])
     assert "screenshot" not in index["suites"][0]
     assert not old_run.exists()
+
+
+def test_run_native_tests_publishes_coverage_omissions_in_the_index(tmp_path):
+    """Omissions reported by the suites reach the published artifact index (AC 4)."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    warning = (
+        "Coverage target omitted: res://scripts/missing_target.gd. "
+        "The coverage plan references a file that no longer exists. "
+        "Fix: The plan is stale. Re-run with --no-cache to regenerate it."
+    )
+    omission = {
+        "file_id": 1,
+        "path": "res://scripts/missing_target.gd",
+        "reason": (
+            "The coverage plan references a file that no longer exists: "
+            "res://scripts/missing_target.gd"
+        ),
+        "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+    }
+
+    def fake_run(args, **kwargs):
+        _write_result(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]),
+            engine_warnings=[warning],
+            run_diagnostics={"coverage_omissions": [omission]},
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("ExampleSuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+        )
+
+    index = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert result.engine_warnings == [warning]
+    assert result.diagnostics == {"coverage_omissions": [omission]}
+    assert index["omitted"] == [omission]
 
 
 def test_run_native_tests_passes_screenshot_base_and_indexes_captures(

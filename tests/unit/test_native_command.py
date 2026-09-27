@@ -14,6 +14,7 @@ from gd_tools.errors import (
     TestFailureError,
 )
 from gd_tools.native_test.command import (
+    _generate_native_report,
     _test_directories,
     run_native_test_command,
 )
@@ -715,3 +716,76 @@ def test_run_native_command_infrastructure_error_dominates_test_failure(
     assert junit_path.is_file()
     root = ET.parse(junit_path).getroot()
     assert root.find("testsuite").attrib["tests"] == "2"
+
+
+def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
+    """R6: the report and the omission gate survive a threshold failure.
+
+    The legacy seam reports the coverage and evaluates the omission gate even
+    when generate_report raises the threshold error, so `--min` plus
+    omissions exits 2 with the partial block visible. The native seam must
+    reach the same shared `_report_coverage` on that path instead of
+    short-circuiting, or the two runtimes disagree exactly when the gate
+    matters most.
+    """
+    coverage_dir = tmp_path / ".gd-tools" / "coverage"
+    coverage_dir.mkdir(parents=True)
+    (coverage_dir / "plan.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_by": "gd-tools-test",
+                "files": [
+                    {
+                        "file_id": 0,
+                        "path": "res://scripts/a.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2026-09-28T00:00:00",
+                "files": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = _native_result().model_copy(
+        update={"coverage_data_path": coverage_path}
+    )
+    summary = object()
+    error = CoverageThresholdError(
+        "below threshold",
+        report_result=SimpleNamespace(summary=summary, file_summaries=[]),
+    )
+    with (
+        patch(
+            "gd_tools.native_test.command.reporter.generate_report",
+            side_effect=error,
+        ),
+        patch(
+            "gd_tools.native_test.command._report_coverage"
+        ) as report_coverage,
+    ):
+        with pytest.raises(CoverageThresholdError) as excinfo:
+            _generate_native_report(
+                _config(),
+                tmp_path,
+                result,
+                coverage=True,
+                min_percent=90,
+                show_uncovered=False,
+                no_cache=False,
+            )
+
+    assert excinfo.value is error
+    report_coverage.assert_called_once()
+    assert report_coverage.call_args.args[2] is summary

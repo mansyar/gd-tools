@@ -1607,3 +1607,301 @@ def test_native_runner_collects_line_and_branch_coverage(godot_bin, tmp_path):
     assert hits["1"] > 0
     assert hits["2"] > 0
     assert hits["3"] > 0
+
+
+def test_native_coverage_warns_and_continues_past_uninstrumentable_target(
+    godot_bin, tmp_path
+):
+    """A target that cannot be instrumented warns, is skipped, and the rest run.
+
+    Covers spec R1, R2, R3, and R4 in one Godot spawn. Three distinct defects
+    are combined in a single plan so the per-spawn flake cost stays low:
+
+    * ``missing_target.gd`` does not exist, so ``load()`` returns null. This is
+      a stale plan, and R4 requires a message that says so.
+    * ``never_called.gd`` loads and is instrumented successfully but is never
+      executed. R3 requires it to appear with an empty ``hits`` object, which
+      is what makes ``files[]`` the *instrumented set* rather than the hit set.
+      Without that entry an instrumented-but-unexercised file is
+      indistinguishable from one that could not be instrumented at all.
+    * ``coverage_subject.gd`` is executed normally and must still be reported
+      with real hit counts.
+
+    R2 is the sharpest regression here. ``activate()`` used to return on the
+    first failing target, leaving ``_active`` false, so ``write()`` bailed out
+    and the coverage file was never written at all -- one uncompilable script
+    cost the project its entire coverage. R1 is asserted via ``engine_errors``:
+    a per-target problem must be a WARNING, never an ERROR, or the runner's
+    error promotion escalates the whole run to exit 2.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    (project / "scripts" / "never_called.gd").write_text(
+        "extends RefCounted\n\n\nfunc unused() -> int:\n\treturn 1\n",
+        encoding="utf-8",
+    )
+
+    plan_path = tmp_path / "native-plan.json"
+    coverage_path = tmp_path / "native-coverage.json"
+    result_path = tmp_path / "omission-result.json"
+    log_path = tmp_path / "omission.log"
+    plan_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_by": "gd-tools-test",
+                "files": [
+                    {
+                        "file_id": 0,
+                        "path": "res://scripts/coverage_subject.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [
+                            {
+                                "line": 5,
+                                "id": 0,
+                                "type": "branch",
+                                "branch_type": "if_true",
+                            },
+                            {
+                                "line": 6,
+                                "id": 1,
+                                "type": "statement",
+                                "branch_type": None,
+                            },
+                        ],
+                    },
+                    {
+                        "file_id": 1,
+                        "path": "res://scripts/missing_target.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [{"line": 1, "id": 0, "type": "statement"}],
+                    },
+                    {
+                        "file_id": 2,
+                        "path": "res://scripts/never_called.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [{"line": 5, "id": 0, "type": "statement"}],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_path = tmp_path / "omission-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 2,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeCoverageSuite",
+                        "path": "res://test/coverage_suite.gd",
+                        "tests": [
+                            {"name": "test_statement_and_branch_coverage"}
+                        ],
+                    }
+                ],
+                "coverage": {
+                    "enabled": True,
+                    "plan_path": str(plan_path),
+                    "output_path": str(coverage_path),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        json.loads(manifest_path.read_text(encoding="utf-8")),
+        result_path,
+        log_path=log_path,
+    )
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+
+    # R1: a per-target problem is a warning, so the run is not escalated.
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["engine_errors"] == [], payload["engine_errors"]
+
+    # R2: the collector continued past the bad target, so coverage was written
+    # at all. Before R2 this file did not exist.
+    assert coverage_path.is_file(), (
+        "the collector aborted on the first uninstrumentable target, so no "
+        "coverage was written for any file"
+    )
+    coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
+    by_id = {entry["file_id"]: entry["hits"] for entry in coverage["files"]}
+
+    # The executed subject still reports real hits.
+    assert by_id[0]["0"] > 0, by_id[0]
+    assert by_id[0]["1"] > 0, by_id[0]
+
+    # R3: instrumented but never executed -> present with an empty hits object.
+    # Absent before R3, which made it indistinguishable from file_id 1.
+    assert 2 in by_id, "instrumented-but-unexecuted target missing from files[]"
+    assert by_id[2] == {}, by_id[2]
+
+    # R3: the uninstrumentable target must NOT appear -- that is what the
+    # absence of file_id 1 tells us, now that 2's presence is meaningful.
+    assert 1 not in by_id, "an uninstrumentable target must not be reported"
+
+    # R4: the message must name the file and point at a stale plan rather than
+    # at gd-tools' own instrumentation.
+    combined = result.stdout + result.stderr
+    assert "missing_target.gd" in combined, combined
+    assert "plan" in combined, combined
+
+    # R5: the additive `omitted` key carries the reason the collector itself
+    # derived, so the terminal report never has to guess it back.
+    assert coverage["omitted"] == [
+        {
+            "file_id": 1,
+            "path": "res://scripts/missing_target.gd",
+            "reason": (
+                "The coverage plan references a file that no longer exists: "
+                "res://scripts/missing_target.gd"
+            ),
+            "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+        }
+    ], coverage.get("omitted")
+
+    # AC 9 / R5: the omission reaches the run result through the existing
+    # channels -- a warning line and the structured diagnostics dict -- with
+    # the protocol version unchanged.
+    assert payload["protocol_version"] == 2
+    assert any(
+        "missing_target.gd" in warning for warning in payload["engine_warnings"]
+    ), payload["engine_warnings"]
+    assert payload["diagnostics"]["coverage_omissions"] == coverage["omitted"]
+
+
+def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_load(
+    godot_bin, tmp_path
+):
+    """A target that loads badly warns and continues; the run still exits 0.
+
+    Covers the load-failure omission class (spec §1.3 calls it the important
+    case). ``broken.gd`` exists and parses, but ``preload()`` points at a file
+    that does not exist, so the collector's ``load()``/``reload()`` fails and
+    Godot *itself* prints ``SCRIPT ERROR:`` and ``ERROR:`` lines into the log
+    while the collector attempts instrumentation. The runner must demote those
+    activation-window errors to warnings -- they are the omission's evidence,
+    not a run failure -- or `:729` escalates the whole run to exit 2 even
+    though the collector behaved correctly. Legacy (GUT) exits 0 for the same
+    scenario, and the two runtimes must agree.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    (project / "scripts" / "broken.gd").write_text(
+        'const Gone = preload("res://scripts/gone.gd")\n\n\n'
+        "func triple(value: int) -> int:\n\treturn value * 3\n",
+        encoding="utf-8",
+    )
+
+    plan_path = tmp_path / "loadfail-plan.json"
+    coverage_path = tmp_path / "loadfail-coverage.json"
+    result_path = tmp_path / "loadfail-result.json"
+    log_path = tmp_path / "loadfail.log"
+    plan_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_by": "gd-tools-test",
+                "files": [
+                    {
+                        "file_id": 0,
+                        "path": "res://scripts/coverage_subject.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [
+                            {
+                                "line": 5,
+                                "id": 0,
+                                "type": "branch",
+                                "branch_type": "if_true",
+                            },
+                            {
+                                "line": 6,
+                                "id": 1,
+                                "type": "statement",
+                                "branch_type": None,
+                            },
+                        ],
+                    },
+                    {
+                        "file_id": 1,
+                        "path": "res://scripts/broken.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [{"line": 5, "id": 0, "type": "statement"}],
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest_path = tmp_path / "loadfail-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 2,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeCoverageSuite",
+                        "path": "res://test/coverage_suite.gd",
+                        "tests": [
+                            {"name": "test_statement_and_branch_coverage"}
+                        ],
+                    }
+                ],
+                "coverage": {
+                    "enabled": True,
+                    "plan_path": str(plan_path),
+                    "output_path": str(coverage_path),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        json.loads(manifest_path.read_text(encoding="utf-8")),
+        result_path,
+        log_path=log_path,
+    )
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+
+    # R1: instrumentation-attributable engine output is demoted, so the run
+    # is not escalated. Before the demotion this exited 2 via :729.
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["engine_errors"] == [], payload["engine_errors"]
+
+    # R2: coverage was still written for the instrumented set.
+    assert coverage_path.is_file()
+    coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
+    by_id = {entry["file_id"]: entry["hits"] for entry in coverage["files"]}
+    assert by_id[0]["0"] > 0, by_id[0]
+
+    # R5: the omission declares itself with the broken-script message, not
+    # the stale-plan one -- R4 keeps the two causes distinct.
+    assert coverage["omitted"] == [
+        {
+            "file_id": 1,
+            "path": "res://scripts/broken.gd",
+            "reason": (
+                "Trackers could not be injected, so the script did not "
+                "reload: res://scripts/broken.gd"
+            ),
+            "fix": (
+                "Fix the script's own syntax, or exclude it from the plan."
+            ),
+        }
+    ], coverage.get("omitted")
+
+    # The demoted engine output lands in the warnings channel.
+    assert any(
+        "broken.gd" in warning for warning in payload["engine_warnings"]
+    ), payload["engine_warnings"]

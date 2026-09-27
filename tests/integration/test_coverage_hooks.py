@@ -322,8 +322,26 @@ def test_hooks_missing_output_env_var(tmp_path):
 
 @pytest.mark.integration
 def test_hooks_nonexistent_script_in_plan(tmp_path):
-    """Plan references non-existent script -> error logged, file skipped."""
+    """Plan references non-existent script -> warning logged, file skipped.
+
+    Extended for spec R1, R3, and R4. The original test asserted only that the
+    good file was still instrumented and that the bad path appeared in the
+    output -- both of which already passed *by luck*, because ``push_error``
+    escalates to a non-zero exit only when Godot is under load. That
+    nondeterminism is the Vector-A flake in this track's known_flakes note.
+    Asserting the severity directly is deterministic and pins the actual
+    contract: a per-target problem is a warning, never an engine error.
+
+    R3: ``never_called.gd`` is instrumented but never executed, so it must
+    appear with an empty ``hits`` object. Its absence is what previously made
+    "instrumented but unexercised" indistinguishable from "could not
+    instrument at all".
+    """
     project = _setup_hooks_project(tmp_path)
+    (project / "scripts" / "never_called.gd").write_text(
+        "extends RefCounted\n\n\nfunc unused() -> int:\n\treturn 1\n",
+        encoding="utf-8",
+    )
 
     plan = _make_plan(
         [
@@ -339,6 +357,11 @@ def test_hooks_nonexistent_script_in_plan(tmp_path):
                     {"line": 7, "id": 0},
                     {"line": 11, "id": 1},
                 ],
+            },
+            {
+                "file_id": 2,
+                "path": "res://scripts/never_called.gd",
+                "lines": [{"line": 5, "id": 0}],
             },
         ]
     )
@@ -370,13 +393,43 @@ def test_hooks_nonexistent_script_in_plan(tmp_path):
         assert output_path.exists()
         data = json.loads(output_path.read_text())
 
-        file_ids = [f["file_id"] for f in data["files"]]
-        assert 1 in file_ids
-        assert 0 not in file_ids
+        by_id = {entry["file_id"]: entry["hits"] for entry in data["files"]}
+        assert 1 in by_id
+        assert 0 not in by_id
 
-        # Error about nonexistent script should appear in output
+        # R3: instrumented but never executed -> present, empty hits.
+        assert (
+            2 in by_id
+        ), "instrumented-but-unexecuted target missing from files[]"
+        assert by_id[2] == {}, by_id[2]
+
+        # R5: the collector declares why file_id 0 could not be instrumented
+        # in the additive optional `omitted` key; the version stays 1.
+        assert data["version"] == 1
+        assert data["omitted"] == [
+            {
+                "file_id": 0,
+                "path": "res://scripts/nonexistent.gd",
+                "reason": (
+                    "The coverage plan references a file that no longer "
+                    "exists: res://scripts/nonexistent.gd"
+                ),
+                "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+            }
+        ], data.get("omitted")
+
+        # R1: the omission is a warning, not an engine error. This is the
+        # assertion that makes the run deterministic; before R1 the severity
+        # was ERROR and the whole run could escalate to exit 2 under load.
         combined = result.stdout + result.stderr
         assert "nonexistent.gd" in combined
+        assert "[gd-tools] [Error]" not in combined, combined
+        assert "[gd-tools] [Warning]" in combined, combined
+
+        # R4: a path that does not exist means a stale plan, and the message
+        # must say so rather than implying the user should check compilation.
+        assert "--no-cache" in combined, combined
+        assert "compiles" not in combined, combined
     finally:
         _clear_coverage_env()
 
@@ -611,8 +664,16 @@ def test_hooks_unloadable_script(tmp_path):
         assert 1 in file_ids, "calculator.gd should be instrumented"
         assert 0 not in file_ids, "unloadable file should be skipped"
 
-        # Error about the unloadable file should appear in output
+        # R1 + R4: the file EXISTS, so this is a real defect in the target, not
+        # a stale plan. The message must name the file and must not send the
+        # user off to regenerate the plan -- that advice would be wrong here.
         combined = result.stdout + result.stderr
         assert "project.godot" in combined, "error should mention the file"
+        assert "[gd-tools] [Error]" not in combined, combined
+        assert "[gd-tools] [Warning]" in combined, combined
+        assert "--no-cache" not in combined, (
+            "an existing-but-unloadable file is a broken script, not a stale "
+            f"plan, so it must not suggest regenerating the plan: {combined}"
+        )
     finally:
         _clear_coverage_env()

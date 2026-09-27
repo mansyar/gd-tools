@@ -11,7 +11,7 @@ from pathlib import Path
 from gd_tools import output
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
-from gd_tools.coverage.orchestrator import _print_coverage_inline
+from gd_tools.coverage.orchestrator import _report_coverage
 from gd_tools.errors import (
     ConfigError,
     CoverageThresholdError,
@@ -306,14 +306,35 @@ def _generate_native_report(
                 min_percent / 100 if min_percent is not None else None
             ),
         )
-    except CoverageThresholdError:
+    except CoverageThresholdError as exc:
+        # The legacy seam reports the coverage and evaluates the omission gate
+        # even when the percentage threshold fails, so `--min` plus omissions
+        # exits 2 with the partial block visible instead of a bare threshold
+        # error that hides the incompleteness. Mirror that here: the shared
+        # _report_coverage raises the gate's exit-2 error in place of the
+        # threshold error when omissions exist, and otherwise the threshold
+        # error propagates unchanged. The two runtimes cannot disagree about
+        # a partial measurement.
+        if exc.report_result is not None:
+            _report_coverage(
+                plan,
+                data,
+                exc.report_result.summary,
+                min_percent,
+                show_uncovered=show_uncovered,
+                file_summaries=exc.report_result.file_summaries,
+            )
         raise
-    _print_coverage_inline(
+    # The native runtime reaches the same reconciliation, report and gate as
+    # the legacy one through the shared _report_coverage, so the two runtimes
+    # cannot disagree about a partial measurement.
+    _report_coverage(
+        plan,
+        data,
         report.summary,
         min_percent,
         show_uncovered=show_uncovered,
         file_summaries=report.file_summaries,
-        plan=plan,
     )
     output.print_verbose(f"Coverage report: {report.output_path}")
 
