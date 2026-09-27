@@ -1544,3 +1544,26 @@ def test_native_coverage_warns_and_continues_past_uninstrumentable_target(
     combined = result.stdout + result.stderr
     assert "missing_target.gd" in combined, combined
     assert "plan" in combined, combined
+
+    # R5: the additive `omitted` key carries the reason the collector itself
+    # derived, so the terminal report never has to guess it back.
+    assert coverage["omitted"] == [
+        {
+            "file_id": 1,
+            "path": "res://scripts/missing_target.gd",
+            "reason": (
+                "The coverage plan references a file that no longer exists: "
+                "res://scripts/missing_target.gd"
+            ),
+            "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+        }
+    ], coverage.get("omitted")
+
+    # AC 9 / R5: the omission reaches the run result through the existing
+    # channels -- a warning line and the structured diagnostics dict -- with
+    # the protocol version unchanged.
+    assert payload["protocol_version"] == 2
+    assert any(
+        "missing_target.gd" in warning for warning in payload["engine_warnings"]
+    ), payload["engine_warnings"]
+    assert payload["diagnostics"]["coverage_omissions"] == coverage["omitted"]

@@ -29,7 +29,10 @@ def _suite(name: str) -> NativeSuite:
 
 
 def _write_result(
-    result_path: Path, status: str = "passed", diagnostics: dict | None = None
+    result_path: Path,
+    status: str = "passed",
+    diagnostics: dict | None = None,
+    engine_warnings: list[str] | None = None,
 ) -> None:
     result_path.write_text(
         json.dumps(
@@ -37,6 +40,7 @@ def _write_result(
                 "protocol_version": 2,
                 "run_id": "test-run",
                 "status": status,
+                "engine_warnings": engine_warnings or [],
                 "tests": [
                     {
                         "suite": "ExampleSuite",
@@ -82,6 +86,45 @@ def test_run_native_tests_uses_one_process_per_suite(tmp_path):
     assert result.status == "passed"
     assert len(result.tests) == 2
     assert all("--headless" in call[0] for call in calls)
+
+
+def test_run_result_aggregates_engine_warnings_and_coverage_omissions(tmp_path):
+    """R5: omissions ride the existing channels into the aggregated result.
+
+    Every suite process instruments the whole plan, so the same omission is
+    reported by each shard; the aggregate must carry it once, not per suite.
+    """
+    omission = {
+        "file_id": 1,
+        "path": "res://scripts/missing_target.gd",
+        "reason": (
+            "The coverage plan references a file that no longer exists: "
+            "res://scripts/missing_target.gd"
+        ),
+        "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+    }
+    warning = "Skipped uninstrumentable coverage target: missing_target.gd"
+
+    def fake_run(args, **kwargs):
+        _write_result(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]),
+            diagnostics={"coverage_omissions": [omission]},
+            engine_warnings=[warning],
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+        )
+
+    assert result.engine_warnings == [warning]
+    assert result.diagnostics == {"coverage_omissions": [omission]}
 
 
 def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
