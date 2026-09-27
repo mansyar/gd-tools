@@ -434,10 +434,21 @@ Covers spec R3 (reconciliation), R5 (terminal report), R6, and R7.
 
 ### Task 3.4: Phase Verification & Checkpoint
 
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] AC 1, 2, 3, 5, 6 confirmed
-  - [ ] A malformed plan still fails, still exit 2 (AC 6)
-  - [ ] Coverage of new Python source above 80% line / 70% branch
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [6eab15f]
+  - [x] AC 1, 2, 3, 5, 6 confirmed
+  - [x] A malformed plan still fails, still exit 2 (AC 6)
+  - [x] Coverage of new Python source above 80% line / 70% branch
+
+> **`[checkpoint: 6eab15f]`** - phase complete. Full suite 1183 passed / 2 known
+> skips, exit 0, total coverage 96.08%; new source all above the 80% line / 70%
+> branch gates (omissions.py 98/90, orchestrator.py 95/88, reporter.py 98/97,
+> command.py 93/89); ruff and black clean. Manual verification plan proposed and
+> approved by the user (six steps: healthy baseline both runtimes, a
+> `load()`-failing target exercising warn-and-continue + the partial block, the
+> `--min` gate at exit 2, the AC 7 sanity check, and restore). First suite
+> attempt failed on an environment gap only: `gd-tools.exe` was not on PATH in
+> this shell (WinError 2) — fixed by adding the Python Scripts dir; no code
+> defect. Verification report attached as a git note on the checkpoint commit.
 
 ---
 
