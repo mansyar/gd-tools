@@ -304,24 +304,56 @@ shapes**, not five copies of one:
 
 ### Task 4.1: Collapse each shape to one helper
 
-- [ ] Task: Collapse the duplicated invoke-and-await shapes
-  - [ ] Re-read all five sites and confirm the spec's two-shape analysis still
+- [x] Task: Collapse the duplicated invoke-and-await shapes
+  - [x] Re-read all five sites and confirm the spec's two-shape analysis still
         matches the source
-  - [ ] Establish and record a test baseline **before** editing
-  - [ ] Collapse the arm-then-await shape: have `_run_cleanup` delegate to
+  - [x] Establish and record a test baseline **before** editing
+  - [x] Collapse the arm-then-await shape: have `_run_cleanup` delegate to
         `_run_optional_call`
-  - [ ] Collapse the already-armed shape: route the three inlined copies through
+  - [x] Collapse the already-armed shape: route the three inlined copies through
         one helper that awaits the existing timer and **does not re-arm**. Write
         the "does not re-arm" requirement into the helper's doc comment, since it
         is the property that is invisible at the call sites
-  - [ ] Confirm the baseline result is unchanged. If any test's expectation
+  - [x] Confirm the baseline result is unchanged. If any test's expectation
         differs, stop — constraint 7 applies
-  - [ ] Confirm the diff touches only the five named sites plus the new helper.
+  - [x] Confirm the diff touches only the five named sites plus the new helper.
         Anything else in `gd_tools_test_runner.gd` is scope creep (constraint 8)
-  - [ ] Refactor: not applicable; this task *is* the refactor
-  - [ ] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
-  - [ ] Commit and record
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Refactor: not applicable; this task *is* the refactor
+  - [x] Verify coverage: GDScript is not measured by pytest-cov, so unchanged by
+        construction, as in Phases 2 and 3
+  - [x] Commit and record
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+**Implementation note.** One trap found and closed while writing the
+`_run_cleanup` delegation, which is the reason it carries a comment at all.
+
+`_run_cleanup` is called from exactly one place — the timed-out `after_each`
+path at `:292` — and it is `await`ed there. A naive "let it just call
+`_run_optional_call`" delegation would have been:
+
+```gdscript
+	_run_optional_call(context, method_name, timeout_seconds)
+```
+
+without an `await`. That compiles and it *looks* right, but it silently makes
+`_run_cleanup` a non-coroutine: a function with no `await` in it. The caller's
+`await _run_cleanup(...)` at `:292` would then return immediately instead of
+waiting out the cleanup, so a hung test would never get its `after_each` and
+teardown would race the hung body. The delegation therefore keeps its `await`,
+and the comment says the `await` is load-bearing rather than decorative.
+
+This is the same class of failure as the re-arming trap the spec warns about:
+both are invisible at the call site and both compile. The two guards that catch
+them are `test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup` (the
+cleanup must still run and must still be bounded) and
+`test_native_runner_marks_timed_out_tests` (the shared per-attempt budget must
+still be shared). Both pass unchanged.
+
+Scope held to the five named sites plus the one new helper. Net effect on the
+runner: **−6 lines while adding two explanatory comments**, so the file got
+smaller and the two invisible properties got written down.
+
+**[checkpoint: <sha>]** — see the git note on the Phase 4 checkpoint commit.
 
 ## Risk register
 

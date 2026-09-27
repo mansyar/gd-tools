@@ -260,24 +260,12 @@ func _run_test_attempt(
 	var timed_out := false
 
 	if test_context.has_method("before_each"):
-		_test_completed = false
-		_invoke_test(
-				test_context,
-				"before_each",
-				_active_test_token
-			)
-		await test_call_completed
+		await _await_test_call(test_context, "before_each")
 		timed_out = _test_timeout_reached
 
 	if not timed_out:
 		if test_context.has_method(test_name):
-			_test_completed = false
-			_invoke_test(
-				test_context,
-				test_name,
-				_active_test_token
-			)
-			await test_call_completed
+			await _await_test_call(test_context, test_name)
 			if _test_timeout_reached:
 				timed_out = true
 		else:
@@ -307,13 +295,7 @@ func _run_test_attempt(
 				timeout_seconds
 			)
 		else:
-			_test_completed = false
-			_invoke_test(
-				test_context,
-				"after_each",
-				_active_test_token
-			)
-			await test_call_completed
+			await _await_test_call(test_context, "after_each")
 		cleanup_timed_out = _test_timeout_reached
 		if cleanup_timed_out:
 			timed_out = true
@@ -540,10 +522,11 @@ func _run_cleanup(
 		method_name: String,
 		timeout_seconds: float
 ) -> void:
-	_begin_test_timeout(timeout_seconds)
-	_test_completed = false
-	_invoke_test(context, method_name, _active_test_token)
-	await test_call_completed
+	# A cleanup hook differs from a suite hook only in intent, not in
+	# mechanism: both arm a fresh timer and await it. The await is load
+	# bearing - without it this stops being a coroutine, and the caller's
+	# await would return at once instead of waiting out the cleanup.
+	await _run_optional_call(context, method_name, timeout_seconds)
 
 
 func _activate_coverage(coverage_data: Dictionary) -> bool:
@@ -597,6 +580,17 @@ func _on_test_timeout(token: int) -> void:
 		return
 	_test_timeout_reached = true
 	test_call_completed.emit()
+
+
+func _await_test_call(context: GdToolsTest, method_name: String) -> void:
+	# Awaits the timer already armed for this attempt. Deliberately does
+	# NOT arm one: re-arming here would hand every hook a fresh budget and
+	# change what a declared timeout_seconds means, since a test attempt
+	# gets one budget for before_each, the body and after_each together.
+	# Arming happens once per attempt, in _begin_test_timeout.
+	_test_completed = false
+	_invoke_test(context, method_name, _active_test_token)
+	await test_call_completed
 
 
 func _invoke_test(
