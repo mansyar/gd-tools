@@ -132,7 +132,7 @@ projects have moved. The native runtime is the default and the forward path.
 | Base class | `GdToolsTest` extends `Node` | `GutTest` |
 | Discovery | `test_*` methods, by directory or exact file selector | Gut convention |
 | Lifecycle hooks | `before_all`, `after_all`, `before_each`, `after_each` | Full hook set |
-| Assertions | 7 core assertions plus `fail()` | Broad assertion library |
+| Assertions | 16 assertions plus `fail()`, covering truthiness, equality, ordering, numeric range, collection membership, and object introspection | Broad assertion library |
 | Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal` | Broader helpers |
 | Tags | Class-level tags, filtered with `--tag` | Yes |
 | Test selectors | `--suite`, `--test`, `--test-timeout` | Via `.gutconfig.json` |
@@ -142,13 +142,13 @@ projects have moved. The native runtime is the default and the forward path.
 | JUnit XML output | Yes | Yes |
 | Mocking and stubbing | Not yet | Yes |
 | Parameterized tests | Not supported | Yes |
-| Skipping a test at runtime | Not yet | Yes |
+| Skipping a test at runtime | `skip_test()` and `pending_test()` | Yes |
 | Parallel execution | Not yet -- suites run sequentially | Partial |
 | Editor plugin | Not yet | Not applicable |
 
 **Known limitations of the native runtime.** It is new, and the gaps above are
-real. If a project depends on mocking, parameterized tests, or runtime
-skipping, the legacy GUT path is the pragmatic choice until those land. See
+real. If a project depends on mocking, parameterized tests, or parallel
+execution, the legacy GUT path is the pragmatic choice until those land. See
 [User Guide](./docs/USER_GUIDE.md#34-test) for the full flag reference and
 [Roadmap](./docs/ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)
 for what is planned.
