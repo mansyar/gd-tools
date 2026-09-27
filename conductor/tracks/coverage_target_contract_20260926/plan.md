@@ -344,47 +344,93 @@ Covers spec R3 (reconciliation), R5 (terminal report), R6, and R7.
 
 ### Task 3.1: Failing tests for reconciliation and gating (Red)
 
-- [ ] Task: Reconciliation unit tests
-  - [ ] No omissions: plan set equals the instrumented set, omission list empty
-  - [ ] Some omitted: the uninstrumented targets are identified
-  - [ ] **The critical case (spec R3):** an instrumented-but-never-executed file is
+- [x] Task: Reconciliation unit tests [5ca2171] — **zero Godot spawns**; pure
+      unit tests over the fixture plan
+  - [x] No omissions: plan set equals the instrumented set, omission list empty
+  - [x] Some omitted: the uninstrumented targets are identified
+  - [x] **The critical case (spec R3):** an instrumented-but-never-executed file is
     **not** an omission — this is what a naive diff gets wrong
-  - [ ] Every omission carries a reason and a fix hint (spec R4)
-- [ ] Task: `--min` gate unit tests
-  - [ ] Percentage is computed over the **instrumented** set, not the total plan
-  - [ ] One uninstrumented target does not depress the percentage for measured code
-  - [ ] With `--min`: an omission is an error, exit 2 (spec R6, R7, AC 5)
-  - [ ] Without `--min`: an omission is a warning, exit code unaffected
-  - [ ] No omissions: `--min` behavior is unchanged from today
-- [ ] Task: Terminal report tests
-  - [ ] Each omitted target is named with its reason and fix in the output (AC 3)
+  - [x] Every omission carries a reason and a fix hint (spec R4)
+- [x] Task: `--min` gate unit tests [f19f03c]
+  - [x] Percentage is computed over the **instrumented** set, not the total plan
+  - [x] One uninstrumented target does not depress the percentage for measured code
+  - [x] With `--min`: an omission is an error, exit 2 (spec R6, R7, AC 5)
+  - [x] Without `--min`: an omission is a warning, exit code unaffected
+  - [x] No omissions: `--min` behavior is unchanged from today
+- [x] Task: Terminal report tests [f19f03c]
+  - [x] Each omitted target is named with its reason and fix in the output (AC 3)
+  - [x] Both figures are shown when they differ, and the report stays silent when
+    there are no omissions
 
 ### Task 3.2: Implement the shared reconciliation helper
 
-- [ ] Task: One helper in `src/gd_tools/coverage/`, two call sites (constraint 6)
-  - [ ] Reads the plan and the coverage data and returns the omitted `{path, reason}`
+- [x] Task: One helper in `src/gd_tools/coverage/`, two call sites (constraint 6) [007c5f6]
+  - [x] Reads the plan and the coverage data and returns the omitted `{path, reason}`
     list, distinguishing "could not instrument" from "instrumented but never run"
-  - [ ] Reuse the reason text the Godot side emits per R4; do not re-derive the reason
+  - [x] Reuse the reason text the Godot side emits per R4; do not re-derive the reason
     in Python — a diff cannot know it
-- [ ] Task: Wire it into the two reporting seams
-  - [ ] `coverage/orchestrator.py:340` `_print_coverage_inline` (call sites `:147`,
-    `:162`) — the legacy path
-  - [ ] `command.py:284` `_generate_native_report`, which already reads the plan at
-    `:297` and the coverage data at `:298` — the native path
+- [x] Task: Wire it into the two reporting seams [007c5f6]
+  - [x] `coverage/orchestrator.py` — the legacy path
+  - [x] `command.py` `_generate_native_report`, which already reads the plan and the
+    coverage data — the native path
 
 ### Task 3.3: Implement the `--min` gate (R6, R7)
 
-- [ ] Task: Percentage over the instrumented set
-  - [ ] Recompute or reweight the reported total so it covers only instrumented targets
-  - [ ] Report the instrumented count alongside the total, so the denominator is
+- [x] Task: Percentage over the instrumented set [007c5f6]
+  - [x] Recompute or reweight the reported total so it covers only instrumented targets
+  - [x] Report the instrumented count alongside the total, so the denominator is
     visible rather than implied
-- [ ] Task: The omission gate
-  - [ ] `--min` requested **and** at least one omission → error, exit **2** (config
+- [x] Task: The omission gate [007c5f6]
+  - [x] `--min` requested **and** at least one omission → error, exit **2** (config
     class per R7, not test failure 1)
-  - [ ] `--min` not requested → prominent warning, exit code unaffected
-  - [ ] Emit the omitted targets in the gate's message so the failure is actionable
-- [ ] Task: Terminal report
-  - [ ] Name every omitted target, its reason, and its fix (AC 3)
+  - [x] `--min` not requested → prominent warning, exit code unaffected
+  - [x] Emit the omitted targets in the gate's message so the failure is actionable
+- [x] Task: Terminal report [007c5f6]
+  - [x] Name every omitted target, its reason, and its fix (AC 3)
+
+> **Phase 3 implementation note (Tasks 3.2 and 3.3 landed in one commit).**
+>
+> **Why one commit.** The gate reads the `OmissionReport` the reconciler returns, so
+> splitting them would have meant either an unused intermediate import or a second
+> pass over the same seam. Constraint 6 is still honoured: one helper, one report
+> seam, two callers.
+>
+> **Both figures, per the resolved (b) decision.** The terminal prints the
+> instrumented-set percentage as the headline with the plan-wide figure beside it,
+> and the gate names both counts. Reporting only the instrumented-set number would
+> let a project keep passing `--min 80` while its worst-covered files progressively
+> fail to instrument and drop out of the denominator — the gate would report success
+> over a set that shrinks precisely because the code most worth measuring stopped
+> being measured.
+>
+> **Split authority, and why.** *Which* targets were omitted is **derived** as
+> `plan.files - data.files`, because that is the definition R3 made reliable. The
+> **reason** comes from the additive `omitted` key. If the two ever disagreed the
+> derivation wins and a generic reason is supplied, so a broken file can never be
+> reported as clean.
+>
+> **No new error type.** The gate reuses `CoverageThresholdError` with
+> `exit_code=2`, verified to be honoured on the `test` path: `cli.py:418-439` catches
+> `CoverageThresholdError` under `except GdToolsError` and exits `e.exit_code`. A
+> threshold miss still exits 1, so R7 is unchanged and **no `cli.py` change was
+> needed**. Deliberately *not* changed: `coverage show --min` (`cli.py:599-609`)
+> catches `CoverageThresholdError` first and hard-codes exit 1. That command reads
+> pre-existing coverage data and has no notion of omissions from a run, so it is out
+> of scope — recorded here so a later reader does not mistake it for an oversight.
+>
+> **No schema bump**, per guiding constraint 2. The coverage JSON stays `version: 1`
+> with an additive optional key. Verified read-compatible both directions:
+> `read_coverage_json` reads only the keys it knows and silently ignores unknown
+> top-level keys, so old readers parse new data, and a missing key defaults to an
+> empty list.
+>
+> **One real bug, recorded because it is a trap.** The first wiring attempt anchored
+> its `omissions` import on a line that already sat *below* the module's
+> `if TYPE_CHECKING:` block, so the import landed inside it. **ruff and black both
+> passed** — the names were defined, just not at runtime. It surfaced only as a
+> `NameError` in 27 CLI-subprocess integration tests. For any later phase adding a
+> runtime import to a module that uses `TYPE_CHECKING`: a lint-clean import is not
+> necessarily a runtime import. Confirm with `hasattr(module, name)`, not just ruff.
 
 ### Task 3.4: Phase Verification & Checkpoint
 
