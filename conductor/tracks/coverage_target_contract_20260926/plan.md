@@ -505,6 +505,32 @@ documentation and flake obligations.
 > show generic reasons and defeated R4/AC 3. gdlint (4.5.0) reports three
 > pre-existing failures in `gd_tools_test.gd`, a file this track never
 > touched; the four files this track edited are clean.
+>
+> **Verification findings (Phase 4 manual verification, user-approved fixes).**
+> Two defects were caught only by running the real CLI and are recorded here
+> because they amend this task's verification clause:
+>
+> 1. **Activation-window engine errors still escalated (defeats R1/AC 1 for
+>    the load-failure class).** When a plan target exists but fails to load
+>    (e.g. `preload()` of a missing dependency), Godot *itself* prints
+>    `SCRIPT ERROR:`/`ERROR:` lines while the collector attempts
+>    instrumentation. The runner's engine-error capture swept them into
+>    `_engine_errors`, so `:729` escalated the whole run to exit 2 — legacy
+>    exited 0 for the same scenario. Fixed in `667d240`: the runner snapshots
+>    the log after `activate()` succeeds and demotes exactly those
+>    activation-window errors to warnings (count-aware), while engine errors
+>    raised during test execution still escalate. Covered by a new batched
+>    e2e test (red `5dc4759`, green `667d240`).
+> 2. **The native seam went silent when the threshold also failed (defeats
+>    R6/AC 3 and the "runtimes cannot disagree" invariant).** With omissions
+>    *and* `--min 90` where the plan-wide percentage was below the threshold,
+>    `command.py`'s `except CoverageThresholdError: raise` short-circuited:
+>    no terminal report, no partial block, no omission gate — exit 1 with the
+>    omission completely invisible, while legacy printed the report and
+>    exited 2 via the gate. Fixed in `c5e6aae`: the native seam now mirrors
+>    the legacy except-block (report via the shared `_report_coverage`, gate
+>    raises exit 2 in place of the threshold error when omissions exist).
+>    Covered by a red/green unit test (red `b23b35c`).
 
 ### Task 4.3: Update the contract test and the known-flakes note
 
