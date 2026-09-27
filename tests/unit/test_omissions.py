@@ -24,13 +24,19 @@ from pathlib import Path
 
 import pytest
 
-from gd_tools.coverage.omissions import OmissionReport, reconcile_omissions
+from gd_tools.coverage.omissions import (
+    OmissionReport,
+    omission_gate_message,
+    reconcile_omissions,
+)
+from gd_tools.coverage.orchestrator import _print_coverage_inline
 from gd_tools.coverage.plan_generator import read_plan_json
 from gd_tools.coverage.reporter import (
     CoverageData,
     CoveragePlanError,
     FileCoverage,
     OmittedTarget,
+    compute_summary,
     read_coverage_json,
 )
 
@@ -153,7 +159,9 @@ def test_stale_plan_and_broken_script_stay_distinguishable(plan):
 
 def test_every_omission_carries_a_reason_and_a_fix(plan):
     """R4/R5: an omission with no reason would be a silence, so fall back."""
-    data = CoverageData(version=1, generated_at="2026-09-28T00:00:00Z", files=[])
+    data = CoverageData(
+        version=1, generated_at="2026-09-28T00:00:00Z", files=[]
+    )
 
     report = reconcile_omissions(plan, data)
 
@@ -207,9 +215,9 @@ def test_instrumented_but_never_executed_is_not_an_omission(plan):
     report = reconcile_omissions(plan, data)
 
     assert report.omitted == []
-    assert report.instrumented_count == 2, (
-        "the empty-hits entry is the R3 signal that enemy.gd was instrumented"
-    )
+    assert (
+        report.instrumented_count == 2
+    ), "the empty-hits entry is the R3 signal that enemy.gd was instrumented"
 
 
 # --- Parsing the additive `omitted` key ------------------------------------
@@ -339,9 +347,172 @@ def test_omission_report_is_falsy_when_empty_and_truthy_when_not(plan):
         ),
     )
     populated = reconcile_omissions(
-        plan, CoverageData(version=1, generated_at="2026-09-28T00:00:00Z", files=[])
+        plan,
+        CoverageData(version=1, generated_at="2026-09-28T00:00:00Z", files=[]),
     )
 
     assert not empty
     assert populated
     assert isinstance(populated, OmissionReport)
+
+
+# --- The `--min` gate (R6, R7) ---------------------------------------------
+
+
+def _with_enemy_omitted() -> CoverageData:
+    """One instrumented file, one omitted target with a stale-plan reason."""
+    return CoverageData(
+        version=1,
+        generated_at="2026-09-28T00:00:00Z",
+        files=[_entry(0, _player_hits())],
+        omitted=[
+            OmittedTarget(
+                file_id=1,
+                path=_ENEMY,
+                reason="the coverage plan references a file that no longer exists",
+                fix="the plan is stale; re-run with --no-cache to regenerate it",
+            )
+        ],
+    )
+
+
+def test_gate_passes_when_min_was_requested_and_nothing_was_omitted(plan):
+    """No omissions means the gate has nothing to say; `--min` is unchanged."""
+    report = reconcile_omissions(
+        plan,
+        CoverageData(
+            version=1,
+            generated_at="2026-09-28T00:00:00Z",
+            files=[_entry(0, _player_hits()), _entry(1, {"0": 1})],
+        ),
+    )
+
+    assert omission_gate_message(report, 80) is None
+
+
+def test_gate_fails_when_min_was_requested_and_a_target_was_omitted(plan):
+    """R6: a gate that reports success over an incomplete measurement is not a gate."""
+    report = reconcile_omissions(plan, _with_enemy_omitted())
+
+    message = omission_gate_message(report, 80)
+
+    assert message is not None
+    assert _ENEMY in message
+    assert "--no-cache" in message
+
+
+def test_omission_alone_is_not_a_gate_failure_when_min_was_not_requested(plan):
+    """R6: a plain `gd-tools test --coverage` must not fail over a broken script."""
+    report = reconcile_omissions(plan, _with_enemy_omitted())
+
+    assert omission_gate_message(report, None) is None
+
+
+def test_gate_message_states_how_much_of_the_project_was_measured(plan):
+    """R6: the user needs to know the measurement was partial, not just that it failed."""
+    report = reconcile_omissions(plan, _with_enemy_omitted())
+
+    message = omission_gate_message(report, 80)
+
+    assert "1 of 2" in message
+
+
+# --- The instrumented-set figure (R6) --------------------------------------
+
+
+def test_plan_wide_summary_still_counts_omitted_targets_as_uncovered(plan):
+    """The existing plan-wide figure is unchanged: an omission reads as 0% covered.
+
+    This is deliberate. Omitting a target from the denominator would let a
+    project keep passing `--min` while its worst-covered files progressively
+    drop out of the measurement, which is exactly the hole R6 exists to close.
+    """
+    data = _with_enemy_omitted()
+
+    plan_wide = compute_summary(plan, data)
+
+    assert plan_wide.total_lines == 8, "player.gd 5 lines + enemy.gd 3 lines"
+    assert plan_wide.covered_lines == 5
+
+
+def test_instrumented_summary_excludes_omitted_targets(plan):
+    """The instrumented-set figure answers a different question, and needs the id."""
+    data = _with_enemy_omitted()
+    report = reconcile_omissions(plan, data)
+
+    instrumented = compute_summary(plan, data, exclude_ids=frozenset({1}))
+
+    assert instrumented.total_lines == 5, "only player.gd was instrumented"
+    assert instrumented.covered_lines == 5
+    assert instrumented.line_rate == 1.0
+    assert report.plan_count == 2
+    assert report.instrumented_count == 1
+
+
+# --- The terminal report (R5) ----------------------------------------------
+
+
+def test_terminal_report_names_each_omitted_target_with_reason_and_fix(
+    plan, capsys
+):
+    """AC 3: the omission must be visible in the terminal, not just on disk."""
+    data = _with_enemy_omitted()
+    report = reconcile_omissions(plan, data)
+
+    _print_coverage_inline(
+        compute_summary(plan, data),
+        None,
+        omissions=report,
+        instrumented_summary=compute_summary(
+            plan, data, exclude_ids=frozenset({1})
+        ),
+    )
+
+    out = capsys.readouterr().out
+    assert _ENEMY in out
+    assert "no longer exists" in out
+    assert "--no-cache" in out
+
+
+def test_terminal_report_shows_both_figures_when_they_differ(plan, capsys):
+    """R6: headline is the instrumented set, with the plan-wide figure beside it.
+
+    Reporting only the instrumented-set percentage would hide a shrinking
+    denominator, so the user is shown how much of the project was measured.
+    """
+    data = _with_enemy_omitted()
+
+    _print_coverage_inline(
+        compute_summary(plan, data),
+        None,
+        omissions=reconcile_omissions(plan, data),
+        instrumented_summary=compute_summary(
+            plan, data, exclude_ids=frozenset({1})
+        ),
+    )
+
+    out = capsys.readouterr().out
+    assert "62.5%" in out, "plan-wide: 5 of 8 lines"
+    assert "100.0%" in out, "instrumented set: 5 of 5 lines"
+
+
+def test_terminal_report_stays_silent_about_omissions_when_there_are_none(
+    plan, capsys
+):
+    """No omissions means no new output, so existing runs read exactly as before."""
+    data = CoverageData(
+        version=1,
+        generated_at="2026-09-28T00:00:00Z",
+        files=[_entry(0, _player_hits()), _entry(1, {"0": 1})],
+    )
+
+    _print_coverage_inline(
+        compute_summary(plan, data),
+        None,
+        omissions=reconcile_omissions(plan, data),
+        instrumented_summary=compute_summary(plan, data),
+    )
+
+    out = capsys.readouterr().out
+    assert "no longer exists" not in out
+    assert "omitted" not in out.lower()
