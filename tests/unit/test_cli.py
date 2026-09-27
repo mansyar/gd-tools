@@ -1794,3 +1794,47 @@ def test_doctor_default_shows_table():
         result = runner.invoke(cli, ["doctor"])
     assert result.exit_code == 0
     assert "Godot Binary" in result.output
+
+
+# ---------------------------------------------------------------------------
+# coverage save-baseline
+# ---------------------------------------------------------------------------
+
+
+def test_coverage_save_baseline_is_registered():
+    """Test coverage save-baseline is registered in the coverage group."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "save-baseline", "--help"])
+    assert result.exit_code == 0
+
+
+def test_coverage_save_baseline_calls_orchestrator():
+    """Test save-baseline delegates to save_coverage_baseline with config."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    baseline_path = Path(".gd-tools") / "coverage" / "baseline.json"
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.save_coverage_baseline",
+            return_value=baseline_path,
+        ) as mock_save,
+    ):
+        result = runner.invoke(cli, ["coverage", "save-baseline"])
+    assert result.exit_code == 0
+    mock_save.assert_called_once_with(mock_config)
+    assert "baseline.json" in result.output
+
+
+def test_coverage_save_baseline_missing_data_exit_2():
+    """Test save-baseline exits 2 when coverage data is missing."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.save_coverage_baseline",
+            side_effect=CoveragePlanError("Coverage data file not found"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "save-baseline"])
+    assert result.exit_code == 2
