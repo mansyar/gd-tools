@@ -62,6 +62,33 @@ regressions, make the suite slower and noisier, and erase the ability to tell
 Items 1 and 2 change how the suite reports failures, so they are the project's
 call to make rather than an implementation detail.
 
+## Update — 2026-09-28 (coverage_target_contract track)
+
+Run 3's fixture (`test_hooks_nonexistent_script_in_plan`) is no longer flaky.
+The Coverage Target Contract track removed the `push_error` from the
+per-target instrumentation failure path (spec R1): a target the collector
+cannot instrument now logs a `push_warning` and the run continues, so the
+timing-sensitive `push_error` exit-code escalation described above can no
+longer fire from that path. The escalation observed in run 3 came verbatim
+from `_log_error` at `coverage.gd:279` — that exact call site no longer
+exists on this path.
+
+Verified, not assumed: one full-suite run after the change passed 1188
+tests with 0 failures, including this test, whose new contract assertion
+(`[gd-tools] [Error]` must not appear for a per-target omission) is
+deterministic by construction.
+
+Two caveats kept honest:
+
+- **One run is one observation.** The mechanism (Vector A) is Godot's own
+  process behavior and can still fire from any *other* path that calls
+  `push_error` mid-run. The fatal carve-outs (missing or malformed plan,
+  unreadable output) deliberately still do.
+- Runs 1 and 2 (`test_run_tests_coverage_flag`,
+  `test_native_cli_tag_selection_skips_unmatched_scene_tests`) involve no
+  coverage instrumentation and are out of this track's scope; their
+  attribution to Vector A remains an unproven hypothesis.
+
 ## Related
 
 - [Coverage target contract](./../coverage_target_contract_20260926/spec.md) —

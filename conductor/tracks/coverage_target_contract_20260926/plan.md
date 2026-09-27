@@ -508,25 +508,36 @@ documentation and flake obligations.
 
 ### Task 4.3: Update the contract test and the known-flakes note
 
-- [ ] Task: Repin the existing contract test
-  - [ ] `tests/integration/test_coverage_hooks.py::test_hooks_nonexistent_script_in_plan`
+- [x] Task: Repin the existing contract test
+  - [x] `tests/integration/test_coverage_hooks.py::test_hooks_nonexistent_script_in_plan`
     currently depends on the run **failing**. Update it to the new contract (AC 10)
-- [ ] Task: Verify the Vector-A flake is actually gone
-  - [ ] `known_flakes.md` attributes this test's ~1-in-5 failure to **Vector A** —
+- [x] Task: Verify the Vector-A flake is actually gone
+  - [x] `known_flakes.md` attributes this test's ~1-in-5 failure to **Vector A** —
     Godot's `push_error` exit-code escalation being timing-sensitive. R1 removes that
     `push_error` from this path, so the flake should disappear as a side effect
-  - [ ] **Verify, do not assume.** Run the full suite and confirm
-  - [ ] If the flake persists, Vector A has another source: record that in
+  - [x] **Verify, do not assume.** Run the full suite and confirm
+  - [x] If the flake persists, Vector A has another source: record that in
     `known_flakes.md` rather than leaving the note's recommendation to quarantine a
     test that should now be deterministic
-  - [ ] The other two tests named in `known_flakes.md` are unrelated to coverage
+  - [x] The other two tests named in `known_flakes.md` are unrelated to coverage
     instrumentation and are **out of scope**
-- [ ] Task: Update the documentation
-  - [ ] `docs/ARCHITECTURE.md` — the coverage contract and the instrumentation failure
+- [x] Task: Update the documentation
+  - [x] `docs/ARCHITECTURE.md` — the coverage contract and the instrumentation failure
     path
-  - [ ] `docs/USER_GUIDE.md` — if it documents the old fail-on-uninstrumentable behavior
-  - [ ] `docs/ROADMAP.md` — only if this work is tracked there
-  - [ ] This track's own [`known_flakes.md`](./known_flakes.md), per the task above
+  - [x] `docs/USER_GUIDE.md` — if it documents the old fail-on-uninstrumentable behavior
+  - [x] `docs/ROADMAP.md` — only if this work is tracked there
+  - [x] This track's own [`known_flakes.md`](./known_flakes.md), per the task above
+
+> **Note (Task 4.3):** The test had already been repinned to the R1/R3/R4
+> warning contract in Phase 2; this task extended it with the R5 assertion
+> (the legacy collector's additive `omitted` key, exact reason/fix, version
+> still 1) and updated its docstring. The full-suite verification run passed
+> 1188 tests with 0 failures, so the flake is gone as R1 predicted;
+> `known_flakes.md` records the evidence plus two honest caveats (one run is
+> one observation; Vector A can still fire from other `push_error` paths,
+> including the deliberately fatal carve-outs). `docs/USER_GUIDE.md` was not
+> changed — it never documented the old fail-on-uninstrumentable behavior —
+> and `docs/ROADMAP.md` does not track this work.
 
 ### Task 4.4: Phase Verification & Checkpoint
 

@@ -403,6 +403,21 @@ def test_hooks_nonexistent_script_in_plan(tmp_path):
         ), "instrumented-but-unexecuted target missing from files[]"
         assert by_id[2] == {}, by_id[2]
 
+        # R5: the collector declares why file_id 0 could not be instrumented
+        # in the additive optional `omitted` key; the version stays 1.
+        assert data["version"] == 1
+        assert data["omitted"] == [
+            {
+                "file_id": 0,
+                "path": "res://scripts/nonexistent.gd",
+                "reason": (
+                    "The coverage plan references a file that no longer "
+                    "exists: res://scripts/nonexistent.gd"
+                ),
+                "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+            }
+        ], data.get("omitted")
+
         # R1: the omission is a warning, not an engine error. This is the
         # assertion that makes the run deterministic; before R1 the severity
         # was ERROR and the whole run could escalate to exit 2 under load.
