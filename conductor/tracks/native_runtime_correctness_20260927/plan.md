@@ -56,7 +56,7 @@ change is in scope, and constraint 1 is why.
 
 ### Task 1.1: Pin the current behaviour, then implement the bounded wait
 
-- [ ] Task: Pin and implement bounded `wait_for_signal`
+- [~] Task: Pin and implement bounded `wait_for_signal`
   - [ ] Re-read `gd_tools_test.gd:480-483` and confirm the file still matches
         what the spec describes
   - [ ] Red: extend
