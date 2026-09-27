@@ -56,10 +56,10 @@ change is in scope, and constraint 1 is why.
 
 ### Task 1.1: Pin the current behaviour, then implement the bounded wait
 
-- [~] Task: Pin and implement bounded `wait_for_signal`
-  - [ ] Re-read `gd_tools_test.gd:480-483` and confirm the file still matches
+- [x] Task: Pin and implement bounded `wait_for_signal` [7b37b55]
+  - [x] Re-read `gd_tools_test.gd:480-483` and confirm the file still matches
         what the spec describes
-  - [ ] Red: extend
+  - [x] Red: extend
         `tests/fixtures/projects/native_test_project/test/async_helpers_suite.gd`
         with the bounded-wait cases, and add a test to
         `tests/e2e/test_native_runtime.py` asserting all five of:
@@ -69,28 +69,40 @@ change is in scope, and constraint 1 is why.
           remaining budget
         - the one-argument call form still works
         - the wait records no failure of its own
-  - [ ] For the third case, prefer asserting the per-test `duration_seconds` in
+  - [x] For the third case, prefer asserting the per-test `duration_seconds` in
         the result payload over wall-clock. The runner already records it, so the
         assertion is on the runner's own measurement of that test rather than on
         machine timing. Note in the task that a wall-clock bound is the fallback
         if the duration field proves unusable.
-  - [ ] Run the new test; confirm it fails for the right reason and not by
+  - [x] Run the new test; confirm it fails for the right reason and not by
         timeout (constraint 6)
-  - [ ] Green: add a `timeout_seconds` parameter with a finite `5.0` default to
+  - [x] Green: add a `timeout_seconds` parameter with a finite `5.0` default to
         the base-class method, resolving on whichever of signal or timer
         completes first, returning `bool` and recording nothing
-  - [ ] Confirm `test_native_runner_supports_async_helpers` still passes
+  - [x] Confirm `test_native_runner_supports_async_helpers` still passes
         unchanged. It is the one-argument compatibility guard: its
         `async_helpers_suite.gd:17` awaits `process_frame`, which resolves on
         the next frame, so the new bound is never reached
-  - [ ] Confirm the docstring states the difference from
+  - [x] Confirm the docstring states the difference from
         `GdToolsTestContext.wait_for_signal` — bounded, but records its own
         failure
-  - [ ] Refactor: only if the Phase 1 tests are Green; extract the await-race
+  - [x] Refactor: only if the Phase 1 tests are Green; extract the await-race
         pattern if it turns out to need more than one call site
-  - [ ] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
-  - [ ] Commit and record
+  - [x] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
+  - [x] Commit and record
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+**Implementation note.** The plan's fallback for the early-resolve case was not
+needed: `duration_seconds` was already carried in the result payload and proved
+usable, so the assertion is on the runner's own measurement rather than on
+wall-clock. No refactor was performed — the await-race pattern has a single call
+site, so extracting it would have been the speculative abstraction
+`workflow.md` warns against. One helper beyond the plan was required and is
+recorded rather than hidden: `_gd_tools_disconnect_wait`. Without it the losing
+side of the race stays connected, so a *second* wait in the same test would be
+resolved early by the first one's leftover timer. That failure mode is invisible
+at the call site, which is why it lives in a named function with a comment
+rather than being inlined.
 
 ### Task 1.2: Record the R6 behaviour change
 
@@ -225,3 +237,13 @@ shapes**, not five copies of one:
 
 Recorded here as they are found, rather than added to the approved spec.
 Candidates already known and deliberately excluded are listed in spec §5.
+
+- **A suite that fails to load reports success.** Found in Phase 1 while
+  confirming the Red. When a fixture suite has a parse error, Godot exits `0`,
+  the result payload reports `status: "passed"`, and `tests` is an empty array.
+  A test asserting `all(...)` over that list passes vacuously. The length guard
+  added in Task 1.1 is what caught it; without it the Red would have been a
+  false Green. This is a runner-level reporting defect, independent of anything
+  in this spec's scope, and is not fixed here. Worth its own track — it is the
+  same class of bug as the vacuous `assert engine_errors == []` a prior track
+  found, and it is a trap for every future native test.
