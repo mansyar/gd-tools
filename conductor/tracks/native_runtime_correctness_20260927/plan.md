@@ -94,7 +94,7 @@ change is in scope, and constraint 1 is why.
         pattern if it turns out to need more than one call site
   - [x] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
   - [x] Commit and record
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 **Implementation note.** The plan's fallback for the early-resolve case was not
 needed: `duration_seconds` was already carried in the result payload and proved
