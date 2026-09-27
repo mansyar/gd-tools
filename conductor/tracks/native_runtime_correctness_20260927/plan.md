@@ -353,7 +353,10 @@ Scope held to the five named sites plus the one new helper. Net effect on the
 runner: **−6 lines while adding two explanatory comments**, so the file got
 smaller and the two invisible properties got written down.
 
-**[checkpoint: <sha>]** — see the git note on the Phase 4 checkpoint commit.
+**[checkpoint: 61b36af]** — verified with the user's explicit yes, given a
+`CI=true pytest` run of 1162 passed, 2 skipped, 0 failed in 9m32s at 96.15%
+coverage, unchanged across three consecutive GDScript-only phases. Full report
+in the git note on `61b36af`.
 
 ## Risk register
 
