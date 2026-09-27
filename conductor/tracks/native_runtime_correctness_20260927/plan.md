@@ -156,6 +156,10 @@ this task closed, so both rows were updated to carry the signature.
 
 Touches `gd_tools_test_runner.gd:_suite_timeout` only.
 
+**[checkpoint: 9ed601d]** — verified with the user's explicit yes, given a
+`CI=true pytest` run of 1162 passed, 2 skipped, 0 failed in 9m49s at 96.15%
+coverage. Full report in the git note on `9ed601d`.
+
 ### Task 2.1: Make the suite budget the maximum across all tests
 
 - [x] Task: Fix `_suite_timeout` to consider every test [e848f3b]
