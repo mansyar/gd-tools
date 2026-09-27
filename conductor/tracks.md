@@ -35,5 +35,4 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Native Assertion Parity and `skip_test()`** - add runtime skipping (the protocol already reserves the statuses; no GDScript emits them) and ten GUT-core assertions. Closes two of the six Known Limitations in `ARCHITECTURE.md` and unblocks migration roadmap Phase 3.
-  *Link: [native_assertion_parity_skip_test_20260927](./tracks/native_assertion_parity_skip_test_20260927/index.md)*
+- [x] **Track: Native Assertion Parity and `skip_test()`** (archived → `./archive/native_assertion_parity_skip_test_20260927/`) - add runtime skipping (the protocol already reserves the statuses; no GDScript emits them) and ten GUT-core assertions. Closes two of the six Known Limitations in `ARCHITECTURE.md` and unblocks migration roadmap Phase 3.
