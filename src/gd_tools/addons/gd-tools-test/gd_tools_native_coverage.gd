@@ -31,10 +31,12 @@ static func activate(plan_path: String, output_path: String) -> bool:
 		push_error("[gd-tools] Unsupported native coverage plan format")
 		return false
 
+	# R2: a target that cannot be instrumented is reported and skipped, not
+	# fatal. This loop used to return on the first failure, which discarded
+	# every file already instrumented and left _active false so nothing was
+	# written at all -- one broken script cost the project its whole coverage.
 	for file_data in parsed.get("files", []):
-		if not _instrument_file(file_data):
-			_active = false
-			return false
+		_instrument_file(file_data)
 
 	_active = true
 	return true
@@ -89,9 +91,21 @@ static func _instrument_file(file_data: Dictionary) -> bool:
 	if path.is_empty() or file_id < 0 or lines.is_empty():
 		return false
 
+	if not FileAccess.file_exists(path):
+		_log_omission(
+			"Skipped uninstrumentable coverage target.",
+			"The coverage plan references a file that no longer exists: " + path,
+			"The plan is stale. Re-run with --no-cache to regenerate it."
+		)
+		return false
+
 	var script := load(path) as GDScript
 	if script == null:
-		push_error("[gd-tools] Unable to load coverage target: %s" % path)
+		_log_omission(
+			"Skipped uninstrumentable coverage target.",
+			"The file exists but does not load as GDScript: " + path,
+			"Fix the script, or exclude it from the plan."
+		)
 		return false
 
 	var original_source := script.source_code
@@ -104,9 +118,36 @@ static func _instrument_file(file_data: Dictionary) -> bool:
 	if reload_error != OK:
 		script.source_code = original_source
 		script.reload(true)
-		push_error("[gd-tools] Unable to instrument coverage target: %s" % path)
+		_log_omission(
+			"Skipped uninstrumentable coverage target.",
+			"Trackers could not be injected, so the script did not reload: " + path,
+			"Fix the script's own syntax, or exclude it from the plan."
+		)
 		return false
+
+	# R3: seed an empty entry so files[] is the instrumented set rather than
+	# the hit set. Without it an instrumented-but-unexecuted file is absent
+	# from the output and cannot be told apart from one that failed to
+	# instrument at all. Phase 1 verified an empty hits object scores
+	# identically to an absent entry in every renderer, so this reports no
+	# change to any percentage.
+	if not _hits.has(file_id):
+		_hits[file_id] = {}
 	return true
+
+
+static func _log_omission(what: String, cause: String, fix: String) -> void:
+	# R1: report an uninstrumentable target as a warning, never an error.
+	# push_error escalates Godot to a non-zero exit, and test_runner.py turns
+	# any returncode above 1 into a hard failure -- so one unrelated broken
+	# script failed every test in the project. The plan-level checks in
+	# activate() stay push_error: a missing, unreadable, or wrong-version plan
+	# is not a per-target problem and genuinely is fatal.
+	push_warning(
+		"[gd-tools] [Warning] " + what + "\n\n"
+		+ "  Cause: " + cause + "\n"
+		+ "  Fix:   " + fix
+	)
 
 
 static func _inject_trackers(
