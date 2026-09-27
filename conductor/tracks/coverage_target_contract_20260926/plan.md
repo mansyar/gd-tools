@@ -454,6 +454,8 @@ Covers spec R3 (reconciliation), R5 (terminal report), R6, and R7.
 
 ## Phase 4 — Native plumbing, artifacts, and documentation truth
 
+> [checkpoint: f8f0647]
+
 Covers spec R5 (run diagnostics and artifact index) and closes out the track's
 documentation and flake obligations.
 
@@ -567,7 +569,7 @@ documentation and flake obligations.
 
 ### Task 4.4: Phase Verification & Checkpoint
 
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [f8f0647]
   - [x] AC 4, 8, 9, 10 confirmed
   - [x] `NATIVE_PROTOCOL_VERSION` is still `2`; the coverage JSON is still `version: 1`
   - [x] Full suite run, with the flake outcome reported
