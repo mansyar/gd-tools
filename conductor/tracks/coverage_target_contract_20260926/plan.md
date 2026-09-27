@@ -541,7 +541,7 @@ documentation and flake obligations.
 
 ### Task 4.4: Phase Verification & Checkpoint
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] AC 4, 8, 9, 10 confirmed
   - [ ] `NATIVE_PROTOCOL_VERSION` is still `2`; the coverage JSON is still `version: 1`
   - [ ] Full suite run, with the flake outcome reported

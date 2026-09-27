@@ -24,6 +24,10 @@ var _run_started_at := ""
 var _run_finished_at := ""
 var _engine_errors: Array[String] = []
 var _engine_warnings: Array[String] = []
+# Engine errors Godot printed while the collector attempted instrumentation.
+# They are the omission's evidence (R1/R4), not a run failure, so they are
+# demoted to warnings before the engine-error promotion runs.
+var _activation_engine_errors: Array[String] = []
 
 var _coverage_omissions: Array = []
 var _log_path := ""
@@ -553,6 +557,10 @@ func _activate_coverage(coverage_data: Dictionary) -> bool:
 	if not GdToolsNativeCoverage.activate(plan_path, output_path):
 		_finish_with_error("Unable to activate native coverage")
 		return false
+	# No test has run yet, so every engine error in the log so far was printed
+	# by the collector's own load/instrument attempts. Snapshot them for the
+	# demotion in _finish_with_status.
+	_snapshot_activation_errors()
 	_coverage_enabled = true
 	return true
 
@@ -678,7 +686,29 @@ func _capture_engine_diagnostics() -> void:
 	var file := FileAccess.open(_log_path, FileAccess.READ)
 	if file == null:
 		return
-	for line in file.get_as_text().split("\n"):
+	_scan_engine_lines(file.get_as_text(), _engine_errors, _engine_warnings)
+	file.close()
+
+
+func _snapshot_activation_errors() -> void:
+	if _log_path.is_empty():
+		return
+	var file := FileAccess.open(_log_path, FileAccess.READ)
+	if file == null:
+		return
+	var activation_errors: Array[String] = []
+	var ignored_warnings: Array[String] = []
+	_scan_engine_lines(
+			file.get_as_text(), activation_errors, ignored_warnings
+	)
+	file.close()
+	_activation_engine_errors = activation_errors
+
+
+func _scan_engine_lines(
+	text: String, errors: Array[String], warnings: Array[String]
+) -> void:
+	for line in text.split("\n"):
 		var normalized := str(line).strip_edges()
 		# `SCRIPT ERROR:` is how GDScript reports a parse error, an invalid call,
 		# and a wrong-typed builtin argument. It is an engine error the run cannot
@@ -688,18 +718,11 @@ func _capture_engine_diagnostics() -> void:
 		# right order: `SCRIPT ERROR:` does not begin with `ERROR:`, but the trimmed
 		# remainder of a nested `ERROR:` line does.
 		if normalized.begins_with("SCRIPT ERROR:"):
-			_engine_errors.append(
-				normalized.trim_prefix("SCRIPT ERROR:").strip_edges()
-			)
+			errors.append(normalized.trim_prefix("SCRIPT ERROR:").strip_edges())
 		elif normalized.begins_with("ERROR:"):
-			_engine_errors.append(
-				normalized.trim_prefix("ERROR:").strip_edges()
-			)
+			errors.append(normalized.trim_prefix("ERROR:").strip_edges())
 		elif normalized.begins_with("WARNING:"):
-			_engine_warnings.append(
-				normalized.trim_prefix("WARNING:").strip_edges()
-			)
-	file.close()
+			warnings.append(normalized.trim_prefix("WARNING:").strip_edges())
 
 
 func _timestamp() -> String:
@@ -728,6 +751,16 @@ func _finish_with_status() -> void:
 			{},
 		)
 	_capture_engine_diagnostics()
+	# Demote the activation-window engine errors (R1): Godot printed them
+	# while the collector attempted instrumentation, so they are evidence of
+	# a coverage omission rather than a run failure. Count-aware: one
+	# occurrence per activation error is demoted, so an identical message
+	# raised later by a test still escalates below.
+	for activation_error in _activation_engine_errors:
+		var index := _engine_errors.find(activation_error)
+		if index != -1:
+			_engine_errors.remove_at(index)
+			_engine_warnings.append(activation_error)
 	if _coverage_enabled:
 		# R5: surface the collector's omissions through the existing warning
 		# channel. Warnings never escalate the status (only _engine_errors
