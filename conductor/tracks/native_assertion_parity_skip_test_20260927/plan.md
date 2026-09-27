@@ -130,9 +130,63 @@ gate (`Required test coverage of 80.0% reached`), branch coverage included.
 
 Covers spec R4, R5, R6.
 
+**Implementation note — probe findings that shaped the design.** Spec §7
+required verifying the Godot primitives rather than assuming them. A probe run
+against Godot 4.7.1 established four constraints, none of which were
+guessable and two of which contradict the obvious implementation:
+
+1. **`is_same()` exists and behaves as R5 needs.** Same reference → `true`;
+   two equal-but-distinct Arrays → `false`. Verified locally on 4.7.1; the CI
+   matrix covers 4.5.2, which is the floor the project claims.
+2. **`expr is T` is a compile-time error when the static type of `expr` is
+   provably disjoint from `T`.** The first probe, written with `:=`-typed
+   locals, failed to compile with eight such errors. This is why every
+   assertion parameter is an untyped Variant — a typed parameter would make
+   the type checks themselves uncompilable, and the R4 guarantee would
+   invert into a parse error.
+3. **`is Object` is `false` for Array, Dictionary, String and every Packed
+   array.** They are Variant types, not Objects, so the obvious
+   `value is Object and value.has_method("has")` membership check silently
+   rejects every builtin container. Membership therefore tests
+   `typeof(value)` against an explicit `TYPE_` list.
+4. **`String` has no `has()`** — it spells it `contains()`, and calling `.has()`
+   on a String is itself a parse error. `assert_has("a", "b")` bridges this
+   so the natural call does not read as a type failure.
+
+A fifth decision follows from the same probe: **`assert_is` requires both
+arguments to carry reference identity** (Object, Array, or Dictionary). `is_same`
+is a total function and would happily value-compare two ints, so
+`assert_is(2, 2)` would silently behave like `assert_eq`. Recording a
+type failure that names `assert_eq` as the right tool is more honest than
+passing. The alternative — accepting primitives — was rejected because a
+passing `assert_is(2, 2)` reads as an identity claim that was never made.
+
+**Task 2.5 (refactor) — decided: no refactor.** The four ordering
+comparisons share a shape, but each differs in both its operator
+(`<=`, `<`, `>=`, `>`) and its recorded `assertion` name, so a shared helper
+would need the operator and the name passed in as parameters. That is
+indirection with no reduction in behaviour, and it would make each assertion
+harder to read rather than easier. The task's own condition was "if it does
+not obscure them"; it would. Recorded here so the decision is visible rather
+than looking like an oversight.
+
+**One correction to this phase's own test.** The type-safety suite fails by
+design, so the run must exit **1**, not 0. Task 2.2's wording implied 0; the
+test initially asserted the wrong code. R4's actual guarantee is that these
+failures stay at 1 and never escalate to 2, which is what the test now pins.
+
+Verification for this phase: `tests/e2e/test_native_runtime.py` 24 passed
+(including the Phase 1 skip tests, which is the load-bearing check — the single
+guard in `_gd_tools_record_failure` suppressed all nine new assertions with no
+per-assertion change, exactly as R2 intended). Full suite `1157 passed, 2
+skipped, 0 failed` in 8m36s. Coverage `96.15%`, unchanged from Phase 1, which
+is the correct result: the coverage gate measures Python and this phase added
+only GDScript. `ruff` and `black` clean. `protocol.py`, `command.py` and
+`orchestrator.py` verified untouched against the branch point.
+
 ### Task 2.1: Write the failing tests (Red)
 
-- [ ] Task: Add fixture suites for the assertion surface
+- [x] Task: Add fixture suites for the assertion surface [60e12c0]
   - [ ] Extend `tests/fixtures/projects/native_test_project/test/assertion_suite.gd` (`NativeAssertionSuite`) with **passing** methods, one per new assertion, each with a one-line docstring-style comment naming the contract it pins. These must all pass, proving the satisfying side of R5.
   - [ ] Create `tests/fixtures/projects/native_test_project/test/assertion_failures_suite.gd` (`NativeAssertionFailuresSuite`) with one method per assertion that deliberately violates it. This is where R5's message requirements become assertable.
   - [ ] Pin R5's two deliberate semantics as named methods so neither is "cleaned up" later:
@@ -143,7 +197,7 @@ Covers spec R4, R5, R6.
 
 ### Task 2.2: Add the e2e tests (Red)
 
-- [ ] Task: Add assertion tests to `tests/e2e/test_native_runtime.py`
+- [x] Task: Add assertion tests to `tests/e2e/test_native_runtime.py` [60e12c0]
   - [ ] `test_native_new_assertions_pass_on_satisfying_input` — one spawn over the extended `assertion_suite.gd`; every entry is `passed` and `returncode == 0`.
   - [ ] `test_native_new_assertions_report_values_and_message_detail` — one spawn over `assertion_failures_suite.gd`; `returncode == 1`, and per assertion assert `failure["assertion"]` is the right method name, `actual` and `expected` are populated, and `message` satisfies **R5's final column**:
     - [ ] `assert_between` message names the violated bound and its value
@@ -158,7 +212,7 @@ Covers spec R4, R5, R6.
 
 ### Task 2.3: Implement the assertions (Green)
 
-- [ ] Task: Add nine assertions to `gd_tools_test.gd`
+- [x] Task: Add nine assertions to `gd_tools_test.gd` [60e12c0]
   - [ ] Add a private type-mismatch helper that records a failure naming the expectation, the received type, and the argument position. Nine call sites justify it; it is not speculative.
   - [ ] Implement the four ordering comparisons — `assert_gt`, `assert_gte`, `assert_lt`, `assert_lte` — per R5. Type-check before comparing so a bad argument records a failure instead of raising (R4).
   - [ ] Implement `assert_between(value, lower, upper)` with **both bounds inclusive** (R5). The failure message must name which bound was violated and its value.
@@ -171,39 +225,39 @@ Covers spec R4, R5, R6.
 
 ### Task 2.4: Run and confirm Green
 
-- [ ] Task: Verify the assertion surface
+- [x] Task: Verify the assertion surface [60e12c0]
   - [ ] Run the Phase 2 e2e tests; all pass.
   - [ ] Re-run the Phase 1 skip tests; still Green. The Phase 1 guard must still suppress post-skip failures now that the assertion count has grown — a new assertion is exactly the case R2 was designed to cover for free.
   - [ ] Re-run `test_native_assertions_report_values_and_source`; still Green. The pre-existing `assert_eq` fixture method must be unaffected.
 
 ### Task 2.5: Refactor (optional)
 
-- [ ] Task: Clean up only if Phase 2 tests are Green
+- [x] Task: Clean up only if Phase 2 tests are Green [60e12c0]
   - [ ] Collapse genuine duplication among the four ordering comparisons if it does not obscure them.
   - [ ] Leave `gd_tools_test.gd`'s existing structure and naming alone otherwise.
 
 ### Task 2.6: Verify the R7 no-protocol-change constraint
 
-- [ ] Task: Prove `protocol.py` and `command.py` were not touched
+- [x] Task: Prove `protocol.py` and `command.py` were not touched [60e12c0]
   - [ ] `git diff --name-only` against the branch point; confirm `src/gd_tools/native_test/protocol.py` and `src/gd_tools/native_test/command.py` are absent.
   - [ ] If either appears, the implementation reached outside the GDScript surface. Revert it and revisit the design — spec R7 makes this a stop condition, not a review note.
 
 ### Task 2.7: Verify coverage
 
-- [ ] Task: Check the self-coverage gate
+- [x] Task: Check the self-coverage gate [60e12c0]
   - [ ] `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
   - [ ] Target: >80% line, >70% branch on new source; gate unchanged or better.
 
 ### Task 2.8: Commit and record
 
-- [ ] Task: Commit Phase 2
+- [x] Task: Commit Phase 2 [60e12c0]
   - [ ] Commit: `feat(native-test): Add GUT-core comparison, membership, and introspection assertions`
   - [ ] Attach a `git notes` summary per `workflow.md` step 9.
   - [ ] Mark tasks `[x]` with the commit SHA and commit the plan update as `conductor(plan): Mark phase 'ASSERTION SURFACE' as complete`.
 
 ### Task 2.9: Phase Verification & Checkpoint
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
+- [~] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
   - [ ] Run `git diff --name-only <phase_1_checkpoint_sha> HEAD`; confirm a test exists for every changed `.py`/`.gd`.
   - [ ] Announce and run the full `CI=true pytest` suite. On failure, propose at most two fixes, then stop and ask.
   - [ ] Present manual verification steps and **await explicit confirmation**:
