@@ -459,19 +459,19 @@ documentation and flake obligations.
 
 ### Task 4.1: Failing tests for the two machine-readable surfaces (Red)
 
-- [ ] Task: Run diagnostics
-  - [ ] The native omission reaches `NativeRunResult.diagnostics` / `engine_warnings`
+- [x] Task: Run diagnostics
+  - [x] The native omission reaches `NativeRunResult.diagnostics` / `engine_warnings`
     **without** a protocol version bump — assert `protocol_version == 2` still (AC 9)
-  - [ ] The omission rides the existing channels; no new field is introduced (R5)
-- [ ] Task: Artifact index
-  - [ ] `native_test/artifacts.py:125` `publish_artifact_index` records the omitted
+  - [x] The omission rides the existing channels; no new field is introduced (R5)
+- [x] Task: Artifact index
+  - [x] `native_test/artifacts.py:125` `publish_artifact_index` records the omitted
     targets for a machine consumer (AC 4)
-  - [ ] The payload at `:168` gains an **additive** key only; it has no version field
+  - [x] The payload at `:168` gains an **additive** key only; it has no version field
     of its own, so nothing is bumped
 
 ### Task 4.2: Implement the native plumbing
 
-- [ ] Task: Surface the native collector's omissions to the runner
+- [~] Task: Surface the native collector's omissions to the runner
   - [ ] The `activate()` call site is `gd_tools_test_runner.gd:551`; the collector's
     omissions must reach the run result through the **existing** `diagnostics` and
     `engine_warnings` channels (`:738-739`, `:777-778`), not a new one

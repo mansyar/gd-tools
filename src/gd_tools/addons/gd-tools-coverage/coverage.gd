@@ -16,6 +16,8 @@ var _active: bool = false
 
 var _plan: Dictionary = {}
 
+var _omitted: Array = []
+
 
 func _ready() -> void:
 	# Instrument files when GD_TOOLS_COVERAGE_PLAN is set.
@@ -59,8 +61,14 @@ func get_hits() -> Dictionary:
 	return _hits
 
 
+func get_omitted() -> Array:
+	## Targets that could not be instrumented, as {file_id, path, reason, fix}.
+	return _omitted
+
+
 func reset() -> void:
 	_hits.clear()
+	_omitted.clear()
 
 
 func set_active(active: bool) -> void:
@@ -96,7 +104,9 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 	# the other means the script is a real defect. FileAccess.file_exists is
 	# what separates them -- load() returns null for both.
 	if not FileAccess.file_exists(path):
-		_log_warning(
+		_record_omission(
+			file_id,
+			path,
 			"Skipped uninstrumentable script.",
 			"The coverage plan references a file that no longer exists: " + path,
 			"The plan is stale. Re-run with --no-cache to regenerate it."
@@ -105,7 +115,9 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 
 	var script = load(path) as GDScript
 	if script == null:
-		_log_warning(
+		_record_omission(
+			file_id,
+			path,
 			"Skipped uninstrumentable script.",
 			"The file exists but does not load as GDScript: " + path,
 			"Fix the script, or exclude it from the plan."
@@ -117,7 +129,9 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 	script.source_code = instrumented
 	var err: int = script.reload(true)
 	if err != OK:
-		_log_warning(
+		_record_omission(
+			file_id,
+			path,
 			"Skipped uninstrumentable script.",
 			"Trackers could not be injected, so the script did not reload: " + path,
 			"Fix the script's own syntax, or exclude it from the plan."
@@ -310,3 +324,13 @@ func _log_warning(what: String, cause: String, fix: String) -> void:
 	push_warning(
 		"[gd-tools] [Warning] " + what + "\n\n" + "  Cause: " + cause + "\n" + "  Fix:   " + fix
 	)
+
+
+func _record_omission(
+		file_id: int, path: String, what: String, cause: String, fix: String
+) -> void:
+	# R5: record the omission structurally so the additive `omitted` key in
+	# the coverage JSON carries the reason the collector derived, while the
+	# console keeps the same warning it has always printed.
+	_omitted.append({"file_id": file_id, "path": path, "reason": cause, "fix": fix})
+	_log_warning(what, cause, fix)

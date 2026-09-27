@@ -351,11 +351,16 @@ def merge_coverage_data(files: list[Path]) -> CoverageData:
 
     merged_files: dict[int, dict[str, int]] = {}
     generated_at: str | None = None
+    merged_omitted: list[OmittedTarget] = []
 
     for fpath in files:
         data = read_coverage_json(fpath)
         if generated_at is None:
             generated_at = data.generated_at
+
+        for omission in data.omitted:
+            if omission not in merged_omitted:
+                merged_omitted.append(omission)
 
         for fc in data.files:
             if fc.file_id not in merged_files:
@@ -374,6 +379,7 @@ def merge_coverage_data(files: list[Path]) -> CoverageData:
         version=1,
         generated_at=generated_at,
         files=result_files,
+        omitted=merged_omitted,
     )
 
 

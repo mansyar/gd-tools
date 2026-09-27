@@ -8,7 +8,10 @@ from unittest.mock import patch
 import pytest
 
 from gd_tools.native_test.artifacts import NativeArtifactLayout
-from gd_tools.native_test.orchestrator import run_native_tests
+from gd_tools.native_test.orchestrator import (
+    _merge_coverage_shards,
+    run_native_tests,
+)
 from gd_tools.native_test.protocol import (
     NativeCoverage,
     NativeExecutionMode,
@@ -33,6 +36,7 @@ def _write_result(
     status: str = "passed",
     diagnostics: dict | None = None,
     engine_warnings: list[str] | None = None,
+    run_diagnostics: dict | None = None,
 ) -> None:
     result_path.write_text(
         json.dumps(
@@ -41,6 +45,7 @@ def _write_result(
                 "run_id": "test-run",
                 "status": status,
                 "engine_warnings": engine_warnings or [],
+                "diagnostics": run_diagnostics or {},
                 "tests": [
                     {
                         "suite": "ExampleSuite",
@@ -108,8 +113,8 @@ def test_run_result_aggregates_engine_warnings_and_coverage_omissions(tmp_path):
     def fake_run(args, **kwargs):
         _write_result(
             Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]),
-            diagnostics={"coverage_omissions": [omission]},
             engine_warnings=[warning],
+            run_diagnostics={"coverage_omissions": [omission]},
         )
         return CompletedProcess(args, 0, "", "")
 
@@ -125,6 +130,51 @@ def test_run_result_aggregates_engine_warnings_and_coverage_omissions(tmp_path):
 
     assert result.engine_warnings == [warning]
     assert result.diagnostics == {"coverage_omissions": [omission]}
+
+
+def test_merge_coverage_shards_unions_omitted_targets(tmp_path):
+    """Shard merging keeps the collector-reported omission reasons.
+
+    Every shard instruments the same plan, so the same omission appears in
+    each; the merged coverage data must carry it once, with the reason intact.
+    """
+    omission = {
+        "file_id": 1,
+        "path": "res://scripts/missing_target.gd",
+        "reason": "stale plan",
+        "fix": "re-run with --no-cache",
+    }
+    shard1 = tmp_path / "suite-0000.coverage.json"
+    shard1.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2026-01-01T00:00:00Z",
+                "files": [{"file_id": 0, "hits": {"0": 1}}],
+                "omitted": [omission],
+            }
+        ),
+        encoding="utf-8",
+    )
+    shard2 = tmp_path / "suite-0001.coverage.json"
+    shard2.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2026-01-01T00:00:01Z",
+                "files": [],
+                "omitted": [omission],
+            }
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "merged.coverage.json"
+
+    assert _merge_coverage_shards([shard1, shard2], output)
+
+    merged = json.loads(output.read_text(encoding="utf-8"))
+    assert merged["omitted"] == [omission]
+    assert merged["files"] == [{"file_id": 0, "hits": {"0": 1}}]
 
 
 def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):

@@ -129,6 +129,7 @@ def publish_artifact_index(
     suite_names: list[str],
     suite_paths: list[dict[str, Any]],
     preflight_paths: dict[str, Path],
+    omitted: list[dict[str, Any]] | None = None,
 ) -> Path:
     """Atomically publish one run index, then prune older run directories.
 
@@ -146,6 +147,11 @@ def publish_artifact_index(
             Entries that were never written are omitted, and a ``screenshots``
             sequence lists only realized captures.
         preflight_paths: Stable preflight artifact paths.
+        omitted: Coverage targets the collector could not instrument, as
+            ``{file_id, path, reason, fix}`` entries. The terminal report dies
+            with its process, so this is the surface a machine consumer reads
+            after the fact. Written as an additive key only when non-empty;
+            the payload has no version field of its own, so nothing is bumped.
 
     Returns:
         The published artifact index path.
@@ -174,6 +180,8 @@ def publish_artifact_index(
         "preflight": {key: str(path) for key, path in preflight_paths.items()},
         "suites": suites,
     }
+    if omitted:
+        payload["omitted"] = omitted
     try:
         _write_json_atomic(layout.index_path, payload)
     except (OSError, TypeError, ValueError) as exc:

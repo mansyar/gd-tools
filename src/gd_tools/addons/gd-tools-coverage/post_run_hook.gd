@@ -16,7 +16,7 @@ func run() -> void:
 		return
 
 	var hits: Dictionary = tracker.get_hits()
-	var data: Dictionary = _build_coverage_json(hits)
+	var data: Dictionary = _build_coverage_json(hits, tracker.get_omitted())
 
 	var output_path: String = OS.get_environment("GD_TOOLS_COVERAGE_OUTPUT")
 	if output_path.is_empty():
@@ -55,7 +55,7 @@ func _get_tracker() -> Node:
 	return tracker
 
 
-func _build_coverage_json(hits: Dictionary) -> Dictionary:
+func _build_coverage_json(hits: Dictionary, omitted: Array = []) -> Dictionary:
 	var files: Array = []
 	for file_id in hits:
 		var file_hits: Dictionary = hits[file_id]
@@ -63,11 +63,14 @@ func _build_coverage_json(hits: Dictionary) -> Dictionary:
 		for line_id in file_hits:
 			hits_dict[str(line_id)] = file_hits[line_id]
 		files.append({"file_id": int(file_id), "hits": hits_dict})
-	return {
+	var data := {
 		"version": 1,
 		"generated_at": Time.get_datetime_string_from_system(true, false) + "Z",
 		"files": files
 	}
+	if not omitted.is_empty():
+		data["omitted"] = omitted
+	return data
 
 
 func _write_json(path: String, data: Dictionary) -> bool:

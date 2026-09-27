@@ -24,6 +24,8 @@ var _run_started_at := ""
 var _run_finished_at := ""
 var _engine_errors: Array[String] = []
 var _engine_warnings: Array[String] = []
+
+var _coverage_omissions: Array = []
 var _log_path := ""
 var _current_windowed := false
 var _screenshot_path := ""
@@ -726,6 +728,17 @@ func _finish_with_status() -> void:
 			{},
 		)
 	_capture_engine_diagnostics()
+	if _coverage_enabled:
+		# R5: surface the collector's omissions through the existing warning
+		# channel. Warnings never escalate the status (only _engine_errors
+		# do, below), so a per-target omission cannot turn the run into an
+		# error while the structured entries land in the result diagnostics.
+		for omission in GdToolsNativeCoverage.get_omitted():
+			_coverage_omissions.append(omission)
+			_engine_warnings.append(
+				"Coverage target omitted: %s. %s Fix: %s"
+				% [omission["path"], omission["reason"], omission["fix"]]
+			)
 	if not _engine_errors.is_empty():
 		_run_status = "error"
 		_record_test_result(
@@ -778,6 +791,8 @@ func _write_result() -> void:
 		"engine_warnings": _engine_warnings,
 		"tests": _test_results,
 	}
+	if not _coverage_omissions.is_empty():
+		result["diagnostics"] = {"coverage_omissions": _coverage_omissions}
 	var result_path := OS.get_environment("GD_TOOLS_NATIVE_RESULT")
 	if result_path.is_empty():
 		print(JSON.stringify(result, "\t"))

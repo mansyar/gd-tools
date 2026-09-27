@@ -345,6 +345,50 @@ def test_merge_coverage_data_empty_list():
     assert merged.version == 1
 
 
+def test_merge_coverage_data_unions_omitted_targets(tmp_path):
+    """Omitted targets dedupe across shards; merged data keeps the reasons."""
+    data1 = {
+        "version": 1,
+        "files": [],
+        "omitted": [
+            {
+                "file_id": 1,
+                "path": "res://a.gd",
+                "reason": "stale",
+                "fix": "regen",
+            },
+        ],
+    }
+    data2 = {
+        "version": 1,
+        "files": [],
+        "omitted": [
+            {
+                "file_id": 1,
+                "path": "res://a.gd",
+                "reason": "stale",
+                "fix": "regen",
+            },
+            {
+                "file_id": 2,
+                "path": "res://b.gd",
+                "reason": "broken",
+                "fix": "repair",
+            },
+        ],
+    }
+    f1 = tmp_path / "shard1.json"
+    f2 = tmp_path / "shard2.json"
+    f1.write_text(json.dumps(data1))
+    f2.write_text(json.dumps(data2))
+
+    merged = merge_coverage_data([f1, f2])
+    assert [(o.file_id, o.reason) for o in merged.omitted] == [
+        (1, "stale"),
+        (2, "broken"),
+    ]
+
+
 def test_merge_coverage_data_single_file(tmp_path):
     """merge_coverage_data with a single file returns equivalent data."""
     data = {
