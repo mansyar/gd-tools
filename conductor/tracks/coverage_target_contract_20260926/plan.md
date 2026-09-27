@@ -59,7 +59,7 @@ Covers spec R3 (premise verification only).
 
 ### Task 1.1: Characterize how the reporter scores uninstrumented and unhit files
 
-- [x] Task: Locate the reporter's scoring path
+- [x] Task: Locate the reporter's scoring path [661e1b7]
   - [x] In `src/gd_tools/coverage/reporter.py` (519 lines), identify where per-file
     line/branch percentages are computed and what happens when a plan file has **no**
     entry in the coverage data `files[]` array
