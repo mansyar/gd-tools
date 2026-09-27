@@ -440,14 +440,123 @@ Two things a future track should weigh:
 - The runner already has the vocabulary. A load failure is `error`, and `error` is not
   retryable, does not escalate silently, and exits 2. A suite that cannot load is an
   environment problem, exactly the class `spec.md`'s exit code 2 reserves.
-- The engine error *was* captured — it reached stderr and the run's engine diagnostics —
-  yet the escalation at `:717-724` that turns any captured `ERROR:` into exit 2 did not
-  fire. Read that capture-or-escalate path before choosing a fix; patching `:101` alone
-  would address the symptom and leave the gap that makes the failure silent.
+- The engine error was **not** captured. The code review of this branch measured
+  `engine_errors: 0` while three `SCRIPT ERROR:` lines were present in the captured
+  log, because `_capture_engine_diagnostics` matches only lines beginning `ERROR:`
+  (`gd_tools_test_runner.gd:681`) and GDScript reports script errors as
+  `SCRIPT ERROR:`. See Phase: Review Fixes.
 
 ### Blanket test-count assertion
 
-Independent of the bug above, e2e tests that assert over `payload["tests"]` should
-assert the expected count before the content. A dropped suite turns content
-assertions vacuously true, and the same class of false pass could reach any of the
-existing tests in this file.
+Narrowed by the code review, which checked all 23 assertions over `payload["tests"]`
+in `tests/e2e/test_native_runtime.py`. Only a QUANTIFIED assertion can pass vacuously
+when a suite is dropped, because `all()` over an empty list is `True`. Index access
+(`payload["tests"][0]`), `next()`, and full-list equality all RAISE on an empty list.
+Both `all()` sites are length-guarded. The pattern is still worth a lint rule, since a
+third quantifier added without a guard would reintroduce the false pass.
+
+---
+
+## Phase: Review Fixes
+
+Raised by the code review of this branch. Both High findings are one defect seen from
+two sides and must land together: fixing only the assertion leaves the safety net blind,
+fixing only the safety net turns a passing case into an exit-2 run failure.
+
+**`[checkpoint: ce6ceb3]`** - review fixes complete. Full suite 1159 passed, 2
+skipped, 0 failed (7m57s). Coverage 96.15%, unchanged, because the gate measures
+Python and these fixes are GDScript plus two test files. ruff clean, black 101
+files unchanged, R7 still empty. Evidence is in the git note on `ce6ceb3`.
+
+**Review outcome: I recommend we fix the important issues** was issued for the two
+High findings; both were applied together, as the review required, because either
+alone leaves the defect half-visible.
+
+- [x] Task: Reject a membership element the container cannot hold
+  - [x] Add the four cases to `assertion_type_safety_suite.gd`
+  - [x] Add an e2e test pinning: failure recorded, exit 1, `engine_errors` empty
+  - [x] Confirm Red - the run escalates to 2 or captures a `SCRIPT ERROR:`
+  - [x] Add `_gd_tools_element_fits` and the two guard blocks; Red -> Green
+
+- [x] Task: Capture `SCRIPT ERROR:` in engine diagnostics
+  - [x] Add `engine_error_suite.gd`, whose test raises a runtime script error
+  - [x] Add an e2e test pinning: `engine_errors` non-empty, `status` `error`, exit 2
+  - [x] Confirm Red - `engine_errors` is empty and the run does not escalate
+  - [x] Widen the `begins_with` match at `:681` to `SCRIPT ERROR:`; Red -> Green
+
+**A fourth finding, surfaced by the fix and the strongest argument for it.**
+
+With `SCRIPT ERROR:` captured, `test_native_cli_runs_scene_suite_with_default_
+and_overridden_metadata` went from exit 1 to exit 2. The cause is a fixture that
+was itself broken: `test_resources_are_not_assigned_automatically` asserted
+`subject.label` on a `Node2D`, which has no `label` property.
+
+The important part is not the exit code. That test was **passing vacuously**.
+The property access raised, the test body aborted before `assert_eq` could
+record anything, the runner saw zero failures, and reported the test as
+`passed`. It had never asserted what its name claims. This is the same defect
+class as the review finding itself, one level up: a GDScript runtime error
+silently converting a test into a pass.
+
+It is fixed with `assert_null(subject.get("label"), ...)` rather than by
+loosening the expected exit code. `get()` returns `null` for a missing property
+without raising (verified: `engine_errors: 0`, exit 1) and still fails if the
+resource is ever auto-assigned onto the node, so the test now tests its intent.
+The alternative - `"label" in subject` - was probed and **rejected**: it returns
+false for *every* property, including `name`, so it would have been a new
+tautology in place of the old one.
+
+**This is a user-visible behaviour change, not only a test repair.** Before this
+fix, a user test that raised a GDScript runtime error was reported as a test
+failure (exit 1), or on the direct-invocation path as a clean pass. It is now
+reported as an engine failure (exit 2), which is what `gd_tools_test_runner.gd`
+has always intended at `:717-724` and what `product.md` means by exit 2. Any
+suite relying on the old leniency needs a small repair of the same shape as
+the fixture above.
+
+- [x] Task: Verify and commit the review fixes [ce6ceb3]
+  - [x] Re-run the full Definition of Done
+  - [ ] Commit the review fixes with a git note
+  - [ ] Commit the plan update
+
+
+**Implementation note - the third finding, and a self-correction.**
+
+Wiring `GD_TOOLS_NATIVE_LOG` into these tests exposed a third problem that was not
+in the review: the pre-existing `assert payload["engine_errors"] == []` in
+`test_native_assertion_type_mismatch_fails_the_test_not_the_run` was **vacuous**.
+`_capture_engine_diagnostics` returns early when the log path is empty, and
+`_run_native_manifest` only sets `GD_TOOLS_NATIVE_LOG` when a caller passes
+`log_path`. No test did, so the capture never ran and `engine_errors` was `[]`
+because it was never written, not because the run was clean. Spec acceptance
+criterion 14 ("no `<engine>` error result") had therefore been pinned against a
+no-op. That test now passes a `log_path`, which is what made the real behaviour
+observable in the first place.
+
+The correction to the review: with a log path in place, the two High findings are
+**confirmed in both directions rather than merely suspected**. A mismatched
+element produced `Invalid type in function 'contains' in base 'String'. Cannot
+convert argument 1 from int to String` in the captured log while `engine_errors`
+stayed `0`; and a runtime script error produced a suite that reported `status:
+error` with `engine_errors: 0` and exit 1. The assertion fix alone would have
+converted those runs into exit-2 failures, so the pair is not two independent
+improvements but one repair.
+
+Two smaller notes. The Red fixture first used `var number := 5;` followed by
+`number.no_such_method_exists()`, which is a **parse** error - GDScript resolves
+member access on a statically-typed local at parse time - so the suite failed to
+load and reproduced the silent false pass on the direct-invocation path. The
+fixture was changed to raise at runtime instead, which is the case Finding 2 is
+about. And the e2e test initially referenced a fixture method by a name one word
+short of the real one; the runner reported the unknown name as an `error` entry,
+so the harness caught the typo rather than the test papering over it. Worth
+noting that this is the same code path that makes Finding 1 a real risk: an
+unloadable suite reports `error`, and an unknown method name reports `error`, so
+an `error` entry is trustworthy only now that `SCRIPT ERROR:` lines are also
+escalated rather than silently dropped.
+
+- [~] Task: Verify and commit the review fixes
+  - [x] Re-run the full Definition of Done
+  - [ ] Commit the review fixes with a git note
+  - [ ] Commit the plan update
+
