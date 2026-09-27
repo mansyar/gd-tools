@@ -803,8 +803,11 @@ mid-test.
 
 A test `status` may be `passed`, `failed`, `error`, `skipped`, or `pending`. The
 protocol models `skipped` and `pending` and Python maps them
-([11.1](#111-commandpy)), but the shipped assertion surface has no
-`skip_test()` call yet, so no GDScript currently emits them.
+([11.1](#111-commandpy)). The assertion surface emits them: `skip_test()`
+marks a test skipped and `pending_test()` is a direct alias of it, so both
+report as `skipped`. A recorded failure outranks a skip, so a test that fails
+before it skips is still reported as `failed` --- a skip never masks a real
+failure.
 
 ### 9.5 Artifact Index (`artifacts.json`)
 
@@ -1000,6 +1003,9 @@ process management.
 | Group | Functions |
 |-------|-----------|
 | Assertions | `assert_true`, `assert_false`, `assert_eq`, `assert_ne`, `assert_null`, `assert_not_null`, `fail` |
+| Comparison | `assert_gt`, `assert_gte`, `assert_lt`, `assert_lte`, `assert_between`, `assert_almost_eq` |
+| Membership | `assert_has`, `assert_in`, `assert_has_method`, `assert_is` |
+| Skipping | `skip_test`, `pending_test` (an alias of it), `is_skipped`, `get_skip_reason` |
 | Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal` |
 | Context | `get_test_context()` |
 | Suite state | suite-scoped storage for sharing fixtures across tests |
@@ -1009,6 +1015,18 @@ assertion that failed instead of only the first. `_gd_tools_record_failure()`
 attributes a failure to user code by skipping `gd_tools_test.gd` and
 `gd_tools_test_runner.gd` stack frames --- a stack trace pointing at the
 framework instead of the test is not a useful failure message.
+
+The guard that discards failures after a `skip_test()` call lives in
+`_gd_tools_record_failure()` rather than in each assertion, so the skip
+semantics apply to every assertion without each one having to remember the
+rule.
+
+Arguments are untyped Variants by design. GDScript rejects `expr is T` at
+parse time when the static type of `expr` is provably disjoint from `T`, so a
+typed assertion parameter would make the type checks themselves
+uncompilable. Each assertion therefore validates its own arguments and records
+a failure naming the offending position and type, which keeps a badly typed
+argument a test failure rather than a GDScript error escalating the whole run.
 
 ### 11.10 gd_tools_test_context.gd
 
@@ -1118,9 +1136,7 @@ Stated so they are not discovered by surprise:
   parameterized method is not discovered as runnable.
 - **No parallel execution.** Suites run sequentially (see
   [8.2](#82-isolation-model)).
-- **No `skip_test()`.** The protocol reserves `skipped` and `pending`, but the
-  assertion surface cannot yet emit them.
-- **Thin assertion surface.** Seven assertions (`gd_tools_test.gd`), which is
-  considerably narrower than the GUT assertion set the migration bridge is
-  being measured against.
+- **No suite-level skip.** `skip_test()` in `before_all` runs on the suite
+  instance rather than the per-test instance the runner reads, so it marks
+  nothing. Guard inside the test method instead.
 - **No editor integration.** The runtime is headless and script-driven only.

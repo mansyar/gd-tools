@@ -278,10 +278,11 @@ def format_test_results(result: TestResult) -> None:
     """Print a Rich table summarizing test results.
 
     Always prints a table with total, passed, failed, skipped, and
-    duration. When all tests pass, prints a success message. When
-    tests fail, prints per-test failure details and GUT's stdout and
-    stderr for debugging context (truncated to 5000 characters if
-    longer), followed by a summary footer.
+    duration. When no test fails, prints a success message that counts
+    skipped tests separately rather than folding them into the passed
+    total. When tests fail, prints per-test failure details and GUT's
+    stdout and stderr for debugging context (truncated to 5000
+    characters if longer), followed by a summary footer.
 
     Args:
         result: The :class:`TestResult` to format and print.
@@ -310,7 +311,14 @@ def format_test_results(result: TestResult) -> None:
         )
 
     if result.failed == 0:
-        output.print_success(f"All {result.total} test(s) passed.")
+        # A skipped test did not run, so counting it as passed would report a
+        # suite as fully green when part of it never executed.
+        if result.skipped:
+            output.print_success(
+                f"All {result.passed} test(s) passed, {result.skipped} skipped."
+            )
+        else:
+            output.print_success(f"All {result.total} test(s) passed.")
         return
 
     # Print per-test failure details.

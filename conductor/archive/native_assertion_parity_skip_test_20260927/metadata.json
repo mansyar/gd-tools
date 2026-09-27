@@ -1,0 +1,8 @@
+{
+  "track_id": "native_assertion_parity_skip_test_20260927",
+  "type": "feature",
+  "status": "complete",
+  "created_at": "2026-09-27T00:00:00Z",
+  "updated_at": "2026-09-27T00:00:00Z",
+  "description": "The native runtime's assertion surface was seven methods, and the protocol reserved the skipped and pending statuses that protocol.py, command.py, and the JUnit writer already consumed, but no GDScript could emit them. Added skip_test()/pending_test() with a single mark-and-abort guard, plus ten GUT-core assertions (ordering, range, membership, introspection) that type-check their arguments so a bad call fails the test instead of escalating the run to exit 2. Closes two of the six Known Limitations in ARCHITECTURE.md and unblocks migration roadmap Phase 3. Delivered in three phases: SKIP EMISSION, ASSERTION SURFACE, DOCUMENTATION TRUTH."
+}

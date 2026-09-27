@@ -317,6 +317,12 @@ func _run_test_attempt(
 	var failures: Array[Dictionary] = test_context.get_failures()
 	var status := "failed" if not failures.is_empty() else "passed"
 	var message := _failure_message(failures)
+	if status == "passed" and test_context.is_skipped():
+		# A skip is only reported when nothing actually failed, so a recorded
+		# failure always outranks it. Cleanup failures and timeouts still
+		# escalate below: they are infrastructure, not the test's verdict.
+		status = "skipped"
+		message = test_context.get_skip_reason()
 	if not cleanup_failures.is_empty() or cleanup_timed_out:
 		status = "error"
 		# A cleanup failure is infrastructure, but the assertion that failed
@@ -672,7 +678,18 @@ func _capture_engine_diagnostics() -> void:
 		return
 	for line in file.get_as_text().split("\n"):
 		var normalized := str(line).strip_edges()
-		if normalized.begins_with("ERROR:"):
+		# `SCRIPT ERROR:` is how GDScript reports a parse error, an invalid call,
+		# and a wrong-typed builtin argument. It is an engine error the run cannot
+		# honestly call clean, and without matching it here such a failure reached
+		# the log, left `engine_errors` empty, and exited 0 -- reporting a broken
+		# test as a clean pass. Matched before `ERROR:` so the prefix trims in the
+		# right order: `SCRIPT ERROR:` does not begin with `ERROR:`, but the trimmed
+		# remainder of a nested `ERROR:` line does.
+		if normalized.begins_with("SCRIPT ERROR:"):
+			_engine_errors.append(
+				normalized.trim_prefix("SCRIPT ERROR:").strip_edges()
+			)
+		elif normalized.begins_with("ERROR:"):
 			_engine_errors.append(
 				normalized.trim_prefix("ERROR:").strip_edges()
 			)

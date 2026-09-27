@@ -1131,6 +1131,27 @@ def test_format_test_results_all_pass(capsys):
 
 
 @pytest.mark.unit
+def test_format_test_results_counts_skipped_separately(capsys):
+    """format_test_results must not report skipped tests as passed."""
+    result = TestResult(
+        total=4,
+        passed=1,
+        failed=0,
+        skipped=3,
+        duration=0.5,
+        junit_xml_path=Path("/fake/results.xml"),
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "All 4 test(s) passed." not in captured.out
+    assert "1 test(s) passed, 3 skipped." in captured.out
+
+
+@pytest.mark.unit
 def test_format_test_results_with_failures(capsys):
     """format_test_results with failures shows table + details + GUT output."""
     result = TestResult(
