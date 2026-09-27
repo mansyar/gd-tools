@@ -568,10 +568,19 @@ documentation and flake obligations.
 ### Task 4.4: Phase Verification & Checkpoint
 
 - [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] AC 4, 8, 9, 10 confirmed
-  - [ ] `NATIVE_PROTOCOL_VERSION` is still `2`; the coverage JSON is still `version: 1`
-  - [ ] Full suite run, with the flake outcome reported
-  - [ ] `ruff check src/ tests/` and `black --check src/ tests/` clean
+  - [x] AC 4, 8, 9, 10 confirmed
+  - [x] `NATIVE_PROTOCOL_VERSION` is still `2`; the coverage JSON is still `version: 1`
+  - [x] Full suite run, with the flake outcome reported
+  - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean
+
+> **Note (Task 4.4):** Full suite **1191 passed, 2 skipped, 0 failed** in
+> 545.42s, coverage **96.14%** (gate 80% reached) — the two skipped tests are
+> the known opt-in benchmark and the Windows symlink limitation. The Vector-A
+> flake remained absent for the second consecutive full run. AC 4/8/9/10 are
+> each backed by automated evidence (artifact-index omission wiring test,
+> `version: 1`/protocol-2 assertions in e2e and unit tests, the deterministic
+> hooks contract test) plus the manual CLI verification summarized in the
+> Task 4.2 findings note. ruff and black are clean tree-wide.
 
 ---
 
