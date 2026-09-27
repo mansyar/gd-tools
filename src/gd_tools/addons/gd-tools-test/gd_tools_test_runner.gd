@@ -151,9 +151,17 @@ func _run_suite(suite_data: Dictionary) -> void:
 
 
 func _suite_timeout(suite_data: Dictionary) -> float:
-	for test_data in suite_data.get("tests", []):
-		return max(float(test_data.get("timeout_seconds", 5.0)), 0.001)
-	return 5.0
+	# The maximum across every test, not the first. This budget is handed to
+	# `before_all` and `after_all`, so reading only the first entry made the
+	# setup allowance depend on declaration order -- a suite whose first test
+	# declared a short timeout starved its own setup.
+	var tests: Array = suite_data.get("tests", [])
+	if tests.is_empty():
+		return 5.0
+	var budget := 0.0
+	for test_data in tests:
+		budget = max(budget, float(test_data.get("timeout_seconds", 5.0)))
+	return max(budget, 0.001)
 
 
 func _run_test(

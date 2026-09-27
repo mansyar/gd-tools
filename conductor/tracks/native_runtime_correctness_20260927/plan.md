@@ -158,7 +158,7 @@ Touches `gd_tools_test_runner.gd:_suite_timeout` only.
 
 ### Task 2.1: Make the suite budget the maximum across all tests
 
-- [ ] Task: Fix `_suite_timeout` to consider every test
+- [~] Task: Fix `_suite_timeout` to consider every test
   - [ ] Red: add a test whose suite declares differing `timeout_seconds` in an
         order placing the smallest first, and whose `before_all` needs more time
         than that smallest budget. It must fail by timing out under the current
