@@ -717,6 +717,7 @@ def test_run_native_command_infrastructure_error_dominates_test_failure(
     root = ET.parse(junit_path).getroot()
     assert root.find("testsuite").attrib["tests"] == "2"
 
+
 def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
     """R6: the report and the omission gate survive a threshold failure.
 
@@ -727,51 +728,51 @@ def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
     short-circuiting, or the two runtimes disagree exactly when the gate
     matters most.
     """
-    coverage_dir = tmp_path / '.gd-tools' / 'coverage'
+    coverage_dir = tmp_path / ".gd-tools" / "coverage"
     coverage_dir.mkdir(parents=True)
-    (coverage_dir / 'plan.json').write_text(
+    (coverage_dir / "plan.json").write_text(
         json.dumps(
             {
-                'version': 1,
-                'generated_by': 'gd-tools-test',
-                'files': [
+                "version": 1,
+                "generated_by": "gd-tools-test",
+                "files": [
                     {
-                        'file_id': 0,
-                        'path': 'res://scripts/a.gd',
-                        'source_hash': 'sha256:test',
-                        'lines': [],
+                        "file_id": 0,
+                        "path": "res://scripts/a.gd",
+                        "source_hash": "sha256:test",
+                        "lines": [],
                     }
                 ],
             }
         ),
-        encoding='utf-8',
+        encoding="utf-8",
     )
-    coverage_path = tmp_path / 'coverage.json'
+    coverage_path = tmp_path / "coverage.json"
     coverage_path.write_text(
         json.dumps(
             {
-                'version': 1,
-                'generated_at': '2026-09-28T00:00:00',
-                'files': [],
+                "version": 1,
+                "generated_at": "2026-09-28T00:00:00",
+                "files": [],
             }
         ),
-        encoding='utf-8',
+        encoding="utf-8",
     )
     result = _native_result().model_copy(
-        update={'coverage_data_path': coverage_path}
+        update={"coverage_data_path": coverage_path}
     )
     summary = object()
     error = CoverageThresholdError(
-        'below threshold',
+        "below threshold",
         report_result=SimpleNamespace(summary=summary, file_summaries=[]),
     )
     with (
         patch(
-            'gd_tools.native_test.command.reporter.generate_report',
+            "gd_tools.native_test.command.reporter.generate_report",
             side_effect=error,
         ),
         patch(
-            'gd_tools.native_test.command._report_coverage'
+            "gd_tools.native_test.command._report_coverage"
         ) as report_coverage,
     ):
         with pytest.raises(CoverageThresholdError) as excinfo:

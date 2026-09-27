@@ -1586,7 +1586,7 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
     """
     project = _prepare_project(tmp_path, godot_bin)
     (project / "scripts" / "broken.gd").write_text(
-        "const Gone = preload(\"res://scripts/gone.gd\")\n\n\n"
+        'const Gone = preload("res://scripts/gone.gd")\n\n\n'
         "func triple(value: int) -> int:\n\treturn value * 3\n",
         encoding="utf-8",
     )

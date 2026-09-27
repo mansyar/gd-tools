@@ -1107,8 +1107,13 @@ plan and the broken script get distinct messages, discriminated by
 `engine_warnings` entry and in the run result's
 `diagnostics.coverage_omissions` --- never as an engine error, so a partial
 measurement cannot fail the run on its own (the `--min` threshold governs
-that separately). The artifact index records the same omissions for machine
-consumers.
+that separately). When a target fails to load, Godot itself prints
+`SCRIPT ERROR:`/`ERROR:` lines while the collector attempts instrumentation;
+the runner snapshots the log after activation and demotes exactly those
+activation-window errors to warnings, so they ride the omission's evidence
+channel instead of escalating the run --- while engine errors raised while
+tests execute still escalate. The artifact index records the same omissions
+for machine consumers.
 
 This component is the bridge between the two halves of `gd-tools`: it is the
 native runtime activating the coverage system described in Part I.
