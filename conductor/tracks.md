@@ -20,7 +20,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Coverage Target Contract** — a coverage target that cannot be
+- [~] **Track: Coverage Target Contract** - a coverage target that cannot be
   instrumented now warns and continues instead of escalating a process-fatal
   error that contradicted the code's own `return false`. The omission is recorded
   in the run diagnostics, the terminal report, and the artifact index; `--min`
