@@ -57,6 +57,12 @@ wrong assumption.
 
 Covers spec R3 (premise verification only).
 
+> **`[checkpoint: 40903b6]`** - phase complete. User approved the checkpoint after
+> reviewing the full-suite result ("Yes - checkpoint and start Phase 2"). Full
+> automated and manual evidence is recorded in the git note on `40903b6`. Phase
+> commits: `661e1b7` (characterization test + implementation note), `6d8697d`
+> (plan SHA record).
+
 ### Task 1.1: Characterize how the reporter scores uninstrumented and unhit files
 
 - [x] Task: Locate the reporter's scoring path [661e1b7]
