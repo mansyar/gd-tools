@@ -157,6 +157,11 @@ Covers spec R3 (premise verification only).
 
 Covers spec R1, R2, R3 (seeding), and R4, in both runtimes.
 
+> **`[checkpoint: e4770c7]`** - phase complete. Manual verification plan proposed and
+> approved by the user. Full automated and manual evidence is recorded in the git
+> note on `e4770c7`. Phase commits: `02724e8` (Red tests), `727877a` (the fix in both
+> runtimes), `fe06562` (seeded-merge test, AC 7), `9fb0c2c` (black formatting).
+
 ### Task 2.1: Failing tests for the runtime contract (Red)
 
 - [x] Task: Legacy runtime — write the failing tests [02724e8]
