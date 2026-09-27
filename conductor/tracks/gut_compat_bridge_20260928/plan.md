@@ -10,12 +10,13 @@
 
 ## Phase 1 — Discovery Routing & Bridge Classification (Python)
 
-- [ ] Task: Write failing tests for suite classification (RED)
+- [x] Task: Write failing tests for suite classification (RED)
   - `extends GdToolsTest` → native suite; `extends GutTest` → bridge suite;
     neither → explicit per-file error; mixed manifest ordering is stable
   - Orchestrator builds a plan containing both suite kinds in one invocation
-- [ ] Task: Implement routing in `native_test/discovery.py` + orchestrator (GREEN)
-- [ ] Task: Verify coverage ≥80/70 for new code; commit + git note
+- [x] Task: Implement routing in `native_test/discovery.py` + orchestrator (GREEN)
+- [x] Task: Verify coverage ≥80/70 for new code; commit + git note
+  (commit `00afbe1`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Preflight Static Scan & GUT-Free Rule (Python)
