@@ -59,27 +59,83 @@ Covers spec R3 (premise verification only).
 
 ### Task 1.1: Characterize how the reporter scores uninstrumented and unhit files
 
-- [ ] Task: Locate the reporter's scoring path
-  - [ ] In `src/gd_tools/coverage/reporter.py` (519 lines), identify where per-file
+- [x] Task: Locate the reporter's scoring path
+  - [x] In `src/gd_tools/coverage/reporter.py` (519 lines), identify where per-file
     line/branch percentages are computed and what happens when a plan file has **no**
     entry in the coverage data `files[]` array
-  - [ ] Identify the same for a data entry whose `hits` object is **empty**
-  - [ ] Note whether `read_coverage_json` (`reporter.py`) tolerates an entry with no
+  - [x] Identify the same for a data entry whose `hits` object is **empty**
+  - [x] Note whether `read_coverage_json` (`reporter.py`) tolerates an entry with no
     `hits` key at all, or whether that is a parse failure
-- [ ] Task: Write characterization tests pinning the current behavior
-  - [ ] These tests are expected to **pass** against current `main`; they document the
+- [x] Task: Write characterization tests pinning the current behavior
+  - [x] These tests are expected to **pass** against current `main`; they document the
     baseline rather than failing. Do not force them red.
-  - [ ] A plan file with no data entry scores: `<actual value>`
-  - [ ] A data entry with an empty `hits` dict scores: `<actual value>`
-  - [ ] A partially-hit file scores: unchanged from today
-  - [ ] Place in the existing coverage reporter unit test module; follow current
+  - [x] A plan file with no data entry scores: **0 hits on every line; `line_rate` and
+    `branch_rate` 0.0; all its lines in `uncovered_lines`** — already pinned by
+    `test_compute_summary_missing_file_in_coverage_data`
+  - [x] A data entry with an empty `hits` dict scores: **identically the same** — the
+    previously untested case, now covered by
+    `test_empty_hits_entry_scores_identically_to_absent_entry`
+  - [x] A partially-hit file scores: unchanged from today
+  - [x] Place in the existing coverage reporter unit test module; follow current
     fixture style
-- [ ] Task: Record the finding as an implementation note in this `plan.md`
-  - [ ] State whether an empty `hits` dict and an absent data entry are scored
+  - [x] *(Deviation: the plan called for three new tests. Two of the three baseline
+    points were already pinned by existing tests in the target module, so one new test
+    was written instead. Recorded here rather than edited into agreement, per the
+    archived track's precedent.)*
+- [x] Task: Record the finding as an implementation note in this `plan.md`
+  - [x] State whether an empty `hits` dict and an absent data entry are scored
     identically
-  - [ ] **Decision gate:** if they are scored *differently*, Phase 2 Task 2.3 needs an
+  - [x] **Decision gate:** if they are scored *differently*, Phase 2 Task 2.3 needs an
     explicit mapping task so seeding does not silently change reported percentages
-  - [ ] State explicitly whether `read_coverage_json` accepts an entry with no `hits` key
+  - [x] State explicitly whether `read_coverage_json` accepts an entry with no `hits` key
+
+> **Implementation note — Task 1.1 (2026-09-28). R3's premise is CONFIRMED.**
+>
+> The scoring path is `compute_file_summary` (`reporter.py:320-374`), which
+> iterates `file_plan.lines` and reads `file_data.hits.get(str(line.id), 0)`. An
+> empty `hits` dict therefore yields 0 for every line.
+>
+> **Absent entry and empty `hits` dict score identically.** Seven call sites
+> independently substitute an empty `FileCoverage` for a missing `file_id`, so
+> the two cases converge before scoring: `reporter.py:398-401` (`compute_summary`,
+> whose docstring at `:381` already states "Files in the plan but missing from
+> coverage data are treated as 0 hits"), `reporter.py:592-595`
+> (`generate_report`), `html_reporter.py:78-81`, `terminal_reporter.py:71-74`,
+> `lcov_reporter.py:38-41`, `cobertura_reporter.py:45-48`, and
+> `orchestrator.py:419-422`. All four output formats and the terminal report are
+> covered, so seeding moves no reported number in any renderer.
+>
+> `read_coverage_json` **rejects** an entry with no `hits` key at all
+> (`reporter.py:220-227` raises `CoveragePlanError`), but **accepts** an empty
+> dict — `:229` only checks `isinstance(hits_data, dict)`. The key must be
+> present; it need not be populated.
+>
+> **Decision gate: resolved — scored identically, so no mapping task is
+> required.** Task 2.3 proceeds as written.
+>
+> **Two of the three baseline points were already pinned** by existing tests, so
+> Task 1.1 needed one new test rather than three:
+> `test_compute_summary_missing_file_in_coverage_data` (`:568`) already covers
+> the absent entry, and `test_read_coverage_json_missing_hits` (`:266`) already
+> covers the missing key. Note that `test_read_coverage_json_zero` (`:159`) uses
+> a dict full of **zero-valued** hits, not an empty dict — no existing test
+> covered `{}`. That is the new test:
+> `test_empty_hits_entry_scores_identically_to_absent_entry`, which round-trips
+> a seeded `{"file_id": 1, "hits": {}}` through `read_coverage_json` and asserts
+> the totals equal the absent-entry baseline (`total_lines == 8`,
+> `covered_lines == 5`, `line_rate == 5/8`, `total_branches == 3`,
+> `covered_branches == 2`, `branch_rate == 2/3`).
+>
+> **Carry into Task 2.3 — do not "optimize" this away.** `merge_coverage_data`
+> creates `merged_files[fid] = {}` *before* iterating hits
+> (`reporter.py:274-275`), so a seeded empty entry survives the merge. This is
+> load-bearing, not incidental: the native orchestrator shards coverage per suite
+> and merges (`orchestrator.py::_merge_coverage_shards`), so without it the
+> instrumented set would be destroyed by the merge and the Phase 3
+> reconciliation would have nothing to reconcile on any multi-suite run. Its
+> test belongs in Task 2.3, where the seeding that produces it exists — not
+> here, where a test would pass for a reason unrelated to what it claims to
+> cover.
 
 ### Task 1.2: Phase Verification & Checkpoint
 

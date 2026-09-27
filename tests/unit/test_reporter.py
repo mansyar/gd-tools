@@ -588,6 +588,51 @@ def test_compute_summary_missing_file_in_coverage_data():
     assert summary.branch_rate == pytest.approx(2 / 3)
 
 
+def test_empty_hits_entry_scores_identically_to_absent_entry(tmp_path):
+    """A seeded empty ``hits`` dict scores exactly like an absent entry.
+
+    Spec R3 seeds ``{"file_id": N, "hits": {}}`` for every file the runtime
+    successfully instrumented, which is what makes ``files[]`` the
+    instrumented set rather than the hit set.  This pins the premise that
+    seeding moves no reported number: ``read_coverage_json`` accepts an empty
+    dict, and ``compute_summary`` scores it identically to a file absent from
+    the coverage data entirely.  Compare the totals asserted by
+    ``test_compute_summary_missing_file_in_coverage_data`` above.
+    """
+    cov = tmp_path / "empty_hits.json"
+    cov.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2025-01-01",
+                "files": [
+                    {
+                        "file_id": 0,
+                        "hits": {"0": 3, "1": 2, "2": 1, "3": 1, "4": 3},
+                    },
+                    {"file_id": 1, "hits": {}},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    data = read_coverage_json(cov)
+    assert data.files[1].hits == {}
+
+    plan = read_plan_json(_PLAN_FIXTURE)
+    summary = compute_summary(plan, data)
+
+    # File 0: 5 lines all covered, 2 of its branches covered.
+    # File 1: present, 3 lines, nothing covered.
+    assert summary.total_lines == 8
+    assert summary.covered_lines == 5
+    assert summary.line_rate == pytest.approx(5 / 8)
+    assert summary.total_branches == 3
+    assert summary.covered_branches == 2
+    assert summary.branch_rate == pytest.approx(2 / 3)
+
+
 # --- Report dispatch and threshold (FR-3) ---
 
 
