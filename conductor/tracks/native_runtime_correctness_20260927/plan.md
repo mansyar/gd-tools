@@ -221,31 +221,66 @@ Touches `gd_tools_test_runner.gd`. The mutation sites are `:277`, `:365`, and
 
 ### Task 3.1: Introduce `_invalidate_timeout()` and `_cancel_timeout()`
 
-- [ ] Task: Name the token invariant and route every mutation through it
-  - [ ] Re-read the three mutation sites and the three readers. Confirm the
+- [x] Task: Name the token invariant and route every mutation through it
+  - [x] Re-read the three mutation sites and the three readers. Confirm the
         spec's description still matches the source
-  - [ ] Establish a test baseline **before** editing, and record the run's
+  - [x] Establish a test baseline **before** editing, and record the run's
         result. This task changes no behaviour, so any difference afterwards is a
         defect introduced here
-  - [ ] Implement `_invalidate_timeout()` as the sole site of
+  - [x] Implement `_invalidate_timeout()` as the sole site of
         `_active_test_token += 1`, with a comment stating the invariant it
         upholds
-  - [ ] Call it from `_begin_test_timeout` to arm, and from a new
+  - [x] Call it from `_begin_test_timeout` to arm, and from a new
         `_cancel_timeout()` to cancel
-  - [ ] Route both early-return paths in `_run_test_attempt` through
+  - [x] Route both early-return paths in `_run_test_attempt` through
         `_cancel_timeout()`
-  - [ ] Verify by inspection against the source that no direct
+  - [x] Verify by inspection against the source that no direct
         `_active_test_token += 1` remains outside `_invalidate_timeout()`
-  - [ ] Verify by inspection that both early returns and the arming path are
+  - [x] Verify by inspection that both early returns and the arming path are
         covered. This cannot be established by a single run's results: a leaked
         timer corrupts a *later* test rather than its own
-  - [ ] Confirm the three readers at `:570`, `:582`, `:585` are unchanged
-  - [ ] Confirm the baseline result is unchanged. If any test's expectation
+  - [x] Confirm the three readers at `:570`, `:582`, `:585` are unchanged
+  - [x] Confirm the baseline result is unchanged. If any test's expectation
         differs, stop — constraint 7 applies
-  - [ ] Refactor: not applicable; this task *is* the refactor
-  - [ ] Verify coverage: `pytest --cov=gd_tools --cov-report=html --cov-branch`
-  - [ ] Commit and record
+  - [x] Refactor: not applicable; this task *is* the refactor
+  - [x] Verify coverage: GDScript is not measured by pytest-cov, so this is
+        unchanged by construction. Phase 2's checkpoint established that a
+        GDScript-only change leaves the figure at 96.15%
+  - [x] Commit and record
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+**Implementation note.** Three findings, none of which changed what the task
+did.
+
+1. **The plan's "both early-return paths" is imprecise, and the imprecision
+   points the wrong way.** The two sites that held a bare increment are the
+   missing-method early return (`:285`) and the *normal exit* (`:373`) — one
+   early return and one normal exit, not two early returns. The two genuine
+   early returns are `:224` (suite does not extend `GdToolsTest`) and `:247`
+   (integration preparation failed), and both correctly need no cancel because
+   both return *before* `_begin_test_timeout` arms anything. Routing those two
+   through `_cancel_timeout()` as well would have been wrong: it would bump the
+   token for an attempt that never armed a timer, and a bump that reads as
+   "clean up after myself" while having nothing to clean up is exactly the kind
+   of misleading step this task exists to remove. Recorded because a future
+   reader following the spec's "every exit path" wording literally would add
+   those two calls and make the code worse while appearing to follow R3.
+
+2. **`_run_optional_call` and `_run_cleanup` leave their timer armed, and that
+   is safe — verified, deliberately not changed.** Both arm via
+   `_begin_test_timeout` and return without cancelling, so `before_all`,
+   `after_all` and the timed-out `after_each` path each leave a live timer. Two
+   things make that safe: the next `_begin_test_timeout` bumps the token, which
+   makes the stale timer inert in `_on_test_timeout`; and in the gap before
+   that, `_test_completed` is still `true` from the completed hook, so
+   `_on_test_timeout` bails at its second condition. Changing this would be a
+   behaviour change, and R3 is explicitly behaviour-preserving. Left alone.
+
+3. **Baseline held exactly.** `tests/e2e/test_native_runtime.py` reported 29
+   passed in 109.64s before the edit and 29 passed in 113.28s after — the same
+   29 tests, no expectation edited. Per constraint 7 any differing expectation
+   would have been a finding to report rather than a new expectation to write.
+
 
 ## Phase 4 — INVOKE COLLAPSE
 

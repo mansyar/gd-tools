@@ -282,7 +282,7 @@ func _run_test_attempt(
 				timed_out = true
 		else:
 			timed_out = true
-			_active_test_token += 1
+			_cancel_timeout()
 			var missing_result := {
 				"status": "error",
 				"duration_seconds": float(Time.get_ticks_msec() - started_ticks) / 1000.0,
@@ -370,7 +370,7 @@ func _run_test_attempt(
 			diagnostics["screenshot"] = screenshot_result["path"]
 	var duration := float(Time.get_ticks_msec() - started_ticks) / 1000.0
 	var finished_at := _timestamp()
-	_active_test_token += 1
+	_cancel_timeout()
 	await _teardown_integration(test_context)
 	test_context.queue_free()
 	await process_frame
@@ -563,8 +563,26 @@ func _activate_coverage(coverage_data: Dictionary) -> bool:
 	return true
 
 
-func _begin_test_timeout(timeout_seconds: float) -> void:
+func _invalidate_timeout() -> void:
+	# The only place _active_test_token is mutated. Every timer is bound
+	# to whatever token was current when it was armed, so advancing the
+	# token here makes all of them inert in _on_test_timeout and
+	# _invoke_test. That is what stops a timer left over from an earlier
+	# attempt from resolving a later attempt's test_call_completed.
 	_active_test_token += 1
+
+
+func _cancel_timeout() -> void:
+	# Every exit from a test attempt must call this, including the early
+	# returns. A timer that outlives its attempt does not break the test
+	# it belonged to; it fires into whatever runs next.
+	_invalidate_timeout()
+
+
+func _begin_test_timeout(timeout_seconds: float) -> void:
+	# Arming also invalidates, which is what makes the new timer the only
+	# live one. This is not a cancel and must not be described as one.
+	_invalidate_timeout()
 	_test_timeout_reached = false
 	_test_completed = false
 	var timer := create_timer(timeout_seconds)
