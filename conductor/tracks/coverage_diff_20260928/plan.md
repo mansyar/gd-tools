@@ -27,7 +27,7 @@
 snapshot with advisory metadata) and expose `gd-tools coverage save-baseline`
 with correct exit codes before any diff logic exists.
 
-- [ ] Task: Add failing baseline-snapshot unit tests
+- [x] Task: Add failing baseline-snapshot unit tests [commit: `5d80d7c`]
   - [ ] Test saving a baseline from fixture `plan.json` + `coverage.json`
     produces a self-contained document with `plan`, `data`, and `baseline_meta`.
   - [ ] Test `baseline_meta.saved_at` is a valid UTC timestamp.
