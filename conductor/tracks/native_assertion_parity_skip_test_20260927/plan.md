@@ -18,6 +18,11 @@
 
 Covers spec R1, R2, R3, and the R7 no-protocol-change verification.
 
+**`[checkpoint: d5b4d1b]`** — phase complete. Manual verification confirmed by the
+user ("Yes, this meets expectations"). Full automated and manual evidence is recorded
+in the git note on `d5b4d1b`. Phase commits: `abbb5de` (the skip surface), `34a3550`
+(the R9 summary-message fix found during verification), `d5b4d1b` (the checkpoint).
+
 **Implementation note — committed as `abbb5de`.** Tasks 1.1 and 1.2 were executed
 differently from how they are written below, and the difference is deliberate. The
 plan listed five separately-spawned e2e tests and a second fixture,
@@ -109,7 +114,7 @@ gate (`Required test coverage of 80.0% reached`), branch coverage included.
 
 ### Task 1.8: Phase Verification & Checkpoint
 
-- [~] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
+- [x] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
   - [ ] Run `git diff --name-only <previous_checkpoint_sha> HEAD`; for every changed `.py`/`.gd`, confirm a corresponding test exists.
   - [ ] Announce and run the full `CI=true pytest` suite. If it fails, propose at most two fixes, then stop and ask.
   - [ ] Present manual verification steps for the user and **await explicit confirmation** before checkpointing:
