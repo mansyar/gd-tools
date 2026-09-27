@@ -619,3 +619,28 @@ Per spec §6, and not to be pulled into any task above: coverage exclusion annot
 (`# gd-tools: no cover`, roadmap Track 30); repairing the broken script this track
 reports on; changing plan generation; the GUT compatibility bridge (migration roadmap
 Phase 3); parallel suite execution (Phase 5).
+
+## Review (2026-09-28)
+
+Conductor review of the full track (base `7a60fea`, 19 files, ~2,000 lines):
+**no Critical or High findings.** All 10 ACs and 7 requirements verified against
+the implementation; full suite 1191 passed / 0 failed at 96.14% coverage; ruff,
+black, and gdlint clean on every edited file.
+
+Findings recorded and fixed in `90092e3`:
+
+- **Medium — cross-runtime exit-code disagreement** in the corner where tests
+  failed, the plan-wide percentage missed `--min`, and targets were omitted:
+  the legacy seam let the omission gate (exit 2) preempt the test failure,
+  while the native seam prefers the test failure (exit 1). Fixed by reordering
+  the legacy threshold branch to raise the test failure first, mirroring
+  `command.py`; pinned by
+  `test_run_coverage_test_prefers_test_failure_over_omission_gate`.
+- **Low — raw `ValueError`** on a non-integer `file_id` in `_read_omitted`;
+  now a structured `CoveragePlanError` like every other malformed field.
+- **Low — duplicate plan-id set construction** in `reconcile_omissions`.
+
+Observations (no action in this track): `main` has diverged (`75a0bdb` carries
+timeout-management work from the native assertion parity track; review diffs
+against `main` are misleading — the correct base is the merge-base `7a60fea`);
+`coverage show --min` hard-codes exit 1 (pre-existing, recorded above).
