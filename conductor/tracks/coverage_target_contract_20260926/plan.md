@@ -275,11 +275,61 @@ Covers spec R1, R2, R3 (seeding), and R4, in both runtimes.
 
 ### Task 2.4: Phase Verification & Checkpoint
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] Both runtimes warn and continue; neither aborts the run
-  - [ ] R1's carve-out verified: a malformed plan still fails with exit 2
-  - [ ] AC 7 and AC 8 confirmed; the coverage JSON is still `version: 1` and still
-    parses in both runtimes
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Both runtimes warn and continue; neither aborts the run — pinned by
+    `test_native_coverage_warns_and_continues_past_uninstrumentable_target` (native
+    `returncode == 0`, was `2` before) and by `test_hooks_nonexistent_script_in_plan` /
+    `test_hooks_unloadable_script` (legacy, both completed)
+  - [x] R1's carve-out verified: the fatal path is unchanged. End-to-end, the existing
+    `test_hooks_malformed_plan_json` (`test_coverage_hooks.py:240`) still asserts
+    `"Failed to parse coverage plan JSON" in combined` and passes. Seven GDScript
+    tests in `test_coverage_instrumentation.gd` still expect `push_error` for
+    plan-level failures and pass unchanged. *Honest limit:* none of these assert the
+    literal exit code `2` on this path (every test in `test_coverage_hooks.py` passes
+    `no_exit_code=True`); the `returncode > 1` mapping in `test_runner.py:492-496` is
+    unchanged code exercised by other failure paths. The error is proven to fire; the
+    exit code on this specific path is not separately asserted
+  - [x] AC 7 and AC 8 confirmed; the coverage JSON is still `version: 1` and still
+    parses in both runtimes — `read_coverage_json` accepted the seeded `{}` entries
+    unchanged, `merge_coverage_data` preserved them across a two-shard merge, and no
+    schema version was touched (`NATIVE_PROTOCOL_VERSION` stays 2)
+
+> **Phase 2 verification evidence.**
+>
+> **Automated.** `CI=true pytest` → **1162 passed, 2 skipped in 546.74s**, 0 failed,
+> 0 errors. Total coverage 96.18% (Phase 1: 96.15%); the +2 tests are exactly the two
+> added here. The 80% threshold was reached.
+>
+> **Both skips identified and both environmental, neither related to this track:**
+> `tests/performance/test_native_vs_gut_benchmark.py:121` is an opt-in benchmark
+> gated on `GD_TOOLS_RUN_BENCHMARK=1`, and
+> `tests/unit/test_native_artifacts.py:272` skips with
+> `WinError 1314 (A required privilege is not held by the client)` because Windows
+> needs Developer Mode or elevation to create a symlink. Confirmed by re-running the
+> latter alone with `-rs`. No hit from the ~1-in-1100 Godot-under-load flake.
+>
+> **Targeted.** 154 passed across the five affected files. `gdlint` reports no
+> problems on either changed `.gd` file; `ruff check src/ tests/` and
+> `black --check src/ tests/` are clean.
+>
+> **Effect on the known-flake note.** `test_hooks_nonexistent_script_in_plan` passed
+> in both the Phase 1 and Phase 2 full runs. `known_flakes.md` records it failing
+> roughly 1 run in 20 with `Godot exited with code 4294967295`. The mechanism is now
+> understood: the old assertions only checked that the good target was instrumented
+> and the bad path appeared in output, both of which held *except* when `push_error`
+> escalated the exit code — which Godot does only under load. R1 removes that
+> `push_error` entirely, so the load-dependence is gone. **Consistent with, not proof
+> of, elimination:** one non-failing run cannot prove a 1-in-20 flake dead. Task 4.3
+> re-checks this.
+>
+> **Recorded deviations from the plan** (all carried in the Task 2.2 / 2.3
+> implementation notes above): the two accumulators deferred to Phase 3, and the two
+> `test_hooks_*` repins moved from Task 4.3 to Task 2.1.
+>
+> **Still open, by design:** R5 (run diagnostics, terminal report, artifact index) and
+> R6 (the `--min` gate) are Phase 3. A user currently sees the omission in the
+> terminal only; a CI job consuming the artifact index has no structured record of it
+> yet. This phase delivers the runtime half of the contract, not the reporting half.
 
 ---
 
