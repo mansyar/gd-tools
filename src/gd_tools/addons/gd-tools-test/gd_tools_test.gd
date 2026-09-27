@@ -15,7 +15,7 @@ var _gd_tools_skipped := false
 var _gd_tools_skip_reason := ""
 var _gd_tools_wait_received := false
 var _gd_tools_wait_signal = null
-var _gd_tools_wait_timer = null
+var _gd_tools_wait_timer: SceneTreeTimer = null
 
 
 func _gd_tools_record_failure(

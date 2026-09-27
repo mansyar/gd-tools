@@ -1,6 +1,8 @@
 extends GdToolsTest
 class_name NativeAsyncHelpersSuite
 
+signal probe_signal
+
 func test_process_frame() -> void:
 	await wait_process_frame()
 	assert_true(true)
@@ -17,8 +19,6 @@ func test_signal() -> void:
 	await wait_for_signal(get_tree().process_frame)
 	assert_true(true)
 
-
-signal probe_signal
 
 func _emit_after(delay: float) -> void:
 	get_tree().create_timer(delay).timeout.connect(

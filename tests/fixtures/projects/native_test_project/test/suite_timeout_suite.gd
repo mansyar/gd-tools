@@ -14,7 +14,7 @@ func before_all() -> void:
 	before_all_completed = true
 	# A file marker as well as the instance flag: an empty suite produces no
 	# test results to assert on, so the flag alone would be unobservable.
-	var marker = FileAccess.open(MARKER_PATH, FileAccess.WRITE)
+	var marker := FileAccess.open(MARKER_PATH, FileAccess.WRITE)
 	if marker != null:
 		marker.store_line("completed")
 		marker.close()
