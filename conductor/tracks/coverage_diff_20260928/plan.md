@@ -40,7 +40,7 @@ with correct exit codes before any diff logic exists.
     existing loaders and rejects malformed/missing payloads with actionable
     errors.
   - [ ] Run the targeted tests and confirm the expected Red phase.
-- [ ] Task: Implement baseline save/load in `diff_reporter.py`
+- [x] Task: Implement baseline save/load in `diff_reporter.py` [commit: `a1a614c`]
   - [ ] Add the baseline document model and `save_baseline(...)` reusing
     `plan_generator.read_plan_json` / `reporter.read_coverage_json` for input.
   - [ ] Add `load_baseline(path)` returning plan + data + advisory metadata.
