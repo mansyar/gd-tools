@@ -119,7 +119,7 @@ R6 makes exactly one bounded, deliberate exception, and R1 is where it lands.
         Known Limitations are mocking, parameterized tests, parallel execution,
         suite-level skip, and editor integration, and none is this
   - [x] Commit and record
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 **Implementation note.** Two plan assumptions did not survive contact with the
 files, and both are recorded rather than edited away.
