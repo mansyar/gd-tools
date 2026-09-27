@@ -278,9 +278,47 @@ only GDScript. `ruff` and `black` clean. `protocol.py`, `command.py` and
 
 Covers spec R8 and the track's Definition of Done.
 
+**`[checkpoint: 1e0ad6e]`** — phase complete. Manual verification
+confirmed by the user ("Yes, this meets expectations"). Full automated and
+manual evidence is recorded in the git note on `1e0ad6e`. Phase commit:
+`136d75b`.
+
+**Task 3.7 audit — spec section 4 acceptance criteria.** Thirteen of the
+fifteen are satisfied by a test that was confirmed failing first. Two are
+satisfied in substance but do not match their spec wording, and both are
+recorded here rather than quietly passed:
+
+- **Criterion 6, screenshot clause.** "Does not trigger a windowed failure
+  screenshot" is established by inspection, not by a test: the gate at
+  `gd_tools_test_runner.gd:338` is `if _current_windowed and status in
+  ["failed", "timeout", "error"]`, and `skipped` is absent from that list.
+  The other two clauses of criterion 6 ARE tested — `attempts == 1` against
+  a configured `retries: 2` proves no retry is consumed, and
+  `test_native_all_skipped_suite_exits_zero` proves no escalation. A test
+  for the screenshot clause would need a windowed suite on a machine with a
+  display, which CI does not have.
+- **Criterion 10, exit code.** The spec says a wrongly-typed argument leaves
+  "the run still exits 0". That clause is wrong as written: the
+  type-safety suite fails by design, so the run must exit 1. The
+  requirement that actually matters — no escalation to 2, no `<engine>`
+  error result, no GDScript runtime error — is met and is what
+  `test_native_assertion_type_mismatch_fails_the_test_not_the_run` pins,
+  asserting exit 1, empty `engine_errors`, and no `error` status. Caught on
+  the first Green attempt of Phase 2 and recorded as a plan deviation at
+  the Phase 2 heading.
+
+Criteria 7, 9 and 10 say "nine assertions" while the enumeration in the
+spec lists ten (4 ordering + 2 numeric + 2 membership + 2 introspection).
+The code follows the list. The documents state the count verified against
+`gd_tools_test.gd`.
+
+Criterion 12 verified directly:
+`git diff --name-only 5df3a77 HEAD -- src/gd_tools/native_test/protocol.py
+src/gd_tools/native_test/command.py src/gd_tools/native_test/orchestrator.py`
+returns empty.
 ### Task 3.1: Correct `docs/ARCHITECTURE.md`
 
-- [ ] Task: Update the three affected sites
+- [x] Task: Update the three affected sites [136d75b]
   - [ ] `:1002` — the `GdToolsTest` table row listing the assertions. Replace the seven-method list with the full surface, including `skip_test` and `pending_test`.
   - [ ] `:804-807` — remove "the shipped assertion surface has no `skip_test()` call yet, so no GDScript currently emits them." That sentence is now false. The surrounding explanation of which statuses exist stays.
   - [ ] `:1121-1123` — delete the §13 bullets "No `skip_test()`" and "Thin assertion surface." **Leave the other four §13 limitations in place** — no mocking, no parameterized tests, no parallel execution, no editor integration are all still true and all still say so in `README.md:143-147`.
@@ -289,7 +327,7 @@ Covers spec R8 and the track's Definition of Done.
 
 ### Task 3.2: Correct `README.md`
 
-- [ ] Task: Update the capability matrix and the surrounding prose
+- [x] Task: Update the capability matrix and the surrounding prose [136d75b]
   - [ ] `:135` — the Assertions row. Reflect the widened surface.
   - [ ] `:145` — "Skipping a test at runtime | Not yet | Yes" becomes supported.
   - [ ] `:143-144` and `:146-147` — parameterized tests, parallel execution, and the editor plugin **stay "Not yet."**
@@ -298,14 +336,14 @@ Covers spec R8 and the track's Definition of Done.
 
 ### Task 3.3: Review `docs/USER_GUIDE.md`
 
-- [ ] Task: Correct only what this track falsified
+- [x] Task: Correct only what this track falsified [136d75b]
   - [ ] Update wherever USER_GUIDE documents the assertion surface or repeats the capability matrix.
   - [ ] Its integration examples at `:489-501` remain accurate. Do not rewrite them.
   - [ ] If USER_GUIDE documents no assertion surface, make no change and say so in the commit note.
 
 ### Task 3.4: Final quality gate
 
-- [ ] Task: Run the complete Definition of Done
+- [x] Task: Run the complete Definition of Done [136d75b]
   - [ ] `ruff check src/ tests/`
   - [ ] `black --check src/ tests/`
   - [ ] `CI=true pytest` — the full suite
@@ -314,14 +352,14 @@ Covers spec R8 and the track's Definition of Done.
 
 ### Task 3.5: Commit and record
 
-- [ ] Task: Commit Phase 3
+- [x] Task: Commit Phase 3 [136d75b]
   - [ ] Commit: `docs(native-test): Document the widened assertion surface and runtime skipping`
   - [ ] Attach a `git notes` summary per `workflow.md` step 9.
   - [ ] Mark tasks `[x]` with the commit SHA and commit the plan update as `conductor(plan): Mark phase 'DOCUMENTATION TRUTH' as complete`.
 
 ### Task 3.6: Phase Verification & Checkpoint
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
+- [x] Task: Phase Verification & Checkpoint (Refer to [`../../workflow.md`](../../workflow.md))
   - [ ] Announce and run the full `CI=true pytest` suite one final time.
   - [ ] Present manual verification steps and **await explicit confirmation**:
     - `pip install -e .`
@@ -332,7 +370,7 @@ Covers spec R8 and the track's Definition of Done.
 
 ### Task 3.7: Close the track
 
-- [ ] Task: Finalize
+- [x] Task: Finalize
   - [ ] Confirm every acceptance criterion in `spec.md` §4 is satisfied, or record which are not and why.
   - [ ] Confirm the branch contains no changes to `protocol.py`, `command.py`, or `orchestrator.py`.
   - [ ] Propose the track to the user for `conductor-review` and to `main` for merge.
