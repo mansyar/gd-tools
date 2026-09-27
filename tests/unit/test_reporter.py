@@ -633,6 +633,55 @@ def test_empty_hits_entry_scores_identically_to_absent_entry(tmp_path):
     assert summary.branch_rate == pytest.approx(2 / 3)
 
 
+def test_merge_preserves_seeded_empty_hits_entries(tmp_path):
+    """A seeded empty ``hits`` entry survives a shard merge.
+
+    The native orchestrator shards coverage per suite and then merges, so an
+    entry with no hits must not be dropped on the way through. If it were,
+    the instrumented set R3 establishes would be destroyed by the merge and
+    the Phase 3 reconciliation would have nothing to reconcile on any
+    multi-suite run -- an instrumented-but-unexecuted file would go back to
+    being indistinguishable from one that could not be instrumented.
+
+    This is a regression guard on existing behavior rather than a new
+    contract: ``merge_coverage_data`` creates the ``file_id`` key *before*
+    iterating hits (``reporter.py:274-275``), which is what makes it work.
+    That ordering is load-bearing and must not be "optimized" away.
+    """
+    (tmp_path / "shard-a.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2025-01-01",
+                "files": [
+                    {"file_id": 0, "hits": {"1": 2}},
+                    {"file_id": 1, "hits": {}},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "shard-b.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "generated_at": "2025-01-01",
+                "files": [{"file_id": 2, "hits": {}}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    merged = merge_coverage_data(
+        [tmp_path / "shard-a.json", tmp_path / "shard-b.json"]
+    )
+    by_id = {fc.file_id: fc.hits for fc in merged.files}
+
+    assert by_id[0] == {"1": 2}
+    assert by_id[1] == {}, "seeded empty entry dropped by the merge"
+    assert by_id[2] == {}, "seeded empty entry dropped by the merge"
+
+
 # --- Report dispatch and threshold (FR-3) ---
 
 
