@@ -32,6 +32,7 @@ from .coverage.orchestrator import (
     generate_coverage_report,
     merge_coverage_files,
     run_coverage_test,
+    save_coverage_baseline,
     show_coverage_summary,
 )
 from .doctor import format_doctor_table, run_doctor
@@ -602,6 +603,25 @@ def show(min):
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
         ctx.exit(1)
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
+
+
+@coverage.command(name="save-baseline")
+def save_baseline_cmd():
+    """Save the latest coverage run as the diff baseline."""
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        baseline_path = save_coverage_baseline(config)
+        click.echo(f"Baseline saved to: {baseline_path}")
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()

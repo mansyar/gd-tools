@@ -17,6 +17,7 @@ from rich.text import Text
 from gd_tools import output
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
+from gd_tools.coverage.diff_reporter import save_baseline
 from gd_tools.coverage.omissions import (
     OmissionReport,
     omission_gate_message,
@@ -552,3 +553,31 @@ def show_coverage_summary(
         )
 
     return summary
+
+
+def save_coverage_baseline(config: GdToolsConfig) -> Path:
+    """Save the latest coverage run as the diff baseline.
+
+    Reads ``plan.json`` and ``coverage.json`` from the coverage output
+    directory and writes them as a self-contained baseline document at
+    ``<output_dir>/baseline.json`` (see ``diff_reporter.save_baseline``).
+
+    Args:
+        config: Resolved project configuration.
+
+    Returns:
+        Path to the written baseline file.
+
+    Raises:
+        CoveragePlanError: If the plan or coverage data is missing or
+            malformed (exit code 2 at the CLI boundary).
+    """
+    project_root = find_project_root()
+    output_dir = project_root / config.coverage.output_dir
+    baseline_path = output_dir / "baseline.json"
+    save_baseline(
+        output_dir / "plan.json",
+        output_dir / "coverage.json",
+        baseline_path,
+    )
+    return baseline_path
