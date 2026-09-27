@@ -398,7 +398,9 @@ def test_hooks_nonexistent_script_in_plan(tmp_path):
         assert 0 not in by_id
 
         # R3: instrumented but never executed -> present, empty hits.
-        assert 2 in by_id, "instrumented-but-unexecuted target missing from files[]"
+        assert (
+            2 in by_id
+        ), "instrumented-but-unexecuted target missing from files[]"
         assert by_id[2] == {}, by_id[2]
 
         # R1: the omission is a warning, not an engine error. This is the
