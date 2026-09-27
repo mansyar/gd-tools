@@ -212,6 +212,49 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
     assert not old_run.exists()
 
 
+def test_run_native_tests_publishes_coverage_omissions_in_the_index(tmp_path):
+    """Omissions reported by the suites reach the published artifact index (AC 4)."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    warning = (
+        "Coverage target omitted: res://scripts/missing_target.gd. "
+        "The coverage plan references a file that no longer exists. "
+        "Fix: The plan is stale. Re-run with --no-cache to regenerate it."
+    )
+    omission = {
+        "file_id": 1,
+        "path": "res://scripts/missing_target.gd",
+        "reason": (
+            "The coverage plan references a file that no longer exists: "
+            "res://scripts/missing_target.gd"
+        ),
+        "fix": "The plan is stale. Re-run with --no-cache to regenerate it.",
+    }
+
+    def fake_run(args, **kwargs):
+        _write_result(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]),
+            engine_warnings=[warning],
+            run_diagnostics={"coverage_omissions": [omission]},
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("ExampleSuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+        )
+
+    index = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert result.engine_warnings == [warning]
+    assert result.diagnostics == {"coverage_omissions": [omission]}
+    assert index["omitted"] == [omission]
+
+
 def test_run_native_tests_passes_screenshot_base_and_indexes_captures(
     tmp_path,
 ):
