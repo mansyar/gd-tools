@@ -53,3 +53,27 @@ func test_is_rejects_value_types() -> void:
 func test_is_rejects_null() -> void:
 	# R4: null carries no reference identity either.
 	assert_is(null, null, "null carries no reference identity")
+
+
+func test_has_rejects_element_a_string_container_cannot_hold() -> void:
+	# R4: the CONTAINER is fine, but String.contains() takes a String. Without an
+	# element check this raises "Invalid type in function 'contains' in base
+	# 'String'", which is a SCRIPT ERROR and escalates the whole run to exit 2.
+	assert_has("abc", 5, "element is not a string")
+
+
+func test_in_rejects_element_a_string_container_cannot_hold() -> void:
+	# R4: same hole through the inverted argument order.
+	assert_in(5, "abc", "element is not a string")
+
+
+func test_has_rejects_element_a_packed_int_array_cannot_hold() -> void:
+	# R4: PackedInt32Array.has() takes an int. The container type check passes
+	# here, so only an element check can catch it.
+	assert_has(PackedInt32Array([1, 2]), "a", "element is not an int")
+
+
+func test_has_accepts_an_element_a_string_container_can_hold() -> void:
+	# The counterpart that must KEEP passing: a correct element is unaffected by
+	# the new check, so this guards against over-rejecting.
+	assert_has("abc", "b", "a string element is fine")

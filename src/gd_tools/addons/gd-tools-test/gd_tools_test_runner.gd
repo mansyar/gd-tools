@@ -678,7 +678,18 @@ func _capture_engine_diagnostics() -> void:
 		return
 	for line in file.get_as_text().split("\n"):
 		var normalized := str(line).strip_edges()
-		if normalized.begins_with("ERROR:"):
+		# `SCRIPT ERROR:` is how GDScript reports a parse error, an invalid call,
+		# and a wrong-typed builtin argument. It is an engine error the run cannot
+		# honestly call clean, and without matching it here such a failure reached
+		# the log, left `engine_errors` empty, and exited 0 -- reporting a broken
+		# test as a clean pass. Matched before `ERROR:` so the prefix trims in the
+		# right order: `SCRIPT ERROR:` does not begin with `ERROR:`, but the trimmed
+		# remainder of a nested `ERROR:` line does.
+		if normalized.begins_with("SCRIPT ERROR:"):
+			_engine_errors.append(
+				normalized.trim_prefix("SCRIPT ERROR:").strip_edges()
+			)
+		elif normalized.begins_with("ERROR:"):
 			_engine_errors.append(
 				normalized.trim_prefix("ERROR:").strip_edges()
 			)

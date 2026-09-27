@@ -125,6 +125,36 @@ func _gd_tools_can_check_membership(value) -> bool:
 	return value is Object and value.has_method("has")
 
 
+func _gd_tools_element_fits(container, element) -> bool:
+	## Return whether `element` is a type the container can be asked about.
+	##
+	## Every builtin answers membership with a TYPED parameter, so a mismatched
+	## element raises inside `has()`/`contains()` rather than returning false.
+	## That is a GDScript runtime error, which the runner captures and escalates
+	## to exit 2 -- exactly the outcome spec R4 exists to prevent. Checking the
+	## container alone was not enough: `assert_has("abc", 5)` passed the container
+	## check and then raised `Invalid type in function 'contains' in base 'String'`.
+	if container is String or container is PackedStringArray:
+		return element is String or element is StringName
+	if (
+		container is PackedByteArray
+		or container is PackedInt32Array
+		or container is PackedInt64Array
+	):
+		return element is int
+	if container is PackedFloat32Array or container is PackedFloat64Array:
+		return element is int or element is float
+	if container is PackedVector2Array:
+		return element is Vector2
+	if container is PackedVector3Array:
+		return element is Vector3
+	if container is PackedColorArray:
+		return element is Color
+	# Array and Dictionary accept any Variant, and a user container's own `has`
+	# signature is the authority on what it will accept.
+	return true
+
+
 func _gd_tools_membership(container, element) -> bool:
 	## Perform a membership query, bridging String's different spelling.
 	if container is String:
@@ -267,6 +297,11 @@ func assert_has(container, element, message: String = "") -> void:
 	if not _gd_tools_can_check_membership(container):
 		_gd_tools_record_type_failure("assert_has", "a container", container, 1)
 		return
+	if not _gd_tools_element_fits(container, element):
+		_gd_tools_record_type_failure(
+			"assert_has", "an element the container can hold", element, 2
+		)
+		return
 	if not _gd_tools_membership(container, element):
 		_gd_tools_record_failure(
 			"assert_has",
@@ -286,6 +321,11 @@ func assert_in(element, container, message: String = "") -> void:
 	## this way and a migrated test must not silently swap subject and object.
 	if not _gd_tools_can_check_membership(container):
 		_gd_tools_record_type_failure("assert_in", "a container", container, 2)
+		return
+	if not _gd_tools_element_fits(container, element):
+		_gd_tools_record_type_failure(
+			"assert_in", "an element the container can hold", element, 1
+		)
 		return
 	if not _gd_tools_membership(container, element):
 		_gd_tools_record_failure(

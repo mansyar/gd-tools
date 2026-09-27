@@ -149,7 +149,13 @@ func test_named_resource_is_loaded() -> void:
 
 func test_resources_are_not_assigned_automatically() -> void:
     var subject := get_test_context().find_node("Subject")
-    assert_eq(subject.label, "")
+    # `get()` rather than `subject.label`: `Subject` is a plain Node2D with no
+    # `label` property, so a direct access raises a GDScript runtime error
+    # instead of returning a value. That error aborted the assertion below
+    # before it could record anything, and the runner then reported this test
+    # as passed -- a vacuous pass. `get()` returns null for a missing property
+    # and still fails if the resource ever *is* auto-assigned onto the node.
+    assert_null(subject.get("label"), "resource was auto-assigned onto the scene node")
 
 func test_alt_scene() -> void:
     var context := get_test_context()

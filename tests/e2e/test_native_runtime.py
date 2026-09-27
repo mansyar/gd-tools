@@ -314,6 +314,10 @@ def test_native_assertion_type_mismatch_fails_the_test_not_the_run(
             "NativeAssertionTypeSafetySuite",
         ),
         result_path,
+        # The log path must be set or the capture never runs, which would make
+        # the `engine_errors` assertion below vacuously true. Found by code
+        # review: this line was absent and the assertion proved nothing.
+        log_path=tmp_path / "type-safety.log",
     )
 
     payload = json.loads(result_path.read_text(encoding="utf-8"))
@@ -342,6 +346,120 @@ def test_native_assertion_type_mismatch_fails_the_test_not_the_run(
             or "Nil" in message
         ), (name, message)
         assert "expects" in message or "identity" in message, (name, message)
+
+
+# Methods whose container is valid but whose ELEMENT the container cannot hold.
+# Found by code review: the container was type-checked, the element was not, so
+# `assert_has("abc", 5)` reached `String.contains(5)` and raised a SCRIPT ERROR.
+ELEMENT_MISMATCH_METHODS = [
+    "test_has_rejects_element_a_string_container_cannot_hold",
+    "test_in_rejects_element_a_string_container_cannot_hold",
+    "test_has_rejects_element_a_packed_int_array_cannot_hold",
+]
+
+# The valid counterpart, which must KEEP passing: a correct element is
+# unaffected by the new check, so this guards against over-rejecting.
+ACCEPTING_ELEMENT_METHOD = (
+    "test_has_accepts_an_element_a_string_container_can_hold"
+)
+
+
+def test_native_membership_element_mismatch_fails_the_test_not_the_run(
+    godot_bin, tmp_path
+):
+    """A wrong-typed membership ELEMENT fails the test; it must not raise (R4).
+
+    The container check alone was insufficient. Before this fix each of these
+    recorded a MISSING-ELEMENT message ("String does not contain 5") because
+    the raise happened inside `contains()` rather than at the assertion. The run
+    still exited 1 by accident, so the exit-code criterion passed while the
+    message described the wrong problem and stderr carried a SCRIPT ERROR that
+    the engine-diagnostics capture could not see.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "element-mismatch.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/assertion_type_safety_suite.gd",
+            ELEMENT_MISMATCH_METHODS + [ACCEPTING_ELEMENT_METHOD],
+            "NativeAssertionTypeSafetySuite",
+        ),
+        result_path,
+        log_path=tmp_path / "element-mismatch.log",
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(ELEMENT_MISMATCH_METHODS) + 1, payload[
+        "tests"
+    ]
+
+    # Exit 1, not 2. A wrong-typed argument is a test failure; escalating it to
+    # an environment failure is the outcome R4 exists to prevent.
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert payload["engine_errors"] == [], payload["engine_errors"]
+
+    for name in ELEMENT_MISMATCH_METHODS:
+        message = _single_failure(payload, name)["message"]
+        # The message must name the ELEMENT as the problem. The argument
+        # position follows each assertion's own signature, which is inverted
+        # for `assert_in` on purpose: the element is argument 1 there, not 2.
+        position = 1 if name.startswith("test_in_") else 2
+        assert "expects" in message, (name, message)
+        assert f"argument {position}" in message, (name, message)
+        # It must NOT read as a missing element, which is what it said before.
+        assert "does not contain" not in message, (name, message)
+
+    # The valid counterpart must still pass, so the new check does not
+    # over-reject: a correct element is unaffected by it.
+    passing = next(
+        item
+        for item in payload["tests"]
+        if item["name"] == ACCEPTING_ELEMENT_METHOD
+    )
+    assert passing["status"] == "passed", passing
+
+
+def test_native_script_errors_are_captured_and_escalate(godot_bin, tmp_path):
+    """A GDScript SCRIPT ERROR must be captured and must exit 2.
+
+    Found by code review: `_capture_engine_diagnostics` matched only lines
+    beginning "ERROR:", but GDScript reports a runtime script error as
+    "SCRIPT ERROR:". Every such error was written to the captured log and then
+    ignored, so `engine_errors` stayed empty and the exit-2 escalation that is
+    supposed to catch a broken run never fired.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "script-error.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/engine_error_suite.gd",
+            [
+                "test_raises_a_runtime_script_error",
+                "test_after_the_error_also_reports",
+            ],
+            "NativeEngineErrorSuite",
+        ),
+        result_path,
+        log_path=tmp_path / "script-error.log",
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert payload["status"] == "error", payload["status"]
+    assert payload["engine_errors"], "the SCRIPT ERROR was not captured"
+    assert any(
+        "no_such_method_exists" in line for line in payload["engine_errors"]
+    ), payload["engine_errors"]
+
+    # The runner kept going: the error is captured, not a suite that aborted.
+    names = [entry["name"] for entry in payload["tests"]]
+    assert "test_after_the_error_also_reports" in names, names
 
 
 def test_native_runner_executes_manifest(godot_bin, tmp_path):
