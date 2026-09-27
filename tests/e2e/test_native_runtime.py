@@ -115,6 +115,235 @@ def test_native_fixture_loads_without_gut(godot_bin, tmp_path):
     assert not (project / "addons" / "gut").exists()
 
 
+def _manifest(project, path, names, suite_name):
+    """Build a native manifest selecting specific methods from one suite."""
+    return {
+        "protocol_version": 2,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": suite_name,
+                "path": path,
+                "tests": [{"name": name} for name in names],
+            }
+        ],
+        "coverage": {"enabled": False},
+    }
+
+
+SATISFYING_METHODS = [
+    "test_gt_passes_when_greater",
+    "test_gte_passes_when_equal",
+    "test_lt_passes_when_less",
+    "test_lte_passes_when_equal",
+    "test_between_passes_in_range",
+    "test_between_inclusive_lower_bound",
+    "test_between_inclusive_upper_bound",
+    "test_almost_eq_passes_within_delta",
+    "test_has_passes_for_present_element",
+    "test_in_passes_for_present_element",
+    "test_has_argument_order",
+    "test_in_argument_order",
+    "test_has_works_on_dictionary",
+    "test_has_works_on_string_via_contains",
+    "test_has_method_passes_for_existing_method",
+    "test_is_passes_for_same_instance",
+    "test_is_passes_for_shared_array",
+]
+
+FAILING_METHODS = [
+    "test_gt_fails_when_not_greater",
+    "test_gte_fails_when_less",
+    "test_lt_fails_when_not_less",
+    "test_lte_fails_when_greater",
+    "test_between_fails_below_lower_bound",
+    "test_between_fails_above_upper_bound",
+    "test_between_fails_when_bounds_inverted",
+    "test_almost_eq_fails_outside_delta",
+    "test_has_fails_for_absent_element",
+    "test_in_fails_for_absent_element",
+    "test_has_method_fails_for_missing_method",
+    "test_is_fails_for_distinct_instances",
+]
+
+TYPE_SAFETY_METHODS = [
+    "test_between_rejects_non_numeric_value",
+    "test_between_rejects_non_numeric_bound",
+    "test_almost_eq_rejects_non_numeric",
+    "test_has_rejects_non_container",
+    "test_in_rejects_non_container",
+    "test_has_method_rejects_non_object",
+    "test_is_rejects_value_types",
+    "test_is_rejects_null",
+]
+
+
+def _single_failure(payload, name):
+    """Return the one recorded failure for a test, asserting there is exactly one."""
+    entry = next(item for item in payload["tests"] if item["name"] == name)
+    failures = entry["diagnostics"]["failures"]
+    assert len(failures) == 1, f"{name} recorded {failures}"
+    return failures[0]
+
+
+def test_native_new_assertions_pass_on_satisfying_input(godot_bin, tmp_path):
+    """Every GUT-core assertion passes when its contract is satisfied (R5)."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "satisfying.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/assertion_suite.gd",
+            SATISFYING_METHODS,
+            "NativeAssertionSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(SATISFYING_METHODS), payload["tests"]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_native_new_assertions_report_values_and_message_detail(
+    godot_bin, tmp_path
+):
+    """A violated assertion reports values and names the specific detail (R5, R6)."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "violated.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/assertion_failures_suite.gd",
+            FAILING_METHODS,
+            "NativeAssertionFailuresSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(FAILING_METHODS), payload["tests"]
+    assert result.returncode == 1, result.stdout + result.stderr
+
+    # R5: assert_between must name the violated bound and its value.
+    lower = _single_failure(payload, "test_between_fails_below_lower_bound")
+    assert lower["assertion"] == "assert_between"
+    assert "0" in lower["message"], lower
+    upper = _single_failure(payload, "test_between_fails_above_upper_bound")
+    assert upper["assertion"] == "assert_between"
+    assert "10" in upper["message"], upper
+
+    # R5: assert_has / assert_in must name the missing element.
+    has_failure = _single_failure(payload, "test_has_fails_for_absent_element")
+    assert has_failure["assertion"] == "assert_has"
+    assert "99" in has_failure["message"], has_failure
+    in_failure = _single_failure(payload, "test_in_fails_for_absent_element")
+    assert in_failure["assertion"] == "assert_in"
+    assert "missing" in in_failure["message"], in_failure
+
+    # R5: assert_almost_eq must name the observed delta and the allowance.
+    almost = _single_failure(payload, "test_almost_eq_fails_outside_delta")
+    assert almost["assertion"] == "assert_almost_eq"
+    assert "0.1" in almost["message"], almost
+
+    # R5: assert_has_method must name the object's type and the method.
+    method = _single_failure(
+        payload, "test_has_method_fails_for_missing_method"
+    )
+    assert method["assertion"] == "assert_has_method"
+    assert "definitely_not_a_method" in method["message"], method
+
+    # R5: assert_is must name both types and the distinctness.
+    identity = _single_failure(payload, "test_is_fails_for_distinct_instances")
+    assert identity["assertion"] == "assert_is"
+    assert "distinct" in identity["message"].lower(), identity
+
+    # R6: every failure still populates actual and expected.
+    for name in FAILING_METHODS:
+        failure = _single_failure(payload, name)
+        assert failure["actual"] != "", name
+        assert failure["expected"] != "", name
+
+
+def test_native_assertions_are_attributed_to_user_code(godot_bin, tmp_path):
+    """A new assertion is attributed to the user's line, not the base class (R6)."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "attributed.json"
+    _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/assertion_failures_suite.gd",
+            FAILING_METHODS,
+            "NativeAssertionFailuresSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(FAILING_METHODS), payload["tests"]
+    for name in FAILING_METHODS:
+        failure = _single_failure(payload, name)
+        assert "assertion_failures_suite.gd" in failure["source"], failure
+        assert "gd_tools_test.gd" not in failure["source"], failure
+        assert failure["line"] > 0, failure
+
+
+def test_native_assertion_type_mismatch_fails_the_test_not_the_run(
+    godot_bin, tmp_path
+):
+    """A wrong-typed argument fails the test; it must never escalate the run (R4)."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "type-safety.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/assertion_type_safety_suite.gd",
+            TYPE_SAFETY_METHODS,
+            "NativeAssertionTypeSafetySuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(TYPE_SAFETY_METHODS), payload["tests"]
+
+    # The R4 guarantee: every method here fails BY DESIGN, so exit 1 is correct.
+    # Exit 2 is the failure this test exists to prevent -- a GDScript runtime
+    # error is captured by the runner and escalates the whole run to an
+    # environment failure, misrepresenting one bad call as a broken install.
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert payload["status"] == "failed"
+    assert payload["engine_errors"] == [], payload["engine_errors"]
+    assert all(
+        entry["status"] != "error" for entry in payload["tests"]
+    ), payload
+
+    # Every one records an actionable failure naming the type problem.
+    for name in TYPE_SAFETY_METHODS:
+        entry = next(item for item in payload["tests"] if item["name"] == name)
+        assert entry["status"] == "failed", (name, entry["status"])
+        message = _single_failure(payload, name)["message"]
+        assert (
+            "int" in message
+            or "String" in message
+            or "float" in message
+            or "Nil" in message
+        ), (name, message)
+        assert "expects" in message or "identity" in message, (name, message)
+
+
 def test_native_runner_executes_manifest(godot_bin, tmp_path):
     """The native runner executes sync/async tests from a manifest."""
     project = _prepare_project(tmp_path, godot_bin)

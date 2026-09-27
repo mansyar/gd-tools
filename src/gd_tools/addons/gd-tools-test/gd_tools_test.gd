@@ -87,6 +87,268 @@ func _gd_tools_clear_test_context() -> void:
 	_gd_tools_test_context = null
 
 
+## Variant types whose instances answer a membership query. GDScript spells
+## membership `has()` on these, except for String, which spells it
+## `contains()`. Object values are handled separately by a `has_method` probe
+## so a user's own container class is accepted without being listed here.
+const _GD_TOOLS_MEMBERSHIP_TYPES := [
+	TYPE_ARRAY,
+	TYPE_DICTIONARY,
+	TYPE_STRING,
+	TYPE_PACKED_BYTE_ARRAY,
+	TYPE_PACKED_INT32_ARRAY,
+	TYPE_PACKED_INT64_ARRAY,
+	TYPE_PACKED_FLOAT32_ARRAY,
+	TYPE_PACKED_FLOAT64_ARRAY,
+	TYPE_PACKED_STRING_ARRAY,
+	TYPE_PACKED_VECTOR2_ARRAY,
+	TYPE_PACKED_VECTOR3_ARRAY,
+	TYPE_PACKED_COLOR_ARRAY,
+]
+
+
+func _gd_tools_is_numeric(value) -> bool:
+	## Return whether a value can take part in a numeric comparison.
+	return value is int or value is float
+
+
+func _gd_tools_is_identity_bearing(value) -> bool:
+	## Return whether this type can distinguish two separately created values
+	## that compare equal, which is what makes reference identity meaningful.
+	return value is Object or value is Array or value is Dictionary
+
+
+func _gd_tools_can_check_membership(value) -> bool:
+	## Return whether a value answers a membership query.
+	if _GD_TOOLS_MEMBERSHIP_TYPES.has(typeof(value)):
+		return true
+	return value is Object and value.has_method("has")
+
+
+func _gd_tools_membership(container, element) -> bool:
+	## Perform a membership query, bridging String's different spelling.
+	if container is String:
+		return container.contains(element)
+	return container.has(element)
+
+
+func _gd_tools_detail(message: String, detail: String) -> String:
+	## Combine a caller-supplied message with assertion-specific detail.
+	return detail if message.is_empty() else "%s: %s" % [message, detail]
+
+
+func _gd_tools_record_type_failure(
+		assertion: String,
+		expectation: String,
+		value,
+		position: int,
+		hint: String = ""
+) -> void:
+	## Record a failure for a wrongly typed argument instead of raising.
+	##
+	## Spec R4: a GDScript runtime error here would be captured by the runner
+	## and escalate the entire run to exit 2, turning one bad call in one test
+	## into a run-level environment failure. Naming the type is actionable.
+	var message := "%s expects %s at argument %d, got %s" % [
+		assertion, expectation, position, type_string(typeof(value))
+	]
+	if not hint.is_empty():
+		message += ". " + hint
+	_gd_tools_record_failure(assertion, message, value, expectation)
+
+
+func assert_gt(actual, expected, message: String = "") -> void:
+	## Assert that a value is strictly greater than another.
+	if not _gd_tools_is_numeric(actual):
+		_gd_tools_record_type_failure("assert_gt", "a number", actual, 1)
+		return
+	if not _gd_tools_is_numeric(expected):
+		_gd_tools_record_type_failure("assert_gt", "a number", expected, 2)
+		return
+	if actual <= expected:
+		_gd_tools_record_failure("assert_gt", message, actual, expected)
+
+
+func assert_gte(actual, expected, message: String = "") -> void:
+	## Assert that a value is greater than or equal to another.
+	if not _gd_tools_is_numeric(actual):
+		_gd_tools_record_type_failure("assert_gte", "a number", actual, 1)
+		return
+	if not _gd_tools_is_numeric(expected):
+		_gd_tools_record_type_failure("assert_gte", "a number", expected, 2)
+		return
+	if actual < expected:
+		_gd_tools_record_failure("assert_gte", message, actual, expected)
+
+
+func assert_lt(actual, expected, message: String = "") -> void:
+	## Assert that a value is strictly less than another.
+	if not _gd_tools_is_numeric(actual):
+		_gd_tools_record_type_failure("assert_lt", "a number", actual, 1)
+		return
+	if not _gd_tools_is_numeric(expected):
+		_gd_tools_record_type_failure("assert_lt", "a number", expected, 2)
+		return
+	if actual >= expected:
+		_gd_tools_record_failure("assert_lt", message, actual, expected)
+
+
+func assert_lte(actual, expected, message: String = "") -> void:
+	## Assert that a value is less than or equal to another.
+	if not _gd_tools_is_numeric(actual):
+		_gd_tools_record_type_failure("assert_lte", "a number", actual, 1)
+		return
+	if not _gd_tools_is_numeric(expected):
+		_gd_tools_record_type_failure("assert_lte", "a number", expected, 2)
+		return
+	if actual > expected:
+		_gd_tools_record_failure("assert_lte", message, actual, expected)
+
+
+func assert_between(value, lower, upper, message: String = "") -> void:
+	## Assert that a value falls within a range. BOTH bounds are INCLUSIVE.
+	##
+	## Inclusive is deliberate: a test ported from GUT must not change meaning
+	## on the way across. Do not "fix" this to be exclusive.
+	if not _gd_tools_is_numeric(value):
+		_gd_tools_record_type_failure("assert_between", "a number", value, 1)
+		return
+	if not _gd_tools_is_numeric(lower):
+		_gd_tools_record_type_failure("assert_between", "a number", lower, 2)
+		return
+	if not _gd_tools_is_numeric(upper):
+		_gd_tools_record_type_failure("assert_between", "a number", upper, 3)
+		return
+	if value < lower:
+		_gd_tools_record_failure(
+			"assert_between",
+			_gd_tools_detail(
+				message, "value %s is below the lower bound %s" % [value, lower]
+			),
+			value,
+			lower
+		)
+	elif value > upper:
+		_gd_tools_record_failure(
+			"assert_between",
+			_gd_tools_detail(
+				message, "value %s is above the upper bound %s" % [value, upper]
+			),
+			value,
+			upper
+		)
+
+
+func assert_almost_eq(actual, expected, max_delta, message: String = "") -> void:
+	## Assert that two numbers differ by no more than `max_delta`.
+	if not _gd_tools_is_numeric(actual):
+		_gd_tools_record_type_failure("assert_almost_eq", "a number", actual, 1)
+		return
+	if not _gd_tools_is_numeric(expected):
+		_gd_tools_record_type_failure("assert_almost_eq", "a number", expected, 2)
+		return
+	if not _gd_tools_is_numeric(max_delta):
+		_gd_tools_record_type_failure("assert_almost_eq", "a number", max_delta, 3)
+		return
+	var delta: float = absf(float(actual) - float(expected))
+	if delta > max_delta:
+		_gd_tools_record_failure(
+			"assert_almost_eq",
+			_gd_tools_detail(
+				message, "difference %s exceeds the allowance %s" % [delta, max_delta]
+			),
+			actual,
+			expected
+		)
+
+
+func assert_has(container, element, message: String = "") -> void:
+	## Assert that a container holds an element.
+	if not _gd_tools_can_check_membership(container):
+		_gd_tools_record_type_failure("assert_has", "a container", container, 1)
+		return
+	if not _gd_tools_membership(container, element):
+		_gd_tools_record_failure(
+			"assert_has",
+			_gd_tools_detail(
+				message,
+				"%s does not contain %s" % [type_string(typeof(container)), element]
+			),
+			container,
+			element
+		)
+
+
+func assert_in(element, container, message: String = "") -> void:
+	## Assert that an element is present in a container.
+	##
+	## Note the INVERTED argument order relative to `assert_has`. GUT spells it
+	## this way and a migrated test must not silently swap subject and object.
+	if not _gd_tools_can_check_membership(container):
+		_gd_tools_record_type_failure("assert_in", "a container", container, 2)
+		return
+	if not _gd_tools_membership(container, element):
+		_gd_tools_record_failure(
+			"assert_in",
+			_gd_tools_detail(
+				message,
+				"%s does not contain %s" % [type_string(typeof(container)), element]
+			),
+			container,
+			element
+		)
+
+
+func assert_has_method(object, method, message: String = "") -> void:
+	## Assert that an object exposes a named method.
+	if not (object is Object):
+		_gd_tools_record_type_failure("assert_has_method", "an Object", object, 1)
+		return
+	if not (method is String or method is StringName):
+		_gd_tools_record_type_failure("assert_has_method", "a method name", method, 2)
+		return
+	if not object.has_method(method):
+		_gd_tools_record_failure(
+			"assert_has_method",
+			_gd_tools_detail(
+				message, "%s has no method %s" % [object.get_class(), method]
+			),
+			object,
+			method
+		)
+
+
+func assert_is(actual, expected, message: String = "") -> void:
+	## Assert that two values are the SAME instance, not merely equal.
+	if not _gd_tools_is_identity_bearing(actual):
+		_gd_tools_record_type_failure(
+			"assert_is",
+			"a value carrying reference identity",
+			actual,
+			1,
+			"Use assert_eq to compare values."
+		)
+		return
+	if not _gd_tools_is_identity_bearing(expected):
+		_gd_tools_record_type_failure(
+			"assert_is",
+			"a value carrying reference identity",
+			expected,
+			2,
+			"Use assert_eq to compare values."
+		)
+		return
+	if not is_same(actual, expected):
+		_gd_tools_record_failure(
+			"assert_is",
+			_gd_tools_detail(
+				message, "distinct instances of %s" % type_string(typeof(actual))
+			),
+			actual,
+			expected
+		)
+
+
 func assert_true(value: bool, message: String = "") -> void:
 	## Assert that a boolean value is true.
 	if not value:
