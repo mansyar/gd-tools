@@ -471,17 +471,40 @@ documentation and flake obligations.
 
 ### Task 4.2: Implement the native plumbing
 
-- [~] Task: Surface the native collector's omissions to the runner
-  - [ ] The `activate()` call site is `gd_tools_test_runner.gd:551`; the collector's
+- [x] Task: Surface the native collector's omissions to the runner
+  - [x] The `activate()` call site is `gd_tools_test_runner.gd:551`; the collector's
     omissions must reach the run result through the **existing** `diagnostics` and
     `engine_warnings` channels (`:738-739`, `:777-778`), not a new one
-  - [ ] Note that `gd_tools_test_runner.gd:729` promotes a non-empty `_engine_errors`
+  - [x] Note that `gd_tools_test_runner.gd:729` promotes a non-empty `_engine_errors`
     to an error status. The R1 change removes these particular errors from that
     channel — **verify** that a per-target omission no longer trips `:729`, and that
     genuine engine errors still do
-- [ ] Task: Record in the artifact index
-  - [ ] Additive key on the `publish_artifact_index` payload (`:168`)
-  - [ ] Batched behind the existing `publish_artifact_index` call, not a second write
+- [x] Task: Record in the artifact index
+  - [x] Additive key on the `publish_artifact_index` payload (`:168`)
+  - [x] Batched behind the existing `publish_artifact_index` call, not a second write
+
+> **[5480625]** Implemented across both collectors and both merge paths. The
+> native collector (`gd_tools_native_coverage.gd`) records each omission as a
+> structured `{file_id, path, reason, fix}` entry (`_record_omission`), keeps
+> the console warning, and writes the additive `omitted` key in `write()`;
+> the legacy tracker does the same and `post_run_hook._build_coverage_json`
+> carries the key into the legacy coverage JSON. The runner appends one
+> single-line warning per omission to `_engine_warnings` (never
+> `_engine_errors`, so `:729` cannot escalate a per-target omission — the
+> existing `engine_errors`-escalation e2e test still passes) and writes
+> `diagnostics.coverage_omissions` only when omissions exist, so clean runs
+> keep the old result shape. Shard merge (`_merge_coverage_shards`) and
+> `merge_coverage_data` union omissions with dedupe, so the terminal report
+> keeps real reasons instead of generic fallbacks. The native orchestrator
+> aggregates per-suite warnings/omissions once and passes them to
+> `publish_artifact_index(omitted=...)` (both the primary and republish
+> calls). **Deviation recorded:** spec R5 (corrected 2026-09-28) requires the
+> `omitted` key to be written by **both** collectors, but no plan task
+> assigned that writing — folded into this task rather than left to the
+> generic fallback, which would have made every real run's terminal report
+> show generic reasons and defeated R4/AC 3. gdlint (4.5.0) reports three
+> pre-existing failures in `gd_tools_test.gd`, a file this track never
+> touched; the four files this track edited are clean.
 
 ### Task 4.3: Update the contract test and the known-flakes note
 
