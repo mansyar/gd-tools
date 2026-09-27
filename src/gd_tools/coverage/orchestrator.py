@@ -17,6 +17,11 @@ from rich.text import Text
 from gd_tools import output
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
+from gd_tools.coverage.omissions import (
+    OmissionReport,
+    omission_gate_message,
+    reconcile_omissions,
+)
 from gd_tools.coverage.reporter import (
     CoverageData,
     CoverageSummary,
@@ -144,12 +149,13 @@ def run_coverage_test(
         )
     except CoverageThresholdError as exc:
         if exc.report_result is not None:
-            _print_coverage_inline(
+            _report_coverage(
+                plan,
+                data,
                 exc.report_result.summary,
                 min_percent,
                 show_uncovered=show_uncovered,
                 file_summaries=exc.report_result.file_summaries,
-                plan=plan,
             )
         if test_error is not None:
             raise test_error
@@ -159,12 +165,13 @@ def run_coverage_test(
         raise test_error
 
     # Print coverage inline summary on success.
-    _print_coverage_inline(
+    _report_coverage(
+        plan,
+        data,
         report_result.summary,
         min_percent,
         show_uncovered=show_uncovered,
         file_summaries=report_result.file_summaries,
-        plan=plan,
     )
 
     if result is None:
@@ -337,12 +344,68 @@ def _print_threshold_footer(
         output.print_summary("pass", f"{line_pct:.1f}% line coverage")
 
 
+def _report_coverage(
+    plan: CoveragePlan,
+    data: CoverageData,
+    summary: CoverageSummary,
+    min_percent: int | None,
+    *,
+    show_uncovered: bool,
+    file_summaries: list[FileSummary] | None,
+) -> None:
+    """Reconcile the run against its plan, print it, and gate on it.
+
+    The single wiring point for the coverage contract (spec R5, R6, R7).
+    Both runtimes reach this through :func:`_print_coverage_inline`; the
+    reconciliation and the gate live here so the two can never diverge.
+
+    Args:
+        plan: The instrumentation plan.
+        data: The runtime coverage data.
+        summary: The plan-wide coverage summary.
+        min_percent: The ``--min`` threshold, or None.
+        show_uncovered: Whether to print per-file uncovered panels.
+        file_summaries: Per-file summaries for uncovered detail.
+
+    Raises:
+        CoverageThresholdError: With exit code 2, when ``--min`` was
+            requested and the measurement turned out to be partial. A gate
+            reporting success over a knowingly incomplete measurement is
+            not a gate, so this is deliberately separate from the
+            percentage threshold.
+    """
+    omissions = reconcile_omissions(plan, data)
+    instrumented_summary = None
+    if omissions.has_omissions:
+        excluded = frozenset(t.file_id for t in omissions.omitted)
+        instrumented_summary = reporter.compute_summary(
+            plan, data, exclude_ids=excluded
+        )
+
+    _print_coverage_inline(
+        summary,
+        min_percent,
+        show_uncovered=show_uncovered,
+        file_summaries=file_summaries,
+        plan=plan,
+        omissions=omissions,
+        instrumented_summary=instrumented_summary,
+    )
+
+    gate = omission_gate_message(omissions, min_percent)
+    if gate is not None:
+        raise CoverageThresholdError(gate, exit_code=2)
+
+
 def _print_coverage_inline(
     summary: CoverageSummary,
     min_percent: int | None = None,
     show_uncovered: bool = False,
     file_summaries: list[FileSummary] | None = None,
     plan: CoveragePlan | None = None,
+    *,
+    omissions: OmissionReport | None = None,
+    instrumented_summary: CoverageSummary | None = None,
 ) -> None:
     """Print a one-line coverage summary.
 
@@ -352,8 +415,14 @@ def _print_coverage_inline(
     When ``show_uncovered`` is True and coverage is below 100%,
     per-file uncovered detail panels are printed below the summary.
 
+    When ``omissions`` reports skipped targets, the run was partial. The
+    plan-wide figure is then labelled as such and the instrumented-set
+    figure is shown beside it, because a percentage whose denominator
+    excludes failing files would otherwise look like a whole-project
+    result (spec R6).
+
     Args:
-        summary: The coverage summary to display.
+        summary: The plan-wide coverage summary to display.
         min_percent: Optional minimum coverage percentage (0-100).
         show_uncovered: If True, print per-file uncovered lines and
             branches panels when coverage is below 100%.
@@ -361,14 +430,43 @@ def _print_coverage_inline(
             Required when ``show_uncovered`` is True.
         plan: Coverage plan for branch type lookup.  Required when
             ``show_uncovered`` is True.
+        omissions: Reconciliation result, when the run skipped any target.
+        instrumented_summary: The instrumented-set summary. Shown beside
+            the plan-wide figure when the two differ.
     """
     line_pct = summary.line_rate * 100
     branch_pct = summary.branch_rate * 100
 
-    output.print_info(
-        f"Coverage: {line_pct:.1f}% lines, {branch_pct:.1f}% branches"
-    )
+    partial = omissions is not None and omissions.has_omissions
+
+    if partial:
+        assert instrumented_summary is not None
+        inst_line_pct = instrumented_summary.line_rate * 100
+        inst_branch_pct = instrumented_summary.branch_rate * 100
+        output.print_info(
+            f"Coverage: {inst_line_pct:.1f}% lines, "
+            f"{inst_branch_pct:.1f}% branches "
+            f"(of {omissions.instrumented_count}/{omissions.plan_count} "
+            f"instrumented; {line_pct:.1f}% lines of the whole plan)"
+        )
+    else:
+        output.print_info(
+            f"Coverage: {line_pct:.1f}% lines, {branch_pct:.1f}% branches"
+        )
+
     _print_threshold_footer(summary, min_percent)
+
+    if partial:
+        assert omissions is not None
+        output.print_warning(
+            f"Coverage is partial: {len(omissions.omitted)} of "
+            f"{omissions.plan_count} plan targets could not be instrumented."
+        )
+        for target in omissions.omitted:
+            detail = f"  {target.path}\n    Cause: {target.reason}"
+            if target.fix:
+                detail += f"\n    Fix:   {target.fix}"
+            output.print_warning(detail)
 
     if show_uncovered and file_summaries is not None and plan is not None:
         panels = reporter.render_uncovered_panels(file_summaries, plan)
