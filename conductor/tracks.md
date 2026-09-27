@@ -43,8 +43,4 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Native Runtime Correctness** — make `wait_for_signal` bounded and
-  honest, fix `_suite_timeout` to consider every test rather than the first, and
-  make per-test timeout cancellation a named operation instead of a hand-
-  maintained token.
-  *Link: [native_runtime_correctness_20260927](./tracks/native_runtime_correctness_20260927/index.md)*
+- [x] **Track: Native Runtime Correctness** (archived → `./archive/native_runtime_correctness_20260927/`) - make `wait_for_signal` bounded and honest, fix `_suite_timeout` to consider every test rather than the first, and make per-test timeout cancellation a named operation instead of a hand-maintained token.
