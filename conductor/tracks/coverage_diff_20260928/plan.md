@@ -132,7 +132,7 @@ detail, JSON report format, and `--fail-on-regression` gating.
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 4 — Documentation and full verification
+## Phase 4 — Documentation and full verification [checkpoint: `c70343e`]
 
 **Purpose:** Document both subcommands for users and CI, and verify the whole
 track against the specification's acceptance criteria.
@@ -153,11 +153,11 @@ track against the specification's acceptance criteria.
   - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`.
   - [ ] Walk the specification's acceptance criteria 1–11 and record results in
     `plan.md` implementation notes.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Perform the workflow's manual verification (CLI feature steps:
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [commit: `c70343e`]
+  - [x] Perform the workflow's manual verification (CLI feature steps:
     `pip install -e .`, run `save-baseline` and `diff` on a real coverage
     fixture, confirm table/JSON/exit codes).
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Implementation Notes
 
