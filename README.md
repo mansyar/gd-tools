@@ -144,16 +144,16 @@ removal once projects have moved.
 | Retries | Configurable per test (`[test].retries`) | Same |
 | Line and branch coverage | Yes | Yes |
 | JUnit XML output | Yes | Yes |
-| Mocking and stubbing | Not yet | Not supported -- preflight rejects `double()`/`stub()` |
+| Mocking and stubbing | `double()`, `partial_double()`, `stub()` (`.to_return`/`.to_call_super`), `assert_called*` family | Same -- inherited from `GdToolsTest` with identical semantics |
 | Parameterized tests | Not supported | Not supported -- preflight rejects `parameterize()` |
 | Skipping a test at runtime | `skip_test()` and `pending_test()` | Yes |
 | Parallel execution | Not yet -- suites run sequentially | Same |
 | Editor plugin | Not yet | Not applicable |
 
 **Known limitations of the native runtime.** It is new, and the gaps above are
-real. A project that depends on mocking or parameterized tests has no
-supported execution path yet -- the bridge deliberately refuses those
-constructs at preflight rather than mis-running them. See the
+real. A project that depends on parameterized tests has no supported
+execution path yet -- the bridge deliberately refuses those constructs at
+preflight rather than mis-running them. See the
 [migration guide](./docs/gut-migration.md) for the bridge's supported subset,
 [User Guide](./docs/USER_GUIDE.md#34-test) for the full flag reference, and
 [Roadmap](./docs/ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)
