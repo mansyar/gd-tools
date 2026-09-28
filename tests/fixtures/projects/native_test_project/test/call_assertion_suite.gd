@@ -57,6 +57,9 @@ func test_assert_called_failure_diagnostic_names_method() -> void:
 	var d = double(SUBJECT)
 	assert_called(d, "greet")
 	var failures := get_failures()
+	# Clear the recorder BEFORE verifying: if the assertion under test failed
+	# to record anything, the verification below must fail the test for real.
+	clear_failures()
 	assert_eq(failures.size(), 1)
 	if failures.size() == 1:
 		var message := str(failures[0]["message"])
@@ -65,7 +68,6 @@ func test_assert_called_failure_diagnostic_names_method() -> void:
 				"not" in message.to_lower() or "never" in message.to_lower(),
 				"states the actual outcome: " + message
 		)
-	clear_failures()
 
 
 func test_assert_not_called_failure_diagnostic_shows_count() -> void:
@@ -73,12 +75,12 @@ func test_assert_not_called_failure_diagnostic_shows_count() -> void:
 	d.greet("world")
 	assert_not_called(d, "greet")
 	var failures := get_failures()
+	clear_failures()
 	assert_eq(failures.size(), 1)
 	if failures.size() == 1:
 		var message := str(failures[0]["message"])
 		assert_true("greet" in message, "names the method: " + message)
 		assert_true("1" in message, "states the actual call count: " + message)
-	clear_failures()
 
 
 func test_assert_call_count_failure_diagnostic_shows_expected_and_actual() -> void:
@@ -86,13 +88,13 @@ func test_assert_call_count_failure_diagnostic_shows_expected_and_actual() -> vo
 	d.add(2, 3)
 	assert_call_count(d, "add", 3)
 	var failures := get_failures()
+	clear_failures()
 	assert_eq(failures.size(), 1)
 	if failures.size() == 1:
 		var message := str(failures[0]["message"])
 		assert_true("add" in message, "names the method: " + message)
 		assert_true("3" in message, "states the expected count: " + message)
 		assert_true("1" in message, "states the actual count: " + message)
-	clear_failures()
 
 
 func test_assert_call_arguments_failure_diagnostic_shows_both_argument_sets() -> void:
@@ -100,13 +102,13 @@ func test_assert_call_arguments_failure_diagnostic_shows_both_argument_sets() ->
 	d.add(2, 3)
 	assert_call_arguments(d, "add", [9, 9])
 	var failures := get_failures()
+	clear_failures()
 	assert_eq(failures.size(), 1)
 	if failures.size() == 1:
 		var message := str(failures[0]["message"])
 		assert_true("add" in message, "names the method: " + message)
 		assert_true("[9, 9]" in message, "shows expected arguments: " + message)
 		assert_true("[2, 3]" in message, "shows actual arguments: " + message)
-	clear_failures()
 
 
 func test_assertions_read_the_call_recorder_not_script_state() -> void:

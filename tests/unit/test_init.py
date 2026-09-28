@@ -1466,6 +1466,14 @@ def test_install_native_test_addon_deploys_integration_files(
     assert (addon_dir / "gd_tools_test_context.gd").is_file()
 
 
+def test_install_native_test_addon_deploys_mock_module(tmp_path: Path):
+    """Native init deploys the bundled mock module used by double()/stub()."""
+    install_native_test_addon(tmp_path)
+
+    addon_dir = tmp_path / "addons" / "gd-tools-test"
+    assert (addon_dir / "gd_tools_mock.gd").is_file()
+
+
 def test_install_native_test_addon_lists_every_bundled_script() -> None:
     """Every bundled native addon script is part of the managed file list."""
     addon_source = Path(__file__).parent.parent.parent.joinpath(

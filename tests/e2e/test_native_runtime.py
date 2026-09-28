@@ -2011,6 +2011,39 @@ def test_native_call_assertions(godot_bin, tmp_path):
         assert entry["status"] == "passed", (entry["name"], entry["message"])
 
 
+VALIDATION_METHODS = [
+    "test_stub_on_nonexistent_method_fails_the_test",
+    "test_stub_on_a_partial_double_missing_method_fails_the_test",
+    "test_stub_requires_a_double",
+    "test_double_on_a_non_script_value_fails_the_test",
+    "test_partial_double_on_a_non_script_value_fails_the_test",
+]
+
+
+def test_native_mock_fail_fast_validation(godot_bin, tmp_path):
+    """Invalid mocking usage fails the test immediately with diagnostics."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "validation.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/validation_suite.gd",
+            VALIDATION_METHODS,
+            "NativeValidationSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(VALIDATION_METHODS), payload["tests"]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
 def test_native_double_and_partial_double_semantics(godot_bin, tmp_path):
     """double()/partial_double() follow GUT semantics for unstubbed calls."""
     project = _prepare_project(tmp_path, godot_bin)
