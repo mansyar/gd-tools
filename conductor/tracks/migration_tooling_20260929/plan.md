@@ -24,7 +24,7 @@
   - [ ] Write failing tests: per-file inventory, "works now, rename later" alias section, config mapping results, unified diff display, summary
   - [ ] Implement report renderer following `output.py` conventions
   - [ ] Verify coverage
-- [ ] Task: Config translation (merge, never clobber) *(TDD)*
+- [x] Task: Config translation (merge, never clobber) *(TDD)* — `43e3083`
   - [ ] Write failing tests: merge into existing `[test]` section, preserve user-set values, report conflicts and unmapped options, no-op when `.gutconfig.json` absent
   - [ ] Implement translation using existing config save/validate machinery
   - [ ] Verify coverage
