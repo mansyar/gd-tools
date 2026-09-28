@@ -44,3 +44,11 @@ _Archived tracks live in `./archive/`._
 ---
 
 - [x] **Track: Native Runtime Correctness** (archived → `./archive/native_runtime_correctness_20260927/`) - make `wait_for_signal` bounded and honest, fix `_suite_timeout` to consider every test rather than the first, and make per-test timeout cancellation a named operation instead of a hand-maintained token.
+
+---
+
+- [x] **Track: Coverage Diff** (archived → `./archive/coverage_diff_20260928/`) - codecov-style
+  coverage comparison: `coverage save-baseline` persists a self-contained plan+data
+  snapshot with advisory metadata, and `coverage diff --base` reports per-file line and
+  branch deltas (new/removed/improved/regressed files, newly-uncovered lines) with
+  `--report-format json` and `--fail-on-regression` exit-1 gating for CI.

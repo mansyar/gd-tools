@@ -17,6 +17,19 @@ from rich.text import Text
 from gd_tools import output
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
+import json
+
+from gd_tools.coverage.diff_reporter import (
+    BaselineMeta,
+    BaselineSnapshot,
+    DiffResult,
+    build_diff_detail,
+    build_diff_json,
+    build_diff_table,
+    compute_diff,
+    load_baseline,
+    save_baseline,
+)
 from gd_tools.coverage.omissions import (
     OmissionReport,
     omission_gate_message,
@@ -552,3 +565,98 @@ def show_coverage_summary(
         )
 
     return summary
+
+
+def save_coverage_baseline(config: GdToolsConfig) -> Path:
+    """Save the latest coverage run as the diff baseline.
+
+    Reads ``plan.json`` and ``coverage.json`` from the coverage output
+    directory and writes them as a self-contained baseline document at
+    ``<output_dir>/baseline.json`` (see ``diff_reporter.save_baseline``).
+
+    Args:
+        config: Resolved project configuration.
+
+    Returns:
+        Path to the written baseline file.
+
+    Raises:
+        CoveragePlanError: If the plan or coverage data is missing or
+            malformed (exit code 2 at the CLI boundary).
+    """
+    project_root = find_project_root()
+    output_dir = project_root / config.coverage.output_dir
+    baseline_path = output_dir / "baseline.json"
+    save_baseline(
+        output_dir / "plan.json",
+        output_dir / "coverage.json",
+        baseline_path,
+    )
+    return baseline_path
+
+
+def diff_coverage(
+    config: GdToolsConfig,
+    base: str,
+    *,
+    show_lines: bool = False,
+    report_format: str = "text",
+    fail_on_regression: bool = False,
+) -> DiffResult:
+    """Compare current coverage against a baseline and report the diff.
+
+    Loads the baseline document and the current plan/data pair from the
+    coverage output directory, computes the per-file diff, and renders
+    it as a terminal table or machine-readable JSON.
+
+    Args:
+        config: Resolved project configuration.
+        base: Path to the baseline file written by ``save-baseline``.
+        show_lines: List newly-uncovered line numbers for regressed files.
+        report_format: ``"text"`` for the terminal table, ``"json"`` for
+            deterministic machine-readable output.
+        fail_on_regression: Raise :class:`CoverageThresholdError` when any
+            file regressed (exit code 1 at the CLI boundary).
+
+    Returns:
+        The computed :class:`DiffResult`.
+
+    Raises:
+        CoveragePlanError: If the baseline or the current plan/data pair
+            is missing or malformed (exit code 2 at the CLI boundary).
+        CoverageThresholdError: If ``fail_on_regression`` is set and any
+            file regressed (exit code 1 at the CLI boundary).
+    """
+    baseline = load_baseline(base)
+
+    project_root = find_project_root()
+    output_dir = project_root / config.coverage.output_dir
+    plan = plan_generator.read_plan_json(str(output_dir / "plan.json"))
+    data = reporter.read_coverage_json(output_dir / "coverage.json")
+    head = BaselineSnapshot(plan=plan, data=data, meta=BaselineMeta())
+
+    result = compute_diff(baseline, head)
+
+    if report_format == "json":
+        # Plain print (not the Rich console) so piped output is never
+        # line-wrapped and stays valid, deterministic JSON.
+        print(json.dumps(build_diff_json(result, baseline.meta), indent=2))
+    else:
+        output.print_table(build_diff_table(result, baseline.meta))
+        if show_lines:
+            for detail_line in build_diff_detail(result):
+                output.console.print(Text(detail_line, style="red"))
+
+    if fail_on_regression and result.has_regression:
+        regressed = [
+            fd.path for fd in result.files if fd.classification == "regressed"
+        ]
+        raise CoverageThresholdError(
+            "[Error] Coverage regression detected\n"
+            f"  Cause: {len(regressed)} file(s) have lower coverage "
+            f"than the baseline: {', '.join(regressed)}\n"
+            "  Fix: Add tests to restore coverage, or rerun without "
+            "--fail-on-regression."
+        )
+
+    return result
