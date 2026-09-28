@@ -16,6 +16,9 @@ import pytest
 from gd_tools.coverage.diff_reporter import (
     BaselineMeta,
     BaselineSnapshot,
+    DiffResult,
+    FileDiff,
+    compute_diff,
     load_baseline,
     save_baseline,
 )
@@ -289,3 +292,263 @@ def test_load_baseline_rejects_malformed_nested_data(tmp_path: Path):
     )
     with pytest.raises(CoveragePlanError):
         load_baseline(baseline_path)
+
+
+# --- compute_diff: helpers ---
+
+
+def _make_file_plan(
+    file_id: int,
+    path: str,
+    statements: int = 2,
+    branches: int = 0,
+) -> FilePlan:
+    """Build a FilePlan with sequential statement and branch lines."""
+    lines = [
+        LinePlan(line=i + 1, id=i, type="statement") for i in range(statements)
+    ]
+    for j in range(branches):
+        lines.append(
+            LinePlan(
+                line=statements + j + 1,
+                id=statements + j,
+                type="branch",
+                branch_type="if_true",
+            )
+        )
+    return FilePlan(
+        file_id=file_id,
+        path=path,
+        source_hash=f"sha256:{file_id:03d}",
+        lines=lines,
+    )
+
+
+def _make_file_data(
+    file_id: int,
+    covered_ids: list[int],
+    total_ids: int,
+) -> FileCoverage:
+    """Build FileCoverage where only *covered_ids* carry hits."""
+    hits = {str(i): (1 if i in covered_ids else 0) for i in range(total_ids)}
+    return FileCoverage(file_id=file_id, hits=hits)
+
+
+def _make_snapshot(
+    file_plans: list[FilePlan],
+    file_datas: list[FileCoverage],
+) -> BaselineSnapshot:
+    """Build a BaselineSnapshot from matching file plans and data."""
+    return BaselineSnapshot(
+        plan=CoveragePlan(version=1, generated_by="gd-tools", files=file_plans),
+        data=CoverageData(version=1, files=file_datas),
+        meta=BaselineMeta(),
+    )
+
+
+def _find_file_diff(result: DiffResult, path: str) -> FileDiff:
+    """Return the FileDiff entry for *path* from a diff result."""
+    for fd in result.files:
+        if fd.path == path:
+            return fd
+    raise AssertionError(f"no diff entry for {path}")
+
+
+# --- compute_diff ---
+
+
+def test_compute_diff_improved_file():
+    """A file with more coverage in head is classified as improved."""
+    base = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=2, branches=1)],
+        [_make_file_data(0, [0], 3)],
+    )
+    head = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=2, branches=1)],
+        [_make_file_data(0, [0, 1, 2], 3)],
+    )
+    result = compute_diff(base, head)
+    fd = _find_file_diff(result, "res://a.gd")
+    assert fd.classification == "improved"
+    assert fd.covered_line_delta == 2
+    assert fd.line_rate_delta == pytest.approx(0.5)
+    assert fd.head_line_rate == pytest.approx(1.0)
+    assert fd.base_line_rate == pytest.approx(1 / 3)
+
+
+def test_compute_diff_regressed_file_reports_newly_uncovered():
+    """A regressed file lists lines covered in base but uncovered in head."""
+    base = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=2, branches=1)],
+        [_make_file_data(0, [0, 1, 2], 3)],
+    )
+    head = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=2, branches=1)],
+        [_make_file_data(0, [0], 3)],
+    )
+    result = compute_diff(base, head)
+    fd = _find_file_diff(result, "res://a.gd")
+    assert fd.classification == "regressed"
+    assert fd.newly_uncovered_lines == [2, 3]
+
+
+def test_compute_diff_unchanged_when_identical():
+    """Identical snapshots classify as unchanged with zero deltas."""
+    snapshot = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=2, branches=1)],
+        [_make_file_data(0, [0, 1], 3)],
+    )
+    result = compute_diff(snapshot, snapshot)
+    fd = _find_file_diff(result, "res://a.gd")
+    assert fd.classification == "unchanged"
+    assert fd.covered_line_delta == 0
+    assert fd.line_rate_delta == 0.0
+    assert fd.covered_branch_delta == 0
+    assert fd.newly_uncovered_lines == []
+
+
+def test_compute_diff_new_and_removed_files_sorted():
+    """Head-only files are new, base-only removed; output sorted by path."""
+    base = _make_snapshot(
+        [
+            _make_file_plan(0, "res://b.gd", statements=2),
+            _make_file_plan(1, "res://c.gd", statements=2),
+        ],
+        [
+            _make_file_data(0, [0, 1], 2),
+            _make_file_data(1, [0, 1], 2),
+        ],
+    )
+    head = _make_snapshot(
+        [
+            _make_file_plan(0, "res://a.gd", statements=2),
+            _make_file_plan(1, "res://b.gd", statements=2),
+        ],
+        [
+            _make_file_data(0, [0, 1], 2),
+            _make_file_data(1, [0, 1], 2),
+        ],
+    )
+    result = compute_diff(base, head)
+    assert [fd.path for fd in result.files] == [
+        "res://a.gd",
+        "res://b.gd",
+        "res://c.gd",
+    ]
+    new_fd = _find_file_diff(result, "res://a.gd")
+    assert new_fd.classification == "new"
+    assert new_fd.base_line_rate is None
+    assert new_fd.head_line_rate == pytest.approx(1.0)
+    removed_fd = _find_file_diff(result, "res://c.gd")
+    assert removed_fd.classification == "removed"
+    assert removed_fd.head_line_rate is None
+    assert removed_fd.base_line_rate == pytest.approx(1.0)
+
+
+def test_compute_diff_matches_by_path_not_file_id():
+    """Files are matched by res:// path even when file_ids differ."""
+    base = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=2)],
+        [_make_file_data(0, [0], 2)],
+    )
+    head = _make_snapshot(
+        [_make_file_plan(7, "res://a.gd", statements=2)],
+        [_make_file_data(7, [0, 1], 2)],
+    )
+    result = compute_diff(base, head)
+    assert len(result.files) == 1
+    fd = result.files[0]
+    assert fd.classification == "improved"
+    assert fd.base_covered_lines == 1
+    assert fd.head_covered_lines == 2
+
+
+def test_compute_diff_regression_is_rate_based():
+    """A rate decrease is a regression even when covered counts increase."""
+    base = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=2)],
+        [_make_file_data(0, [0, 1], 2)],
+    )
+    head = _make_snapshot(
+        [_make_file_plan(0, "res://a.gd", statements=4)],
+        [_make_file_data(0, [0, 1, 2], 4)],
+    )
+    result = compute_diff(base, head)
+    fd = _find_file_diff(result, "res://a.gd")
+    assert fd.classification == "regressed"
+    assert fd.covered_line_delta == 1
+    assert fd.line_rate_delta == pytest.approx(-0.25)
+    assert result.has_regression
+
+
+def test_compute_diff_totals_aggregate_each_side():
+    """DiffResult carries overall summaries for base and head."""
+    base = _make_snapshot(
+        [
+            _make_file_plan(0, "res://a.gd", statements=2),
+            _make_file_plan(1, "res://b.gd", statements=2),
+        ],
+        [
+            _make_file_data(0, [0, 1], 2),
+            _make_file_data(1, [0], 2),
+        ],
+    )
+    head = _make_snapshot(
+        [
+            _make_file_plan(0, "res://a.gd", statements=2),
+            _make_file_plan(1, "res://b.gd", statements=2),
+        ],
+        [
+            _make_file_data(0, [0, 1], 2),
+            _make_file_data(1, [0, 1], 2),
+        ],
+    )
+    result = compute_diff(base, head)
+    assert result.base_summary.covered_lines == 3
+    assert result.base_summary.total_lines == 4
+    assert result.head_summary.covered_lines == 4
+    assert result.head_summary.total_lines == 4
+    assert result.head_summary.line_rate == pytest.approx(1.0)
+
+
+def test_compute_diff_has_regression_false_without_regression():
+    """has_regression is False for improvements, new and removed files only."""
+    base = _make_snapshot(
+        [
+            _make_file_plan(0, "res://a.gd", statements=2),
+            _make_file_plan(1, "res://gone.gd", statements=2),
+        ],
+        [
+            _make_file_data(0, [0], 2),
+            _make_file_data(1, [0, 1], 2),
+        ],
+    )
+    head = _make_snapshot(
+        [
+            _make_file_plan(0, "res://a.gd", statements=2),
+            _make_file_plan(1, "res://fresh.gd", statements=2),
+        ],
+        [
+            _make_file_data(0, [0, 1], 2),
+            _make_file_data(1, [0, 1], 2),
+        ],
+    )
+    result = compute_diff(base, head)
+    assert not result.has_regression
+
+
+def test_compute_diff_zero_executable_lines_is_unchanged():
+    """A file with no executable lines on both sides never divides by zero."""
+    base = _make_snapshot(
+        [_make_file_plan(0, "res://empty.gd", statements=0)],
+        [_make_file_data(0, [], 0)],
+    )
+    head = _make_snapshot(
+        [_make_file_plan(0, "res://empty.gd", statements=0)],
+        [_make_file_data(0, [], 0)],
+    )
+    result = compute_diff(base, head)
+    fd = _find_file_diff(result, "res://empty.gd")
+    assert fd.classification == "unchanged"
+    assert fd.head_line_rate == 0.0
+    assert not result.has_regression
