@@ -101,12 +101,8 @@
 
 **Purpose:** Prove the full loop on a real project with real file events.
 
-- [ ] Task: Add integration/e2e watch-session test
-  - [ ] Script a real-filesystem watch session on a fixture project.
-  - [ ] Assert save → single mapped re-run.
-  - [ ] Assert new suite file pickup without restart.
-  - [ ] Assert fallback run and clean Ctrl+C shutdown with no orphan Godot processes.
-- [ ] Task: Full quality gate
+- [x] Task: Add integration/e2e watch-session test [3a9fbeb]
+- [x] Task: Full quality gate [3df4f46]
   - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`.
   - [ ] Run `CI=true pytest` with coverage thresholds on new source.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
