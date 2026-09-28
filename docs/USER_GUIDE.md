@@ -901,6 +901,152 @@ branches (with type annotations). Files with full coverage are omitted.
 | 1 | Coverage is below the specified threshold. |
 | 2 | Configuration or environment error, or no coverage data found. |
 
+#### 3.7.4 coverage save-baseline
+
+Save the latest coverage run as the diff baseline for
+[coverage diff](#374-coverage-diff). The baseline is a single
+self-contained JSON document (`.gd-tools/coverage/baseline.json`) that
+embeds the instrumentation plan and the coverage data of the run, so it
+stays valid even after the branch changes both files. Advisory
+metadata (UTC timestamp, git branch and commit when available) is
+stamped into the document; it is displayed for context but never
+required for the diff computation.
+
+**Usage:**
+
+```bash
+gd-tools coverage save-baseline [OPTIONS]
+```
+
+**Examples:**
+
+```bash
+# Save the latest coverage run as the baseline
+gd-tools coverage save-baseline
+```
+
+**Output:**
+
+```
+Baseline saved to: .gd-tools/coverage/baseline.json
+```
+
+Saving again overwrites the previous baseline.
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Baseline saved successfully. |
+| 2 | No coverage data found, or the existing data is malformed. Run `gd-tools test --coverage` first. |
+
+#### 3.7.5 coverage diff
+
+Compare current coverage against a saved baseline and report per-file
+line and branch deltas — which files improved, regressed, were added,
+or removed. This answers the code-review question a single coverage
+snapshot cannot: *did this change add or remove coverage?*
+
+**Usage:**
+
+```bash
+gd-tools coverage diff --base BASELINE [OPTIONS]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--base` | path | required | Path to a baseline file written by `coverage save-baseline`. |
+| `--show-lines` | flag | off | List newly-uncovered line numbers for regressed files. |
+| `--report-format` | `text` or `json` | `text` | `text` renders a Rich table; `json` emits deterministic machine-readable output. |
+| `--fail-on-regression` | flag | off | Exit with code 1 when any file's line or branch coverage rate is lower than in the baseline. |
+
+**Example output (`text`):**
+
+```
+                      Coverage diff vs baseline (on main @ abc1234)
+┌─────────────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
+│ File            │ Lines     │ Lines     │ Branches  │ Branches  │ Change    │
+│                 │ (base)    │ (head)    │ (base)    │ (head)    │           │
+├─────────────────┼───────────┼───────────┼───────────┼───────────┼───────────┤
+│ res://enemy.gd  │ 3/3 (100%)│ 0/3 (0%)  │ 1/1 (100%)│ 0/1 (0%)  │ -3 lines, │
+│ res://player.gd │ 5/5 (100%)│ 5/5 (100%)│ 2/2 (100%)│ 2/2 (100%)│ -         │
+│ TOTAL           │ 8/8 (100%)│ 5/8 (62%) │ 3/3 (100%)│ 2/3 (67%) │ -3 lines… │
+└─────────────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+```
+
+Improvements are shown in green, regressions in red, and paths in dim.
+New files are labeled `new` (with their head metrics only), removed
+files `removed` (with their baseline metrics only). With
+`--show-lines`, each regressed file is followed by a detail line such
+as `res://enemy.gd: newly uncovered lines 3, 5, 8`.
+
+**JSON output shape (`--report-format json`):**
+
+```json
+{
+  "baseline_meta": {"saved_at": "...", "git_branch": "...", "git_commit": "..."},
+  "files": [
+    {
+      "path": "res://enemy.gd",
+      "classification": "regressed",
+      "base": {"covered_lines": 3, "total_lines": 3, "line_rate": 1.0,
+               "covered_branches": 1, "total_branches": 1, "branch_rate": 1.0},
+      "head": {"covered_lines": 0, "total_lines": 3, "line_rate": 0.0,
+               "covered_branches": 0, "total_branches": 1, "branch_rate": 0.0},
+      "covered_line_delta": -3,
+      "line_rate_delta": -1.0,
+      "covered_branch_delta": -1,
+      "branch_rate_delta": -1.0,
+      "newly_uncovered_lines": [3, 5, 8]
+    }
+  ],
+  "totals": {"base": {"covered_lines": 8, "total_lines": 8, "line_rate": 1.0, "...": "..."},
+             "head": {"covered_lines": 5, "total_lines": 8, "line_rate": 0.625, "...": "..."}},
+  "has_regression": true
+}
+```
+
+`classification` is one of `improved`, `regressed`, `unchanged`,
+`new`, `removed`. `base`/`head` metric objects are `null` for new and
+removed files respectively. Files are sorted by path; the output is
+deterministic for identical inputs.
+
+**CI usage:** save the baseline on pushes to the main branch, then gate
+pull requests against it:
+
+```yaml
+# .github/workflows/ci.yml (excerpt)
+jobs:
+  coverage-baseline:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - run: gd-tools test --coverage
+      - run: gd-tools coverage save-baseline
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-baseline
+          path: .gd-tools/coverage/baseline.json
+
+  coverage-diff:
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-baseline
+      - run: gd-tools test --coverage
+      - run: gd-tools coverage diff --base baseline.json --fail-on-regression
+```
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Diff computed and rendered (no regression, or `--fail-on-regression` not set). |
+| 1 | `--fail-on-regression` is set and at least one file regressed. |
+| 2 | The baseline or the current coverage data is missing or malformed, or a configuration/environment error occurred. |
+
 ### 3.8 gd-tools version
 
 Display the versions of all gd-tools components.
