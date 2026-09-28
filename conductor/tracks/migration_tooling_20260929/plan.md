@@ -12,7 +12,7 @@
   - [ ] Write failing tests: reusing `native_test/bridge_scan.py`, build a migration report model (per-file: base class, supported constructs, unsupported constructs with file:line + guidance, bridge-only aliases)
   - [ ] Implement `src/gd_tools/migration/` scanner module
   - [ ] Verify coverage (pytest --cov, >80% line / >70% branch)
-- [ ] Task: `.gutconfig.json` option mapping inventory *(TDD)*
+- [x] Task: `.gutconfig.json` option mapping inventory *(TDD)* — `cd80792`
   - [ ] Write failing tests defining the known-option → `[test]` key mapping table and unmapped-option passthrough
   - [ ] Implement the mapping module (explicit table; unknown options reported, never dropped)
   - [ ] Verify coverage
