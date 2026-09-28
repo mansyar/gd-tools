@@ -20,12 +20,12 @@
   - [ ] Implement convention-based mapping resolution.
   - [ ] Integrate with native discovery results (known suites).
   - [ ] Run the mapping tests to Green.
-- [ ] Task: Add failing tests for debounce & run-coalescing state machine
+- [x] Task: Add failing tests for debounce & run-coalescing state machine [763b37b]
   - [ ] Test 500 ms coalescing of rapid saves into one run.
   - [ ] Test mid-run save → dirty flag → exactly one queued re-run.
   - [ ] Test no run pile-up under continuous saves.
   - [ ] Use an injectable fake clock; confirm the expected Red phase.
-- [ ] Task: Implement the debounce/coalescing state machine
+- [x] Task: Implement the debounce/coalescing state machine [763b37b]
   - [ ] Implement the state machine against the fake-clock tests.
   - [ ] Refactor pass if warranted.
   - [ ] Run the debounce tests to Green.
