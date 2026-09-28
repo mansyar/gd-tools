@@ -63,3 +63,16 @@ _Archived tracks live in `./archive/`._
   the GUT addon installed. Auto-routes per suite, preflight-fails unsupported
   constructs with migration guidance, removes the legacy GUT subprocess path,
   and adds coverage support plus `docs/gut-migration.md`.
+
+---
+
+- [ ] **Track: Migration Tooling** (Migration Phase 4)
+  *Link: [migration_tooling_20260929](./tracks/migration_tooling_20260929/index.md)* - a guided `gd-tools migrate`
+  command: read-only per-file migration report reusing the bridge preflight
+  scanner (base class, supported/unsupported constructs with file:line
+  guidance, bridge-only aliases listed as "works now, rename later"),
+  `.gutconfig.json` → `gd-tools.toml` translation (merge, never clobber;
+  unmapped options reported), and conservative diff-previewed `--apply`
+  rewrites (`extends GutTest` → `extends GdToolsTest` plus config
+  translation; files with unsupported constructs are never rewritten). Exit
+  codes 0/1/2. Fulfills the promise in `docs/gut-migration.md` §6.
