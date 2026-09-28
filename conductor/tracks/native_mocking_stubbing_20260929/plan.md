@@ -7,7 +7,7 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 ## Phase 1 — Double engine (GDScript)
 - [x] Task: Red — write failing native suites for `double()` / `partial_double()` semantics (unstubbed double returns `null`; partial runs real implementation; `to_call_super()` calls parent; doubles of scripts by path and preloaded `Script`; fresh instances per call) `[a83b5d1]`
 - [x] Task: Green — implement the doubler (runtime-generated extending script) as a new addon module (e.g. `gd_tools_mock.gd`) `[cb1b320]`
-- [ ] Task: Refactor + full native suite green
+- [x] Task: Refactor + full native suite green `[f43f1e3]`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Stub matching & call recording (GDScript)
