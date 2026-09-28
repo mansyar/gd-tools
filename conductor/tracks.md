@@ -48,7 +48,7 @@ _Archived tracks live in `./archive/`._
 ---
 
 - [x] **Track: GUT Compatibility Bridge** (Migration Phase 3)
-  *Link: [gut_compat_bridge_20260928](./tracks/gut_compat_bridge_20260928/index.md)* - a
+  *Link: [gut_compat_bridge_20260928](./archive/gut_compat_bridge_20260928/index.md)* (archived → `./archive/gut_compat_bridge_20260928/`) - a
   GutTest-compatible shim base class in the gd-tools-test addon so legacy GUT
   suites run through the native protocol with the same result contract, without
   the GUT addon installed. Auto-routes per suite, preflight-fails unsupported
