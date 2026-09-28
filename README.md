@@ -94,7 +94,7 @@ func test_health_starts_at_full() -> void:
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. Add `--with-gut` to also install the legacy GUT runtime. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, GUT (if installed), coverage addon, tooling. |
-| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Runs the native runtime by default; `--runtime gut` selects the legacy path. Accepts optional path arguments to override configured test directories. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
+| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Runs the native runtime by default; `--runtime gut` selects the legacy path. Accepts optional path arguments to override configured test directories. `--watch` re-runs affected suites on `.gd` file changes. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
@@ -121,6 +121,29 @@ Each run writes a machine-readable artifact index under
 engine log, coverage data, and any failure screenshots the run actually
 produced. Only the latest run is retained. See the
 [User Guide](./docs/USER_GUIDE.md#34-test) for the full artifact tree.
+
+### Watch Mode
+
+```bash
+gd-tools test --watch                      # watch .gd files, re-run on change
+gd-tools test --watch --coverage           # every re-run includes coverage
+gd-tools test --watch --tag smoke          # filters apply to every run
+```
+
+`--watch` runs the full suite once, then keeps watching: saving a `.gd` file
+re-runs the tests affected by the change. The changed file is mapped to its
+suite by convention — `src/enemy.gd` re-runs `tests/test_enemy.gd` or
+`tests/enemy_test.gd` — with a full-suite fallback (announced explicitly)
+when no suite matches. Rapid successive saves are coalesced into a single
+re-run, and a save during a running suite queues exactly one follow-up run.
+
+- Native runtime only: `--watch` combined with `--runtime gut` exits 2.
+- Interactive only: `--watch` combined with `CI=true` exits 2.
+- The terminal is cleared between runs; the banner shows how many files are
+  watched, and `Ctrl+C` always exits 0.
+- Positional path arguments are not supported with `--watch`; the watched
+  scope is the project root minus standard excludes (`.godot/`, `.gd-tools/`,
+  `.git/`, and the gd-tools addons).
 
 ### Native Runtime vs. GUT
 
