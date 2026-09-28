@@ -43,7 +43,7 @@
   - [ ] Review the domain modules for forward compatibility with the observer layer.
   - [ ] Create the phase checkpoint commit and record its SHA.
 
-## Phase 2 — Watchdog integration & watch loop
+## Phase 2 — Watchdog integration & watch loop [checkpoint: eec0676]
 
 **Purpose:** Wire the domain logic to real file events and the existing native orchestrator.
 
