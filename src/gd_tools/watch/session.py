@@ -15,12 +15,40 @@ from gd_tools.native_test.discovery import (
     NativeDiscoveryError,
     discover_native_suites,
 )
-from gd_tools.native_test.protocol import NativeRunResult
+from gd_tools.native_test.protocol import NativeRunResult, NativeTestResult
 from gd_tools.watch.loop import watch_loop
 from gd_tools.watch.observer import WatchdogEventSource
 from gd_tools.watch.scope import resolve_watched_files
 
 WATCH_BANNER = "Watching {count} files. Press Ctrl+C to stop."
+
+_STATUS_MAP = {
+    "pass": "passed",
+    "fail": "failed",
+    "skip": "skipped",
+}
+
+
+def _watch_result(result, status: str) -> NativeRunResult:
+    """Map a native command result into the loop's summary result.
+
+    The per-test breakdown is carried over (with statuses translated to
+    the native protocol vocabulary) so the watch loop can report how many
+    tests each run executed.
+    """
+    if result is None:
+        return NativeRunResult(run_id="watch", status=status)
+    tests = [
+        NativeTestResult(
+            suite=detail.suite,
+            name=detail.name,
+            status=_STATUS_MAP.get(detail.status, "error"),
+            duration_seconds=detail.duration,
+            message=detail.message,
+        )
+        for detail in result.test_details
+    ]
+    return NativeRunResult(run_id="watch", status=status, tests=tests)
 
 
 def run_watch_mode(
@@ -113,13 +141,14 @@ def run_watch_mode(
         When the loop narrowed the selection to a single suite (a mapped
         re-run), that suite's name is passed as the exact suite filter so
         only the affected suite executes. Full runs pass every discovered
-        suite and therefore no extra filter.
+        suite and therefore no extra filter. The native run's per-test
+        breakdown is carried back so the loop can report test counts.
         """
         suite_filter = suites[0].name if len(suites) == 1 else None
         click.clear()
         output(banner)
         try:
-            run_native_test_command(
+            result = run_native_test_command(
                 config,
                 coverage=coverage,
                 min_percent=min_percent,
@@ -132,12 +161,12 @@ def run_watch_mode(
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,
             )
-            return NativeRunResult(run_id="watch", status="passed")
-        except TestFailureError:
-            return NativeRunResult(run_id="watch", status="failed")
+        except TestFailureError as exc:
+            return _watch_result(getattr(exc, "result", None), "failed")
         except GdToolsError as exc:
             output(f"Error: {exc}")
             return NativeRunResult(run_id="watch", status="error")
+        return _watch_result(result, "passed")
 
     return watch_loop(
         project_root,
