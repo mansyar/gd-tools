@@ -1970,6 +1970,47 @@ def test_native_stub_matching_and_recording(godot_bin, tmp_path):
         assert entry["status"] == "passed", (entry["name"], entry["message"])
 
 
+CALL_ASSERTION_METHODS = [
+    "test_assert_called_passes_after_a_call",
+    "test_assert_not_called_passes_without_calls",
+    "test_assert_call_count_matches_exact_number_of_calls",
+    "test_assert_call_arguments_matches_recorded_arguments",
+    "test_assert_call_arguments_checks_specific_call_index",
+    "test_assertions_count_methods_independently",
+    "test_assert_called_failure_diagnostic_names_method",
+    "test_assert_not_called_failure_diagnostic_shows_count",
+    "test_assert_call_count_failure_diagnostic_shows_expected_and_actual",
+    "test_assert_call_arguments_failure_diagnostic_shows_both_argument_sets",
+    "test_assertions_read_the_call_recorder_not_script_state",
+]
+
+
+def test_native_call_assertions(godot_bin, tmp_path):
+    """assert_called*/assert_call_* assertions read recorded double calls."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "call-assertions.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/call_assertion_suite.gd",
+            CALL_ASSERTION_METHODS,
+            "NativeCallAssertionSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(CALL_ASSERTION_METHODS), payload[
+        "tests"
+    ]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
 def test_native_double_and_partial_double_semantics(godot_bin, tmp_path):
     """double()/partial_double() follow GUT semantics for unstubbed calls."""
     project = _prepare_project(tmp_path, godot_bin)
