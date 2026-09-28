@@ -1,10 +1,16 @@
 """Unit tests for the watch-mode event source abstraction and watchdog adapter."""
 
+import os
 import time
+from types import SimpleNamespace
 
 import pytest
 
-from gd_tools.watch.observer import FileEvent, WatchdogEventSource
+from gd_tools.watch.observer import (
+    FileEvent,
+    WatchdogEventSource,
+    _relative_posix,
+)
 from gd_tools.watch.scope import is_watched_path
 
 pytestmark = pytest.mark.unit
@@ -122,3 +128,26 @@ def test_adapter_stop_terminates_event_stream(tmp_path):
     next(generator, None)
     source.stop()
     assert next(generator, None) is None
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows path prefix")
+def test_relative_posix_handles_extended_length_prefix(tmp_path):
+    """Windows \\?\ paths resolve to project-relative posix paths."""
+    extended = "\\\\?\\" + str(tmp_path / "src" / "enemy.gd")
+    assert _relative_posix(extended, tmp_path) == "src/enemy.gd"
+
+
+def test_relative_posix_outside_root_returns_none(tmp_path):
+    """Paths outside the project root resolve to None."""
+    outside = tmp_path.parent / "elsewhere.gd"
+    assert _relative_posix(str(outside), tmp_path) is None
+
+
+def test_enqueue_survives_unresolvable_paths(tmp_path):
+    """Out-of-scope watchdog events are dropped without raising."""
+    handler = WatchdogEventSource(tmp_path)._handler()
+    stranger = SimpleNamespace(
+        event_type="modified",
+        src_path=str(tmp_path.parent / "elsewhere.gd"),
+    )
+    handler.on_any_event(stranger)

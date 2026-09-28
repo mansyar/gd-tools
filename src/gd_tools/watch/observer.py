@@ -27,6 +27,32 @@ class FileEvent(NamedTuple):
     event_type: str
 
 
+def _relative_posix(src_path: str, project_root: Path) -> str | None:
+    """Resolve a watchdog path to a project-relative posix path.
+
+    Returns ``None`` when the path cannot be resolved inside the project
+    root. Windows extended-length (``\\\\?\\``) prefixes, as emitted by
+    some file-system activity, are stripped before resolving.
+
+    Args:
+        src_path: Absolute path reported by the file system.
+        project_root: Root directory of the watched project.
+
+    Returns:
+        The project-relative posix path, or ``None`` when the path lies
+        outside the project root or cannot be resolved.
+    """
+    raw = src_path
+    if raw.startswith("\\\\?\\"):
+        raw = raw[4:]
+    try:
+        return (
+            Path(raw).resolve().relative_to(project_root.resolve()).as_posix()
+        )
+    except ValueError:
+        return None
+
+
 class WatchdogEventSource:
     """File event source backed by a watchdog observer.
 
@@ -56,7 +82,13 @@ class WatchdogEventSource:
 
         class _Handler(FileSystemEventHandler):
             def on_any_event(self, event: FileSystemEvent) -> None:
-                source._enqueue(event)
+                # An observer callback must never raise: an exception here
+                # kills the watchdog emitter thread and silently stalls
+                # the event stream.
+                try:
+                    source._enqueue(event)
+                except Exception:  # noqa: BLE001 - protect the emitter
+                    return
 
         return _Handler()
 
@@ -66,13 +98,10 @@ class WatchdogEventSource:
             return
         if watchdog_event.event_type not in ("modified", "created", "deleted"):
             return
-        relative = (
-            Path(watchdog_event.src_path)
-            .resolve()
-            .relative_to(self._project_root.resolve())
+        relative_posix = _relative_posix(
+            str(watchdog_event.src_path), self._project_root
         )
-        relative_posix = relative.as_posix()
-        if not is_watched_path(relative_posix):
+        if relative_posix is None or not is_watched_path(relative_posix):
             return
         self._queue.put(
             FileEvent(relative_posix, str(watchdog_event.event_type))
