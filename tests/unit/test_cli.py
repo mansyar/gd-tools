@@ -17,7 +17,6 @@ from gd_tools.errors import (
     CoveragePlanError,
     CoverageThresholdError,
     GdToolsError,
-    GUTNotInstalledError,
     TestFailureError,
 )
 from gd_tools.format_runner import FormatResult
@@ -137,77 +136,12 @@ def test_test_config_error_exit_code_2():
         "gd_tools.cli.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut"])
+        result = runner.invoke(cli, ["test"])
     assert result.exit_code == 2
 
 
-def test_test_calls_run_tests_with_correct_args():
-    """Test test command calls run_tests with config and default flags."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=3,
-        passed=3,
-        failed=0,
-        skipped=0,
-        duration=0.5,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut"])
-    assert result.exit_code == 0
-    mock_run.assert_called_once_with(
-        mock_config,
-        coverage=False,
-        min_percent=None,
-        suite=None,
-        test_name=None,
-        junit_xml=None,
-        no_exit_code=False,
-        timeout=None,
-        paths=None,
-    )
-
-
-def test_test_gut_runtime_bypasses_native_preflight():
-    """Explicit GUT routing remains on the legacy path without preflight."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=0,
-        passed=0,
-        failed=0,
-        skipped=0,
-        duration=0.0,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result),
-        patch("gd_tools.cli.run_native_test_command") as native,
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut"])
-
-    assert result.exit_code == 0
-    native.assert_not_called()
-
-
-def test_test_suite_flag():
-    """Test --suite passes suite to run_tests."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
+def _native_result() -> TestResult:
+    return TestResult(
         total=1,
         passed=1,
         failed=0,
@@ -219,520 +153,152 @@ def test_test_suite_flag():
         stderr="",
         test_details=[],
     )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--suite", "MySuite"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_run.call_args
-    assert kwargs["suite"] == "MySuite"
 
 
-def test_test_name_flag():
-    """Test --test passes test_name to run_tests."""
+def test_test_forwards_selection_options_to_native():
+    """Suite, test, junit-xml, and path selectors reach the native adapter."""
     runner = CliRunner()
     mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--test", "MyTest"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_run.call_args
-    assert kwargs["test_name"] == "MyTest"
-
-
-def test_test_coverage_calls_orchestrator():
-    """Test --coverage calls orchestrator.run_coverage_test, not run_tests."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_coverage_test",
-            return_value=mock_result,
-        ) as mock_orch,
+            "gd_tools.cli.run_native_test_command",
+            return_value=_native_result(),
+        ) as mock_run,
     ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
+        result = runner.invoke(
+            cli,
+            [
+                "test",
+                "--suite",
+                "MySuite",
+                "--test",
+                "MyTest",
+                "--junit-xml",
+                "/path/to.xml",
+                "dir_a",
+                "dir_b",
+            ],
+        )
     assert result.exit_code == 0
-    mock_orch.assert_called_once()
+    kwargs = mock_run.call_args.kwargs
+    assert kwargs["suite"] == "MySuite"
+    assert kwargs["test_name"] == "MyTest"
+    assert kwargs["junit_xml"] == "/path/to.xml"
+    assert kwargs["paths"] == ["dir_a", "dir_b"]
+
+
+def test_test_forwards_coverage_options_to_native():
+    """Coverage-related flags reach the native adapter unchanged."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_native_test_command",
+            return_value=_native_result(),
+        ) as mock_run,
+    ):
+        result = runner.invoke(
+            cli,
+            [
+                "test",
+                "--coverage",
+                "--min",
+                "80",
+                "--show-uncovered",
+                "--no-cache",
+                "--no-exit-code",
+                "--timeout",
+                "120",
+            ],
+        )
+    assert result.exit_code == 0
+    kwargs = mock_run.call_args.kwargs
+    assert kwargs["coverage"] is True
+    assert kwargs["min_percent"] == 80
+    assert kwargs["show_uncovered"] is True
+    assert kwargs["no_cache"] is True
+    assert kwargs["no_exit_code"] is True
+    assert kwargs["timeout"] == 120
 
 
 def test_test_min_without_coverage_warns():
-    """Test --min without --coverage prints warning and proceeds normally."""
+    """--min without --coverage prints a warning and proceeds with native."""
     runner = CliRunner()
     mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-        patch("gd_tools.cli.run_coverage_test") as mock_orch,
+        patch(
+            "gd_tools.cli.run_native_test_command",
+            return_value=_native_result(),
+        ) as mock_run,
     ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--min", "80"])
+        result = runner.invoke(cli, ["test", "--min", "80"])
     assert result.exit_code == 0
     assert "--min is only valid with --coverage" in result.output
     mock_run.assert_called_once()
-    mock_orch.assert_not_called()
 
 
-def test_test_coverage_min_passed_to_orchestrator():
-    """Test --coverage --min 80 passes min_percent=80 to orchestrator."""
+def test_test_show_uncovered_without_coverage_warns():
+    """--show-uncovered without --coverage warns and proceeds with native."""
     runner = CliRunner()
     mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_coverage_test",
-            return_value=mock_result,
-        ) as mock_orch,
+            "gd_tools.cli.run_native_test_command",
+            return_value=_native_result(),
+        ) as mock_run,
     ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--coverage", "--min", "80"]
-        )
+        result = runner.invoke(cli, ["test", "--show-uncovered"])
     assert result.exit_code == 0
-    _, kwargs = mock_orch.call_args
-    assert kwargs["min_percent"] == 80
-
-
-def test_test_no_coverage_calls_run_tests_directly():
-    """Test test without --coverage calls run_tests directly (regression guard)."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-        patch("gd_tools.cli.run_coverage_test") as mock_orch,
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut"])
-    assert result.exit_code == 0
+    assert "--show-uncovered is only valid with --coverage" in result.output
     mock_run.assert_called_once()
-    mock_orch.assert_not_called()
 
 
-def test_test_coverage_test_failure_exit_1():
-    """Test TestFailureError from orchestrator exits with code 1."""
+def test_test_test_failure_exit_code_1():
+    """TestFailureError from the native adapter exits with code 1."""
     runner = CliRunner()
     mock_config = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_coverage_test",
+            "gd_tools.cli.run_native_test_command",
             side_effect=TestFailureError("2 test(s) failed"),
         ),
     ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
+        result = runner.invoke(cli, ["test"])
     assert result.exit_code == 1
 
 
 def test_test_coverage_threshold_error_exit_1():
-    """Test CoverageThresholdError from orchestrator exits with code 1."""
+    """CoverageThresholdError from the native adapter exits with code 1."""
     runner = CliRunner()
     mock_config = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_coverage_test",
+            "gd_tools.cli.run_native_test_command",
             side_effect=CoverageThresholdError("Coverage below threshold"),
         ),
     ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
+        result = runner.invoke(cli, ["test", "--coverage"])
     assert result.exit_code == 1
 
 
 def test_test_coverage_plan_error_exit_2():
-    """Test CoveragePlanError from orchestrator exits with code 2."""
+    """CoveragePlanError from the native adapter exits with code 2."""
     runner = CliRunner()
     mock_config = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_coverage_test",
+            "gd_tools.cli.run_native_test_command",
             side_effect=CoveragePlanError("Missing plan"),
         ),
     ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
-    assert result.exit_code == 2
-
-
-def test_test_coverage_no_exit_code_propagated():
-    """Test --no-exit-code flag is propagated to orchestrator."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch(
-            "gd_tools.cli.run_coverage_test",
-            return_value=mock_result,
-        ) as mock_orch,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--coverage", "--no-exit-code"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_orch.call_args
-    assert kwargs["no_exit_code"] is True
-
-
-def test_test_coverage_show_uncovered_passed_to_orchestrator():
-    """Test --coverage --show-uncovered passes show_uncovered=True to orchestrator."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch(
-            "gd_tools.cli.run_coverage_test",
-            return_value=mock_result,
-        ) as mock_orch,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--coverage", "--show-uncovered"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_orch.call_args
-    assert kwargs["show_uncovered"] is True
-
-
-def test_test_coverage_without_show_uncovered_defaults_false():
-    """Test --coverage without --show-uncovered passes show_uncovered=False."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch(
-            "gd_tools.cli.run_coverage_test",
-            return_value=mock_result,
-        ) as mock_orch,
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
-    assert result.exit_code == 0
-    _, kwargs = mock_orch.call_args
-    assert kwargs["show_uncovered"] is False
-
-
-def test_test_show_uncovered_without_coverage_warns():
-    """Test --show-uncovered without --coverage prints warning and proceeds."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-        patch("gd_tools.cli.run_coverage_test") as mock_orch,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--show-uncovered"]
-        )
-    assert result.exit_code == 0
-    assert "--show-uncovered is only valid with --coverage" in result.output
-    mock_run.assert_called_once()
-    mock_orch.assert_not_called()
-
-
-def test_test_coverage_no_cache_passed_to_orchestrator():
-    """Test --coverage --no-cache passes no_cache=True to orchestrator."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch(
-            "gd_tools.cli.run_coverage_test",
-            return_value=mock_result,
-        ) as mock_orch,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--coverage", "--no-cache"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_orch.call_args
-    assert kwargs["no_cache"] is True
-
-
-def test_test_coverage_default_no_cache_false():
-    """Test --coverage without --no-cache passes no_cache=False."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch(
-            "gd_tools.cli.run_coverage_test",
-            return_value=mock_result,
-        ) as mock_orch,
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--coverage"])
-    assert result.exit_code == 0
-    _, kwargs = mock_orch.call_args
-    assert kwargs["no_cache"] is False
-
-
-def test_test_no_cache_without_coverage_accepted():
-    """Test --no-cache without --coverage is accepted, calls run_tests."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-        patch("gd_tools.cli.run_coverage_test") as mock_orch,
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut", "--no-cache"])
-    assert result.exit_code == 0
-    mock_run.assert_called_once()
-    mock_orch.assert_not_called()
-
-
-def test_test_junit_xml_flag():
-    """Test --junit-xml passes junit_xml to run_tests."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--junit-xml", "/path/to.xml"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_run.call_args
-    assert kwargs["junit_xml"] == "/path/to.xml"
-
-
-def test_test_no_exit_code_flag():
-    """Test --no-exit-code passes no_exit_code=True to run_tests."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "--no-exit-code"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_run.call_args
-    assert kwargs["no_exit_code"] is True
-
-
-def test_test_all_pass_exit_code_0():
-    """Test test command exits 0 when all tests pass."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=3,
-        passed=3,
-        failed=0,
-        skipped=0,
-        duration=0.5,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result),
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut"])
-    assert result.exit_code == 0
-
-
-def test_test_failures_exit_code_1():
-    """Test test command exits 1 when tests fail."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch(
-            "gd_tools.cli.run_tests",
-            side_effect=TestFailureError("2 test(s) failed"),
-        ),
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut"])
-    assert result.exit_code == 1
-
-
-def test_test_gut_not_installed_exit_code_2():
-    """Test test command exits 2 when GUT is not installed."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch(
-            "gd_tools.cli.run_tests",
-            side_effect=GUTNotInstalledError("GUT is not installed"),
-        ),
-    ):
-        result = runner.invoke(cli, ["test", "--runtime", "gut"])
+        result = runner.invoke(cli, ["test", "--coverage"])
     assert result.exit_code == 2
 
 
@@ -1496,34 +1062,6 @@ def test_format_multiple_paths():
     mock_run.assert_called_once_with(
         mock_config, ["path_a", "path_b"], check=False, diff=False
     )
-
-
-def test_test_paths_arg():
-    """Test test command accepts optional path arguments."""
-    runner = CliRunner()
-    mock_config = MagicMock()
-    mock_result = TestResult(
-        total=1,
-        passed=1,
-        failed=0,
-        skipped=0,
-        duration=0.1,
-        junit_xml_path=None,
-        coverage_data_path=None,
-        stdout="",
-        stderr="",
-        test_details=[],
-    )
-    with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_tests", return_value=mock_result) as mock_run,
-    ):
-        result = runner.invoke(
-            cli, ["test", "--runtime", "gut", "dir_a", "dir_b"]
-        )
-    assert result.exit_code == 0
-    _, kwargs = mock_run.call_args
-    assert kwargs["paths"] == ["dir_a", "dir_b"]
 
 
 def test_cli_version_table_output():

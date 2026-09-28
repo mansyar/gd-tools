@@ -64,13 +64,11 @@ def test_test_defaults_to_native_runtime_dispatch():
             "gd_tools.cli.run_native_test_command",
             return_value=_result(),
         ) as native_run,
-        patch("gd_tools.cli.run_tests") as legacy_run,
     ):
         result = CliRunner().invoke(cli, ["test"])
 
     assert result.exit_code == 0
     native_run.assert_called_once()
-    legacy_run.assert_not_called()
 
 
 def test_test_explicit_native_and_no_exit_dispatch_native_options():
@@ -119,19 +117,25 @@ def test_test_forwards_native_tags_and_test_timeout():
     assert native_run.call_args.kwargs["test_timeout"] == 1.5
 
 
-def test_test_runtime_gut_dispatches_legacy_runner():
-    """Explicit GUT selection preserves the existing runner."""
-    config = MagicMock()
-    with (
-        patch("gd_tools.cli.load_config", return_value=config),
-        patch("gd_tools.cli.run_tests", return_value=_result()) as legacy_run,
-        patch("gd_tools.cli.run_native_test_command") as native_run,
-    ):
-        result = CliRunner().invoke(cli, ["test", "--runtime", "gut"])
+def test_test_runtime_gut_is_rejected_with_migration_guidance():
+    """`--runtime gut` is rejected; the bridge replaces the legacy runner."""
+    result = CliRunner().invoke(cli, ["test", "--runtime", "gut"])
 
-    assert result.exit_code == 0
-    legacy_run.assert_called_once()
-    native_run.assert_not_called()
+    assert result.exit_code == 2
+    assert "GUT compatibility bridge" in result.output
+    assert "docs/gut-migration.md" in result.output
+
+
+def test_test_config_runtime_gut_is_rejected_with_migration_guidance():
+    """`test.runtime = "gut"` in the project config is rejected the same way."""
+    config = MagicMock()
+    config.test.runtime = "gut"
+    with patch("gd_tools.cli.load_config", return_value=config):
+        result = CliRunner().invoke(cli, ["test"])
+
+    assert result.exit_code == 2
+    assert "GUT compatibility bridge" in result.output
+    assert "docs/gut-migration.md" in result.output
 
 
 def test_test_invalid_runtime_exits_2():

@@ -119,6 +119,13 @@ def run_native_test_command(
     process_timeout = float(timeout) if timeout is not None else 300.0
     run_id = uuid.uuid4().hex
     artifact_layout = NativeArtifactLayout.create(project_root, run_id)
+    if any(suite.runtime == RuntimeMode.GUT for suite in suites):
+        # FR-9: bridge runs announce the temporary migration path so users
+        # know GutTest suites execute through the compatibility bridge.
+        output.print_info(
+            "Running through the GUT compatibility bridge: this is a "
+            "temporary migration path. See docs/gut-migration.md."
+        )
     try:
         mark_run_started(artifact_layout)
     except OSError as exc:

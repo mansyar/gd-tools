@@ -1,8 +1,7 @@
 """Coverage orchestrator module.
 
-Coordinates the full coverage flow by wiring together the plan generator,
-test runner, and reporter modules.  This is the orchestration layer mandated
-by NFR-1 — CLI commands delegate to these functions rather than embedding
+Coordinates coverage plan generation, data merging, and reporting. The
+coverage CLI commands delegate to these functions rather than embedding
 business logic directly.
 """
 
@@ -29,165 +28,11 @@ from gd_tools.coverage.reporter import (
     ReportResult,
 )
 from gd_tools.errors import (
-    CoveragePlanError,
     CoverageThresholdError,
-    TestFailureError,
 )
-from gd_tools.test_runner import TestResult, run_tests
 
 if TYPE_CHECKING:
     from gd_tools.coverage.plan_generator import CoveragePlan
-
-
-def run_coverage_test(
-    config: GdToolsConfig,
-    suite: str | None = None,
-    test_name: str | None = None,
-    junit_xml: str | None = None,
-    no_exit_code: bool = False,
-    min_percent: int | None = None,
-    timeout: int | None = None,
-    paths: list[str] | None = None,
-    show_uncovered: bool = False,
-    no_cache: bool = False,
-) -> TestResult:
-    """Run tests with coverage instrumentation and generate reports.
-
-    Orchestrates the full coverage flow:
-
-    1. Generate an instrumentation plan.
-    2. Write the plan to ``<output_dir>/plan.json``.
-    3. Run tests with coverage enabled.
-    4. Read the coverage data produced by the runtime hooks.
-    5. Generate reports in the configured format.
-
-    Error precedence (NFR-2): ``TestFailureError`` is re-raised before
-    ``CoverageThresholdError`` when both occur.
-
-    Args:
-        config: Project configuration.
-        suite: Optional test suite filter.
-        test_name: Optional specific test to run.
-        junit_xml: Optional JUnit XML output path.
-        no_exit_code: If True, test failures do not raise
-            :class:`TestFailureError`.
-        min_percent: Minimum coverage percentage (0-100). If set and
-            coverage is below this, raises
-            :class:`CoverageThresholdError`.
-        timeout: Optional test timeout in seconds.
-        show_uncovered: If True, print per-file uncovered lines and
-            branches when coverage is below 100%.
-        no_cache: If True, bypass the plan cache and force plan
-            regeneration.
-
-    Returns:
-        The :class:`TestResult` from running tests.
-
-    Raises:
-        TestFailureError: If tests fail (unless ``no_exit_code`` is True).
-        CoverageThresholdError: If coverage is below ``min_percent``.
-    """
-    project_root = find_project_root()
-    output_dir = project_root / config.coverage.output_dir
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Generate instrumentation plan (with cache support).
-    plan, cache_status = plan_generator.generate_plan_cached(
-        str(project_root),
-        config.coverage.exclude,
-        config.coverage.test_dirs,
-        cache_path=str(output_dir / "plan.json"),
-        use_cache=not no_cache,
-    )
-    if not cache_status.hit:
-        plan_generator.write_plan_json(plan, str(output_dir / "plan.json"))
-
-    output.print_verbose(
-        f"Coverage plan cache {'hit' if cache_status.hit else 'miss'}: "
-        f"{cache_status.reason}"
-    )
-
-    # Run tests with coverage enabled.
-    test_error: TestFailureError | None = None
-    result: TestResult | None = None
-    try:
-        result = run_tests(
-            config,
-            coverage=True,
-            min_percent=min_percent,
-            suite=suite,
-            test_name=test_name,
-            junit_xml=junit_xml,
-            no_exit_code=no_exit_code,
-            timeout=timeout,
-            paths=paths,
-        )
-    except TestFailureError as exc:
-        test_error = exc
-
-    # Read coverage data and generate reports (even if tests failed).
-    # If tests failed AND coverage data is missing (e.g., GUT crashed
-    # before writing coverage.json), re-raise the TestFailureError
-    # instead of the CoveragePlanError — the test failure is the root
-    # cause and the missing file is just a side effect.
-    try:
-        data = reporter.read_coverage_json(output_dir / "coverage.json")
-        plan = plan_generator.read_plan_json(str(output_dir / "plan.json"))
-    except CoveragePlanError:
-        if test_error is not None:
-            raise test_error
-        raise
-
-    min_threshold = min_percent / 100 if min_percent is not None else None
-    try:
-        report_result = reporter.generate_report(
-            plan,
-            data,
-            output_dir,
-            config.coverage.format,
-            min_threshold=min_threshold,
-        )
-    except CoverageThresholdError as exc:
-        # The native seam (command.py) prefers the test failure over the
-        # coverage gate, and the two runtimes must not disagree about exit
-        # codes. A failed test is the more actionable signal, and the
-        # gate's anti-false-success purpose is moot once the run already
-        # failed -- so the test failure is raised before the gate here too.
-        if test_error is not None:
-            raise test_error
-        if exc.report_result is not None:
-            _report_coverage(
-                plan,
-                data,
-                exc.report_result.summary,
-                min_percent,
-                show_uncovered=show_uncovered,
-                file_summaries=exc.report_result.file_summaries,
-            )
-        if test_error is not None:
-            raise test_error
-        raise
-
-    if test_error is not None:
-        raise test_error
-
-    # Print coverage inline summary on success.
-    _report_coverage(
-        plan,
-        data,
-        report_result.summary,
-        min_percent,
-        show_uncovered=show_uncovered,
-        file_summaries=report_result.file_summaries,
-    )
-
-    if result is None:
-        raise CoveragePlanError(
-            "Coverage generation returned no result — "
-            "run_tests() returned None without raising TestFailureError. "
-            "This should not happen; please report as a bug."
-        )
-    return result
 
 
 def generate_coverage_report(
@@ -416,7 +261,7 @@ def _print_coverage_inline(
 ) -> None:
     """Print a one-line coverage summary.
 
-    Used by :func:`run_coverage_test` to show coverage after test
+    Used by :func:`show_coverage_summary` to show coverage after test
     results.  Prints the line and branch coverage percentages followed
     by a summary footer indicating whether the threshold was met.
     When ``show_uncovered`` is True and coverage is below 100%,

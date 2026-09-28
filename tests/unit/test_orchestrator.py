@@ -1,9 +1,8 @@
 """Unit tests for the coverage orchestrator module.
 
-Tests the four orchestration functions that coordinate plan_generator ->
-test_runner -> reporter:
+Tests the three orchestration functions that coordinate plan_generator and
+reporter:
 
-- run_coverage_test(): full coverage flow (plan -> run -> report)
 - generate_coverage_report(): regenerate reports from existing data
 - merge_coverage_files(): merge multiple coverage data files
 - show_coverage_summary(): print terminal summary table
@@ -18,7 +17,6 @@ from gd_tools.config import GdToolsConfig
 from gd_tools.coverage.orchestrator import (
     generate_coverage_report,
     merge_coverage_files,
-    run_coverage_test,
     show_coverage_summary,
 )
 from gd_tools.coverage.plan_generator import (
@@ -32,13 +30,11 @@ from gd_tools.coverage.reporter import (
     CoverageSummary,
     FileCoverage,
     FileSummary,
-    OmittedTarget,
     ReportResult,
 )
 from gd_tools.errors import (
     CoveragePlanError,
     CoverageThresholdError,
-    TestFailureError,
 )
 from gd_tools.test_runner import TestResult
 from gd_tools.verbosity import Verbosity, set_verbosity
@@ -129,7 +125,6 @@ def mock_deps(tmp_path):
         patch(
             "gd_tools.coverage.orchestrator.plan_generator.write_plan_json"
         ) as mock_write_plan,
-        patch("gd_tools.coverage.orchestrator.run_tests") as mock_run_tests,
         patch(
             "gd_tools.coverage.orchestrator.reporter.read_coverage_json"
         ) as mock_read_cov,
@@ -148,7 +143,6 @@ def mock_deps(tmp_path):
             _make_plan(),
             CacheStatus(hit=False, reason="1 file changed"),
         )
-        mock_run_tests.return_value = _make_test_result()
         mock_read_cov.return_value = _make_coverage_data()
         mock_read_plan.return_value = _make_plan()
         mock_gen_report.return_value = _make_report_result()
@@ -165,7 +159,6 @@ def mock_deps(tmp_path):
             "find_project_root": mock_find_root,
             "generate_plan_cached": mock_gen_plan_cached,
             "write_plan_json": mock_write_plan,
-            "run_tests": mock_run_tests,
             "read_coverage_json": mock_read_cov,
             "read_plan_json": mock_read_plan,
             "generate_report": mock_gen_report,
@@ -189,231 +182,10 @@ def quiet_mode():
     set_verbosity(Verbosity.DEFAULT)
 
 
-# --- run_coverage_test() ---
-
-
-@pytest.mark.unit
-def test_run_coverage_test_generates_plan(mock_deps):
-    """run_coverage_test() generates a plan via plan_generator.generate_plan_cached()."""
-    run_coverage_test(_make_config())
-
-    mock_deps["generate_plan_cached"].assert_called_once()
-
-
-@pytest.mark.unit
-def test_run_coverage_test_writes_plan_json(mock_deps):
-    """run_coverage_test() writes plan to <output_dir>/plan.json."""
-    run_coverage_test(_make_config())
-
-    mock_deps["write_plan_json"].assert_called_once()
-    plan_path = mock_deps["write_plan_json"].call_args[0][1]
-    assert plan_path.endswith("plan.json")
-    assert "coverage" in plan_path
-
-
-@pytest.mark.unit
-def test_run_coverage_test_calls_run_tests_with_coverage(mock_deps):
-    """run_coverage_test() calls run_tests() with coverage=True."""
-    run_coverage_test(_make_config())
-
-    mock_deps["run_tests"].assert_called_once()
-    kwargs = mock_deps["run_tests"].call_args.kwargs
-    assert kwargs.get("coverage") is True
-
-
-@pytest.mark.unit
-def test_run_coverage_test_reads_coverage_data(mock_deps):
-    """run_coverage_test() reads coverage data via reporter.read_coverage_json()."""
-    run_coverage_test(_make_config())
-
-    mock_deps["read_coverage_json"].assert_called_once()
-    cov_path = mock_deps["read_coverage_json"].call_args[0][0]
-    assert str(cov_path).endswith("coverage.json")
-
-
-@pytest.mark.unit
-def test_run_coverage_test_min_percent_converted(mock_deps):
-    """run_coverage_test() converts min_percent (0-100) to min_threshold (0.0-1.0)."""
-    run_coverage_test(_make_config(), min_percent=80)
-
-    mock_deps["generate_report"].assert_called_once()
-    kwargs = mock_deps["generate_report"].call_args.kwargs
-    assert kwargs.get("min_threshold") == 0.8
-
-
-@pytest.mark.unit
-def test_run_coverage_test_error_precedence_test_failure_first(mock_deps):
-    """When both TestFailureError and CoverageThresholdError occur, TestFailureError is re-raised."""
-    mock_deps["run_tests"].side_effect = TestFailureError("Tests failed")
-    mock_deps["generate_report"].side_effect = CoverageThresholdError(
-        "Below threshold"
-    )
-
-    with pytest.raises(TestFailureError):
-        run_coverage_test(_make_config())
-
-
-@pytest.mark.unit
-def test_run_coverage_test_prefers_test_failure_over_omission_gate(mock_deps):
-    """A failed test outranks the omission gate, matching the native seam.
-
-    The threshold branch reports and gates before re-raising, but only when
-    the tests passed: command.py prefers test_failure over the gate, and the
-    two runtimes must not disagree about exit codes (review finding).
-    """
-    mock_deps["run_tests"].side_effect = TestFailureError("Tests failed")
-    mock_deps["read_coverage_json"].return_value = CoverageData(
-        version=1,
-        generated_at="2025-01-01T00:00:00",
-        files=[FileCoverage(file_id=0, hits={"0": 3})],
-        omitted=[
-            OmittedTarget(
-                file_id=99,
-                path="res://gone.gd",
-                reason="stale plan",
-                fix="regen",
-            )
-        ],
-    )
-    report_result = _make_report_result()
-    report_result.threshold_met = False
-    mock_deps["generate_report"].side_effect = CoverageThresholdError(
-        "Below threshold", report_result=report_result
-    )
-
-    with pytest.raises(TestFailureError):
-        run_coverage_test(_make_config(), min_percent=90)
-
-    # The gate must never fire over a failed test: no partial report, no
-    # exit-2 CoverageThresholdError.
-    mock_deps["compute_summary"].assert_not_called()
-
-
-@pytest.mark.unit
-def test_run_coverage_test_raises_coverage_threshold_error(mock_deps):
-    """When only CoverageThresholdError occurs, it is raised."""
-    mock_deps["generate_report"].side_effect = CoverageThresholdError(
-        "Below threshold"
-    )
-
-    with pytest.raises(CoverageThresholdError):
-        run_coverage_test(_make_config())
-
-
-@pytest.mark.unit
-def test_run_coverage_test_returns_test_result(mock_deps):
-    """When no errors occur, TestResult is returned."""
-    expected = _make_test_result()
-    mock_deps["run_tests"].return_value = expected
-
-    result = run_coverage_test(_make_config())
-
-    assert result == expected
-
-
-@pytest.mark.unit
-def test_run_coverage_test_re_raises_test_failure(mock_deps):
-    """When TestFailureError occurs but coverage is above threshold, TestFailureError is re-raised."""
-    mock_deps["run_tests"].side_effect = TestFailureError("Tests failed")
-
-    with pytest.raises(TestFailureError):
-        run_coverage_test(_make_config())
-
-
-@pytest.mark.unit
-def test_run_coverage_test_no_exit_code_passes_flag(mock_deps):
-    """When no_exit_code=True, the flag is passed to run_tests and reports are still generated."""
-    run_coverage_test(_make_config(), no_exit_code=True)
-
-    kwargs = mock_deps["run_tests"].call_args.kwargs
-    assert kwargs.get("no_exit_code") is True
-    mock_deps["generate_report"].assert_called_once()
+# --- Coverage summary display ---
 
 
 # --- Cache integration tests ---
-
-
-@pytest.mark.unit
-def test_run_coverage_test_no_cache_forces_regeneration(mock_deps):
-    """run_coverage_test() with no_cache=True passes use_cache=False."""
-    run_coverage_test(_make_config(), no_cache=True)
-
-    kwargs = mock_deps["generate_plan_cached"].call_args.kwargs
-    assert kwargs.get("use_cache") is False
-
-
-@pytest.mark.unit
-def test_run_coverage_test_default_uses_cache(mock_deps):
-    """run_coverage_test() without no_cache passes use_cache=True."""
-    run_coverage_test(_make_config())
-
-    kwargs = mock_deps["generate_plan_cached"].call_args.kwargs
-    assert kwargs.get("use_cache") is True
-
-
-@pytest.mark.unit
-def test_run_coverage_test_passes_cache_path(mock_deps):
-    """run_coverage_test() passes cache_path pointing to plan.json."""
-    run_coverage_test(_make_config())
-
-    kwargs = mock_deps["generate_plan_cached"].call_args.kwargs
-    cache_path = kwargs.get("cache_path")
-    assert cache_path is not None
-    assert cache_path.endswith("plan.json")
-
-
-@pytest.mark.unit
-def test_run_coverage_test_skips_write_on_cache_hit(mock_deps):
-    """run_coverage_test() skips writing plan.json on cache hit."""
-    mock_deps["generate_plan_cached"].return_value = (
-        _make_plan(),
-        CacheStatus(hit=True, reason="1 file unchanged"),
-    )
-    run_coverage_test(_make_config())
-
-    mock_deps["write_plan_json"].assert_not_called()
-
-
-@pytest.mark.unit
-def test_run_coverage_test_verbose_cache_hit(mock_deps, capsys, verbose_mode):
-    """run_coverage_test() prints cache hit message when --verbose."""
-    mock_deps["generate_plan_cached"].return_value = (
-        _make_plan(),
-        CacheStatus(hit=True, reason="1 file unchanged"),
-    )
-    run_coverage_test(_make_config())
-
-    captured = capsys.readouterr()
-    assert "cache hit" in captured.out.lower()
-
-
-@pytest.mark.unit
-def test_run_coverage_test_verbose_cache_miss(mock_deps, capsys, verbose_mode):
-    """run_coverage_test() prints cache miss message when --verbose."""
-    run_coverage_test(_make_config())
-
-    captured = capsys.readouterr()
-    assert "cache miss" in captured.out.lower()
-
-
-@pytest.mark.unit
-def test_run_coverage_test_default_no_cache_output(mock_deps, capsys):
-    """run_coverage_test() does not print cache status in default verbosity."""
-    run_coverage_test(_make_config())
-
-    captured = capsys.readouterr()
-    assert "cache hit" not in captured.out.lower()
-    assert "cache miss" not in captured.out.lower()
-
-
-@pytest.mark.unit
-def test_run_coverage_test_quiet_no_cache_output(mock_deps, capsys, quiet_mode):
-    """run_coverage_test() does not print cache status in quiet mode."""
-    run_coverage_test(_make_config())
-
-    captured = capsys.readouterr()
-    assert "cache hit" not in captured.out.lower()
-    assert "cache miss" not in captured.out.lower()
 
 
 # --- generate_coverage_report() ---
@@ -732,73 +504,7 @@ def test_show_coverage_summary_no_panels_when_full_coverage(mock_deps, capsys):
     assert "Uncovered lines" not in captured.out
 
 
-# --- Coverage summary display in run_coverage_test() ---
-
-
-@pytest.mark.unit
-def test_run_coverage_test_coverage_summary_on_success(mock_deps, capsys):
-    """run_coverage_test() prints coverage inline summary on success (no --min)."""
-    run_coverage_test(_make_config())
-
-    captured = capsys.readouterr()
-    assert "Coverage:" in captured.out
-    assert "80.0%" in captured.out  # line_rate = 0.8 = 80%
-
-
-@pytest.mark.unit
-def test_run_coverage_test_coverage_summary_threshold_met(mock_deps, capsys):
-    """run_coverage_test() prints coverage inline summary when --min threshold is met."""
-    run_coverage_test(_make_config(), min_percent=80)
-
-    captured = capsys.readouterr()
-    assert "Coverage:" in captured.out
-    assert "80.0%" in captured.out
-
-
-@pytest.mark.unit
-def test_run_coverage_test_coverage_summary_before_threshold_error(
-    mock_deps,
-    capsys,
-):
-    """run_coverage_test() prints coverage inline summary before raising CoverageThresholdError."""
-    err = CoverageThresholdError(
-        "Below threshold", report_result=_make_report_result()
-    )
-    mock_deps["generate_report"].side_effect = err
-
-    with pytest.raises(CoverageThresholdError):
-        run_coverage_test(_make_config(), min_percent=90)
-
-    captured = capsys.readouterr()
-    assert "Coverage:" in captured.out
-
-
-@pytest.mark.unit
-def test_run_coverage_test_no_coverage_summary_on_plan_error(mock_deps, capsys):
-    """run_coverage_test() does NOT print coverage summary when coverage data is unavailable."""
-    mock_deps["read_coverage_json"].side_effect = CoveragePlanError(
-        "File not found"
-    )
-
-    with pytest.raises(CoveragePlanError):
-        run_coverage_test(_make_config())
-
-    captured = capsys.readouterr()
-    assert "Coverage:" not in captured.out
-    assert "Coverage Summary" not in captured.out
-
-
-@pytest.mark.unit
-def test_coverage_summary_table_format_matches_show_summary(mock_deps, capsys):
-    """show_coverage_summary() table has columns: Metric, Found, Hit, Rate."""
-    show_coverage_summary(_make_config())
-
-    captured = capsys.readouterr()
-    assert "Coverage Summary" in captured.out
-    assert "Metric" in captured.out
-    assert "Found" in captured.out
-    assert "Hit" in captured.out
-    assert "Rate" in captured.out
+# --- Coverage summary display ---
 
 
 # --- Coverage output color-coding and summary footer ---
@@ -846,17 +552,6 @@ def test_show_coverage_summary_color_coded_below_threshold(
     captured = capsys.readouterr()
     # Red ANSI code for rates below threshold
     assert "\x1b[31" in captured.out  # red
-
-
-@pytest.mark.unit
-def test_run_coverage_test_inline_summary_content(mock_deps, capsys):
-    """run_coverage_test() inline summary shows line and branch coverage percentages."""
-    run_coverage_test(_make_config())
-
-    captured = capsys.readouterr()
-    assert "Coverage:" in captured.out
-    assert "80.0%" in captured.out  # line_rate = 0.8 = 80%
-    assert "100.0%" in captured.out  # branch_rate = 1.0 = 100%
 
 
 # --- _print_coverage_inline() with show_uncovered ---
