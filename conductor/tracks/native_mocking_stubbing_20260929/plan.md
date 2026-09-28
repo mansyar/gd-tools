@@ -13,7 +13,7 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 ## Phase 2 — Stub matching & call recording (GDScript)
 - [x] Task: Red — failing tests for `stub()` chain (`to_return`, `to_call_super`), exact-argument matching, "any" wildcard, default fallback, per-test isolation `[211f352]`
 - [x] Task: Green — implement stub registry + call recorder wired into generated doubles `[61eec36]`
-- [ ] Task: Refactor + suite green
+- [x] Task: Refactor + suite green `[967f830]`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Call assertions (GDScript)
