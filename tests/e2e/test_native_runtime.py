@@ -1906,6 +1906,7 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
         "broken.gd" in warning for warning in payload["engine_warnings"]
     ), payload["engine_warnings"]
 
+
 MOCKING_METHODS = [
     "test_double_returns_instance_extending_target",
     "test_double_accepts_path_string",

@@ -69,6 +69,7 @@ COVERAGE_ADDON_FILES = [
 
 NATIVE_TEST_ADDON_FILES = [
     "gd_tools_test.gd",
+    "gd_tools_mock.gd",
     "gd_tools_gut_bridge.gd",
     "gd_tools_test_context.gd",
     "gd_tools_test_runner.gd",
