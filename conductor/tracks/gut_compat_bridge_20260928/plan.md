@@ -74,11 +74,11 @@
 
 ## Phase 6 — Documentation & Truth Pass
 
-- [ ] Task: Write `docs/gut-migration.md` (supported subset, failing
+- [x] Task: Write `docs/gut-migration.md` (supported subset, failing
       constructs, migration steps; linked from diagnostics)
-- [ ] Task: Update `docs/ROADMAP.md` Phase 3 checkboxes to delivered; update
+- [x] Task: Update `docs/ROADMAP.md` Phase 3 checkboxes to delivered; update
       `ARCHITECTURE.md` Known Limitations
-- [ ] Task: Update README/CLI help touchpoints referencing the legacy runtime
-- [ ] Task: Final verification: full suite (`CI=true pytest`), `ruff check`,
-      `black --check`, e2e green; commit
+- [x] Task: Update README/CLI help touchpoints referencing the legacy runtime
+- [x] Task: Final verification: full suite (`CI=true pytest`), `ruff check`,
+      `black --check`, e2e green; commit (commit `0d8cbbb`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
