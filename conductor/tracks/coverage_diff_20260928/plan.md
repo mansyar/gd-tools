@@ -63,7 +63,7 @@ with correct exit codes before any diff logic exists.
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 2 — Diff computation engine
+## Phase 2 — Diff computation engine [checkpoint: `36a5eda`]
 
 **Purpose:** Implement the pure diff core (`compute_diff`) with line and
 branch deltas, file classification, newly-uncovered line extraction, and
@@ -82,20 +82,20 @@ totals — independent of CLI and rendering.
     lines/branches (no division by zero).
   - [ ] Confirm the expected Red phase.
 - [x] Task: Implement `compute_diff(base, head) -> DiffResult` [commit: `50f1b4b`]
-  - [ ] Compute per-file base/head covered and executable counts and rates for
+  - [x] Compute per-file base/head covered and executable counts and rates for
     lines and branches, plus deltas in counts and rate points.
-  - [ ] Classify each file: `unchanged`, `improved`, `regressed`, `new`,
+  - [x] Classify each file: `unchanged`, `improved`, `regressed`, `new`,
     `removed`.
-  - [ ] Extract newly-uncovered line numbers for regressed files.
-  - [ ] Aggregate total metrics and overall classification.
-  - [ ] Reuse existing summary computation where practical; keep the module
+  - [x] Extract newly-uncovered line numbers for regressed files.
+  - [x] Aggregate total metrics and overall classification.
+  - [x] Reuse existing summary computation where practical; keep the module
     self-contained otherwise (surgical, no refactor of existing reporters).
-  - [ ] Run the targeted tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run the diff-engine unit tests plus static checks.
-  - [ ] Verify determinism (same inputs → same outputs) and stable ordering.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+  - [x] Run the targeted tests to Green.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [commit: `36a5eda`]
+  - [x] Run the diff-engine unit tests plus static checks.
+  - [x] Verify determinism (same inputs → same outputs) and stable ordering.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 3 — `coverage diff` CLI, rendering, and gating
 
