@@ -48,7 +48,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
   (checkpoint `1fd5937`)
 
-## Phase 4 — Result Normalization, Orchestration & Coverage
+## Phase 4 — Result Normalization, Orchestration & Coverage [checkpoint: e40cbf8]
 
 - [x] Task: Write failing tests for bridge→native result normalization
       (statuses, JUnit XML, artifacts index, exit codes, mixed runs) (RED)
@@ -57,7 +57,8 @@
 - [x] Task: Write failing tests for coverage on bridge suites, then implement
       (tracker, plan schema v1, no GUT autoload) (RED→GREEN)
 - [x] Task: Verify coverage; commit + git note (commit `5be845a`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      (checkpoint `e40cbf8`)
 
 ## Phase 5 — Legacy Path Removal & Deprecation Diagnostics (Python/CLI)
 
