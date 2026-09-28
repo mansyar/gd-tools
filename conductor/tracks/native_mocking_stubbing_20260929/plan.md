@@ -4,11 +4,11 @@ Track ID: `native_mocking_stubbing_20260929` · Branch: `feature/native-mocking-
 
 All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum implementation) → Refactor. Coverage gates: >80% line, >70% branch for new source code.
 
-## Phase 1 — Double engine (GDScript)
+## Phase 1 — Double engine (GDScript) `[checkpoint: 204f2aa]`
 - [x] Task: Red — write failing native suites for `double()` / `partial_double()` semantics (unstubbed double returns `null`; partial runs real implementation; `to_call_super()` calls parent; doubles of scripts by path and preloaded `Script`; fresh instances per call) `[a83b5d1]`
 - [x] Task: Green — implement the doubler (runtime-generated extending script) as a new addon module (e.g. `gd_tools_mock.gd`) `[cb1b320]`
 - [x] Task: Refactor + full native suite green `[f43f1e3]`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `[204f2aa]`
 
 ## Phase 2 — Stub matching & call recording (GDScript)
 - [ ] Task: Red — failing tests for `stub()` chain (`to_return`, `to_call_super`), exact-argument matching, "any" wildcard, default fallback, per-test isolation
