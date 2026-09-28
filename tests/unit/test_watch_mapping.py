@@ -11,16 +11,16 @@ pytestmark = pytest.mark.unit
 
 
 def _suite(relative_posix_path: str) -> NativeSuite:
-    return NativeSuite(name=Path(relative_posix_path).stem, path=relative_posix_path)
+    return NativeSuite(
+        name=Path(relative_posix_path).stem, path=relative_posix_path
+    )
 
 
 def test_maps_source_file_to_test_prefix_suite(tmp_path):
     """foo.gd maps to a sibling test_foo.gd suite."""
     suites = [_suite("res://tests/test_enemy.gd")]
 
-    result = map_changed_file(
-        tmp_path / "src" / "enemy.gd", tmp_path, suites
-    )
+    result = map_changed_file(tmp_path / "src" / "enemy.gd", tmp_path, suites)
 
     assert result == "res://tests/test_enemy.gd"
 
@@ -29,9 +29,7 @@ def test_maps_source_file_to_suffix_suite(tmp_path):
     """foo.gd maps to a sibling foo_test.gd suite."""
     suites = [_suite("res://tests/enemy_test.gd")]
 
-    result = map_changed_file(
-        tmp_path / "src" / "enemy.gd", tmp_path, suites
-    )
+    result = map_changed_file(tmp_path / "src" / "enemy.gd", tmp_path, suites)
 
     assert result == "res://tests/enemy_test.gd"
 
@@ -75,9 +73,7 @@ def test_no_match_returns_none(tmp_path):
     """A changed file with no convention sibling maps to nothing."""
     suites = [_suite("res://tests/test_enemy.gd")]
 
-    result = map_changed_file(
-        tmp_path / "src" / "player.gd", tmp_path, suites
-    )
+    result = map_changed_file(tmp_path / "src" / "player.gd", tmp_path, suites)
 
     assert result is None
 
@@ -86,9 +82,7 @@ def test_mapping_respects_active_suite_filter(tmp_path):
     """A sibling suite present on disk but absent from the selected set does not match."""
     suites: list[NativeSuite] = []
 
-    result = map_changed_file(
-        tmp_path / "src" / "enemy.gd", tmp_path, suites
-    )
+    result = map_changed_file(tmp_path / "src" / "enemy.gd", tmp_path, suites)
 
     assert result is None
 

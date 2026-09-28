@@ -2,7 +2,11 @@
 
 import pytest
 
-from gd_tools.watch.scope import WatchAction, classify_event, resolve_watched_files
+from gd_tools.watch.scope import (
+    WatchAction,
+    classify_event,
+    resolve_watched_files,
+)
 
 pytestmark = pytest.mark.unit
 
