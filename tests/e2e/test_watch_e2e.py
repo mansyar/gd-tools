@@ -241,4 +241,7 @@ def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
         line.startswith("Run 4:") and "(3 tests)" in line for line in lines
     )
     assert any("No suite mapped for 'src/helper.gd'" in line for line in lines)
-    assert before is None or after is None or before == after
+    # Orphan check: the session must not ADD Godot processes. A strict
+    # equality comparison is flaky in a shared environment because
+    # unrelated pre-existing Godot processes may exit during the run.
+    assert before is None or after is None or after <= before
