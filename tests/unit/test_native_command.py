@@ -405,7 +405,9 @@ def test_run_native_command_empty_suites_gives_gut_guidance(tmp_path):
             return_value=[],
         ),
     ):
-        with pytest.raises(ConfigError, match=r"--runtime gut"):
+        with pytest.raises(
+            ConfigError, match=r"Add a suite extending GdToolsTest"
+        ):
             run_native_test_command(_config())
 
 

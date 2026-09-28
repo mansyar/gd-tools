@@ -25,6 +25,7 @@ from gd_tools.native_test.artifacts import (
     mark_run_started,
     publish_artifact_index,
 )
+from gd_tools.native_test.bridge_scan import scan_bridge_suites
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.preflight import (
@@ -109,9 +110,10 @@ def run_native_test_command(
     )
     if not suites:
         raise ConfigError(
-            "No native GdToolsTest suites were found. Add a suite extending "
-            "GdToolsTest or run a legacy project with --runtime gut."
+            "No test suites were found. Add a suite extending GdToolsTest "
+            "(native) or GutTest (compatibility bridge)."
         )
+    scan_bridge_suites(project_root, suites)
 
     _import_project(godot_info.path, project_root, timeout)
     process_timeout = float(timeout) if timeout is not None else 300.0
