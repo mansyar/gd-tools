@@ -17,6 +17,7 @@ from gd_tools.config import GdToolsConfig
 from gd_tools.coverage.orchestrator import (
     generate_coverage_report,
     merge_coverage_files,
+    save_coverage_baseline,
     show_coverage_summary,
 )
 from gd_tools.coverage.plan_generator import (
@@ -691,3 +692,59 @@ def test_print_coverage_inline_without_show_uncovered_no_panels(capsys):
     captured = capsys.readouterr()
     assert "Coverage:" in captured.out
     assert "Uncovered lines" not in captured.out
+
+
+# ---------------------------------------------------------------------------
+# save_coverage_baseline
+# ---------------------------------------------------------------------------
+
+
+def test_save_coverage_baseline_writes_baseline(tmp_path):
+    """save_coverage_baseline writes a loadable baseline.json."""
+    from gd_tools.coverage.diff_reporter import load_baseline
+    from gd_tools.coverage.plan_generator import write_plan_json
+    from gd_tools.coverage.reporter import write_coverage_json
+
+    output_dir = tmp_path / ".gd-tools" / "coverage"
+    output_dir.mkdir(parents=True)
+    plan = CoveragePlan(
+        version=1,
+        generated_by="gd-tools",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://player.gd",
+                source_hash="sha256:abc123",
+                lines=[LinePlan(line=5, id=0, type="statement")],
+            )
+        ],
+    )
+    data = CoverageData(
+        version=1, files=[FileCoverage(file_id=0, hits={"0": 1})]
+    )
+    write_plan_json(plan, str(output_dir / "plan.json"))
+    write_coverage_json(data, output_dir / "coverage.json")
+
+    config = GdToolsConfig()
+    with patch(
+        "gd_tools.coverage.orchestrator.find_project_root",
+        return_value=tmp_path,
+    ):
+        baseline_path = save_coverage_baseline(config)
+
+    assert baseline_path == output_dir / "baseline.json"
+    snapshot = load_baseline(baseline_path)
+    assert snapshot.plan.files[0].path == "res://player.gd"
+    assert snapshot.data.files[0].hits == {"0": 1}
+
+
+def test_save_coverage_baseline_missing_data_raises(tmp_path):
+    """save_coverage_baseline raises CoveragePlanError without coverage data."""
+    (tmp_path / ".gd-tools" / "coverage").mkdir(parents=True)
+    config = GdToolsConfig()
+    with patch(
+        "gd_tools.coverage.orchestrator.find_project_root",
+        return_value=tmp_path,
+    ):
+        with pytest.raises(CoveragePlanError):
+            save_coverage_baseline(config)

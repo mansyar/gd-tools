@@ -47,6 +47,14 @@ _Archived tracks live in `./archive/`._
 
 ---
 
+- [x] **Track: Coverage Diff** (archived → `./archive/coverage_diff_20260928/`) - codecov-style
+  coverage comparison: `coverage save-baseline` persists a self-contained plan+data
+  snapshot with advisory metadata, and `coverage diff --base` reports per-file line and
+  branch deltas (new/removed/improved/regressed files, newly-uncovered lines) with
+  `--report-format json` and `--fail-on-regression` exit-1 gating for CI.
+
+---
+
 - [x] **Track: GUT Compatibility Bridge** (Migration Phase 3)
   *Link: [gut_compat_bridge_20260928](./archive/gut_compat_bridge_20260928/index.md)* (archived → `./archive/gut_compat_bridge_20260928/`) - a
   GutTest-compatible shim base class in the gd-tools-test addon so legacy GUT

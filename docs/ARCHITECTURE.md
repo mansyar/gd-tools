@@ -589,6 +589,22 @@ metrics, and dispatches to format-specific reporters.
 the caller can display the coverage summary table before the error
 propagates).
 
+### 5.6 diff_reporter.py
+
+**Location:** `src/gd_tools/coverage/diff_reporter.py`
+
+**Responsibility:** Baseline snapshots and codecov-style coverage
+diffs (see `docs/USER_GUIDE.md` §3.7.4--3.7.5). A baseline is a
+single self-contained JSON document nesting the `plan.json` and
+`coverage.json` payloads verbatim plus advisory `baseline_meta`
+(UTC `saved_at`, best-effort git branch/commit), so a baseline stays
+valid across branches even when the plan changes. `compute_diff`
+matches files by path (never `file_id`), reuses
+`compute_file_summary`/`compute_summary` from `reporter.py`, and
+classifies each file as `improved`, `regressed`, `unchanged`, `new`,
+or `removed` using rate-based semantics (a count increase can still
+be a rate regression). Pure Python --- no Godot process involved.
+
 ---
 
 ## 6. Design Decisions

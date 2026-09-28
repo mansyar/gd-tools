@@ -1067,7 +1067,7 @@ themselves.
 | **Modules** | `src/gd_tools/coverage/diff_reporter.py` (new), `src/gd_tools/cli.py` |
 | **Effort** | 2-3 days |
 | **Risk** | MEDIUM -- baseline storage, diff computation |
-| **Status** | Planned |
+| **Status** | Delivered -- tracked as `coverage_diff_20260928` (branch `feature/coverage-diff-20260928`) |
 
 **Problem:**
 

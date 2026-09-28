@@ -1332,3 +1332,149 @@ def test_doctor_default_shows_table():
         result = runner.invoke(cli, ["doctor"])
     assert result.exit_code == 0
     assert "Godot Binary" in result.output
+
+
+# ---------------------------------------------------------------------------
+# coverage save-baseline
+# ---------------------------------------------------------------------------
+
+
+def test_coverage_save_baseline_is_registered():
+    """Test coverage save-baseline is registered in the coverage group."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "save-baseline", "--help"])
+    assert result.exit_code == 0
+
+
+def test_coverage_save_baseline_calls_orchestrator():
+    """Test save-baseline delegates to save_coverage_baseline with config."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    baseline_path = Path(".gd-tools") / "coverage" / "baseline.json"
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.save_coverage_baseline",
+            return_value=baseline_path,
+        ) as mock_save,
+    ):
+        result = runner.invoke(cli, ["coverage", "save-baseline"])
+    assert result.exit_code == 0
+    mock_save.assert_called_once_with(mock_config)
+    assert "baseline.json" in result.output
+
+
+def test_coverage_save_baseline_missing_data_exit_2():
+    """Test save-baseline exits 2 when coverage data is missing."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.save_coverage_baseline",
+            side_effect=CoveragePlanError("Coverage data file not found"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "save-baseline"])
+    assert result.exit_code == 2
+
+
+# --- coverage diff ---
+
+
+def test_coverage_diff_is_registered():
+    """Test coverage diff --help shows the command and its options."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "diff", "--help"])
+    assert result.exit_code == 0
+    assert "--base" in result.output
+    assert "--fail-on-regression" in result.output
+    assert "--show-lines" in result.output
+    assert "--report-format" in result.output
+
+
+def test_coverage_diff_requires_base_option():
+    """Test coverage diff without --base is a usage error (exit 2)."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "diff"])
+    assert result.exit_code == 2
+
+
+def test_coverage_diff_calls_orchestrator():
+    """Test coverage diff delegates to diff_coverage with defaults."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.diff_coverage", return_value=None) as mock_diff,
+    ):
+        result = runner.invoke(cli, ["coverage", "diff", "--base", "b.json"])
+    assert result.exit_code == 0
+    mock_diff.assert_called_once_with(
+        mock_config,
+        "b.json",
+        show_lines=False,
+        report_format="text",
+        fail_on_regression=False,
+    )
+
+
+def test_coverage_diff_flags_passed_to_orchestrator():
+    """Test coverage diff forwards --show-lines/--report-format/gating flags."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.diff_coverage", return_value=None) as mock_diff,
+    ):
+        result = runner.invoke(
+            cli,
+            [
+                "coverage",
+                "diff",
+                "--base",
+                "b.json",
+                "--show-lines",
+                "--report-format",
+                "json",
+                "--fail-on-regression",
+            ],
+        )
+    assert result.exit_code == 0
+    mock_diff.assert_called_once_with(
+        mock_config,
+        "b.json",
+        show_lines=True,
+        report_format="json",
+        fail_on_regression=True,
+    )
+
+
+def test_coverage_diff_plan_error_exit_2():
+    """Test missing/malformed baseline or current data exits 2."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.diff_coverage",
+            side_effect=CoveragePlanError("Baseline file not found"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "diff", "--base", "b.json"])
+    assert result.exit_code == 2
+
+
+def test_coverage_diff_regression_gate_exit_1():
+    """Test a gated regression raises CoverageThresholdError mapped to exit 1."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.diff_coverage",
+            side_effect=CoverageThresholdError("Coverage regressed"),
+        ),
+    ):
+        result = runner.invoke(
+            cli,
+            ["coverage", "diff", "--base", "b.json", "--fail-on-regression"],
+        )
+    assert result.exit_code == 1
