@@ -20,7 +20,7 @@
 
 ## Phase 2: Report Rendering & Config Translation
 
-- [ ] Task: Rich report rendering *(TDD)*
+- [x] Task: Rich report rendering *(TDD)* — `3b74579`
   - [ ] Write failing tests: per-file inventory, "works now, rename later" alias section, config mapping results, unified diff display, summary
   - [ ] Implement report renderer following `output.py` conventions
   - [ ] Verify coverage
