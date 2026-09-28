@@ -18,19 +18,15 @@ MIGRATION_DOC = "docs/gut-migration.md"
 
 # Longest names first so regex alternation captures the full construct name
 # (``assert_property_with_backing_variable`` rather than ``assert_property``).
+#
+# Mocking constructs (``double``, ``partial_double``, ``stub``,
+# ``assert_called*``) are NOT listed: the native runtime implements them and
+# the bridge inherits them from ``GdToolsTest``.
 _UNSUPPORTED_NAMES: tuple[str, ...] = sorted(
     (
-        # Mocking.
-        "double",
-        "partial_double",
-        "stub",
         # Parameterization.
         "parameterize",
         "use_parameters",
-        # Mock assertions.
-        "assert_called",
-        "assert_call_count",
-        "assert_not_called",
         # Property, orphan, and interactive assertions.
         "assert_setget",
         "assert_accessors",

@@ -146,8 +146,8 @@ def test_scan_reports_line_numbers_and_deduplicates(tmp_path):
         """extends GutTest
 
 func test_repeated() -> void:
-    double("res://a.gd")
-    double("res://b.gd")
+    parameterize("res://a.gd")
+    parameterize("res://b.gd")
 """,
     )
 
@@ -155,20 +155,20 @@ func test_repeated() -> void:
         scan_bridge_suites(tmp_path, [suite])
 
     message = str(excinfo.value)
-    assert message.count("double") == 1
+    assert message.count("parameterize") == 1
     assert "line 4" in message
 
 
 def test_scan_ignores_member_calls_on_objects(tmp_path):
-    """A method call like ``foo.double()`` is not a GUT helper call."""
+    """A method call like ``foo.parameterize()`` is not a GUT helper call."""
     suite = _bridge_suite(
         tmp_path,
         """extends GutTest
 
 func test_member_calls() -> void:
     var helper = MyHelper.new()
-    helper.double()
-    helper.stub()
+    helper.parameterize()
+    helper.use_parameters()
 """,
     )
 
@@ -213,11 +213,11 @@ def test_scan_groups_findings_per_file(tmp_path):
     """Findings from multiple bridge suites are grouped per file."""
     first = _bridge_suite(
         tmp_path,
-        'extends GutTest\n\nfunc test_one() -> void:\n    double("a")\n',
+        'extends GutTest\n\nfunc test_one() -> void:\n    parameterize("a")\n',
     )
     second_file = tmp_path / "test" / "other_test.gd"
     second_file.write_text(
-        "extends GutTest\n\nfunc test_two() -> void:\n    stub(b)\n",
+        "extends GutTest\n\nfunc test_two() -> void:\n    use_parameters(b)\n",
         encoding="utf-8",
     )
     second = NativeSuite(
@@ -242,7 +242,7 @@ def test_command_runs_bridge_scan_before_preflight(tmp_path, monkeypatch):
     test_dir = tmp_path / "test"
     test_dir.mkdir()
     (test_dir / "legacy_test.gd").write_text(
-        "extends GutTest\n\nfunc test_x() -> void:\n    double(obj)\n",
+        "extends GutTest\n\nfunc test_x() -> void:\n    parameterize(obj)\n",
         encoding="utf-8",
     )
     godot_info = SimpleNamespace(is_valid=True, path="godot", version="4.5")
@@ -257,5 +257,5 @@ def test_command_runs_bridge_scan_before_preflight(tmp_path, monkeypatch):
 
     monkeypatch.setattr(command, "_import_project", _fail_import)
 
-    with pytest.raises(BridgeScanError, match="double"):
+    with pytest.raises(BridgeScanError, match="parameterize"):
         command.run_native_test_command(GdToolsConfig())
