@@ -23,9 +23,9 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Fail-fast validation + addon packaging (Python + GDScript)
-- [ ] Task: Red (pytest) — `init` deploys the new mock module file; `doctor` verifies it; addon version handling
-- [ ] Task: Red (GDScript) — failing tests: `stub()` on a nonexistent method fails immediately; `double()` on a non-script value fails immediately, diagnostics name method + target
-- [ ] Task: Green — implement validation in the mock module; update `init.py`/`addon_check.py` manifests
+- [x] Task: Red (pytest) — `init` deploys the new mock module file; `doctor` verifies it; addon version handling `[7afdd75]`
+- [x] Task: Red (GDScript) — failing tests: `stub()` on a nonexistent method fails immediately; `double()` on a non-script value fails immediately, diagnostics name method + target `[7afdd75]`
+- [x] Task: Green — implement validation in the mock module; update `init.py`/`addon_check.py` manifests `[a983d96]`
 - [ ] Task: Refactor + `CI=true pytest` + native suites green, coverage gates met
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
