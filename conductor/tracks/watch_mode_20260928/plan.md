@@ -77,19 +77,19 @@
 
 **Purpose:** Expose the feature through `gd-tools test` with the documented UX contract.
 
-- [ ] Task: Add failing CLI tests for --watch flag handling
+- [x] Task: Add failing CLI tests for --watch flag handling [1568be9]
   - [ ] Test `--watch` + `--runtime gut` → exit 2 with a clear message.
   - [ ] Test `CI=true` + `--watch` → exit 2 with a clear message.
   - [ ] Test filters and `--coverage` pass through to the watch loop.
   - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement CLI wiring
+- [x] Task: Implement CLI wiring [1568be9]
   - [ ] Add the `--watch` flag to the `test` command.
   - [ ] Implement startup guards and error messages.
   - [ ] Print the banner (`Watching N files. Press Ctrl+C to stop.`).
   - [ ] Clear the screen between runs (Windows-safe implementation).
   - [ ] Emit per-run results via the existing reporter.
   - [ ] Run the CLI tests to Green.
-- [ ] Task: Update documentation
+- [x] Task: Update documentation [5ecd291]
   - [ ] Add a watch-mode section to `README.md`.
   - [ ] Add a CHANGELOG entry.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
