@@ -1026,12 +1026,23 @@ def test_native_runner_retries_failed_test_with_fresh_instance(
     """Retry settings create a fresh attempt and report the attempt count."""
     project = _prepare_project(tmp_path, godot_bin)
     retry_script = project / "test" / "retry_suite.gd"
+    # Count attempts through a marker file instead of a script static var:
+    # Godot 4.7 intermittently crashes on exit (0xC0000005) when a suite
+    # script declares a static var, which would make the process exit code
+    # disagree with the passing result.
     retry_script.write_text(
         "extends GdToolsTest\n"
-        "static var _attempt_count := 0\n\n\n"
+        "\n\n"
+        'const MARKER := "res://.retry_attempted"\n'
+        "\n\n"
         "func test_retry() -> void:\n"
-        "    _attempt_count += 1\n"
-        "    if _attempt_count < 2:\n"
+        "    if FileAccess.file_exists(MARKER):\n"
+        "        DirAccess.remove_absolute(MARKER)\n"
+        "        assert_true(true)\n"
+        "    else:\n"
+        "        var marker := FileAccess.open(MARKER, FileAccess.WRITE)\n"
+        '        marker.store_line("attempted")\n'
+        "        marker.close()\n"
         '        assert_true(false, "first attempt fails")\n',
         encoding="utf-8",
     )
