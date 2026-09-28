@@ -47,14 +47,14 @@
 
 **Purpose:** Wire the domain logic to real file events and the existing native orchestrator.
 
-- [ ] Task: Document the watchdog dependency in tech-stack.md
+- [x] Task: Document the watchdog dependency in tech-stack.md [2ee2c05]
   - [ ] Add a dated note documenting the `watchdog` runtime dependency.
   - [ ] Add `watchdog` to `pyproject.toml` runtime dependencies.
-- [ ] Task: Add failing tests for the event-source abstraction
+- [x] Task: Add failing tests for the event-source abstraction [4315887]
   - [ ] Define the observer interface over file events.
   - [ ] Test create/modify/delete event mapping to domain actions with a fake event source.
   - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement the watchdog observer adapter
+- [x] Task: Implement the watchdog observer adapter [4315887]
   - [ ] Implement the watchdog-backed observer behind the abstraction.
   - [ ] Batch event delivery feeding the debouncer.
   - [ ] Run the observer tests to Green.
