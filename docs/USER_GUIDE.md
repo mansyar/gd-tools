@@ -64,8 +64,10 @@ The `init` command performs the following steps:
 7. Creates the `.gd-tools/` working directory.
 8. Leaves GUT, `.gutconfig.json`, and the legacy coverage autoload uninstalled.
 
-Use `gd-tools init --with-gut` when maintaining a legacy GUT project. That
-option also installs/enables GUT and creates the compatibility configuration.
+`--with-gut` still installs the legacy GUT addon, but the addon now conflicts
+with the built-in compatibility bridge (both provide `class_name GutTest`) and
+`gd-tools doctor` warns about it. New projects should not use it; see the
+[migration guide](./gut-migration.md).
 
 The `init` command is idempotent -- running it again updates components
 to the expected state without duplicating files.
@@ -278,7 +280,7 @@ gd-tools init [--non-interactive] [--with-gut]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--non-interactive` | flag | `false` | Run without interactive prompts. |
-| `--with-gut` | flag | `false` | Also install/enable the legacy GUT runtime and compatibility files. |
+| `--with-gut` | flag | `false` | Also install/enable the legacy GUT runtime and compatibility files. The installed addon conflicts with the compatibility bridge and `doctor` warns about it. |
 
 **Examples:**
 
@@ -327,17 +329,18 @@ gd-tools doctor
 | 1 | Godot Binary | critical | Godot binary is found via the detection chain. |
 | 2 | Godot Version | critical | Godot version is >= 4.5.0. |
 | 3 | Native Test Addon | critical/warning | Bundled `gd-tools-test` files are present and the deployed version is current. |
-| 4 | GUT Installed | conditional | GUT is present when runtime is `gut`; optional for native projects. |
-| 5 | GUT Version | conditional | Legacy GUT version matches the detected Godot when `runtime = "gut"`; native-mode mismatches are informational warnings. |
+| 4 | GUT Installed | warning | GUT is never required; an installed GUT addon conflicts with the compatibility bridge (duplicate `class_name GutTest`). |
+| 5 | GUT Version | informational | Reports the installed GUT version; it no longer affects any runtime. |
 | 6 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present and not stale. |
-| 7 | GUT Config | conditional | `.gutconfig.json` is required only for the legacy runtime. |
+| 7 | GUT Config | warning | `.gutconfig.json` is not read by any runtime; malformed JSON is reported as a warning. |
 | 8 | gd-tools.toml | critical | `gd-tools.toml` exists and is valid TOML. |
 | 9 | GD Toolkit | critical | `gdlint` and `gdformat` CLI tools are installed. |
-| 10 | Autoload | conditional | `_GDTCoverage` is required only for the legacy GUT path. |
+| 10 | GUT Suites | informational | Lists `GutTest` suites in the project; they run through the compatibility bridge automatically. |
+| 11 | Autoload | warning | `_GDTCoverage` is legacy; native coverage does not use an autoload. |
 
-In native mode, missing or mismatched legacy GUT files are reported as
-informational warnings and do not make `doctor` fail. In GUT mode they remain
-blocking checks.
+`doctor` additionally warns when `test.runtime = "gut"` is set in
+`gd-tools.toml` -- that value is no longer runnable; `GutTest` suites run
+through the bridge automatically.
 
 **Output:**
 
@@ -355,8 +358,11 @@ symbol.
 
 ### 3.4 gd-tools test
 
-Run GDScript tests using the bundled native runtime by default. GUT remains
-available explicitly with `--runtime gut` for projects being migrated.
+Run GDScript tests using the bundled native runtime. Suites extending
+`GdToolsTest` and `GutTest` are detected automatically; `GutTest` suites run
+through the GUT compatibility bridge (see the
+[migration guide](./gut-migration.md)). The legacy `--runtime gut` flag has
+been removed and is rejected with migration guidance.
 
 **Usage:**
 
@@ -390,11 +396,8 @@ gd-tools test [PATHS]... [OPTIONS]
 **Examples:**
 
 ```bash
-# Run all native tests (default; uses config test_dirs)
+# Run all tests (GdToolsTest and GutTest suites are routed automatically)
 gd-tools test
-
-# Explicitly use the legacy GUT compatibility path
-gd-tools test --runtime gut
 
 # Run a native suite and write JUnit XML
 gd-tools test --suite NativeFixtureSuite --junit-xml .gd-tools/native.xml
@@ -455,8 +458,8 @@ gd-tools test tests/unit/test_player.gd
 - Class-level tags can be configured with `[test].tags` or selected with
   repeatable `--tag` options. Explicit file paths are never broadened to
   sibling suites.
-- If native discovery finds no suites, the error suggests `--runtime gut` for
-  a legacy project.
+- If discovery finds no suites, the error explains that suites must extend
+  `GdToolsTest` (native) or `GutTest` (compatibility bridge).
 - The foundation does not yet provide broad mocking, parameterized tests,
   parallel execution, or an editor UI.
 
