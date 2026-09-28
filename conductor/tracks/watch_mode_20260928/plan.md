@@ -105,6 +105,9 @@
 - [x] Task: Full quality gate [3df4f46]
   - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`.
   - [ ] Run `CI=true pytest` with coverage thresholds on new source.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [91720e5]
   - [x] Execute the manual verification plan: install via `pip install -e .`, run `gd-tools test --watch` on the sample project, confirm each acceptance criterion.
   - [x] Create the phase checkpoint commit and record its SHA. [91720e5]
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions [f41c8ea]
