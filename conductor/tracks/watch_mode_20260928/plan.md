@@ -9,13 +9,13 @@
 
 **Purpose:** Nail mapping, debounce, and scope rules as testable units before any watching or CLI work.
 
-- [ ] Task: Add failing tests for file→suite convention mapping
+- [x] Task: Add failing tests for file→suite convention mapping [ced68b5]
   - [ ] Test `foo.gd` → `test_foo.gd` / `foo_test.gd` resolution.
   - [ ] Test suite self-mapping (a changed suite file maps to itself).
-  - [ ] Test same-directory constraint and no-match result.
+  - [ ] Test same-directory precedence and cross-directory stem match.
   - [ ] Test both naming conventions and their precedence.
   - [ ] Run the targeted tests and confirm the expected Red phase.
-- [ ] Task: Implement the mapping module
+- [x] Task: Implement the mapping module [ced68b5]
   - [ ] Create the `src/gd_tools/watch/` package.
   - [ ] Implement convention-based mapping resolution.
   - [ ] Integrate with native discovery results (known suites).

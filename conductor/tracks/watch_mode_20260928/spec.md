@@ -27,8 +27,11 @@ CLI after every edit.
    (reusing existing exclusion logic). Newly created `.gd` files are picked up
    automatically (watchdog handles create/delete/rename events).
 5. **File→suite mapping (convention):** changed `foo.gd` → suite `test_foo.gd`
-   or `foo_test.gd` in the same directory; a changed file that *is* a suite
-   re-runs itself; edits to shared test helpers fall back sensibly. No match →
+   or `foo_test.gd`, with the `test_` prefix taking precedence; a sibling in
+   the same directory is preferred, otherwise any selected suite with a
+   matching stem is used (supports the common `src/` + `tests/` layout); a
+   changed file that *is* a suite re-runs itself; edits to shared test helpers
+   fall back sensibly. No match →
    explicit status line ("No test suite maps to `<path>` — running full suite").
 6. **Debounce:** fixed 500 ms, coalescing rapid saves into one run.
 7. **Mid-run saves:** set a dirty flag; exactly one fresh re-run of the
