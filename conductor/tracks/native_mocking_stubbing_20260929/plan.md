@@ -29,7 +29,7 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 - [x] Task: Refactor + `CI=true pytest` + native suites green, coverage gates met
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 5 — Bridge un-rejection (GDScript)
+## Phase 5 — Bridge un-rejection (GDScript) `[checkpoint: 66e83f9]`
 - [x] Task: Red — failing preflight tests: bridge suites using `double()`/`stub()`/`assert_called*` are no longer flagged; unsupported constructs (incl. `parameterize()`) still rejected with guidance `[a7f2fbd]`
 - [x] Task: Green — update `gd_tools_test_preflight.gd` refusal list and `gd_tools_gut_bridge.gd` forwarding `[beb6d23]`
 - [x] Task: Refactor + mixed native/bridge run green (no refactor needed; full bridge e2e module green)
