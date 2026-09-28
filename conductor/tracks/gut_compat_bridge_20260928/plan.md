@@ -34,7 +34,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
   (checkpoint `6e2be56`)
 
-## Phase 3 — GutTest Shim Base Class (GDScript)
+## Phase 3 — GutTest Shim Base Class (GDScript) [checkpoint: 1fd5937]
 
 - [x] Task: Add fixture GUT-style suites to `tests/fixtures/projects` +
       failing e2e tests asserting bridge behaviour (RED)
@@ -45,7 +45,8 @@
 - [x] Task: Implement async helpers (bounded `wait_*`, `yield_*` aliases) (GREEN)
 - [x] Task: Verify e2e green; commit + git note
   (commit `3a9fd2e`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  (checkpoint `1fd5937`)
 
 ## Phase 4 — Result Normalization, Orchestration & Coverage
 
