@@ -78,7 +78,10 @@ def test_scan_passes_supported_bridge_constructs(tmp_path):
     [
         ("mocking", ["double", "partial_double", "stub"]),
         ("parameterization", ["parameterize", "use_parameters"]),
-        ("mock-assertions", ["assert_called_with", "assert_call_count", "assert_not_called"]),
+        (
+            "mock-assertions",
+            ["assert_called_with", "assert_call_count", "assert_not_called"],
+        ),
         (
             "property-orphan-interactive",
             [
