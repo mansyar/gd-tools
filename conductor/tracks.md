@@ -52,3 +52,11 @@ _Archived tracks live in `./archive/`._
   snapshot with advisory metadata, and `coverage diff --base` reports per-file line and
   branch deltas (new/removed/improved/regressed files, newly-uncovered lines) with
   `--report-format json` and `--fail-on-regression` exit-1 gating for CI.
+
+---
+
+- [ ] **Track: Watch Mode** *Link: [./tracks/watch_mode_20260928/](./tracks/watch_mode_20260928/)* - add `gd-tools test --watch`:
+  watchdog-based `.gd` file watching with a 500 ms debounce, convention-based
+  file→suite mapping with an explicit full-suite fallback, existing filters and
+  `--coverage` respected per run, screen-clear UX with a watching banner, and a
+  clean Ctrl+C exit-0 contract. Native runtime only.
