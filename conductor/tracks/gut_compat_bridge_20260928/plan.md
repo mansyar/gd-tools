@@ -17,15 +17,17 @@
 - [x] Task: Implement routing in `native_test/discovery.py` + orchestrator (GREEN)
 - [x] Task: Verify coverage ≥80/70 for new code; commit + git note
   (commit `00afbe1`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  (checkpoint `38faa28`)
 
 ## Phase 2 — Preflight Static Scan & GUT-Free Rule (Python)
 
-- [ ] Task: Write failing tests for the unsupported-construct scanner (RED)
+- [x] Task: Write failing tests for the unsupported-construct scanner (RED)
   - Per-category detection (mocking, parameterization, mock-assertions,
     property/orphan/interactive, engine-error asserts), per-file reporting,
     exit code 2 with actionable guidance
-- [ ] Task: Implement scanner and wire into bridge preflight path (GREEN)
+- [x] Task: Implement scanner and wire into bridge preflight path (GREEN)
+  (commit `6c84c41`)
 - [ ] Task: Write failing tests for the `addons/gut` present → error rule
       (FR-5), then implement (GREEN)
 - [ ] Task: Verify coverage; commit + git note
