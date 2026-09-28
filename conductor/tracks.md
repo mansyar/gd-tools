@@ -47,8 +47,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Coverage Diff** (Roadmap Track 33, Phase 8)
-  *Link: [coverage_diff_20260928](./tracks/coverage_diff_20260928/index.md)* - codecov-style
+- [x] **Track: Coverage Diff** (archived → `./archive/coverage_diff_20260928/`) - codecov-style
   coverage comparison: `coverage save-baseline` persists a self-contained plan+data
   snapshot with advisory metadata, and `coverage diff --base` reports per-file line and
   branch deltas (new/removed/improved/regressed files, newly-uncovered lines) with
