@@ -5,6 +5,7 @@ from __future__ import annotations
 import queue
 from collections.abc import Iterator
 from pathlib import Path
+from typing import NamedTuple
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -14,7 +15,7 @@ from gd_tools.watch.scope import is_watched_path
 _POLL_TIMEOUT_SECONDS = 0.1
 
 
-class FileEvent:
+class FileEvent(NamedTuple):
     """A single observed file-system event inside the watch scope.
 
     Attributes:
@@ -22,26 +23,8 @@ class FileEvent:
         event_type: One of ``"modified"``, ``"created"`` or ``"deleted"``.
     """
 
-    def __init__(self, path: str, event_type: str) -> None:
-        """Create a file event.
-
-        Args:
-            path: Project-relative posix path of the affected file.
-            event_type: One of ``"modified"``, ``"created"`` or
-                ``"deleted"``.
-        """
-        self.path = path
-        self.event_type = event_type
-
-    def __repr__(self) -> str:
-        """Return a debug representation."""
-        return f"FileEvent(path={self.path!r}, event_type={self.event_type!r})"
-
-    def __eq__(self, other: object) -> bool:
-        """Compare by path and event type."""
-        if not isinstance(other, FileEvent):
-            return NotImplemented
-        return self.path == other.path and self.event_type == other.event_type
+    path: str
+    event_type: str
 
 
 class WatchdogEventSource:
