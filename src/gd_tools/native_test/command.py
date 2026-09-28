@@ -131,7 +131,14 @@ def run_native_test_command(
             project_root,
             NativeManifest(
                 project_root=project_root,
-                runtime=RuntimeMode.NATIVE,
+                # The manifest runtime marker is informational: a run is a
+                # bridge run when any suite is routed through the GutTest
+                # compatibility bridge, even in a mixed native+bridge run.
+                runtime=(
+                    RuntimeMode.GUT
+                    if any(suite.runtime == RuntimeMode.GUT for suite in suites)
+                    else RuntimeMode.NATIVE
+                ),
                 suites=suites,
             ),
             godot_binary=godot_info.path,

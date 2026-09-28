@@ -119,7 +119,11 @@ func _load_suite_script(suite_path: String) -> Dictionary:
 	if not ResourceLoader.exists(suite_path):
 		return _error("Unable to load suite script '%s': file does not exist" % suite_path)
 	var script := ResourceLoader.load(suite_path) as Script
-	if script == null:
+	# Godot 4.7+ loads parse-error scripts as non-null resources, so only
+	# `can_instantiate()` reveals the broken state; validating tests against
+	# such a script would produce a confusing "unknown test" error instead
+	# of pointing at the unloadable suite.
+	if script == null or not script.can_instantiate():
 		return _error("Unable to load suite script '%s'" % suite_path)
 	return {"value": script}
 

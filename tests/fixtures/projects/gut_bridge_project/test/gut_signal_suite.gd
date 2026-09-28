@@ -27,8 +27,13 @@ func test_signal_not_emitted() -> void:
 	assert_signal_not_emitted(self, "bridge_fired")
 
 func test_connected_assertions() -> void:
-	var receiver := Node.new()
+	var receiver := BridgeReceiver.new()
 	assert_not_connected(self, "bridge_fired", receiver, "_on_fired")
 	self.bridge_fired.connect(receiver._on_fired)
 	assert_connected(self, "bridge_fired", receiver, "_on_fired")
 	receiver.free()
+
+
+class BridgeReceiver extends Node:
+	func _on_fired() -> void:
+		pass

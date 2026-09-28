@@ -4,9 +4,14 @@ class_name BridgeAsyncSuite
 signal async_fired
 
 func test_wait_seconds() -> void:
-	var started := Time.get_ticks_msec()
+	# Ordering assertion instead of wall-clock: both timers share the engine
+	# clock, so this holds even when headless frame deltas diverge from wall
+	# time under load. A no-op wait would resume before the flag timer fired.
+	var state := {"flag": false}
+	get_tree().create_timer(0.05).timeout.connect(func() -> void:
+		state["flag"] = true)
 	await wait_seconds(0.1)
-	assert_true(Time.get_ticks_msec() - started >= 90)
+	assert_true(state["flag"], "wait_seconds resumed after the 0.05s flag timer")
 
 func test_frame_waits() -> void:
 	await wait_frames(2)
