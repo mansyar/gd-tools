@@ -1905,3 +1905,37 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
     assert any(
         "broken.gd" in warning for warning in payload["engine_warnings"]
     ), payload["engine_warnings"]
+
+MOCKING_METHODS = [
+    "test_double_returns_instance_extending_target",
+    "test_double_accepts_path_string",
+    "test_double_unstubbed_method_returns_null",
+    "test_double_does_not_run_real_implementation",
+    "test_double_returns_fresh_instance_per_call",
+    "test_partial_double_runs_real_implementation",
+    "test_partial_double_keeps_side_effects",
+]
+
+
+def test_native_double_and_partial_double_semantics(godot_bin, tmp_path):
+    """double()/partial_double() follow GUT semantics for unstubbed calls."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "mocking.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/mocking_suite.gd",
+            MOCKING_METHODS,
+            "NativeMockingSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(MOCKING_METHODS), payload["tests"]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
