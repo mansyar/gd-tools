@@ -57,6 +57,18 @@ class BridgeScanError(GdToolsError):
     """Bridge suites use GUT constructs outside the supported subset."""
 
 
+def find_unsupported_constructs(source: str) -> list[tuple[str, int]]:
+    """Return every unsupported construct call in ``source`` with its line.
+
+    The migration scanner consumes this so both the preflight gate and the
+    migration report are driven by the same construct list.
+    """
+    return [
+        (match.group(1), source.count("\n", 0, match.start()) + 1)
+        for match in _UNSUPPORTED_CALL_RE.finditer(source)
+    ]
+
+
 def scan_bridge_suites(project_root: Path, suites: list[NativeSuite]) -> None:
     """Fail before any Godot process spawns on bridge-obstructing setups.
 
@@ -83,10 +95,9 @@ def scan_bridge_suites(project_root: Path, suites: list[NativeSuite]) -> None:
             source = source_path.read_text(encoding="utf-8")
         except OSError:
             continue
-        for match in _UNSUPPORTED_CALL_RE.finditer(source):
-            line = source.count("\n", 0, match.start()) + 1
+        for name, line in find_unsupported_constructs(source):
             suite_findings = findings.setdefault(suite.path, {})
-            suite_findings.setdefault(match.group(1), line)
+            suite_findings.setdefault(name, line)
 
     if findings:
         raise BridgeScanError(_format_error(findings))
