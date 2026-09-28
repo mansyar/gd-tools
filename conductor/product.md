@@ -118,8 +118,8 @@ Supporting success metrics (measured but not gating):
 public native API is `GdToolsTest` / `GdToolsTestRunner`.
 
 The native runtime is the default execution path for `gd-tools test`.
-GUT remains available during a one-release migration period through a
-bounded compatibility path.
+GUT-style suites remain runnable during a one-release migration period
+through the built-in compatibility bridge (no GUT addon required).
 
 ### Runtime model
 
@@ -177,8 +177,9 @@ bounded compatibility path.
 ### Migration boundary
 
 - `gd-tools test` defaults to native execution.
-- The existing GUT execution path remains selectable during migration.
-- The future GUT bridge supports only a documented core subset:
+- The legacy GUT subprocess path has been removed; suites extending
+  `GutTest` run through the compatibility bridge automatically.
+- The GUT bridge supports only a documented core subset:
   base class, test discovery, lifecycle hooks, core assertions, and async
   helpers.
 - Unsupported GUT features fail with actionable migration guidance.

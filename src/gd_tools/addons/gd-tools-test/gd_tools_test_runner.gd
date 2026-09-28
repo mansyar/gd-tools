@@ -100,7 +100,11 @@ func _run_suite(suite_data: Dictionary) -> void:
 		)
 		return
 	var script := load(suite_path) as GDScript
-	if script == null:
+	# A script with a parse error still loads as a GDScript resource in Godot
+	# 4.7+; only `can_instantiate()` reveals the broken state. Calling `new()`
+	# on such a script raises a script error that would abort this coroutine
+	# silently, so the load guard has to cover both conditions.
+	if script == null or not script.can_instantiate():
 		_record_suite_error(suite_name, "Unable to load suite: %s" % suite_path)
 		return
 
@@ -110,6 +114,21 @@ func _run_suite(suite_data: Dictionary) -> void:
 		return
 	get_root().add_child(suite_context)
 	var suite_timeout := _suite_timeout(suite_data)
+
+	var prerun_failure_count := suite_context.get_failures().size()
+	if suite_context.has_method("prerun_setup"):
+		var prerun_result := await _run_optional_call(
+			suite_context,
+			"prerun_setup",
+			suite_timeout
+		)
+		_record_hook_result(
+			suite_name,
+			"prerun_setup",
+			_failures_since(suite_context, prerun_failure_count),
+			bool(prerun_result.get("timed_out", false)),
+			suite_timeout
+		)
 
 	var before_failure_count := suite_context.get_failures().size()
 	if suite_context.has_method("before_all"):
@@ -149,6 +168,21 @@ func _run_suite(suite_data: Dictionary) -> void:
 			"after_all",
 			after_failures,
 			bool(after_result.get("timed_out", false)),
+			suite_timeout
+		)
+
+	var postrun_failure_count := suite_context.get_failures().size()
+	if suite_context.has_method("postrun_teardown"):
+		var postrun_result := await _run_optional_call(
+			suite_context,
+			"postrun_teardown",
+			suite_timeout
+		)
+		_record_hook_result(
+			suite_name,
+			"postrun_teardown",
+			_failures_since(suite_context, postrun_failure_count),
+			bool(postrun_result.get("timed_out", false)),
 			suite_timeout
 		)
 

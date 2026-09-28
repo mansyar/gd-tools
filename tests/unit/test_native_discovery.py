@@ -8,6 +8,7 @@ from gd_tools.native_test.discovery import (
     NativeDiscoveryError,
     discover_native_suites,
 )
+from gd_tools.native_test.protocol import RuntimeMode
 
 pytestmark = pytest.mark.unit
 
@@ -28,6 +29,22 @@ func test_addition() -> void:
     pass
 
 func test_async_wait() -> void:
+    pass
+""",
+    )
+
+
+def _gut_suite(path: Path) -> None:
+    _write(
+        path,
+        """extends GutTest
+class_name LegacySuite
+const TAGS = [\"legacy\"]
+
+func test_legacy_assertion() -> void:
+    pass
+
+func test_legacy_signal() -> void:
     pass
 """,
     )
@@ -110,24 +127,79 @@ def test_discovery_applies_tags_and_deduplicates_directories(tmp_path):
     assert suites[0].tags == ["smoke"]
 
 
-def test_discovery_ignores_non_native_scripts(tmp_path):
-    """Production scripts and non-native suites are not collected."""
+def test_discovery_ignores_non_suite_helper_scripts(tmp_path):
+    """Scripts without test methods in test dirs are not collected."""
     (tmp_path / "project.godot").touch()
     _write(
-        tmp_path / "test" / "not_a_suite.gd",
-        "extends Node\n\nfunc test_helper() -> void:\n    pass\n",
+        tmp_path / "test" / "helper.gd",
+        "extends Node\n\nfunc collect_value() -> int:\n    return 4\n",
     )
 
     assert discover_native_suites(tmp_path, test_dirs=["test"]) == []
 
 
-def test_discovery_reports_gut_only_project_with_legacy_hint(tmp_path):
-    """A GUT-only project gets an actionable migration error."""
+def test_discovery_classifies_gut_suite_as_bridge_runtime(tmp_path):
+    """A GutTest suite is discovered as a bridge suite, not an error."""
     (tmp_path / "project.godot").touch()
+    _gut_suite(tmp_path / "test" / "legacy_test.gd")
+
+    suites = discover_native_suites(tmp_path, test_dirs=["test"])
+
+    assert len(suites) == 1
+    assert suites[0].runtime is RuntimeMode.GUT
+    assert suites[0].name == "LegacySuite"
+    assert suites[0].path == "res://test/legacy_test.gd"
+    assert suites[0].tags == ["legacy"]
+    assert [test.name for test in suites[0].tests] == [
+        "test_legacy_assertion",
+        "test_legacy_signal",
+    ]
+
+
+def test_discovery_marks_native_suites_with_native_runtime(tmp_path):
+    """Native suites carry the native runtime explicitly."""
+    (tmp_path / "project.godot").touch()
+    _native_suite(tmp_path / "test" / "example_test.gd")
+
+    suites = discover_native_suites(tmp_path, test_dirs=["test"])
+
+    assert len(suites) == 1
+    assert suites[0].runtime is RuntimeMode.NATIVE
+
+
+def test_discovery_mixed_suites_keep_stable_path_order(tmp_path):
+    """Mixed native and bridge suites are ordered by path, not kind."""
+    (tmp_path / "project.godot").touch()
+    _gut_suite(tmp_path / "test" / "zeta_legacy_test.gd")
+    _native_suite(tmp_path / "test" / "alpha_example_test.gd")
+    _gut_suite(tmp_path / "test" / "mid_legacy_test.gd")
+    # Give the middle bridge suite a distinct class name.
     _write(
-        tmp_path / "test" / "legacy_test.gd",
-        "extends GutTest\n\nfunc test_legacy() -> void:\n    pass\n",
+        tmp_path / "test" / "mid_legacy_test.gd",
+        """extends GutTest
+class_name MidLegacySuite
+
+func test_mid() -> void:
+    pass
+""",
     )
 
-    with pytest.raises(NativeDiscoveryError, match=r"--runtime gut"):
+    suites = discover_native_suites(tmp_path, test_dirs=["test"])
+
+    assert [(suite.name, suite.runtime) for suite in suites] == [
+        ("ExampleSuite", RuntimeMode.NATIVE),
+        ("MidLegacySuite", RuntimeMode.GUT),
+        ("LegacySuite", RuntimeMode.GUT),
+    ]
+
+
+def test_discovery_errors_when_test_file_extends_unknown_base(tmp_path):
+    """A test file with test methods and an unknown base fails discovery."""
+    (tmp_path / "project.godot").touch()
+    _write(
+        tmp_path / "test" / "stray_test.gd",
+        "extends Node\n\nfunc test_thing() -> void:\n    pass\n",
+    )
+
+    with pytest.raises(NativeDiscoveryError, match=r"stray_test\.gd.*Node"):
         discover_native_suites(tmp_path, test_dirs=["test"])

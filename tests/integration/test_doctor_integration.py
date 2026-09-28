@@ -66,7 +66,7 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
         result = run_doctor()
 
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 10
+    assert len(result.checks) == 11
     assert not result.all_passed
 
     check_map = {c.name: c for c in result.checks}
@@ -79,13 +79,16 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
     assert not check_map["Native Test Addon"].passed
     assert check_map["Native Test Addon"].severity == "critical"
 
-    # GUT is optional in the native runtime.
+    # GUT is never required; the bridge provides GutTest natively.
     assert check_map["GUT Installed"].passed
     assert check_map["GUT Installed"].severity == "critical"
-    assert "optional" in check_map["GUT Installed"].message.lower()
+    assert "compatibility bridge" in check_map["GUT Installed"].message.lower()
 
-    # GUT Version passes (version unknown - cannot verify)
+    # GUT Version passes (informational; not used by any runtime)
     assert check_map["GUT Version"].passed
+
+    # GUT Suites reports no bridge-eligible suites on a fresh project.
+    assert check_map["GUT Suites"].passed
 
     # Coverage addon missing
     assert not check_map["Coverage Addon"].passed
@@ -108,11 +111,12 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
 
 
 def test_doctor_after_init(tmp_path, monkeypatch):
-    """Doctor after init reports all checks pass.
+    """Doctor after ``init --with-gut`` flags the bridge conflict.
 
-    Runs ``gd-tools init`` first (with mocked Godot and download),
-    then runs ``gd-tools doctor`` and verifies that all checks pass,
-    including the _GDTCoverage autoload (registered during init).
+    The GUT addon installed by ``--with-gut`` provides ``class_name
+    GutTest``, which conflicts with the compatibility bridge's own
+    ``GutTest`` base class. Doctor therefore warns about the addon
+    instead of celebrating its presence; every other check passes.
     """
     _setup_project(tmp_path)
     monkeypatch.chdir(tmp_path)
@@ -139,20 +143,31 @@ def test_doctor_after_init(tmp_path, monkeypatch):
         result = run_doctor()
 
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 10
-    assert result.all_passed  # All checks pass after init
+    assert len(result.checks) == 11
+    # The GUT addon installed by --with-gut conflicts with the bridge.
+    assert not result.all_passed
 
     check_map = {c.name: c for c in result.checks}
 
-    # All checks pass
+    # All non-GUT checks pass
     assert check_map["Godot Binary"].passed
     assert check_map["Godot Version"].passed
-    assert check_map["GUT Installed"].passed
-    assert check_map["GUT Version"].passed
     assert check_map["Coverage Addon"].passed
     assert check_map["GUT Config"].passed
     assert check_map["gd-tools.toml"].passed
     assert check_map["GD Toolkit"].passed
+
+    # GUT Installed warns about the bridge conflict.
+    assert not check_map["GUT Installed"].passed
+    assert check_map["GUT Installed"].severity == "warning"
+    assert "compatibility bridge" in check_map["GUT Installed"].message.lower()
+    assert "docs/gut-migration.md" in check_map["GUT Installed"].fix_hint
+
+    # GUT Version is informational only.
+    assert check_map["GUT Version"].passed
+
+    # GUT Suites: init --with-gut installs no suites, so nothing to report.
+    assert check_map["GUT Suites"].passed
 
     # Autoload passes (registered during init)
     assert check_map["Autoload"].passed

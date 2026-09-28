@@ -1616,12 +1616,12 @@ the latest run.
 
 ### Phase 3 — GUT Compatibility Bridge
 
-- [ ] Add `GutTest` compatibility base
-- [ ] Add core GUT assertion aliases
-- [ ] Add lifecycle and async helper aliases
-- [ ] Normalize bridge results into native results
-- [ ] Replace the legacy GUT subprocess path with the bridge
-- [ ] Emit deprecation and migration diagnostics
+- [x] Add `GutTest` compatibility base
+- [x] Add core GUT assertion aliases
+- [x] Add lifecycle and async helper aliases
+- [x] Normalize bridge results into native results
+- [x] Replace the legacy GUT subprocess path with the bridge
+- [x] Emit deprecation and migration diagnostics
 
 **Exit gate:** Supported legacy GUT suites run through the native protocol
 and produce the same user-facing result contract.

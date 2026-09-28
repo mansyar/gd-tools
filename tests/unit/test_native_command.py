@@ -27,6 +27,7 @@ from gd_tools.native_test.protocol import (
     NativeSuiteIntegration,
     NativeTest,
     NativeTestResult,
+    RuntimeMode,
 )
 from gd_tools.test_runner import TestResult
 
@@ -275,6 +276,116 @@ def test_run_native_command_preflights_once_before_suite_processes(
     )
 
 
+def _run_with_preflight_capture(tmp_path, suites):
+    """Drive run_native_test_command and capture the preflight manifest."""
+    captured: dict = {}
+
+    def fake_preflight(project_root, manifest, **kwargs):
+        captured["manifest"] = manifest
+        return _preflight(suites)
+
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=suites,
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            side_effect=fake_preflight,
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=_native_result(),
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch("gd_tools.native_test.command.output.print_info") as notice,
+    ):
+        run_native_test_command(_config())
+        captured["notice_calls"] = notice.call_args_list
+
+    return captured
+
+
+def test_preflight_manifest_declares_native_runtime_for_native_only_runs(
+    tmp_path,
+):
+    """A native-only run keeps the native runtime marker on the manifest."""
+    manifest = _run_with_preflight_capture(
+        tmp_path,
+        [NativeSuite(name="ExampleSuite", path="res://test/example.gd")],
+    )["manifest"]
+
+    assert manifest.runtime == RuntimeMode.NATIVE
+
+
+def test_preflight_manifest_declares_gut_runtime_for_bridge_runs(tmp_path):
+    """Any bridge suite flips the manifest runtime marker to the bridge."""
+    bridge = NativeSuite(
+        name="LegacySuite",
+        path="res://test/legacy_test.gd",
+        runtime=RuntimeMode.GUT,
+    )
+    manifest = _run_with_preflight_capture(tmp_path, [bridge])["manifest"]
+
+    assert manifest.runtime == RuntimeMode.GUT
+
+
+def test_preflight_manifest_declares_gut_runtime_for_mixed_runs(tmp_path):
+    """A mixed run reports the bridge marker so diagnostics stay honest."""
+    native = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    bridge = NativeSuite(
+        name="LegacySuite",
+        path="res://test/legacy_test.gd",
+        runtime=RuntimeMode.GUT,
+    )
+    manifest = _run_with_preflight_capture(tmp_path, [native, bridge])[
+        "manifest"
+    ]
+
+    assert manifest.runtime == RuntimeMode.GUT
+
+
+def test_bridge_run_prints_migration_notice(tmp_path):
+    """Bridge runs announce the temporary bridge path (FR-9)."""
+    bridge = NativeSuite(
+        name="LegacySuite",
+        path="res://test/legacy_test.gd",
+        runtime=RuntimeMode.GUT,
+    )
+    captured = _run_with_preflight_capture(tmp_path, [bridge])
+
+    notices = [str(call.args[0]) for call in captured["notice_calls"]]
+    assert any(
+        "compatibility bridge" in notice and "docs/gut-migration.md" in notice
+        for notice in notices
+    )
+
+
+def test_native_only_run_prints_no_bridge_notice(tmp_path):
+    """Pure native runs do not mention the bridge."""
+    native = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    captured = _run_with_preflight_capture(tmp_path, [native])
+
+    notices = [str(call.args[0]) for call in captured["notice_calls"]]
+    assert not any("compatibility bridge" in notice for notice in notices)
+
+
 def test_run_native_command_propagates_preflight_failure(tmp_path):
     """Preflight infrastructure failures stop before suite execution."""
     suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
@@ -405,7 +516,9 @@ def test_run_native_command_empty_suites_gives_gut_guidance(tmp_path):
             return_value=[],
         ),
     ):
-        with pytest.raises(ConfigError, match=r"--runtime gut"):
+        with pytest.raises(
+            ConfigError, match=r"Add a suite extending GdToolsTest"
+        ):
             run_native_test_command(_config())
 
 

@@ -33,7 +33,6 @@ from .coverage.orchestrator import (
     diff_coverage,
     generate_coverage_report,
     merge_coverage_files,
-    run_coverage_test,
     save_coverage_baseline,
     show_coverage_summary,
 )
@@ -48,7 +47,6 @@ from .format_runner import run_format
 from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .native_test.command import run_native_test_command
-from .test_runner import run_tests
 from .watch.session import run_watch_mode
 from .update_check import check_for_update
 from .addon_check import check_addon_version
@@ -289,13 +287,27 @@ def version(as_json):
     ctx.exit(0)
 
 
+def _reject_legacy_runtime(source: str) -> None:
+    """Reject the removed legacy GUT runtime with migration guidance."""
+    click.echo(
+        "Error: The legacy GUT test runtime was removed. Suites extending "
+        "GutTest now run through the GUT compatibility bridge automatically "
+        f"with `gd-tools test`. Remove {source} and rerun. See "
+        "docs/gut-migration.md for the supported subset and migration steps.",
+        err=True,
+    )
+    ctx = click.get_current_context()
+    ctx.exit(2)
+
+
 @cli.command()
 @click.argument("paths", nargs=-1)
 @click.option(
     "--runtime",
     type=click.Choice(["native", "gut"]),
     default=None,
-    help="Select the test runtime (default: native).",
+    help="Select the test runtime (default: native). 'gut' is no longer a "
+    "runnable runtime; GutTest suites run through the compatibility bridge.",
 )
 @click.option("--coverage", is_flag=True, help="Generate coverage report.")
 @click.option("--min", type=int, help="Minimum coverage threshold.")
@@ -356,7 +368,13 @@ def test(
     no_cache,
     watch,
 ):
-    """Run GDScript tests using the native runtime or legacy GUT."""
+    """Run GDScript tests with the native runtime.
+
+    Suites extending ``GutTest`` are detected automatically and run through
+    the GUT compatibility bridge (see docs/gut-migration.md).
+    """
+    if runtime == "gut":
+        _reject_legacy_runtime("--runtime gut")
     try:
         config = load_config()
     except ConfigError as e:
@@ -381,17 +399,11 @@ def test(
     selected_runtime = runtime
     if selected_runtime is None:
         selected_runtime = getattr(config.test, "runtime", "native")
+    if selected_runtime == "gut":
+        _reject_legacy_runtime('test.runtime = "gut" in gd-tools.toml')
     if selected_runtime not in {"native", "gut"}:
         selected_runtime = "native"
 
-    if watch and selected_runtime == "gut":
-        click.echo(
-            "Error: --watch requires the native runtime; --runtime gut is "
-            "not supported in watch mode.",
-            err=True,
-        )
-        ctx = click.get_current_context()
-        ctx.exit(2)
     if watch and os.environ.get("CI", "").lower() == "true":
         click.echo(
             "Error: --watch is interactive and cannot run with CI=true.",
@@ -441,31 +453,6 @@ def test(
                 paths=list(paths) if paths else None,
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,
-            )
-        elif coverage:
-            run_coverage_test(
-                config,
-                suite=suite,
-                test_name=test,
-                junit_xml=junit_xml,
-                no_exit_code=no_exit_code,
-                min_percent=min,
-                timeout=timeout,
-                paths=list(paths) if paths else None,
-                show_uncovered=show_uncovered,
-                no_cache=no_cache,
-            )
-        else:
-            run_tests(
-                config,
-                coverage=coverage,
-                min_percent=min,
-                suite=suite,
-                test_name=test,
-                junit_xml=junit_xml,
-                no_exit_code=no_exit_code,
-                timeout=timeout,
-                paths=list(paths) if paths else None,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)

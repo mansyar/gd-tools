@@ -11,7 +11,7 @@ pytestmark = pytest.mark.unit
 
 
 def test_watch_with_gut_runtime_exits_2():
-    """``--watch`` is native-only; combining it with GUT exits 2."""
+    """The removed GUT runtime is rejected (exit 2); watch never starts."""
     runner = CliRunner()
     with (
         patch("gd_tools.cli.load_config", return_value=MagicMock()),
@@ -19,7 +19,7 @@ def test_watch_with_gut_runtime_exits_2():
     ):
         result = runner.invoke(cli, ["test", "--watch", "--runtime", "gut"])
     assert result.exit_code == 2
-    assert "native" in result.output
+    assert "legacy GUT test runtime was removed" in result.output
     mock_watch.assert_not_called()
 
 

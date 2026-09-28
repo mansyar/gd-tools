@@ -24,7 +24,6 @@ from gd_tools.native_test.protocol import (
     NativeRunResult,
     NativeSuite,
     NativeTestResult,
-    RuntimeMode,
     write_json_atomic,
 )
 
@@ -120,7 +119,7 @@ def run_native_tests(
 
         manifest = NativeManifest(
             project_root=project_root,
-            runtime=RuntimeMode.NATIVE,
+            runtime=suite.runtime,
             suites=[suite],
             coverage=suite_coverage,
         )
