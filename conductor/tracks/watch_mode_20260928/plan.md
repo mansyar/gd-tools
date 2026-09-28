@@ -73,7 +73,7 @@
   - [ ] Review observer/loop seams for e2e testability.
   - [ ] Create the phase checkpoint commit and record its SHA.
 
-## Phase 3 — CLI integration & terminal UX
+## Phase 3 — CLI integration & terminal UX [checkpoint: 827aa72]
 
 **Purpose:** Expose the feature through `gd-tools test` with the documented UX contract.
 
