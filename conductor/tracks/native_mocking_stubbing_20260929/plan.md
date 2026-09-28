@@ -30,7 +30,7 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — Bridge un-rejection (GDScript)
-- [ ] Task: Red — failing preflight tests: bridge suites using `double()`/`stub()`/`assert_called*` are no longer flagged; unsupported constructs (incl. `parameterize()`) still rejected with guidance
+- [~] Task: Red — failing preflight tests: bridge suites using `double()`/`stub()`/`assert_called*` are no longer flagged; unsupported constructs (incl. `parameterize()`) still rejected with guidance
 - [ ] Task: Green — update `gd_tools_test_preflight.gd` refusal list and `gd_tools_gut_bridge.gd` forwarding
 - [ ] Task: Refactor + mixed native/bridge run green
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

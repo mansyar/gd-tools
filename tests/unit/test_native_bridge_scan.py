@@ -73,15 +73,29 @@ def test_scan_passes_supported_bridge_constructs(tmp_path):
     _assert_no_findings(tmp_path, _supported_suite(tmp_path))
 
 
+def test_scan_allows_mocking_constructs(tmp_path):
+    """Mocking constructs are native now and must not fail the bridge scan."""
+    suite = _bridge_suite(
+        tmp_path,
+        """extends GutTest
+
+func test_mocking() -> void:
+    double(subject)
+    partial_double(subject)
+    stub(subject, "add")
+    assert_called(subject, "add")
+    assert_call_count(subject, "add", 1)
+    assert_not_called(subject, "add")
+""",
+    )
+
+    _assert_no_findings(tmp_path, suite)
+
+
 @pytest.mark.parametrize(
     ("category", "constructs"),
     [
-        ("mocking", ["double", "partial_double", "stub"]),
         ("parameterization", ["parameterize", "use_parameters"]),
-        (
-            "mock-assertions",
-            ["assert_called_with", "assert_call_count", "assert_not_called"],
-        ),
         (
             "property-orphan-interactive",
             [
