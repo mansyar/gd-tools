@@ -108,7 +108,14 @@ def run_watch_mode(
             return []
 
     def runner(suites: list) -> NativeRunResult:
-        """Execute one run through the existing native command pipeline."""
+        """Execute one run through the existing native command pipeline.
+
+        When the loop narrowed the selection to a single suite (a mapped
+        re-run), that suite's name is passed as the exact suite filter so
+        only the affected suite executes. Full runs pass every discovered
+        suite and therefore no extra filter.
+        """
+        suite_filter = suites[0].name if len(suites) == 1 else None
         click.clear()
         output(banner)
         try:
@@ -116,7 +123,7 @@ def run_watch_mode(
                 config,
                 coverage=coverage,
                 min_percent=min_percent,
-                suite=suite,
+                suite=suite_filter,
                 test_name=test_name,
                 junit_xml=junit_xml,
                 timeout=timeout,

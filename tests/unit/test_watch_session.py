@@ -226,3 +226,72 @@ def test_screen_cleared_between_runs(tmp_path):
         )
     assert code == 0
     assert mock_clear.call_count == 2
+
+
+def _suites():
+    """Two fake suites so a mapped re-run is a strict subset."""
+    return [
+        SimpleNamespace(name="EnemySuite", path="res://tests/test_enemy.gd"),
+        SimpleNamespace(name="PlayerSuite", path="res://tests/test_player.gd"),
+    ]
+
+
+def test_mapped_rerun_passes_suite_filter(tmp_path):
+    """A mapped re-run targets only the affected suite."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    calls = []
+
+    def fake_native(*args, **kwargs):
+        calls.append(kwargs)
+        if len(calls) >= 2:
+            raise KeyboardInterrupt
+        return MagicMock()
+
+    with patch(
+        "gd_tools.watch.session.discover_native_suites",
+        return_value=_suites(),
+    ):
+        code, mock_native = _run_watch(
+            tmp_path,
+            _config(tmp_path),
+            fake_native,
+            [("src/enemy.gd", "modified")],
+            output,
+            clock,
+        )
+    assert code == 0
+    assert mock_native.call_args_list[0].kwargs.get("suite") is None
+    assert mock_native.call_args_list[1].kwargs.get("suite") == "EnemySuite"
+
+
+def test_fallback_full_run_has_no_suite_filter(tmp_path):
+    """A full-suite fallback run keeps every discovered suite."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    calls = []
+
+    def fake_native(*args, **kwargs):
+        calls.append(kwargs)
+        if len(calls) >= 2:
+            raise KeyboardInterrupt
+        return MagicMock()
+
+    with patch(
+        "gd_tools.watch.session.discover_native_suites",
+        return_value=_suites(),
+    ):
+        code, mock_native = _run_watch(
+            tmp_path,
+            _config(tmp_path),
+            fake_native,
+            [("src/helper.gd", "created")],
+            output,
+            clock,
+        )
+    assert code == 0
+    assert mock_native.call_args_list[0].kwargs.get("suite") is None
+    assert mock_native.call_args_list[1].kwargs.get("suite") is None
+    assert any("full suite" in line for line in output)
