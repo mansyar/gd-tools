@@ -2,6 +2,7 @@
 
 import copy
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,7 @@ from .format_runner import run_format
 from .init import run_init
 from .lint_runner import format_lint_json, format_lint_text, run_lint
 from .native_test.command import run_native_test_command
+from .watch.session import run_watch_mode
 from .update_check import check_for_update
 from .addon_check import check_addon_version
 from .verbosity import Verbosity, get_verbosity, set_verbosity
@@ -344,6 +346,12 @@ def _reject_legacy_runtime(source: str) -> None:
     help="Force plan regeneration, bypassing the coverage plan cache. "
     "Only effective with --coverage.",
 )
+@click.option(
+    "--watch",
+    is_flag=True,
+    help="Watch .gd files and re-run affected tests on change "
+    "(native runtime only, interactive sessions).",
+)
 def test(
     paths,
     runtime,
@@ -358,6 +366,7 @@ def test(
     timeout,
     show_uncovered,
     no_cache,
+    watch,
 ):
     """Run GDScript tests with the native runtime.
 
@@ -395,7 +404,40 @@ def test(
     if selected_runtime not in {"native", "gut"}:
         selected_runtime = "native"
 
+    if watch and os.environ.get("CI", "").lower() == "true":
+        click.echo(
+            "Error: --watch is interactive and cannot run with CI=true.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+    if watch and paths:
+        click.echo(
+            "Error: --watch does not accept path arguments; it watches the "
+            "whole project scope.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
     try:
+        if watch:
+            ctx = click.get_current_context()
+            ctx.exit(
+                run_watch_mode(
+                    config=config,
+                    coverage=coverage,
+                    min_percent=min,
+                    suite=suite,
+                    test_name=test,
+                    junit_xml=junit_xml,
+                    timeout=timeout,
+                    tags=tags,
+                    test_timeout=test_timeout,
+                    show_uncovered=show_uncovered,
+                    no_cache=no_cache,
+                )
+            )
         if selected_runtime == "native":
             run_native_test_command(
                 config,

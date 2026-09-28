@@ -23,6 +23,7 @@
 | `pyyaml` | YAML config file generation | Used by `gd-tools init` and config to generate `gdlintrc` (YAML set format) |
 | `requests` | Download the optional legacy GUT addon release from GitHub | Used by `gd-tools init --with-gut` only; native tests and the bridge do not require it |
 | `packaging` | Version comparison for PyPI update check | Used by `gd-tools` update notification feature |
+| `watchdog` | Cross-platform file-system event watching | Used by `gd-tools test --watch` (Watch Mode track, 2026-09-28); observes `.gd` files and feeds the debounce/run loop |
 
 ---
 

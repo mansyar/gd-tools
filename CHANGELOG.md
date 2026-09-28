@@ -2,6 +2,7 @@
 
 ### Feat
 
+- **watch**: Add `gd-tools test --watch` — interactive watch mode for the native runtime. An initial full suite is followed by debounced re-runs mapped from changed `.gd` files by convention (`src/enemy.gd` → `test_enemy.gd`/`enemy_test.gd`, same-directory preferred), with an explicit full-suite fallback when nothing maps. Existing filters (`--suite`, `--test`, `--tag`) and `--coverage` apply to every run; rapid saves coalesce into one re-run and a save during a run queues exactly one follow-up. The screen is cleared between runs under a watching banner, `Ctrl+C` exits 0, and `--watch` rejects `--runtime gut` and `CI=true` with exit 2.
 - **coverage**: Add `coverage save-baseline` and `coverage diff` subcommands (codecov-style). `save-baseline` persists the latest coverage run as a self-contained baseline document with advisory metadata; `diff --base` reports per-file line and branch deltas (improved/regressed/unchanged/new/removed) with newly-uncovered line detail (`--show-lines`), deterministic JSON output (`--report-format json`), and CI gating (`--fail-on-regression` exits 1 on any per-file regression).
 
 ### Fix

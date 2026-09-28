@@ -218,6 +218,9 @@ def run_native_test_command(
     if infrastructure_error:
         _raise_for_native_error(native_result)
     if test_failure is not None:
+        # Attach the aggregated result so callers (e.g. watch mode) can
+        # report the per-test breakdown without re-running anything.
+        test_failure.result = result
         raise test_failure
     return result
 

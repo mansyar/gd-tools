@@ -1,0 +1,8 @@
+{
+  "track_id": "watch_mode_20260928",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-09-28T13:11:48Z",
+  "updated_at": "2026-09-28T13:11:48Z",
+  "description": "Watch Mode - add gd-tools test --watch: observe .gd files with watchdog, re-run affected native-runtime suites on save with 500ms debounce, convention-based file-to-suite mapping with full-suite fallback, coverage support, and clean Ctrl+C exit."
+}
