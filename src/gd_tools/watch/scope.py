@@ -28,6 +28,30 @@ class WatchAction(Enum):
     IGNORE = auto()
 
 
+def is_watched_path(relative_posix_path: str) -> bool:
+    """Return whether a project-relative path is inside the watch scope.
+
+    Args:
+        relative_posix_path: Path relative to the project root, using ``/``
+            separators.
+
+    Returns:
+        True for ``.gd`` files that are not inside the standard watch
+        excludes.
+    """
+    if not relative_posix_path.lower().endswith(".gd"):
+        return False
+    parts = relative_posix_path.split("/")
+    joined = "/".join(parts[:-1]) if len(parts) > 1 else ""
+    for entry in WATCH_EXCLUDES:
+        if "/" in entry:
+            if joined == entry or joined.startswith(entry + "/"):
+                return False
+        elif entry in parts:
+            return False
+    return True
+
+
 def resolve_watched_files(project_root: Path) -> list[str]:
     """Return the ``.gd`` files that make up the watch scope.
 
