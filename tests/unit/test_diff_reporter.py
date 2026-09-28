@@ -18,6 +18,9 @@ from gd_tools.coverage.diff_reporter import (
     BaselineSnapshot,
     DiffResult,
     FileDiff,
+    build_diff_detail,
+    build_diff_json,
+    build_diff_table,
     compute_diff,
     load_baseline,
     save_baseline,
@@ -552,3 +555,144 @@ def test_compute_diff_zero_executable_lines_is_unchanged():
     assert fd.classification == "unchanged"
     assert fd.head_line_rate == 0.0
     assert not result.has_regression
+
+
+# ---------------------------------------------------------------------------
+# Rendering: build_diff_table / build_diff_detail / build_diff_json
+# ---------------------------------------------------------------------------
+
+
+def _mixed_diff() -> DiffResult:
+    """Build a diff containing improved, regressed, new, and removed files."""
+    base = _make_snapshot(
+        [
+            _make_file_plan(0, "res://improved.gd", statements=4),
+            _make_file_plan(1, "res://regressed.gd", statements=4),
+            _make_file_plan(2, "res://gone.gd", statements=2),
+        ],
+        [
+            _make_file_data(0, [0, 1], 4),
+            _make_file_data(1, [0, 1, 2, 3], 4),
+            _make_file_data(2, [0, 1], 2),
+        ],
+    )
+    head = _make_snapshot(
+        [
+            _make_file_plan(5, "res://improved.gd", statements=4),
+            _make_file_plan(6, "res://regressed.gd", statements=4),
+            _make_file_plan(7, "res://brand_new.gd", statements=3),
+        ],
+        [
+            _make_file_data(5, [0, 1, 2, 3], 4),
+            _make_file_data(6, [0, 1], 4),
+            _make_file_data(7, [0, 1], 3),
+        ],
+    )
+    return compute_diff(base, head)
+
+
+def _table_text(table) -> str:
+    """Render a Rich table to plain text with a fixed-width console."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    io = StringIO()
+    Console(file=io, width=140).print(table)
+    return io.getvalue()
+
+
+def test_build_diff_table_lists_per_file_rows_and_total():
+    """The table lists per-file rows with counts, rates, change, and a total."""
+    text = _table_text(build_diff_table(_mixed_diff(), BaselineMeta()))
+    # Per-file rows show base/head counts and rates.
+    assert "res://improved.gd" in text
+    assert "res://regressed.gd" in text
+    assert "2/4 (50%)" in text
+    assert "4/4 (100%)" in text
+    # Changes are rendered as signed deltas.
+    assert "+2 lines" in text
+    assert "-2 lines" in text
+    # New and removed files are labeled, not confused with deltas.
+    assert "new" in text
+    assert "removed" in text
+    # A total row aggregates both sides.
+    assert "TOTAL" in text
+
+
+def test_build_diff_table_shows_baseline_metadata_in_title():
+    """The table title carries the baseline's advisory metadata when present."""
+    meta = BaselineMeta(
+        saved_at="2026-09-28T00:00:00+00:00",
+        git_branch="main",
+        git_commit="abc1234",
+    )
+    text = _table_text(build_diff_table(_mixed_diff(), meta))
+    assert "main" in text
+    assert "abc1234" in text
+
+
+def test_build_diff_table_renders_without_metadata():
+    """An empty BaselineMeta still renders a usable table."""
+    text = _table_text(build_diff_table(_mixed_diff(), BaselineMeta()))
+    assert "res://improved.gd" in text
+    assert "TOTAL" in text
+
+
+def test_build_diff_detail_lists_newly_uncovered_for_regressed_only():
+    """Detail lines name newly-uncovered lines for regressed files only."""
+    lines = build_diff_detail(_mixed_diff())
+    assert len(lines) == 1
+    assert lines[0] == (
+        "res://regressed.gd: newly uncovered lines 3, 4"
+    )
+
+
+def test_build_diff_json_structure():
+    """The JSON payload covers files, totals, regression flag, metadata."""
+    meta = BaselineMeta(
+        saved_at="2026-09-28T00:00:00+00:00",
+        git_branch="main",
+        git_commit="abc1234",
+    )
+    payload = build_diff_json(_mixed_diff(), meta)
+
+    assert payload["has_regression"] is True
+    assert payload["baseline_meta"]["git_branch"] == "main"
+    assert payload["baseline_meta"]["git_commit"] == "abc1234"
+
+    paths = [f["path"] for f in payload["files"]]
+    assert paths == sorted(paths)
+
+    new_entry = next(
+        f for f in payload["files"] if f["path"] == "res://brand_new.gd"
+    )
+    assert new_entry["classification"] == "new"
+    assert new_entry["base"] is None
+    assert new_entry["head"]["covered_lines"] == 2
+
+    removed_entry = next(
+        f for f in payload["files"] if f["path"] == "res://gone.gd"
+    )
+    assert removed_entry["classification"] == "removed"
+    assert removed_entry["head"] is None
+
+    regressed_entry = next(
+        f for f in payload["files"] if f["path"] == "res://regressed.gd"
+    )
+    assert regressed_entry["classification"] == "regressed"
+    assert regressed_entry["newly_uncovered_lines"] == [3, 4]
+
+    assert payload["totals"]["base"]["covered_lines"] == 8
+    assert payload["totals"]["head"]["covered_lines"] == 8
+    assert payload["totals"]["head"]["total_lines"] == 11
+
+
+def test_build_diff_json_is_deterministic():
+    """Two serializations of the same diff produce identical JSON."""
+    import json
+
+    meta = BaselineMeta(saved_at="2026-09-28T00:00:00+00:00")
+    first = json.dumps(build_diff_json(_mixed_diff(), meta), indent=2)
+    second = json.dumps(build_diff_json(_mixed_diff(), meta), indent=2)
+    assert first == second
