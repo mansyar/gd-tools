@@ -1865,9 +1865,10 @@ def test_coverage_diff_calls_orchestrator():
     """Test coverage diff delegates to diff_coverage with defaults."""
     runner = CliRunner()
     mock_config = MagicMock()
-    with patch("gd_tools.cli.load_config", return_value=mock_config), patch(
-        "gd_tools.cli.diff_coverage", return_value=None
-    ) as mock_diff:
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.diff_coverage", return_value=None) as mock_diff,
+    ):
         result = runner.invoke(cli, ["coverage", "diff", "--base", "b.json"])
     assert result.exit_code == 0
     mock_diff.assert_called_once_with(
@@ -1883,9 +1884,10 @@ def test_coverage_diff_flags_passed_to_orchestrator():
     """Test coverage diff forwards --show-lines/--report-format/gating flags."""
     runner = CliRunner()
     mock_config = MagicMock()
-    with patch("gd_tools.cli.load_config", return_value=mock_config), patch(
-        "gd_tools.cli.diff_coverage", return_value=None
-    ) as mock_diff:
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.diff_coverage", return_value=None) as mock_diff,
+    ):
         result = runner.invoke(
             cli,
             [
@@ -1912,9 +1914,12 @@ def test_coverage_diff_flags_passed_to_orchestrator():
 def test_coverage_diff_plan_error_exit_2():
     """Test missing/malformed baseline or current data exits 2."""
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=MagicMock()), patch(
-        "gd_tools.cli.diff_coverage",
-        side_effect=CoveragePlanError("Baseline file not found"),
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.diff_coverage",
+            side_effect=CoveragePlanError("Baseline file not found"),
+        ),
     ):
         result = runner.invoke(cli, ["coverage", "diff", "--base", "b.json"])
     assert result.exit_code == 2
@@ -1923,11 +1928,15 @@ def test_coverage_diff_plan_error_exit_2():
 def test_coverage_diff_regression_gate_exit_1():
     """Test a gated regression raises CoverageThresholdError mapped to exit 1."""
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=MagicMock()), patch(
-        "gd_tools.cli.diff_coverage",
-        side_effect=CoverageThresholdError("Coverage regressed"),
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.diff_coverage",
+            side_effect=CoverageThresholdError("Coverage regressed"),
+        ),
     ):
         result = runner.invoke(
-            cli, ["coverage", "diff", "--base", "b.json", "--fail-on-regression"]
+            cli,
+            ["coverage", "diff", "--base", "b.json", "--fail-on-regression"],
         )
     assert result.exit_code == 1

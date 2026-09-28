@@ -29,6 +29,7 @@ from .config import (
     GdToolsConfig,
 )
 from .coverage.orchestrator import (
+    diff_coverage,
     generate_coverage_report,
     merge_coverage_files,
     run_coverage_test,
@@ -622,6 +623,53 @@ def save_baseline_cmd():
     try:
         baseline_path = save_coverage_baseline(config)
         click.echo(f"Baseline saved to: {baseline_path}")
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
+
+
+@coverage.command(name="diff")
+@click.option(
+    "--base",
+    required=True,
+    help="Path to the baseline file written by 'coverage save-baseline'.",
+)
+@click.option(
+    "--show-lines",
+    is_flag=True,
+    default=False,
+    help="List newly-uncovered line numbers for regressed files.",
+)
+@click.option(
+    "--report-format",
+    type=click.Choice(["text", "json"], case_sensitive=False),
+    default="text",
+    help="Output format (default: text).",
+)
+@click.option(
+    "--fail-on-regression",
+    is_flag=True,
+    default=False,
+    help="Exit 1 when any file has lower coverage than the baseline.",
+)
+def diff_cmd(base, show_lines, report_format, fail_on_regression):
+    """Compare current coverage against a baseline."""
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        diff_coverage(
+            config,
+            base,
+            show_lines=show_lines,
+            report_format=report_format.lower(),
+            fail_on_regression=fail_on_regression,
+        )
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()

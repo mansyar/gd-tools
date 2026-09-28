@@ -24,6 +24,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from rich.table import Table
+from rich.text import Text
+
 from gd_tools.coverage import plan_generator, reporter
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.coverage.reporter import (
@@ -487,3 +490,240 @@ def compute_diff(base: BaselineSnapshot, head: BaselineSnapshot) -> DiffResult:
         head_summary=compute_summary(head.plan, head.data),
         has_regression=any(fd.classification == "regressed" for fd in files),
     )
+
+
+# --- Rendering (FR-2) ---
+
+
+def _format_metrics(
+    covered: int | None, total: int | None, rate: float | None
+) -> str:
+    """Format a side's coverage metrics, or ``-`` when the side is absent."""
+    if covered is None or total is None or rate is None:
+        return "-"
+    return f"{covered}/{total} ({rate:.0%})"
+
+
+def _format_change(fd: FileDiff) -> str:
+    """Format the human-readable change column for one file."""
+    if fd.classification == "new":
+        return "new"
+    if fd.classification == "removed":
+        return "removed"
+    parts: list[str] = []
+    if fd.covered_line_delta:
+        parts.append(f"{fd.covered_line_delta:+d} lines")
+    if fd.covered_branch_delta:
+        parts.append(f"{fd.covered_branch_delta:+d} branches")
+    return ", ".join(parts) if parts else "-"
+
+
+def build_diff_table(result: DiffResult, meta: BaselineMeta) -> Table:
+    """Build the Rich summary table for a coverage diff.
+
+    Rows are one per file (sorted by path) plus a ``TOTAL`` row. The
+    table title carries the baseline's advisory metadata when available.
+
+    Args:
+        result: The diff to render.
+        meta: The baseline's metadata (may be all-``None``).
+
+    Returns:
+        A :class:`rich.table.Table` ready to print via
+        ``gd_tools.output.print_table``.
+    """
+    title = "Coverage diff vs baseline"
+    meta_bits: list[str] = []
+    if meta.saved_at:
+        meta_bits.append(f"saved {meta.saved_at}")
+    if meta.git_branch:
+        meta_bits.append(f"on {meta.git_branch}")
+    if meta.git_commit:
+        meta_bits.append(f"@ {meta.git_commit[:7]}")
+    if meta_bits:
+        title += f" ({' '.join(meta_bits)})"
+
+    table = Table(title=title)
+    table.add_column("File", style="dim", no_wrap=True)
+    table.add_column("Lines (base)", justify="right")
+    table.add_column("Lines (head)", justify="right")
+    table.add_column("Branches (base)", justify="right")
+    table.add_column("Branches (head)", justify="right")
+    table.add_column("Change")
+
+    for fd in result.files:
+        style = (
+            "red"
+            if fd.classification == "regressed"
+            else "green" if fd.classification == "improved" else ""
+        )
+        table.add_row(
+            fd.path,
+            _format_metrics(
+                fd.base_covered_lines, fd.base_total_lines, fd.base_line_rate
+            ),
+            _format_metrics(
+                fd.head_covered_lines, fd.head_total_lines, fd.head_line_rate
+            ),
+            _format_metrics(
+                fd.base_covered_branches,
+                fd.base_total_branches,
+                fd.base_branch_rate,
+            ),
+            _format_metrics(
+                fd.head_covered_branches,
+                fd.head_total_branches,
+                fd.head_branch_rate,
+            ),
+            Text(_format_change(fd), style=style),
+        )
+
+    line_delta = (
+        result.head_summary.covered_lines - result.base_summary.covered_lines
+    )
+    branch_delta = (
+        result.head_summary.covered_branches
+        - result.base_summary.covered_branches
+    )
+    total_parts: list[str] = []
+    if line_delta:
+        total_parts.append(f"{line_delta:+d} lines")
+    if branch_delta:
+        total_parts.append(f"{branch_delta:+d} branches")
+    table.add_row(
+        "TOTAL",
+        _format_metrics(
+            result.base_summary.covered_lines,
+            result.base_summary.total_lines,
+            result.base_summary.line_rate,
+        ),
+        _format_metrics(
+            result.head_summary.covered_lines,
+            result.head_summary.total_lines,
+            result.head_summary.line_rate,
+        ),
+        _format_metrics(
+            result.base_summary.covered_branches,
+            result.base_summary.total_branches,
+            result.base_summary.branch_rate,
+        ),
+        _format_metrics(
+            result.head_summary.covered_branches,
+            result.head_summary.total_branches,
+            result.head_summary.branch_rate,
+        ),
+        Text(
+            ", ".join(total_parts) if total_parts else "-",
+            style="red" if line_delta < 0 or branch_delta < 0 else "green",
+        ),
+    )
+    return table
+
+
+def build_diff_detail(result: DiffResult) -> list[str]:
+    """Build newly-uncovered detail lines for regressed files.
+
+    Args:
+        result: The diff to render.
+
+    Returns:
+        One line per regressed file that lost coverage, e.g.
+        ``res://player.gd: newly uncovered lines 3, 4``. Files that did
+        not regress contribute nothing.
+    """
+    detail: list[str] = []
+    for fd in result.files:
+        if fd.classification == "regressed" and fd.newly_uncovered_lines:
+            numbers = ", ".join(str(n) for n in fd.newly_uncovered_lines)
+            detail.append(f"{fd.path}: newly uncovered lines {numbers}")
+    return detail
+
+
+def _side_to_json(
+    covered: int | None,
+    total: int | None,
+    rate: float | None,
+    covered_branches: int | None,
+    total_branches: int | None,
+    branch_rate: float | None,
+) -> dict[str, int | float] | None:
+    """Serialize one side's metrics, or ``None`` when the side is absent."""
+    if covered is None or total is None or rate is None:
+        return None
+    return {
+        "covered_lines": covered,
+        "total_lines": total,
+        "line_rate": rate,
+        "covered_branches": covered_branches or 0,
+        "total_branches": total_branches or 0,
+        "branch_rate": branch_rate or 0.0,
+    }
+
+
+def build_diff_json(result: DiffResult, meta: BaselineMeta) -> dict:
+    """Build the machine-readable diff payload (``--report-format json``).
+
+    The structure is deterministic: files are sorted by path and all
+    keys are fixed, so two runs over identical inputs serialize
+    identically.
+
+    Args:
+        result: The diff to serialize.
+        meta: The baseline's advisory metadata.
+
+    Returns:
+        A JSON-serializable dict with ``baseline_meta``, ``files``
+        (per-file metrics, classifications, deltas, and newly-uncovered
+        lines), ``totals`` for both sides, and ``has_regression``.
+    """
+
+    def file_entry(fd: FileDiff) -> dict:
+        return {
+            "path": fd.path,
+            "classification": fd.classification,
+            "base": _side_to_json(
+                fd.base_covered_lines,
+                fd.base_total_lines,
+                fd.base_line_rate,
+                fd.base_covered_branches,
+                fd.base_total_branches,
+                fd.base_branch_rate,
+            ),
+            "head": _side_to_json(
+                fd.head_covered_lines,
+                fd.head_total_lines,
+                fd.head_line_rate,
+                fd.head_covered_branches,
+                fd.head_total_branches,
+                fd.head_branch_rate,
+            ),
+            "covered_line_delta": fd.covered_line_delta,
+            "line_rate_delta": fd.line_rate_delta,
+            "covered_branch_delta": fd.covered_branch_delta,
+            "branch_rate_delta": fd.branch_rate_delta,
+            "newly_uncovered_lines": fd.newly_uncovered_lines,
+        }
+
+    def totals(summary: CoverageSummary) -> dict[str, int | float]:
+        return {
+            "covered_lines": summary.covered_lines,
+            "total_lines": summary.total_lines,
+            "line_rate": summary.line_rate,
+            "covered_branches": summary.covered_branches,
+            "total_branches": summary.total_branches,
+            "branch_rate": summary.branch_rate,
+        }
+
+    return {
+        "baseline_meta": {
+            "saved_at": meta.saved_at,
+            "git_branch": meta.git_branch,
+            "git_commit": meta.git_commit,
+        },
+        "files": [file_entry(fd) for fd in result.files],
+        "totals": {
+            "base": totals(result.base_summary),
+            "head": totals(result.head_summary),
+        },
+        "has_regression": result.has_regression,
+    }
