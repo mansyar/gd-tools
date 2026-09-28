@@ -5,7 +5,7 @@
 - **Status:** New
 - **Specification:** [`spec.md`](./spec.md)
 
-## Phase 1 — Watch domain logic (pure Python, no I/O)
+## Phase 1 — Watch domain logic (pure Python, no I/O) [checkpoint: 38156b1]
 
 **Purpose:** Nail mapping, debounce, and scope rules as testable units before any watching or CLI work.
 
@@ -29,12 +29,12 @@
   - [ ] Implement the state machine against the fake-clock tests.
   - [ ] Refactor pass if warranted.
   - [ ] Run the debounce tests to Green.
-- [ ] Task: Add failing tests for watched-scope resolution
+- [x] Task: Add failing tests for watched-scope resolution [8c37552]
   - [ ] Test project-root scan with standard excludes (`.godot/`, `.gd-tools/`, `addons/gd-tools-*`, artifact dirs).
   - [ ] Test event classification (modified/created/deleted → action).
   - [ ] Test new-file pickup semantics.
   - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement watched-scope resolution
+- [x] Task: Implement watched-scope resolution [8c37552]
   - [ ] Implement scope enumeration reusing existing exclusion logic.
   - [ ] Implement event → action classification.
   - [ ] Run the scope tests to Green.
