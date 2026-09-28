@@ -66,7 +66,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Migration Tooling** (Migration Phase 4)
+- [~] **Track: Migration Tooling** (Migration Phase 4)
   *Link: [migration_tooling_20260929](./tracks/migration_tooling_20260929/index.md)* - a guided `gd-tools migrate`
   command: read-only per-file migration report reusing the bridge preflight
   scanner (base class, supported/unsupported constructs with file:line
