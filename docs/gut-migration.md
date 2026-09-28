@@ -39,11 +39,14 @@ code 2) with a per-file, per-line list:
 
 | Category | Constructs | Migrate to |
 |---|---|---|
-| Mocking | `double()`, `partial_double()`, `stub()` | Hand-rolled fakes or plain instances; inject them via constructor or a test-local factory |
 | Parameterized tests | `parameterize()`, `use_parameters()` | One test method per case, or a loop over fixture data inside a single test |
-| Mock call assertions | `assert_called()`, `assert_call_count()` | Assert on observable effects, or track calls in a small hand-written spy |
 | Property/orphan/interactive assertions | `assert_setget()`, `assert_accessors()`, `assert_exports()`, `assert_property_with_backing_variable()`, `assert_freed()`, `assert_no_new_orphans()`, `pause_before_teardown()` | Direct `get`/`set` assertions; `is_instance_valid()` checks; cleanup in `postrun_teardown` |
 | Engine-error assertions | `assert_engine_error()`, `assert_engine_error_count()`, `assert_push_error()`, `assert_push_warning()`, and count variants | GdToolsTest collects engine errors and warnings natively; migrate the suite to `GdToolsTest` and use its diagnostics |
+
+Mocking constructs (`double()`, `partial_double()`, `stub()`, and the
+`assert_called*` family) are no longer refused: the native runtime
+implements them and bridge suites inherit them from `GdToolsTest` with
+identical semantics (see the mocking section of the user guide).
 
 Unsupported GUT features beyond this list also fail the preflight scan
 with actionable guidance naming the construct.
