@@ -57,6 +57,7 @@ def test_watch_passes_filters_and_coverage_to_session():
                 "--tag",
                 "smoke",
             ],
+            env={"CI": ""},
         )
     assert result.exit_code == 0
     mock_watch.assert_called_once()
