@@ -14,14 +14,31 @@ extends RefCounted
 var _is_partial := false
 var _suite: Variant = null
 var _script_path := ""
+var _target_id := 0
+
+## Every call made on the owning double, in call order.
+##
+## Each entry is a dictionary with "method" and "args" keys. The recorder is
+## the foundation for the call-count and call-argument assertions that a
+## later phase adds to the test API.
+var calls: Array = []
 
 
 func _init(target: Object, values: Dictionary) -> void:
 	_is_partial = bool(values.get("is_partial", false))
 	_script_path = str(values.get("path", ""))
+	_target_id = target.get_instance_id()
 	var suite_id := int(values.get("suite_id", 0))
 	if suite_id != 0:
 		_suite = instance_from_id(suite_id)
+
+
+## Record one call made on the owning double.
+##
+## Generated overrides call this as their first statement so that even
+## stubbed and super-forwarded calls are counted.
+func record(method: String, args: Array) -> void:
+	calls.append({"method": method, "args": args.duplicate()})
 
 
 ## Evaluate a doubled method's parameter default.
@@ -38,19 +55,30 @@ func default_val(method: String, index: int) -> Variant:
 
 ## Return true when the generated override must forward to super().
 ##
-## A partial double forwards every call to the real implementation until a
-## stub says otherwise; a full double never forwards. Stub registration in a
-## later phase overrides this default per method and per argument match.
+## A matched stub decides outright; otherwise a partial double forwards every
+## call to the real implementation and a full double forwards none.
 func calls_super(method: String, args: Array) -> bool:
+	if _suite != null:
+		var entry: Dictionary = _suite._gd_tools_stub_find(
+				_target_id, method, args
+		)
+		if not entry.is_empty():
+			return entry["action"] == "call_super"
 	return _is_partial
 
 
 ## Return the value a stub supplies for a call, or null when unstubbed.
 ##
-## Unstubbed doubles answer null (GUT semantics). Stub registration and
-## argument matching arrive in a later phase; until then every call resolves
-## to null.
+## Unstubbed doubles answer null (GUT semantics); the [method coerce] layer
+## adapts that to typed returns. A matched stub registered with
+## `to_return()` supplies its value here.
 func respond(method: String, args: Array) -> Variant:
+	if _suite != null:
+		var entry: Dictionary = _suite._gd_tools_stub_find(
+				_target_id, method, args
+		)
+		if not entry.is_empty() and entry["action"] == "return":
+			return entry["value"]
 	return null
 
 
@@ -155,6 +183,38 @@ static func _default_for_return(return_meta: Dictionary) -> Variant:
 			return null
 
 
+## Fluent builder completing a stub registration started by
+## [method GdToolsTest.stub].
+##
+## The builder writes into the creating test instance's stub registry, so
+## stubs live and die with the test that made them.
+class StubBuilder:
+	var _suite: Variant = null
+	var _double_id := 0
+	var _method := ""
+	var _args: Array = []
+
+	func _init(suite, double_id: int, method: String, args: Array) -> void:
+		_suite = suite
+		_double_id = double_id
+		_method = method
+		_args = args.duplicate()
+
+	## Answer every matching call with the given value.
+	func to_return(value: Variant) -> StubBuilder:
+		_suite._gd_tools_stub_register(
+				_double_id, _method, _args, "return", value
+		)
+		return self
+
+	## Forward every matching call to the real implementation.
+	func to_call_super() -> StubBuilder:
+		_suite._gd_tools_stub_register(
+				_double_id, _method, _args, "call_super", null
+		)
+		return self
+
+
 ## Build the GDScript source text for a test double of a target script.
 class Doubler:
 	const MOCK_SCRIPT_PATH := "res://addons/gd-tools-test/gd_tools_mock.gd"
@@ -218,6 +278,7 @@ class Doubler:
 			# a value at all, so both branches run as plain statements.
 			return "\n".join([
 					"func %s(%s):" % [method_name, params],
+					'\t__gd_tools.record("%s", [%s])' % [method_name, args],
 					'\tif __gd_tools.calls_super("%s", [%s]):'
 							% [method_name, args],
 					"\t\tsuper(%s)" % args,
@@ -227,6 +288,7 @@ class Doubler:
 		if _is_nullable_return(meta):
 			return "\n".join([
 					"func %s(%s):" % [method_name, params],
+					'\t__gd_tools.record("%s", [%s])' % [method_name, args],
 					'\tif __gd_tools.calls_super("%s", [%s]):'
 							% [method_name, args],
 					"\t\treturn await super(%s)" % args,
@@ -237,6 +299,7 @@ class Doubler:
 		# result goes through coerce() to become the type's zero value.
 		return "\n".join([
 				"func %s(%s):" % [method_name, params],
+				'\t__gd_tools.record("%s", [%s])' % [method_name, args],
 				'\tif __gd_tools.calls_super("%s", [%s]):' % [method_name, args],
 				"\t\treturn await super(%s)" % args,
 				'\treturn __gd_tools.coerce("%s", __gd_tools.respond("%s", [%s]))'
@@ -269,6 +332,7 @@ class Doubler:
 		return "\n".join([
 				"func _init(%s):" % _params_text(meta),
 				"\tsuper(%s)" % _args_text(meta),
+				'\t__gd_tools.record("_init", [%s])' % _args_text(meta),
 		])
 
 	static func _params_text(meta: Dictionary) -> String:

@@ -17,6 +17,7 @@ var _gd_tools_wait_received := false
 var _gd_tools_wait_signal = null
 var _gd_tools_wait_timer: SceneTreeTimer = null
 var _gd_tools_mock_methods: Dictionary = {}
+var _gd_tools_stub_registry: Dictionary = {}
 
 
 func _gd_tools_record_failure(
@@ -499,6 +500,82 @@ func _gd_tools_mock_return_meta(script_path: String, method: String) -> Dictiona
 		if str(meta.get("name", "")) == method:
 			return meta.get("return", {})
 	return {}
+
+
+## Start a stub registration on a double.
+##
+## [param target] must be a double created by [method double] or
+## [method partial_double]. The returned builder must be completed with
+## [method GdToolsMock.StubBuilder.to_return] or
+## [method GdToolsMock.StubBuilder.to_call_super]. When [param args] is
+## given, only calls whose arguments match it element-wise are affected,
+## with the string `"any"` acting as a wildcard per element; a stub
+## registered without arguments is the default fallback for every other
+## call. Exact-argument stubs take precedence over wildcard stubs, which
+## take precedence over the default fallback; within one tier the most
+## recently registered stub wins. Stubs are stored per double instance on
+## the test instance, so they never leak into other tests or doubles.
+func stub(target: Object, method: String, args: Array = []) -> GdToolsMock.StubBuilder:
+	return GdToolsMock.StubBuilder.new(
+			self, target.get_instance_id(), method, args
+	)
+
+
+func _gd_tools_stub_register(
+		double_id: int,
+		method: String,
+		args: Array,
+		action: String,
+		value: Variant
+) -> void:
+	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
+	var entries: Array = per_double.get(method, [])
+	entries.append({
+			"args": args.duplicate(),
+			"action": action,
+			"value": value,
+	})
+	per_double[method] = entries
+	_gd_tools_stub_registry[double_id] = per_double
+
+
+static func _gd_tools_stub_specificity(pattern: Array, call_args: Array) -> int:
+	## Rank how specifically a stub pattern matches a call.
+	##
+	## Returns 2 for an exact match, 1 for a match involving "any"
+	## wildcards, 0 for the default (empty) pattern, and -1 for no match.
+	if pattern.is_empty():
+		return 0
+	if pattern.size() != call_args.size():
+		return -1
+	var wildcard := false
+	for index in range(pattern.size()):
+		var element = pattern[index]
+		if element is String and str(element) == "any":
+			wildcard = true
+			continue
+		if element != call_args[index]:
+			return -1
+	return 1 if wildcard else 2
+
+
+func _gd_tools_stub_find(
+		double_id: int,
+		method: String,
+		call_args: Array
+) -> Dictionary:
+	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
+	var entries: Array = per_double.get(method, [])
+	var best: Dictionary = {}
+	var best_tier := -1
+	for entry in entries:
+		var tier := _gd_tools_stub_specificity(entry["args"], call_args)
+		if tier > best_tier:
+			best_tier = tier
+			best = entry
+		elif tier == best_tier and tier >= 0:
+			best = entry
+	return best
 
 
 func _gd_tools_mock_default(
