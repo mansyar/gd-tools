@@ -20,7 +20,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
   (checkpoint `38faa28`)
 
-## Phase 2 — Preflight Static Scan & GUT-Free Rule (Python)
+## Phase 2 — Preflight Static Scan & GUT-Free Rule (Python) [checkpoint: 6e2be56]
 
 - [x] Task: Write failing tests for the unsupported-construct scanner (RED)
   - Per-category detection (mocking, parameterization, mock-assertions,
@@ -28,10 +28,11 @@
     exit code 2 with actionable guidance
 - [x] Task: Implement scanner and wire into bridge preflight path (GREEN)
   (commit `6c84c41`)
-- [ ] Task: Write failing tests for the `addons/gut` present → error rule
-      (FR-5), then implement (GREEN)
-- [ ] Task: Verify coverage; commit + git note
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Write failing tests for the `addons/gut` present → error rule
+      (FR-5), then implement (GREEN) (commit `17a56bd`)
+- [x] Task: Verify coverage; commit + git note (commit `17a56bd`)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  (checkpoint `6e2be56`)
 
 ## Phase 3 — GutTest Shim Base Class (GDScript)
 
