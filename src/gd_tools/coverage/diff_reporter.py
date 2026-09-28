@@ -20,17 +20,25 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
 from gd_tools.coverage import plan_generator, reporter
-from gd_tools.coverage.plan_generator import CoveragePlan
-from gd_tools.coverage.reporter import CoverageData
+from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
+from gd_tools.coverage.reporter import (
+    CoverageData,
+    CoverageSummary,
+    FileCoverage,
+    FileSummary,
+    compute_file_summary,
+    compute_summary,
+)
 from gd_tools.errors import CoveragePlanError
 
 _BASELINE_VERSION = 1
 _GIT_TIMEOUT_SECONDS = 5
+_RATE_EPSILON = 1e-9
 
 
 @dataclass
@@ -226,3 +234,256 @@ def load_baseline(path: Path) -> BaselineSnapshot:
         git_commit=raw_meta.get("git_commit"),
     )
     return BaselineSnapshot(plan=plan, data=data, meta=meta)
+
+
+# --- Diff computation (FR-2) ---
+
+
+@dataclass
+class FileDiff:
+    """Per-file coverage comparison between a baseline and the head.
+
+    Metrics are ``None`` on the side the file does not exist on:
+    ``new`` files have no base metrics, ``removed`` files have no head
+    metrics, and delta fields are ``None`` in both cases.
+
+    Attributes:
+        path: ``res://`` path the two sides were matched by.
+        classification: One of ``improved``, ``regressed``,
+            ``unchanged``, ``new``, ``removed``.
+        base_covered_lines / base_total_lines / base_line_rate:
+            Baseline line metrics (``None`` for new files).
+        head_covered_lines / head_total_lines / head_line_rate:
+            Head line metrics (``None`` for removed files).
+        base_covered_branches / base_total_branches / base_branch_rate:
+            Baseline branch metrics (``None`` for new files).
+        head_covered_branches / head_total_branches / head_branch_rate:
+            Head branch metrics (``None`` for removed files).
+        covered_line_delta: Head minus baseline covered-line count.
+        line_rate_delta: Head minus baseline line rate.
+        covered_branch_delta: Head minus baseline covered-branch count.
+        branch_rate_delta: Head minus baseline branch rate.
+        newly_uncovered_lines: Line numbers covered in the baseline but
+            not covered in the head (regressed files only).
+    """
+
+    path: str
+    classification: str
+    base_covered_lines: int | None
+    base_total_lines: int | None
+    base_line_rate: float | None
+    head_covered_lines: int | None
+    head_total_lines: int | None
+    head_line_rate: float | None
+    base_covered_branches: int | None
+    base_total_branches: int | None
+    base_branch_rate: float | None
+    head_covered_branches: int | None
+    head_total_branches: int | None
+    head_branch_rate: float | None
+    covered_line_delta: int | None
+    line_rate_delta: float | None
+    covered_branch_delta: int | None
+    branch_rate_delta: float | None
+    newly_uncovered_lines: list[int] = field(default_factory=list)
+
+
+@dataclass
+class DiffResult:
+    """Result of comparing a baseline snapshot against the head.
+
+    Attributes:
+        files: Per-file diffs, sorted by ``res://`` path.
+        base_summary: Overall coverage summary of the baseline side.
+        head_summary: Overall coverage summary of the head side.
+        has_regression: ``True`` when at least one common file's line or
+            branch rate decreased relative to the baseline.
+    """
+
+    files: list[FileDiff]
+    base_summary: CoverageSummary
+    head_summary: CoverageSummary
+    has_regression: bool
+
+
+def _covered_line_numbers(
+    file_plan: FilePlan, file_data: FileCoverage
+) -> set[int]:
+    """Return the set of line numbers with at least one hit.
+
+    Args:
+        file_plan: The file's instrumentation plan.
+        file_data: The file's runtime coverage data.
+
+    Returns:
+        Line numbers (1-indexed) whose hit count is positive.
+    """
+    return {
+        line_plan.line
+        for line_plan in file_plan.lines
+        if file_data.hits.get(str(line_plan.id), 0) > 0
+    }
+
+
+def _side_maps(
+    snapshot: BaselineSnapshot,
+) -> tuple[dict[str, FileSummary], dict[str, set[int]]]:
+    """Compute per-path summaries and covered-line sets for one side.
+
+    Args:
+        snapshot: A baseline (or head) plan+data pair.
+
+    Returns:
+        A mapping of ``res://`` path to :class:`FileSummary`, and a
+        mapping of ``res://`` path to the set of covered line numbers.
+    """
+    data_by_id = {fc.file_id: fc for fc in snapshot.data.files}
+    summaries: dict[str, FileSummary] = {}
+    covered: dict[str, set[int]] = {}
+    for file_plan in snapshot.plan.files:
+        file_data = data_by_id.get(
+            file_plan.file_id,
+            FileCoverage(file_id=file_plan.file_id, hits={}),
+        )
+        summaries[file_plan.path] = compute_file_summary(file_plan, file_data)
+        covered[file_plan.path] = _covered_line_numbers(file_plan, file_data)
+    return summaries, covered
+
+
+def compute_diff(base: BaselineSnapshot, head: BaselineSnapshot) -> DiffResult:
+    """Compare a baseline coverage snapshot against the head snapshot.
+
+    Files are matched by ``res://`` path, never by ``file_id``, so the
+    two sides may come from plans generated on different branches. Files
+    present only in the head are classified ``new``; files present only
+    in the baseline are classified ``removed``. Regression is decided on
+    coverage *rates*, not covered counts, so a file that gained covered
+    lines but gained even more executable lines still counts as a
+    regression.
+
+    Args:
+        base: The baseline snapshot (plan + data + advisory metadata).
+        head: The head snapshot. Its metadata is ignored.
+
+    Returns:
+        A :class:`DiffResult` with per-file diffs sorted by path,
+        overall summaries for both sides, and the regression flag.
+    """
+    base_summaries, base_covered = _side_maps(base)
+    head_summaries, head_covered = _side_maps(head)
+
+    files: list[FileDiff] = []
+    for path in sorted(set(base_summaries) | set(head_summaries)):
+        base_fs = base_summaries.get(path)
+        head_fs = head_summaries.get(path)
+
+        if head_fs is None:
+            files.append(
+                FileDiff(
+                    path=path,
+                    classification="removed",
+                    base_covered_lines=base_fs.covered_lines,
+                    base_total_lines=base_fs.total_lines,
+                    base_line_rate=base_fs.line_rate,
+                    head_covered_lines=None,
+                    head_total_lines=None,
+                    head_line_rate=None,
+                    base_covered_branches=base_fs.covered_branches,
+                    base_total_branches=base_fs.total_branches,
+                    base_branch_rate=base_fs.branch_rate,
+                    head_covered_branches=None,
+                    head_total_branches=None,
+                    head_branch_rate=None,
+                    covered_line_delta=None,
+                    line_rate_delta=None,
+                    covered_branch_delta=None,
+                    branch_rate_delta=None,
+                )
+            )
+            continue
+
+        if base_fs is None:
+            files.append(
+                FileDiff(
+                    path=path,
+                    classification="new",
+                    base_covered_lines=None,
+                    base_total_lines=None,
+                    base_line_rate=None,
+                    head_covered_lines=head_fs.covered_lines,
+                    head_total_lines=head_fs.total_lines,
+                    head_line_rate=head_fs.line_rate,
+                    base_covered_branches=None,
+                    base_total_branches=None,
+                    base_branch_rate=None,
+                    head_covered_branches=head_fs.covered_branches,
+                    head_total_branches=head_fs.total_branches,
+                    head_branch_rate=head_fs.branch_rate,
+                    covered_line_delta=None,
+                    line_rate_delta=None,
+                    covered_branch_delta=None,
+                    branch_rate_delta=None,
+                )
+            )
+            continue
+
+        line_regressed = head_fs.line_rate < base_fs.line_rate - _RATE_EPSILON
+        branch_regressed = (
+            head_fs.branch_rate < base_fs.branch_rate - _RATE_EPSILON
+        )
+        line_improved = head_fs.line_rate > base_fs.line_rate + _RATE_EPSILON
+        branch_improved = (
+            head_fs.branch_rate > base_fs.branch_rate + _RATE_EPSILON
+        )
+        # A file with no executable points on either side has no
+        # meaningful rates; never let 0/0 vs 0/0 read as a change.
+        if (
+            base_fs.total_lines == 0
+            and head_fs.total_lines == 0
+            and base_fs.total_branches == 0
+            and head_fs.total_branches == 0
+        ):
+            classification = "unchanged"
+        elif line_regressed or branch_regressed:
+            classification = "regressed"
+        elif line_improved or branch_improved:
+            classification = "improved"
+        else:
+            classification = "unchanged"
+
+        files.append(
+            FileDiff(
+                path=path,
+                classification=classification,
+                base_covered_lines=base_fs.covered_lines,
+                base_total_lines=base_fs.total_lines,
+                base_line_rate=base_fs.line_rate,
+                head_covered_lines=head_fs.covered_lines,
+                head_total_lines=head_fs.total_lines,
+                head_line_rate=head_fs.line_rate,
+                base_covered_branches=base_fs.covered_branches,
+                base_total_branches=base_fs.total_branches,
+                base_branch_rate=base_fs.branch_rate,
+                head_covered_branches=head_fs.covered_branches,
+                head_total_branches=head_fs.total_branches,
+                head_branch_rate=head_fs.branch_rate,
+                covered_line_delta=(
+                    head_fs.covered_lines - base_fs.covered_lines
+                ),
+                line_rate_delta=head_fs.line_rate - base_fs.line_rate,
+                covered_branch_delta=(
+                    head_fs.covered_branches - base_fs.covered_branches
+                ),
+                branch_rate_delta=(head_fs.branch_rate - base_fs.branch_rate),
+                newly_uncovered_lines=sorted(
+                    base_covered[path] - head_covered[path]
+                ),
+            )
+        )
+
+    return DiffResult(
+        files=files,
+        base_summary=compute_summary(base.plan, base.data),
+        head_summary=compute_summary(head.plan, head.data),
+        has_regression=any(fd.classification == "regressed" for fd in files),
+    )

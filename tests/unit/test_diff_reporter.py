@@ -371,7 +371,7 @@ def test_compute_diff_improved_file():
     fd = _find_file_diff(result, "res://a.gd")
     assert fd.classification == "improved"
     assert fd.covered_line_delta == 2
-    assert fd.line_rate_delta == pytest.approx(0.5)
+    assert fd.line_rate_delta == pytest.approx(2 / 3)
     assert fd.head_line_rate == pytest.approx(1.0)
     assert fd.base_line_rate == pytest.approx(1 / 3)
 
