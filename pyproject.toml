@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
     "gdtoolkit",
     "click",
-    "junitparser",
+    
     "jinja2",
     "rich",
     "pyyaml",
