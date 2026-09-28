@@ -30,6 +30,7 @@ _UNSUPPORTED_NAMES: tuple[str, ...] = sorted(
         # Mock assertions.
         "assert_called",
         "assert_call_count",
+        "assert_not_called",
         # Property, orphan, and interactive assertions.
         "assert_setget",
         "assert_accessors",

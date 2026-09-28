@@ -606,15 +606,15 @@ func assert_file_does_not_exist(file_path: String, text: String = "") -> void:
 
 
 func assert_file_empty(file_path: String, text: String = "") -> void:
-	if FileAccess.file_exists(file_path):
-		var file := FileAccess.open(file_path, FileAccess.READ)
-		if file != null and file.get_length() > 0:
-			_gut_fail(
-					"assert_file_empty",
-					_gut_detail(text, "Expected file to be empty: %s" % file_path)
-			)
-			return
-	_gut_fail("assert_file_empty", _gut_detail(text, "File does not exist: %s" % file_path))
+	if not FileAccess.file_exists(file_path):
+		_gut_fail("assert_file_empty", _gut_detail(text, "File does not exist: %s" % file_path))
+		return
+	var file := FileAccess.open(file_path, FileAccess.READ)
+	if file != null and file.get_length() > 0:
+		_gut_fail(
+				"assert_file_empty",
+				_gut_detail(text, "Expected file to be empty: %s" % file_path)
+		)
 
 
 func assert_file_not_empty(file_path: String, text: String = "") -> void:

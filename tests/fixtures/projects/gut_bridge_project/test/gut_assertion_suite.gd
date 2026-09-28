@@ -38,3 +38,12 @@ func test_file_assertions() -> void:
 	assert_file_exists("res://data/sample.txt")
 	assert_file_not_empty("res://data/sample.txt")
 	assert_file_does_not_exist("res://data/missing.txt")
+
+func test_file_empty_assertion() -> void:
+	# Regression: an existing empty file must pass assert_file_empty; the
+	# original implementation fell through to the "File does not exist" fail.
+	var path := "res://data/empty_tmp.txt"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.close()
+	assert_file_exists(path)
+	assert_file_empty(path)
