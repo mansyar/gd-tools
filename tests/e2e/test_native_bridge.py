@@ -215,6 +215,26 @@ class TestBridgeResultContract:
         assert by_name["test_version_skip_lt"]["status"] == "passed"
         assert by_name["test_version_skip_ne"]["status"] == "passed"
 
+    def test_bridge_broken_suite_records_error(
+        self, tmp_path: Path, godot_bin: str
+    ) -> None:
+        """A parse-error bridge suite is a suite error, not a silent green run."""
+        project = _prepare_project(tmp_path, godot_bin)
+        result_path = tmp_path / "broken_result.json"
+        result, completed = _run_bridge_manifest(
+            project,
+            godot_bin,
+            [
+                _suite_entry("gut_broken_suite", ["test_never_runs"]),
+            ],
+            result_path,
+        )
+
+        assert result["status"] == "error"
+        assert completed.returncode == 2
+        assert result["tests"][0]["status"] == "error"
+        assert "Unable to load suite" in result["tests"][0]["message"]
+
     def test_bridge_failure_reports_failed_with_message(
         self, tmp_path: Path, godot_bin: str
     ) -> None:
