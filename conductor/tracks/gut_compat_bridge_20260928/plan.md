@@ -72,7 +72,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       (checkpoint `71ceeda`)
 
-## Phase 6 — Documentation & Truth Pass
+## Phase 6 — Documentation & Truth Pass [checkpoint: 91be73b]
 
 - [x] Task: Write `docs/gut-migration.md` (supported subset, failing
       constructs, migration steps; linked from diagnostics)
@@ -81,4 +81,5 @@
 - [x] Task: Update README/CLI help touchpoints referencing the legacy runtime
 - [x] Task: Final verification: full suite (`CI=true pytest`), `ruff check`,
       `black --check`, e2e green; commit (commit `0d8cbbb`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      (checkpoint `91be73b`)
