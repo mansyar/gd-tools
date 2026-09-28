@@ -83,3 +83,12 @@
       `black --check`, e2e green; commit (commit `0d8cbbb`)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       (checkpoint `91be73b`)
+
+## Phase: Review Fixes
+
+- [x] Task: Fix `assert_file_empty` fall-through in the shim (existing empty
+      files failed); add fixture regression test (commit `2f718b5`)
+- [x] Task: Add `assert_not_called` to the preflight scan's unsupported
+      mock-assertion category + parametrized unit test (commit `2f718b5`)
+- [x] Task: Remove whitespace-only line from `pyproject.toml` dependencies
+      (commit `2f718b5`)
