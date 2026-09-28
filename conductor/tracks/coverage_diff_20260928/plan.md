@@ -21,7 +21,7 @@
   `save-baseline`/`diff` orchestration functions live there or in the existing
   coverage orchestrator per surgical judgment; `cli.py` only wires commands.
 
-## Phase 1 — Baseline snapshot and `save-baseline`
+## Phase 1 — Baseline snapshot and `save-baseline` [checkpoint: `4037956`]
 
 **Purpose:** Establish the baseline file contract (self-contained plan+data
 snapshot with advisory metadata) and expose `gd-tools coverage save-baseline`
@@ -48,20 +48,20 @@ with correct exit codes before any diff logic exists.
   - [ ] Convert missing/malformed inputs to exit-code `2` diagnostics with
     actionable messages.
   - [ ] Run the targeted tests to Green.
-- [ ] Task: Add failing CLI tests for `coverage save-baseline`
+- [x] Task: Add failing CLI tests for `coverage save-baseline` [commit: `d793ecc`]
   - [ ] Verify the command is registered in the `coverage` group and delegates
     to the orchestrator function (no business logic in `cli.py`).
   - [ ] Verify success output names the written baseline path (exit `0`).
   - [ ] Verify missing current coverage data produces an actionable exit `2`.
   - [ ] Confirm the expected Red phase.
-- [ ] Task: Wire the `coverage save-baseline` command
+- [x] Task: Wire the `coverage save-baseline` command [commit: `2d85c20`]
   - [ ] Add the Click command to the existing `coverage` group.
   - [ ] Run CLI tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run targeted unit and CLI tests plus static checks (`ruff`, `black`).
-  - [ ] Verify the baseline document round-trips through `load_baseline`.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [commit: `4037956`]
+  - [x] Run targeted unit and CLI tests plus static checks (`ruff`, `black`).
+  - [x] Verify the baseline document round-trips through `load_baseline`.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 2 — Diff computation engine
 
