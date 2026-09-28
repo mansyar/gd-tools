@@ -69,7 +69,7 @@ with correct exit codes before any diff logic exists.
 branch deltas, file classification, newly-uncovered line extraction, and
 totals — independent of CLI and rendering.
 
-- [ ] Task: Add failing `compute_diff` unit tests
+- [x] Task: Add failing `compute_diff` unit tests [commit: `d0a9dc3`]
   - [ ] Cover improvements (rate and covered-count increases) and regressions
     (rate decreases) for both line and branch metrics.
   - [ ] Cover `unchanged` files and exact zero-delta rounding behavior.
@@ -81,7 +81,7 @@ totals — independent of CLI and rendering.
   - [ ] Cover degenerate cases: empty file sets, files with zero executable
     lines/branches (no division by zero).
   - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement `compute_diff(base, head) -> DiffResult`
+- [x] Task: Implement `compute_diff(base, head) -> DiffResult` [commit: `50f1b4b`]
   - [ ] Compute per-file base/head covered and executable counts and rates for
     lines and branches, plus deltas in counts and rate points.
   - [ ] Classify each file: `unchanged`, `improved`, `regressed`, `new`,
