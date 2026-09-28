@@ -58,13 +58,13 @@
   - [ ] Implement the watchdog-backed observer behind the abstraction.
   - [ ] Batch event delivery feeding the debouncer.
   - [ ] Run the observer tests to Green.
-- [ ] Task: Add failing tests for the watch loop orchestration
+- [x] Task: Add failing tests for the watch loop orchestration [2e58da7]
   - [ ] Test initial full run → watch transition.
   - [ ] Test mapped re-run and fallback full run on no-match with explicit status.
   - [ ] Test dirty-flag re-run after an in-flight run completes.
   - [ ] Test KeyboardInterrupt → clean exit 0.
   - [ ] Test filters respected per run. Confirm the expected Red phase.
-- [ ] Task: Implement the watch loop
+- [x] Task: Implement the watch loop [2e58da7]
   - [ ] Orchestrate observer + debouncer + mapping + native orchestrator invocation.
   - [ ] Reuse existing result reporting per run.
   - [ ] Run the watch-loop tests to Green.
