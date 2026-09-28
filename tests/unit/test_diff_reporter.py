@@ -643,9 +643,7 @@ def test_build_diff_detail_lists_newly_uncovered_for_regressed_only():
     """Detail lines name newly-uncovered lines for regressed files only."""
     lines = build_diff_detail(_mixed_diff())
     assert len(lines) == 1
-    assert lines[0] == (
-        "res://regressed.gd: newly uncovered lines 3, 4"
-    )
+    assert lines[0] == ("res://regressed.gd: newly uncovered lines 3, 4")
 
 
 def test_build_diff_json_structure():
