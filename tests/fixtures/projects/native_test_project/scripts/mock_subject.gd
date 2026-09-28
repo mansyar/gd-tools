@@ -22,3 +22,10 @@ func add(left: int, right: int) -> int:
 
 func note(event: String) -> void:
 	events.append(event)
+
+
+func pick(option):
+	# Deliberately untyped: doubles of Variant-returning methods can answer
+	# with null (GUT semantics), unlike typed primitive returns.
+	events.append("pick")
+	return option

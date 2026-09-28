@@ -16,6 +16,7 @@ var _gd_tools_skip_reason := ""
 var _gd_tools_wait_received := false
 var _gd_tools_wait_signal = null
 var _gd_tools_wait_timer: SceneTreeTimer = null
+var _gd_tools_mock_methods: Dictionary = {}
 
 
 func _gd_tools_record_failure(
@@ -430,6 +431,92 @@ func assert_not_null(value, message: String = "") -> void:
 	## Assert that a value is not null.
 	if value == null:
 		_gd_tools_record_failure("assert_not_null", message, value, "not null")
+
+
+## Return a full test double of a GDScript script.
+##
+## Every doublable script method is redeclared on the generated double as an
+## untyped override. Unstubbed double methods return null and never run the
+## real implementation (GUT semantics). Accepts a preloaded Script or a
+## resource path string; an unusable target fails the test immediately.
+func double(target: Variant) -> Object:
+	return _gd_tools_make_double(target, false)
+
+
+## Return a partial test double of a GDScript script.
+##
+## Identical to [method double] except that unstubbed methods forward to the
+## real implementation via super(), preserving real behaviour except where a
+## later stub overrides it.
+func partial_double(target: Variant) -> Object:
+	return _gd_tools_make_double(target, true)
+
+
+func _gd_tools_make_double(target: Variant, is_partial: bool) -> Object:
+	var target_script := _gd_tools_resolve_mock_script(target)
+	if target_script == null:
+		fail(
+				"double() and partial_double() require a GDScript script"
+				+ " or a script resource path"
+		)
+		return null
+	var methods := _gd_tools_mock_methods_for(target_script)
+	var source := GdToolsMock.Doubler.generate(
+			target_script, get_instance_id(), is_partial, methods
+	)
+	var generated := GDScript.new()
+	generated.source_code = source
+	var reload_error := generated.reload()
+	if reload_error != OK or not generated.can_instantiate():
+		fail(
+				"Unable to generate a double of '%s': the generated script"
+				+ " did not load" % target_script.resource_path
+		)
+		return null
+	return generated.new()
+
+
+func _gd_tools_resolve_mock_script(target: Variant) -> Script:
+	if target is Script:
+		return target
+	if target is String:
+		return load(str(target)) as Script
+	return null
+
+
+func _gd_tools_mock_methods_for(target_script: Script) -> Array:
+	var path := target_script.resource_path
+	if not _gd_tools_mock_methods.has(path):
+		_gd_tools_mock_methods[path] = (
+			GdToolsMock.Doubler.collect_methods(target_script)
+		)
+	return _gd_tools_mock_methods[path]
+
+
+func _gd_tools_mock_return_meta(script_path: String, method: String) -> Dictionary:
+	var methods: Array = _gd_tools_mock_methods.get(script_path, [])
+	for meta in methods:
+		if str(meta.get("name", "")) == method:
+			return meta.get("return", {})
+	return {}
+
+
+func _gd_tools_mock_default(
+		script_path: String,
+		method: String,
+		index: int
+) -> Variant:
+	var methods: Array = _gd_tools_mock_methods.get(script_path, [])
+	for meta in methods:
+		if str(meta.get("name", "")) != method:
+			continue
+		var default_args: Array = meta.get("default_args", [])
+		var argument_count: int = meta.get("args", []).size()
+		var first_default := argument_count - default_args.size()
+		if index >= first_default and index - first_default < default_args.size():
+			return default_args[index - first_default]
+		return null
+	return null
 
 
 func fail(message: String = "Test failed") -> void:

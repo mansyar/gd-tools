@@ -1909,7 +1909,8 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
 MOCKING_METHODS = [
     "test_double_returns_instance_extending_target",
     "test_double_accepts_path_string",
-    "test_double_unstubbed_method_returns_null",
+    "test_double_unstubbed_variant_method_returns_null",
+    "test_double_unstubbed_typed_method_returns_type_default",
     "test_double_does_not_run_real_implementation",
     "test_double_returns_fresh_instance_per_call",
     "test_partial_double_runs_real_implementation",
