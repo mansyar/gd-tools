@@ -1919,6 +1919,46 @@ MOCKING_METHODS = [
 ]
 
 
+STUBBING_METHODS = [
+    "test_stub_to_return_overrides_double",
+    "test_stub_to_return_on_partial_double",
+    "test_stub_to_call_super_on_full_double",
+    "test_stub_to_call_super_on_partial_runs_real",
+    "test_stub_with_exact_arguments_matches_only_those",
+    "test_stub_with_any_wildcard_matches_any_value",
+    "test_stub_without_arguments_is_default_fallback",
+    "test_stub_to_return_null_on_untyped_method",
+    "test_stub_to_return_typed_value_on_typed_method",
+    "test_stub_applies_only_to_its_own_double",
+    "test_stubs_do_not_leak_into_the_next_test",
+    "test_double_records_calls_with_arguments",
+]
+
+
+def test_native_stub_matching_and_recording(godot_bin, tmp_path):
+    """stub() chains follow the spec's matching precedence and record calls."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "stubbing.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/stubbing_suite.gd",
+            STUBBING_METHODS,
+            "NativeStubbingSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(STUBBING_METHODS), payload["tests"]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
 def test_native_double_and_partial_double_semantics(godot_bin, tmp_path):
     """double()/partial_double() follow GUT semantics for unstubbed calls."""
     project = _prepare_project(tmp_path, godot_bin)
