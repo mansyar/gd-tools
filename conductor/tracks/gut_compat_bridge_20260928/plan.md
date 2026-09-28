@@ -60,7 +60,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       (checkpoint `e40cbf8`)
 
-## Phase 5 — Legacy Path Removal & Deprecation Diagnostics (Python/CLI)
+## Phase 5 — Legacy Path Removal & Deprecation Diagnostics (Python/CLI) [checkpoint: 71ceeda]
 
 - [x] Task: Write failing tests: `--runtime gut` CLI value and
       `test.runtime = "gut"` config rejected with migration guidance; legacy
@@ -69,7 +69,8 @@
 - [x] Task: Write failing doctor tests, then update `doctor.py` (GUT checks
       relaxed to optional/bridge-aware) (RED→GREEN)
 - [x] Task: Verify coverage; commit + git note (commit `99e7779`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      (checkpoint `71ceeda`)
 
 ## Phase 6 — Documentation & Truth Pass
 
