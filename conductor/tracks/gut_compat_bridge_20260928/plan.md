@@ -50,13 +50,13 @@
 
 ## Phase 4 — Result Normalization, Orchestration & Coverage
 
-- [ ] Task: Write failing tests for bridge→native result normalization
+- [x] Task: Write failing tests for bridge→native result normalization
       (statuses, JUnit XML, artifacts index, exit codes, mixed runs) (RED)
-- [ ] Task: Implement normalization in `native_test/command.py` /
+- [x] Task: Implement normalization in `native_test/command.py` /
       `orchestrator.py` + runner side (GREEN)
-- [ ] Task: Write failing tests for coverage on bridge suites, then implement
+- [x] Task: Write failing tests for coverage on bridge suites, then implement
       (tracker, plan schema v1, no GUT autoload) (RED→GREEN)
-- [ ] Task: Verify coverage; commit + git note
+- [x] Task: Verify coverage; commit + git note (commit `5be845a`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — Legacy Path Removal & Deprecation Diagnostics (Python/CLI)
