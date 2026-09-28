@@ -111,6 +111,7 @@ class NativeSuite(BaseModel):
     tests: list[NativeTest] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
     integration: NativeSuiteIntegration | None = None
+    runtime: RuntimeMode = RuntimeMode.NATIVE
 
 
 class NativeManifest(BaseModel):

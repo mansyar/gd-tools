@@ -925,9 +925,17 @@ directories, discover suites, import the project, run the preflight, prepare
 coverage, execute, then translate the run result into an exit code.
 
 `run_native_test_command()` raises `ConfigError` when discovery finds nothing,
-naming both remedies: add a suite extending `GdToolsTest`, or use
-`--runtime gut` for a legacy project. The most useful error is the one that
-tells you what to do next.
+naming the remedy: add a suite extending `GdToolsTest` or `GutTest`. The most
+useful error is the one that tells you what to do next.
+
+Before the preflight runs, `scan_bridge_suites()` statically inspects every
+bridge (`GutTest`) suite and fails the run when a suite uses a construct the
+bridge does not support (doubles, parameterization, mock-call assertions,
+engine-error assertions), listing each finding per file and line and pointing
+at [docs/gut-migration.md](./gut-migration.md). The scan is pure Python, so
+unsupported constructs are caught before any Godot process spawns. It also
+fails the run when `addons/gut` is present: the bridge provides
+`class_name GutTest` itself, and the addon's copy would collide.
 
 `_raise_for_native_error()` maps a terminal `error` status onto exit `2` before
 any coverage threshold is evaluated --- an infrastructure failure must not be
@@ -965,10 +973,15 @@ Finds candidate suites. This is the one place where Python reads GDScript as
 **text**, and it is deliberately limited to identifying *candidates*:
 
 - `_EXTENDS_RE` matches a suite that extends `GdToolsTest`
-- `_GUT_EXTENDS_RE` detects legacy `GutTest` suites so the error message can
-  point at `--runtime gut`
+- `_GUT_EXTENDS_RE` detects `GutTest` suites, which are classified as
+  bridge suites (`RuntimeMode.GUT`) and routed through the compatibility
+  bridge in the same run
 - `_TEST_FUNC_RE` matches `test_*` methods with an empty parameter list
 - `_TAG_RE` reads a class-level `const TAGS`
+
+A file that declares `test_*` methods but extends neither base class is a
+discovery error (exit 2): the file looks like a test but the runtime cannot
+run it. Helper scripts without test methods are ignored.
 
 Anything semantic is deferred to the preflight. `NativeDiscoveryError` is a
 `ConfigError`, so discovery problems exit `2` as configuration failures.
@@ -1205,6 +1218,7 @@ Isolation over throughput. See [8.2](#82-isolation-model).
 | Native runtime configuration keys | [User Guide](./USER_GUIDE.md) | Section 2.3 |
 | Instrumentation plan and coverage data formats | This document | Sections 4.1, 4.2 |
 | Runtime protocol and exit codes | This document | Sections 9, 11 |
+| GUT compatibility bridge and migration guide | [gut-migration](./gut-migration.md) | Whole document |
 
 ### Known Limitations
 
@@ -1219,3 +1233,12 @@ Stated so they are not discovered by surprise:
   instance rather than the per-test instance the runner reads, so it marks
   nothing. Guard inside the test method instead.
 - **No editor integration.** The runtime is headless and script-driven only.
+
+The GUT compatibility bridge inherits every limitation above and adds its
+own: it supports only the documented core subset of the GUT API
+([docs/gut-migration.md](./gut-migration.md)). Suites using constructs
+outside that subset fail at preflight with per-file guidance instead of
+running incompletely. The bridge is a temporary migration path; after the
+bounded migration period it is removed and `extends GutTest` stops
+resolving (see
+[Roadmap §8](./ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)).

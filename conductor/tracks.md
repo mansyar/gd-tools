@@ -52,3 +52,13 @@ _Archived tracks live in `./archive/`._
   snapshot with advisory metadata, and `coverage diff --base` reports per-file line and
   branch deltas (new/removed/improved/regressed files, newly-uncovered lines) with
   `--report-format json` and `--fail-on-regression` exit-1 gating for CI.
+
+---
+
+- [x] **Track: GUT Compatibility Bridge** (Migration Phase 3)
+  *Link: [gut_compat_bridge_20260928](./archive/gut_compat_bridge_20260928/index.md)* (archived → `./archive/gut_compat_bridge_20260928/`) - a
+  GutTest-compatible shim base class in the gd-tools-test addon so legacy GUT
+  suites run through the native protocol with the same result contract, without
+  the GUT addon installed. Auto-routes per suite, preflight-fails unsupported
+  constructs with migration guidance, removes the legacy GUT subprocess path,
+  and adds coverage support plus `docs/gut-migration.md`.

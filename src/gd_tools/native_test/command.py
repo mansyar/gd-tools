@@ -25,6 +25,7 @@ from gd_tools.native_test.artifacts import (
     mark_run_started,
     publish_artifact_index,
 )
+from gd_tools.native_test.bridge_scan import scan_bridge_suites
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.preflight import (
@@ -109,14 +110,22 @@ def run_native_test_command(
     )
     if not suites:
         raise ConfigError(
-            "No native GdToolsTest suites were found. Add a suite extending "
-            "GdToolsTest or run a legacy project with --runtime gut."
+            "No test suites were found. Add a suite extending GdToolsTest "
+            "(native) or GutTest (compatibility bridge)."
         )
+    scan_bridge_suites(project_root, suites)
 
     _import_project(godot_info.path, project_root, timeout)
     process_timeout = float(timeout) if timeout is not None else 300.0
     run_id = uuid.uuid4().hex
     artifact_layout = NativeArtifactLayout.create(project_root, run_id)
+    if any(suite.runtime == RuntimeMode.GUT for suite in suites):
+        # FR-9: bridge runs announce the temporary migration path so users
+        # know GutTest suites execute through the compatibility bridge.
+        output.print_info(
+            "Running through the GUT compatibility bridge: this is a "
+            "temporary migration path. See docs/gut-migration.md."
+        )
     try:
         mark_run_started(artifact_layout)
     except OSError as exc:
@@ -129,7 +138,14 @@ def run_native_test_command(
             project_root,
             NativeManifest(
                 project_root=project_root,
-                runtime=RuntimeMode.NATIVE,
+                # The manifest runtime marker is informational: a run is a
+                # bridge run when any suite is routed through the GutTest
+                # compatibility bridge, even in a mixed native+bridge run.
+                runtime=(
+                    RuntimeMode.GUT
+                    if any(suite.runtime == RuntimeMode.GUT for suite in suites)
+                    else RuntimeMode.NATIVE
+                ),
                 suites=suites,
             ),
             godot_binary=godot_info.path,
