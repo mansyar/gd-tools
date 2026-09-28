@@ -62,13 +62,13 @@
 
 ## Phase 5 — Legacy Path Removal & Deprecation Diagnostics (Python/CLI)
 
-- [ ] Task: Write failing tests: `--runtime gut` CLI value and
+- [x] Task: Write failing tests: `--runtime gut` CLI value and
       `test.runtime = "gut"` config rejected with migration guidance; legacy
       subprocess path gone from `test_runner.py` (RED)
-- [ ] Task: Implement removal + bridge-run migration notice in output (GREEN)
-- [ ] Task: Write failing doctor tests, then update `doctor.py` (GUT checks
+- [x] Task: Implement removal + bridge-run migration notice in output (GREEN)
+- [x] Task: Write failing doctor tests, then update `doctor.py` (GUT checks
       relaxed to optional/bridge-aware) (RED→GREEN)
-- [ ] Task: Verify coverage; commit + git note
+- [x] Task: Verify coverage; commit + git note (commit `99e7779`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 — Documentation & Truth Pass
