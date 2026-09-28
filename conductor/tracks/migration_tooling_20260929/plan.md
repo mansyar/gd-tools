@@ -8,7 +8,7 @@
 
 ## Phase 1: Analysis Engine
 
-- [ ] Task: Migration scanner and report model *(TDD: Red → Green → Refactor)*
+- [x] Task: Migration scanner and report model *(TDD: Red → Green → Refactor)* — `0524984`
   - [ ] Write failing tests: reusing `native_test/bridge_scan.py`, build a migration report model (per-file: base class, supported constructs, unsupported constructs with file:line + guidance, bridge-only aliases)
   - [ ] Implement `src/gd_tools/migration/` scanner module
   - [ ] Verify coverage (pytest --cov, >80% line / >70% branch)
