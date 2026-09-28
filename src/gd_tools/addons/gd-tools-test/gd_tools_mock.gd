@@ -193,15 +193,22 @@ class StubBuilder:
 	var _double_id := 0
 	var _method := ""
 	var _args: Array = []
+	# Disabled builders are returned by stub() after a fail-fast validation
+	# error, so chained calls stay safe while the recorded failure fails the
+	# test.
+	var _disabled := false
 
-	func _init(suite, double_id: int, method: String, args: Array) -> void:
+	func _init(suite, double_id: int, method: String, args: Array, disabled := false) -> void:
 		_suite = suite
 		_double_id = double_id
 		_method = method
 		_args = args.duplicate()
+		_disabled = disabled
 
 	## Answer every matching call with the given value.
 	func to_return(value: Variant) -> StubBuilder:
+		if _disabled:
+			return self
 		_suite._gd_tools_stub_register(
 				_double_id, _method, _args, "return", value
 		)
@@ -209,6 +216,8 @@ class StubBuilder:
 
 	## Forward every matching call to the real implementation.
 	func to_call_super() -> StubBuilder:
+		if _disabled:
+			return self
 		_suite._gd_tools_stub_register(
 				_double_id, _method, _args, "call_super", null
 		)

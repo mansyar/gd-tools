@@ -458,7 +458,7 @@ func _gd_tools_make_double(target: Variant, is_partial: bool) -> Object:
 	if target_script == null:
 		fail(
 				"double() and partial_double() require a GDScript script"
-				+ " or a script resource path"
+				+ " or a script resource path; got: %s" % [target]
 		)
 		return null
 	var methods := _gd_tools_mock_methods_for(target_script)
@@ -516,9 +516,37 @@ func _gd_tools_mock_return_meta(script_path: String, method: String) -> Dictiona
 ## recently registered stub wins. Stubs are stored per double instance on
 ## the test instance, so they never leak into other tests or doubles.
 func stub(target: Object, method: String, args: Array = []) -> GdToolsMock.StubBuilder:
+	## Create a stub builder for one method of a double.
+	##
+	## Fails the test immediately when the target is not a double or has no
+	## such method, so a typo surfaces at setup time instead of silently
+	## registering a stub that can never match.
+	var mock: Object = target.get("__gd_tools")
+	if mock == null:
+		fail(
+				"stub() requires a double created by double()"
+				+ " or partial_double(); got: %s" % [target]
+		)
+		return _gd_tools_disabled_stub_builder()
+	var script_path := str(mock.get("_script_path"))
+	var method_names := []
+	var target_script := load(script_path) as Script
+	if target_script != null:
+		for meta in _gd_tools_mock_methods_for(target_script):
+			method_names.append(str(meta.get("name", "")))
+	if not method in method_names:
+		fail(
+				'stub() cannot stub "%s": %s has no such method' % [method, script_path]
+		)
+		return _gd_tools_disabled_stub_builder()
 	return GdToolsMock.StubBuilder.new(
 			self, target.get_instance_id(), method, args
 	)
+
+
+func _gd_tools_disabled_stub_builder() -> GdToolsMock.StubBuilder:
+	## A no-op builder handed out after a fail-fast stub() error.
+	return GdToolsMock.StubBuilder.new(self, 0, "", [], true)
 
 
 func _gd_tools_stub_register(
