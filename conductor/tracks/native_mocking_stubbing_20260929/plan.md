@@ -35,7 +35,7 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 - [x] Task: Refactor + mixed native/bridge run green (no refactor needed; full bridge e2e module green)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 6 — Coverage honesty (Python + GDScript)
+## Phase 6 — Coverage honesty (Python + GDScript) `[checkpoint: e71c9e8]`
 - [x] Task: Red — failing tests proving generated double scripts never appear in coverage plan/report; real-script metrics unaffected by stubbing `[44693a1]` (property already held — test green on arrival, see note)
 - [x] Task: Green — implement exclusion in plan generation/data collection as needed (no change needed — honesty holds structurally: plan enumerates on-disk files only; collector instruments plan-listed files via injected trackers)
 - [x] Task: Refactor + coverage command regression green (no refactor; coverage-enabled e2e run green)
