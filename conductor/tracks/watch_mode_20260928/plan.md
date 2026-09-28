@@ -97,7 +97,7 @@
   - [ ] Verify docs match actual behavior.
   - [ ] Create the phase checkpoint commit and record its SHA.
 
-## Phase 4 — End-to-end verification & polish
+## Phase 4 — End-to-end verification & polish [checkpoint: 91720e5]
 
 **Purpose:** Prove the full loop on a real project with real file events.
 
@@ -106,5 +106,5 @@
   - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`.
   - [ ] Run `CI=true pytest` with coverage thresholds on new source.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Execute the manual verification plan: install via `pip install -e .`, run `gd-tools test --watch` on the sample project, confirm each acceptance criterion.
-  - [ ] Create the phase checkpoint commit and record its SHA.
+  - [x] Execute the manual verification plan: install via `pip install -e .`, run `gd-tools test --watch` on the sample project, confirm each acceptance criterion.
+  - [x] Create the phase checkpoint commit and record its SHA. [91720e5]
