@@ -596,6 +596,126 @@ func _gd_tools_mock_default(
 	return null
 
 
+func assert_called(target: Object, method: String, message: String = "") -> void:
+	## Assert that a double recorded at least one call to `method`.
+	if _gd_tools_assert_target_is_double(target, "assert_called"):
+		return
+	var calls: Array = _gd_tools_double_calls(target, method)
+	if calls.is_empty():
+		_gd_tools_record_failure(
+				"assert_called",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" to have been called at least once, but it was never called.'
+								% method
+				),
+				0,
+				"at least 1"
+		)
+
+
+func assert_not_called(target: Object, method: String, message: String = "") -> void:
+	## Assert that a double recorded no calls to `method`.
+	if _gd_tools_assert_target_is_double(target, "assert_not_called"):
+		return
+	var calls: Array = _gd_tools_double_calls(target, method)
+	if not calls.is_empty():
+		_gd_tools_record_failure(
+				"assert_not_called",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" to have never been called, but it was called %d time(s).'
+								% [method, calls.size()]
+				),
+				calls.size(),
+				0
+		)
+
+
+func assert_call_count(
+		target: Object, method: String, count: int, message: String = ""
+) -> void:
+	## Assert that a double recorded exactly `count` calls to `method`.
+	if _gd_tools_assert_target_is_double(target, "assert_call_count"):
+		return
+	var actual := _gd_tools_double_calls(target, method).size()
+	if actual != count:
+		_gd_tools_record_failure(
+				"assert_call_count",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" to have been called %d time(s), but it was called %d time(s).'
+								% [method, count, actual]
+				),
+				actual,
+				count
+		)
+
+
+func assert_call_arguments(
+		target: Object,
+		method: String,
+		expected_args: Array,
+		call_index: int = -1,
+		message: String = ""
+) -> void:
+	## Assert the arguments of one recorded call on a double.
+	##
+	## `call_index` selects the recorded call (0 is the first); -1, the
+	## default, selects the most recent call.
+	if _gd_tools_assert_target_is_double(target, "assert_call_arguments"):
+		return
+	var calls: Array = _gd_tools_double_calls(target, method)
+	if call_index < 0:
+		call_index = calls.size() + call_index
+	if call_index < 0 or call_index >= calls.size():
+		_gd_tools_record_failure(
+				"assert_call_arguments",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" call %d to exist, but only %d call(s) were recorded.'
+								% [method, call_index, calls.size()]
+				),
+				calls.size(),
+				call_index + 1
+		)
+		return
+	var actual_args: Array = calls[call_index]
+	if actual_args != expected_args:
+		_gd_tools_record_failure(
+				"assert_call_arguments",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" call %d arguments %s, but was %s.'
+								% [method, call_index, expected_args, actual_args]
+				),
+				actual_args,
+				expected_args
+		)
+
+
+func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> bool:
+	## Record a failure and return true when `target` is not a double.
+	if target.get("__gd_tools") != null:
+		return false
+	_gd_tools_record_failure(
+			assertion,
+			"%s() requires a double created by double() or partial_double(); got: %s"
+					% [assertion, target]
+	)
+	return true
+
+
+func _gd_tools_double_calls(target: Object, method: String) -> Array:
+	## Return the arguments of every recorded call to `method` on a double.
+	var mock: Object = target.get("__gd_tools")
+	var recorded: Array = []
+	for call in mock.get("calls"):
+		if str(call.get("method", "")) == method:
+			recorded.append(call.get("args", []))
+	return recorded
+
+
 func fail(message: String = "Test failed") -> void:
 	## Record an unconditional test failure.
 	_gd_tools_record_failure("fail", message)
