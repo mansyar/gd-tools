@@ -6,7 +6,7 @@
 
 ---
 
-## Phase 1: Analysis Engine
+## Phase 1: Analysis Engine `[checkpoint: 623d210]`
 
 - [x] Task: Migration scanner and report model *(TDD: Red → Green → Refactor)* — `0524984`
   - [ ] Write failing tests: reusing `native_test/bridge_scan.py`, build a migration report model (per-file: base class, supported constructs, unsupported constructs with file:line + guidance, bridge-only aliases)
