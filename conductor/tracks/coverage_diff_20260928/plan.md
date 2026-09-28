@@ -137,20 +137,20 @@ detail, JSON report format, and `--fail-on-regression` gating.
 **Purpose:** Document both subcommands for users and CI, and verify the whole
 track against the specification's acceptance criteria.
 
-- [ ] Task: Update documentation
-  - [ ] Document `coverage save-baseline` and `coverage diff` in
+- [x] Task: Update documentation [commit: `be3c4c7`]
+  - [x] Document `coverage save-baseline` and `coverage diff` in
     `docs/USER_GUIDE.md` (options, exit codes, output examples).
-  - [ ] Document the JSON diff output shape.
-  - [ ] Add a CI usage snippet: `save-baseline` on main pushes,
+  - [x] Document the JSON diff output shape.
+  - [x] Add a CI usage snippet: `save-baseline` on main pushes,
     `diff --fail-on-regression` on PRs.
-  - [ ] Update `CHANGELOG.md` for the new subcommands.
-  - [ ] Cross-check `docs/ARCHITECTURE.md` for any needed pointer to the diff
+  - [x] Update `CHANGELOG.md` for the new subcommands.
+  - [x] Cross-check `docs/ARCHITECTURE.md` for any needed pointer to the diff
     feature (surgical addition only).
-- [ ] Task: Full-suite verification
-  - [ ] Run `CI=true pytest` and confirm all tests pass.
-  - [ ] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
+- [x] Task: Full-suite verification
+  - [x] Run `CI=true pytest` and confirm all tests pass.
+  - [x] Run `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`
     and confirm >80% line / >70% branch for new source code.
-  - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`.
+  - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`.
   - [ ] Walk the specification's acceptance criteria 1–11 and record results in
     `plan.md` implementation notes.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
@@ -158,3 +158,62 @@ track against the specification's acceptance criteria.
     `pip install -e .`, run `save-baseline` and `diff` on a real coverage
     fixture, confirm table/JSON/exit codes).
   - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+
+## Implementation Notes
+
+### Full-suite verification (2026-09-28)
+
+- `CI=true pytest` (full suite, Godot 4.7.1 via `GODOT_BIN=C:\Godot\godot.exe`,
+  worktree-local venv with `pip install -e ".[dev]"`): **1235 passed,
+  2 skipped**. The 18 initial e2e failures were environmental
+  (`FileNotFoundError: [WinError 2]` launching the `gd-tools` console script
+  that resolves to the user's main-clone editable install); they all passed
+  after the worktree venv was created. No product change was involved.
+- Coverage: **95.40%** total (gates: >80% line, >70% branch);
+  `coverage/diff_reporter.py` at **96%** (only defensive branches uncovered).
+- `ruff check src/ tests/`: clean. `black --check src/ tests/`: clean.
+
+### Acceptance criteria walk (spec, 1–11)
+
+1. **save-baseline writes baseline.json + metadata** — PASS. Unit:
+   `save_baseline_writes_self_contained_document`, `stamps_utc_saved_at`,
+   `stamps_git_metadata` (tests/unit/test_diff_reporter.py). Manual: file
+   written with `version`/`baseline_meta`/`plan`/`data` keys (Phase 1
+   verification transcript).
+2. **save without data exits 2, no file** — PASS. Unit:
+   `missing_coverage_data_raises`, `missing_plan_raises`; CLI:
+   `test_coverage_save_baseline_missing_data_exit_2`; orchestrator:
+   `test_save_coverage_baseline_missing_data_raises`. Manual: exit 2 with
+   `[Error] Coverage data file not found` + Cause/Fix after deleting
+   coverage.json.
+3. **diff table with base/head counts, rates, deltas + TOTAL row** — PASS.
+   Unit: `test_coverage_diff_is_registered`, table builder tests
+   (`build_diff_table...` asserts in test_diff_reporter.py). Manual: full
+   table rendered with per-file rows and TOTAL (Phase 3 transcript).
+4. **improvements/regressions visually distinct** — PASS. Change cells use
+   green for improved, red for regressed (style applied in
+   `build_diff_table`); asserted in rendering tests via `Text.style`.
+5. **new/removed files shown and classified** — PASS. Unit:
+   `test_compute_diff_new_and_removed_files_sorted`; JSON/ table rows carry
+   `new`/`removed` with one-sided metrics (base/head `null` in JSON).
+   Manual: `brand_new.gd` shown as `new (2/3 = 67%)` in the Phase 2 scenario.
+6. **--show-lines lists newly-uncovered lines for regressed files** — PASS.
+   Unit: `build_diff_detail` tests + CLI flag-passing test. Manual:
+   `res://enemy.gd: newly uncovered lines 3, 5, 8`.
+7. **--report-format json valid + deterministic** — PASS. Unit:
+   `build_diff_json` structure test and `json.dumps` twice-identical
+   determinism test. Manual: JSON rendered in Phase 3 transcript.
+8. **--fail-on-regression exit semantics** — PASS. Unit:
+   `test_coverage_diff_regression_gate_exit_1` (exit 1 with flag),
+   `test_compute_diff_has_regression_false_without_regression`. Manual:
+   exit 1 with the regression table shown first; exit 0 without the flag.
+9. **missing/malformed baseline or current data exit 2** — PASS. Unit:
+   `missing_file_raises`, `invalid_json_raises`,
+   `rejects_missing_plan_payload`, `rejects_missing_data_payload`,
+   `rejects_malformed_nested_data`, `test_coverage_diff_plan_error_exit_2`
+   (all `CoveragePlanError` → exit 2 at the CLI boundary).
+10. **all tests pass; coverage gates; ruff/black** — PASS (see full-suite
+    verification above: 1235 passed / 2 skipped, 95.40%, clean).
+11. **USER_GUIDE documents subcommands, JSON shape, CI snippet** — PASS
+    (§3.7.4/§3.7.5 added in commit be3c4c7; also CHANGELOG entry and
+    ARCHITECTURE §5.6 pointer).
