@@ -7,7 +7,11 @@ import pytest
 
 from gd_tools.config import GdToolsConfig
 from gd_tools.native_test import command
-from gd_tools.native_test.bridge_scan import BridgeScanError, scan_bridge_suites
+from gd_tools.native_test.bridge_scan import (
+    MIGRATION_DOC,
+    BridgeScanError,
+    scan_bridge_suites,
+)
 from gd_tools.native_test.protocol import NativeSuite, NativeTest, RuntimeMode
 
 pytestmark = pytest.mark.unit
@@ -152,6 +156,40 @@ func test_member_calls() -> void:
     )
 
     _assert_no_findings(tmp_path, suite)
+
+
+def test_scan_fails_when_gut_addon_installed(tmp_path):
+    """A GUT installation collides with the shim and must be removed."""
+    addon_dir = tmp_path / "addons" / "gut"
+    addon_dir.mkdir(parents=True)
+    (addon_dir / "plugin.cfg").write_text(
+        "[plugin]\nname=GUT\n", encoding="utf-8"
+    )
+    suite = _bridge_suite(
+        tmp_path,
+        "extends GutTest\n\nfunc test_x() -> void:\n    assert_eq(1, 1)\n",
+    )
+
+    with pytest.raises(
+        BridgeScanError, match=r"addons/gut.*class_name GutTest"
+    ) as excinfo:
+        scan_bridge_suites(tmp_path, [suite])
+
+    assert MIGRATION_DOC in str(excinfo.value)
+
+
+def test_scan_fails_with_gut_addon_even_for_native_only_runs(tmp_path):
+    """The class_name collision affects every run, not only bridge suites."""
+    (tmp_path / "addons" / "gut").mkdir(parents=True)
+    suite = NativeSuite(
+        name="NativeSuite",
+        path="res://test/native_test.gd",
+        runtime=RuntimeMode.NATIVE,
+        tests=[NativeTest(name="test_native")],
+    )
+
+    with pytest.raises(BridgeScanError, match="addons/gut"):
+        scan_bridge_suites(tmp_path, [suite])
 
 
 def test_scan_groups_findings_per_file(tmp_path):

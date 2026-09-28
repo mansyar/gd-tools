@@ -57,15 +57,22 @@ class BridgeScanError(GdToolsError):
 
 
 def scan_bridge_suites(project_root: Path, suites: list[NativeSuite]) -> None:
-    """Fail when a bridge suite calls an unsupported GUT helper.
+    """Fail before any Godot process spawns on bridge-obstructing setups.
 
     Args:
         project_root: Godot project root used to resolve ``res://`` paths.
-        suites: Discovered suites; only ``RuntimeMode.GUT`` suites are scanned.
+        suites: Discovered suites; only ``RuntimeMode.GUT`` suites are scanned
+            for unsupported constructs.
 
     Raises:
-        BridgeScanError: If any bridge suite calls an unsupported construct.
+        BridgeScanError: If a GUT addon is installed (it collides with the
+            shim's ``class_name GutTest``) or any bridge suite calls an
+            unsupported construct.
     """
+    gut_addon_dir = project_root / "addons" / "gut"
+    if gut_addon_dir.is_dir():
+        raise BridgeScanError(_format_gut_addon_error())
+
     findings: dict[str, dict[str, int]] = {}
     for suite in suites:
         if suite.runtime is not RuntimeMode.GUT:
@@ -87,6 +94,16 @@ def scan_bridge_suites(project_root: Path, suites: list[NativeSuite]) -> None:
 def _plural(count: int, singular: str) -> str:
     """Return ``<count> <word>`` with a plural suffix when needed."""
     return f"{count} {singular}{'' if count == 1 else 's'}"
+
+
+def _format_gut_addon_error() -> str:
+    """Build the actionable error for an installed GUT addon."""
+    return (
+        "GUT is installed at 'res://addons/gut'. The GUT compatibility "
+        "bridge provides GutTest natively, so the GUT addon would create a "
+        "duplicate class_name GutTest. Remove addons/gut to run through the "
+        f"bridge. See {MIGRATION_DOC} for migration steps."
+    )
 
 
 def _format_error(findings: dict[str, dict[str, int]]) -> str:
