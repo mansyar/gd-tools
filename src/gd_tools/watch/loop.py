@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterator
 from pathlib import Path
+from typing import Protocol
 
 from gd_tools.native_test.protocol import NativeRunResult, NativeSuite
 from gd_tools.watch.coalescer import RunCoalescer
@@ -13,12 +14,24 @@ from gd_tools.watch.observer import FileEvent
 from gd_tools.watch.scope import WatchAction, classify_event
 
 
+class EventSource(Protocol):
+    """Minimal interface the watch loop needs from an event source."""
+
+    def events(self) -> Iterator[FileEvent | None]:
+        """Yield file events, with ``None`` poll ticks between arrivals."""
+        ...
+
+    def stop(self) -> None:
+        """Terminate the event stream."""
+        ...
+
+
 def watch_loop(
     project_root: Path,
     *,
     discover: Callable[[], list[NativeSuite]],
     runner: Callable[[list[NativeSuite]], NativeRunResult],
-    event_source: object,
+    event_source: EventSource,
     clock: Callable[[], float],
     sleep: Callable[[float], None] = time.sleep,
     output: Callable[[str], None] = print,
@@ -47,7 +60,7 @@ def watch_loop(
     """
     coalescer = RunCoalescer(clock=clock)
     run_number = 0
-    last_changed: str | None = None
+    changed: set[str] = set()
 
     def run(suites: list[NativeSuite]) -> None:
         nonlocal run_number
@@ -64,32 +77,37 @@ def watch_loop(
                 if coalescer.should_run():
                     coalescer.start_run()
                     suites = discover()
-                    if last_changed is not None:
+                    mapped_paths: set[str] = set()
+                    unmapped: list[str] = []
+                    for path in sorted(changed):
                         mapped = map_changed_file(
-                            project_root / last_changed, project_root, suites
+                            project_root / path, project_root, suites
                         )
                         if mapped is None:
+                            unmapped.append(path)
+                        else:
+                            mapped_paths.add(mapped)
+                    if unmapped:
+                        for path in unmapped:
                             output(
-                                f"No suite mapped for '{last_changed}';"
+                                f"No suite mapped for '{path}';"
                                 " running full suite."
                             )
-                            run(suites)
-                        else:
-                            run(
-                                [
-                                    suite
-                                    for suite in suites
-                                    if suite.path == mapped
-                                ]
-                            )
-                    else:
                         run(suites)
-                    last_changed = None
+                    else:
+                        run(
+                            [
+                                suite
+                                for suite in suites
+                                if suite.path in mapped_paths
+                            ]
+                        )
+                    changed.clear()
                     coalescer.finish_run()
             else:
                 if classify_event(event.event_type) is WatchAction.RUN:
                     coalescer.notify_change()
-                    last_changed = event.path
+                    changed.add(event.path)
     except KeyboardInterrupt:
         pass
     finally:

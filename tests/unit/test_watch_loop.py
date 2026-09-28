@@ -212,3 +212,57 @@ def test_output_reports_run_status_lines():
     _run_loop(source, discover, runner, clock, output)
 
     assert len([line for line in output if "passed" in line]) == 2
+
+
+def test_coalesced_batch_reruns_all_mapped_suites():
+    """Multiple changed files map to all affected suites in one run."""
+    clock = FakeClock()
+    source = FakeEventSource(
+        FileEvent("src/enemy.gd", "modified"),
+        FileEvent("src/player.gd", "modified"),
+    )
+    suites = [
+        SUITE,
+        NativeSuite(name="test_player", path="res://tests/test_player.gd"),
+    ]
+
+    def discover():
+        return list(suites)
+
+    def on_call(n):
+        if n >= 2:
+            source.stop()
+
+    runner = FakeRunner(on_call)
+    output: list[str] = []
+
+    _run_loop(source, discover, runner, clock, output)
+
+    assert runner.calls[1] == [
+        "res://tests/test_enemy.gd",
+        "res://tests/test_player.gd",
+    ]
+
+
+def test_batch_with_any_unmapped_file_falls_back_to_full_suite():
+    """One unmapped file in a batch forces a full-suite fallback run."""
+    clock = FakeClock()
+    source = FakeEventSource(
+        FileEvent("src/enemy.gd", "modified"),
+        FileEvent("src/helper.gd", "modified"),
+    )
+
+    def discover():
+        return [SUITE]
+
+    def on_call(n):
+        if n >= 2:
+            source.stop()
+
+    runner = FakeRunner(on_call)
+    output: list[str] = []
+
+    _run_loop(source, discover, runner, clock, output)
+
+    assert runner.calls[1] == ["res://tests/test_enemy.gd"]
+    assert any("src/helper.gd" in line for line in output)

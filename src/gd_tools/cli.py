@@ -399,6 +399,14 @@ def test(
         )
         ctx = click.get_current_context()
         ctx.exit(2)
+    if watch and paths:
+        click.echo(
+            "Error: --watch does not accept path arguments; it watches the "
+            "whole project scope.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
 
     try:
         if watch:

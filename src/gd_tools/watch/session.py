@@ -15,7 +15,12 @@ from gd_tools.native_test.discovery import (
     NativeDiscoveryError,
     discover_native_suites,
 )
-from gd_tools.native_test.protocol import NativeRunResult, NativeTestResult
+from gd_tools.native_test.protocol import (
+    NativeRunResult,
+    NativeSuite,
+    NativeTestResult,
+)
+from gd_tools.test_runner import TestResult
 from gd_tools.watch.loop import watch_loop
 from gd_tools.watch.observer import WatchdogEventSource
 from gd_tools.watch.scope import resolve_watched_files
@@ -29,7 +34,7 @@ _STATUS_MAP = {
 }
 
 
-def _watch_result(result, status: str) -> NativeRunResult:
+def _watch_result(result: TestResult | None, status: str) -> NativeRunResult:
     """Map a native command result into the loop's summary result.
 
     The per-test breakdown is carried over (with statuses translated to
@@ -109,18 +114,16 @@ def run_watch_mode(
     banner = WATCH_BANNER.format(count=len(watched))
     output(banner)
 
-    selected_tags = (
-        list(tags) if tags else list(getattr(config.test, "tags", []))
-    )
+    selected_tags = list(tags) if tags else list(config.test.tags)
     effective_test_timeout = (
         test_timeout
         if test_timeout is not None
         else config.test.timeout_seconds
     )
-    test_dirs = list(getattr(config.test, "test_dirs", []))
-    retries = getattr(config.test, "retries", 0)
+    test_dirs = list(config.test.test_dirs)
+    retries = config.test.retries
 
-    def discover() -> list:
+    def discover() -> list[NativeSuite]:
         """Resolve the current suites; transient discovery gaps yield none."""
         try:
             return discover_native_suites(
@@ -135,7 +138,7 @@ def run_watch_mode(
         except NativeDiscoveryError:
             return []
 
-    def runner(suites: list) -> NativeRunResult:
+    def runner(suites: list[NativeSuite]) -> NativeRunResult:
         """Execute one run through the existing native command pipeline.
 
         When the loop narrowed the selection to a single suite (a mapped

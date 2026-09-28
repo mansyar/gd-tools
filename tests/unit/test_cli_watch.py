@@ -36,6 +36,21 @@ def test_watch_with_ci_env_exits_2():
     mock_watch.assert_not_called()
 
 
+def test_watch_with_path_arguments_exits_2():
+    """Watch mode ignores positional paths; it must reject them instead."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch("gd_tools.cli.run_watch_mode") as mock_watch,
+    ):
+        result = runner.invoke(
+            cli, ["test", "tests/", "--watch"], env={"CI": ""}
+        )
+    assert result.exit_code == 2
+    assert "path" in result.output
+    mock_watch.assert_not_called()
+
+
 def test_watch_passes_filters_and_coverage_to_session():
     """Filters and --coverage are passed through to the watch session."""
     runner = CliRunner()
