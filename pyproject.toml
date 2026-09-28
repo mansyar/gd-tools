@@ -37,6 +37,7 @@ dependencies = [
     "pydantic >= 2.0",
     "requests",
     "packaging",
+    "watchdog",
 ]
 
 [project.urls]
