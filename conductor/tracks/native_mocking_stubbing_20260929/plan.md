@@ -42,8 +42,8 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 7 — Documentation truth pass
-- [ ] Task: Update `docs/USER_GUIDE.md` (mocking API reference)
-- [ ] Task: Update `docs/gut-migration.md` (remove double/stub rows from refused table)
-- [ ] Task: Update `docs/ARCHITECTURE.md` (drop "No mocking or stubbing" limitation; describe the facility)
-- [ ] Task: Update `README.md` capability table
+- [x] Task: Update `docs/USER_GUIDE.md` (mocking API reference) `[3ddbfd8]`
+- [x] Task: Update `docs/gut-migration.md` (remove double/stub rows from refused table) `[d784dde]`
+- [x] Task: Update `docs/ARCHITECTURE.md` (drop "No mocking or stubbing" limitation; describe the facility) `[2093aaa]`
+- [x] Task: Update `README.md` capability table `[ccdf575]`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
