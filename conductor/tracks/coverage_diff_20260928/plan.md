@@ -97,40 +97,40 @@ totals — independent of CLI and rendering.
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 3 — `coverage diff` CLI, rendering, and gating
+## Phase 3 — `coverage diff` CLI, rendering, and gating [checkpoint: `c6ccb2d`]
 
 **Purpose:** Expose `gd-tools coverage diff` with the terminal table, line
 detail, JSON report format, and `--fail-on-regression` gating.
 
-- [ ] Task: Add failing CLI tests for `coverage diff`
-  - [ ] Verify `--base` is required and a missing file exits `2`.
-  - [ ] Verify a malformed baseline and missing/malformed current coverage data
+- [x] Task: Add failing CLI tests for `coverage diff` [commit: `e729c09`]
+  - [x] Verify `--base` is required and a missing file exits `2`.
+  - [x] Verify a malformed baseline and missing/malformed current coverage data
     exit `2` with actionable messages.
-  - [ ] Verify the default terminal table lists per-file rows (path, base and
+  - [x] Verify the default terminal table lists per-file rows (path, base and
     head line/branch counts and rates, change) plus a total row, using shared
     `output.py` helpers and project color semantics.
-  - [ ] Verify baseline metadata renders as a one-line context header when
+  - [x] Verify baseline metadata renders as a one-line context header when
     present.
-  - [ ] Verify `--show-lines` lists newly-uncovered line numbers for regressed
+  - [x] Verify `--show-lines` lists newly-uncovered line numbers for regressed
     files only.
-  - [ ] Verify `--report-format json` emits valid, deterministic JSON covering
+  - [x] Verify `--report-format json` emits valid, deterministic JSON covering
     per-file metrics, classifications, newly-uncovered lines, and totals.
-  - [ ] Verify `--fail-on-regression` exits `1` when any file regressed and `0`
+  - [x] Verify `--fail-on-regression` exits `1` when any file regressed and `0`
     otherwise (including regressions without the flag).
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement the `coverage diff` command and rendering
-  - [ ] Add the Click command to the existing `coverage` group, delegating to
+  - [x] Confirm the expected Red phase.
+- [x] Task: Implement the `coverage diff` command and rendering [commit: `15e5a3a`]
+  - [x] Add the Click command to the existing `coverage` group, delegating to
     an orchestration function.
-  - [ ] Render the Rich summary table and detail lines per project output
+  - [x] Render the Rich summary table and detail lines per project output
     conventions (ASCII-only markers, color semantics).
-  - [ ] Implement the JSON report structure deterministically.
-  - [ ] Wire exit codes `0` / `1` / `2` per the specification.
-  - [ ] Run CLI tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run all coverage-module tests plus static checks.
-  - [ ] Verify no new dependencies were added and `cli.py` holds no diff logic.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+  - [x] Implement the JSON report structure deterministically.
+  - [x] Wire exit codes `0` / `1` / `2` per the specification.
+  - [x] Run CLI tests to Green.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [commit: `c6ccb2d`]
+  - [x] Run all coverage-module tests plus static checks.
+  - [x] Verify no new dependencies were added and `cli.py` holds no diff logic.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 4 — Documentation and full verification
 
