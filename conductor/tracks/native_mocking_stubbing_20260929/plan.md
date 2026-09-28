@@ -16,7 +16,7 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 - [x] Task: Refactor + suite green `[967f830]`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Call assertions (GDScript)
+## Phase 3 — Call assertions (GDScript) `[checkpoint: 6046dfa]`
 - [x] Task: Red — failing tests for `assert_called`, `assert_not_called`, `assert_call_count`, `assert_call_arguments`, incl. actionable failure diagnostics (expected vs actual) `[fce486c]`
 - [x] Task: Green — implement assertions on `GdToolsTest` `[8d9fc3c]`
 - [x] Task: Refactor + suite green (no refactor needed; full suite green)
