@@ -62,3 +62,8 @@ _Archived tracks live in `./archive/`._
   the GUT addon installed. Auto-routes per suite, preflight-fails unsupported
   constructs with migration guidance, removes the legacy GUT subprocess path,
   and adds coverage support plus `docs/gut-migration.md`.
+
+---
+
+- [ ] **Track: Native Mocking & Stubbing**
+  *Link: [native_mocking_stubbing_20260929](./tracks/native_mocking_stubbing_20260929/index.md)* - a GUT-compatible test-double facility (`double()`, `partial_double()`, `stub()` with `to_return`/`to_call_super`, exact + wildcard argument matching, and the `assert_called` family) on the native `GdToolsTest` runtime, with bridge preflight un-rejecting mocking constructs, coverage honesty guarantees, and a four-document truth pass.
