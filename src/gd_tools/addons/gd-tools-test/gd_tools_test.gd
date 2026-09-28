@@ -37,6 +37,8 @@ func _gd_tools_record_failure(
 	for frame in stack:
 		var frame_source := str(frame.get("source", ""))
 		if frame_source.ends_with("gd_tools_test.gd") or frame_source.ends_with(
+				"gd_tools_gut_bridge.gd"
+		) or frame_source.ends_with(
 				"gd_tools_test_runner.gd"
 		):
 			continue

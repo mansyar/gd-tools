@@ -1,0 +1,1 @@
+The bridge fixture reads this file with the assert_file_* family.

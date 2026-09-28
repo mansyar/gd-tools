@@ -122,7 +122,7 @@ def test_native_cli_defaults_to_native_and_writes_junit(tmp_path, godot_bin):
 
 
 def test_native_cli_enforces_tag_selection(tmp_path, godot_bin):
-    """A tag with no matching suites produces native migration guidance."""
+    """A tag with no matching suites produces discovery guidance."""
     project = _setup_project(tmp_path)
     assert (
         _run_cli(["init", "--non-interactive"], project, godot_bin).returncode
@@ -136,7 +136,7 @@ def test_native_cli_enforces_tag_selection(tmp_path, godot_bin):
     )
 
     assert result.returncode == 2
-    assert "--runtime gut" in result.stdout + result.stderr
+    assert "No test suites were found" in result.stdout + result.stderr
 
 
 def test_native_cli_preserves_exact_file_selector(tmp_path, godot_bin):
@@ -187,8 +187,10 @@ def test_native_cli_preserves_failure_and_no_exit_exit_codes(
     assert suppressed.returncode == 0, suppressed.stdout + suppressed.stderr
 
 
-def test_native_cli_empty_selection_gives_legacy_guidance(tmp_path, godot_bin):
-    """A missing native selection explains how to use the GUT fallback."""
+def test_native_cli_empty_selection_gives_selection_guidance(
+    tmp_path, godot_bin
+):
+    """A missing selection explains what discovery accepts."""
     project = _setup_project(tmp_path)
     assert (
         _run_cli(["init", "--non-interactive"], project, godot_bin).returncode
@@ -202,7 +204,7 @@ def test_native_cli_empty_selection_gives_legacy_guidance(tmp_path, godot_bin):
     )
 
     assert result.returncode == 2
-    assert "--runtime gut" in result.stdout + result.stderr
+    assert "No test suites were found" in result.stdout + result.stderr
 
 
 @pytest.mark.slow
