@@ -8,7 +8,7 @@
 
 ---
 
-## Phase 1 — Discovery Routing & Bridge Classification (Python)
+## Phase 1 — Discovery Routing & Bridge Classification (Python) [checkpoint: 38faa28]
 
 - [x] Task: Write failing tests for suite classification (RED)
   - `extends GdToolsTest` → native suite; `extends GutTest` → bridge suite;
