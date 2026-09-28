@@ -55,7 +55,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Watch Mode** *Link: [./tracks/watch_mode_20260928/](./tracks/watch_mode_20260928/)* - add `gd-tools test --watch`:
+- [x] **Track: Watch Mode** *Link: [./tracks/watch_mode_20260928/](./tracks/watch_mode_20260928/)* - add `gd-tools test --watch`:
   watchdog-based `.gd` file watching with a 500 ms debounce, convention-based
   file→suite mapping with an explicit full-suite fallback, existing filters and
   `--coverage` respected per run, screen-clear UX with a watching banner, and a
