@@ -36,14 +36,15 @@
 
 ## Phase 3 — GutTest Shim Base Class (GDScript)
 
-- [ ] Task: Add fixture GUT-style suites to `tests/fixtures/projects` +
+- [x] Task: Add fixture GUT-style suites to `tests/fixtures/projects` +
       failing e2e tests asserting bridge behaviour (RED)
-- [ ] Task: Implement `gd_tools_gut_bridge.gd` shim (`class_name GutTest`),
+- [x] Task: Implement `gd_tools_gut_bridge.gd` shim (`class_name GutTest`),
       six lifecycle hooks incl. `prerun_setup`/`postrun_teardown` (GREEN)
-- [ ] Task: Implement core assertion aliases reusing native assertions (GREEN)
-- [ ] Task: Implement signal family (`watch_signals` + signal assertion set) (GREEN)
-- [ ] Task: Implement async helpers (bounded `wait_*`, `yield_*` aliases) (GREEN)
-- [ ] Task: Verify e2e green; commit + git note
+- [x] Task: Implement core assertion aliases reusing native assertions (GREEN)
+- [x] Task: Implement signal family (`watch_signals` + signal assertion set) (GREEN)
+- [x] Task: Implement async helpers (bounded `wait_*`, `yield_*` aliases) (GREEN)
+- [x] Task: Verify e2e green; commit + git note
+  (commit `3a9fd2e`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Result Normalization, Orchestration & Coverage
