@@ -9,7 +9,7 @@ with a verification checkpoint task.
 
 ## Phase 1 — Protocol & Preflight: Parameter-Aware Discovery and Validation
 
-- [ ] Task: Write failing Python tests for manifest expansion metadata
+- [x] Task: Write failing Python tests for manifest expansion metadata (d7d6586)
     - [ ] `tests/test_native_protocol.py` (or nearest existing file): suite manifest carries per-method parameter declarations (`params`, `values`, case count) discovered through the preflight
     - [ ] Test: parameterized methods appear in discovered tests with declared case count; zero-arg methods unchanged
 - [ ] Task: Write failing Python tests for preflight validation (exit 2)
