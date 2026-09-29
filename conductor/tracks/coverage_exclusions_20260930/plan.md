@@ -60,9 +60,9 @@ Covers spec FR4.
 
 Covers spec FR5.
 
-- [ ] Task 3.1: Write failing tests: HTML renders excluded lines in a distinct style; terminal report shows a compact excluded count only when exclusions exist; `--min` evaluates against the post-exclusion denominator (Red)
-- [ ] Task 3.2: Implement HTML + terminal changes reading `excluded_lines` from the plan (Green)
-- [ ] Task 3.3: Confirm LCOV/Cobertura/diff outputs are unchanged for annotated files (they simply never see the excluded lines)
+- [x] Task 3.1: Write failing tests: HTML renders excluded lines in a distinct style; terminal report shows a compact excluded count only when exclusions exist; `--min` evaluates against the post-exclusion denominator (Red) [9786eab]
+- [x] Task 3.2: Implement HTML + terminal changes reading `excluded_lines` from the plan (Green) [9786eab]
+- [x] Task 3.3: Confirm LCOV/Cobertura/diff outputs are unchanged for annotated files (they simply never see the excluded lines) [9786eab]
 - [ ] Task 3.4: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Documentation
