@@ -65,7 +65,7 @@ Covers spec FR5.
 - [x] Task 3.3: Confirm LCOV/Cobertura/diff outputs are unchanged for annotated files (they simply never see the excluded lines) [9786eab]
 - [ ] Task 3.4: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4 — Documentation
+## Phase 4 — Documentation [checkpoint: ff99d74]
 
 Covers spec AC8.
 
