@@ -38,7 +38,7 @@ with a verification checkpoint task.
     - [ ] Result entries and NDJSON events use `test_foo[case-name]` identifiers
 - [x] Task: Write failing Python tests + implement selector interaction (`native_test/discovery.py` / `command.py`) (b1974dc)
     - [x] Note: case-selector trimming is implemented in the GDScript preflight (shared by all callers) rather than `command.py`; discovery preserves the selector verbatim and the full pipeline is verified end to end
-- [ ] Task: Verify coverage attribution aggregates per-case hits back to the method (integration check; plan change only if needed)
+- [x] Task: Verify coverage attribution aggregates per-case hits back to the method (integration check; plan change only if needed) (2dec2a7)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Suite-Level Skip in `before_all`
