@@ -7,7 +7,7 @@ Workflow notes: every task follows the TDD lifecycle from `conductor/workflow.md
 commit → git note → mark `[x]` with SHA → commit plan update). Each phase ends
 with a verification checkpoint task.
 
-## Phase 1 — Protocol & Preflight: Parameter-Aware Discovery and Validation
+## Phase 1 — Protocol & Preflight: Parameter-Aware Discovery and Validation [checkpoint: de010af]
 
 - [x] Task: Write failing Python tests for manifest expansion metadata (d7d6586)
     - [ ] `tests/test_native_protocol.py` (or nearest existing file): suite manifest carries per-method parameter declarations (`params`, `values`, case count) discovered through the preflight
