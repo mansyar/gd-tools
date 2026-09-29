@@ -43,12 +43,12 @@ with a verification checkpoint task.
 
 ## Phase 3 — Suite-Level Skip in `before_all`
 
-- [ ] Task: Write failing tests (fixture suite + Python result assertions)
-    - [ ] `skip_test("reason")` in `before_all` → every test reported `skipped` with the reason; per-test entries present
-    - [ ] Per-test `skip_test()` behavior unchanged (existing suite regression)
-    - [ ] Suite skip interacts correctly with parameterized methods (all cases skipped)
-- [ ] Task: Implement suite-level skip state (`gd_tools_test.gd`, `gd_tools_test_runner.gd`)
-    - [ ] Record skip on the instance the runner reads from `before_all`; propagate to every test result
+- [x] Task: Write failing tests (fixture suite + Python result assertions) (52c3a36)
+    - [x] `skip_test("reason")` in `before_all` → every test reported `skipped` with the reason; per-test entries present
+    - [x] Per-test `skip_test()` behavior unchanged (existing suite regression; 4 skip regression e2e tests still pass)
+    - [x] Suite skip interacts correctly with parameterized methods (all cases skipped)
+- [x] Task: Implement suite-level skip state (`gd_tools_test.gd`, `gd_tools_test_runner.gd`) (52c3a36)
+    - [x] Record skip on the instance the runner reads from `before_all`; propagate to every test result
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — GUT Bridge Unblocking
