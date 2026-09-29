@@ -19,12 +19,12 @@ and workflow YAML tasks are verified through their own verification steps).
 
 ## Phase 2: Timing-Knob Injection for Real-Time E2E Waits
 
-- [ ] Task: Audit real-time waits in watch/migration e2e
+- [x] Task: Audit real-time waits in watch/migration e2e — `bf95fc7`
   - Inventory every sleep/debounce/poll wait in `test_watch_e2e.py` and the
     migration e2e paths with its source: fixture value, production default,
     or hardcoded.
   - Output: inventory recorded in git notes for the task commit.
-- [ ] Task: Inject fast timing values through e2e fixtures
+- [x] Task: Inject fast timing values through e2e fixtures — `bf95fc7`
   - Use existing seams (`Coalescer(debounce_seconds=...)`, session clock
     injection, `GdToolsConfig`) to shrink waits in e2e runs.
   - Any missing seam is added TDD-style: failing test first, minimal
