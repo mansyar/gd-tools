@@ -5,12 +5,12 @@ and workflow YAML tasks are verified through their own verification steps).
 
 ## Phase 1: Measurement & Marker Infrastructure
 
-- [ ] Task: Add `--durations=20` to CI pytest steps
+- [x] Task: Add `--durations=20` to CI pytest steps — `2d2f9e3`
   - Append the flag to the Stage 3 E2E and Stage 2 integration `pytest`
     invocations in `.github/workflows/ci.yml`.
   - Verification: workflow YAML parses; a CI run shows the slowest tests in
     the job log.
-- [ ] Task: Register the `e2e_smoke` marker
+- [x] Task: Register the `e2e_smoke` marker — `b2f0619`
   - Add `e2e_smoke: Fast critical-path E2E subset for PR CI.` to the
     `markers` list in `pyproject.toml`.
   - Verification: `pytest --collect-only -m e2e_smoke` collects without
