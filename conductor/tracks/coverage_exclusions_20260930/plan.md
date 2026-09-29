@@ -56,7 +56,7 @@ Covers spec FR4.
 - [x] Task 2.3: Verify files without annotations produce identical results to before (regression tests pinning success criterion 6) [f2c2b15]
 - [ ] Task 2.4: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Reporting surface
+## Phase 3 — Reporting surface [checkpoint: f1ea59c]
 
 Covers spec FR5.
 
