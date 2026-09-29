@@ -63,3 +63,13 @@ _Archived tracks live in `./archive/`._
   the GUT addon installed. Auto-routes per suite, preflight-fails unsupported
   constructs with migration guidance, removes the legacy GUT subprocess path,
   and adds coverage support plus `docs/gut-migration.md`.
+
+---
+
+- [ ] **Track: Native Parameterized Tests + Suite-Level Skip**
+  *Link: [native_parameterized_skip_20260929](./tracks/native_parameterized_skip_20260929/index.md)* - GUT-compatible
+  `parameterize` / `use_parameters` support in the native runtime with per-case
+  lifecycle and pytest-style `test_foo[case-name]` identification, suite-level
+  `skip_test()` in `before_all` marking every test skipped with its reason, and
+  removal of both constructs from the bridge's unsupported list. Closes 2 of the
+  4 Known Limitations in `ARCHITECTURE.md`.
