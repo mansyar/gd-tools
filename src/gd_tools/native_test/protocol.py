@@ -89,6 +89,35 @@ class NativeCoverage(BaseModel):
     output_path: Path | None = None
 
 
+class NativeTestParameters(BaseModel):
+    """A parameterization declaration resolved by integration preflight.
+
+    ``names`` lists the parameter names a test method receives per case and
+    ``values`` holds one value set per expanded case. An empty ``values``
+    list is a valid declaration: the runtime reports the test as skipped.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    names: list[str] = Field(min_length=1)
+    values: list[list[Any]] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _validate_shape(self) -> NativeTestParameters:
+        """Keep parameter names non-empty, unique, and row-consistent."""
+        if any(not name.strip() for name in self.names):
+            raise ValueError("parameter names must be non-empty strings")
+        if len(set(self.names)) != len(self.names):
+            raise ValueError("parameter names must be unique")
+        for index, row in enumerate(self.values):
+            if len(row) != len(self.names):
+                raise ValueError(
+                    "parameter value set "
+                    f"{index} has {len(row)} values; expected {len(self.names)}"
+                )
+        return self
+
+
 class NativeTest(BaseModel):
     """A single native test method in a suite manifest."""
 
@@ -99,6 +128,7 @@ class NativeTest(BaseModel):
     timeout_seconds: float = Field(default=5.0, gt=0)
     retries: int = Field(default=0, ge=0)
     integration: NativeTestIntegration | None = None
+    parameters: NativeTestParameters | None = None
 
 
 class NativeSuite(BaseModel):
