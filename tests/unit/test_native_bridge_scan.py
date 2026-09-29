@@ -268,11 +268,14 @@ def test_find_unsupported_constructs_returns_all_occurrences():
         "extends GutTest\n"
         "\n"
         "func test_x() -> void:\n"
-        "    double(a)\n"
-        "    double(b)\n"
+        "    parameterize(a)\n"
+        "    parameterize(b)\n"
     )
 
-    assert find_unsupported_constructs(source) == [("double", 4), ("double", 5)]
+    assert find_unsupported_constructs(source) == [
+        ("parameterize", 4),
+        ("parameterize", 5),
+    ]
 
 
 def test_find_unsupported_constructs_clean_source():

@@ -219,7 +219,7 @@ class TestApplySkipsDirtySuites:
         _write_suite(
             tmp_path,
             "test/dirty.gd",
-            "extends GutTest\n\n\nfunc test_x() -> void:\n\tdouble(obj)\n",
+            "extends GutTest\n\n\nfunc test_x() -> void:\n\tparameterize(args)\n",
         )
         _write_suite(tmp_path, "test/clean.gd", _GUT_SOURCE)
         suites = [
@@ -232,7 +232,7 @@ class TestApplySkipsDirtySuites:
 
         assert (tmp_path / "test/dirty.gd").read_text(
             encoding="utf-8"
-        ) == "extends GutTest\n\n\nfunc test_x() -> void:\n\tdouble(obj)\n"
+        ) == "extends GutTest\n\n\nfunc test_x() -> void:\n\tparameterize(args)\n"
         assert (tmp_path / "test/clean.gd").read_text(
             encoding="utf-8"
         ) == _RENAMED
