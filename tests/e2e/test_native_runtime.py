@@ -2291,3 +2291,57 @@ def test_native_command_covers_parameterized_cases(
     assert result.coverage_data_path.is_file()
     payload = json.loads(result.coverage_data_path.read_text(encoding="utf-8"))
     assert payload.get("files"), payload
+
+
+def test_native_suite_skip_in_before_all_skips_every_test(godot_bin, tmp_path):
+    """skip_test() in before_all marks every suite test skipped with the reason.
+
+    Per-test entries are still produced (including each expanded
+    parameterized case), no test body or hook ever runs, and a skip
+    consumes no retry.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "suite-skip-result.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        {
+            "protocol_version": 2,
+            "project_root": str(project),
+            "runtime": "native",
+            "suites": [
+                {
+                    "name": "NativeSuiteSkipSuite",
+                    "path": "res://test/suite_skip_suite.gd",
+                    "tests": [
+                        {"name": "test_skipped_by_suite", "retries": 3},
+                        {
+                            "name": "test_async_case",
+                            "retries": 3,
+                            "parameters": {
+                                "names": ["value"],
+                                "values": [[1], [2]],
+                            },
+                        },
+                    ],
+                }
+            ],
+            "coverage": {"enabled": False},
+        },
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    entries = payload["tests"]
+    by_name = {test["name"]: test for test in entries}
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert by_name["test_skipped_by_suite"]["status"] == "skipped"
+    assert by_name["test_async_case[1]"]["status"] == "skipped"
+    assert by_name["test_async_case[2]"]["status"] == "skipped"
+    for entry in entries:
+        assert entry["message"] == "suite environment unavailable"
+        # A suite-level skip is terminal and never consumes a retry.
+        assert entry["attempts"] == 1
+    # Test bodies and hooks must never have run.
+    assert not (project / "suite_skip_hook_ran.txt").exists()

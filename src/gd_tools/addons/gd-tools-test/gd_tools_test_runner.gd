@@ -135,10 +135,16 @@ func _run_suite(suite_data: Dictionary) -> void:
 			bool(before_result.get("timed_out", false)),
 			suite_timeout
 		)
+	# `skip_test()` inside `before_all` runs on the suite instance, so the
+	# per-test skip flag would otherwise be invisible. Propagate it so every
+	# test (and every expanded case) is reported skipped with the reason.
+	var suite_skip_reason := ""
+	if bool(suite_context.get("_gd_tools_skipped")):
+		suite_skip_reason = str(suite_context.get("_gd_tools_skip_reason"))
 
 	for test_data in suite_data.get("tests", []):
 		for case_data in _expand_test_cases(script, test_data):
-			await _run_test(suite_context, script, suite_name, case_data)
+			await _run_test(suite_context, script, suite_name, case_data, suite_skip_reason)
 
 	var after_failure_count := suite_context.get_failures().size()
 	if suite_context.has_method("after_all"):
@@ -232,11 +238,17 @@ func _suite_timeout(suite_data: Dictionary) -> float:
 
 
 func _run_test(
-	suite_context: GdToolsTest, script: GDScript, suite_name: String, test_data: Dictionary
+	suite_context: GdToolsTest,
+	script: GDScript,
+	suite_name: String,
+	test_data: Dictionary,
+	suite_skip_reason: String = ""
 ) -> void:
 	var test_name := str(test_data.get("name", ""))
 	_emit_event({"event": "test_started", "suite": suite_name, "name": test_name})
 	var skip_reason := str(test_data.get("skip_reason", ""))
+	if skip_reason.is_empty():
+		skip_reason = suite_skip_reason
 	if not skip_reason.is_empty():
 		_record_test_result(suite_name, test_name, "skipped", 0.0, skip_reason, {})
 		_emit_event(
