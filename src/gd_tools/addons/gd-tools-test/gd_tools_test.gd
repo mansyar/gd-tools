@@ -16,6 +16,8 @@ var _gd_tools_skip_reason := ""
 var _gd_tools_wait_received := false
 var _gd_tools_wait_signal = null
 var _gd_tools_wait_timer: SceneTreeTimer = null
+var _gd_tools_mock_methods: Dictionary = {}
+var _gd_tools_stub_registry: Dictionary = {}
 
 
 func _gd_tools_record_failure(
@@ -430,6 +432,316 @@ func assert_not_null(value, message: String = "") -> void:
 	## Assert that a value is not null.
 	if value == null:
 		_gd_tools_record_failure("assert_not_null", message, value, "not null")
+
+
+## Return a full test double of a GDScript script.
+##
+## Every doublable script method is redeclared on the generated double as an
+## untyped override. Unstubbed double methods return null and never run the
+## real implementation (GUT semantics). Accepts a preloaded Script or a
+## resource path string; an unusable target fails the test immediately.
+func double(target: Variant) -> Object:
+	return _gd_tools_make_double(target, false)
+
+
+## Return a partial test double of a GDScript script.
+##
+## Identical to [method double] except that unstubbed methods forward to the
+## real implementation via super(), preserving real behaviour except where a
+## later stub overrides it.
+func partial_double(target: Variant) -> Object:
+	return _gd_tools_make_double(target, true)
+
+
+func _gd_tools_make_double(target: Variant, is_partial: bool) -> Object:
+	var target_script := _gd_tools_resolve_mock_script(target)
+	if target_script == null:
+		fail(
+				"double() and partial_double() require a GDScript script"
+				+ " or a script resource path; got: %s" % [target]
+		)
+		return null
+	var methods := _gd_tools_mock_methods_for(target_script)
+	var source := GdToolsMock.Doubler.generate(
+			target_script, get_instance_id(), is_partial, methods
+	)
+	var generated := GDScript.new()
+	generated.source_code = source
+	var reload_error := generated.reload()
+	if reload_error != OK or not generated.can_instantiate():
+		fail(
+				"Unable to generate a double of '%s': the generated script"
+				+ " did not load" % target_script.resource_path
+		)
+		return null
+	return generated.new()
+
+
+func _gd_tools_resolve_mock_script(target: Variant) -> Script:
+	if target is Script:
+		return target
+	if target is String:
+		return load(str(target)) as Script
+	return null
+
+
+func _gd_tools_mock_methods_for(target_script: Script) -> Array:
+	var path := target_script.resource_path
+	if not _gd_tools_mock_methods.has(path):
+		_gd_tools_mock_methods[path] = (
+			GdToolsMock.Doubler.collect_methods(target_script)
+		)
+	return _gd_tools_mock_methods[path]
+
+
+func _gd_tools_mock_return_meta(script_path: String, method: String) -> Dictionary:
+	var methods: Array = _gd_tools_mock_methods.get(script_path, [])
+	for meta in methods:
+		if str(meta.get("name", "")) == method:
+			return meta.get("return", {})
+	return {}
+
+
+## Start a stub registration on a double.
+##
+## [param target] must be a double created by [method double] or
+## [method partial_double]. The returned builder must be completed with
+## [method GdToolsMock.StubBuilder.to_return] or
+## [method GdToolsMock.StubBuilder.to_call_super]. When [param args] is
+## given, only calls whose arguments match it element-wise are affected,
+## with the string `"any"` acting as a wildcard per element; a stub
+## registered without arguments is the default fallback for every other
+## call. Exact-argument stubs take precedence over wildcard stubs, which
+## take precedence over the default fallback; within one tier the most
+## recently registered stub wins. Stubs are stored per double instance on
+## the test instance, so they never leak into other tests or doubles.
+func stub(target: Object, method: String, args: Array = []) -> GdToolsMock.StubBuilder:
+	## Create a stub builder for one method of a double.
+	##
+	## Fails the test immediately when the target is not a double or has no
+	## such method, so a typo surfaces at setup time instead of silently
+	## registering a stub that can never match.
+	var mock: Object = target.get("__gd_tools")
+	if mock == null:
+		fail(
+				"stub() requires a double created by double()"
+				+ " or partial_double(); got: %s" % [target]
+		)
+		return _gd_tools_disabled_stub_builder()
+	var script_path := str(mock.get("_script_path"))
+	var method_names := []
+	var target_script := load(script_path) as Script
+	if target_script != null:
+		for meta in _gd_tools_mock_methods_for(target_script):
+			method_names.append(str(meta.get("name", "")))
+	if not method in method_names:
+		fail(
+				'stub() cannot stub "%s": %s has no such method' % [method, script_path]
+		)
+		return _gd_tools_disabled_stub_builder()
+	return GdToolsMock.StubBuilder.new(
+			self, target.get_instance_id(), method, args
+	)
+
+
+func _gd_tools_disabled_stub_builder() -> GdToolsMock.StubBuilder:
+	## A no-op builder handed out after a fail-fast stub() error.
+	return GdToolsMock.StubBuilder.new(self, 0, "", [], true)
+
+
+func _gd_tools_stub_register(
+		double_id: int,
+		method: String,
+		args: Array,
+		action: String,
+		value: Variant
+) -> void:
+	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
+	var entries: Array = per_double.get(method, [])
+	entries.append({
+			"args": args.duplicate(),
+			"action": action,
+			"value": value,
+	})
+	per_double[method] = entries
+	_gd_tools_stub_registry[double_id] = per_double
+
+
+static func _gd_tools_stub_specificity(pattern: Array, call_args: Array) -> int:
+	## Rank how specifically a stub pattern matches a call.
+	##
+	## Returns 2 for an exact match, 1 for a match involving "any"
+	## wildcards, 0 for the default (empty) pattern, and -1 for no match.
+	if pattern.is_empty():
+		return 0
+	if pattern.size() != call_args.size():
+		return -1
+	var wildcard := false
+	for index in range(pattern.size()):
+		var element = pattern[index]
+		if element is String and str(element) == "any":
+			wildcard = true
+			continue
+		if element != call_args[index]:
+			return -1
+	return 1 if wildcard else 2
+
+
+func _gd_tools_stub_find(
+		double_id: int,
+		method: String,
+		call_args: Array
+) -> Dictionary:
+	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
+	var entries: Array = per_double.get(method, [])
+	var best: Dictionary = {}
+	var best_tier := -1
+	for entry in entries:
+		var tier := _gd_tools_stub_specificity(entry["args"], call_args)
+		if tier > best_tier:
+			best_tier = tier
+			best = entry
+		elif tier == best_tier and tier >= 0:
+			best = entry
+	return best
+
+
+func _gd_tools_mock_default(
+		script_path: String,
+		method: String,
+		index: int
+) -> Variant:
+	var methods: Array = _gd_tools_mock_methods.get(script_path, [])
+	for meta in methods:
+		if str(meta.get("name", "")) != method:
+			continue
+		var default_args: Array = meta.get("default_args", [])
+		var argument_count: int = meta.get("args", []).size()
+		var first_default := argument_count - default_args.size()
+		if index >= first_default and index - first_default < default_args.size():
+			return default_args[index - first_default]
+		return null
+	return null
+
+
+func assert_called(target: Object, method: String, message: String = "") -> void:
+	## Assert that a double recorded at least one call to `method`.
+	if _gd_tools_assert_target_is_double(target, "assert_called"):
+		return
+	var calls: Array = _gd_tools_double_calls(target, method)
+	if calls.is_empty():
+		_gd_tools_record_failure(
+				"assert_called",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" to have been called at least once, but it was never called.'
+								% method
+				),
+				0,
+				"at least 1"
+		)
+
+
+func assert_not_called(target: Object, method: String, message: String = "") -> void:
+	## Assert that a double recorded no calls to `method`.
+	if _gd_tools_assert_target_is_double(target, "assert_not_called"):
+		return
+	var calls: Array = _gd_tools_double_calls(target, method)
+	if not calls.is_empty():
+		_gd_tools_record_failure(
+				"assert_not_called",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" to have never been called, but it was called %d time(s).'
+								% [method, calls.size()]
+				),
+				calls.size(),
+				0
+		)
+
+
+func assert_call_count(
+		target: Object, method: String, count: int, message: String = ""
+) -> void:
+	## Assert that a double recorded exactly `count` calls to `method`.
+	if _gd_tools_assert_target_is_double(target, "assert_call_count"):
+		return
+	var actual := _gd_tools_double_calls(target, method).size()
+	if actual != count:
+		_gd_tools_record_failure(
+				"assert_call_count",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" to have been called %d time(s), but it was called %d time(s).'
+								% [method, count, actual]
+				),
+				actual,
+				count
+		)
+
+
+func assert_call_arguments(
+		target: Object,
+		method: String,
+		expected_args: Array,
+		call_index: int = -1,
+		message: String = ""
+) -> void:
+	## Assert the arguments of one recorded call on a double.
+	##
+	## `call_index` selects the recorded call (0 is the first); -1, the
+	## default, selects the most recent call.
+	if _gd_tools_assert_target_is_double(target, "assert_call_arguments"):
+		return
+	var calls: Array = _gd_tools_double_calls(target, method)
+	if call_index < 0:
+		call_index = calls.size() + call_index
+	if call_index < 0 or call_index >= calls.size():
+		_gd_tools_record_failure(
+				"assert_call_arguments",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" call %d to exist, but only %d call(s) were recorded.'
+								% [method, call_index, calls.size()]
+				),
+				calls.size(),
+				call_index + 1
+		)
+		return
+	var actual_args: Array = calls[call_index]
+	if actual_args != expected_args:
+		_gd_tools_record_failure(
+				"assert_call_arguments",
+				_gd_tools_detail(
+						message,
+						'Expected "%s" call %d arguments %s, but was %s.'
+								% [method, call_index, expected_args, actual_args]
+				),
+				actual_args,
+				expected_args
+		)
+
+
+func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> bool:
+	## Record a failure and return true when `target` is not a double.
+	if target != null and target.get("__gd_tools") != null:
+		return false
+	_gd_tools_record_failure(
+			assertion,
+			"%s() requires a double created by double() or partial_double(); got: %s"
+					% [assertion, target]
+	)
+	return true
+
+
+func _gd_tools_double_calls(target: Object, method: String) -> Array:
+	## Return the arguments of every recorded call to `method` on a double.
+	var mock: Object = target.get("__gd_tools")
+	var recorded: Array = []
+	for call in mock.get("calls"):
+		if str(call.get("method", "")) == method:
+			recorded.append(call.get("args", []))
+	return recorded
 
 
 func fail(message: String = "Test failed") -> void:

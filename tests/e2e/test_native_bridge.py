@@ -372,3 +372,45 @@ def test_bridge_cli_run_with_coverage_produces_plan_schema_v1(
     assert subject_ids, "the bridge subject must be planned"
     assert subject_ids[0] in measured
     assert sum(measured[subject_ids[0]]["hits"].values()) > 0
+
+
+def test_bridge_mocking_suites_run_through_bridge(tmp_path, godot_bin):
+    """Bridge suites may use double()/stub()/assert_called* (FR-5).
+
+    The bridge shim inherits the native mocking API from ``GdToolsTest``, so
+    a GutTest suite runs mocking constructs with identical semantics.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "mocking_result.json"
+    result, completed = _run_bridge_manifest(
+        project,
+        godot_bin,
+        [
+            _suite_entry(
+                "gut_mocking_suite",
+                [
+                    "test_bridge_double_and_stub_work",
+                    "test_bridge_partial_double_runs_real",
+                    "test_bridge_call_assertions_work",
+                ],
+            ),
+        ],
+        result_path,
+    )
+
+    assert result["status"] == "passed"
+    assert completed.returncode == 0
+    assert len(result["tests"]) == 3
+    for entry in result["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_bridge_cli_allows_mocking_constructs(tmp_path, godot_bin):
+    """The CLI preflight scan no longer rejects mocking constructs."""
+    project = _prepare_project(tmp_path, godot_bin)
+
+    result = _run_cli(
+        ["--quiet", "test", "--suite", "BridgeMockingSuite"], project, godot_bin
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr

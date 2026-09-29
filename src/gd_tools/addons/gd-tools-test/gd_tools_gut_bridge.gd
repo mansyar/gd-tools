@@ -15,10 +15,12 @@
 ## - The signal family (`watch_signals` plus the `assert_signal_*` set).
 ## - Async helpers (`wait_*` and legacy `yield_*` aliases).
 ## - Skipping (`skip_test`, `skip_if_godot_version_lt/ne`).
+## - Mocking (`double`, `partial_double`, `stub`, `assert_called*`), inherited
+##   from the native `GdToolsTest` runtime with identical semantics.
 ##
-## Unsupported GUT constructs (mocking, parameterization, mock assertions,
-## property/orphan checks, engine-error asserts) are rejected by the preflight
-## static scan before any test runs, with migration guidance.
+## Unsupported GUT constructs (parameterization, property/orphan checks,
+## engine-error asserts) are rejected by the preflight static scan before any
+## test runs, with migration guidance.
 class_name GutTest
 extends GdToolsTest
 
