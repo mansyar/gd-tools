@@ -41,7 +41,7 @@ with a verification checkpoint task.
 - [x] Task: Verify coverage attribution aggregates per-case hits back to the method (integration check; plan change only if needed) (2dec2a7)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Suite-Level Skip in `before_all`
+## Phase 3 - Suite-Level Skip in `before_all` [checkpoint: 9e842f8]
 
 - [x] Task: Write failing tests (fixture suite + Python result assertions) (52c3a36)
     - [x] `skip_test("reason")` in `before_all` → every test reported `skipped` with the reason; per-test entries present
