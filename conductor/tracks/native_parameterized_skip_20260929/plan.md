@@ -53,11 +53,12 @@ with a verification checkpoint task.
 
 ## Phase 4 — GUT Bridge Unblocking
 
-- [ ] Task: Write failing tests for bridge parameterization support
-    - [ ] Remove `parameterize`/`use_parameters` from `_UNSUPPORTED_NAMES` in `bridge_scan.py` (update existing negative tests to positive)
-    - [ ] Bridge fixture suite (`extends GutTest`) using `parameterize` runs through the native machinery with the same result contract
-    - [ ] Bridge suite with malformed declaration → exit 2 preflight (inherited validation)
-- [ ] Task: Implement: `bridge_scan.py` list update + any bridge shim passthrough (`gd_tools_gut_bridge.gd`)
+- [x] Task: Write failing tests for bridge parameterization support (5e0ae1f)
+    - [x] Remove `parameterize`/`use_parameters` from `_UNSUPPORTED_NAMES` in `bridge_scan.py` (update existing negative tests to positive)
+    - [x] Bridge fixture suite (`extends GutTest`) using `parameterize` runs through the native machinery with the same result contract
+    - [x] Bridge suite with malformed declaration → exit 2 preflight (inherited validation)
+- [x] Task: Implement: `bridge_scan.py` list update + any bridge shim passthrough (`gd_tools_gut_bridge.gd`) (5e0ae1f)
+    - Note: no shim passthrough needed — `GutTest` extends `GdToolsTest`, so the shim inherits the native parameterize/use_parameters API; only its docstring was updated.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — Documentation, Reporting, and Final Verification
