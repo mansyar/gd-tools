@@ -29,14 +29,14 @@ class TestScanSource:
             "extends GutTest\n"
             "\n"
             "func test_x() -> void:\n"
-            "    parameterize(args)\n"
+            '    assert_setget(prop, "value")\n'
             "    assert_freed(node)\n"
         )
 
         findings = scan_source(source)
 
         assert findings.unsupported == (
-            ConstructHit(name="parameterize", line=4),
+            ConstructHit(name="assert_setget", line=4),
             ConstructHit(name="assert_freed", line=5),
         )
         assert findings.aliases == ()
@@ -47,25 +47,25 @@ class TestScanSource:
             "extends GutTest\n"
             "\n"
             "func test_x() -> void:\n"
-            '    parameterize("res://a.gd")\n'
-            '    parameterize("res://b.gd")\n'
+            '    assert_setget("res://a.gd")\n'
+            '    assert_setget("res://b.gd")\n'
         )
 
         findings = scan_source(source)
 
         assert findings.unsupported == (
-            ConstructHit(name="parameterize", line=4),
-            ConstructHit(name="parameterize", line=5),
+            ConstructHit(name="assert_setget", line=4),
+            ConstructHit(name="assert_setget", line=5),
         )
 
     def test_ignores_member_calls_on_objects(self):
-        """A method call like ``helper.parameterize()`` is not a GUT helper call."""
+        """A method call like ``helper.double()`` is not a GUT helper call."""
         source = (
             "extends GutTest\n"
             "\n"
             "func test_x() -> void:\n"
             "    var helper = MyHelper.new()\n"
-            "    helper.parameterize()\n"
+            "    helper.double()\n"
             "    helper.assert_freed()\n"
         )
 
@@ -129,7 +129,7 @@ class TestBuildMigrationReport:
         suite_dir = tmp_path / "test"
         suite_dir.mkdir()
         (suite_dir / "legacy_test.gd").write_text(
-            "extends GutTest\n\nfunc test_x() -> void:\n    parameterize(obj)\n",
+            "extends GutTest\n\nfunc test_x() -> void:\n    assert_setget(obj)\n",
             encoding="utf-8",
         )
         suite = _suite("res://test/legacy_test.gd", RuntimeMode.GUT, 3)
@@ -141,7 +141,7 @@ class TestBuildMigrationReport:
         assert suite_report.path == "res://test/legacy_test.gd"
         assert suite_report.test_count == 3
         assert suite_report.unsupported == (
-            ConstructHit(name="parameterize", line=4),
+            ConstructHit(name="assert_setget", line=4),
         )
         assert not suite_report.is_clean
 
@@ -176,7 +176,7 @@ class TestBuildMigrationReport:
         (suite_dir / "legacy_test.gd").write_text(
             "extends GutTest\n\nfunc test_x() -> void:\n"
             "    assert_freed(a)\n"
-            "    parameterize(b)\n",
+            '    assert_setget(prop, "v")\n',
             encoding="utf-8",
         )
         suite = _suite("res://test/legacy_test.gd", RuntimeMode.GUT)

@@ -284,13 +284,13 @@ def test_find_unsupported_constructs_returns_all_occurrences():
         "extends GutTest\n"
         "\n"
         "func test_x() -> void:\n"
-        "    parameterize(a)\n"
-        "    parameterize(b)\n"
+        '    assert_setget(a, "x")\n'
+        '    assert_setget(b, "y")\n'
     )
 
     assert find_unsupported_constructs(source) == [
-        ("parameterize", 4),
-        ("parameterize", 5),
+        ("assert_setget", 4),
+        ("assert_setget", 5),
     ]
 
 
