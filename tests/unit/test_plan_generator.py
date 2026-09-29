@@ -139,7 +139,7 @@ def test_write_plan_json_empty_plan(tmp_path):
 def test_read_plan_json_valid(tmp_path):
     """read_plan_json deserializes a valid JSON file into CoveragePlan."""
     json_data = {
-        "version": 1,
+        "version": 2,
         "generated_by": "gd-tools",
         "files": [
             {
@@ -161,7 +161,7 @@ def test_read_plan_json_valid(tmp_path):
     plan_file.write_text(json.dumps(json_data))
 
     cp = read_plan_json(str(plan_file))
-    assert cp.version == 1
+    assert cp.version == 2
     assert cp.generated_by == "gd-tools"
     assert len(cp.files) == 1
     assert cp.files[0].file_id == 0
@@ -198,11 +198,135 @@ def test_read_plan_json_wrong_version(tmp_path):
         read_plan_json(str(plan_file))
 
 
+def test_generate_plan_emits_current_version(tmp_path):
+    """generate_plan stamps plans with the current schema version (2)."""
+    from gd_tools.coverage.plan_generator import PLAN_VERSION
+
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+    )
+    plan = generate_plan(str(tmp_path))
+
+    assert plan.version == PLAN_VERSION
+    assert plan.version == 2
+
+
+def test_read_plan_json_accepts_version_2(tmp_path):
+    """read_plan_json accepts a version-2 plan."""
+    json_data = {"version": 2, "generated_by": "gd-tools", "files": []}
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps(json_data))
+
+    plan = read_plan_json(str(plan_file))
+
+    assert plan.version == 2
+
+
+def test_read_plan_json_rejects_version_1_with_regeneration_hint(tmp_path):
+    """A v1 plan (pre-exclusion schema) is rejected with a regeneration hint."""
+    from gd_tools.errors import CoveragePlanError
+
+    json_data = {"version": 1, "generated_by": "gd-tools", "files": []}
+    plan_file = tmp_path / "plan.json"
+    plan_file.write_text(json.dumps(json_data))
+
+    with pytest.raises(CoveragePlanError) as exc_info:
+        read_plan_json(str(plan_file))
+
+    message = str(exc_info.value)
+    assert "regenerate" in message
+    assert "2" in message
+
+
+def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
+    """A stale v1 cache file is treated as a miss, not a hit."""
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+    # Downgrade the cache file to the pre-exclusion schema version.
+    data = json.loads(cache_path.read_text(encoding="utf-8"))
+    data["version"] = 1
+    cache_path.write_text(json.dumps(data), encoding="utf-8")
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert "version" in status.reason
+    assert plan.version == 2
+    assert plan.files  # a fresh plan was generated
+
+
+def test_cache_with_non_integer_version_is_a_miss(tmp_path):
+    """A cache file whose version is not an integer never reads as a hit."""
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+    data = json.loads(cache_path.read_text(encoding="utf-8"))
+    data["version"] = "2"
+    cache_path.write_text(json.dumps(data), encoding="utf-8")
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert plan.version == 2
+
+
+def test_cache_hit_ignores_files_with_syntax_errors(tmp_path):
+    """Unparseable files are skipped when hashing, so they never force a miss."""
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+    # Added after the cache was written: unparseable, so not hashable.
+    (tmp_path / "broken.gd").write_text(
+        "func _ready(:\n    pass\n", encoding="utf-8"
+    )
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is True
+    assert plan.version == 2
+
+
+def test_cache_hit_with_explicit_exclude_and_test_dirs(tmp_path):
+    """Explicit exclude/test dirs are forwarded when checking the cache."""
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+
+    plan, status = generate_plan_cached(
+        str(tmp_path),
+        exclude_dirs=["addons"],
+        test_dirs=["test"],
+        cache_path=str(cache_path),
+    )
+
+    assert status.hit is True
+    assert plan.version == 2
+
+
 def test_read_plan_json_missing_required_field(tmp_path):
     """read_plan_json raises CoveragePlanError when required fields are missing."""
     from gd_tools.errors import CoveragePlanError
 
-    json_data = {"version": 1, "files": []}
+    json_data = {"version": 2, "files": []}
     plan_file = tmp_path / "plan.json"
     plan_file.write_text(json.dumps(json_data))
     with pytest.raises(CoveragePlanError):
@@ -219,7 +343,7 @@ def test_read_plan_json_round_trip(tmp_path):
         source_hash="sha256:abc",
         lines=[lp1, lp2],
     )
-    original = CoveragePlan(version=1, generated_by="gd-tools", files=[fp])
+    original = CoveragePlan(version=2, generated_by="gd-tools", files=[fp])
 
     plan_file = tmp_path / "round_trip.json"
     write_plan_json(original, str(plan_file))
@@ -243,7 +367,7 @@ def test_read_plan_json_missing_files_field(tmp_path):
     """read_plan_json raises CoveragePlanError when 'files' field is missing."""
     from gd_tools.errors import CoveragePlanError
 
-    json_data = {"version": 1, "generated_by": "gd-tools"}
+    json_data = {"version": 2, "generated_by": "gd-tools"}
     plan_file = tmp_path / "plan.json"
     plan_file.write_text(json.dumps(json_data))
     with pytest.raises(CoveragePlanError):
@@ -265,7 +389,7 @@ def test_read_plan_json_files_not_list(tmp_path):
     from gd_tools.errors import CoveragePlanError
 
     json_data = {
-        "version": 1,
+        "version": 2,
         "generated_by": "gd-tools",
         "files": "not_a_list",
     }
@@ -280,7 +404,7 @@ def test_read_plan_json_file_entry_missing_field(tmp_path):
     from gd_tools.errors import CoveragePlanError
 
     json_data = {
-        "version": 1,
+        "version": 2,
         "generated_by": "gd-tools",
         "files": [{"file_id": 0, "path": "res://x.gd"}],
     }
@@ -295,7 +419,7 @@ def test_read_plan_json_file_entry_not_dict(tmp_path):
     from gd_tools.errors import CoveragePlanError
 
     json_data = {
-        "version": 1,
+        "version": 2,
         "generated_by": "gd-tools",
         "files": ["not_a_dict"],
     }

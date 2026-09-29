@@ -27,6 +27,13 @@ from rich.console import Console
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
+PLAN_VERSION = 2
+"""Current coverage plan JSON schema version.
+
+Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
+stale cached plans regenerate instead of silently dropping exclusions.
+"""
+
 # --- Data structures (FR-1) ---
 
 
@@ -72,7 +79,7 @@ class CoveragePlan:
     """Top-level container for a coverage plan.
 
     Attributes:
-        version: Schema version (currently 1).
+        version: Schema version (see :data:`PLAN_VERSION`).
         generated_by: Name of the tool that generated this plan.
         files: List of per-file plans.
     """
@@ -157,9 +164,10 @@ def read_plan_json(path: str) -> CoveragePlan:
         raise CoveragePlanError("Plan JSON must be a JSON object")
 
     version = data.get("version")
-    if version != 1:
+    if version != PLAN_VERSION:
         raise CoveragePlanError(
-            f"Unsupported plan version: {version} (expected 1)"
+            f"Unsupported plan version: {version} (expected {PLAN_VERSION}). "
+            "Delete this plan file or re-run gd-tools to regenerate it."
         )
 
     if "generated_by" not in data:
@@ -262,9 +270,6 @@ def _scan_annotations(source: str) -> list[Annotation]:
         i = 0
         while i < len(text):
             ch = text[i]
-            if ch == "\\":
-                i += 2
-                continue
             if text.startswith('"""', i) or text.startswith("'''", i):
                 closer = text[i : i + 3]
                 j = text.find(closer, i + 3)
@@ -274,10 +279,19 @@ def _scan_annotations(source: str) -> list[Annotation]:
                 i = j + 3
                 continue
             if ch in ('"', "'"):
-                j = text.find(ch, i + 1)
-                if j == -1:
+                i += 1
+                closed = False
+                while i < len(text):
+                    if text[i] == "\\":
+                        i += 2
+                        continue
+                    if text[i] == ch:
+                        i += 1
+                        closed = True
+                        break
+                    i += 1
+                if not closed:
                     break
-                i = j + 1
                 continue
             if ch == "#":
                 comment = text[i + 1 :]
@@ -590,13 +604,32 @@ def generate_plan(
         )
 
     return CoveragePlan(
-        version=1,
+        version=PLAN_VERSION,
         generated_by="gd-tools",
         files=file_plans,
     )
 
 
 # --- Plan Caching (Track 37) ---
+
+
+def _cached_plan_version(path: str) -> int | None:
+    """Peek at a cached plan file's schema version.
+
+    Args:
+        path: Path to the cached ``plan.json``.
+
+    Returns:
+        The schema version, or ``None`` when the file cannot be read,
+        is not valid JSON, or has no integer ``version`` field.
+    """
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if isinstance(data, dict) and isinstance(data.get("version"), int):
+        return data["version"]
+    return None
 
 
 def generate_plan_cached(
@@ -642,6 +675,16 @@ def generate_plan_cached(
 
     # --- Attempt cache hit ---
     if use_cache and cache_path is not None and Path(cache_path).exists():
+        cached_version = _cached_plan_version(cache_path)
+        if cached_version is not None and cached_version != PLAN_VERSION:
+            fresh_plan = generate_plan(project_root, exclude_dirs, test_dirs)
+            return fresh_plan, CacheStatus(
+                hit=False,
+                reason=(
+                    f"cache plan version outdated "
+                    f"(found {cached_version}, expected {PLAN_VERSION})"
+                ),
+            )
         try:
             cached_plan = read_plan_json(cache_path)
         except CoveragePlanError:

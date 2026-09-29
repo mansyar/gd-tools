@@ -213,7 +213,7 @@ class TestPlanJsonExcludedLines:
         )
         output = tmp_path / "plan.json"
         write_plan_json(
-            CoveragePlan(version=1, generated_by="gd-tools", files=[fp]),
+            CoveragePlan(version=2, generated_by="gd-tools", files=[fp]),
             str(output),
         )
 
@@ -235,7 +235,7 @@ class TestPlanJsonExcludedLines:
         )
         plan_file = tmp_path / "plan.json"
         write_plan_json(
-            CoveragePlan(version=1, generated_by="gd-tools", files=[fp]),
+            CoveragePlan(version=2, generated_by="gd-tools", files=[fp]),
             str(plan_file),
         )
 
@@ -247,7 +247,7 @@ class TestPlanJsonExcludedLines:
     ):
         """Older JSON without excluded_lines loads with an empty list."""
         json_data = {
-            "version": 1,
+            "version": 2,
             "generated_by": "gd-tools",
             "files": [
                 {
@@ -456,3 +456,35 @@ class TestNoAnnotations:
         assert _excluded_lines(plan) == []
         lines = _point_lines(plan)
         assert 5 in lines
+
+
+class TestScannerStringHandling:
+    """The line lexer ignores annotation text embedded in strings."""
+
+    @staticmethod
+    def _scan(source):
+        from gd_tools.coverage.plan_generator import find_excluded_lines
+
+        return find_excluded_lines(source)
+
+    def test_escaped_quote_does_not_open_string_state(self):
+        r"""An escaped quote inside a string keeps the lexer in string state."""
+        excluded, warnings = self._scan(
+            'var s = "a \\"# gd-tools: no cover\\" b"\n'
+        )
+        assert excluded == []
+        assert warnings == []
+
+    def test_closed_triple_quote_is_skipped_in_one_line(self):
+        """A triple-quoted string opened and closed on one line is skipped."""
+        excluded, warnings = self._scan('var s = """# gd-tools: no cover"""\n')
+        assert excluded == []
+        assert warnings == []
+
+    def test_unterminated_quote_never_yields_a_comment(self):
+        """An unterminated string means no comment is read from that line."""
+        excluded, warnings = self._scan(
+            'var s = "unterminated # gd-tools: no cover\n'
+        )
+        assert excluded == []
+        assert warnings == []
