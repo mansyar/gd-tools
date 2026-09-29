@@ -66,7 +66,7 @@ with a verification checkpoint task.
 - [x] Task: Update `docs/ARCHITECTURE.md` - Known Limitations 4 → 2; document parameterization + suite-skip semantics in Part II (d4ef941)
 - [x] Task: Update `docs/USER_GUIDE.md` (usage) and `docs/gut-migration.md` (constructs now supported) (d4ef941)
 - [x] Task: Update `CHANGELOG.md` (feat entry) (d4ef941)
-- [ ] Task: Full-suite verification
-    - [ ] `ruff check src/ tests/` && `black --check src/ tests/`
-    - [ ] `CI=true pytest --cov=gd_tools --cov-branch` (≥80% line / ≥70% branch on touched modules)
+- [x] Task: Full-suite verification (d4ef941)
+    - [x] `ruff check src/ tests/` && `black --check src/ tests/` — both clean
+    - [x] `CI=true pytest --cov=gd_tools --cov-branch` — 1230 passed / 2 skipped, 95.83% coverage (≥80% gate)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
