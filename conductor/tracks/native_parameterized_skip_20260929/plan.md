@@ -70,3 +70,7 @@ with a verification checkpoint task.
     - [x] `ruff check src/ tests/` && `black --check src/ tests/` — both clean
     - [x] `CI=true pytest --cov=gd_tools --cov-branch` — 1230 passed / 2 skipped, 95.83% coverage (≥80% gate)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions (1a52fdd)
