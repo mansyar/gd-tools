@@ -18,7 +18,7 @@
   - [ ] Verify coverage
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2: Report Rendering & Config Translation
+## Phase 2: Report Rendering & Config Translation `[checkpoint: e68ee57]`
 
 - [x] Task: Rich report rendering *(TDD)* — `3b74579`
   - [ ] Write failing tests: per-file inventory, "works now, rename later" alias section, config mapping results, unified diff display, summary
@@ -30,7 +30,7 @@
   - [ ] Verify coverage
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3: Rewrites (`--apply`)
+## Phase 3: Rewrites (`--apply`) `[checkpoint: e68ee57]`
 
 - [x] Task: Base-class rename rewriter + diff generation *(TDD)* — `ce6bb1b`
   - [ ] Write failing tests: `extends GutTest` → `extends GdToolsTest` rename; files with unsupported constructs are never rewritten; diff generation
@@ -42,7 +42,7 @@
   - [ ] Verify coverage
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4: CLI Integration & Documentation
+## Phase 4: CLI Integration & Documentation `[checkpoint: e68ee57]`
 
 - [x] Task: `gd-tools migrate` command wiring *(TDD)* — `8d17258`
   - [ ] Write failing tests: command registration, flags (`--apply`, `--config-only`), exit codes (0 nothing to migrate / 1 findings / 2 infrastructure error), discovery reuse from test config
