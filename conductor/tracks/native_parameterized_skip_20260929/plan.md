@@ -36,8 +36,8 @@ with a verification checkpoint task.
 - [x] Task: Implement case expansion in the runner (`gd_tools_test_runner.gd`) (e9b6ede)
     - [ ] Expand declared methods into per-case executions with full lifecycle, per-case timeout, retries, artifacts
     - [ ] Result entries and NDJSON events use `test_foo[case-name]` identifiers
-- [ ] Task: Write failing Python tests + implement selector interaction (`native_test/discovery.py` / `command.py`)
-    - [ ] `--test method` → all cases; `--test "method[case]"` → single case; tags at method level
+- [x] Task: Write failing Python tests + implement selector interaction (`native_test/discovery.py` / `command.py`) (b1974dc)
+    - [x] Note: case-selector trimming is implemented in the GDScript preflight (shared by all callers) rather than `command.py`; discovery preserves the selector verbatim and the full pipeline is verified end to end
 - [ ] Task: Verify coverage attribution aggregates per-case hits back to the method (integration check; plan change only if needed)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
