@@ -174,6 +174,21 @@ On Windows (PowerShell), set the environment variable inline:
 $env:CI='true'; pytest -m unit -x -q
 ```
 
+#### Running the E2E smoke subset
+
+PR CI runs only the fast critical-path E2E subset (marked
+`@pytest.mark.e2e_smoke`); the full E2E suite runs nightly and on demand
+via the *E2E Full Matrix* workflow (`workflow_dispatch`). To run the same
+subset locally before pushing:
+
+```bash
+# Smoke subset only (a few minutes; requires Godot)
+CI=true pytest tests/e2e/ -m "e2e and e2e_smoke" --no-cov
+
+# Full E2E suite (what the nightly workflow runs)
+CI=true pytest tests/e2e/ -m e2e --no-cov
+```
+
 ### 3.3 Coverage Thresholds
 
 All source code must meet the following coverage thresholds:
