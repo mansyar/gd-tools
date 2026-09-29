@@ -42,7 +42,7 @@ and workflow YAML tasks are verified through their own verification steps).
   - PR E2E job runs `pytest tests/e2e/ -m "e2e and e2e_smoke"`.
   - Full E2E (`-m e2e`) runs via a nightly `schedule` trigger plus
     `workflow_dispatch` on the unchanged 6-job matrix.
-- [ ] Task: Document the local smoke run
+- [x] Task: Document the local smoke run — `96afa09`
   - CONTRIBUTING (or USER_GUIDE dev section): how to run the smoke subset
     locally.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
