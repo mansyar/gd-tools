@@ -98,6 +98,7 @@ func test_health_starts_at_full() -> void:
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, bridge-eligible GUT suites, coverage addon, tooling. |
 | `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites extending `GdToolsTest` and `GutTest` are detected and routed automatically (`GutTest` suites run through the compatibility bridge). Accepts optional path arguments to override configured test directories. `--watch` re-runs affected suites on `.gd` file changes. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
+| `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
