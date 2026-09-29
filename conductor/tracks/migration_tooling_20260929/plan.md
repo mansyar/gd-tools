@@ -48,7 +48,10 @@
   - [ ] Write failing tests: command registration, flags (`--apply`, `--config-only`), exit codes (0 nothing to migrate / 1 findings / 2 infrastructure error), discovery reuse from test config
   - [ ] Implement CLI command in `cli.py`
   - [ ] Verify coverage
-- [x] Task: Documentation — `cbf58d1`
+- [x] Task: Documentation - `cbf58d1`
   - [ ] Update `docs/gut-migration.md` (replace the "arrives with migration tooling" promise with real usage)
   - [ ] Update README and USER_GUIDE as applicable
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions `cb61d53`
