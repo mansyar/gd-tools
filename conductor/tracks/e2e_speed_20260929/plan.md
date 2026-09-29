@@ -38,7 +38,7 @@ and workflow YAML tasks are verified through their own verification steps).
     coverage, lint/format pass, migration dry-run) guided by the Phase 1
     durations data; target <= ~2 minutes per job.
   - Apply `@pytest.mark.e2e_smoke` to the selected tests.
-- [ ] Task: Split CI execution
+- [x] Task: Split CI execution — `95e4d39`
   - PR E2E job runs `pytest tests/e2e/ -m "e2e and e2e_smoke"`.
   - Full E2E (`-m e2e`) runs via a nightly `schedule` trigger plus
     `workflow_dispatch` on the unchanged 6-job matrix.
