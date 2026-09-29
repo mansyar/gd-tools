@@ -36,7 +36,7 @@
   - [ ] Write failing tests: `extends GutTest` → `extends GdToolsTest` rename; files with unsupported constructs are never rewritten; diff generation
   - [ ] Implement rewriter
   - [ ] Verify coverage
-- [ ] Task: Atomic apply flow *(TDD)*
+- [x] Task: Atomic apply flow *(TDD)* — `cf21b18`
   - [ ] Write failing tests: `--apply` writes only proposed changes, per-file atomic writes, failure leaves files untouched, `--config-only` scope limiting
   - [ ] Implement apply orchestration
   - [ ] Verify coverage
