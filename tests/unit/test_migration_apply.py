@@ -4,6 +4,11 @@ import json
 
 import pytest
 
+try:
+    import tomllib
+except ImportError:  # pragma: no cover - Python 3.10 fallback
+    import tomli as tomllib
+
 from gd_tools.migration.apply import ApplyResult, apply_migration
 from gd_tools.migration.scan import (
     MigrationReport,
@@ -78,8 +83,6 @@ class TestApplyMigration:
             tmp_path, report, {"dirs": ["res://test/"], "prefix": "check_"}
         )
 
-        import tomllib
-
         with open(tmp_path / "gd-tools.toml", "rb") as handle:
             data = tomllib.load(handle)
         assert data["test"]["test_dirs"] == ["test"]
@@ -118,8 +121,6 @@ class TestApplyMigration:
         )
 
         result = apply_migration(tmp_path, report, {"dirs": ["res://test/"]})
-
-        import tomllib
 
         with open(tmp_path / "gd-tools.toml", "rb") as handle:
             data = tomllib.load(handle)
