@@ -44,7 +44,7 @@
 
 ## Phase 4: CLI Integration & Documentation
 
-- [ ] Task: `gd-tools migrate` command wiring *(TDD)*
+- [x] Task: `gd-tools migrate` command wiring *(TDD)* — `8d17258`
   - [ ] Write failing tests: command registration, flags (`--apply`, `--config-only`), exit codes (0 nothing to migrate / 1 findings / 2 infrastructure error), discovery reuse from test config
   - [ ] Implement CLI command in `cli.py`
   - [ ] Verify coverage
