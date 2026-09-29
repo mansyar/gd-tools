@@ -63,9 +63,9 @@ with a verification checkpoint task.
 
 ## Phase 5 — Documentation, Reporting, and Final Verification
 
-- [ ] Task: Update `docs/ARCHITECTURE.md` — Known Limitations 4 → 2; document parameterization + suite-skip semantics in Part II
-- [ ] Task: Update `docs/USER_GUIDE.md` (usage) and `docs/gut-migration.md` (constructs now supported)
-- [ ] Task: Update `CHANGELOG.md` (feat entry)
+- [x] Task: Update `docs/ARCHITECTURE.md` - Known Limitations 4 → 2; document parameterization + suite-skip semantics in Part II (d4ef941)
+- [x] Task: Update `docs/USER_GUIDE.md` (usage) and `docs/gut-migration.md` (constructs now supported) (d4ef941)
+- [x] Task: Update `CHANGELOG.md` (feat entry) (d4ef941)
 - [ ] Task: Full-suite verification
     - [ ] `ruff check src/ tests/` && `black --check src/ tests/`
     - [ ] `CI=true pytest --cov=gd_tools --cov-branch` (≥80% line / ≥70% branch on touched modules)
