@@ -15,7 +15,7 @@ and workflow YAML tasks are verified through their own verification steps).
     `markers` list in `pyproject.toml`.
   - Verification: `pytest --collect-only -m e2e_smoke` collects without
     `PytestUnknownMarkWarning` under `--strict-markers`.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `f489470`
 
 ## Phase 2: Timing-Knob Injection for Real-Time E2E Waits [checkpoint: 5552cb2]
 
@@ -29,7 +29,7 @@ and workflow YAML tasks are verified through their own verification steps).
     injection, `GdToolsConfig`) to shrink waits in e2e runs.
   - Any missing seam is added TDD-style: failing test first, minimal
     parameter, green; production defaults unchanged.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `5552cb2`
 
 ## Phase 3: Smoke Subset & CI Split [checkpoint: 3a8c839]
 
@@ -45,9 +45,9 @@ and workflow YAML tasks are verified through their own verification steps).
 - [x] Task: Document the local smoke run — `96afa09`
   - CONTRIBUTING (or USER_GUIDE dev section): how to run the smoke subset
     locally.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `3a8c839`
 
 ## Final Acceptance Check
 
-- Open the track PR and observe PR CI wall time <= 10 minutes.
-- Trigger the full E2E `workflow_dispatch` run and confirm green.
+- [x] Open the track PR and observe PR CI wall time <= 10 minutes. (PR #13: 4m56s, green)
+- [x] Trigger the full E2E `workflow_dispatch` run and confirm green. (run 36513808084: success)
