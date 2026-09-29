@@ -12,15 +12,15 @@ with a verification checkpoint task.
 - [x] Task: Write failing Python tests for manifest expansion metadata (d7d6586)
     - [ ] `tests/test_native_protocol.py` (or nearest existing file): suite manifest carries per-method parameter declarations (`params`, `values`, case count) discovered through the preflight
     - [ ] Test: parameterized methods appear in discovered tests with declared case count; zero-arg methods unchanged
-- [ ] Task: Write failing Python tests for preflight validation (exit 2)
-    - [ ] Mismatched `params`/`values` lengths → error naming suite path, method, and expected shape
-    - [ ] Non-array arguments and duplicate parameter names → same class of failure
-    - [ ] Empty values list → valid declaration, test marked skipped (asserted in later runtime phase, validated here)
-- [ ] Task: Implement GDScript preflight changes (`gd_tools_test_preflight.gd`)
-    - [ ] `_test_method_names()`: include parameterized `test_*` methods when a `before_all` `parameterize` declaration matches their signature
-    - [ ] Validate declarations (lengths, types, duplicates); emit structured preflight errors with expected shape
-    - [ ] Record expansion metadata in the suite manifest
-- [ ] Task: Implement Python-side manifest/protocol support (`native_test/protocol.py`, `discovery.py`, `preflight.py`)
+- [x] Task: Write failing Python tests for preflight validation (exit 2) (909072f)
+    - [x] Mismatched `params`/`values` lengths → error naming suite path, method, and expected shape
+    - [x] Non-array arguments and duplicate parameter names → same class of failure
+    - [x] Empty values list → valid declaration, test marked skipped (asserted in later runtime phase, validated here)
+- [x] Task: Implement GDScript preflight changes (`gd_tools_test_preflight.gd`) (909072f)
+    - [x] `_test_method_names()`: include parameterized `test_*` methods when a `before_all` `parameterize` declaration matches their signature
+    - [x] Validate declarations (lengths, types, duplicates); emit structured preflight errors with expected shape
+    - [x] Record expansion metadata in the suite manifest
+- [x] Task: Implement Python-side manifest/protocol support (`native_test/protocol.py`, `discovery.py`, `preflight.py`) (d7d6586; `preflight.py` required no change — the adapter already round-trips `NativeTest` fields, and the added `parameters` field flows through manifest JSON unchanged)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Native Runtime: Case Expansion, Lifecycle, Naming, Selectors
