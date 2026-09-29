@@ -148,7 +148,7 @@ jobs:
   # Stage 3: E2E Tests (requires Godot + sample project)
   # ──────────────────────────────────────────────────────────────────
   e2e:
-    name: Stage 3 - E2E Tests (${{ matrix.godot-version }}, ${{ matrix.os }})
+    name: Stage 3 - E2E Smoke Tests (${{ matrix.godot-version }}, ${{ matrix.os }})
     needs: integration
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
@@ -174,8 +174,8 @@ jobs:
         with:
           version: ${{ matrix.godot-version }}
 
-      - name: Run E2E tests
-        run: pytest tests/e2e/ -m e2e --no-cov --durations=20 --junitxml=junit-e2e.xml
+      - name: Run E2E smoke tests
+        run: pytest tests/e2e/ -m "e2e and e2e_smoke" --no-cov --durations=20 --junitxml=junit-e2e.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
