@@ -6,6 +6,7 @@
       "file_id": 0,
       "path": "res://nested.gd",
       "source_hash": "sha256:48ef8fb3b9cf48af7aa75521c21d26a735bafdaa4324f03fb27381faec76ceb3",
+      "excluded_lines": [],
       "lines": [
         {
           "line": 9,

@@ -6,6 +6,7 @@
       "file_id": 0,
       "path": "res://edge_cases.gd",
       "source_hash": "sha256:a28c1d71d96292cea8f5ea8a92aaac9f201cbabe1cbf2cfe76aee969f4485ef4",
+      "excluded_lines": [],
       "lines": [
         {
           "line": 12,

@@ -6,6 +6,7 @@
       "file_id": 0,
       "path": "res://loops.gd",
       "source_hash": "sha256:998a0611c2fca51f2ee535529f8e1a9ec071bc0eb84ede39f0b94fd634d89aee",
+      "excluded_lines": [],
       "lines": [
         {
           "line": 4,
