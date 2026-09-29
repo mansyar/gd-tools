@@ -69,6 +69,6 @@ Covers spec FR5.
 
 Covers spec AC8.
 
-- [ ] Task 4.1: USER_GUIDE section documenting all three forms, edge-case semantics, and the warn-and-continue behavior
-- [ ] Task 4.2: README one-liner under coverage features
+- [x] Task 4.1: USER_GUIDE section documenting all three forms, edge-case semantics, and the warn-and-continue behavior [9f39cfb]
+- [x] Task 4.2: README one-liner under coverage features [9f39cfb]
 - [ ] Task 4.3: Phase Verification & Checkpoint (Refer to workflow.md)
