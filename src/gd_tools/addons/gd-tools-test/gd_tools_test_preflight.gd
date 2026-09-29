@@ -509,13 +509,48 @@ func _method_body(source: String, method_name: String) -> String:
 
 func _extract_call_arguments(body: String, call_name: String) -> Dictionary:
 	var regex := RegEx.create_from_string("(?<![\\w.])" + call_name + "\\s*\\(")
+	var strings := _string_spans(body)
 	var calls: Array = []
 	for match: Variant in regex.search_all(body):
+		if _offset_in_spans(strings, (match as RegExMatch).get_start()):
+			# The match only mentions the API inside a string literal or a
+			# trailing comment, not a live call; skip it.
+			continue
 		var content := _balanced_paren_content(body, (match as RegExMatch).get_end())
 		if content.has(ERROR_KEY):
 			return content
 		calls.append(_split_top_level_arguments(String(content["value"])))
 	return {"value": calls}
+
+
+func _string_spans(source: String) -> Array:
+	# Character ranges covered by string literals and comments, so call
+	# scanning can skip matches that merely mention an API name there.
+	var spans: Array = []
+	var index := 0
+	while index < source.length():
+		var character := source[index]
+		if character == "#":
+			var comment_end := source.find("\n", index)
+			if comment_end == -1:
+				comment_end = source.length()
+			spans.append([index, comment_end])
+			index = comment_end
+			continue
+		if character == '"' or character == "'":
+			var end := _skip_string(source, index)
+			spans.append([index, end])
+			index = end
+			continue
+		index += 1
+	return spans
+
+
+func _offset_in_spans(spans: Array, offset: int) -> bool:
+	for span: Variant in spans:
+		if offset >= span[0] and offset < span[1]:
+			return true
+	return false
 
 
 func _balanced_paren_content(source: String, start: int) -> Dictionary:

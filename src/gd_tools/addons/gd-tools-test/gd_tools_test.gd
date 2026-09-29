@@ -783,8 +783,9 @@ func use_parameters(params: Variant) -> Variant:
 	## The preflight statically resolves the literal argument into per-case
 	## metadata and the runner advances the case index before each case body
 	## runs, so repeated calls observe one value per case (the GUT legacy
-	## convention). An index past the end of ``params`` yields ``null``
-	## instead of failing the run.
+	## convention). Declare at most one ``use_parameters`` call per test
+	## method; the preflight rejects additional calls. An index past the end
+	## of ``params`` yields ``null`` instead of failing the run.
 	if typeof(params) == TYPE_DICTIONARY:
 		var values: Array = (params as Dictionary).values()
 		if _gd_tools_case_index < values.size():

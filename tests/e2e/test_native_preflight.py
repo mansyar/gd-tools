@@ -959,3 +959,42 @@ def test_preflight_rejects_malformed_bridge_declarations(godot_bin, tmp_path):
     assert payload["suites"] == []
     assert "res://test/integration_suite.gd" in payload["error"]
     assert "parameter set 0 has 2 value(s); expected 1" in payload["error"]
+
+
+def test_preflight_ignores_api_mentions_in_string_literals(godot_bin, tmp_path):
+    """Mentions of the parameterization APIs inside strings are not declarations.
+
+    A before_all line like ``var hint := "call parameterize(names, values)``
+    must not be mistaken for a live declaration, and a string in a test body
+    mentioning ``use_parameters`` must not resolve as one either.
+    """
+    body = dedent("""
+        func before_all() -> void:
+        \tvar hint := "call parameterize(names, values) before writing tests."
+        \tparameterize(["value"], [[1], [2]])
+
+        func test_ranked(value: int) -> void:
+        \tvar note := "the legacy form is use_parameters(values) in the body."
+        \tassert_true(value > 0)
+        """).strip()
+    source = _suite_source(body=body)
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": source},
+    )
+    result_path = tmp_path / "preflight-string-mentions.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "ok"
+    suite = payload["suites"][0]
+    test = suite["tests"][0]
+    assert test["parameters"] == {"names": ["value"], "values": [[1], [2]]}

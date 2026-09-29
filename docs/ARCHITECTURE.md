@@ -814,6 +814,9 @@ Two declaration forms are supported:
   preflight statically resolves both forms and rejects malformed
   declarations (arity mismatches, duplicate or empty names, non-literal
   values, multiple declarations) with exit `2` before anything runs.
+  Declaration expressions are evaluated once at preflight, so they must not
+  depend on runtime state; a global call that happens to evaluate (such as
+  `randi()`) would bake in the preflight-time value for every run.
 
 Selection: `--test test_foo` matches every expanded case; `--test
 "test_foo[admin]"` runs the single matching case; tags apply at the method
