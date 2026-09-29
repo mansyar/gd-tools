@@ -17,7 +17,7 @@ and workflow YAML tasks are verified through their own verification steps).
     `PytestUnknownMarkWarning` under `--strict-markers`.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2: Timing-Knob Injection for Real-Time E2E Waits
+## Phase 2: Timing-Knob Injection for Real-Time E2E Waits [checkpoint: 5552cb2]
 
 - [x] Task: Audit real-time waits in watch/migration e2e — `bf95fc7`
   - Inventory every sleep/debounce/poll wait in `test_watch_e2e.py` and the
