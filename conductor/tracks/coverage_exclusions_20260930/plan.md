@@ -40,7 +40,7 @@ Covers spec FR1–FR3.
   > annotations at statement indent.
 - [x] Task 1.4: Phase Verification & Checkpoint (Refer to workflow.md) [209271c]
 
-## Phase 2 — Plan version bump and cache invalidation
+## Phase 2 — Plan version bump and cache invalidation [checkpoint: 6268894]
 
 Covers spec FR4.
 
