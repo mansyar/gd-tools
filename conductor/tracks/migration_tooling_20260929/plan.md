@@ -32,7 +32,7 @@
 
 ## Phase 3: Rewrites (`--apply`)
 
-- [ ] Task: Base-class rename rewriter + diff generation *(TDD)*
+- [x] Task: Base-class rename rewriter + diff generation *(TDD)* — `ce6bb1b`
   - [ ] Write failing tests: `extends GutTest` → `extends GdToolsTest` rename; files with unsupported constructs are never rewritten; diff generation
   - [ ] Implement rewriter
   - [ ] Verify coverage
