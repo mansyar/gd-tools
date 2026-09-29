@@ -18,6 +18,8 @@ var _gd_tools_wait_signal = null
 var _gd_tools_wait_timer: SceneTreeTimer = null
 var _gd_tools_mock_methods: Dictionary = {}
 var _gd_tools_stub_registry: Dictionary = {}
+var _gd_tools_parameter_names: Array = []
+var _gd_tools_parameter_values: Array = []
 
 
 func _gd_tools_record_failure(
@@ -778,6 +780,19 @@ func is_skipped() -> bool:
 func get_skip_reason() -> String:
 	## Return the reason given to `skip_test`. Never empty.
 	return _gd_tools_skip_reason
+
+
+func parameterize(param_names, values) -> void:
+	## Declare the parameter sets for the suite's parameterized tests.
+	##
+	## Called once from `before_all`. The preflight validates the declaration
+	## statically and the runner expands each matching `test_*` method into
+	## one case per value set. Runtime expansion is provided by the runner;
+	## this method only records the declaration. The arguments stay untyped
+	## so that malformed declarations are reported by the preflight instead
+	## of refusing to compile the suite.
+	_gd_tools_parameter_names = param_names.duplicate(true)
+	_gd_tools_parameter_values = values.duplicate(true)
 
 
 func wait_process_frame() -> void:

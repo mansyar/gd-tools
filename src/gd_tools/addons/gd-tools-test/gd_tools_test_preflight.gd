@@ -89,9 +89,14 @@ func _resolve_suite(raw_suite: Variant) -> Dictionary:
 		return script_result
 	var script: Script = script_result["value"]
 	var method_names := _test_method_names(script)
+	var arities := _test_method_arities(script)
+	var parameterization_result := _resolve_parameterization(suite_path, script, arities, suite)
 	var tests_result := _validate_manifest_tests(suite_path, suite.get("tests", []), method_names)
-	if tests_result.has(ERROR_KEY):
-		return tests_result
+	var failure: Dictionary = (
+		parameterization_result if parameterization_result.has(ERROR_KEY) else tests_result
+	)
+	if failure.has(ERROR_KEY):
+		return failure
 
 	var constants: Dictionary = script.get_script_constant_map()
 	var raw_integration: Variant = constants.get("INTEGRATION", {})
@@ -167,15 +172,322 @@ func _test_method_names(script: Script) -> Dictionary:
 		var method_name: String = method_name_value
 		if not method_name.begins_with("test_"):
 			continue
+		names[method_name] = true
+	return names
+
+
+func _test_method_arities(script: Script) -> Dictionary:
+	## Parameter counts for every ``test_*`` method, including defaults.
+	var arities: Dictionary = {}
+	for method_value: Variant in script.get_script_method_list():
+		if typeof(method_value) != TYPE_DICTIONARY:
+			continue
+		var method: Dictionary = method_value
+		var method_name_value: Variant = method.get("name")
+		if typeof(method_name_value) != TYPE_STRING:
+			continue
+		var method_name: String = method_name_value
+		if not method_name.begins_with("test_"):
+			continue
 		var arguments: Variant = method.get("args", [])
 		if typeof(arguments) != TYPE_ARRAY:
 			continue
-		# Discovery only selects no-argument test methods, so a parameterized
-		# method is not a runnable test here either. Treating it as known would
-		# let an override validate for a test that is never executed.
-		if (arguments as Array).is_empty():
-			names[method_name] = true
-	return names
+		arities[method_name] = (arguments as Array).size()
+	return arities
+
+
+func _resolve_parameterization(
+	suite_path: String, script: Script, arities: Dictionary, suite: Dictionary
+) -> Dictionary:
+	## Validate the suite's ``parameterize`` declaration and attach case
+	## metadata to every manifest test it covers.
+	var declaration_result := _extract_parameterize_declaration(suite_path, script)
+	if declaration_result.has(ERROR_KEY):
+		return declaration_result
+	var declaration: Variant = declaration_result["value"]
+
+	var parameterized: Array = []
+	for method_name: Variant in arities:
+		if int(arities[method_name]) > 0:
+			parameterized.append(String(method_name))
+	parameterized.sort()
+
+	if declaration == null:
+		if parameterized.is_empty():
+			return {}
+		var first: String = parameterized[0]
+		return _error(
+			(
+				(
+					"Suite '%s' test method '%s' takes %d parameters but no"
+					+ " parameterize declaration was found in before_all"
+				)
+				% [suite_path, first, int(arities[first])]
+			)
+		)
+
+	var names: Array = declaration["names"]
+	var values: Array = declaration["values"]
+	var expected := names.size()
+	var matched := 0
+	for method_name: Variant in parameterized:
+		var arity := int(arities[method_name])
+		if arity != expected:
+			return _error(
+				(
+					(
+						"Suite '%s' test method '%s' takes %d parameters but the"
+						+ " parameterize declaration provides %d"
+					)
+					% [suite_path, method_name, arity, expected]
+				)
+			)
+		matched += 1
+	if matched == 0:
+		return _error(
+			(
+				(
+					"parameterize declaration in '%s' does not match any test"
+					+ " method (expected a test taking %d parameter(s))"
+				)
+				% [suite_path, expected]
+			)
+		)
+	for raw_test: Variant in suite.get("tests", []):
+		var test := raw_test as Dictionary
+		if int(arities.get(test.get("name"), -1)) == expected:
+			test["parameters"] = {
+				"names": names.duplicate(true),
+				"values": values.duplicate(true),
+			}
+	return {}
+
+
+func _extract_parameterize_declaration(suite_path: String, script: Script) -> Dictionary:
+	## Statically extract the single ``parameterize`` call from before_all.
+	var source := script.get_source_code()
+	var body := _before_all_body(source)
+	var call_result := _extract_call_arguments(body, "parameterize")
+	if call_result.has(ERROR_KEY):
+		return call_result
+	return _resolve_parameterize_declaration(suite_path, call_result["value"])
+
+
+func _resolve_parameterize_declaration(suite_path: String, calls: Array) -> Dictionary:
+	if calls.is_empty():
+		return {"value": null}
+	if calls.size() > 1:
+		return _error(
+			(
+				(
+					"Suite '%s' has %d parameterize calls in before_all;"
+					+ " exactly one parameterize declaration is supported"
+				)
+				% [suite_path, calls.size()]
+			)
+		)
+	var arguments: Array = calls[0]
+	if arguments.size() != 2:
+		return _error(
+			(
+				(
+					"parameterize declaration in '%s' takes two arguments"
+					+ " (names, values); received %d"
+				)
+				% [suite_path, arguments.size()]
+			)
+		)
+	var names_result := _evaluate_expression(suite_path, "names", arguments[0])
+	var values_result := _evaluate_expression(suite_path, "values", arguments[1])
+	var expression_error := _first_error([names_result, values_result])
+	if expression_error.has(ERROR_KEY):
+		return expression_error
+	var names: Variant = names_result["value"]
+	var values: Variant = values_result["value"]
+	var shape_error := _first_error(
+		[
+			_validate_parameter_names(suite_path, names),
+			_validate_parameter_values(suite_path, values, names),
+			_validate_json_safe(suite_path, values, "parameterize values"),
+		]
+	)
+	if shape_error.has(ERROR_KEY):
+		return shape_error
+	return {
+		"value":
+		{
+			"names": names.duplicate(true),
+			"values": values.duplicate(true),
+		},
+	}
+
+
+func _first_error(results: Array) -> Dictionary:
+	for result: Variant in results:
+		if (result as Dictionary).has(ERROR_KEY):
+			return result
+	return {}
+
+
+func _before_all_body(source: String) -> String:
+	var lines := source.split("\n")
+	var start := -1
+	var declaration := RegEx.create_from_string("^func\\s+before_all\\s*\\(")
+	for index in lines.size():
+		if declaration.search(String(lines[index])) != null:
+			start = index
+			break
+	if start == -1:
+		return ""
+	var body: Array[String] = []
+	for index in range(start + 1, lines.size()):
+		var line := String(lines[index])
+		if line.begins_with("func "):
+			break
+		body.append(line)
+	return "\n".join(body)
+
+
+func _extract_call_arguments(body: String, call_name: String) -> Dictionary:
+	var regex := RegEx.create_from_string("(?<![\\w.])" + call_name + "\\s*\\(")
+	var calls: Array = []
+	for match: Variant in regex.search_all(body):
+		var content := _balanced_paren_content(body, (match as RegExMatch).get_end())
+		if content.has(ERROR_KEY):
+			return content
+		calls.append(_split_top_level_arguments(String(content["value"])))
+	return {"value": calls}
+
+
+func _balanced_paren_content(source: String, start: int) -> Dictionary:
+	var depth := 1
+	var index := start
+	while index < source.length():
+		var character := source[index]
+		if character == "#":
+			while index < source.length() and source[index] != "\n":
+				index += 1
+			continue
+		if character == '"' or character == "'":
+			index = _skip_string(source, index)
+			continue
+		if character == "(":
+			depth += 1
+		elif character == ")":
+			depth -= 1
+			if depth == 0:
+				return {"value": source.substr(start, index - start)}
+		index += 1
+	return _error("parameterize call is missing its closing parenthesis")
+
+
+func _skip_string(source: String, start: int) -> int:
+	var quote := source[start]
+	var index := start + 1
+	while index < source.length():
+		var character := source[index]
+		if character == "\\":
+			index += 2
+			continue
+		if character == quote:
+			return index + 1
+		index += 1
+	return index
+
+
+func _split_top_level_arguments(source: String) -> Array:
+	var arguments: Array = []
+	var depth := 0
+	var start := 0
+	var index := 0
+	while index < source.length():
+		var character := source[index]
+		if character == '"' or character == "'":
+			index = _skip_string(source, index)
+			continue
+		if character == "(" or character == "[" or character == "{":
+			depth += 1
+		elif character == ")" or character == "]" or character == "}":
+			depth -= 1
+		elif character == "," and depth == 0:
+			arguments.append(source.substr(start, index - start).strip_edges())
+			start = index + 1
+		index += 1
+	arguments.append(source.substr(start).strip_edges())
+	return arguments
+
+
+func _evaluate_expression(suite_path: String, label: String, source: String) -> Dictionary:
+	var expression := Expression.new()
+	if expression.parse(source) != Error.OK:
+		return _error(
+			(
+				"parameterize %s in '%s' must be a literal expression (%s)"
+				% [label, suite_path, expression.get_error_text()]
+			)
+		)
+	var value: Variant = expression.execute([], null, false)
+	if expression.has_execute_failed():
+		return _error(
+			(
+				(
+					"parameterize %s in '%s' must be literal values that preflight"
+					+ " can evaluate without running the suite (%s)"
+				)
+				% [label, suite_path, expression.get_error_text()]
+			)
+		)
+	return {"value": value}
+
+
+func _validate_parameter_names(suite_path: String, names: Variant) -> Dictionary:
+	if typeof(names) != TYPE_ARRAY:
+		return _error("Suite '%s' parameterize names must be an array of strings" % suite_path)
+	var seen: Dictionary = {}
+	for name_value: Variant in names:
+		if typeof(name_value) != TYPE_STRING or (name_value as String).strip_edges().is_empty():
+			return _error("Suite '%s' parameterize names must be non-empty strings" % suite_path)
+		if seen.has(name_value):
+			return _error("Suite '%s' duplicate parameter name '%s'" % [suite_path, name_value])
+		seen[name_value] = true
+	if (names as Array).is_empty():
+		return _error("Suite '%s' parameterize requires at least one parameter name" % suite_path)
+	return {}
+
+
+func _validate_parameter_values(suite_path: String, values: Variant, names: Variant) -> Dictionary:
+	if typeof(names) != TYPE_ARRAY:
+		# The names check already reports the malformed declaration; skip the
+		# row-shape comparison rather than comparing against a non-array.
+		return {}
+	if typeof(values) != TYPE_ARRAY:
+		return _error("Suite '%s' parameterize values must be an array of value sets" % suite_path)
+	for index in values.size():
+		var value_set: Variant = values[index]
+		if typeof(value_set) != TYPE_ARRAY:
+			return _error("Suite '%s' parameter set %d must be an array" % [suite_path, index])
+		if (value_set as Array).size() != names.size():
+			return _error(
+				(
+					"Suite '%s' parameter set %d has %d value(s); expected %d"
+					% [suite_path, index, (value_set as Array).size(), names.size()]
+				)
+			)
+	return {}
+
+
+func _validate_json_safe(suite_path: String, value: Variant, label: String) -> Dictionary:
+	match typeof(value):
+		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING:
+			return {}
+		TYPE_ARRAY:
+			for element: Variant in value:
+				var result := _validate_json_safe(suite_path, element, label)
+				if result.has(ERROR_KEY):
+					return result
+			return {}
+		_:
+			return _error("Suite '%s' %s must be JSON-serializable literals" % [suite_path, label])
 
 
 func _resolve_integration(
