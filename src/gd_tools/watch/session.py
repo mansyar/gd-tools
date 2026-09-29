@@ -21,6 +21,7 @@ from gd_tools.native_test.protocol import (
     NativeTestResult,
 )
 from gd_tools.test_runner import TestResult
+from gd_tools.watch.coalescer import DEFAULT_DEBOUNCE_SECONDS
 from gd_tools.watch.loop import watch_loop
 from gd_tools.watch.observer import WatchdogEventSource
 from gd_tools.watch.scope import resolve_watched_files
@@ -72,6 +73,7 @@ def run_watch_mode(
     event_source: WatchdogEventSource | None = None,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
+    debounce_seconds: float = DEFAULT_DEBOUNCE_SECONDS,
     output: Callable[[str], None] = click.echo,
 ) -> int:
     """Run the interactive watch session and return the process exit code.
@@ -97,6 +99,8 @@ def run_watch_mode(
         event_source: Injectable event source (defaults to watchdog).
         clock: Injectable clock for debounce timing.
         sleep: Injectable sleep used between poll ticks.
+        debounce_seconds: Quiet period after the latest change before a
+            run becomes due; injectable for tests and fast e2e.
         output: Injectable output sink (defaults to ``click.echo``).
 
     Returns:
@@ -178,5 +182,6 @@ def run_watch_mode(
         event_source=event_source or WatchdogEventSource(project_root),
         clock=clock,
         sleep=sleep,
+        debounce_seconds=debounce_seconds,
         output=output,
     )

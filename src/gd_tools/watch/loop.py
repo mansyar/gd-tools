@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Protocol
 
 from gd_tools.native_test.protocol import NativeRunResult, NativeSuite
-from gd_tools.watch.coalescer import RunCoalescer
+from gd_tools.watch.coalescer import DEFAULT_DEBOUNCE_SECONDS, RunCoalescer
 from gd_tools.watch.mapping import map_changed_file
 from gd_tools.watch.observer import FileEvent
 from gd_tools.watch.scope import WatchAction, classify_event
@@ -34,6 +34,7 @@ def watch_loop(
     event_source: EventSource,
     clock: Callable[[], float],
     sleep: Callable[[float], None] = time.sleep,
+    debounce_seconds: float = DEFAULT_DEBOUNCE_SECONDS,
     output: Callable[[str], None] = print,
 ) -> int:
     """Run the watch session until interrupted.
@@ -53,12 +54,14 @@ def watch_loop(
             :class:`FileEvent` or ``None`` ticks) and ``stop()``.
         clock: Monotonic time callable for the coalescer.
         sleep: Wait between poll ticks; injectable for tests.
+        debounce_seconds: Quiet period after the latest change before a
+            run becomes due; injectable for tests and fast e2e.
         output: Status-line sink.
 
     Returns:
         The process exit code: always ``0`` for a watch session.
     """
-    coalescer = RunCoalescer(clock=clock)
+    coalescer = RunCoalescer(clock=clock, debounce_seconds=debounce_seconds)
     run_number = 0
     changed: set[str] = set()
 

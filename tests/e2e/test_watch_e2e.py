@@ -217,6 +217,7 @@ def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
         code = run_watch_mode(
             config,
             event_source=_TerminableSource(WatchdogEventSource(project), stop),
+            debounce_seconds=0.05,
             output=collector,
         )
     finally:
