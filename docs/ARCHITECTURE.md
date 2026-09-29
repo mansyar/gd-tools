@@ -786,6 +786,45 @@ cache, and that contention is already a known source of intermittent failures
 under load. The coverage shard merge ([11.2](#112-orchestratorpy)) is
 order-independent, so it is already parallel-safe if that decision is revisited.
 
+### 8.3 Parameterization and Suite-Level Skip
+
+A test method may take parameters. The suite declares the value sets once, in
+`before_all`, with `parameterize(names, values)`, where `names` is a list of
+parameter names and `values` is a list of value-set rows. The runner expands
+every method whose arity matches into one **case per value set**, and each
+case is a first-class test: it gets its own `before_each`/`after_each`, its
+own timeout budget, its own result entry, its own retry accounting, and its
+own artifacts.
+
+Case names are pytest-style suffixes on the method name: a single value
+renders as its string form (`test_foo[3]`, `test_foo[admin]`), multiple
+values are hyphen-joined (`test_foo[3-admin]`), and values without a stable
+string form (objects, dictionaries, nested arrays) fall back to the case
+index (`test_foo[2]`). Naming is deterministic, and JSON round-tripping
+normalizes whole floats back to integers so names do not depend on how the
+manifest was parsed.
+
+Two declaration forms are supported:
+
+- `parameterize(names, values)` in `before_all` --- the method receives the
+  values as ordinary parameters.
+- `use_parameters(values)` inside the test body --- the GUT legacy
+  convention. It may be an array (one value per case) or a dictionary
+  (each entry becomes one case, keyed by its name for reporting). The
+  preflight statically resolves both forms and rejects malformed
+  declarations (arity mismatches, duplicate or empty names, non-literal
+  values, multiple declarations) with exit `2` before anything runs.
+
+Selection: `--test test_foo` matches every expanded case; `--test
+"test_foo[admin]"` runs the single matching case; tags apply at the method
+level and select all of its cases.
+
+`skip_test()` called in `before_all` skips the **whole suite**: every test,
+and every expanded case of every parameterized method, is reported
+`skipped` with the recorded reason. No test body or per-test hook runs, and
+a suite-level skip is terminal --- it never consumes a retry. Per-test
+`skip_test()` inside a test method is unchanged.
+
 ## 9. Data Formats
 
 All cross-process data is versioned. `NATIVE_PROTOCOL_VERSION` is `2` in
@@ -807,7 +846,7 @@ Written by Python, read by Godot. One file per suite.
 | `runtime` | `native` \| `gut` | Runtime selector, echoed for clarity |
 | `suite.name` | string | Class name, used for reporting and selection |
 | `suite.path` | `res://` string | Suite script path |
-| `suite.tests[]` | objects | `name`, `timeout_seconds`, `retries` |
+| `suite.tests[]` | objects | `name`, `timeout_seconds`, `retries`, optional `parameters` (`names`, `values`) |
 | `suite.tags[]` | strings | Class-level tags, from `const TAGS` |
 | `suite.integration` | object\|null | `scene`, `resources`, `mode` |
 
@@ -852,7 +891,10 @@ A test `status` may be `passed`, `failed`, `error`, `skipped`, or `pending`. The
 protocol models `skipped` and `pending` and Python maps them
 ([11.1](#111-commandpy)). The assertion surface emits them: `skip_test()`
 marks a test skipped and `pending_test()` is a direct alias of it, so both
-report as `skipped`. A recorded failure outranks a skip, so a test that fails
+report as `skipped`. `skip_test()` in `before_all` is propagated by the
+runner to every test and every expanded case of the suite (see
+[8.3](#83-parameterization-and-suite-level-skip)). A recorded failure
+outranks a skip, so a test that fails
 before it skips is still reported as `failed` --- a skip never masks a real
 failure.
 
@@ -930,9 +972,12 @@ useful error is the one that tells you what to do next.
 
 Before the preflight runs, `scan_bridge_suites()` statically inspects every
 bridge (`GutTest`) suite and fails the run when a suite uses a construct the
-bridge does not support (parameterization, property/orphan assertions,
+bridge does not support (property/orphan assertions,
 engine-error assertions), listing each finding per file and line and pointing
-at [docs/gut-migration.md](./gut-migration.md). The scan is pure Python, so
+at [docs/gut-migration.md](./gut-migration.md). Parameterization
+(`parameterize`/`use_parameters`) is native now and no longer scanned: bridge
+suites use the same declaration validation, case expansion, and naming as
+native suites. The scan is pure Python, so
 unsupported constructs are caught before any Godot process spawns. It also
 fails the run when `addons/gut` is present: the bridge provides
 `class_name GutTest` itself, and the addon's copy would collide.
@@ -976,7 +1021,9 @@ Finds candidate suites. This is the one place where Python reads GDScript as
 - `_GUT_EXTENDS_RE` detects `GutTest` suites, which are classified as
   bridge suites (`RuntimeMode.GUT`) and routed through the compatibility
   bridge in the same run
-- `_TEST_FUNC_RE` matches `test_*` methods with an empty parameter list
+- `_TEST_FUNC_RE` matches `test_*` methods regardless of their parameter
+  list; a method that takes parameters becomes runnable once the preflight
+  resolves its parameterization declaration
 - `_TAG_RE` reads a class-level `const TAGS`
 
 A file that declares `test_*` methods but extends neither base class is a
@@ -986,10 +1033,11 @@ run it. Helper scripts without test methods are ignored.
 Anything semantic is deferred to the preflight. `NativeDiscoveryError` is a
 `ConfigError`, so discovery problems exit `2` as configuration failures.
 
-Because the test-method pattern requires no parameters, a parameterized test
-method is not discovered as runnable. This is intentional, not an oversight ---
-it is pinned by a test, because silently running a method that expects
-arguments would be worse than not running it.
+Parameterization is resolved by the preflight, not discovery: a
+parameterized test method is discovered by name, and a `name[case]`
+selector prefix-matches the owning method because whether the case exists
+is only known after the preflight statically resolves the suite's
+declaration. Discovery is textual on purpose.
 
 ### 11.5 protocol.py
 
@@ -1233,13 +1281,8 @@ Isolation over throughput. See [8.2](#82-isolation-model).
 
 Stated so they are not discovered by surprise:
 
-- **No parameterized tests.** Test methods must take no parameters; a
-  parameterized method is not discovered as runnable.
 - **No parallel execution.** Suites run sequentially (see
   [8.2](#82-isolation-model)).
-- **No suite-level skip.** `skip_test()` in `before_all` runs on the suite
-  instance rather than the per-test instance the runner reads, so it marks
-  nothing. Guard inside the test method instead.
 - **No editor integration.** The runtime is headless and script-driven only.
 
 The GUT compatibility bridge inherits every limitation above and adds its

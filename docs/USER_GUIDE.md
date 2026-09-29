@@ -460,8 +460,49 @@ gd-tools test tests/unit/test_player.gd
   sibling suites.
 - If discovery finds no suites, the error explains that suites must extend
   `GdToolsTest` (native) or `GutTest` (compatibility bridge).
-- The foundation does not yet provide parameterized tests, parallel
-  execution, or an editor UI.
+- The runtime does not provide parallel execution or an editor UI.
+
+**Parameterized tests:**
+
+Test methods may take parameters. Declare the value sets once in
+`before_all`, and the runner expands one case per value set:
+
+```gdscript
+extends GdToolsTest
+
+func before_all() -> void:
+    parameterize(["value", "label"], [[1, "admin"], [2, "user"]])
+
+func test_ranked(value: int, label: String) -> void:
+    assert_true(value > 0)
+    assert_true(label != "")
+```
+
+This runs `test_ranked[1-admin]` and `test_ranked[2-user]` as separate
+first-class tests: each case gets its own hooks, timeout, retry accounting,
+and result entry. Cases are named with pytest-style suffixes --- a single
+value renders as its string form, multiple values are hyphen-joined, and
+values without a stable string form fall back to the case index.
+
+The GUT legacy convention also works: call `use_parameters(values)` inside
+the test body (an array of values, or a dictionary whose entries each
+become one case):
+
+```gdscript
+func test_item() -> void:
+    var item = use_parameters(["alpha", "beta"])
+    assert_eq(item, "alpha")
+```
+
+Select one case with `--test "test_ranked[2-user]"`; a bare method name
+matches every case of that method.
+
+**Suite-level skip:**
+
+`skip_test("reason")` called in `before_all` skips the whole suite: every
+test --- and every expanded case --- is reported `skipped` with the reason,
+no test body or hook runs, and the suite passes with zero failures. Calling
+`skip_test()` inside a test method skips only that test, as before.
 
 **Mocking and stubbing:**
 

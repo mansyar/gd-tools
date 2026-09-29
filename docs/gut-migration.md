@@ -21,6 +21,7 @@ permanent GUT replacement.
 | Signal assertions | `watch_signals`, `assert_signal_emitted`, `assert_signal_not_emitted`, `assert_signal_emitted_with_parameters`, `assert_signal_emit_count`, `assert_has_signal`, `assert_connected`, `assert_not_connected` |
 | Async helpers | `wait_seconds`, `wait_for_signal` (bounded), `wait_frames`, `wait_physics_frames`, `wait_idle_frames`, `wait_process_frames`, `wait_until`, `wait_while`, `yield_for`, `yield_to`, `yield_frames` |
 | Skipping | `skip_test`, `skip_if_godot_version_lt`, `skip_if_godot_version_ne` |
+| Parameterization | `parameterize`, `use_parameters` (native expansion, pytest-style case names) |
 | Misc | `fail`, `pending_test` |
 
 Results normalize into the native result contract: the same statuses
@@ -39,9 +40,15 @@ code 2) with a per-file, per-line list:
 
 | Category | Constructs | Migrate to |
 |---|---|---|
-| Parameterized tests | `parameterize()`, `use_parameters()` | One test method per case, or a loop over fixture data inside a single test |
 | Property/orphan/interactive assertions | `assert_setget()`, `assert_accessors()`, `assert_exports()`, `assert_property_with_backing_variable()`, `assert_freed()`, `assert_no_new_orphans()`, `pause_before_teardown()` | Direct `get`/`set` assertions; `is_instance_valid()` checks; cleanup in `postrun_teardown` |
 | Engine-error assertions | `assert_engine_error()`, `assert_engine_error_count()`, `assert_push_error()`, `assert_push_warning()`, and count variants | GdToolsTest collects engine errors and warnings natively; migrate the suite to `GdToolsTest` and use its diagnostics |
+
+Parameterization (`parameterize()` / `use_parameters()`) is no longer
+refused: it is native now, and bridge suites use the same declaration
+validation, case expansion, and pytest-style case naming as `GdToolsTest`
+suites (see the parameterized-tests section of the user guide). Malformed
+declarations fail at preflight with exit code 2, exactly as they do for
+native suites.
 
 Mocking constructs (`double()`, `partial_double()`, `stub()`, and the
 `assert_called*` family) are no longer refused: the native runtime
