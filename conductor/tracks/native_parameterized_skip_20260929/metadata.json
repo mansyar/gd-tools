@@ -1,8 +1,8 @@
 {
   "track_id": "native_parameterized_skip_20260929",
   "type": "feature",
-  "status": "new",
+  "status": "completed",
   "created_at": "2026-09-29T00:00:00Z",
-  "updated_at": "2026-09-29T00:00:00Z",
+  "updated_at": "2026-09-30T00:00:00Z",
   "description": "Add GUT-compatible parameterized tests (parameterize/use_parameters) with per-case lifecycle and pytest-style case naming, make skip_test() in before_all skip the whole suite, and unblock the GUT bridge for parameterized suites."
 }

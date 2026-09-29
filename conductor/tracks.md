@@ -66,7 +66,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Native Parameterized Tests + Suite-Level Skip**
+- [x] **Track: Native Parameterized Tests + Suite-Level Skip**
   *Link: [native_parameterized_skip_20260929](./tracks/native_parameterized_skip_20260929/index.md)* - GUT-compatible
   `parameterize` / `use_parameters` support in the native runtime with per-case
   lifecycle and pytest-style `test_foo[case-name]` identification, suite-level
