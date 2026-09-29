@@ -8,6 +8,7 @@ from gd_tools.migration.apply import ApplyResult, apply_migration
 from gd_tools.migration.scan import (
     MigrationReport,
     MigrationScanError,
+    SuiteReport,
     build_migration_report,
 )
 from gd_tools.native_test.protocol import NativeSuite, NativeTest, RuntimeMode
@@ -170,9 +171,9 @@ class TestApplyMigration:
         _write_suite(tmp_path, "test/first.gd", _GUT_SOURCE)
         _write_suite(tmp_path, "test/second.gd", _GUT_SOURCE)
         suites = [
-            _suite("res://test/first.gd", RuntimeMode.GUT),
-            _suite("res://test/second.gd", RuntimeMode.GUT),
-            _suite("res://test/missing.gd", RuntimeMode.GUT),
+            SuiteReport(path="res://test/first.gd", test_count=1),
+            SuiteReport(path="res://test/second.gd", test_count=1),
+            SuiteReport(path="res://test/missing.gd", test_count=1),
         ]
         report = MigrationReport(suites=tuple(suites), gutconfig_path=None)
 
@@ -207,3 +208,32 @@ class TestApplyMigration:
         )
 
         assert result.rewritten == ()
+
+
+class TestApplySkipsDirtySuites:
+    def test_suites_with_unsupported_constructs_are_not_rewritten(
+        self, tmp_path
+    ):
+        """--apply renames only clean suites; dirty files stay untouched."""
+
+        _write_suite(
+            tmp_path,
+            "test/dirty.gd",
+            "extends GutTest\n\n\nfunc test_x() -> void:\n\tdouble(obj)\n",
+        )
+        _write_suite(tmp_path, "test/clean.gd", _GUT_SOURCE)
+        suites = [
+            _suite("res://test/dirty.gd", RuntimeMode.GUT),
+            _suite("res://test/clean.gd", RuntimeMode.GUT),
+        ]
+        report = build_migration_report(tmp_path, suites)
+
+        result = apply_migration(tmp_path, report, {})
+
+        assert (tmp_path / "test/dirty.gd").read_text(
+            encoding="utf-8"
+        ) == "extends GutTest\n\n\nfunc test_x() -> void:\n\tdouble(obj)\n"
+        assert (tmp_path / "test/clean.gd").read_text(
+            encoding="utf-8"
+        ) == _RENAMED
+        assert result.rewritten == ("res://test/clean.gd",)

@@ -34,6 +34,45 @@ class ApplyResult:
     skipped: tuple[tuple[str, str], ...]
 
 
+def plan_rewrites(
+    project_root: Path,
+    report: MigrationReport,
+) -> dict[str, tuple[Path, str, str]]:
+    """Read and rewrite clean suites in memory, without writing.
+
+    Args:
+        project_root: Path to the Godot project root.
+        report: The migration report produced by the scanner.
+
+    Returns:
+        A mapping from ``res://`` suite path to
+        ``(file_path, old_source, new_source)`` for every clean suite
+        whose base class would be renamed. Suites with unsupported
+        constructs are never included (spec FR-3).
+
+    Raises:
+        MigrationScanError: If a suite cannot be read.
+    """
+    root = Path(project_root).resolve()
+    plans: dict[str, tuple[Path, str, str]] = {}
+    for suite in report.suites:
+        if not suite.is_clean:
+            # Files with unsupported constructs stay untouched; they
+            # are reported with guidance instead (spec FR-3).
+            continue
+        file_path = root / suite.path.removeprefix("res://")
+        try:
+            source = file_path.read_text(encoding="utf-8")
+        except OSError as error:
+            raise MigrationScanError(
+                f"Cannot read suite '{suite.path}': {error}"
+            ) from error
+        result = rewrite_suite(source)
+        if result.changes:
+            plans[suite.path] = (file_path, source, result.new_source)
+    return plans
+
+
 def apply_migration(
     project_root: Path,
     report: MigrationReport,
@@ -61,21 +100,8 @@ def apply_migration(
     root = Path(project_root).resolve()
 
     # Phase A — read and rewrite everything in memory.
-    planned: list[tuple[Path, str]] = []
-    rewritten: list[str] = []
-    if not config_only:
-        for suite in report.suites:
-            file_path = root / suite.path.removeprefix("res://")
-            try:
-                source = file_path.read_text(encoding="utf-8")
-            except OSError as error:
-                raise MigrationScanError(
-                    f"Cannot read suite '{suite.path}': {error}"
-                ) from error
-            result = rewrite_suite(source)
-            if result.changes:
-                planned.append((file_path, result.new_source))
-                rewritten.append(suite.path)
+    plans = {} if config_only else plan_rewrites(root, report)
+    rewritten = tuple(plans)
 
     # Phase B — plan the config translation.
     existing: Mapping[str, object] | None = None
@@ -92,7 +118,7 @@ def apply_migration(
         update = build_config_update(options, existing)
 
     # Phase C — write. Nothing above this point mutated the project.
-    for file_path, new_source in planned:
+    for file_path, _old, new_source in plans.values():
         file_path.write_text(new_source, encoding="utf-8")
 
     config_updated = False

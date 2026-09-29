@@ -8,6 +8,7 @@ can print it through the shared console or tests can assert on it.
 from __future__ import annotations
 
 import io
+from collections.abc import Mapping
 
 from rich.console import Console
 from rich.highlighter import NullHighlighter
@@ -83,6 +84,7 @@ def _render_config(
 def render_migration_report(
     report: MigrationReport,
     translation: ConfigTranslation | None = None,
+    diffs: Mapping[str, str] | None = None,
 ) -> str:
     """Render the migration report as an ANSI-colored terminal string.
 
@@ -90,6 +92,8 @@ def render_migration_report(
         report: The migration report model produced by the scanner.
         translation: Optional ``.gutconfig.json`` classification; rendered
             when the report records a gutconfig file.
+        diffs: Optional ``res://`` path to unified-diff mapping for clean
+            suites whose base class can be renamed under ``--apply``.
 
     Returns:
         The formatted report string with ANSI color codes.
@@ -118,6 +122,19 @@ def render_migration_report(
             f"{_plural(dirty_count, 'suite needs', 'suites need')} migration, "
             f"{_plural(clean_count, 'suite is', 'suites are')} ready"
         )
+
+    clean_paths = {suite.path for suite in report.suites if suite.is_clean}
+    proposed = {
+        path: diff
+        for path, diff in (diffs or {}).items()
+        if path in clean_paths and diff
+    }
+    if proposed:
+        console.print()
+        console.print(Text("Proposed rewrites (--apply):", style="cyan"))
+        for path, diff in proposed.items():
+            console.print()
+            console.print(diff, markup=False)
 
     if report.gutconfig_path is not None:
         console.print()

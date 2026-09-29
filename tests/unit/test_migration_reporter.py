@@ -113,3 +113,45 @@ class TestRenderMigrationReport:
         rendered = render_migration_report(MigrationReport(suites=()))
 
         assert "No GUT suites found" in rendered
+
+
+class TestRenderProposedRewrites:
+    def _report(self):
+        return MigrationReport(suites=(_clean_suite(),))
+
+    def test_proposed_rewrites_section_is_rendered(self):
+        """Clean suites with diffs get a proposed-rewrite section."""
+
+        diffs = {
+            "res://test/clean_test.gd": (
+                "--- res://test/clean_test.gd\n"
+                "+++ res://test/clean_test.gd\n"
+                "@@ -1 +1 @@\n"
+                "-extends GutTest\n"
+                "+extends GdToolsTest\n"
+            )
+        }
+
+        rendered = render_migration_report(self._report(), diffs=diffs)
+
+        assert "Proposed rewrites" in rendered
+        assert "res://test/clean_test.gd" in rendered
+        assert "+extends GdToolsTest" in rendered
+
+    def test_no_rewrites_section_without_diffs(self):
+        """No diffs means no rewrite section."""
+
+        rendered = render_migration_report(self._report())
+
+        assert "Proposed rewrites" not in rendered
+
+    def test_dirty_suites_get_no_rewrite_section(self):
+        """Files with unsupported constructs are never proposed."""
+
+        diffs = {"res://test/legacy_test.gd": "-extends GutTest\n"}
+
+        rendered = render_migration_report(
+            MigrationReport(suites=(_dirty_suite(),)), diffs=diffs
+        )
+
+        assert "Proposed rewrites" not in rendered
