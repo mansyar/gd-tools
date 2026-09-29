@@ -647,8 +647,25 @@ func _validate_json_safe(suite_path: String, value: Variant, label: String) -> D
 				if result.has(ERROR_KEY):
 					return result
 			return {}
+		TYPE_DICTIONARY:
+			return _validate_json_safe_dictionary(suite_path, value, label)
 		_:
 			return _error("Suite '%s' %s must be JSON-serializable literals" % [suite_path, label])
+
+
+func _validate_json_safe_dictionary(
+	suite_path: String, dictionary: Dictionary, label: String
+) -> Dictionary:
+	# Dictionaries are JSON-serializable when their keys are strings; JSON
+	# coerces other key types, which would silently change the values the
+	# runner injects.
+	for key: Variant in dictionary:
+		if typeof(key) != TYPE_STRING:
+			return _error("Suite '%s' %s dictionary keys must be strings" % [suite_path, label])
+		var result := _validate_json_safe(suite_path, dictionary[key], label)
+		if result.has(ERROR_KEY):
+			return result
+	return {}
 
 
 func _resolve_integration(

@@ -2259,3 +2259,35 @@ def test_native_command_selects_single_parameterized_case(
     assert "test_ranked[1-admin]" in junit
     assert "test_ranked[2-user]" not in junit
     assert "test_plain" not in junit
+
+
+def test_native_command_covers_parameterized_cases(
+    godot_bin, tmp_path, monkeypatch
+):
+    """Coverage data is produced for a run containing parameterized cases.
+
+    Coverage is aggregated per source line across the whole run, so every
+    case of a parameterized method contributes hits without per-case
+    attribution plumbing. The suite deliberately includes failing cases.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+
+    result = run_native_test_command(
+        config,
+        suite="NativeParameterizeSuite",
+        coverage=True,
+        no_exit_code=True,
+        timeout=30,
+    )
+
+    # test_ranked[2-user] fails by design.
+    assert (result.total, result.passed, result.failed) == (7, 6, 1), result
+    assert result.coverage_data_path is not None
+    assert result.coverage_data_path.is_file()
+    payload = json.loads(result.coverage_data_path.read_text(encoding="utf-8"))
+    assert payload.get("files"), payload
