@@ -19,15 +19,25 @@
 
 Covers spec FR1–FR3.
 
-- [ ] Task 1.1: Write failing unit tests for annotation parsing and exclusion (Red)
+- [x] Task 1.1: Write failing unit tests for annotation parsing and exclusion (Red) [0ffc869]
   - Fixture `.gd` files: line exclusion, block `start`/`end`, func-line exclusion
   - Assert excluded lines are absent from the plan's instrumented lines and present in the new excluded-lines field
-- [ ] Task 1.2: Write failing unit tests for edge cases (Red)
+- [x] Task 1.2: Write failing unit tests for edge cases (Red) [0ffc869]
   - Nested `start` ignored with warning; unterminated `start` → to-EOF; stray `end` ignored with warning
   - Annotation text inside string literals/docstrings is inert; annotation on blank/comment-only line excludes that line only
   - Malformed-annotation warnings go to stderr; generation does not fail
-- [ ] Task 1.3: Implement the annotation scanner in `plan_generator.py` (Green)
+- [x] Task 1.3: Implement the annotation scanner in `plan_generator.py` (Green) [0ffc869]
   - Single-pass comment scan integrated with the existing Lark traversal; func-body spans derived from the AST
+
+  > **Deviation (2026-09-30):** func-body spans are derived by an
+  > indentation-based line scan instead of AST metadata — Lark
+  > `end_line` in gdtoolkit is unreliable (a `func_def`'s reported
+  > `end_line` overlaps the *next* function's def line), so text-based
+  > spans are strictly more correct here. Scanner cost measured at
+  > ~3ms per 100 files (NFR2 satisfied). Also discovered: gdtoolkit's
+  > lexer fails on over-indented comment-only lines (pre-existing
+  > parser quirk, unrelated to annotations) — test fixtures keep
+  > annotations at statement indent.
 - [ ] Task 1.4: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Plan version bump and cache invalidation
