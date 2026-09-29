@@ -15,7 +15,7 @@
 
 ---
 
-## Phase 1 — Annotation detection in the plan generator
+## Phase 1 — Annotation detection in the plan generator [checkpoint: 209271c]
 
 Covers spec FR1–FR3.
 
