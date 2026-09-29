@@ -47,3 +47,6 @@ All tasks follow the TDD workflow: Red (failing tests first) → Green (minimum 
 - [x] Task: Update `docs/ARCHITECTURE.md` (drop "No mocking or stubbing" limitation; describe the facility) `[2093aaa]`
 - [x] Task: Update `README.md` capability table `[ccdf575]`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions `[e34d082]`
