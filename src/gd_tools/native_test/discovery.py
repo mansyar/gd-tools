@@ -27,7 +27,7 @@ _CLASS_NAME_RE = re.compile(
     r"^\s*class_name\s+([A-Za-z_][A-Za-z0-9_]*)", re.MULTILINE
 )
 _TEST_FUNC_RE = re.compile(
-    r"^\s*(?:static\s+)?func\s+(test_[A-Za-z0-9_]+)\s*\(\s*\)",
+    r"^\s*(?:static\s+)?func\s+(test_[A-Za-z0-9_]+)\s*\(",
     re.MULTILINE,
 )
 _TAG_RE = re.compile(r"^\s*const\s+TAGS\b[^=\n]*=\s*\[([^\]]*)\]", re.MULTILINE)
@@ -96,7 +96,10 @@ def discover_native_suites(
         Deterministically ordered suites with selected test methods. Suites
         extending ``GdToolsTest`` carry ``RuntimeMode.NATIVE``; suites
         extending ``GutTest`` carry ``RuntimeMode.GUT`` and run through the
-        compatibility bridge.
+        compatibility bridge. Parameterized test methods (declared through
+        ``parameterize``) are discovered by method name; preflight resolves
+        their cases. A ``name[case]`` test selector prefix-matches the
+        owning method.
 
     Raises:
         NativeDiscoveryError: If a file declares test methods but extends
@@ -136,7 +139,16 @@ def discover_native_suites(
 
         test_names = _TEST_FUNC_RE.findall(source)
         if test is not None:
-            test_names = [name for name in test_names if name == test]
+            # A ``name[case]`` selector addresses one expanded case of a
+            # parameterized method, so it prefix-matches the method here;
+            # preflight resolves whether the case exists. The selector is
+            # preserved verbatim so preflight can trim the declaration to
+            # the selected case.
+            test_names = [
+                test if test.startswith(f"{name}[") else name
+                for name in test_names
+                if name == test or test.startswith(f"{name}[")
+            ]
         if not test_names:
             continue
 

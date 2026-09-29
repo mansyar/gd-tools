@@ -2068,3 +2068,281 @@ def test_native_double_and_partial_double_semantics(godot_bin, tmp_path):
     assert payload["status"] == "passed"
     for entry in payload["tests"]:
         assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def _parameters_manifest(project, path, suite_name, tests):
+    """Build a manifest whose tests carry preflight-resolved parameter metadata."""
+    manifest = _manifest(project, path, [], suite_name)
+    manifest["suites"][0]["tests"] = tests
+    return manifest
+
+
+def test_native_runner_expands_parameterized_cases(godot_bin, tmp_path):
+    """Each value set becomes a first-class case with its own result entry.
+
+    Cases run in declaration order, each with its own lifecycle hooks, and
+    a failing case fails only itself.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = _parameters_manifest(
+        project,
+        "res://test/parameterize_suite.gd",
+        "ParameterizeSuite",
+        [
+            {
+                "name": "test_ranked",
+                "parameters": {
+                    "names": ["value", "label"],
+                    "values": [[1, "admin"], [2, "user"]],
+                },
+            },
+            {"name": "test_plain"},
+        ],
+    )
+    result_path = tmp_path / "result.json"
+
+    process = _run_native_manifest(project, godot_bin, manifest, result_path)
+
+    assert process.returncode == 1, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "failed"
+    names = [entry["name"] for entry in payload["tests"]]
+    assert names == [
+        "test_ranked[1-admin]",
+        "test_ranked[2-user]",
+        "test_plain",
+    ]
+    statuses = {entry["name"]: entry["status"] for entry in payload["tests"]}
+    assert statuses["test_ranked[1-admin]"] == "passed"
+    assert statuses["test_ranked[2-user]"] == "failed"
+    assert statuses["test_plain"] == "passed"
+
+
+def test_native_runner_parameterizes_async_methods_and_unstable_values(
+    godot_bin, tmp_path
+):
+    """Async methods parameterize identically; unstable values use indexes."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = _parameters_manifest(
+        project,
+        "res://test/parameterize_suite.gd",
+        "ParameterizeSuite",
+        [
+            {
+                "name": "test_async_value",
+                "parameters": {
+                    "names": ["value", "label"],
+                    "values": [[1, "a"], [2, "b"]],
+                },
+            },
+            {
+                "name": "test_payload",
+                "parameters": {
+                    "names": ["payload"],
+                    "values": [[{"a": 1}], [{"b": 2}]],
+                },
+            },
+        ],
+    )
+    result_path = tmp_path / "result.json"
+
+    process = _run_native_manifest(project, godot_bin, manifest, result_path)
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    names = [entry["name"] for entry in payload["tests"]]
+    assert names == [
+        "test_async_value[1-a]",
+        "test_async_value[2-b]",
+        "test_payload[0]",
+        "test_payload[1]",
+    ]
+    assert all(entry["status"] == "passed" for entry in payload["tests"])
+
+
+def test_native_runner_expands_use_parameters_cases(godot_bin, tmp_path):
+    """use_parameters cases resolve the current value inside the test body."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = _parameters_manifest(
+        project,
+        "res://test/use_parameters_suite.gd",
+        "UseParametersSuite",
+        [
+            {
+                "name": "test_item",
+                "parameters": {
+                    "names": ["value"],
+                    "values": [["alpha"], ["beta"]],
+                },
+            },
+            {
+                "name": "test_flag",
+                "parameters": {
+                    "names": ["value"],
+                    "values": [["on"], ["off"]],
+                },
+            },
+        ],
+    )
+    result_path = tmp_path / "result.json"
+
+    process = _run_native_manifest(project, godot_bin, manifest, result_path)
+
+    assert process.returncode == 1, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    names = [entry["name"] for entry in payload["tests"]]
+    assert names == [
+        "test_item[alpha]",
+        "test_item[beta]",
+        "test_flag[on]",
+        "test_flag[off]",
+    ]
+    statuses = {entry["name"]: entry["status"] for entry in payload["tests"]}
+    assert statuses["test_item[alpha]"] == "passed"
+    assert statuses["test_item[beta]"] == "failed"
+    assert statuses["test_flag[on]"] == "passed"
+    assert statuses["test_flag[off]"] == "passed"
+
+
+def test_native_runner_skips_parameterized_test_without_values(
+    godot_bin, tmp_path
+):
+    """An empty values list marks the test skipped with an explicit reason."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = _parameters_manifest(
+        project,
+        "res://test/parameterize_suite.gd",
+        "ParameterizeSuite",
+        [
+            {
+                "name": "test_ranked",
+                "parameters": {"names": ["value", "label"], "values": []},
+            },
+        ],
+    )
+    result_path = tmp_path / "result.json"
+
+    process = _run_native_manifest(project, godot_bin, manifest, result_path)
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "passed"
+    assert len(payload["tests"]) == 1
+    entry = payload["tests"][0]
+    assert entry["name"] == "test_ranked"
+    assert entry["status"] == "skipped"
+    assert "No parameter values declared" in entry["message"]
+
+
+def test_native_command_selects_single_parameterized_case(
+    godot_bin, tmp_path, monkeypatch
+):
+    """``--test name[case]`` runs exactly the matching case end to end."""
+    project = _prepare_project(tmp_path, godot_bin)
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+    junit_path = tmp_path / "case-results.xml"
+
+    result = run_native_test_command(
+        config,
+        suite="NativeParameterizeSuite",
+        test_name="test_ranked[1-admin]",
+        tags=[],
+        junit_xml=str(junit_path),
+        timeout=30,
+    )
+
+    assert (result.total, result.passed, result.failed) == (1, 1, 0)
+    junit = junit_path.read_text(encoding="utf-8")
+    assert "test_ranked[1-admin]" in junit
+    assert "test_ranked[2-user]" not in junit
+    assert "test_plain" not in junit
+
+
+def test_native_command_covers_parameterized_cases(
+    godot_bin, tmp_path, monkeypatch
+):
+    """Coverage data is produced for a run containing parameterized cases.
+
+    Coverage is aggregated per source line across the whole run, so every
+    case of a parameterized method contributes hits without per-case
+    attribution plumbing. The suite deliberately includes failing cases.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+
+    result = run_native_test_command(
+        config,
+        suite="NativeParameterizeSuite",
+        coverage=True,
+        no_exit_code=True,
+        timeout=30,
+    )
+
+    # test_ranked[2-user] fails by design.
+    assert (result.total, result.passed, result.failed) == (7, 6, 1), result
+    assert result.coverage_data_path is not None
+    assert result.coverage_data_path.is_file()
+    payload = json.loads(result.coverage_data_path.read_text(encoding="utf-8"))
+    assert payload.get("files"), payload
+
+
+def test_native_suite_skip_in_before_all_skips_every_test(godot_bin, tmp_path):
+    """skip_test() in before_all marks every suite test skipped with the reason.
+
+    Per-test entries are still produced (including each expanded
+    parameterized case), no test body or hook ever runs, and a skip
+    consumes no retry.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "suite-skip-result.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        {
+            "protocol_version": 2,
+            "project_root": str(project),
+            "runtime": "native",
+            "suites": [
+                {
+                    "name": "NativeSuiteSkipSuite",
+                    "path": "res://test/suite_skip_suite.gd",
+                    "tests": [
+                        {"name": "test_skipped_by_suite", "retries": 3},
+                        {
+                            "name": "test_async_case",
+                            "retries": 3,
+                            "parameters": {
+                                "names": ["value"],
+                                "values": [[1], [2]],
+                            },
+                        },
+                    ],
+                }
+            ],
+            "coverage": {"enabled": False},
+        },
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    entries = payload["tests"]
+    by_name = {test["name"]: test for test in entries}
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert by_name["test_skipped_by_suite"]["status"] == "skipped"
+    assert by_name["test_async_case[1]"]["status"] == "skipped"
+    assert by_name["test_async_case[2]"]["status"] == "skipped"
+    for entry in entries:
+        assert entry["message"] == "suite environment unavailable"
+        # A suite-level skip is terminal and never consumes a retry.
+        assert entry["attempts"] == 1
+    # Test bodies and hooks must never have run.
+    assert not (project / "suite_skip_hook_ran.txt").exists()

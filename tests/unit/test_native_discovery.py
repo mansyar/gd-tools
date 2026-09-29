@@ -203,3 +203,127 @@ def test_discovery_errors_when_test_file_extends_unknown_base(tmp_path):
 
     with pytest.raises(NativeDiscoveryError, match=r"stray_test\.gd.*Node"):
         discover_native_suites(tmp_path, test_dirs=["test"])
+
+
+def _parameterized_suite(path: Path) -> None:
+    _write(
+        path,
+        """extends GdToolsTest
+class_name ParameterizedSuite
+
+func before_all() -> void:
+    parameterize(["value", "label"], [[1, "admin"], [2, "user"]])
+
+func test_ranked(value: int, label: String) -> void:
+    pass
+
+func test_plain() -> void:
+    pass
+""",
+    )
+
+
+def test_discovery_includes_parameterized_test_methods(tmp_path):
+    """Parameterized methods are discovered alongside zero-arg methods."""
+    (tmp_path / "project.godot").touch()
+    _parameterized_suite(tmp_path / "test" / "parameterized_test.gd")
+
+    suites = discover_native_suites(tmp_path, test_dirs=["test"])
+
+    assert len(suites) == 1
+    assert [test.name for test in suites[0].tests] == [
+        "test_ranked",
+        "test_plain",
+    ]
+
+
+def test_discovery_finds_suite_with_only_parameterized_methods(tmp_path):
+    """A suite whose tests are all parameterized is still discovered."""
+    (tmp_path / "project.godot").touch()
+    _write(
+        tmp_path / "test" / "only_parameterized_test.gd",
+        """extends GdToolsTest
+class_name OnlyParameterizedSuite
+
+func before_all() -> void:
+    parameterize(["value"], [["a"], ["b"]])
+
+func test_value(value: String) -> void:
+    pass
+""",
+    )
+
+    suites = discover_native_suites(tmp_path, test_dirs=["test"])
+
+    assert len(suites) == 1
+    assert [test.name for test in suites[0].tests] == ["test_value"]
+
+
+def test_discovery_finds_parameterized_bridge_suite(tmp_path):
+    """A GutTest suite with parameterized methods is a bridge suite."""
+    (tmp_path / "project.godot").touch()
+    _write(
+        tmp_path / "test" / "legacy_parameterized_test.gd",
+        """extends GutTest
+class_name LegacyParameterizedSuite
+
+func before_all() -> void:
+    parameterize(["value"], [[1], [2]])
+
+func test_legacy_value(value: int) -> void:
+    pass
+""",
+    )
+
+    suites = discover_native_suites(tmp_path, test_dirs=["test"])
+
+    assert len(suites) == 1
+    assert suites[0].runtime is RuntimeMode.GUT
+    assert [test.name for test in suites[0].tests] == ["test_legacy_value"]
+
+
+def test_discovery_case_selector_matches_parameterized_method(tmp_path):
+    """A ``name[case]`` selector selects the method owning that case."""
+    (tmp_path / "project.godot").touch()
+    _parameterized_suite(tmp_path / "test" / "parameterized_test.gd")
+
+    suites = discover_native_suites(
+        tmp_path,
+        test_dirs=["test"],
+        test="test_ranked[admin]",
+    )
+
+    assert len(suites) == 1
+    assert [test.name for test in suites[0].tests] == ["test_ranked[admin]"]
+
+
+def test_discovery_case_selector_defers_case_existence_to_preflight(tmp_path):
+    """A ``name[case]`` selector keeps the method; preflight resolves cases."""
+    (tmp_path / "project.godot").touch()
+    _parameterized_suite(tmp_path / "test" / "parameterized_test.gd")
+
+    suites = discover_native_suites(
+        tmp_path,
+        test_dirs=["test"],
+        test="test_plain[admin]",
+    )
+
+    # Discovery is textual: whether ``test_plain`` has cases is only known
+    # after preflight resolves parameterization, so the selector survives
+    # verbatim for preflight to validate.
+    assert len(suites) == 1
+    assert [test.name for test in suites[0].tests] == ["test_plain[admin]"]
+
+
+def test_discovery_case_selector_requires_bracket_suffix(tmp_path):
+    """A selector without brackets keeps exact method-name matching."""
+    (tmp_path / "project.godot").touch()
+    _parameterized_suite(tmp_path / "test" / "parameterized_test.gd")
+
+    suites = discover_native_suites(
+        tmp_path,
+        test_dirs=["test"],
+        test="test_rankedx",
+    )
+
+    assert suites == []

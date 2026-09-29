@@ -308,6 +308,82 @@ class TestBridgeResultContract:
         assert result["tests"][0]["status"] == "failed"
         assert "intentional bridge failure" in result["tests"][0]["message"]
 
+    def test_bridge_parameterized_suites_expand_into_cases(
+        self, tmp_path: Path, godot_bin: str
+    ) -> None:
+        """Bridge parameterization follows the native result contract.
+
+        ``test_ranked[2-user]`` and ``test_item[beta]`` fail by design.
+        """
+        project = _prepare_project(tmp_path, godot_bin)
+        result_path = tmp_path / "parameterize_result.json"
+        suite = _suite_entry(
+            "gut_parameterize_suite",
+            ["test_ranked", "test_plain", "test_item"],
+        )
+        suite["tests"][0]["parameters"] = {
+            "names": ["value", "label"],
+            "values": [[1, "admin"], [2, "user"]],
+        }
+        suite["tests"][2]["parameters"] = {
+            "names": ["value"],
+            "values": [["alpha"], ["beta"]],
+        }
+
+        result, completed = _run_bridge_manifest(
+            project, godot_bin, [suite], result_path
+        )
+
+        statuses = {test["name"]: test["status"] for test in result["tests"]}
+        assert statuses == {
+            "test_ranked[1-admin]": "passed",
+            "test_ranked[2-user]": "failed",
+            "test_plain": "passed",
+            "test_item[alpha]": "passed",
+            "test_item[beta]": "failed",
+        }
+        assert result["status"] == "failed"
+        assert completed.returncode == 1
+        assert all(test["attempts"] == 1 for test in result["tests"])
+
+
+def test_bridge_cli_parameterized_suite_runs_end_to_end(tmp_path, godot_bin):
+    """A bridge suite using parameterize runs through the full CLI pipeline.
+
+    The bridge scan must accept parameterization, preflight must resolve the
+    declaration, and the runner must expand cases with native naming.
+    ``test_ranked[2-user]`` and ``test_item[beta]`` fail by design, so the
+    run exits 1.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+
+    result = _run_cli(
+        [
+            "test",
+            "--suite",
+            "BridgeParameterizeSuite",
+            "--junit-xml",
+            "bridge-parameterize.xml",
+        ],
+        project,
+        godot_bin,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "unsupported" not in (result.stdout + result.stderr).lower()
+    root = ET.parse(project / "bridge-parameterize.xml").getroot()
+    outcomes = {
+        testcase.attrib["name"]: testcase.find("failure") is not None
+        for testcase in root.iter("testcase")
+    }
+    assert outcomes == {
+        "test_ranked[1-admin]": False,
+        "test_ranked[2-user]": True,
+        "test_plain": False,
+        "test_item[alpha]": False,
+        "test_item[beta]": True,
+    }
+
 
 @pytest.mark.e2e_smoke
 def test_bridge_cli_mixed_run_uses_native_contract(tmp_path, godot_bin):
@@ -343,7 +419,12 @@ def test_bridge_cli_mixed_run_uses_native_contract(tmp_path, godot_bin):
         for testcase in root.iter("testcase")
         if testcase.find("failure") is not None
     }
-    assert failures == {"test_intentional_failure"}
+    assert failures == {
+        "test_intentional_failure",
+        # The parameterize fixture ships two by-design failures.
+        "test_ranked[2-user]",
+        "test_item[beta]",
+    }
 
 
 def test_bridge_cli_run_with_coverage_produces_plan_schema_v1(

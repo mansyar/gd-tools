@@ -17,6 +17,7 @@ from gd_tools.native_test.protocol import (
     NativeSuiteIntegration,
     NativeTest,
     NativeTestIntegration,
+    NativeTestParameters,
     NativeTestResult,
     RuntimeMode,
     write_json_atomic,
@@ -324,3 +325,91 @@ def test_preflight_result_rejects_unknown_status():
     """Only successful and failed preflight states are accepted."""
     with pytest.raises(ValidationError):
         NativePreflightResult(status="partial")
+
+
+def test_native_test_accepts_parameterization_declaration():
+    """A test entry carries its preflight-resolved parameterization."""
+    test = NativeTest(
+        name="test_ranked",
+        parameters=NativeTestParameters(
+            names=["value", "label"],
+            values=[[1, "admin"], [2, "user"]],
+        ),
+    )
+
+    assert test.parameters is not None
+    assert test.parameters.names == ["value", "label"]
+    assert test.parameters.values == [[1, "admin"], [2, "user"]]
+
+
+def test_native_test_defaults_to_unparameterized():
+    """Plain test entries carry no parameterization metadata."""
+    assert NativeTest(name="test_example").parameters is None
+
+
+def test_parameterization_requires_at_least_one_name():
+    """A declaration without parameter names is not a declaration."""
+    with pytest.raises(ValidationError):
+        NativeTestParameters(names=[], values=[[1]])
+
+
+def test_parameterization_rejects_empty_parameter_names():
+    """Parameter names must be non-empty strings."""
+    with pytest.raises(ValidationError):
+        NativeTestParameters(names=["value", ""], values=[[1, 2]])
+
+
+def test_parameterization_rejects_duplicate_parameter_names():
+    """Parameter names must be unique."""
+    with pytest.raises(ValidationError):
+        NativeTestParameters(names=["value", "value"], values=[[1, 2]])
+
+
+def test_parameterization_rejects_row_length_mismatch():
+    """Every value set must supply one value per parameter name."""
+    with pytest.raises(ValidationError):
+        NativeTestParameters(
+            names=["value", "label"], values=[[1, "admin"], [2]]
+        )
+
+
+def test_parameterization_allows_empty_value_sets():
+    """An empty values list is a valid declaration resolved as skipped."""
+    parameters = NativeTestParameters(names=["value"], values=[])
+
+    assert parameters.values == []
+
+
+def test_parameterization_allows_nested_value_structures():
+    """Values may be nested arrays of JSON-serializable primitives."""
+    parameters = NativeTestParameters(
+        names=["coords"],
+        values=[[[1, 2]], [[3, 4]]],
+    )
+
+    assert parameters.values == [[[1, 2]], [[3, 4]]]
+
+
+def test_manifest_json_round_trip_preserves_parameters(tmp_path):
+    """Parameterization declarations survive the atomic JSON boundary."""
+    suite = NativeSuite(
+        name="ParameterizedSuite",
+        path="res://test/parameterized_test.gd",
+        tests=[
+            NativeTest(
+                name="test_ranked",
+                parameters=NativeTestParameters(
+                    names=["value"],
+                    values=[[1], [2]],
+                ),
+            )
+        ],
+    )
+    result = NativePreflightResult(status="ok", suites=[suite])
+
+    path = write_json_atomic(tmp_path / "preflight.json", result)
+    loaded = NativePreflightResult.model_validate(json.loads(path.read_text()))
+
+    assert loaded.suites[0].tests[0].parameters is not None
+    assert loaded.suites[0].tests[0].parameters.names == ["value"]
+    assert loaded.suites[0].tests[0].parameters.values == [[1], [2]]

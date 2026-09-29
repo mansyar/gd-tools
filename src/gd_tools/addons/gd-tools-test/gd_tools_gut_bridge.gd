@@ -18,9 +18,11 @@
 ## - Mocking (`double`, `partial_double`, `stub`, `assert_called*`), inherited
 ##   from the native `GdToolsTest` runtime with identical semantics.
 ##
-## Unsupported GUT constructs (parameterization, property/orphan checks,
-## engine-error asserts) are rejected by the preflight static scan before any
-## test runs, with migration guidance.
+## Parameterization (`parameterize`/`use_parameters`) is native now: bridge
+## suites use the same declaration validation, case expansion, and naming as
+## native suites. Remaining unsupported GUT constructs (property/orphan
+## checks, engine-error asserts) are rejected by the preflight static scan
+## before any test runs, with migration guidance.
 class_name GutTest
 extends GdToolsTest
 
