@@ -266,3 +266,33 @@ def test_batch_with_any_unmapped_file_falls_back_to_full_suite():
 
     assert runner.calls[1] == ["res://tests/test_enemy.gd"]
     assert any("src/helper.gd" in line for line in output)
+
+
+def test_zero_debounce_reruns_without_clock_advance():
+    """debounce_seconds=0.0 lets an event trigger a rerun with no wait."""
+    clock = FakeClock()
+    source = FakeEventSource(FileEvent("src/enemy.gd", "modified"))
+
+    def discover():
+        return [SUITE]
+
+    def on_call(n):
+        if n >= 2:
+            source.stop()
+
+    runner = FakeRunner(on_call)
+    output: list[str] = []
+
+    exit_code = watch_loop(
+        Path(".").resolve(),
+        discover=discover,
+        runner=runner,
+        event_source=source,
+        clock=clock,
+        sleep=lambda _seconds: None,
+        output=output.append,
+        debounce_seconds=0.0,
+    )
+
+    assert exit_code == 0
+    assert len(runner.calls) == 2

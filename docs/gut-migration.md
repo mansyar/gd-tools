@@ -96,13 +96,45 @@ installed GUT addon is flagged as a bridge conflict, and existing
    suites need nothing more than renaming the base class and, where you
    relied on GUT-only spelling (`assert_in`, `pending_test`), keeping
    the bridge-compatible aliases until you are ready to rename them.
+   `gd-tools migrate --apply` performs this rename for every clean
+   suite and shows the diff first.
 5. **Verify coverage still reports** with `gd-tools test --coverage`;
    bridge suites participate in the same coverage tracker and plan
    schema. No GUT autoload or hook scripts are involved.
 6. **Remove stale configuration**: `.gutconfig.json` is not read by the
-   native runtime or the bridge (`.gutconfig.json` translation arrives
-   with the guided migration tooling). Test selectors, timeouts, and
-   tags live in `gd-tools.toml` under `[test]`.
+   native runtime or the bridge. Run `gd-tools migrate --config-only`
+   to translate the options it maps into `gd-tools.toml` under `[test]`
+   (the file itself is preserved on disk). Test selectors, timeouts,
+   and tags live in `gd-tools.toml` under `[test]`.
+
+## Guided migration (`gd-tools migrate`)
+
+`gd-tools migrate` automates the mechanical parts of the steps above:
+
+```bash
+gd-tools migrate                 # read-only report (exit 1 when items are found)
+gd-tools migrate --config-only   # translate .gutconfig.json only
+gd-tools migrate --apply         # apply rewrites and config translation
+```
+
+- **Report (default):** inventories every bridge suite with the
+  unsupported constructs and line numbers the bridge preflight reports,
+  lists bridge-only aliases (`assert_in`, `pending_test`) that work
+  today but have native spellings, and shows unified diffs of the
+  proposed base-class rewrites. Nothing is written.
+- **Config translation:** known `.gutconfig.json` options are mapped
+  into `[test]` in `gd-tools.toml` — merge, never clobber: values you
+  already set are kept and the conflict is reported. Unmapped keys are
+  listed, never silently dropped, and `.gutconfig.json` itself is
+  preserved on disk.
+- **Rewrites (`--apply`):** clean suites (no unsupported constructs)
+  get `extends GutTest` renamed to `extends GdToolsTest`. Files with
+  unsupported constructs are never rewritten — migrate those constructs
+  by hand, then re-run.
+
+Exit codes: `0` nothing to migrate, `1` migration items found (dry run,
+nothing written), `2` infrastructure error (unreadable or unparseable
+files).
 
 ## Where the bridge is heading
 

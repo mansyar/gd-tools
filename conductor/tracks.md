@@ -65,3 +65,26 @@ _Archived tracks live in `./archive/`._
   and adds coverage support plus `docs/gut-migration.md`.
 
 ---
+
+- [x] **Track: Migration Tooling** (Migration Phase 4)
+  *Link: [migration_tooling_20260929](./archive/migration_tooling_20260929/index.md)* (archived → `./archive/migration_tooling_20260929/`) - a guided `gd-tools migrate`
+  command: read-only per-file migration report reusing the bridge preflight
+  scanner (base class, supported/unsupported constructs with file:line
+  guidance, bridge-only aliases listed as "works now, rename later"),
+  `.gutconfig.json` → `gd-tools.toml` translation (merge, never clobber;
+  unmapped options reported), and conservative diff-previewed `--apply`
+  rewrites (`extends GutTest` → `extends GdToolsTest` plus config
+  translation; files with unsupported constructs are never rewritten). Exit
+  codes 0/1/2. Fulfills the promise in `docs/gut-migration.md` §6.
+
+---
+
+- [x] **Track: E2E Test Speed** (CI performance chore) (archived → ./archive/e2e_speed_20260929/)
+  *Link: [e2e_speed_20260929](./archive/e2e_speed_20260929/index.md)* - speeds
+  up the E2E stage, the CI wall-time bottleneck (5-10.5 min per job, PR CI
+  ~13 min vs the 10-min target): `--durations=20` in CI pytest steps, fast
+  timing values injected through existing config/fixture seams for
+  watch/migration e2e (no production default changes), and an `e2e_smoke`
+  marker selecting 3-5 critical-path tests for the unchanged 6-job PR matrix
+  while the full E2E suite moves to nightly + `workflow_dispatch`. Acceptance:
+  PR CI wall time <= 10 minutes.

@@ -176,6 +176,7 @@ def _godot_process_count() -> int | None:
         return None
 
 
+@pytest.mark.e2e_smoke
 def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
     """The full watch loop reacts to real file events and shuts down."""
     project = tmp_path / "watch_project"
@@ -217,15 +218,30 @@ def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
         code = run_watch_mode(
             config,
             event_source=_TerminableSource(WatchdogEventSource(project), stop),
+            debounce_seconds=0.05,
             output=collector,
         )
     finally:
         stop.set()
         worker.join(timeout=_RUN_TIMEOUT + 30)
-    after = _godot_process_count()
-
     assert not errors, errors
     assert code == 0
+    # Orphan check: the session must not ADD Godot processes. Process exit
+    # is asynchronous, so allow a short grace period for the last child to
+    # be reaped before asserting. A strict equality comparison is flaky in
+    # a shared environment because unrelated pre-existing Godot processes
+    # may exit during the run.
+    deadline = time.monotonic() + 5.0
+    after = _godot_process_count()
+    while (
+        after is not None
+        and before is not None
+        and after > before
+        and time.monotonic() < deadline
+    ):
+        time.sleep(0.1)
+        after = _godot_process_count()
+    assert before is None or after is None or after <= before
     lines = collector.lines
     assert any("Watching" in line and "Ctrl+C" in line for line in lines)
     assert any(
@@ -241,7 +257,3 @@ def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
         line.startswith("Run 4:") and "(3 tests)" in line for line in lines
     )
     assert any("No suite mapped for 'src/helper.gd'" in line for line in lines)
-    # Orphan check: the session must not ADD Godot processes. A strict
-    # equality comparison is flaky in a shared environment because
-    # unrelated pre-existing Godot processes may exit during the run.
-    assert before is None or after is None or after <= before
