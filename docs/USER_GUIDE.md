@@ -66,7 +66,8 @@ The `init` command performs the following steps:
 
 `--with-gut` still installs the legacy GUT addon, but the addon now conflicts
 with the built-in compatibility bridge (both provide `class_name GutTest`) and
-`gd-tools doctor` warns about it. New projects should not use it; see the
+`gd-tools doctor` warns about it. New projects should not use it. Existing GUT
+suites can be migrated with `gd-tools migrate`; see the
 [migration guide](./gut-migration.md).
 
 The `init` command is idempotent -- running it again updates components

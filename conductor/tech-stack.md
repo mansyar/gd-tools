@@ -130,5 +130,5 @@
 - **Artifacts:** `.gd-tools/artifacts/<run_id>/` holds a machine-readable index plus preflight and per-suite artifacts; only the latest run is retained.
 - **Coverage:** Native runtime owns activation; existing coverage plan schema v1 is reused where possible for line and branch metrics.
 - **Dependencies:** No new third-party GDScript runtime dependency. GUT is optional during the bounded migration period.
-- **Compatibility:** `.gutconfig.json` is not read by the bridge; translation arrives with the Phase 4 migration tooling. `gd-tools.toml` is canonical.
+- **Compatibility:** `.gutconfig.json` is not read by the bridge; `gd-tools migrate` translates its mapped options into `gd-tools.toml` (merge, never clobber) and preserves the file. `gd-tools.toml` is canonical.
 - **Exit condition:** Remove the temporary bridge and fold the durable decisions into the main roadmap after native migration is complete.

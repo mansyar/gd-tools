@@ -10,6 +10,7 @@ from gd_tools.native_test import command
 from gd_tools.native_test.bridge_scan import (
     MIGRATION_DOC,
     BridgeScanError,
+    find_unsupported_constructs,
     scan_bridge_suites,
 )
 from gd_tools.native_test.protocol import NativeSuite, NativeTest, RuntimeMode
@@ -259,3 +260,26 @@ def test_command_runs_bridge_scan_before_preflight(tmp_path, monkeypatch):
 
     with pytest.raises(BridgeScanError, match="parameterize"):
         command.run_native_test_command(GdToolsConfig())
+
+
+def test_find_unsupported_constructs_returns_all_occurrences():
+    """The public helper reports every construct call with its line."""
+    source = (
+        "extends GutTest\n"
+        "\n"
+        "func test_x() -> void:\n"
+        "    parameterize(a)\n"
+        "    parameterize(b)\n"
+    )
+
+    assert find_unsupported_constructs(source) == [
+        ("parameterize", 4),
+        ("parameterize", 5),
+    ]
+
+
+def test_find_unsupported_constructs_clean_source():
+    """A supported source produces no hits."""
+    source = "extends GutTest\n\nfunc test_x() -> void:\n    assert_eq(1, 1)\n"
+
+    assert find_unsupported_constructs(source) == []
