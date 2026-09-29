@@ -9,7 +9,7 @@ touched. Only then are the planned writes executed. The source
 
 from __future__ import annotations
 
-import tomllib
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +18,11 @@ from gd_tools.config import load_config, save_config
 from gd_tools.migration.rewrite import rewrite_suite
 from gd_tools.migration.scan import MigrationReport, MigrationScanError
 from gd_tools.migration.translate import build_config_update
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:  # pragma: no cover
+    import tomli as tomllib
 
 
 @dataclass(frozen=True)
