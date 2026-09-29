@@ -33,7 +33,7 @@ and workflow YAML tasks are verified through their own verification steps).
 
 ## Phase 3: Smoke Subset & CI Split
 
-- [ ] Task: Select and mark smoke tests
+- [x] Task: Select and mark smoke tests — `49b8f5b`
   - Pick 3-5 critical-path e2e tests (representative native run with
     coverage, lint/format pass, migration dry-run) guided by the Phase 1
     durations data; target <= ~2 minutes per job.
