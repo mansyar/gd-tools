@@ -516,7 +516,7 @@ def test_preflight_accepts_empty_parameter_values(godot_bin, tmp_path):
                 "func test_ranked(value: int) -> void:\n"
                 "\tpass"
             ),
-            "at least one parameter name",
+            "parameterize names must not be empty",
         ),
         (
             (
@@ -696,3 +696,109 @@ def test_preflight_does_not_instantiate_or_execute_suite(godot_bin, tmp_path):
 
     assert process.returncode == 0, process.stdout + process.stderr
     assert not (project / "preflight-side-effect.txt").exists()
+
+
+def test_preflight_resolves_use_parameters_declarations(godot_bin, tmp_path):
+    """A use_parameters literal inside a test body records case metadata.
+
+    The array form yields one unnamed value per case; the dictionary form
+    uses the dictionary keys as parameter names and its values as the case
+    values, matching the GUT legacy convention.
+    """
+    body = dedent("""
+        func test_item() -> void:
+        \tvar item = use_parameters(["alpha", "beta"])
+        \tassert_eq(item, "alpha")
+
+        func test_flag() -> void:
+        \tvar flag = use_parameters({"on": true, "off": false})
+        \tassert_true(flag is bool)
+        """).strip()
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-use-parameters.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_item", "test_flag"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    tests = {test["name"]: test for test in payload["suites"][0]["tests"]}
+    assert tests["test_item"]["parameters"] == {
+        "names": ["value"],
+        "values": [["alpha"], ["beta"]],
+    }
+    assert tests["test_flag"]["parameters"] == {
+        "names": ["value"],
+        "values": [["on"], ["off"]],
+    }
+
+
+@pytest.mark.parametrize(
+    ("body", "expected_error"),
+    [
+        (
+            dedent("""
+                func test_item() -> void:
+                \tvar first = use_parameters(["alpha"])
+                \tvar second = use_parameters(["beta"])
+                """).strip(),
+            "exactly one use_parameters call",
+        ),
+        (
+            dedent("""
+                func before_all() -> void:
+                \tparameterize(["value"], [[1]])
+
+                func test_item(value: int) -> void:
+                \tvar item = use_parameters(["alpha"])
+                """).strip(),
+            "cannot combine signature parameters with use_parameters",
+        ),
+        (
+            dedent("""
+                const LIMIT := 3
+
+                func test_item() -> void:
+                \tvar item = use_parameters([LIMIT])
+                """).strip(),
+            "must be literal values",
+        ),
+    ],
+    ids=[
+        "multiple-calls",
+        "combine-signature",
+        "unresolvable-expression",
+    ],
+)
+def test_preflight_rejects_use_parameters_declarations(
+    godot_bin, tmp_path, body, expected_error
+):
+    """Malformed use_parameters declarations produce exit-code-2 diagnostics."""
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-use-parameters-invalid.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_item"]),
+        result_path,
+    )
+
+    assert process.returncode == 2, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "error"
+    assert payload["suites"] == []
+    assert "res://test/integration_suite.gd" in payload["error"]
+    assert expected_error in payload["error"]

@@ -18,15 +18,13 @@ var _gd_tools_wait_signal = null
 var _gd_tools_wait_timer: SceneTreeTimer = null
 var _gd_tools_mock_methods: Dictionary = {}
 var _gd_tools_stub_registry: Dictionary = {}
+var _gd_tools_case_index := 0
 var _gd_tools_parameter_names: Array = []
 var _gd_tools_parameter_values: Array = []
 
 
 func _gd_tools_record_failure(
-		assertion: String,
-		message: String = "",
-		actual = null,
-		expected = null
+	assertion: String, message: String = "", actual = null, expected = null
 ) -> void:
 	## Record one structured assertion failure for the current test.
 	##
@@ -40,23 +38,28 @@ func _gd_tools_record_failure(
 	var stack: Array[Dictionary] = get_stack()
 	for frame in stack:
 		var frame_source := str(frame.get("source", ""))
-		if frame_source.ends_with("gd_tools_test.gd") or frame_source.ends_with(
-				"gd_tools_gut_bridge.gd"
-		) or frame_source.ends_with(
-				"gd_tools_test_runner.gd"
+		if (
+			frame_source.ends_with("gd_tools_test.gd")
+			or frame_source.ends_with("gd_tools_gut_bridge.gd")
+			or frame_source.ends_with("gd_tools_test_runner.gd")
 		):
 			continue
 		source = frame_source
 		line = int(frame.get("line", 0))
 		break
-	_gd_tools_failures.append({
-		"assertion": assertion,
-		"message": message,
-		"actual": str(actual),
-		"expected": str(expected),
-		"source": source,
-		"line": line,
-	})
+	(
+		_gd_tools_failures
+		. append(
+			{
+				"assertion": assertion,
+				"message": message,
+				"actual": str(actual),
+				"expected": str(expected),
+				"source": source,
+				"line": line,
+			}
+		)
+	)
 
 
 func get_failures() -> Array[Dictionary]:
@@ -179,20 +182,17 @@ func _gd_tools_detail(message: String, detail: String) -> String:
 
 
 func _gd_tools_record_type_failure(
-		assertion: String,
-		expectation: String,
-		value,
-		position: int,
-		hint: String = ""
+	assertion: String, expectation: String, value, position: int, hint: String = ""
 ) -> void:
 	## Record a failure for a wrongly typed argument instead of raising.
 	##
 	## Spec R4: a GDScript runtime error here would be captured by the runner
 	## and escalate the entire run to exit 2, turning one bad call in one test
 	## into a run-level environment failure. Naming the type is actionable.
-	var message := "%s expects %s at argument %d, got %s" % [
-		assertion, expectation, position, type_string(typeof(value))
-	]
+	var message := (
+		"%s expects %s at argument %d, got %s"
+		% [assertion, expectation, position, type_string(typeof(value))]
+	)
 	if not hint.is_empty():
 		message += ". " + hint
 	_gd_tools_record_failure(assertion, message, value, expectation)
@@ -263,18 +263,14 @@ func assert_between(value, lower, upper, message: String = "") -> void:
 	if value < lower:
 		_gd_tools_record_failure(
 			"assert_between",
-			_gd_tools_detail(
-				message, "value %s is below the lower bound %s" % [value, lower]
-			),
+			_gd_tools_detail(message, "value %s is below the lower bound %s" % [value, lower]),
 			value,
 			lower
 		)
 	elif value > upper:
 		_gd_tools_record_failure(
 			"assert_between",
-			_gd_tools_detail(
-				message, "value %s is above the upper bound %s" % [value, upper]
-			),
+			_gd_tools_detail(message, "value %s is above the upper bound %s" % [value, upper]),
 			value,
 			upper
 		)
@@ -309,16 +305,13 @@ func assert_has(container, element, message: String = "") -> void:
 		_gd_tools_record_type_failure("assert_has", "a container", container, 1)
 		return
 	if not _gd_tools_element_fits(container, element):
-		_gd_tools_record_type_failure(
-			"assert_has", "an element the container can hold", element, 2
-		)
+		_gd_tools_record_type_failure("assert_has", "an element the container can hold", element, 2)
 		return
 	if not _gd_tools_membership(container, element):
 		_gd_tools_record_failure(
 			"assert_has",
 			_gd_tools_detail(
-				message,
-				"%s does not contain %s" % [type_string(typeof(container)), element]
+				message, "%s does not contain %s" % [type_string(typeof(container)), element]
 			),
 			container,
 			element
@@ -334,16 +327,13 @@ func assert_in(element, container, message: String = "") -> void:
 		_gd_tools_record_type_failure("assert_in", "a container", container, 2)
 		return
 	if not _gd_tools_element_fits(container, element):
-		_gd_tools_record_type_failure(
-			"assert_in", "an element the container can hold", element, 1
-		)
+		_gd_tools_record_type_failure("assert_in", "an element the container can hold", element, 1)
 		return
 	if not _gd_tools_membership(container, element):
 		_gd_tools_record_failure(
 			"assert_in",
 			_gd_tools_detail(
-				message,
-				"%s does not contain %s" % [type_string(typeof(container)), element]
+				message, "%s does not contain %s" % [type_string(typeof(container)), element]
 			),
 			container,
 			element
@@ -361,9 +351,7 @@ func assert_has_method(object, method, message: String = "") -> void:
 	if not object.has_method(method):
 		_gd_tools_record_failure(
 			"assert_has_method",
-			_gd_tools_detail(
-				message, "%s has no method %s" % [object.get_class(), method]
-			),
+			_gd_tools_detail(message, "%s has no method %s" % [object.get_class(), method]),
 			object,
 			method
 		)
@@ -392,9 +380,7 @@ func assert_is(actual, expected, message: String = "") -> void:
 	if not is_same(actual, expected):
 		_gd_tools_record_failure(
 			"assert_is",
-			_gd_tools_detail(
-				message, "distinct instances of %s" % type_string(typeof(actual))
-			),
+			_gd_tools_detail(message, "distinct instances of %s" % type_string(typeof(actual))),
 			actual,
 			expected
 		)
@@ -459,21 +445,25 @@ func _gd_tools_make_double(target: Variant, is_partial: bool) -> Object:
 	var target_script := _gd_tools_resolve_mock_script(target)
 	if target_script == null:
 		fail(
+			(
 				"double() and partial_double() require a GDScript script"
 				+ " or a script resource path; got: %s" % [target]
+			)
 		)
 		return null
 	var methods := _gd_tools_mock_methods_for(target_script)
 	var source := GdToolsMock.Doubler.generate(
-			target_script, get_instance_id(), is_partial, methods
+		target_script, get_instance_id(), is_partial, methods
 	)
 	var generated := GDScript.new()
 	generated.source_code = source
 	var reload_error := generated.reload()
 	if reload_error != OK or not generated.can_instantiate():
 		fail(
+			(
 				"Unable to generate a double of '%s': the generated script"
 				+ " did not load" % target_script.resource_path
+			)
 		)
 		return null
 	return generated.new()
@@ -490,9 +480,7 @@ func _gd_tools_resolve_mock_script(target: Variant) -> Script:
 func _gd_tools_mock_methods_for(target_script: Script) -> Array:
 	var path := target_script.resource_path
 	if not _gd_tools_mock_methods.has(path):
-		_gd_tools_mock_methods[path] = (
-			GdToolsMock.Doubler.collect_methods(target_script)
-		)
+		_gd_tools_mock_methods[path] = (GdToolsMock.Doubler.collect_methods(target_script))
 	return _gd_tools_mock_methods[path]
 
 
@@ -526,8 +514,10 @@ func stub(target: Object, method: String, args: Array = []) -> GdToolsMock.StubB
 	var mock: Object = target.get("__gd_tools")
 	if mock == null:
 		fail(
+			(
 				"stub() requires a double created by double()"
 				+ " or partial_double(); got: %s" % [target]
+			)
 		)
 		return _gd_tools_disabled_stub_builder()
 	var script_path := str(mock.get("_script_path"))
@@ -537,13 +527,9 @@ func stub(target: Object, method: String, args: Array = []) -> GdToolsMock.StubB
 		for meta in _gd_tools_mock_methods_for(target_script):
 			method_names.append(str(meta.get("name", "")))
 	if not method in method_names:
-		fail(
-				'stub() cannot stub "%s": %s has no such method' % [method, script_path]
-		)
+		fail('stub() cannot stub "%s": %s has no such method' % [method, script_path])
 		return _gd_tools_disabled_stub_builder()
-	return GdToolsMock.StubBuilder.new(
-			self, target.get_instance_id(), method, args
-	)
+	return GdToolsMock.StubBuilder.new(self, target.get_instance_id(), method, args)
 
 
 func _gd_tools_disabled_stub_builder() -> GdToolsMock.StubBuilder:
@@ -552,19 +538,20 @@ func _gd_tools_disabled_stub_builder() -> GdToolsMock.StubBuilder:
 
 
 func _gd_tools_stub_register(
-		double_id: int,
-		method: String,
-		args: Array,
-		action: String,
-		value: Variant
+	double_id: int, method: String, args: Array, action: String, value: Variant
 ) -> void:
 	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
 	var entries: Array = per_double.get(method, [])
-	entries.append({
-			"args": args.duplicate(),
-			"action": action,
-			"value": value,
-	})
+	(
+		entries
+		. append(
+			{
+				"args": args.duplicate(),
+				"action": action,
+				"value": value,
+			}
+		)
+	)
 	per_double[method] = entries
 	_gd_tools_stub_registry[double_id] = per_double
 
@@ -589,11 +576,7 @@ static func _gd_tools_stub_specificity(pattern: Array, call_args: Array) -> int:
 	return 1 if wildcard else 2
 
 
-func _gd_tools_stub_find(
-		double_id: int,
-		method: String,
-		call_args: Array
-) -> Dictionary:
+func _gd_tools_stub_find(double_id: int, method: String, call_args: Array) -> Dictionary:
 	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
 	var entries: Array = per_double.get(method, [])
 	var best: Dictionary = {}
@@ -608,11 +591,7 @@ func _gd_tools_stub_find(
 	return best
 
 
-func _gd_tools_mock_default(
-		script_path: String,
-		method: String,
-		index: int
-) -> Variant:
+func _gd_tools_mock_default(script_path: String, method: String, index: int) -> Variant:
 	var methods: Array = _gd_tools_mock_methods.get(script_path, [])
 	for meta in methods:
 		if str(meta.get("name", "")) != method:
@@ -633,14 +612,13 @@ func assert_called(target: Object, method: String, message: String = "") -> void
 	var calls: Array = _gd_tools_double_calls(target, method)
 	if calls.is_empty():
 		_gd_tools_record_failure(
-				"assert_called",
-				_gd_tools_detail(
-						message,
-						'Expected "%s" to have been called at least once, but it was never called.'
-								% method
-				),
-				0,
-				"at least 1"
+			"assert_called",
+			_gd_tools_detail(
+				message,
+				'Expected "%s" to have been called at least once, but it was never called.' % method
+			),
+			0,
+			"at least 1"
 		)
 
 
@@ -651,43 +629,41 @@ func assert_not_called(target: Object, method: String, message: String = "") -> 
 	var calls: Array = _gd_tools_double_calls(target, method)
 	if not calls.is_empty():
 		_gd_tools_record_failure(
-				"assert_not_called",
-				_gd_tools_detail(
-						message,
-						'Expected "%s" to have never been called, but it was called %d time(s).'
-								% [method, calls.size()]
-				),
-				calls.size(),
-				0
+			"assert_not_called",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have never been called, but it was called %d time(s).'
+					% [method, calls.size()]
+				)
+			),
+			calls.size(),
+			0
 		)
 
 
-func assert_call_count(
-		target: Object, method: String, count: int, message: String = ""
-) -> void:
+func assert_call_count(target: Object, method: String, count: int, message: String = "") -> void:
 	## Assert that a double recorded exactly `count` calls to `method`.
 	if _gd_tools_assert_target_is_double(target, "assert_call_count"):
 		return
 	var actual := _gd_tools_double_calls(target, method).size()
 	if actual != count:
 		_gd_tools_record_failure(
-				"assert_call_count",
-				_gd_tools_detail(
-						message,
-						'Expected "%s" to have been called %d time(s), but it was called %d time(s).'
-								% [method, count, actual]
-				),
-				actual,
-				count
+			"assert_call_count",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been called %d time(s), but it was called %d time(s).'
+					% [method, count, actual]
+				)
+			),
+			actual,
+			count
 		)
 
 
 func assert_call_arguments(
-		target: Object,
-		method: String,
-		expected_args: Array,
-		call_index: int = -1,
-		message: String = ""
+	target: Object, method: String, expected_args: Array, call_index: int = -1, message: String = ""
 ) -> void:
 	## Assert the arguments of one recorded call on a double.
 	##
@@ -700,27 +676,31 @@ func assert_call_arguments(
 		call_index = calls.size() + call_index
 	if call_index < 0 or call_index >= calls.size():
 		_gd_tools_record_failure(
-				"assert_call_arguments",
-				_gd_tools_detail(
-						message,
-						'Expected "%s" call %d to exist, but only %d call(s) were recorded.'
-								% [method, call_index, calls.size()]
-				),
-				calls.size(),
-				call_index + 1
+			"assert_call_arguments",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" call %d to exist, but only %d call(s) were recorded.'
+					% [method, call_index, calls.size()]
+				)
+			),
+			calls.size(),
+			call_index + 1
 		)
 		return
 	var actual_args: Array = calls[call_index]
 	if actual_args != expected_args:
 		_gd_tools_record_failure(
-				"assert_call_arguments",
-				_gd_tools_detail(
-						message,
-						'Expected "%s" call %d arguments %s, but was %s.'
-								% [method, call_index, expected_args, actual_args]
-				),
-				actual_args,
-				expected_args
+			"assert_call_arguments",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" call %d arguments %s, but was %s.'
+					% [method, call_index, expected_args, actual_args]
+				)
+			),
+			actual_args,
+			expected_args
 		)
 
 
@@ -729,9 +709,11 @@ func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> boo
 	if target != null and target.get("__gd_tools") != null:
 		return false
 	_gd_tools_record_failure(
-			assertion,
+		assertion,
+		(
 			"%s() requires a double created by double() or partial_double(); got: %s"
-					% [assertion, target]
+			% [assertion, target]
+		)
 	)
 	return true
 
@@ -795,6 +777,26 @@ func parameterize(param_names, values) -> void:
 	_gd_tools_parameter_values = values.duplicate(true)
 
 
+func use_parameters(params: Variant) -> Variant:
+	## Return the current case's value from a ``use_parameters`` declaration.
+	##
+	## The preflight statically resolves the literal argument into per-case
+	## metadata and the runner advances the case index before each case body
+	## runs, so repeated calls observe one value per case (the GUT legacy
+	## convention). An index past the end of ``params`` yields ``null``
+	## instead of failing the run.
+	if typeof(params) == TYPE_DICTIONARY:
+		var values: Array = (params as Dictionary).values()
+		if _gd_tools_case_index < values.size():
+			return values[_gd_tools_case_index]
+		return null
+	if typeof(params) == TYPE_ARRAY:
+		if _gd_tools_case_index < (params as Array).size():
+			return (params as Array)[_gd_tools_case_index]
+		return null
+	return null
+
+
 func wait_process_frame() -> void:
 	## Wait for one process frame.
 	await get_tree().process_frame
@@ -811,10 +813,7 @@ func wait_seconds(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
 
 
-func wait_for_signal(
-		target_signal: Signal,
-		timeout_seconds: float = 5.0
-	) -> bool:
+func wait_for_signal(target_signal: Signal, timeout_seconds: float = 5.0) -> bool:
 	## Wait for a signal with a bounded timeout; return whether it was emitted.
 	##
 	##     if not wait_for_signal(door.door_opened, 1.0):
@@ -833,10 +832,7 @@ func wait_for_signal(
 	_gd_tools_wait_signal = target_signal
 	_gd_tools_wait_signal.connect(_gd_tools_on_wait_signal, CONNECT_ONE_SHOT)
 	_gd_tools_wait_timer = get_tree().create_timer(max(timeout_seconds, 0.001))
-	_gd_tools_wait_timer.timeout.connect(
-			_gd_tools_wait_resolved.emit,
-			CONNECT_ONE_SHOT
-	)
+	_gd_tools_wait_timer.timeout.connect(_gd_tools_wait_resolved.emit, CONNECT_ONE_SHOT)
 	await _gd_tools_wait_resolved
 	var received := _gd_tools_wait_received
 	_gd_tools_disconnect_wait()
@@ -851,12 +847,14 @@ func _gd_tools_on_wait_signal() -> void:
 func _gd_tools_disconnect_wait() -> void:
 	## Drop whichever side of the race did not win, so a later wait in the same
 	## test is not resolved by this one's leftover timer.
-	if _gd_tools_wait_signal != null and _gd_tools_wait_signal.is_connected(
-			_gd_tools_on_wait_signal
+	if (
+		_gd_tools_wait_signal != null
+		and _gd_tools_wait_signal.is_connected(_gd_tools_on_wait_signal)
 	):
 		_gd_tools_wait_signal.disconnect(_gd_tools_on_wait_signal)
-	if _gd_tools_wait_timer != null and _gd_tools_wait_timer.timeout.is_connected(
-			_gd_tools_wait_resolved.emit
+	if (
+		_gd_tools_wait_timer != null
+		and _gd_tools_wait_timer.timeout.is_connected(_gd_tools_wait_resolved.emit)
 	):
 		_gd_tools_wait_timer.timeout.disconnect(_gd_tools_wait_resolved.emit)
 	_gd_tools_wait_signal = null

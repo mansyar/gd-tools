@@ -92,8 +92,9 @@ func _resolve_suite(raw_suite: Variant) -> Dictionary:
 	var arities := _test_method_arities(script)
 	var parameterization_result := _resolve_parameterization(suite_path, script, arities, suite)
 	var tests_result := _validate_manifest_tests(suite_path, suite.get("tests", []), method_names)
-	var failure: Dictionary = (
-		parameterization_result if parameterization_result.has(ERROR_KEY) else tests_result
+	var use_parameters_result := _resolve_use_parameters(suite_path, script, arities, suite)
+	var failure: Dictionary = _first_error(
+		[parameterization_result, tests_result, use_parameters_result]
 	)
 	if failure.has(ERROR_KEY):
 		return failure
@@ -266,7 +267,7 @@ func _resolve_parameterization(
 func _extract_parameterize_declaration(suite_path: String, script: Script) -> Dictionary:
 	## Statically extract the single ``parameterize`` call from before_all.
 	var source := script.get_source_code()
-	var body := _before_all_body(source)
+	var body := _method_body(source, "before_all")
 	var call_result := _extract_call_arguments(body, "parameterize")
 	if call_result.has(ERROR_KEY):
 		return call_result
@@ -304,22 +305,7 @@ func _resolve_parameterize_declaration(suite_path: String, calls: Array) -> Dict
 		return expression_error
 	var names: Variant = names_result["value"]
 	var values: Variant = values_result["value"]
-	var shape_error := _first_error(
-		[
-			_validate_parameter_names(suite_path, names),
-			_validate_parameter_values(suite_path, values, names),
-			_validate_json_safe(suite_path, values, "parameterize values"),
-		]
-	)
-	if shape_error.has(ERROR_KEY):
-		return shape_error
-	return {
-		"value":
-		{
-			"names": names.duplicate(true),
-			"values": values.duplicate(true),
-		},
-	}
+	return _checked_metadata(suite_path, "parameterize names", names, values)
 
 
 func _first_error(results: Array) -> Dictionary:
@@ -329,10 +315,128 @@ func _first_error(results: Array) -> Dictionary:
 	return {}
 
 
-func _before_all_body(source: String) -> String:
+func _resolve_use_parameters(
+	suite_path: String, script: Script, arities: Dictionary, suite: Dictionary
+) -> Dictionary:
+	## Statically resolve ``use_parameters`` declarations inside test bodies.
+	for raw_test: Variant in suite.get("tests", []):
+		var result := _resolve_test_use_parameters(
+			suite_path, script, arities, raw_test as Dictionary
+		)
+		if result.has(ERROR_KEY):
+			return result
+	return {}
+
+
+func _resolve_test_use_parameters(
+	suite_path: String, script: Script, arities: Dictionary, test: Dictionary
+) -> Dictionary:
+	var method_name := str(test.get("name", ""))
+	var body := _method_body(script.get_source_code(), method_name)
+	var call_result := _extract_call_arguments(body, "use_parameters")
+	if call_result.has(ERROR_KEY):
+		return call_result
+	var calls: Array = call_result["value"]
+	if calls.is_empty():
+		return {}
+	var metadata_result := _use_parameters_metadata(
+		suite_path, method_name, int(arities.get(method_name, 0)), calls
+	)
+	if metadata_result.has(ERROR_KEY):
+		return metadata_result
+	test["parameters"] = metadata_result["value"]
+	return {}
+
+
+func _use_parameters_metadata(
+	suite_path: String, method_name: String, arity: int, calls: Array
+) -> Dictionary:
+	if calls.size() > 1:
+		return _error(
+			(
+				(
+					"Suite '%s' test method '%s' has %d use_parameters calls;"
+					+ " exactly one use_parameters call is supported"
+				)
+				% [suite_path, method_name, calls.size()]
+			)
+		)
+	if arity > 0:
+		return _error(
+			(
+				(
+					"Suite '%s' test method '%s' cannot combine signature"
+					+ " parameters with use_parameters"
+				)
+				% [suite_path, method_name]
+			)
+		)
+	var arguments: Array = calls[0]
+	if arguments.size() != 1:
+		return _error(
+			(
+				("use_parameters declaration in '%s' takes one argument" + " (values); received %d")
+				% [suite_path, arguments.size()]
+			)
+		)
+	var values_result := _evaluate_expression(suite_path, "values", arguments[0])
+	if values_result.has(ERROR_KEY):
+		return values_result
+	return _use_parameters_metadata_shape(suite_path, values_result["value"])
+
+
+func _use_parameters_metadata_shape(suite_path: String, declared: Variant) -> Dictionary:
+	if typeof(declared) == TYPE_DICTIONARY:
+		# The GUT legacy convention: each dictionary entry is one case and the
+		# test body receives the entry's value through use_parameters. The keys
+		# become the case identifiers, so the metadata values carry the keys
+		# for naming only -- runtime injection reads the test's own dictionary.
+		var dictionary: Dictionary = declared
+		var values: Array = []
+		for key: Variant in dictionary:
+			values.append([key])
+		return _checked_metadata(suite_path, "use_parameters keys", ["value"], values)
+	if typeof(declared) != TYPE_ARRAY:
+		return _error(
+			(
+				(
+					"Suite '%s' use_parameters declaration must be an array of"
+					+ " values or a dictionary of named values"
+				)
+				% suite_path
+			)
+		)
+	var values: Array = []
+	for value: Variant in declared:
+		values.append([value])
+	return _checked_metadata(suite_path, "use_parameters values", ["value"], values)
+
+
+func _checked_metadata(
+	suite_path: String, label: String, names: Variant, values: Variant
+) -> Dictionary:
+	var shape_error := _first_error(
+		[
+			_validate_parameter_names(suite_path, names, label),
+			_validate_parameter_values(suite_path, values, names),
+			_validate_json_safe(suite_path, values, "parameter values"),
+		]
+	)
+	if shape_error.has(ERROR_KEY):
+		return shape_error
+	return {
+		"value":
+		{
+			"names": (names as Array).duplicate(true),
+			"values": (values as Array).duplicate(true),
+		},
+	}
+
+
+func _method_body(source: String, method_name: String) -> String:
 	var lines := source.split("\n")
 	var start := -1
-	var declaration := RegEx.create_from_string("^func\\s+before_all\\s*\\(")
+	var declaration := RegEx.create_from_string("^func\\s+%s\\s*\\(" % method_name)
 	for index in lines.size():
 		if declaration.search(String(lines[index])) != null:
 			start = index
@@ -344,7 +448,11 @@ func _before_all_body(source: String) -> String:
 		var line := String(lines[index])
 		if line.begins_with("func "):
 			break
-		body.append(line)
+		# Comment-only lines are dropped so a commented-out declaration is
+		# never mistaken for a live one; inline comments are still handled
+		# by the call-argument scanner.
+		if not line.strip_edges().begins_with("#"):
+			body.append(line)
 	return "\n".join(body)
 
 
@@ -440,18 +548,20 @@ func _evaluate_expression(suite_path: String, label: String, source: String) -> 
 	return {"value": value}
 
 
-func _validate_parameter_names(suite_path: String, names: Variant) -> Dictionary:
+func _validate_parameter_names(
+	suite_path: String, names: Variant, label: String = "parameterize names"
+) -> Dictionary:
 	if typeof(names) != TYPE_ARRAY:
-		return _error("Suite '%s' parameterize names must be an array of strings" % suite_path)
+		return _error("Suite '%s' %s must be an array of strings" % [suite_path, label])
 	var seen: Dictionary = {}
 	for name_value: Variant in names:
 		if typeof(name_value) != TYPE_STRING or (name_value as String).strip_edges().is_empty():
-			return _error("Suite '%s' parameterize names must be non-empty strings" % suite_path)
+			return _error("Suite '%s' %s must be non-empty strings" % [suite_path, label])
 		if seen.has(name_value):
 			return _error("Suite '%s' duplicate parameter name '%s'" % [suite_path, name_value])
 		seen[name_value] = true
 	if (names as Array).is_empty():
-		return _error("Suite '%s' parameterize requires at least one parameter name" % suite_path)
+		return _error("Suite '%s' %s must not be empty" % [suite_path, label])
 	return {}
 
 
