@@ -70,6 +70,7 @@ markers = [
     "unit: Unit tests for individual modules.",
     "integration: Integration tests for command flows.",
     "e2e: End-to-end tests for full workflows.",
+    "e2e_smoke: Fast critical-path E2E subset for PR CI.",
     "slow: Tests that take a long time to run.",
 ]
 addopts = [

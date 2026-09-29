@@ -77,6 +77,7 @@ def test_native_cli_init_installs_native_runtime_without_gut(
     )
 
 
+@pytest.mark.e2e_smoke
 def test_native_cli_defaults_to_native_and_writes_junit(tmp_path, godot_bin):
     """The default test command runs native suites and emits JUnit XML."""
     project = _setup_project(tmp_path)

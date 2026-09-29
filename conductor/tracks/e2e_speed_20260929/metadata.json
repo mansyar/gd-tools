@@ -1,0 +1,8 @@
+{
+  "track_id": "e2e_speed_20260929",
+  "type": "chore",
+  "status": "new",
+  "created": "2026-09-29",
+  "title": "E2E Test Speed (CI instrumentation, timing knobs, smoke split)",
+  "branch": "perf/e2e-speed-20260929"
+}

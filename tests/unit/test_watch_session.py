@@ -295,3 +295,31 @@ def test_fallback_full_run_has_no_suite_filter(tmp_path):
     assert mock_native.call_args_list[0].kwargs.get("suite") is None
     assert mock_native.call_args_list[1].kwargs.get("suite") is None
     assert any("full suite" in line for line in output)
+
+
+def test_debounce_seconds_is_forwarded_to_the_loop(tmp_path):
+    """A custom debounce window reaches the watch loop unchanged."""
+    _project(tmp_path)
+    with (
+        patch(
+            "gd_tools.watch.session.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.watch.session.find_godot",
+            return_value=SimpleNamespace(
+                is_valid=True, path="godot", version="4.5"
+            ),
+        ),
+        patch(
+            "gd_tools.watch.session.watch_loop",
+            return_value=0,
+        ) as mock_loop,
+    ):
+        code = run_watch_mode(
+            _config(tmp_path),
+            event_source=FakeEventSource([]),
+            debounce_seconds=0.05,
+        )
+    assert code == 0
+    assert mock_loop.call_args.kwargs["debounce_seconds"] == 0.05

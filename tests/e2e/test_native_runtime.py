@@ -1492,6 +1492,7 @@ def test_native_command_runs_plain_suite_through_preflight(
     assert [test["name"] for test in suite_result["tests"]] == ["test_pass"]
 
 
+@pytest.mark.e2e_smoke
 def test_native_command_runs_real_coverage(godot_bin, tmp_path, monkeypatch):
     """The native CLI adapter reuses the existing coverage report pipeline."""
     project = _prepare_project(tmp_path, godot_bin)
