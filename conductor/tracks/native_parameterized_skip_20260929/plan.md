@@ -25,15 +25,15 @@ with a verification checkpoint task.
 
 ## Phase 2 — Native Runtime: Case Expansion, Lifecycle, Naming, Selectors
 
-- [ ] Task: Write failing GDScript-side runtime tests (Godot fixture suites)
+- [x] Task: Write failing GDScript-side runtime tests (Godot fixture suites) (e9b6ede)
     - [ ] Fixture suite: `parameterize` in `before_all` → one result entry per value set, each with own hooks/timeout/artifacts, declaration order
     - [ ] Fixture suite: `use_parameters` inside a test body → one case per value set
     - [ ] Case naming: stringified values, hyphen-join, index fallback for unstable types; deterministic across runs
     - [ ] Async parameterized test method runs identically to sync
-- [ ] Task: Implement `GdToolsTest` API (`gd_tools_test.gd`)
+- [x] Task: Implement `GdToolsTest` API (`gd_tools_test.gd`) (e9b6ede)
     - [ ] `parameterize(params, values)` — suite-level declaration storage with preflight-consistent validation
     - [ ] `use_parameters(values)` — per-case value resolution inside test body
-- [ ] Task: Implement case expansion in the runner (`gd_tools_test_runner.gd`)
+- [x] Task: Implement case expansion in the runner (`gd_tools_test_runner.gd`) (e9b6ede)
     - [ ] Expand declared methods into per-case executions with full lifecycle, per-case timeout, retries, artifacts
     - [ ] Result entries and NDJSON events use `test_foo[case-name]` identifiers
 - [ ] Task: Write failing Python tests + implement selector interaction (`native_test/discovery.py` / `command.py`)
