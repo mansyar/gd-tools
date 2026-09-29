@@ -1982,6 +1982,7 @@ CALL_ASSERTION_METHODS = [
     "test_assert_call_count_failure_diagnostic_shows_expected_and_actual",
     "test_assert_call_arguments_failure_diagnostic_shows_both_argument_sets",
     "test_assertions_read_the_call_recorder_not_script_state",
+    "test_assertion_on_a_null_target_fails_cleanly",
 ]
 
 

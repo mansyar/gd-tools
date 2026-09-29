@@ -120,3 +120,15 @@ func test_assertions_read_the_call_recorder_not_script_state() -> void:
 	assert_called(d, "add")
 	assert_call_count(d, "add", 1)
 	assert_call_arguments(d, "add", [2, 3])
+
+
+func test_assertion_on_a_null_target_fails_cleanly() -> void:
+	# A null target must record an actionable failure, not crash the suite
+	# with a runtime error on a method call against null.
+	assert_called(null, "greet")
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("double()" in message, "names the remedy: " + message)

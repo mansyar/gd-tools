@@ -724,7 +724,7 @@ func assert_call_arguments(
 
 func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> bool:
 	## Record a failure and return true when `target` is not a double.
-	if target.get("__gd_tools") != null:
+	if target != null and target.get("__gd_tools") != null:
 		return false
 	_gd_tools_record_failure(
 			assertion,
