@@ -945,6 +945,110 @@ def test_native_coverage_reaches_scripts_driven_by_scenes(
     assert not any(path.startswith("res://addons/") for path in planned)
 
 
+def _mock_coverage_files() -> dict[str, str]:
+    """Return two mock-driven suites for coverage-honesty verification."""
+    return {
+        "test/coverage_stub_suite.gd": """
+extends GdToolsTest
+class_name CoverageStubSuite
+
+const SUBJECT := preload("res://scripts/mock_subject.gd")
+
+
+func test_stubbed_double_never_runs_the_real_script() -> void:
+\tvar d = double(SUBJECT)
+\tstub(d, "add").to_return(99)
+\tassert_eq(d.add(2, 3), 99)
+\tassert_called(d, "add")
+""",
+        "test/coverage_partial_suite.gd": """
+extends GdToolsTest
+class_name CoveragePartialSuite
+
+const SUBJECT := preload("res://scripts/mock_subject.gd")
+
+
+func test_partial_double_super_runs_the_real_script() -> void:
+\tvar p = partial_double(SUBJECT)
+\tassert_eq(p.add(2, 3), 5)
+""",
+    }
+
+
+def test_native_coverage_stays_honest_with_doubles_and_stubs(
+    tmp_path, godot_bin, monkeypatch
+):
+    """Doubles and stubs never distort coverage output (spec FR-6).
+
+    Generated double scripts exist only in memory, so they must never show
+    up in a coverage plan or report. Stubbing must not invent hits for the
+    real script, while real execution through a partial double's super()
+    must still be measured.
+    """
+    project = _prepare_project(tmp_path, godot_bin, _mock_coverage_files())
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+
+    # Run 1: only stubbed full doubles run -- the real script never executes.
+    stub_result = run_native_test_command(
+        config,
+        suite="CoverageStubSuite",
+        coverage=True,
+        timeout=30,
+    )
+    assert stub_result.failed == 0
+    assert stub_result.coverage_data_path is not None
+
+    plan = json.loads(
+        (project / ".gd-tools" / "coverage" / "plan.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    stub_data = json.loads(
+        stub_result.coverage_data_path.read_text(encoding="utf-8")
+    )
+
+    path_by_id = {entry["file_id"]: entry["path"] for entry in plan["files"]}
+    # No generated or in-memory script is planned: every planned path exists
+    # on disk, and the addon's mock machinery is not a coverage target.
+    for path in path_by_id.values():
+        assert (project / path.removeprefix("res://")).is_file(), path
+        assert not path.startswith("res://addons/"), path
+    assert "res://scripts/mock_subject.gd" in path_by_id.values()
+
+    # The report contains no file_id outside the plan (no anonymous scripts).
+    for entry in stub_data["files"]:
+        assert entry["file_id"] in path_by_id, entry["file_id"]
+
+    hits_by_path = {
+        path_by_id[entry["file_id"]]: sum(entry["hits"].values())
+        for entry in stub_data["files"]
+    }
+    # Stubbing invents nothing: the stubbed double never runs real code.
+    assert hits_by_path.get("res://scripts/mock_subject.gd", 0) == 0
+
+    # Run 2: a partial double's super() runs real code -- it must be measured.
+    partial_result = run_native_test_command(
+        config,
+        suite="CoveragePartialSuite",
+        coverage=True,
+        timeout=30,
+    )
+    assert partial_result.failed == 0
+    assert partial_result.coverage_data_path is not None
+    partial_data = json.loads(
+        partial_result.coverage_data_path.read_text(encoding="utf-8")
+    )
+    partial_hits_by_path = {
+        path_by_id[entry["file_id"]]: sum(entry["hits"].values())
+        for entry in partial_data["files"]
+    }
+    assert partial_hits_by_path.get("res://scripts/mock_subject.gd", 0) > 0
+
+
 def test_native_windowed_pass_and_headless_failure_skip_screenshots(
     tmp_path, godot_bin
 ):

@@ -461,8 +461,54 @@ gd-tools test tests/unit/test_player.gd
   sibling suites.
 - If discovery finds no suites, the error explains that suites must extend
   `GdToolsTest` (native) or `GutTest` (compatibility bridge).
-- The foundation does not yet provide broad mocking, parameterized tests,
-  parallel execution, or an editor UI.
+- The foundation does not yet provide parameterized tests, parallel
+  execution, or an editor UI.
+
+**Mocking and stubbing:**
+
+`GdToolsTest` ships a GUT-compatible test-double facility so suites can
+isolate collaborators. Doubles exist only in memory: they are runtime-
+generated subclasses of the target script and never appear on disk, in
+coverage plans, or in coverage reports.
+
+- `double(script)` returns a fresh double of a script (preloaded `Script`
+  or a `res://` path). Unstubbed methods return `null` for untyped returns
+  or the type's zero value for typed returns, and never run the real
+  implementation.
+- `partial_double(script)` behaves like the real script; only stubbed
+  methods are overridden.
+- `stub(double, "method", [args...])` returns a chainable spec:
+  `.to_return(value)` replaces the response, `.to_call_super()` invokes the
+  parent implementation. Argument matching supports exact values, the
+  `"any"` wildcard per argument, and a no-args default fallback; a more
+  specific match wins, and the last registered stub wins within a tier.
+- Call assertions: `assert_called`, `assert_not_called`,
+  `assert_call_count(double, "method", n)`, and
+  `assert_call_arguments(double, "method", [args], call_index)` (index `0`
+  is the first recorded call, `-1` the most recent).
+- Fail-fast validation: stubbing a method the target does not have, or
+  doubling a non-script value, fails the test immediately with a diagnostic
+  naming the method and the target.
+- Doubles and stubs are per-test: every test gets fresh instances, so no
+  state leaks between tests.
+- Bridge suites (`extends GutTest`) inherit the same facility with
+  identical semantics; the preflight scan no longer rejects mocking
+  constructs.
+
+```gdscript
+extends GdToolsTest
+
+const SUBJECT := preload("res://scripts/inventory.gd")
+
+func test_removing_items_reports_remaining() -> void:
+    var inventory = double(SUBJECT)
+    stub(inventory, "count").to_return(3)
+    inventory.remove("sword")
+
+    assert_call_count(inventory, "remove", 1)
+    assert_call_arguments(inventory, "remove", ["sword"])
+    assert_eq(inventory.count(), 3)
+```
 
 **Scene and resource integration:**
 

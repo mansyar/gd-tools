@@ -930,7 +930,7 @@ useful error is the one that tells you what to do next.
 
 Before the preflight runs, `scan_bridge_suites()` statically inspects every
 bridge (`GutTest`) suite and fails the run when a suite uses a construct the
-bridge does not support (doubles, parameterization, mock-call assertions,
+bridge does not support (parameterization, property/orphan assertions,
 engine-error assertions), listing each finding per file and line and pointing
 at [docs/gut-migration.md](./gut-migration.md). The scan is pure Python, so
 unsupported constructs are caught before any Godot process spawns. It also
@@ -1070,10 +1070,19 @@ process management.
 | Assertions | `assert_true`, `assert_false`, `assert_eq`, `assert_ne`, `assert_null`, `assert_not_null`, `fail` |
 | Comparison | `assert_gt`, `assert_gte`, `assert_lt`, `assert_lte`, `assert_between`, `assert_almost_eq` |
 | Membership | `assert_has`, `assert_in`, `assert_has_method`, `assert_is` |
+| Mocking | `double`, `partial_double`, `stub` (chainable `.to_return`/`.to_call_super`), `assert_called`, `assert_not_called`, `assert_call_count`, `assert_call_arguments` |
 | Skipping | `skip_test`, `pending_test` (an alias of it), `is_skipped`, `get_skip_reason` |
 | Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal(signal, timeout)` (bounded, returns whether the signal was emitted) |
 | Context | `get_test_context()` |
 | Suite state | suite-scoped storage for sharing fixtures across tests |
+
+The mocking surface (detailed in the user guide) generates a subclass of the
+target script at runtime; the double records every call through a companion
+`gd_tools_mock.gd` instance, stubs are matched by specificity (exact args >
+wildcard > no-args default), and `assert_call_arguments` reads the recorder.
+Generated double scripts exist only in memory: the coverage plan enumerates
+on-disk files, so doubles never appear in plans or reports and cannot distort
+per-file metrics of the real script.
 
 `wait_for_signal` on the base class and the one on `GdToolsTestContext` share a
 name but not a contract, which is worth stating because the collision is easy to
@@ -1224,7 +1233,6 @@ Isolation over throughput. See [8.2](#82-isolation-model).
 
 Stated so they are not discovered by surprise:
 
-- **No mocking or stubbing.** There is no double, spy, or stub facility.
 - **No parameterized tests.** Test methods must take no parameters; a
   parameterized method is not discovered as runnable.
 - **No parallel execution.** Suites run sequentially (see

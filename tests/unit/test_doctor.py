@@ -314,6 +314,21 @@ def test_check_native_test_addon_warns_when_stale(tmp_path):
     assert "gd-tools init" in result.fix_hint
 
 
+def test_check_native_test_addon_verifies_mock_module(tmp_path):
+    """Doctor treats a missing mock module as a critical runtime gap."""
+    addon = tmp_path / "addons" / "gd-tools-test"
+    addon.mkdir(parents=True)
+    for name in NATIVE_TEST_ADDON_FILES:
+        (addon / name).touch()
+    (addon / "gd_tools_mock.gd").unlink()
+
+    result = check_native_test_addon(tmp_path)
+
+    assert result.passed is False
+    assert result.severity == "critical"
+    assert "gd_tools_mock.gd" in result.message
+
+
 def test_check_native_test_addon_requires_integration_files(tmp_path):
     """Doctor fails when the preflight and context scripts are missing."""
     addon = tmp_path / "addons" / "gd-tools-test"

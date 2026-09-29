@@ -78,7 +78,7 @@ Every error message must be **actionable** — it tells the user not just what w
 **Examples (from PRD):**
 - Godot not found → "Godot binary not found. Tried: config, $GODOT_BIN, PATH, common locations. Install Godot 4.5+ from https://godotengine.org and set GODOT_BIN or add to PATH."
 - Godot version too old → "Godot 4.4.1 detected, but gd-tools requires 4.5+. Upgrade at https://godotengine.org."
-- Unsupported bridge construct → "The GUT compatibility bridge does not support 1 construct used in 1 bridge suite:\n\nres://test/legacy_test.gd:\n  - double (line 4)\n\nMigrate these constructs to GdToolsTest or remove them. See docs/gut-migration.md for the supported subset and migration steps."
+- Unsupported bridge construct → "The GUT compatibility bridge does not support 1 construct used in 1 bridge suite:\n\nres://test/legacy_test.gd:\n  - parameterize (line 4)\n\nMigrate these constructs to GdToolsTest or remove them. See docs/gut-migration.md for the supported subset and migration steps."
 
 ### 4.2 Principles
 - **Name the thing that's missing.** "Godot binary not found" — not "Error occurred."

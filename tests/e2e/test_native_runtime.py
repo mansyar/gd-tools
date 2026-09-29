@@ -1026,12 +1026,23 @@ def test_native_runner_retries_failed_test_with_fresh_instance(
     """Retry settings create a fresh attempt and report the attempt count."""
     project = _prepare_project(tmp_path, godot_bin)
     retry_script = project / "test" / "retry_suite.gd"
+    # Count attempts through a marker file instead of a script static var:
+    # Godot 4.7 intermittently crashes on exit (0xC0000005) when a suite
+    # script declares a static var, which would make the process exit code
+    # disagree with the passing result.
     retry_script.write_text(
         "extends GdToolsTest\n"
-        "static var _attempt_count := 0\n\n\n"
+        "\n\n"
+        'const MARKER := "res://.retry_attempted"\n'
+        "\n\n"
         "func test_retry() -> void:\n"
-        "    _attempt_count += 1\n"
-        "    if _attempt_count < 2:\n"
+        "    if FileAccess.file_exists(MARKER):\n"
+        "        DirAccess.remove_absolute(MARKER)\n"
+        "        assert_true(true)\n"
+        "    else:\n"
+        "        var marker := FileAccess.open(MARKER, FileAccess.WRITE)\n"
+        '        marker.store_line("attempted")\n'
+        "        marker.close()\n"
         '        assert_true(false, "first attempt fails")\n',
         encoding="utf-8",
     )
@@ -1905,3 +1916,154 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
     assert any(
         "broken.gd" in warning for warning in payload["engine_warnings"]
     ), payload["engine_warnings"]
+
+
+MOCKING_METHODS = [
+    "test_double_returns_instance_extending_target",
+    "test_double_accepts_path_string",
+    "test_double_unstubbed_variant_method_returns_null",
+    "test_double_unstubbed_typed_method_returns_type_default",
+    "test_double_does_not_run_real_implementation",
+    "test_double_returns_fresh_instance_per_call",
+    "test_partial_double_runs_real_implementation",
+    "test_partial_double_keeps_side_effects",
+]
+
+
+STUBBING_METHODS = [
+    "test_stub_to_return_overrides_double",
+    "test_stub_to_return_on_partial_double",
+    "test_stub_to_call_super_on_full_double",
+    "test_stub_to_call_super_on_partial_runs_real",
+    "test_stub_with_exact_arguments_matches_only_those",
+    "test_stub_with_any_wildcard_matches_any_value",
+    "test_stub_without_arguments_is_default_fallback",
+    "test_stub_to_return_null_on_untyped_method",
+    "test_stub_to_return_typed_value_on_typed_method",
+    "test_stub_applies_only_to_its_own_double",
+    "test_stubs_do_not_leak_into_the_next_test",
+    "test_double_records_calls_with_arguments",
+]
+
+
+def test_native_stub_matching_and_recording(godot_bin, tmp_path):
+    """stub() chains follow the spec's matching precedence and record calls."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "stubbing.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/stubbing_suite.gd",
+            STUBBING_METHODS,
+            "NativeStubbingSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(STUBBING_METHODS), payload["tests"]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+CALL_ASSERTION_METHODS = [
+    "test_assert_called_passes_after_a_call",
+    "test_assert_not_called_passes_without_calls",
+    "test_assert_call_count_matches_exact_number_of_calls",
+    "test_assert_call_arguments_matches_recorded_arguments",
+    "test_assert_call_arguments_checks_specific_call_index",
+    "test_assertions_count_methods_independently",
+    "test_assert_called_failure_diagnostic_names_method",
+    "test_assert_not_called_failure_diagnostic_shows_count",
+    "test_assert_call_count_failure_diagnostic_shows_expected_and_actual",
+    "test_assert_call_arguments_failure_diagnostic_shows_both_argument_sets",
+    "test_assertions_read_the_call_recorder_not_script_state",
+    "test_assertion_on_a_null_target_fails_cleanly",
+]
+
+
+def test_native_call_assertions(godot_bin, tmp_path):
+    """assert_called*/assert_call_* assertions read recorded double calls."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "call-assertions.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/call_assertion_suite.gd",
+            CALL_ASSERTION_METHODS,
+            "NativeCallAssertionSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(CALL_ASSERTION_METHODS), payload[
+        "tests"
+    ]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+VALIDATION_METHODS = [
+    "test_stub_on_nonexistent_method_fails_the_test",
+    "test_stub_on_a_partial_double_missing_method_fails_the_test",
+    "test_stub_requires_a_double",
+    "test_double_on_a_non_script_value_fails_the_test",
+    "test_partial_double_on_a_non_script_value_fails_the_test",
+]
+
+
+def test_native_mock_fail_fast_validation(godot_bin, tmp_path):
+    """Invalid mocking usage fails the test immediately with diagnostics."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "validation.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/validation_suite.gd",
+            VALIDATION_METHODS,
+            "NativeValidationSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(VALIDATION_METHODS), payload["tests"]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_native_double_and_partial_double_semantics(godot_bin, tmp_path):
+    """double()/partial_double() follow GUT semantics for unstubbed calls."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "mocking.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/mocking_suite.gd",
+            MOCKING_METHODS,
+            "NativeMockingSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(MOCKING_METHODS), payload["tests"]
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert payload["status"] == "passed"
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
