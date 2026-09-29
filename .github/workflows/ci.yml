@@ -134,7 +134,7 @@ jobs:
           version: ${{ matrix.godot-version }}
 
       - name: Run integration tests
-        run: pytest tests/integration/ -m integration --no-cov --junitxml=junit-integration.xml
+        run: pytest tests/integration/ -m integration --no-cov --durations=20 --junitxml=junit-integration.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -175,7 +175,7 @@ jobs:
           version: ${{ matrix.godot-version }}
 
       - name: Run E2E tests
-        run: pytest tests/e2e/ -m e2e --no-cov --junitxml=junit-e2e.xml
+        run: pytest tests/e2e/ -m e2e --no-cov --durations=20 --junitxml=junit-e2e.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
