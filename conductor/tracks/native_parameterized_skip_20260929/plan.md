@@ -51,7 +51,7 @@ with a verification checkpoint task.
     - [x] Record skip on the instance the runner reads from `before_all`; propagate to every test result
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4 — GUT Bridge Unblocking
+## Phase 4 - GUT Bridge Unblocking [checkpoint: e62c934]
 
 - [x] Task: Write failing tests for bridge parameterization support (5e0ae1f)
     - [x] Remove `parameterize`/`use_parameters` from `_UNSUPPORTED_NAMES` in `bridge_scan.py` (update existing negative tests to positive)
