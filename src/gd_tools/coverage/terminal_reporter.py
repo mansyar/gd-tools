@@ -104,4 +104,17 @@ def generate_terminal_report(
         f"[/{overall_branch_color}]"
     )
 
+    # Compact exclusion count (Track 30) — only when exclusions exist.
+    total_excluded = sum(len(fp.excluded_lines) for fp in plan.files)
+    if total_excluded:
+        files_with_exclusions = sum(1 for fp in plan.files if fp.excluded_lines)
+        lines_word = "line" if total_excluded == 1 else "lines"
+        files_word = "file" if files_with_exclusions == 1 else "files"
+        console.print(
+            f"Excluded: {total_excluded} {lines_word} "
+            f"across {files_with_exclusions} {files_word}",
+            style="dim",
+            highlight=False,
+        )
+
     return buf.getvalue()

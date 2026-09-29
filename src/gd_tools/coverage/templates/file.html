@@ -40,6 +40,10 @@
     .covered { background-color: #c8e6c9; }
     .uncovered { background-color: #ffcdd2; }
     .partial { background-color: #fff9c4; }
+    .excluded {
+      background-color: #eceff1; color: #90a4ae;
+      text-decoration: line-through;
+    }
     .not-tracked { color: #ccc; }
     a { color: #1565c0; text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -64,7 +68,7 @@
     <div class="source-line {{ line.css_class }}">
       <span class="line-number">{{ line.number }}</span>
       <span class="line-content">{{ line.source }}</span>
-      <span class="line-hits">{{ line.hits }}x</span>
+      <span class="line-hits">{% if line.css_class == 'excluded' %}&ndash;{% else %}{{ line.hits }}x{% endif %}</span>
     </div>
     {% endfor %}
   </div>
