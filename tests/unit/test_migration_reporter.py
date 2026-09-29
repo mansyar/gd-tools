@@ -59,6 +59,20 @@ class TestRenderMigrationReport:
         assert "[FAIL] res://test/legacy_test.gd (3 tests)" in rendered
         assert "[FAIL] res://test/legacy_test.gd (3 tests, " not in rendered
 
+    def test_clean_suite_aliases_are_still_reported(self):
+        """Alias-only clean suites still get the rename-later guidance."""
+
+        suite = SuiteReport(
+            path="res://test/alias_only_test.gd",
+            test_count=1,
+            aliases=(ConstructHit(name="assert_in", line=3),),
+        )
+        rendered = render_migration_report(MigrationReport(suites=(suite,)))
+
+        assert "[OK] res://test/alias_only_test.gd" in rendered
+        assert "line 3: assert_in" in rendered
+        assert "rename later" in rendered.lower()
+
     def test_includes_migration_doc_pointer(self):
         """The report points at the migration documentation."""
 

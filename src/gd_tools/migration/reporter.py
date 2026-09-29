@@ -44,6 +44,11 @@ def _render_suite(console: Console, suite: SuiteReport) -> None:
                 style="green",
             )
         )
+        if suite.aliases:
+            console.print("    Bridge-only aliases (works now, rename later):")
+            for hit in suite.aliases:
+                console.print(f"      line {hit.line}: {hit.name}")
+            console.print()
         return
 
     console.print(

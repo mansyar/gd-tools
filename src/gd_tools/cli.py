@@ -591,7 +591,6 @@ def migrate(path, apply, config_only):
     for flag, value in result.cli_flags:
         output.print_info(f"Suggested flag: {flag} {value}")
 
-    ctx = click.get_current_context()
     ctx.exit(0)
 
 

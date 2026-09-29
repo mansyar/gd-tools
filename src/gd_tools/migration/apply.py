@@ -131,7 +131,7 @@ def apply_migration(
         config_updated = True
 
     return ApplyResult(
-        rewritten=tuple(rewritten),
+        rewritten=rewritten,
         config_updated=config_updated,
         cli_flags=update.cli_flags if report.gutconfig_path is not None else (),
         skipped=update.skipped if report.gutconfig_path is not None else (),

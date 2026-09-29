@@ -67,6 +67,10 @@ def build_config_update(
         if option.target == "test.test_dirs":
             if "test_dirs" in existing_test:
                 skipped.append((key, option.target))
+            elif not isinstance(value, list):
+                # A malformed value (e.g. a string) is reported like an
+                # unknown key instead of being iterated per character.
+                untouched.append(key)
             else:
                 test_values["test_dirs"] = [
                     _normalize_dir(directory)

@@ -51,6 +51,14 @@ class TestBuildConfigUpdate:
         )
         assert update.test_values == {}
 
+    def test_non_list_dirs_value_is_untouched(self):
+        """A malformed dirs value is reported, never exploded per character."""
+
+        update = build_config_update({"dirs": "res://test"})
+
+        assert update.test_values == {}
+        assert update.untouched_keys == ("dirs",)
+
     def test_existing_values_are_never_clobbered(self):
         """A key already set in gd-tools.toml is kept, not overwritten."""
 
