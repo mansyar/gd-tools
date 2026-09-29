@@ -23,7 +23,7 @@ with a verification checkpoint task.
 - [x] Task: Implement Python-side manifest/protocol support (`native_test/protocol.py`, `discovery.py`, `preflight.py`) (d7d6586; `preflight.py` required no change — the adapter already round-trips `NativeTest` fields, and the added `parameters` field flows through manifest JSON unchanged)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — Native Runtime: Case Expansion, Lifecycle, Naming, Selectors
+## Phase 2 - Native Runtime: Case Expansion, Lifecycle, Naming, Selectors [checkpoint: ec2c227]
 
 - [x] Task: Write failing GDScript-side runtime tests (Godot fixture suites) (e9b6ede)
     - [ ] Fixture suite: `parameterize` in `before_all` → one result entry per value set, each with own hooks/timeout/artifacts, declaration order
