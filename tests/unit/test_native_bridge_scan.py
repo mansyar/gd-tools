@@ -92,10 +92,26 @@ func test_mocking() -> void:
     _assert_no_findings(tmp_path, suite)
 
 
+def test_scan_allows_parameterization_constructs(tmp_path):
+    """Parameterization is native now and must not fail the bridge scan."""
+    suite = _bridge_suite(
+        tmp_path,
+        """extends GutTest
+
+func before_all() -> void:
+    parameterize(["value"], [[1], [2]])
+
+func test_ranked(value: int) -> void:
+    use_parameters(["alpha", "beta"])
+""",
+    )
+
+    _assert_no_findings(tmp_path, suite)
+
+
 @pytest.mark.parametrize(
     ("category", "constructs"),
     [
-        ("parameterization", ["parameterize", "use_parameters"]),
         (
             "property-orphan-interactive",
             [
@@ -146,8 +162,8 @@ def test_scan_reports_line_numbers_and_deduplicates(tmp_path):
         """extends GutTest
 
 func test_repeated() -> void:
-    parameterize("res://a.gd")
-    parameterize("res://b.gd")
+    assert_setget("res://a.gd")
+    assert_setget("res://b.gd")
 """,
     )
 
@@ -155,20 +171,20 @@ func test_repeated() -> void:
         scan_bridge_suites(tmp_path, [suite])
 
     message = str(excinfo.value)
-    assert message.count("parameterize") == 1
+    assert message.count("assert_setget") == 1
     assert "line 4" in message
 
 
 def test_scan_ignores_member_calls_on_objects(tmp_path):
-    """A method call like ``foo.parameterize()`` is not a GUT helper call."""
+    """A method call like ``foo.assert_setget()`` is not a GUT helper call."""
     suite = _bridge_suite(
         tmp_path,
         """extends GutTest
 
 func test_member_calls() -> void:
     var helper = MyHelper.new()
-    helper.parameterize()
-    helper.use_parameters()
+    helper.assert_setget()
+    helper.assert_exports()
 """,
     )
 
@@ -213,11 +229,11 @@ def test_scan_groups_findings_per_file(tmp_path):
     """Findings from multiple bridge suites are grouped per file."""
     first = _bridge_suite(
         tmp_path,
-        'extends GutTest\n\nfunc test_one() -> void:\n    parameterize("a")\n',
+        'extends GutTest\n\nfunc test_one() -> void:\n    assert_setget("a")\n',
     )
     second_file = tmp_path / "test" / "other_test.gd"
     second_file.write_text(
-        "extends GutTest\n\nfunc test_two() -> void:\n    use_parameters(b)\n",
+        "extends GutTest\n\nfunc test_two() -> void:\n    assert_exports(b)\n",
         encoding="utf-8",
     )
     second = NativeSuite(
@@ -242,7 +258,7 @@ def test_command_runs_bridge_scan_before_preflight(tmp_path, monkeypatch):
     test_dir = tmp_path / "test"
     test_dir.mkdir()
     (test_dir / "legacy_test.gd").write_text(
-        "extends GutTest\n\nfunc test_x() -> void:\n    parameterize(obj)\n",
+        "extends GutTest\n\nfunc test_x() -> void:\n    assert_setget(obj)\n",
         encoding="utf-8",
     )
     godot_info = SimpleNamespace(is_valid=True, path="godot", version="4.5")
@@ -257,5 +273,5 @@ def test_command_runs_bridge_scan_before_preflight(tmp_path, monkeypatch):
 
     monkeypatch.setattr(command, "_import_project", _fail_import)
 
-    with pytest.raises(BridgeScanError, match="parameterize"):
+    with pytest.raises(BridgeScanError, match="assert_setget"):
         command.run_native_test_command(GdToolsConfig())
