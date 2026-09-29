@@ -309,6 +309,7 @@ class TestBridgeResultContract:
         assert "intentional bridge failure" in result["tests"][0]["message"]
 
 
+@pytest.mark.e2e_smoke
 def test_bridge_cli_mixed_run_uses_native_contract(tmp_path, godot_bin):
     """A mixed GdToolsTest+GutTest project runs in one CLI invocation (AC-2).
 
