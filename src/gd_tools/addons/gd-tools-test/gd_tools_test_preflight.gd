@@ -4,6 +4,7 @@ const PROTOCOL_VERSION := 2
 const SUITE_FIELDS := ["scene", "resources", "mode", "tests"]
 const PER_TEST_FIELDS := ["scene", "resources"]
 const ERROR_KEY := "__gdtools_preflight_error__"
+const PARAMETER_NAMING = preload("res://addons/gd-tools-test/gd_tools_parameter_naming.gd")
 
 
 func _init() -> void:
@@ -93,8 +94,9 @@ func _resolve_suite(raw_suite: Variant) -> Dictionary:
 	var parameterization_result := _resolve_parameterization(suite_path, script, arities, suite)
 	var tests_result := _validate_manifest_tests(suite_path, suite.get("tests", []), method_names)
 	var use_parameters_result := _resolve_use_parameters(suite_path, script, arities, suite)
+	var selectors_result := _apply_case_selectors(suite_path, arities, suite)
 	var failure: Dictionary = _first_error(
-		[parameterization_result, tests_result, use_parameters_result]
+		[parameterization_result, tests_result, use_parameters_result, selectors_result]
 	)
 	if failure.has(ERROR_KEY):
 		return failure
@@ -145,7 +147,11 @@ func _validate_manifest_tests(
 		var test_name: Variant = (raw_test as Dictionary).get("name")
 		if typeof(test_name) != TYPE_STRING:
 			return _error("Suite '%s' test names must be strings" % suite_path)
-		if not method_names.has(test_name):
+		# A ``method[case]`` selector addresses one expanded case; validate
+		# the owning method here and let case filtering report selectors
+		# that match no declared case.
+		var base_name: String = _parse_case_selector(test_name)["method"]
+		if not method_names.has(base_name):
 			return _error("Suite '%s' references unknown test '%s'" % [suite_path, test_name])
 	return {}
 
@@ -256,11 +262,45 @@ func _resolve_parameterization(
 		)
 	for raw_test: Variant in suite.get("tests", []):
 		var test := raw_test as Dictionary
-		if int(arities.get(test.get("name"), -1)) == expected:
+		var base: String = _parse_case_selector(str(test.get("name", "")))["method"]
+		if int(arities.get(base, -1)) == expected:
 			test["parameters"] = {
 				"names": names.duplicate(true),
 				"values": values.duplicate(true),
 			}
+	return {}
+
+
+func _apply_case_selectors(
+	suite_path: String, arities: Dictionary, suite: Dictionary
+) -> Dictionary:
+	## Trim parameterized declarations to ``method[case]`` selections and
+	## rewrite each selected entry to its owning method so the runner sees
+	## exactly one case per selector.
+	for raw_test: Variant in suite.get("tests", []):
+		var test := raw_test as Dictionary
+		var name := str(test.get("name", ""))
+		var selector := _parse_case_selector(name)
+		if str(selector["case"]) == "":
+			continue
+		var base := str(selector["method"])
+		if not arities.has(base):
+			# Unknown tests are reported by manifest validation.
+			continue
+		if typeof(test.get("parameters")) != TYPE_DICTIONARY:
+			return _error("Suite '%s' test method '%s' is not parameterized" % [suite_path, base])
+		var values: Array = test["parameters"]["values"]
+		var selected: Array = []
+		for case_index in values.size():
+			var suffix := PARAMETER_NAMING.case_suffix(values[case_index], case_index)
+			if suffix == "[%s]" % selector["case"]:
+				selected.append(values[case_index])
+		if selected.is_empty():
+			return _error(
+				"Suite '%s' test '%s' has no case '[%s]'" % [suite_path, base, selector["case"]]
+			)
+		test["parameters"]["values"] = selected
+		test["name"] = base
 	return {}
 
 
@@ -424,13 +464,24 @@ func _checked_metadata(
 	)
 	if shape_error.has(ERROR_KEY):
 		return shape_error
+	var normalized_values: Array = []
+	for value_set: Variant in values:
+		normalized_values.append(PARAMETER_NAMING.normalize_value_set(value_set))
 	return {
 		"value":
 		{
 			"names": (names as Array).duplicate(true),
-			"values": (values as Array).duplicate(true),
+			"values": normalized_values,
 		},
 	}
+
+
+func _parse_case_selector(name: String) -> Dictionary:
+	var selector := RegEx.create_from_string("^(test_\\w+)\\[(.+)\\]$")
+	var matched := selector.search(name)
+	if matched == null:
+		return {"method": name, "case": ""}
+	return {"method": matched.get_string(1), "case": matched.get_string(2)}
 
 
 func _method_body(source: String, method_name: String) -> String:

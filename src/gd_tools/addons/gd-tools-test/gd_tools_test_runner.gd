@@ -191,7 +191,7 @@ func _expand_test_cases(script: GDScript, test_data: Dictionary) -> Array:
 	var arity := _method_arity(script, method_name)
 	var cases: Array = []
 	for case_index in (values as Array).size():
-		var value_set := _normalize_parameter_values(values[case_index])
+		var value_set := PARAMETER_NAMING.normalize_value_set(values[case_index])
 		var case_data: Dictionary = test_data.duplicate(true)
 		case_data.erase("parameters")
 		case_data["name"] = (method_name + PARAMETER_NAMING.case_suffix(value_set, case_index))
@@ -201,30 +201,6 @@ func _expand_test_cases(script: GDScript, test_data: Dictionary) -> Array:
 		case_data["parameters_index"] = case_index
 		cases.append(case_data)
 	return cases
-
-
-func _normalize_parameter_values(value_set: Variant) -> Array:
-	## Godot's JSON parser decodes every number as a float; restore whole
-	## numbers to ints so declared values and case names keep the form the
-	## author wrote after the manifest round trip.
-	var normalized: Array = []
-	if typeof(value_set) != TYPE_ARRAY:
-		return normalized
-	for value: Variant in value_set:
-		if typeof(value) == TYPE_ARRAY:
-			normalized.append(_normalize_parameter_values(value))
-		else:
-			normalized.append(_normalize_value(value))
-	return normalized
-
-
-func _normalize_value(value: Variant) -> Variant:
-	if typeof(value) != TYPE_FLOAT:
-		return value
-	var number := float(value)
-	if not is_nan(number) and absf(number) <= 9007199254740992.0 and number == floorf(number):
-		return int(number)
-	return value
 
 
 func _method_arity(script: GDScript, method_name: String) -> int:

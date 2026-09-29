@@ -2129,7 +2129,10 @@ def test_native_runner_parameterizes_async_methods_and_unstable_values(
         [
             {
                 "name": "test_async_value",
-                "parameters": {"names": ["value"], "values": [[1], [2]]},
+                "parameters": {
+                    "names": ["value", "label"],
+                    "values": [[1, "a"], [2, "b"]],
+                },
             },
             {
                 "name": "test_payload",
@@ -2148,8 +2151,8 @@ def test_native_runner_parameterizes_async_methods_and_unstable_values(
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     names = [entry["name"] for entry in payload["tests"]]
     assert names == [
-        "test_async_value[1]",
-        "test_async_value[2]",
+        "test_async_value[1-a]",
+        "test_async_value[2-b]",
         "test_payload[0]",
         "test_payload[1]",
     ]
@@ -2228,3 +2231,31 @@ def test_native_runner_skips_parameterized_test_without_values(
     assert entry["name"] == "test_ranked"
     assert entry["status"] == "skipped"
     assert "No parameter values declared" in entry["message"]
+
+
+def test_native_command_selects_single_parameterized_case(
+    godot_bin, tmp_path, monkeypatch
+):
+    """``--test name[case]`` runs exactly the matching case end to end."""
+    project = _prepare_project(tmp_path, godot_bin)
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+    junit_path = tmp_path / "case-results.xml"
+
+    result = run_native_test_command(
+        config,
+        suite="NativeParameterizeSuite",
+        test_name="test_ranked[1-admin]",
+        tags=[],
+        junit_xml=str(junit_path),
+        timeout=30,
+    )
+
+    assert (result.total, result.passed, result.failed) == (1, 1, 0)
+    junit = junit_path.read_text(encoding="utf-8")
+    assert "test_ranked[1-admin]" in junit
+    assert "test_ranked[2-user]" not in junit
+    assert "test_plain" not in junit

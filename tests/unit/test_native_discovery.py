@@ -294,7 +294,7 @@ def test_discovery_case_selector_matches_parameterized_method(tmp_path):
     )
 
     assert len(suites) == 1
-    assert [test.name for test in suites[0].tests] == ["test_ranked"]
+    assert [test.name for test in suites[0].tests] == ["test_ranked[admin]"]
 
 
 def test_discovery_case_selector_defers_case_existence_to_preflight(tmp_path):
@@ -309,9 +309,10 @@ def test_discovery_case_selector_defers_case_existence_to_preflight(tmp_path):
     )
 
     # Discovery is textual: whether ``test_plain`` has cases is only known
-    # after preflight resolves parameterization, so the method survives.
+    # after preflight resolves parameterization, so the selector survives
+    # verbatim for preflight to validate.
     assert len(suites) == 1
-    assert [test.name for test in suites[0].tests] == ["test_plain"]
+    assert [test.name for test in suites[0].tests] == ["test_plain[admin]"]
 
 
 def test_discovery_case_selector_requires_bracket_suffix(tmp_path):

@@ -26,12 +26,12 @@ func test_plain() -> void:
 	assert_eq(marker, "setup")
 
 
-func test_async_value(value: int) -> void:
+func test_async_value(value: int, label: String) -> void:
 	await wait_process_frame()
 	assert_true(value > 0)
+	assert_true(label != "")
 
 
 func test_payload() -> void:
 	var payload = use_parameters([{"a": 1}, {"b": 2}])
 	assert_not_null(payload)
-

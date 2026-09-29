@@ -141,9 +141,11 @@ def discover_native_suites(
         if test is not None:
             # A ``name[case]`` selector addresses one expanded case of a
             # parameterized method, so it prefix-matches the method here;
-            # preflight resolves whether the case exists.
+            # preflight resolves whether the case exists. The selector is
+            # preserved verbatim so preflight can trim the declaration to
+            # the selected case.
             test_names = [
-                name
+                test if test.startswith(f"{name}[") else name
                 for name in test_names
                 if name == test or test.startswith(f"{name}[")
             ]

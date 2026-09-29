@@ -802,3 +802,85 @@ def test_preflight_rejects_use_parameters_declarations(
     assert payload["suites"] == []
     assert "res://test/integration_suite.gd" in payload["error"]
     assert expected_error in payload["error"]
+
+
+def test_preflight_trims_case_selector_to_matching_value_set(godot_bin, tmp_path):
+    """A ``name[case]`` selector filters the declaration to the selected case.
+
+    The manifest entry is rewritten to the owning method so the runner
+    receives one case whose values are exactly the selected value set.
+    """
+    body = dedent("""
+        func before_all() -> void:
+        \tparameterize(["value", "label"], [[1, "admin"], [2, "user"]])
+
+        func test_ranked(value: int, label: String) -> void:
+        \tpass
+        """).strip()
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-case-selector.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked[1-admin]"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    tests = payload["suites"][0]["tests"]
+    assert len(tests) == 1
+    assert tests[0]["name"] == "test_ranked"
+    assert tests[0]["parameters"] == {
+        "names": ["value", "label"],
+        "values": [[1, "admin"]],
+    }
+
+
+@pytest.mark.parametrize(
+    ("selector", "expected_error"),
+    [
+        ("test_ranked[nobody]", "has no case '[nobody]'"),
+        ("test_plain[admin]", "is not parameterized"),
+    ],
+    ids=["unknown-case", "non-parameterized"],
+)
+def test_preflight_rejects_invalid_case_selectors(
+    godot_bin, tmp_path, selector, expected_error
+):
+    """Case selectors that address no case produce exit-code-2 diagnostics."""
+    body = dedent("""
+        func before_all() -> void:
+        \tparameterize(["value", "label"], [[1, "admin"], [2, "user"]])
+
+        func test_ranked(value: int, label: String) -> void:
+        \tpass
+
+        func test_plain() -> void:
+        \tpass
+        """).strip()
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-case-selector-invalid.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=[selector]),
+        result_path,
+    )
+
+    assert process.returncode == 2, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "error"
+    assert payload["suites"] == []
+    assert "res://test/integration_suite.gd" in payload["error"]
+    assert expected_error in payload["error"]
