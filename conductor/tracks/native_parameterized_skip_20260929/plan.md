@@ -61,7 +61,7 @@ with a verification checkpoint task.
     - Note: no shim passthrough needed — `GutTest` extends `GdToolsTest`, so the shim inherits the native parameterize/use_parameters API; only its docstring was updated.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 5 — Documentation, Reporting, and Final Verification
+## Phase 5 - Documentation, Reporting, and Final Verification [checkpoint: aefb987]
 
 - [x] Task: Update `docs/ARCHITECTURE.md` - Known Limitations 4 → 2; document parameterization + suite-skip semantics in Part II (d4ef941)
 - [x] Task: Update `docs/USER_GUIDE.md` (usage) and `docs/gut-migration.md` (constructs now supported) (d4ef941)
