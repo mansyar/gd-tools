@@ -79,7 +79,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: E2E Test Speed** (CI performance chore)
+- [~] **Track: E2E Test Speed** (CI performance chore)
   *Link: [e2e_speed_20260929](./tracks/e2e_speed_20260929/index.md)* - speeds
   up the E2E stage, the CI wall-time bottleneck (5-10.5 min per job, PR CI
   ~13 min vs the 10-min target): `--durations=20` in CI pytest steps, fast
