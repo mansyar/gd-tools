@@ -31,7 +31,7 @@ and workflow YAML tasks are verified through their own verification steps).
     parameter, green; production defaults unchanged.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3: Smoke Subset & CI Split
+## Phase 3: Smoke Subset & CI Split [checkpoint: 3a8c839]
 
 - [x] Task: Select and mark smoke tests — `49b8f5b`
   - Pick 3-5 critical-path e2e tests (representative native run with
