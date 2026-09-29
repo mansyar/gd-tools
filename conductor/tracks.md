@@ -88,3 +88,16 @@ _Archived tracks live in `./archive/`._
   marker selecting 3-5 critical-path tests for the unchanged 6-job PR matrix
   while the full E2E suite moves to nightly + `workflow_dispatch`. Acceptance:
   PR CI wall time <= 10 minutes.
+
+---
+
+- [ ] **Track: Coverage Exclusion Annotations**
+  *Link: [coverage_exclusions_20260930](./tracks/coverage_exclusions_20260930/index.md)* -
+  support `# gd-tools: no cover` annotations (single-line, block
+  `start`/`end`, and func-line exclusion) so users can exclude lines from
+  coverage instrumentation. Excluded lines are recorded in the plan JSON
+  (plan version bumped to 2 for cache regeneration), removed from the
+  coverage percentage denominator and `--min` gate, styled distinctly in the
+  HTML report, and summarized compactly in the terminal report only when
+  exclusions exist. Malformed annotations warn on stderr and never abort
+  generation (warn-and-continue).

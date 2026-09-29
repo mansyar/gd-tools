@@ -1,0 +1,14 @@
+{
+  "track_id": "coverage_exclusions_20260930",
+  "title": "Coverage Exclusion Annotations",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-09-30",
+  "updated": "2026-09-30",
+  "branch": "feat/coverage-exclusions-20260930",
+  "source": "ROADMAP Track 30 (docs/ROADMAP.md)",
+  "links": {
+    "spec": "./spec.md",
+    "plan": "./plan.md"
+  }
+}
