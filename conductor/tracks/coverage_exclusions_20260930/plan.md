@@ -38,15 +38,22 @@ Covers spec FR1–FR3.
   > lexer fails on over-indented comment-only lines (pre-existing
   > parser quirk, unrelated to annotations) — test fixtures keep
   > annotations at statement indent.
-- [ ] Task 1.4: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 1.4: Phase Verification & Checkpoint (Refer to workflow.md) [209271c]
 
 ## Phase 2 — Plan version bump and cache invalidation
 
 Covers spec FR4.
 
-- [ ] Task 2.1: Write failing tests for plan v2 acceptance, v1 rejection (with actionable regeneration message), and cache miss after bump (Red)
-- [ ] Task 2.2: Bump `PLAN_VERSION` to 2; update loader and cache key; add optional `excluded_lines` to the plan model/dataclass (Green)
-- [ ] Task 2.3: Verify files without annotations produce identical results to before (regression tests pinning success criterion 6)
+> **Deviation (2026-09-30):** the version bump required a one-line change
+> in the GDScript addon (`gd_tools_native_coverage.gd`): its hard
+> `version == 1` check was relaxed to `version >= 1`, because the
+> instrumentation contract is unchanged and v2 plans only add the
+> `excluded_lines` field. The plan originally assumed the addon would not
+> need changes.
+
+- [x] Task 2.1: Write failing tests for plan v2 acceptance, v1 rejection (with actionable regeneration message), and cache miss after bump (Red) [f2c2b15]
+- [x] Task 2.2: Bump `PLAN_VERSION` to 2; update loader and cache key; add optional `excluded_lines` to the plan model/dataclass (Green) [f2c2b15]
+- [x] Task 2.3: Verify files without annotations produce identical results to before (regression tests pinning success criterion 6) [f2c2b15]
 - [ ] Task 2.4: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Reporting surface
