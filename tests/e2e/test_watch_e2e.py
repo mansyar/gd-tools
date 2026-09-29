@@ -224,11 +224,6 @@ def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
     finally:
         stop.set()
         worker.join(timeout=_RUN_TIMEOUT + 30)
-    # Orphan check: the session must not ADD Godot processes. Process exit
-    # is asynchronous, so allow a short grace period for the last child to
-    # be reaped before asserting. A strict equality comparison is flaky in
-    # a shared environment because unrelated pre-existing Godot processes
-    # may exit during the run.
     assert not errors, errors
     assert code == 0
     # Orphan check: the session must not ADD Godot processes. Process exit
