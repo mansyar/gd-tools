@@ -61,6 +61,15 @@ class CoveragePlanError(GdToolsError):
     """Raised when there is an error generating the coverage plan."""
 
 
+class CoveragePlaytestError(GdToolsError):
+    """Raised when a playtest coverage session cannot run or produce data.
+
+    Covers invalid scenes, missing projects, launch failures, and
+    sessions that end without any coverage data on disk.  Exit code 2
+    (environment/setup problem).
+    """
+
+
 class CoverageThresholdError(GdToolsError):
     """Raised when coverage falls below the required threshold.
 

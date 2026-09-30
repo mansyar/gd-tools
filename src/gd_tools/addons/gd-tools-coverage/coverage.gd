@@ -7,8 +7,21 @@ extends Node
 ## during GUT test execution. Tracker activation happens via
 ## pre_run_hook.gd's set_active(true) call after all autoloads have
 ## initialized.
+##
+## Playtest mode: when GD_TOOLS_COVERAGE_PLAYTEST=1 is set, the tracker
+## activates itself (no test runtime or hook involved) and writes the
+## coverage output periodically (GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL,
+## default 5s) and once more when the game exits, so a plain game run
+## collects coverage while a human plays. The JSON output matches the
+## post-run hook contract exactly.
 
 const TRACKER_NAME = "_GDTCoverage"
+
+const PLAYTEST_ENV = "GD_TOOLS_COVERAGE_PLAYTEST"
+
+const PLAYTEST_INTERVAL_ENV = "GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL"
+
+const DEFAULT_PLAYTEST_INTERVAL: float = 5.0
 
 var _hits: Dictionary = {}
 
@@ -17,6 +30,12 @@ var _active: bool = false
 var _plan: Dictionary = {}
 
 var _omitted: Array = []
+
+var _playtest_active: bool = false
+
+var _playtest_output_path: String = ""
+
+var _playtest_timer: Timer = null
 
 
 func _ready() -> void:
@@ -41,6 +60,10 @@ func _ready() -> void:
 		return
 
 	_instrument_files()
+
+	if OS.get_environment(PLAYTEST_ENV) == "1":
+		_start_playtest_mode()
+		return
 
 	# _active remains false — the pre-run hook will activate the tracker
 	# via set_active(true) after all autoloads have initialized.
@@ -77,6 +100,144 @@ func set_active(active: bool) -> void:
 
 func is_active() -> bool:
 	return _active
+
+
+# === Playtest mode ===
+
+
+func _notification(what: int) -> void:
+	# The windowed game closing is the primary exit path during play.
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_stop_playtest(true)
+
+
+func _exit_tree() -> void:
+	# Covers SceneTree.quit() and editor/engine shutdown, where the
+	# window-close notification is not delivered.
+	_stop_playtest(true)
+
+
+func _start_playtest_mode() -> void:
+	# Self-activate: there is no test runtime to call set_active(true),
+	# and the pre-run hook is never involved in a plain game run.
+	_playtest_active = true
+	set_active(true)
+	_playtest_output_path = OS.get_environment("GD_TOOLS_COVERAGE_OUTPUT")
+	if _playtest_output_path.is_empty():
+		_log_warning(
+			"Playtest coverage cannot write output.",
+			"GD_TOOLS_COVERAGE_OUTPUT environment variable is not set.",
+			"Set GD_TOOLS_COVERAGE_OUTPUT to a writable file path."
+		)
+		return
+
+	var timer := Timer.new()
+	timer.wait_time = _resolve_playtest_interval()
+	timer.timeout.connect(_write_playtest_snapshot)
+	add_child(timer)
+	timer.start()
+	_playtest_timer = timer
+
+
+func _resolve_playtest_interval() -> float:
+	var raw: String = OS.get_environment(PLAYTEST_INTERVAL_ENV)
+	if raw.is_empty():
+		return DEFAULT_PLAYTEST_INTERVAL
+	var value: float = raw.to_float()
+	if value <= 0.0:
+		_log_warning(
+			"Invalid playtest flush interval.",
+			"GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL is not a positive number: " + raw,
+			"Set a positive number of seconds, or unset the variable to use "
+			+ "the %.1fs default." % DEFAULT_PLAYTEST_INTERVAL
+		)
+		return DEFAULT_PLAYTEST_INTERVAL
+	return value
+
+
+func _stop_playtest(flush: bool) -> void:
+	# One-shot: both the window-close notification and tree exit funnel
+	# here, so the final write happens exactly once.
+	if not _playtest_active:
+		return
+	_playtest_active = false
+	if _playtest_output_path.is_empty():
+		# _start_playtest_mode already warned about the missing output
+		# path; do not spam another error on every shutdown flush.
+		return
+	if _playtest_timer != null:
+		_playtest_timer.stop()
+		_playtest_timer.queue_free()
+		_playtest_timer = null
+	if flush:
+		_write_playtest_snapshot(true)
+
+
+func _write_playtest_snapshot(final: bool = false) -> void:
+	var data: Dictionary = _build_coverage_json(_hits, _omitted)
+	if not _write_json(_playtest_output_path, data):
+		return
+	if final:
+		_log_summary(_hits, _playtest_output_path)
+
+
+func _build_coverage_json(hits: Dictionary, omitted: Array = []) -> Dictionary:
+	# Matches the post-run hook output contract exactly so every
+	# reporter consumes playtest sessions unchanged.
+	var files: Array = []
+	for file_id in hits:
+		var file_hits: Dictionary = hits[file_id]
+		var hits_dict: Dictionary = {}
+		for line_id in file_hits:
+			hits_dict[str(line_id)] = file_hits[line_id]
+		files.append({"file_id": int(file_id), "hits": hits_dict})
+	var data := {
+		"version": 1,
+		"generated_at": Time.get_datetime_string_from_system(true, false) + "Z",
+		"files": files
+	}
+	if not omitted.is_empty():
+		data["omitted"] = omitted
+	return data
+
+
+func _write_json(path: String, data: Dictionary) -> bool:
+	var dir_path: String = path.get_base_dir()
+	if not dir_path.is_empty() and not DirAccess.dir_exists_absolute(dir_path):
+		var err: int = DirAccess.make_dir_recursive_absolute(dir_path)
+		if err != OK:
+			_log_error(
+				"Cannot create output directory.",
+				"Failed to create directory: " + dir_path,
+				"Check permissions and path validity."
+			)
+			return false
+
+	var file = FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		_log_error(
+			"Cannot write coverage output.",
+			"Cannot open file for writing: " + path,
+			"Check file permissions and path validity."
+		)
+		return false
+
+	file.store_string(JSON.stringify(data, "  "))
+	file = null
+	return true
+
+
+func _log_summary(hits: Dictionary, output_path: String) -> String:
+	var total_files: int = hits.size()
+	var total_lines: int = 0
+	for file_id in hits:
+		total_lines += hits[file_id].size()
+	var summary := (
+		"[gd-tools] Coverage summary: %d files, %d lines tracked, output: %s"
+		% [total_files, total_lines, output_path]
+	)
+	print(summary)
+	return summary
 
 
 # === Instrumentation logic (moved from pre_run_hook.gd) ===
