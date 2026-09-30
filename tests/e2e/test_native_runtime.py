@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import pytest
 
@@ -118,7 +119,7 @@ def test_native_fixture_loads_without_gut(godot_bin, tmp_path):
 def _manifest(project, path, names, suite_name):
     """Build a native manifest selecting specific methods from one suite."""
     return {
-        "protocol_version": 2,
+        "protocol_version": 3,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -470,7 +471,7 @@ def test_native_runner_executes_manifest(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -512,7 +513,7 @@ def test_native_runner_executes_manifest(godot_bin, tmp_path):
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert payload["protocol_version"] == 2
+    assert payload["protocol_version"] == 3
     assert payload["status"] == "passed"
     assert [test["name"] for test in payload["tests"]] == [
         "test_pass",
@@ -529,7 +530,7 @@ def test_native_runner_runs_lifecycle_hooks_after_failure(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -596,7 +597,7 @@ def test_native_runner_reports_lifecycle_failures_and_preserves_suite_state(
     """Setup/teardown failures and suite state affect the native result."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 2,
+        "protocol_version": 3,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -646,7 +647,7 @@ def test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup(
     """A hanging setup hook is bounded and cleanup still runs."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 2,
+        "protocol_version": 3,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -688,7 +689,7 @@ def test_native_runner_captures_engine_errors_and_warnings(godot_bin, tmp_path):
     """Godot engine diagnostics fail the run and appear in native JSON."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 2,
+        "protocol_version": 3,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -730,7 +731,7 @@ def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -785,7 +786,7 @@ def test_native_skipped_tests_report_status_and_reason(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 2,
+            "protocol_version": 3,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -829,7 +830,7 @@ def test_native_post_skip_assertions_are_discarded(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 2,
+            "protocol_version": 3,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -873,7 +874,7 @@ def test_native_all_skipped_suite_exits_zero(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 2,
+            "protocol_version": 3,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -913,7 +914,7 @@ def test_native_runner_emits_structured_events(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -962,6 +963,66 @@ def test_native_runner_emits_structured_events(godot_bin, tmp_path):
         "run_finished",
     ]
     assert events[2]["status"] == "passed"
+    assert all(event["suite"] == "NativeFixtureSuite" for event in events)
+    assert all(event["worker_slot"] == 0 for event in events)
+
+
+def test_native_runner_events_carry_env_suite_identity(godot_bin, tmp_path):
+    """Env-provided suite name and worker slot are stamped into events."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest_path = tmp_path / "slot-manifest.json"
+    result_path = tmp_path / "slot-result.json"
+    events_path = tmp_path / "slot-events.ndjson"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "protocol_version": 3,
+                "project_root": str(project),
+                "runtime": "native",
+                "suites": [
+                    {
+                        "name": "NativeFixtureSuite",
+                        "path": "res://test/native_suite.gd",
+                        "tests": [{"name": "test_pass"}],
+                    }
+                ],
+                "coverage": {"enabled": False},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    env = os.environ.copy()
+    env["GD_TOOLS_NATIVE_MANIFEST"] = str(manifest_path)
+    env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+    env["GD_TOOLS_NATIVE_EVENTS"] = str(events_path)
+    env["GD_TOOLS_SUITE_NAME"] = "EnvNamedSuite"
+    env["GD_TOOLS_WORKER_SLOT"] = "3"
+    result = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=30,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    events = [
+        json.loads(line)
+        for line in events_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert events, "expected at least one NDJSON event"
+    assert all(event["suite"] == "EnvNamedSuite" for event in events)
+    assert all(event["worker_slot"] == 3 for event in events)
 
 
 def test_native_runner_marks_timed_out_tests(godot_bin, tmp_path):
@@ -972,7 +1033,7 @@ def test_native_runner_marks_timed_out_tests(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1073,7 +1134,7 @@ def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1138,7 +1199,7 @@ def test_native_wait_for_signal_is_bounded(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1201,7 +1262,7 @@ def _run_suite_timeout_manifest(project, godot_bin, tmp_path, tag, test_specs):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1567,7 +1628,7 @@ def test_native_runner_collects_line_and_branch_coverage(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1702,7 +1763,7 @@ def test_native_coverage_warns_and_continues_past_uninstrumentable_target(
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1782,7 +1843,7 @@ def test_native_coverage_warns_and_continues_past_uninstrumentable_target(
     # AC 9 / R5: the omission reaches the run result through the existing
     # channels -- a warning line and the structured diagnostics dict -- with
     # the protocol version unchanged.
-    assert payload["protocol_version"] == 2
+    assert payload["protocol_version"] == 3
     assert any(
         "missing_target.gd" in warning for warning in payload["engine_warnings"]
     ), payload["engine_warnings"]
@@ -1855,7 +1916,7 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -2307,7 +2368,7 @@ def test_native_suite_skip_in_before_all_skips_every_test(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 2,
+            "protocol_version": 3,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -2346,3 +2407,72 @@ def test_native_suite_skip_in_before_all_skips_every_test(godot_bin, tmp_path):
         assert entry["attempts"] == 1
     # Test bodies and hooks must never have run.
     assert not (project / "suite_skip_hook_ran.txt").exists()
+
+
+@pytest.mark.e2e_smoke
+def test_native_parallel_run_matches_sequential_outcomes(
+    godot_bin, tmp_path, monkeypatch
+):
+    """A parallel CLI run produces the same outcomes as the sequential run.
+
+    Exit status, the discovery-ordered JUnit test list, and the merged
+    coverage report must be structurally identical across both modes on
+    the same fixture project.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    shutil.rmtree(project / "test")
+    (project / "test").mkdir()
+    suite_names = [
+        "ParallelAlphaSuite",
+        "ParallelBetaSuite",
+        "ParallelGammaSuite",
+    ]
+    for index, suite_name in enumerate(suite_names):
+        (project / "test" / f"parallel_{index}_suite.gd").write_text(
+            "extends GdToolsTest\n\n\n"
+            "func test_always_passes() -> void:\n"
+            "    assert_true(true)\n",
+            encoding="utf-8",
+        )
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+
+    def _run(parallel):
+        return run_native_test_command(
+            config,
+            coverage=True,
+            junit_xml=str(tmp_path / f"junit-{parallel}.xml"),
+            timeout=30,
+            parallel=parallel,
+        )
+
+    sequential = _run(None)
+    sequential_junit = ET.parse(tmp_path / "junit-None.xml")
+    sequential_cases = [
+        (case.get("classname"), case.get("name"))
+        for case in sequential_junit.getroot().iter("testcase")
+    ]
+    sequential_coverage = json.loads(
+        sequential.coverage_data_path.read_text(encoding="utf-8")
+    )
+    sequential_coverage.pop("generated_at")
+
+    parallel = _run(2)
+    parallel_junit = ET.parse(tmp_path / "junit-2.xml")
+    parallel_cases = [
+        (case.get("classname"), case.get("name"))
+        for case in parallel_junit.getroot().iter("testcase")
+    ]
+    parallel_coverage = json.loads(
+        parallel.coverage_data_path.read_text(encoding="utf-8")
+    )
+    parallel_coverage.pop("generated_at")
+
+    assert parallel.total == sequential.total
+    assert parallel.failed == sequential.failed
+    assert parallel_cases == sequential_cases
+    assert parallel_cases, "expected JUnit test cases in both runs"
+    assert parallel_coverage == sequential_coverage

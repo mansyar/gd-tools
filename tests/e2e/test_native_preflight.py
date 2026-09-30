@@ -85,7 +85,7 @@ def _manifest(
     *,
     suite_path: str = "res://test/integration_suite.gd",
     tests: list[str] | None = None,
-    protocol_version: int = 2,
+    protocol_version: int = 3,
 ) -> dict:
     """Build a discovery manifest for direct preflight execution."""
     return {
@@ -158,7 +158,7 @@ def test_preflight_defaults_without_integration_constant(
 
     assert process.returncode == 0, process.stdout + process.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert payload["protocol_version"] == 2
+    assert payload["protocol_version"] == 3
     assert payload["status"] == "ok"
     assert payload["error"] is None
     suite = payload["suites"][0]
@@ -324,7 +324,7 @@ def test_preflight_rejects_malformed_declarations(
 
     assert process.returncode == 2, process.stdout + process.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert payload["protocol_version"] == 2
+    assert payload["protocol_version"] == 3
     assert payload["status"] == "error"
     assert payload["suites"] == []
     assert "res://test/integration_suite.gd" in payload["error"]
@@ -613,7 +613,7 @@ def test_preflight_rejects_parameterize_declarations(
 
     assert process.returncode == 2, process.stdout + process.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert payload["protocol_version"] == 2
+    assert payload["protocol_version"] == 3
     assert payload["status"] == "error"
     assert payload["suites"] == []
     assert "res://test/integration_suite.gd" in payload["error"]
@@ -639,7 +639,7 @@ def test_preflight_rejects_protocol_v1(godot_bin, tmp_path):
     assert process.returncode == 2, process.stdout + process.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert payload["status"] == "error"
-    assert "protocol_version 2" in payload["error"]
+    assert "protocol_version 3" in payload["error"]
 
 
 def test_preflight_reports_script_load_failure(godot_bin, tmp_path):

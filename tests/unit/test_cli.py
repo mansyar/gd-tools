@@ -302,6 +302,89 @@ def test_test_coverage_plan_error_exit_2():
     assert result.exit_code == 2
 
 
+# --- test --parallel flag ---
+
+
+def _invoke_test_with_parallel(args, config_parallel=None):
+    """Invoke `test` with a config whose test.parallel is config_parallel.
+
+    Returns (result, mock_run) with run_native_test_command patched.
+    """
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.test.parallel = config_parallel
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_native_test_command",
+            return_value=_native_result(),
+        ) as mock_run,
+    ):
+        result = runner.invoke(cli, args)
+    return result, mock_run
+
+
+def test_test_parallel_bare_flag_defaults_to_4():
+    """Bare --parallel resolves to the default worker count of 4."""
+    result, mock_run = _invoke_test_with_parallel(["test", "--parallel"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 4
+
+
+def test_test_parallel_explicit_value_forwarded():
+    """--parallel N forwards N to the native test command."""
+    result, mock_run = _invoke_test_with_parallel(["test", "--parallel", "8"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 8
+
+
+def test_test_parallel_flag_overrides_config():
+    """--parallel takes precedence over test.parallel in config."""
+    result, mock_run = _invoke_test_with_parallel(
+        ["test", "--parallel", "8"], config_parallel=2
+    )
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 8
+
+
+def test_test_parallel_config_used_when_flag_absent():
+    """test.parallel from config applies when --parallel is not given."""
+    result, mock_run = _invoke_test_with_parallel(["test"], config_parallel=2)
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 2
+
+
+def test_test_parallel_absent_is_none():
+    """Without flag or config key, parallel is None (sequential)."""
+    result, mock_run = _invoke_test_with_parallel(["test"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] is None
+
+
+@pytest.mark.parametrize("value", ["0", "33", "100"])
+def test_test_parallel_out_of_range_exits_2(value):
+    """Out-of-range --parallel exits 2 with a fix hint and does not run."""
+    result, mock_run = _invoke_test_with_parallel(["test", "--parallel", value])
+    assert result.exit_code == 2
+    assert "--parallel" in result.output
+    assert "1" in result.output and "32" in result.output
+    mock_run.assert_not_called()
+
+
+def test_test_parallel_one_forwarded():
+    """--parallel 1 is a valid request that pins sequential execution."""
+    result, mock_run = _invoke_test_with_parallel(["test", "--parallel", "1"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 1
+
+
+def test_test_parallel_one_from_config():
+    """test.parallel = 1 in config pins sequential execution."""
+    result, mock_run = _invoke_test_with_parallel(["test"], config_parallel=1)
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 1
+
+
 def test_lint_exit_code_2_config_error():
     """Test lint exits with code 2 when config loading fails."""
     runner = CliRunner()
@@ -1478,3 +1561,38 @@ def test_coverage_diff_regression_gate_exit_1():
             ["coverage", "diff", "--base", "b.json", "--fail-on-regression"],
         )
     assert result.exit_code == 1
+
+
+def test_test_watch_forwards_resolved_parallel():
+    """--watch inherits the resolved --parallel count for every re-run."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_watch_mode",
+            return_value=0,
+        ) as mock_watch,
+    ):
+        result = runner.invoke(
+            cli, ["test", "--watch", "--parallel", "3"], env={"CI": "false"}
+        )
+    assert result.exit_code == 0
+    assert mock_watch.call_args.kwargs["parallel"] == 3
+
+
+def test_test_watch_uses_config_parallel_without_flag():
+    """Configured [test] parallel applies to watch mode when no flag given."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.test.parallel = 2
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_watch_mode",
+            return_value=0,
+        ) as mock_watch,
+    ):
+        result = runner.invoke(cli, ["test", "--watch"], env={"CI": "false"})
+    assert result.exit_code == 0
+    assert mock_watch.call_args.kwargs["parallel"] == 2

@@ -1,5 +1,6 @@
 """Unit tests for interrupted native test runs (crash recovery)."""
 
+import itertools
 import json
 import signal
 from contextlib import ExitStack
@@ -12,6 +13,7 @@ import pytest
 from click.testing import CliRunner
 
 from gd_tools.cli import cli
+from gd_tools.errors import NativeInterruptError
 from gd_tools.native_test.artifacts import NativeArtifactLayout
 from gd_tools.native_test.command import (
     _raise_interrupt,
@@ -22,6 +24,38 @@ from gd_tools.native_test.preflight import NativePreflightResult
 from gd_tools.native_test.protocol import NativeSuite, NativeTest
 
 pytestmark = pytest.mark.unit
+
+_POPEN_IDS = itertools.count(700)
+
+
+class _FakePopen:
+    """Minimal Popen stand-in driving a fake runner through communicate()."""
+
+    def __init__(self, command, runner, env):
+        self.pid = next(_POPEN_IDS)
+        self._runner = runner
+        self._args = command
+        self._env = env
+        self.returncode = None
+
+    def communicate(self, timeout=None):
+        result = self._runner(self._args, env=self._env)
+        self.returncode = result.returncode
+        return result.stdout, result.stderr
+
+    def poll(self):
+        return self.returncode
+
+
+def _spawn_adapter(runner):
+    """Adapt a ``CompletedProcess``-style fake to the Popen spawn seam."""
+
+    def adapt(command, *, env, registry, abort_event=None):
+        process = _FakePopen(command, runner, env)
+        registry.add(process)
+        return process
+
+    return adapt
 
 
 def _suite(name: str) -> NativeSuite:
@@ -54,7 +88,7 @@ def _write_result(result_path: Path, status: str = "passed") -> None:
     result_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "run_id": "test-run",
                 "status": status,
                 "engine_warnings": [],
@@ -79,23 +113,30 @@ def _write_result(result_path: Path, status: str = "passed") -> None:
 def test_interrupt_publishes_incomplete_index_and_stops(tmp_path):
     """An interrupted run marks the artifacts incomplete and spawns no more.
 
-    ``subprocess.run`` already kills the in-flight Godot child on
-    ``KeyboardInterrupt``; the orchestrator must publish an artifact index
-    whose status says the run never finished, then re-raise so the CLI can
+    The in-flight Godot child is killed through the process-tree killer and
+    the orchestrator must publish an artifact index whose status says the
+    run never finished, then raise ``NativeInterruptError`` so the CLI can
     exit 130.
     """
     attempts = []
+    killed = []
 
     def fake_run(args, **kwargs):
         attempts.append(args)
         raise KeyboardInterrupt
 
     layout = NativeArtifactLayout.create(tmp_path, "interrupt-1")
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch(
+            "gd_tools.native_test.orchestrator._kill_process_tree",
+            side_effect=lambda pid, **kwargs: killed.append(pid),
+        ),
     ):
-        with pytest.raises(KeyboardInterrupt):
+        with pytest.raises(NativeInterruptError) as excinfo:
             run_native_tests(
                 tmp_path,
                 [_suite("FirstSuite"), _suite("SecondSuite")],
@@ -103,7 +144,9 @@ def test_interrupt_publishes_incomplete_index_and_stops(tmp_path):
                 artifact_layout=layout,
             )
 
+    assert excinfo.value.exit_code == 130
     assert len(attempts) == 1
+    assert len(killed) == 1
     index = json.loads(layout.index_path.read_text(encoding="utf-8"))
     assert index["status"] == "incomplete"
     assert [entry["suite"] for entry in index["suites"]] == ["FirstSuite"]
@@ -122,11 +165,14 @@ def test_interrupt_after_completed_suite_keeps_attempted_suites(tmp_path):
         raise KeyboardInterrupt
 
     layout = NativeArtifactLayout.create(tmp_path, "interrupt-2")
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
-        with pytest.raises(KeyboardInterrupt):
+        with pytest.raises(NativeInterruptError):
             run_native_tests(
                 tmp_path,
                 [_suite("FirstSuite"), _suite("SecondSuite")],
@@ -154,8 +200,8 @@ def test_completed_run_is_never_marked_incomplete(tmp_path):
 
     layout = NativeArtifactLayout.create(tmp_path, "complete-1")
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,

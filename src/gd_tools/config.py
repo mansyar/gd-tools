@@ -57,6 +57,8 @@ class TestConfig(BaseModel):
         timeout_seconds: Default per-test timeout for native async tests.
         retries: Number of explicit opt-in retries per native test.
         tags: Optional native suite tag filters.
+        parallel: Number of suites to run concurrently (1-32), or
+            None for sequential execution.
     """
 
     __test__ = False
@@ -71,6 +73,7 @@ class TestConfig(BaseModel):
     timeout_seconds: float = Field(default=5.0, gt=0)
     retries: int = Field(default=0, ge=0)
     tags: list[str] = Field(default_factory=list)
+    parallel: int | None = Field(default=None, ge=1, le=32)
 
 
 class LintConfig(BaseModel):

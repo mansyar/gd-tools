@@ -18,6 +18,7 @@ from gd_tools.errors import (
     ConfigError,
     CoverageThresholdError,
     GdToolsError,
+    NativeInterruptError,
     TestFailureError,
 )
 from gd_tools.godot import find_godot, run_godot
@@ -57,6 +58,7 @@ def run_native_test_command(
     paths: list[str] | None = None,
     show_uncovered: bool = False,
     no_cache: bool = False,
+    parallel: int | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -84,6 +86,7 @@ def run_native_test_command(
             paths=paths,
             show_uncovered=show_uncovered,
             no_cache=no_cache,
+            parallel=parallel,
         )
     finally:
         if previous_sigterm is not None:
@@ -109,6 +112,7 @@ def _run_native_test_command(
     paths: list[str] | None = None,
     show_uncovered: bool = False,
     no_cache: bool = False,
+    parallel: int | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -126,6 +130,8 @@ def _run_native_test_command(
         paths: Optional test file or directory selectors.
         show_uncovered: Include uncovered lines in the coverage summary.
         no_cache: Bypass the coverage plan cache.
+        parallel: Optional worker count (1-32) for concurrent suite
+            execution; None or 1 runs suites sequentially.
 
     Returns:
         The normalized CLI-facing test result.
@@ -241,13 +247,16 @@ def _run_native_test_command(
             coverage=coverage_settings,
             work_dir=artifact_layout.native_dir,
             process_timeout=process_timeout,
+            parallel=parallel,
             run_id=run_id,
             artifact_layout=artifact_layout,
         )
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, NativeInterruptError):
         # The orchestrator has already published the incomplete index for
         # interrupts during suite execution; report either way so the user
-        # always sees where the partial artifacts live.
+        # always sees where the partial artifacts live. NativeInterruptError
+        # (exit 130) carries the run_dir in its message; a bare
+        # KeyboardInterrupt from an earlier phase leaves no index at all.
         _report_interrupted_run(artifact_layout)
         raise
     infrastructure_error = native_result.status == "error"

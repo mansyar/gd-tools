@@ -1,6 +1,6 @@
 extends SceneTree
 
-const PROTOCOL_VERSION := 2
+const PROTOCOL_VERSION := 3
 const SUITE_FIELDS := ["scene", "resources", "mode", "tests"]
 const PER_TEST_FIELDS := ["scene", "resources"]
 const ERROR_KEY := "__gdtools_preflight_error__"
@@ -46,7 +46,7 @@ func _build_preflight_result(manifest_path: String) -> Dictionary:
 		or int(protocol_version) != PROTOCOL_VERSION
 	):
 		return _error_result(
-			"Discovery manifest requires protocol_version 2; received %s" % [str(protocol_version)]
+			"Discovery manifest requires protocol_version 3; received %s" % [str(protocol_version)]
 		)
 	return _build_suites_result(manifest.get("suites", []))
 

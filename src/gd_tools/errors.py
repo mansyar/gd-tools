@@ -110,3 +110,14 @@ class FormatError(GdToolsError):
     """Raised when formatting issues are found."""
 
     exit_code: int = 1
+
+
+class NativeInterruptError(GdToolsError):
+    """Raised when the user interrupts a native test run.
+
+    All in-flight Godot process trees are killed and the run's artifact index
+    is marked incomplete before this is raised, so the CLI exits 130 while
+    leaving a truthful record of what the run produced.
+    """
+
+    exit_code: int = 130

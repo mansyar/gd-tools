@@ -99,7 +99,7 @@ func test_health_starts_at_full() -> void:
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, bridge-eligible GUT suites, coverage addon, tooling. |
-| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites extending `GdToolsTest` and `GutTest` are detected and routed automatically (`GutTest` suites run through the compatibility bridge). Accepts optional path arguments to override configured test directories. `--watch` re-runs affected suites on `.gd` file changes. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
+| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites extending `GdToolsTest` and `GutTest` are detected and routed automatically (`GutTest` suites run through the compatibility bridge). Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--watch` re-runs affected suites on `.gd` file changes. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
 | `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
@@ -116,10 +116,14 @@ gd-tools test --suite PlayerTests          # one suite, by class name
 gd-tools test --test test_takes_damage     # one test method
 gd-tools test --tag smoke                  # suites with that class-level tag
 gd-tools test --test-timeout 30            # per-test timeout, in seconds
+gd-tools test --parallel 4                 # run suites with 4 concurrent workers
 ```
 
 `--tag` is repeatable, and `--test-timeout` (per test) is separate from
-`--timeout` (per suite process).
+`--timeout` (per suite process). `--parallel` dispatches suites to a bounded
+worker pool (1-32 workers; bare `--parallel` means 4) while keeping results,
+JUnit XML, and merged coverage identical to a sequential run. Persist the
+choice with `parallel = 4` under `[test]` in `gd-tools.toml`.
 
 Each run writes a machine-readable artifact index under
 `.gd-tools/artifacts/<run_id>/`, listing the manifest, result, event stream,
@@ -146,7 +150,8 @@ re-run, and a save during a running suite queues exactly one follow-up run.
   rejected with exit 2; `GutTest` suites run through the compatibility bridge.
 - Interactive only: `--watch` combined with `CI=true` exits 2.
 - The terminal is cleared between runs; the banner shows how many files are
-  watched, and `Ctrl+C` always exits 0.
+  watched. While idle, `Ctrl+C` exits 0; interrupting an in-flight run kills
+  its Godot processes and exits 130.
 - Positional path arguments are not supported with `--watch`; the watched
   scope is the project root minus standard excludes (`.godot/`, `.gd-tools/`,
   `.git/`, and the gd-tools addons).
@@ -173,7 +178,7 @@ runner; the bridge is deprecated as of v0.5.0 and will be removed in v0.6.0.
 | Mocking and stubbing | `double()`, `partial_double()`, `stub()` (`.to_return`/`.to_call_super`), `assert_called*` family | Same -- inherited from `GdToolsTest` with identical semantics |
 | Parameterized tests | `parameterize()` in `before_all`, values injected via `use_parameters` | Not supported -- preflight rejects `parameterize()` |
 | Skipping a test at runtime | `skip_test()` and `pending_test()` | Yes |
-| Parallel execution | Not yet -- suites run sequentially | Same |
+| Parallel execution | Opt-in -- `--parallel N` or `[test].parallel` (bounded worker pool, 1-32) | Bridge suites run in the same pool |
 | Editor plugin | Not yet | Not applicable |
 
 **Known limitations.** Parameterized tests are native-only -- the bridge

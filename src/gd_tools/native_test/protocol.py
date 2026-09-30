@@ -18,7 +18,7 @@ from pydantic import (
     model_validator,
 )
 
-NATIVE_PROTOCOL_VERSION = 2
+NATIVE_PROTOCOL_VERSION = 3
 
 
 def _reject_relative_segments(value: str) -> str:
@@ -149,7 +149,7 @@ class NativeManifest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    protocol_version: Literal[2] = NATIVE_PROTOCOL_VERSION
+    protocol_version: Literal[3] = NATIVE_PROTOCOL_VERSION
     project_root: Path
     runtime: RuntimeMode
     suites: list[NativeSuite] = Field(default_factory=list)
@@ -161,7 +161,7 @@ class NativePreflightResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    protocol_version: Literal[2] = NATIVE_PROTOCOL_VERSION
+    protocol_version: Literal[3] = NATIVE_PROTOCOL_VERSION
     status: Literal["ok", "error"]
     suites: list[NativeSuite] = Field(default_factory=list)
     error: str | None = None
@@ -209,7 +209,7 @@ class NativeRunResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    protocol_version: Literal[2] = NATIVE_PROTOCOL_VERSION
+    protocol_version: Literal[3] = NATIVE_PROTOCOL_VERSION
     run_id: str
     status: Literal["passed", "failed", "error", "cancelled"]
     tests: list[NativeTestResult] = Field(default_factory=list)

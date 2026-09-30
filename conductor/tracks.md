@@ -115,3 +115,15 @@ _Archived tracks live in `./archive/`._
   Roadmap Track 36) (archived
   ./archive/macos_ci_matrix_20260930/)
   *Link: [macos_ci_matrix_20260930](./archive/macos_ci_matrix_20260930/index.md)*
+
+---
+
+- [x] **Track: Parallel Suite Execution** (Targets v0.6.0)
+  *Link: [native_parallel_suites_20260930](./archive/native_parallel_suites_20260930/index.md)* -
+  opt-in bounded worker pool for `gd-tools test`: `--parallel N` flag plus
+  `[test] parallel` config (1–32, default 4, N=1 = sequential path),
+  discovery-order queue scheduling over native and GUT-bridge suites alike,
+  deterministic ordered summary and JUnit XML, suite-tagged NDJSON progress
+  events, full `--coverage` support, watch-mode inheritance, continue-on-failure
+  with process-tree kill on interrupt (exit 130), unchanged artifact contract,
+  and in-track documentation updates.

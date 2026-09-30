@@ -1,6 +1,6 @@
 """Opt-in native-versus-legacy runtime benchmark.
 
-Run with ``GD_TOOLS_RUN_BENCHMARK=1 pytest -m performance``.  The benchmark
+Run with ``GD_TOOLS_RUN_BENCHMARK=1 pytest tests/performance``.  The benchmark
 uses the same machine, Godot binary, headless mode, and small-suite shape for
 both runtimes.  It is intentionally excluded from the default suite because
 startup-heavy benchmarks are noisy on shared CI workers.

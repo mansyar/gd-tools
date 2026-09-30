@@ -309,6 +309,23 @@ def _reject_legacy_runtime(source: str) -> None:
     ctx.exit(2)
 
 
+def _validate_parallel(
+    ctx: click.Context,
+    param: click.Parameter,
+    value: int | None,
+) -> int | None:
+    """Validate the --parallel worker count range (1-32)."""
+    if value is None:
+        return None
+    if not 1 <= value <= 32:
+        raise click.BadParameter(
+            "must be an integer between 1 and 32.",
+            ctx=ctx,
+            param=param,
+        )
+    return value
+
+
 @cli.command()
 @click.argument("paths", nargs=-1)
 @click.option(
@@ -317,6 +334,16 @@ def _reject_legacy_runtime(source: str) -> None:
     default=None,
     help="Select the test runtime (default: native). 'gut' is no longer a "
     "runnable runtime; GutTest suites run through the compatibility bridge.",
+)
+@click.option(
+    "--parallel",
+    type=click.INT,
+    is_flag=False,
+    flag_value="4",
+    default=None,
+    callback=_validate_parallel,
+    help="Run suites with up to N concurrent workers (1-32). Bare "
+    "--parallel defaults to 4 workers. Omit for sequential execution.",
 )
 @click.option("--coverage", is_flag=True, help="Generate coverage report.")
 @click.option("--min", type=int, help="Minimum coverage threshold.")
@@ -364,6 +391,7 @@ def _reject_legacy_runtime(source: str) -> None:
 def test(
     paths,
     runtime,
+    parallel,
     coverage,
     min,
     suite,
@@ -413,6 +441,10 @@ def test(
     if selected_runtime not in {"native", "gut"}:
         selected_runtime = "native"
 
+    effective_parallel = (
+        parallel if parallel is not None else config.test.parallel
+    )
+
     if watch and os.environ.get("CI", "").lower() == "true":
         click.echo(
             "Error: --watch is interactive and cannot run with CI=true.",
@@ -445,6 +477,7 @@ def test(
                     test_timeout=test_timeout,
                     show_uncovered=show_uncovered,
                     no_cache=no_cache,
+                    parallel=effective_parallel,
                 )
             )
         if selected_runtime == "native":
@@ -462,6 +495,7 @@ def test(
                 paths=list(paths) if paths else None,
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,
+                parallel=effective_parallel,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)
