@@ -10,7 +10,7 @@
 
 ## Phase 1 — `clean.py` Core (TDD)
 
-- [ ] Task: Write failing unit tests for `run_clean` (Red)
+- [~] Task: Write failing unit tests for `run_clean` (Red)
   - `tests/unit/test_clean.py` with `tmp_path` project fixtures creating
     `.gd-tools/coverage/` (with `plan.json`, `coverage.json`, `baseline.json`),
     `.gd-tools/artifacts/<run_id>/`, `.gd-tools/native/`.
