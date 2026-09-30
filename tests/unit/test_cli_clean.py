@@ -56,7 +56,9 @@ def test_clean_dry_run_reports_would_remove_and_keeps_files(tmp_path):
     assert result.exit_code == 0
     assert "would remove" in result.output.lower()
     assert (tmp_path / ".gd-tools" / "coverage" / "coverage.json").exists()
-    assert (tmp_path / ".gd-tools" / "artifacts" / "run_1" / "result.xml").exists()
+    assert (
+        tmp_path / ".gd-tools" / "artifacts" / "run_1" / "result.xml"
+    ).exists()
 
 
 def test_clean_coverage_removes_dir_and_prints_summary(tmp_path):
@@ -68,7 +70,9 @@ def test_clean_coverage_removes_dir_and_prints_summary(tmp_path):
     assert "coverage" in result.output
     assert "100" in result.output  # coverage.json is 100 bytes
     # artifacts survive
-    assert (tmp_path / ".gd-tools" / "artifacts" / "run_1" / "result.xml").exists()
+    assert (
+        tmp_path / ".gd-tools" / "artifacts" / "run_1" / "result.xml"
+    ).exists()
 
 
 def test_clean_all_removes_everything_but_config(tmp_path):
