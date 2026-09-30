@@ -15,8 +15,12 @@
 
 ## Phase 1 — Addon Playtest Mode (`coverage.gd`)
 
-- [ ] Task 1.1: Write failing GDScript unit tests in `tests/unit/test_coverage_tracker.gd`
-  for playtest mode:
+- [x] Task 1.1: Write failing integration tests for playtest mode in
+  `tests/integration/test_coverage_playtest.py` — Python-driven real-Godot runs
+  mirroring `tests/e2e/test_native_runtime.py` conventions (this is the live way
+  to exercise addon GDScript since the GUT-era e2e drivers were removed in
+  `99e7779`; amends the originally planned `tests/unit/test_coverage_tracker.gd`
+  location, which has no live driver):
   - [ ] `GD_TOOLS_COVERAGE_PLAYTEST=1` activates playtest mode
   - [ ] Periodic flush writes the output file at the configured interval
   - [ ] Exit flush on `NOTIFICATION_WM_CLOSE_REQUEST` finalizes and writes data
@@ -25,8 +29,8 @@
 
   **Expected fail:** playtest mode does not exist yet (Red).
 
-- [ ] Task 1.2: Implement playtest mode in
-  `src/gd_tools/addons/gd-tools-coverage/coverage.gd`:
+- [x] Task 1.2: Implement playtest mode in
+  `src/gd_tools/addons/gd-tools-coverage/coverage.gd` (`1fec960`):
   - [ ] Env-activated mode (`GD_TOOLS_COVERAGE_PLAYTEST=1`)
   - [ ] SceneTree timer driving periodic flush (default 5s, interval via env)
   - [ ] `NOTIFICATION_WM_CLOSE_REQUEST` handling for exit flush
@@ -34,7 +38,7 @@
 
   **Expected pass:** Task 1.1 tests go green (Green).
 
-- [ ] Task 1.3: Refactor + regression:
+- [x] Task 1.3: Refactor + regression:
   - [ ] Existing tracker/instrumentation tests stay green (hook path unaffected)
   - [ ] Coverage gates on affected Python code still met
 
@@ -115,9 +119,9 @@
 
 ## Phase 5 — Integration Test, Docs & Release Polish
 
-- [ ] Task 5.1: CI-skippable integration test using the
-  `tests/fixtures/autoload_coverage` fixture project (real Godot, skipped in
-  CI; NFR-2).
+- [ ] Task 5.1: Integration test for the CLI path (windowed launch, `--timeout`
+  auto-close) using a prepared fixture project (real Godot; runs in CI like the
+  other integration tests — Godot is present via the `install-godot` action).
 
 - [ ] Task 5.2: Documentation (NFR-4):
   - [ ] USER_GUIDE playtest-coverage section
