@@ -70,7 +70,7 @@ every phase (pause for user sign-off before checkpointing).
   - [ ] Produce manual verification plan and pause for user sign-off
   - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
-## Phase 4 — Release Preparation (v0.5.0)
+## Phase 4 — Release Preparation (v0.5.0) [checkpoint: 2dcb333]
 
 - [x] Task 1: Version bump (commit 58b8823)
   - [x] Bump to `0.5.0` in `pyproject.toml` and version-displayed surfaces (`[project]` and `[tool.commitizen]`; `__init__.py` reads installed metadata dynamically)
