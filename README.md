@@ -176,15 +176,14 @@ runner; the bridge is deprecated as of v0.5.0 and will be removed in v0.6.0.
 | Line and branch coverage | Yes | Yes |
 | JUnit XML output | Yes | Yes |
 | Mocking and stubbing | `double()`, `partial_double()`, `stub()` (`.to_return`/`.to_call_super`), `assert_called*` family | Same -- inherited from `GdToolsTest` with identical semantics |
-| Parameterized tests | `parameterize()` in `before_all`, values injected via `use_parameters` | Not supported -- preflight rejects `parameterize()` |
+| Parameterized tests | `parameterize()` in `before_all`, values injected via `use_parameters` | Same -- bridge suites use the same machinery |
 | Skipping a test at runtime | `skip_test()` and `pending_test()` | Yes |
 | Parallel execution | Opt-in -- `--parallel N` or `[test].parallel` (bounded worker pool, 1-32) | Bridge suites run in the same pool |
 | Editor plugin | Not yet | Not applicable |
 
-**Known limitations.** Parameterized tests are native-only -- the bridge
-deliberately refuses `parameterize()` at preflight rather than mis-running
-them, so such suites must migrate to `GdToolsTest`. Suites run sequentially;
-parallel execution is planned but not yet available. The bridge itself is
+**Known limitations.** Parallel execution is opt-in and off by default
+(`--parallel N` / `[test].parallel`); suites run sequentially without it. The
+bridge itself is
 deprecated as of v0.5.0 and will be removed in v0.6.0. See the
 [migration guide](./docs/gut-migration.md) for the bridge's supported subset,
 [User Guide](./docs/USER_GUIDE.md#34-test) for the full flag reference, and
