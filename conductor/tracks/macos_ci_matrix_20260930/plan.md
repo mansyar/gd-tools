@@ -37,15 +37,19 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
 
 ## Phase 2 — Fix macOS-specific issues surfaced by CI (conditional)
 
-- [ ] Task: Diagnose macOS-only failures
-  - Collect failing test names/logs; classify each as (a) genuine macOS
-    platform bug in `src/gd_tools/`, (b) test-fixture assumption (e.g.
-    POSIX paths, line endings), or (c) runner-environment limitation.
-- [ ] Task: Fix source-code issues (TDD)
-  - Only if (a) issues exist: write failing unit tests that reproduce the
-    platform-specific behavior via mocks/monkeypatched platform info
-    (tests must pass on all 3 OSes), then implement the minimal fix in
-    `godot.py` (or the related module). Red → Green → refactor.
+- [x] Task: Diagnose macOS-only failures
+  (run 36684261317, commit 5a1773b)
+  - Findings: (1) macOS integration failed on ALL 3 Godot versions in the
+    action's verify step — `godot --version` SIGKILLed ("Killed: 9",
+    exit 137) on macos-latest arm64 → macOS code-signing/Gatekeeper kill
+    of the extracted binary, category (c) runner-environment limitation.
+    (2) Unit tests failed on Python 3.10 across ALL 3 OSes —
+    `ModuleNotFoundError: No module named 'tomllib'` in
+    `tests/unit/test_version.py` (pre-existing on main, first surfaced
+    here because matrix-unit runs 3.10) → category (b) test-fixture
+    assumption, not macOS-specific. No category (a) issues found.
+- [x] Task: Fix source-code issues (TDD) — not applicable
+  (no category (a) issues: no `src/gd_tools/` changes needed)
 - [x] Task: Fix test-fixture assumptions
   (c467b31 — done early: the CI contract tests in
   `tests/unit/test_ci_matrix.py` pinned the old matrix shape and blocked
