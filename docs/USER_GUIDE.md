@@ -389,7 +389,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--test` | string | None | Run only the specified test. |
 | `--tag` | string, repeatable | Config `[test].tags` | Run native suites matching a class-level tag. |
 | `--test-timeout` | number | Config `[test].timeout_seconds` | Per-test timeout in seconds for native tests. |
-| `--parallel` | integer | Config `[test].parallel` | Run suites with up to N concurrent workers (1-32). Bare `--parallel` defaults to 4 workers. Omit for sequential execution. |
+| `--parallel` | integer | Config `[test].parallel` | Run suites with up to N concurrent workers (1-32). Bare `--parallel` defaults to 4 workers — note it overrides a configured value even if that value is higher. Omit for sequential execution. |
 | `--junit-xml` | string | None | Path to write a JUnit XML report. |
 | `--no-exit-code` | flag | `false` | Do not exit with non-zero on test failure. |
 | `--timeout` | integer | None | Godot import and per-suite process timeout in seconds. |
@@ -465,9 +465,10 @@ gd-tools test tests/unit/test_player.gd
   `GdToolsTest` (native) or `GutTest` (compatibility bridge).
 - Opt-in parallel execution: `--parallel N` or `[test].parallel` dispatches
   suites to at most N concurrent Godot processes. Results, JUnit XML, and
-  merged coverage are identical to a sequential run; a failed or crashed
-  suite never cancels its neighbors, and Ctrl+C kills every in-flight
-  process tree and marks the artifact index `incomplete` (exit `130`).
+  merged coverage are identical to a sequential run; a failed, timed-out, or
+  crashed suite never cancels its neighbors. Ctrl+C (or SIGTERM) kills every
+  in-flight process tree and marks the artifact index `incomplete`
+  (exit `130`) — in both sequential and parallel runs.
 - The runtime does not provide an editor UI.
 
 **Parameterized tests:**

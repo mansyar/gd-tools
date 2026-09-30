@@ -11,6 +11,7 @@ import sys
 import tempfile
 import threading
 import uuid
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -47,7 +48,7 @@ class _ProcessRegistry:
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._processes: set[Any] = set()
+        self._processes: set[subprocess.Popen[Any]] = set()
 
     def add(self, process: Any) -> None:
         with self._lock:
@@ -68,7 +69,7 @@ def _raise_interrupt(signum: int, frame: Any) -> None:
 
 
 @contextlib.contextmanager
-def _sigterm_as_interrupt():
+def _sigterm_as_interrupt() -> Iterator[None]:
     """Treat SIGTERM like Ctrl+C for the duration of the context.
 
     Only installed on the main thread (signal handlers must be), and only
@@ -85,6 +86,21 @@ def _sigterm_as_interrupt():
         yield
     finally:
         signal.signal(signal.SIGTERM, previous)
+
+
+def _ignore_sigterm() -> None:
+    """Stop converting further SIGTERMs while the abort path runs.
+
+    A second SIGTERM during process-tree kills or artifact publishing must
+    not abort the abort; the previous handler is restored by the enclosing
+    ``_sigterm_as_interrupt`` context.
+    """
+    if threading.current_thread() is not threading.main_thread() or not hasattr(
+        signal, "SIGTERM"
+    ):
+        return
+    with contextlib.suppress(OSError, ValueError):
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
 
 def _kill_process_tree(pid: int, *, _platform: str | None = None) -> None:
@@ -115,8 +131,14 @@ def _spawn_process(
     *,
     env: dict[str, str],
     registry: _ProcessRegistry,
-):
-    """Start one Godot suite process and register it for abort handling."""
+    abort_event: threading.Event | None = None,
+) -> subprocess.Popen[str]:
+    """Start one Godot suite process and register it for abort handling.
+
+    If the run was interrupted between the process being spawned and being
+    registered, the process is killed here so it cannot escape the abort
+    snapshot.
+    """
     kwargs: dict[str, Any] = {
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
@@ -130,6 +152,13 @@ def _spawn_process(
         kwargs["start_new_session"] = True
     process = subprocess.Popen(command, **kwargs)
     registry.add(process)
+    if abort_event is not None and abort_event.is_set():
+        # The abort snapshot was taken before this spawn registered; kill
+        # the latecomer here so no tree outlives the interrupted run.
+        _kill_process_tree(process.pid)
+        with contextlib.suppress(Exception):
+            process.communicate()
+        registry.remove(process)
     return process
 
 
@@ -147,6 +176,7 @@ class _SuiteContext:
     coverage: NativeCoverage | None
     parallel: int = 1
     registry: _ProcessRegistry = field(default_factory=_ProcessRegistry)
+    abort_event: threading.Event = field(default_factory=threading.Event)
 
 
 @dataclass
@@ -182,6 +212,8 @@ def _abort_run(context: _SuiteContext, suites: list[NativeSuite]) -> None:
     verified as written at abort time), keeping ``suite_names`` and
     ``suite_paths`` aligned for every suite in discovery order.
     """
+    # Tell spawns racing this snapshot to clean up after themselves.
+    context.abort_event.set()
     for process in context.registry.snapshot():
         if process.poll() is None:
             _kill_process_tree(process.pid)
@@ -262,26 +294,38 @@ def run_native_tests(
     )
     work_items = list(enumerate(suites))
     with _sigterm_as_interrupt():
-        try:
-            if parallel is not None and parallel > 1:
-                with ThreadPoolExecutor(max_workers=parallel) as executor:
-                    futures = [
-                        executor.submit(_execute_suite, index, suite, context)
-                        for index, suite in work_items
-                    ]
+        if parallel is not None and parallel > 1:
+            with ThreadPoolExecutor(max_workers=parallel) as executor:
+                futures = [
+                    executor.submit(_execute_suite, index, suite, context)
+                    for index, suite in work_items
+                ]
+                try:
                     outcomes = [future.result() for future in futures]
-            else:
+                except KeyboardInterrupt:
+                    # Handle the interrupt INSIDE the with-block:
+                    # __exit__ calls shutdown(wait=True), which would
+                    # otherwise join every still-running suite before
+                    # the kill path runs. Killing first makes that
+                    # join return almost immediately.
+                    _ignore_sigterm()
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    _abort_run(context, suites)
+                    raise NativeInterruptError(
+                        _interrupt_message(context)
+                    ) from None
+        else:
+            try:
                 outcomes = [
                     _execute_suite(index, suite, context)
                     for index, suite in work_items
                 ]
-        except KeyboardInterrupt:
-            if parallel is not None and parallel > 1:
-                # Let the executor drop queued work; running workers finish
-                # on their own once their processes are killed below.
-                executor.shutdown(wait=False, cancel_futures=True)
-            _abort_run(context, suites)
-            raise NativeInterruptError(_interrupt_message(context)) from None
+            except KeyboardInterrupt:
+                _ignore_sigterm()
+                _abort_run(context, suites)
+                raise NativeInterruptError(
+                    _interrupt_message(context)
+                ) from None
 
     all_tests: list[NativeTestResult] = []
     coverage_shards: list[Path] = []
@@ -466,11 +510,21 @@ def _execute_suite(
         ]
     )
 
-    process = _spawn_process(command, env=env, registry=context.registry)
+    process = _spawn_process(
+        command,
+        env=env,
+        registry=context.registry,
+        abort_event=context.abort_event,
+    )
     try:
         stdout, stderr = process.communicate(timeout=context.process_timeout)
     except (subprocess.TimeoutExpired, TimeoutError) as exc:
         _kill_process_tree(process.pid)
+        with contextlib.suppress(Exception):
+            # Re-call communicate() after the kill so the direct child is
+            # reaped and its pipes are closed (subprocess.run did this
+            # implicitly; communicate(timeout=...) does not).
+            process.communicate()
         context.registry.remove(process)
         return _SuiteOutcome(
             tests=[_process_error(suite.name, f"Godot process failed: {exc}")],

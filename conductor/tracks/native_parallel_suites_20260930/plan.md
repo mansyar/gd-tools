@@ -99,6 +99,17 @@ the end of every phase (pause for user sign-off before checkpointing).
 
 ---
 
+## Phase: Review Fixes
+
+- [x] Task 1: Apply review findings — H1 interrupt-in-parallel restructure
+  (+ real-executor interrupt regression test), M1 spawn/abort race
+  (`abort_event`), M2 timeout reaping, M3/M4 honest routing + worker-slot
+  claims, H2-H5 doc truth fixes, low-severity cleanups (annotations,
+  CHANGELOG spacing, benchmark docstrings, GDScript event-line wrapping,
+  POSIX test skips) (see `fix(conductor)` commit sha)
+
+---
+
 ## Definition of Done
 
 - All spec functional requirements implemented and tested; sequential default

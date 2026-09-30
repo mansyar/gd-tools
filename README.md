@@ -148,7 +148,8 @@ re-run, and a save during a running suite queues exactly one follow-up run.
   rejected with exit 2; `GutTest` suites run through the compatibility bridge.
 - Interactive only: `--watch` combined with `CI=true` exits 2.
 - The terminal is cleared between runs; the banner shows how many files are
-  watched, and `Ctrl+C` always exits 0.
+  watched. While idle, `Ctrl+C` exits 0; interrupting an in-flight run kills
+  its Godot processes and exits 130.
 - Positional path arguments are not supported with `--watch`; the watched
   scope is the project root minus standard excludes (`.godot/`, `.gd-tools/`,
   `.git/`, and the gd-tools addons).

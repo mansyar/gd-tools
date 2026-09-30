@@ -64,7 +64,14 @@ func _run() -> void:
 	if _suite_name.is_empty() and _suite_count == 1:
 		_suite_name = str(suites[0].get("name", ""))
 
-	_emit_event({"event": "run_started", "protocol_version": PROTOCOL_VERSION, "suite": _suite_name, "worker_slot": _worker_slot})
+	_emit_event(
+		{
+			"event": "run_started",
+			"protocol_version": PROTOCOL_VERSION,
+			"suite": _suite_name,
+			"worker_slot": _worker_slot,
+		}
+	)
 	for suite_data in suites:
 		await _run_suite(suite_data)
 
@@ -800,7 +807,15 @@ func _finish_with_error(message: String) -> void:
 	_run_status = "error"
 	_record_test_result("<runner>", "<runner>", "error", 0.0, message, {})
 	_run_finished_at = _timestamp()
-	_emit_event({"event": "run_finished", "protocol_version": PROTOCOL_VERSION, "suite": _suite_name, "worker_slot": _worker_slot, "status": _run_status})
+	_emit_event(
+		{
+			"event": "run_finished",
+			"protocol_version": PROTOCOL_VERSION,
+			"suite": _suite_name,
+			"worker_slot": _worker_slot,
+			"status": _run_status,
+		}
+	)
 	_write_result()
 	quit(2)
 
@@ -854,7 +869,15 @@ func _finish_with_status() -> void:
 			},
 		)
 	_run_finished_at = _timestamp()
-	_emit_event({"event": "run_finished", "protocol_version": PROTOCOL_VERSION, "suite": _suite_name, "worker_slot": _worker_slot, "status": _run_status})
+	_emit_event(
+		{
+			"event": "run_finished",
+			"protocol_version": PROTOCOL_VERSION,
+			"suite": _suite_name,
+			"worker_slot": _worker_slot,
+			"status": _run_status,
+		}
+	)
 	_write_result()
 	if _run_status == "error":
 		quit(2)

@@ -790,10 +790,11 @@ completion order, and a failed, timed-out, or crashed suite never cancels its
 in-flight neighbors. Coverage shards are merged through the
 order-independent merge ([11.2](#112-orchestratorpy)), so a parallel run
 produces a merged report structurally identical to the sequential run.
-Interrupting a parallel run cancels queued work, kills every in-flight Godot
-process tree (including children), and publishes an `incomplete` artifact
-index before the CLI exits 130. Concurrent Godot processes still contend over
-the shared `.godot/` import cache, which is why parallelism stays opt-in.
+Interrupting a run (sequential or parallel) cancels queued work, kills every
+in-flight Godot process tree (including children), and publishes an
+`incomplete` artifact index before the CLI exits 130. Concurrent Godot
+processes still contend over the shared `.godot/` import cache, which is why
+parallelism stays opt-in.
 
 ### 8.3 Parameterization and Suite-Level Skip
 
@@ -839,9 +840,10 @@ a suite-level skip is terminal --- it never consumes a retry. Per-test
 
 ## 9. Data Formats
 
-All cross-process data is versioned. `NATIVE_PROTOCOL_VERSION` is `2` in
-`protocol.py`, mirrored by `PROTOCOL_VERSION := 2` in both GDScript entrypoints.
-A mismatch is a protocol error, which surfaces as exit `2` --- never as a
+All cross-process data is versioned. `NATIVE_PROTOCOL_VERSION` is `3` in
+`protocol.py`, mirrored by `PROTOCOL_VERSION := 3` in both GDScript entrypoints.
+Version 3 adds `suite` and `worker_slot` identity to progress events. A
+mismatch is a protocol error, which surfaces as exit `2` --- never as a
 silently mis-parsed result.
 
 Every model is a Pydantic `BaseModel` with `extra='forbid'`, so an unknown key
@@ -853,7 +855,7 @@ Written by Python, read by Godot. One file per suite.
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `protocol_version` | `2` | Wire contract version |
+| `protocol_version` | `3` | Wire contract version |
 | `project_root` | path | Absolute project root, for `res://` resolution |
 | `runtime` | `native` \| `gut` | Runtime selector, echoed for clarity |
 | `suite.name` | string | Class name, used for reporting and selection |
@@ -918,9 +920,9 @@ realized.
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `protocol_version` | `2` | Wire contract version |
+| `protocol_version` | `3` | Wire contract version |
 | `run_id` | string | Run identifier |
-| `status` | `passed` \| `failed` \| `error` \| `cancelled` | Terminal run status |
+| `status` | `passed` \| `failed` \| `error` \| `cancelled` \| `incomplete` | Terminal run status; `incomplete` means the run was interrupted and in-flight suites were killed |
 | `artifact_root` / `run_dir` | paths | Where the run wrote |
 | `preflight` | map | Preflight artifact paths |
 | `suites[]` | objects | Suite name plus its realized artifact paths |
@@ -929,7 +931,8 @@ realized.
 ### 9.6 Progress Events (`native/suite-NNNN.events.ndjson`)
 
 One JSON object per line, appended as the run progresses. Streaming, so a run
-can be observed while it executes.
+can be observed while it executes. Every event carries `protocol_version`,
+and the runtime's `suite` name and `worker_slot` scheduling hint.
 
 ### 9.7 Exit Codes
 
@@ -940,6 +943,7 @@ The exit code is the contract. It is stable across runtimes.
 | `0` | All selected tests passed, and any configured coverage threshold was met |
 | `1` | A test failed, or coverage fell below `--min` |
 | `2` | Environment, configuration, protocol, engine, or process failure |
+| `130` | The run was interrupted (Ctrl+C or SIGTERM); in-flight Godot processes were killed and the artifact index was published as `incomplete` |
 
 Exit `2` is reserved for conditions where the run could not be trusted. A test
 assertion failure is never exit `2` --- it is exit `1`. A windowed suite

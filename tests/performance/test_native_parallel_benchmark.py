@@ -1,10 +1,10 @@
 """Opt-in parallel-versus-sequential execution benchmark.
 
-Run with ``GD_TOOLS_RUN_BENCHMARK=1 pytest -m performance``.  The benchmark
-spawns the same fixture suites sequentially and through the parallel worker
-pool and asserts that the parallel run finishes first.  Like the
-native-versus-legacy benchmark it is excluded from the default suite because
-process-spawn-heavy timings are noisy on shared CI workers.
+Run with ``GD_TOOLS_RUN_BENCHMARK=1 pytest tests/performance``.  The
+benchmark spawns the same fixture suites sequentially and through the
+parallel worker pool and asserts that the parallel run finishes first.  Like
+the native-versus-legacy benchmark it is excluded from the default suite
+because process-spawn-heavy timings are noisy on shared CI workers.
 """
 
 import json

@@ -306,7 +306,11 @@ def _reject_legacy_runtime(source: str) -> None:
     ctx.exit(2)
 
 
-def _validate_parallel(ctx, param, value):
+def _validate_parallel(
+    ctx: click.Context,
+    param: click.Parameter,
+    value: int | None,
+) -> int | None:
     """Validate the --parallel worker count range (1-32)."""
     if value is None:
         return None

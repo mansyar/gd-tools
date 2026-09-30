@@ -2,6 +2,7 @@
 
 import itertools
 import json
+import os
 import signal
 import subprocess
 import threading
@@ -809,7 +810,7 @@ def test_parallel_coverage_matches_sequential_merge(tmp_path):
 
 
 def test_parallel_one_runs_suites_in_discovery_order(tmp_path):
-    """parallel=1 keeps the sequential path: ordered, one at a time."""
+    """parallel=1 behaves like sequential execution, one suite at a time."""
     calls = []
 
     def fake_run(args, **kwargs):
@@ -820,9 +821,14 @@ def test_parallel_one_runs_suites_in_discovery_order(tmp_path):
         )
         return CompletedProcess(args, 0, "stdout", "stderr")
 
-    with patch(
-        "gd_tools.native_test.orchestrator._spawn_process",
-        side_effect=_spawn_adapter(fake_run),
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch(
+            "gd_tools.native_test.orchestrator.ThreadPoolExecutor"
+        ) as mock_pool,
     ):
         result = run_native_tests(
             tmp_path,
@@ -833,6 +839,31 @@ def test_parallel_one_runs_suites_in_discovery_order(tmp_path):
 
     assert calls == ["FirstSuite", "SecondSuite"]
     assert result.status == "passed"
+    mock_pool.assert_not_called()
+
+
+def test_parallel_none_never_builds_a_pool(tmp_path):
+    """The default (no --parallel) must not touch the pool machinery."""
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator.ThreadPoolExecutor"
+        ) as mock_pool,
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(
+                lambda args, **kwargs: CompletedProcess(
+                    args, 0, "stdout", "stderr"
+                )
+            ),
+        ),
+    ):
+        run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite")],
+            godot_binary="godot",
+        )
+
+    mock_pool.assert_not_called()
 
 
 def test_parallel_timeout_fails_suite_and_queue_continues(tmp_path):
@@ -1002,9 +1033,18 @@ class _FakePopen:
         self._runner = runner
         self._args = args
         self.returncode = None
+        self._pending_exception = None
 
     def communicate(self, timeout=None):
-        outcome = self._runner(self._args, env=self._env)
+        if self._pending_exception is not None:
+            # The runner already ran and failed; a reaped re-communicate
+            # must not invoke it a second time.
+            raise self._pending_exception
+        try:
+            outcome = self._runner(self._args, env=self._env)
+        except Exception as exc:  # noqa: BLE001 - re-raised verbatim below
+            self._pending_exception = exc
+            raise
         if isinstance(outcome, CompletedProcess):
             self.returncode = outcome.returncode
             return outcome.stdout, outcome.stderr
@@ -1017,9 +1057,12 @@ class _FakePopen:
 def _spawn_adapter(runner):
     """Wrap a fake_run(args, **kwargs) into the _spawn_process seam."""
 
-    def adapt(command, *, env, registry):
+    def adapt(command, *, env, registry, abort_event=None):
         process = _FakePopen(env, runner, command)
         registry.add(process)
+        if abort_event is not None and abort_event.is_set():
+            _kill_process_tree(process.pid)
+            registry.remove(process)
         return process
 
     return adapt
@@ -1041,19 +1084,18 @@ def test_kill_process_tree_windows_uses_taskkill():
     assert taskkill.call_args.kwargs.get("check") is False
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX process groups")
 def test_kill_process_tree_posix_kills_process_group(monkeypatch):
     """On POSIX the kill targets the whole process group."""
     calls = []
-    monkeypatch.setattr(
-        orchestrator_module.os, "getpgid", lambda pid: 99, raising=False
-    )
+    monkeypatch.setattr(orchestrator_module.os, "getpgid", lambda pid: 99)
     monkeypatch.setattr(
         orchestrator_module.os,
         "killpg",
         lambda pgid, sig: calls.append((pgid, sig)),
-        raising=False,
     )
     if not hasattr(orchestrator_module.signal, "SIGKILL"):
+        # Some exotic POSIX platforms lack SIGKILL; create it for the test.
         monkeypatch.setattr(
             orchestrator_module.signal, "SIGKILL", 9, raising=False
         )
@@ -1063,6 +1105,7 @@ def test_kill_process_tree_posix_kills_process_group(monkeypatch):
     assert calls == [(99, signal.SIGKILL)]
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX process groups")
 def test_kill_process_tree_posix_falls_back_to_single_kill(monkeypatch):
     """If the group lookup fails, the direct kill is still attempted."""
     kills = []
@@ -1073,11 +1116,10 @@ def test_kill_process_tree_posix_falls_back_to_single_kill(monkeypatch):
     def boom_killpg(pgid, sig):
         raise AssertionError("killpg must not run when the lookup fails")
 
-    monkeypatch.setattr(orchestrator_module.os, "getpgid", boom, raising=False)
-    monkeypatch.setattr(
-        orchestrator_module.os, "killpg", boom_killpg, raising=False
-    )
+    monkeypatch.setattr(orchestrator_module.os, "getpgid", boom)
+    monkeypatch.setattr(orchestrator_module.os, "killpg", boom_killpg)
     if not hasattr(orchestrator_module.signal, "SIGKILL"):
+        # Some exotic POSIX platforms lack SIGKILL; create it for the test.
         monkeypatch.setattr(
             orchestrator_module.signal, "SIGKILL", 9, raising=False
         )
@@ -1085,7 +1127,6 @@ def test_kill_process_tree_posix_falls_back_to_single_kill(monkeypatch):
         orchestrator_module.os,
         "kill",
         lambda pid, sig: kills.append(pid),
-        raising=False,
     )
 
     _kill_process_tree(4242, _platform="linux")
@@ -1111,6 +1152,9 @@ def test_spawn_process_registers_process_and_uses_popen():
     assert kwargs["text"] is True
     assert kwargs["encoding"] == "utf-8"
     assert kwargs["env"] == {"X": "1"}
+    if os.name == "posix":
+        # Own session so the tree kill can take descendants via killpg.
+        assert kwargs["start_new_session"] is True
     assert registry.snapshot() == [process]
 
 
@@ -1289,7 +1333,12 @@ def test_suite_env_carries_suite_name_and_worker_slot(tmp_path):
 
 
 def test_worker_slot_cycles_across_pool(tmp_path):
-    """Parallel slots cycle deterministically across the worker pool."""
+    """The worker slot is the suite index modulo the worker count.
+
+    Note the slot is a deterministic scheduling hint, not a unique
+    in-flight worker identity: with ``parallel=2`` the suites at index 0
+    and 2 can run concurrently and both legitimately report slot ``0``.
+    """
     envs = []
     with patch(
         "gd_tools.native_test.orchestrator._spawn_process",
@@ -1315,3 +1364,49 @@ def test_worker_slot_cycles_across_pool(tmp_path):
         ("SecondSuite", "1"),
         ("ThirdSuite", "0"),
     ]
+
+
+def test_parallel_interrupt_with_real_executor_kills_in_flight(tmp_path):
+    """A real worker pool: the kill happens before the executor joins.
+
+    Uses the actual ThreadPoolExecutor (not a fake) so the regression in
+    which the interrupt handler only ran after ``Executor.__exit__`` had
+    already joined every suite is caught: an in-flight suite's registered
+    process must be killed while its worker is still blocked inside
+    ``communicate``.
+    """
+    release = threading.Event()
+    killed = []
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        if name == "FirstSuite":
+            raise KeyboardInterrupt
+        # SecondSuite blocks until its process tree is killed.
+        assert release.wait(timeout=10), "suite was never killed"
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    def fake_kill(pid, **kwargs):
+        killed.append(pid)
+        release.set()
+
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch(
+            "gd_tools.native_test.orchestrator._kill_process_tree",
+            side_effect=fake_kill,
+        ),
+        pytest.raises(NativeInterruptError) as excinfo,
+    ):
+        run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            parallel=2,
+        )
+
+    assert excinfo.value.exit_code == 130
+    assert killed, "no in-flight process was killed"
