@@ -15,6 +15,7 @@ from gd_tools.errors import GdToolsError, GodotNotFoundError
 from gd_tools.godot import GodotInfo
 from gd_tools.test_runner import is_gut_installed
 from gd_tools.init import (
+    EDITOR_PLUGIN_FILES,
     NATIVE_TEST_ADDON_FILES,
     create_config_file,
     create_data_dir,
@@ -25,6 +26,7 @@ from gd_tools.init import (
     generate_lint_format_rcs,
     get_installed_gut_version,
     install_coverage_addon,
+    install_editor_plugin,
     install_gut,
     install_native_test_addon,
     print_summary,
@@ -1525,3 +1527,133 @@ def test_run_init_action_summary_includes_version_file_entry(
     assert isinstance(actions, list)
     assert any("version file" in a.lower() for a in actions)
     assert any("v0.3.0" in a for a in actions)
+
+
+# --- install_editor_plugin ---
+
+
+def test_install_editor_plugin_copies_bundled_files(tmp_path: Path):
+    """Editor plugin init deploys all managed plugin files."""
+    from gd_tools import __version__
+
+    install_editor_plugin(tmp_path)
+
+    target_dir = tmp_path / "addons" / "gd-tools-editor"
+    assert (target_dir / "plugin.cfg").is_file()
+    assert (target_dir / "plugin.gd").is_file()
+    assert (target_dir / "dock.gd").is_file()
+    assert (target_dir / "coverage_overlay.gd").is_file()
+    version = (target_dir / "_version.txt").read_text(encoding="utf-8")
+    assert version == f"{__version__}\n"
+
+
+def test_install_editor_plugin_backs_up_modified_files(tmp_path: Path):
+    """Reinitializing preserves user-modified editor files before replacement."""
+    install_editor_plugin(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-editor"
+    modified = "# user customization\n"
+    (target_dir / "dock.gd").write_text(modified, encoding="utf-8")
+
+    with patch("gd_tools.init.console.print") as mock_print:
+        install_editor_plugin(tmp_path)
+
+    backup = target_dir / ".backups" / "dock.gd.bak"
+    assert backup.read_text(encoding="utf-8") == modified
+    assert (target_dir / "dock.gd").read_text(encoding="utf-8") != modified
+    assert "Backed up" in " ".join(
+        str(call.args[0]) for call in mock_print.call_args_list
+    )
+
+
+def test_install_editor_plugin_does_not_backup_unchanged_files(tmp_path: Path):
+    """A repeated editor plugin install does not create unnecessary backups."""
+    install_editor_plugin(tmp_path)
+    target_dir = tmp_path / "addons" / "gd-tools-editor"
+    backups_dir = target_dir / ".backups"
+    if backups_dir.exists():
+        shutil.rmtree(backups_dir)
+
+    install_editor_plugin(tmp_path)
+
+    assert not backups_dir.exists() or not any(backups_dir.iterdir())
+
+
+def test_install_editor_plugin_lists_every_bundled_script() -> None:
+    """Every bundled editor plugin script is part of the managed file list."""
+    addon_source = Path(__file__).parent.parent.parent.joinpath(
+        "src", "gd_tools", "addons", "gd-tools-editor"
+    )
+    bundled = {
+        path.name
+        for path in addon_source.glob("*.gd")
+        if not path.name.startswith("_")
+    }
+
+    assert bundled == {"plugin.gd", "dock.gd", "coverage_overlay.gd"}
+
+
+def test_install_editor_plugin_covers_all_declared_files(tmp_path: Path):
+    """The managed file list covers every bundled editor addon file."""
+    addon_source = Path(__file__).parent.parent.parent.joinpath(
+        "src", "gd_tools", "addons", "gd-tools-editor"
+    )
+    bundled = {
+        path.name
+        for path in addon_source.iterdir()
+        if path.is_file() and not path.name.startswith("_")
+    }
+
+    assert bundled == set(EDITOR_PLUGIN_FILES)
+
+
+def test_run_init_deploys_editor_plugin(tmp_path: Path):
+    """Native init deploys the editor plugin addon by default."""
+    (tmp_path / "project.godot").write_text("config_version=5\n")
+    config = GdToolsConfig()
+    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
+
+    with (
+        patch("gd_tools.init.find_project_root", return_value=tmp_path),
+        patch("gd_tools.init.load_config", return_value=config),
+        patch("gd_tools.init.find_godot", return_value=mock_info),
+        patch("gd_tools.init.install_native_test_addon"),
+        patch("gd_tools.init.install_editor_plugin"),
+        patch("gd_tools.init.install_gut") as gut,
+        patch("gd_tools.init.enable_gut_plugin"),
+        patch("gd_tools.init.register_coverage_autoload"),
+        patch("gd_tools.init.install_coverage_addon"),
+        patch("gd_tools.init.update_gutconfig"),
+        patch("gd_tools.init.create_config_file"),
+        patch("gd_tools.init.generate_lint_format_rcs"),
+        patch("gd_tools.init.create_data_dir"),
+        patch("gd_tools.init.print_summary") as mock_summary,
+    ):
+        run_init()
+
+    gut.assert_not_called()
+    call_args = mock_summary.call_args
+    actions = (
+        call_args.args[1] if call_args.args else call_args.kwargs.get("actions")
+    )
+    assert isinstance(actions, list)
+    assert any("editor plugin" in a.lower() for a in actions)
+
+
+def test_pyproject_package_data_includes_editor_addon():
+    """Wheel packaging ships the bundled editor plugin files."""
+    import sys
+
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:  # pragma: no cover
+        import tomli as tomllib
+
+    pyproject = Path(__file__).parent.parent.parent / "pyproject.toml"
+    with open(pyproject, "rb") as f:
+        data = tomllib.load(f)
+
+    package_data = data["tool"]["setuptools"]["package-data"]
+    patterns = [
+        pattern for values in package_data.values() for pattern in values
+    ]
+    assert any("gd-tools-editor" in pattern for pattern in patterns)

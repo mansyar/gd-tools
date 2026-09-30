@@ -66,7 +66,7 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
         result = run_doctor()
 
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 11
+    assert len(result.checks) == 12
     assert not result.all_passed
 
     check_map = {c.name: c for c in result.checks}
@@ -143,7 +143,7 @@ def test_doctor_after_init(tmp_path, monkeypatch):
         result = run_doctor()
 
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 11
+    assert len(result.checks) == 12
     # The GUT addon installed by --with-gut conflicts with the bridge.
     assert not result.all_passed
 
