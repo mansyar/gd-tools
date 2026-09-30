@@ -1,3 +1,11 @@
+# GDScript addons and the Python test suite are outside the pytest coverage
+# report (--cov=gd_tools); their behavior is verified by the real-Godot
+# integration suite. Excluding them keeps the patch status meaningful instead
+# of counting unmeasurable lines as uncovered.
+ignore:
+  - "src/gd_tools/addons/**"
+  - "tests/**"
+
 coverage:
   status:
     patch:
