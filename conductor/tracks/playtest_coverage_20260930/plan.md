@@ -108,7 +108,7 @@
 
 ## Phase 4 — CLI Wiring (`coverage run`)
 
-- [ ] Task 4.1: Write failing CLI unit tests:
+- [x] Task 4.1: Write failing CLI unit tests:
   - [ ] `coverage run` accepts `--scene`, `--timeout`, `--min`,
         `--report-format` (FR-1)
   - [ ] Help text documents the subcommand and flags
@@ -116,10 +116,11 @@
 
   **Expected fail:** subcommand does not exist yet (Red).
 
-- [ ] Task 4.2: Wire `coverage run` into the coverage command group in
-  `src/gd_tools/cli.py`, calling the playtest orchestrator (Green).
+- [x] Task 4.2: Wire `coverage run` into the coverage command group in
+  `src/gd_tools/cli.py`, calling the playtest orchestrator (Green)
+  (`6012692`).
 
-- [ ] Task 4.3: Refactor + full unit suite green.
+- [x] Task 4.3: Refactor + full unit suite green (106/106 CLI tests).
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
