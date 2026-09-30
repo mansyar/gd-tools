@@ -1126,9 +1126,10 @@ func _test_helper():  # gd-tools: no cover
     return preload("res://test_helpers.gd")
 ```
 
-The token must appear in a comment, exactly as
-`# gd-tools: no cover` (the optional `start`/`end` suffix selects the
-block form). Annotations inside string literals or docstrings are
+The token must appear in a comment as
+`# gd-tools: no cover` (whitespace around the token is flexible; the
+optional `start`/`end` suffix selects the block form). Annotations
+inside string literals or docstrings are
 inert.
 
 **Edge-case semantics:**
