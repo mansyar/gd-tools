@@ -19,7 +19,6 @@
 
 ### Known Limitations
 
-- Parallel suite execution is available behind `--parallel N` / `[test].parallel` (1-32, default 4); the earlier "suites run sequentially; parallel execution is deferred" note no longer applies.
 - The GUT compatibility bridge is deprecated in this release and planned for removal in v0.6.0. `GutTest` suites still run through it during the migration window; new suites should extend `GdToolsTest`.
 - There is no editor plugin integration (roadmap Phase 5 candidates: coverage heatmap dock, playtest coverage).
 
