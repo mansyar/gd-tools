@@ -38,7 +38,7 @@ every phase (pause for user sign-off before checkpointing).
   - [ ] Produce manual verification plan (CLI feature variant) and pause for user sign-off
   - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
-## Phase 2 — GUT Bridge Deprecation
+## Phase 2 — GUT Bridge Deprecation [checkpoint: b7be0f7]
 
 - [x] Task 1: One-time deprecation notice for GUT-style suites
   - [x] Write failing tests (Red): running a GUT-style suite prints a deprecation notice exactly once per run stating removal is planned for v0.6.0; native suites print nothing new (1/2 failed on first run)
