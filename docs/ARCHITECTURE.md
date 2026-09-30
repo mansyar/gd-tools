@@ -780,11 +780,20 @@ detail --- it is what makes the run reproducible:
 - Each process gets a fresh `ProjectSettings` load and a fresh engine, so
   ordering between suites cannot become a hidden dependency.
 
-Suites run **sequentially** by default. Parallel execution is deliberately
-deferred: concurrent Godot processes contend over the shared `.godot/` import
-cache, and that contention is already a known source of intermittent failures
-under load. The coverage shard merge ([11.2](#112-orchestratorpy)) is
-order-independent, so it is already parallel-safe if that decision is revisited.
+Suites run **sequentially by default**. Passing `--parallel N` (or setting
+`[test].parallel` in `gd-tools.toml`) dispatches suites to a bounded
+`ThreadPoolExecutor` of at most N workers; each worker launches its own
+isolated Godot process, so a suite's per-process timeout, crash handling, and
+artifact capture are enforced independently per worker. Dispatch follows
+discovery order, results are aggregated in discovery order regardless of
+completion order, and a failed, timed-out, or crashed suite never cancels its
+in-flight neighbors. Coverage shards are merged through the
+order-independent merge ([11.2](#112-orchestratorpy)), so a parallel run
+produces a merged report structurally identical to the sequential run.
+Interrupting a parallel run cancels queued work, kills every in-flight Godot
+process tree (including children), and publishes an `incomplete` artifact
+index before the CLI exits 130. Concurrent Godot processes still contend over
+the shared `.godot/` import cache, which is why parallelism stays opt-in.
 
 ### 8.3 Parameterization and Suite-Level Skip
 
@@ -1000,8 +1009,8 @@ missing or unparseable becomes an `error` test result rather than a silent
 omission.
 
 `_merge_coverage_shards()` is order-independent by design, so coverage results
-do not depend on suite order. That is also what makes the deferred parallelism
-decision cheap to revisit.
+do not depend on suite order or on whether suites ran sequentially or through
+the worker pool.
 
 `DEFAULT_RUNNER_SCRIPT` pins the runner to
 `res://addons/gd-tools-test/gd_tools_test_runner.gd`.
@@ -1284,8 +1293,6 @@ Isolation over throughput. See [8.2](#82-isolation-model).
 
 Stated so they are not discovered by surprise:
 
-- **No parallel execution.** Suites run sequentially (see
-  [8.2](#82-isolation-model)).
 - **No editor integration.** The runtime is headless and script-driven only.
 
 The GUT compatibility bridge inherits every limitation above and adds its
