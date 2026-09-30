@@ -1,11 +1,15 @@
 """Unit tests for the version detection module."""
 
 import sys
-import tomllib
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib  # type: ignore[no-redef]
 
 from gd_tools.version import collect_versions
 
