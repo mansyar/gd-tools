@@ -129,16 +129,21 @@
 
 ## Phase 5 — Integration Test, Docs & Release Polish
 
-- [ ] Task 5.1: Integration test for the CLI path (windowed launch, `--timeout`
+- [x] Task 5.1: Integration test for the CLI path (windowed launch, `--timeout`
   auto-close) using a prepared fixture project (real Godot; runs in CI like the
   other integration tests — Godot is present via the `install-godot` action).
+  Implemented as `tests/integration/test_coverage_playtest_cli.py` (clean-exit
+  scene + lingering scene closed by `--timeout 15`); the ubuntu CI leg now
+  runs under `xvfb-run` since the windowed launch needs a display server;
+  the Phase 1 integration file also gained its missing `pytestmark`
+  (CI would have silently deselected it) (`e486f2c`).
 
-- [ ] Task 5.2: Documentation (NFR-4):
+- [x] Task 5.2: Documentation (NFR-4):
   - [ ] USER_GUIDE playtest-coverage section
   - [ ] README feature mention
   - [ ] CHANGELOG entry
 
-- [ ] Task 5.3: Full verification:
+- [x] Task 5.3: Full verification:
   - [ ] `CI=true pytest` green
   - [ ] `ruff check src/ tests/` clean
   - [ ] `black --check src/ tests/` clean
