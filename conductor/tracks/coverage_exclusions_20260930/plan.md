@@ -71,4 +71,8 @@ Covers spec AC8.
 
 - [x] Task 4.1: USER_GUIDE section documenting all three forms, edge-case semantics, and the warn-and-continue behavior [9f39cfb]
 - [x] Task 4.2: README one-liner under coverage features [9f39cfb]
-- [ ] Task 4.3: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 4.3: Phase Verification & Checkpoint (Refer to workflow.md) [ff99d74]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions [7611f2b]
