@@ -115,3 +115,12 @@ _Archived tracks live in `./archive/`._
   Roadmap Track 36) (archived
   ./archive/macos_ci_matrix_20260930/)
   *Link: [macos_ci_matrix_20260930](./archive/macos_ci_matrix_20260930/index.md)*
+
+---
+
+- [ ] **Track: Coverage During Playtesting** (feature: `gd-tools coverage run`
+  launches the game windowed and instrumented, collects coverage during live
+  gameplay via an env-activated playtest mode in the coverage autoload
+  (periodic + exit flush), and reports through the existing reporter suite with
+  `--timeout` and `--min` gating; Roadmap Track 34)
+  *Link: [playtest_coverage_20260930](./tracks/playtest_coverage_20260930/index.md)*
