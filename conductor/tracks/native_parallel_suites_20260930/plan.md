@@ -35,13 +35,13 @@ the end of every phase (pause for user sign-off before checkpointing).
 
 ## Phase 2 — Parallel Execution Engine
 
-- [ ] Task 1: Worker-pool scheduler in `native_test/orchestrator.py`
+- [x] Task 1: Worker-pool scheduler in `native_test/orchestrator.py`
   (discovery-order queue, per-worker dispatch, mocked subprocesses in unit
-  tests)
-  - [ ] Write failing tests (Red): concurrency bound respected, dispatch
+  tests) (62bf0a4)
+  - [x] Write failing tests (Red): concurrency bound respected, dispatch
     order, all suites executed
-  - [ ] Implement (Green)
-- [ ] Task 2: Per-worker timeout enforcement + continue-after-failure
+  - [x] Implement (Green)
+- [~] Task 2: Per-worker timeout enforcement + continue-after-failure
   semantics (timed-out/crashed suite fails its slot; next suite dispatched; no
   cross-suite cancellation)
   - [ ] Write failing tests (Red)

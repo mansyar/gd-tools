@@ -747,3 +747,103 @@ def test_parallel_one_runs_suites_in_discovery_order(tmp_path):
 
     assert calls == ["FirstSuite", "SecondSuite"]
     assert result.status == "passed"
+
+
+def test_parallel_timeout_fails_suite_and_queue_continues(tmp_path):
+    """A timed-out suite fails its own slot; remaining suites still run."""
+    calls = []
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        calls.append(name)
+        if name == "FirstSuite":
+            raise TimeoutExpired("godot", 60)
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [
+                _suite("FirstSuite"),
+                _suite("SecondSuite"),
+                _suite("ThirdSuite"),
+            ],
+            godot_binary="godot",
+            process_timeout=60,
+            parallel=2,
+        )
+
+    assert sorted(calls) == ["FirstSuite", "SecondSuite", "ThirdSuite"]
+    timeout_tests = [t for t in result.tests if t.suite == "FirstSuite"]
+    assert len(timeout_tests) == 1
+    assert timeout_tests[0].status == "error"
+    assert "Godot process failed" in timeout_tests[0].message
+    assert result.status == "error"
+
+
+def test_parallel_timeouts_are_independent_per_suite(tmp_path):
+    """Each timed-out suite reports its own error, not a shared one."""
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        if name in {"FirstSuite", "ThirdSuite"}:
+            raise TimeoutExpired("godot", 60)
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [
+                _suite("FirstSuite"),
+                _suite("SecondSuite"),
+                _suite("ThirdSuite"),
+            ],
+            godot_binary="godot",
+            process_timeout=60,
+            parallel=2,
+        )
+
+    error_suites = [
+        t.suite for t in result.tests if t.status == "error"
+    ]
+    assert sorted(error_suites) == ["FirstSuite", "ThirdSuite"]
+    assert result.status == "error"
+
+
+def test_parallel_crashed_suite_does_not_block_queue(tmp_path):
+    """A crashed suite (no result file) errors its slot; peers complete."""
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        if name == "SecondSuite":
+            return CompletedProcess(args, -1073741819, "stdout", "crash")
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            parallel=2,
+        )
+
+    assert result.status == "error"
+    assert [(t.suite, t.status) for t in result.tests] == [
+        ("FirstSuite", "passed"),
+        ("SecondSuite", "error"),
+    ]
