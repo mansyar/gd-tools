@@ -747,6 +747,67 @@ def test_parallel_matches_sequential_results(tmp_path):
     assert parallel.stderr == sequential.stderr
 
 
+def test_parallel_coverage_matches_sequential_merge(tmp_path):
+    """Parallel runs merge coverage into a report identical to sequential."""
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        manifest = json.loads(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_MANIFEST"]).read_text()
+        )
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        _write_result(result_path)
+        shard_path = Path(manifest["coverage"]["output_path"])
+        hits = {"0": 1 if name == "FirstSuite" else 2}
+        shard_path.write_text(
+            json.dumps(
+                {
+                    "version": 1,
+                    "generated_at": "test",
+                    "files": [{"file_id": 0, "hits": hits}],
+                    "omitted": [{"file_id": 0, "reason": name}],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    suites = [_suite("FirstSuite"), _suite("SecondSuite")]
+    coverage_kwargs = {
+        "coverage": NativeCoverage(
+            enabled=True,
+            plan_path=tmp_path / "plan.json",
+            output_path=tmp_path / "coverage.json",
+        )
+    }
+    (tmp_path / "plan.json").write_text("{}", encoding="utf-8")
+    with patch(
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
+    ):
+        sequential = run_native_tests(
+            tmp_path, suites, godot_binary="godot", **coverage_kwargs
+        )
+        sequential_report = json.loads(
+            sequential.coverage_data_path.read_text(encoding="utf-8")
+        )
+        parallel = run_native_tests(
+            tmp_path,
+            suites,
+            godot_binary="godot",
+            parallel=2,
+            **coverage_kwargs,
+        )
+        parallel_report = json.loads(
+            parallel.coverage_data_path.read_text(encoding="utf-8")
+        )
+
+    assert parallel_report == sequential_report
+    assert parallel_report["files"][0]["hits"] == {"0": 3}
+    assert parallel_report["omitted"] == sequential_report["omitted"]
+    assert len(parallel_report["omitted"]) == 2
+
+
 def test_parallel_one_runs_suites_in_discovery_order(tmp_path):
     """parallel=1 keeps the sequential path: ordered, one at a time."""
     calls = []
