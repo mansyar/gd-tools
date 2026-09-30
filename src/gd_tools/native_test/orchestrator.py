@@ -145,6 +145,7 @@ class _SuiteContext:
     output_dir: Path
     artifact_layout: NativeArtifactLayout | None
     coverage: NativeCoverage | None
+    parallel: int = 1
     registry: _ProcessRegistry = field(default_factory=_ProcessRegistry)
 
 
@@ -257,6 +258,7 @@ def run_native_tests(
         output_dir=output_dir,
         artifact_layout=artifact_layout,
         coverage=coverage,
+        parallel=parallel if parallel and parallel > 1 else 1,
     )
     work_items = list(enumerate(suites))
     with _sigterm_as_interrupt():
@@ -443,6 +445,8 @@ def _execute_suite(
             "GD_TOOLS_NATIVE_LOG": str(log_path),
             "GD_TOOLS_NATIVE_SCREENSHOT": str(screenshot_path),
             "GD_TOOLS_NATIVE_RUN_ID": context.run_id,
+            "GD_TOOLS_SUITE_NAME": suite.name,
+            "GD_TOOLS_WORKER_SLOT": str(index % context.parallel),
         }
     )
     command = [context.godot_binary]

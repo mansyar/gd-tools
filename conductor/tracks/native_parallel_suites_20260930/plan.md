@@ -64,7 +64,7 @@ the end of every phase (pause for user sign-off before checkpointing).
 
 ## Phase 3 — Protocol, Coverage & Watch Integration
 
-- [ ] Task 1: NDJSON progress events carry suite identifier + worker slot;
+- [~] Task 1: NDJSON progress events carry suite identifier + worker slot;
   protocol minor version bump per versioned-JSON convention
   - [ ] Write failing tests (Red)
   - [ ] Implement (Green)

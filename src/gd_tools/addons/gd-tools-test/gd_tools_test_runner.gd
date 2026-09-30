@@ -9,12 +9,15 @@ extends SceneTree
 
 signal test_call_completed
 
-const PROTOCOL_VERSION := 2
+const PROTOCOL_VERSION := 3
 const TEST_CONTEXT_SCRIPT = preload("res://addons/gd-tools-test/gd_tools_test_context.gd")
 const PARAMETER_NAMING = preload("res://addons/gd-tools-test/gd_tools_parameter_naming.gd")
 
 var _test_results: Array[Dictionary] = []
 var _run_status := "passed"
+var _suite_name := ""
+var _worker_slot := 0
+var _suite_count := 0
 var _active_test_token := 0
 var _test_timeout_reached := false
 var _test_completed := false
@@ -41,6 +44,8 @@ func _init() -> void:
 
 func _run() -> void:
 	_run_started_at = _timestamp()
+	_suite_name = OS.get_environment("GD_TOOLS_SUITE_NAME")
+	_worker_slot = int(OS.get_environment("GD_TOOLS_WORKER_SLOT"))
 	var manifest := _load_manifest()
 	if manifest.is_empty():
 		return
@@ -54,8 +59,13 @@ func _run() -> void:
 	if not _activate_coverage(manifest.get("coverage", {})):
 		return
 
-	_emit_event({"event": "run_started", "protocol_version": PROTOCOL_VERSION})
-	for suite_data in manifest.get("suites", []):
+	var suites: Array = manifest.get("suites", [])
+	_suite_count = suites.size()
+	if _suite_name.is_empty() and _suite_count == 1:
+		_suite_name = str(suites[0].get("name", ""))
+
+	_emit_event({"event": "run_started", "protocol_version": PROTOCOL_VERSION, "suite": _suite_name, "worker_slot": _worker_slot})
+	for suite_data in suites:
 		await _run_suite(suite_data)
 
 	_finish_with_status()
@@ -85,6 +95,8 @@ func _load_manifest() -> Dictionary:
 
 func _run_suite(suite_data: Dictionary) -> void:
 	var suite_name := str(suite_data.get("name", ""))
+	if _suite_count == 1 and not _suite_name.is_empty():
+		suite_name = _suite_name
 	var suite_path := str(suite_data.get("path", ""))
 	var integration: Variant = suite_data.get("integration", {})
 	_current_windowed = (
@@ -245,7 +257,14 @@ func _run_test(
 	suite_skip_reason: String = ""
 ) -> void:
 	var test_name := str(test_data.get("name", ""))
-	_emit_event({"event": "test_started", "suite": suite_name, "name": test_name})
+	_emit_event(
+		{
+			"event": "test_started",
+			"suite": suite_name,
+			"name": test_name,
+			"worker_slot": _worker_slot,
+		}
+	)
 	var skip_reason := str(test_data.get("skip_reason", ""))
 	if skip_reason.is_empty():
 		skip_reason = suite_skip_reason
@@ -258,6 +277,7 @@ func _run_test(
 				"name": test_name,
 				"status": "skipped",
 				"attempts": 1,
+				"worker_slot": _worker_slot,
 			}
 		)
 		return
@@ -297,6 +317,7 @@ func _run_test(
 			"name": test_name,
 			"status": final_status,
 			"attempts": attempt,
+			"worker_slot": _worker_slot,
 		}
 	)
 
@@ -779,7 +800,7 @@ func _finish_with_error(message: String) -> void:
 	_run_status = "error"
 	_record_test_result("<runner>", "<runner>", "error", 0.0, message, {})
 	_run_finished_at = _timestamp()
-	_emit_event({"event": "run_finished", "status": _run_status})
+	_emit_event({"event": "run_finished", "protocol_version": PROTOCOL_VERSION, "suite": _suite_name, "worker_slot": _worker_slot, "status": _run_status})
 	_write_result()
 	quit(2)
 
@@ -833,7 +854,7 @@ func _finish_with_status() -> void:
 			},
 		)
 	_run_finished_at = _timestamp()
-	_emit_event({"event": "run_finished", "status": _run_status})
+	_emit_event({"event": "run_finished", "protocol_version": PROTOCOL_VERSION, "suite": _suite_name, "worker_slot": _worker_slot, "status": _run_status})
 	_write_result()
 	if _run_status == "error":
 		quit(2)

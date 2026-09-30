@@ -54,7 +54,7 @@ def _write_result(
     result_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "run_id": "test-run",
                 "status": status,
                 "engine_warnings": engine_warnings or [],
@@ -556,7 +556,7 @@ def test_run_native_tests_records_expired_process_timeout(tmp_path):
 def _result_for(suite_name: str, status: str = "passed") -> str:
     return json.dumps(
         {
-            "protocol_version": 2,
+            "protocol_version": 3,
             "run_id": "test-run",
             "status": status,
             "engine_warnings": [],
@@ -1192,3 +1192,65 @@ def test_sigterm_conversion_installs_and_restores_handler():
     with _sigterm_as_interrupt():
         assert signal.getsignal(signal.SIGTERM) is _raise_interrupt
     assert signal.getsignal(signal.SIGTERM) is previous
+
+
+def _env_collecting_runner(envs):
+    """Build a fake runner that records the per-suite environment."""
+
+    def runner(args, **kwargs):
+        envs.append(kwargs["env"])
+        name = _suite_name_from_env(kwargs)
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    return runner
+
+
+def test_suite_env_carries_suite_name_and_worker_slot(tmp_path):
+    """Suite identity and scheduling slot flow to the runner via env."""
+    envs = []
+    with patch(
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(_env_collecting_runner(envs)),
+    ):
+        run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+        )
+
+    assert [env["GD_TOOLS_SUITE_NAME"] for env in envs] == [
+        "FirstSuite",
+        "SecondSuite",
+    ]
+    assert [env["GD_TOOLS_WORKER_SLOT"] for env in envs] == ["0", "0"]
+
+
+def test_worker_slot_cycles_across_pool(tmp_path):
+    """Parallel slots cycle deterministically across the worker pool."""
+    envs = []
+    with patch(
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(_env_collecting_runner(envs)),
+    ):
+        run_native_tests(
+            tmp_path,
+            [
+                _suite("FirstSuite"),
+                _suite("SecondSuite"),
+                _suite("ThirdSuite"),
+            ],
+            godot_binary="godot",
+            parallel=2,
+        )
+
+    slots = sorted(
+        (env["GD_TOOLS_SUITE_NAME"], env["GD_TOOLS_WORKER_SLOT"])
+        for env in envs
+    )
+    assert slots == [
+        ("FirstSuite", "0"),
+        ("SecondSuite", "1"),
+        ("ThirdSuite", "0"),
+    ]

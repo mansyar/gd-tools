@@ -93,7 +93,7 @@ def _run_bridge_manifest(
     """Write a bridge manifest, invoke the native runner, and read the result."""
     manifest_path = result_path.with_suffix(".manifest.json")
     manifest = {
-        "protocol_version": 2,
+        "protocol_version": 3,
         "project_root": str(project),
         "runtime": "gut",
         "suites": suites,
@@ -170,7 +170,7 @@ class TestBridgeResultContract:
             result_path,
         )
 
-        assert result["protocol_version"] == 2
+        assert result["protocol_version"] == 3
         assert result["status"] == "passed"
         assert completed.returncode == 0
         assert result["tests"], "expected recorded tests"
