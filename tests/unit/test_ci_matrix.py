@@ -35,7 +35,7 @@ ACTION_PATH = (
 
 GODOT_STAGES = ["integration", "e2e"]
 EXPECTED_VERSIONS = ["4.5.2", "4.6.1", "4.7.1"]
-EXPECTED_OSES = ["ubuntu-latest", "windows-latest"]
+EXPECTED_OSES = ["ubuntu-latest", "windows-latest", "macos-latest"]
 
 
 @pytest.fixture(scope="module")
@@ -63,7 +63,7 @@ def test_each_godot_stage_has_a_version_axis(godot_jobs: dict, stage: str):
 
 @pytest.mark.parametrize("stage", GODOT_STAGES)
 def test_each_godot_stage_has_an_os_axis(godot_jobs: dict, stage: str):
-    """Every Godot stage runs on Linux and Windows."""
+    """Every Godot stage runs on Linux, Windows and macOS."""
     matrix = godot_jobs[stage]["strategy"]["matrix"]
     assert matrix["os"] == EXPECTED_OSES
 
@@ -75,10 +75,10 @@ def test_each_godot_stage_runs_on_the_matrix_os(godot_jobs: dict, stage: str):
 
 
 @pytest.mark.parametrize("stage", GODOT_STAGES)
-def test_each_godot_stage_expands_to_six_jobs(godot_jobs: dict, stage: str):
-    """3 versions x 2 OSes = 6 jobs per stage, 12 across the two stages."""
+def test_each_godot_stage_expands_to_nine_jobs(godot_jobs: dict, stage: str):
+    """3 versions x 3 OSes = 9 jobs per stage, 18 across the two stages."""
     matrix = godot_jobs[stage]["strategy"]["matrix"]
-    assert len(matrix["godot-version"]) * len(matrix["os"]) == 6
+    assert len(matrix["godot-version"]) * len(matrix["os"]) == 9
 
 
 @pytest.mark.parametrize("stage", GODOT_STAGES)
@@ -100,7 +100,7 @@ def test_axes_are_separate_so_a_failure_names_both_dimensions(
 
 @pytest.mark.parametrize("stage", GODOT_STAGES)
 def test_fail_fast_is_disabled(godot_jobs: dict, stage: str):
-    """One failing cell must not cancel the other five."""
+    """One failing cell must not cancel the other eight."""
     assert godot_jobs[stage]["strategy"]["fail-fast"] is False
 
 
@@ -130,7 +130,7 @@ def test_artifact_names_are_unique_per_cell(godot_jobs: dict, stage: str):
 
 @pytest.mark.parametrize("stage", GODOT_STAGES)
 def test_godot_stages_stay_off_the_python_axis(godot_jobs: dict, stage: str):
-    """A single Python version only; adding the axis would mean 36 jobs."""
+    """A single Python version only; adding the axis would mean 27 jobs."""
     steps = godot_jobs[stage]["steps"]
     setup = next(
         s
@@ -190,10 +190,11 @@ def test_install_action_is_a_composite_action():
 
 
 def test_install_action_selects_the_asset_per_platform():
-    """Linux and Windows ship different asset names; the step must branch."""
+    """Linux, Windows and macOS ship different asset names; the step branches."""
     text = ACTION_PATH.read_text(encoding="utf-8")
     assert "_linux.x86_64.zip" in text
     assert "_win64.exe.zip" in text
+    assert "_macos.universal.zip" in text
 
 
 def test_install_action_exports_godot_bin_for_native_python():
