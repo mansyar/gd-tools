@@ -15,10 +15,10 @@
 
 - **native-test**: `GdToolsTest.wait_for_signal` is bounded and returns whether the signal was emitted. It was declared `-> bool` but could only ever return `true`, so a guard such as `if not wait_for_signal(sig): fail(...)` never reached the `fail` — the await blocked to the per-test timeout and the test was reported as `timeout` rather than `failed`, discarding the reason. A test waiting on a signal that never arrives now receives `false` at the wait budget (default `5.0`, matching the per-test default) instead of running to the per-test timeout, and the wait resolves as soon as the signal fires rather than when the budget runs out. The wait records no failure of its own.
 - **native-test**: Infrastructure failures (exit 2) now carry structured diagnostics. Timeout, engine-crash, unparseable-result, and protocol-mismatch failures report `expected` / `found` / `kind` / `remedy` — e.g. a timeout names its budget and points at `--timeout` / `[test].timeout_seconds`; an engine crash points at the engine log directory; the aggregate error surfaces the first remedy.
+- **docs**: Correct stale capability claims left over from earlier milestones. README, ROADMAP, and PRD no longer describe parallel suite execution as "planned but not yet available" / "deferred", and README's bridge capability table no longer claims `parameterize()` is bridge-unsupported — parameterized tests and parallel execution both shipped in this release (`cli.py --parallel`, bridge parameterization included).
 
 ### Known Limitations
 
-- Suites run sequentially; optional parallel execution is deferred (roadmap Phase 5).
 - The GUT compatibility bridge is deprecated in this release and planned for removal in v0.6.0. `GutTest` suites still run through it during the migration window; new suites should extend `GdToolsTest`.
 - There is no editor plugin integration (roadmap Phase 5 candidates: coverage heatmap dock, playtest coverage).
 
