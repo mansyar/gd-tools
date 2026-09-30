@@ -7,6 +7,8 @@ import os
 import subprocess
 import tempfile
 import uuid
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +32,35 @@ from gd_tools.native_test.protocol import (
 DEFAULT_RUNNER_SCRIPT = "res://addons/gd-tools-test/gd_tools_test_runner.gd"
 
 
+@dataclass
+class _SuiteContext:
+    """Constants shared by every per-suite worker invocation."""
+
+    project_root: Path
+    godot_binary: str
+    runner_script: str
+    process_timeout: float
+    run_id: str
+    output_dir: Path
+    artifact_layout: NativeArtifactLayout | None
+    coverage: NativeCoverage | None
+
+
+@dataclass
+class _SuiteOutcome:
+    """Everything one suite execution contributes to the aggregate."""
+
+    tests: list[NativeTestResult]
+    stdout: str = ""
+    stderr: str = ""
+    has_failure: bool = False
+    has_error: bool = False
+    suite_paths: dict[str, Any] | None = None
+    coverage_shard: Path | None = None
+    engine_warnings: list[str] = field(default_factory=list)
+    coverage_omissions: list[dict[str, Any]] = field(default_factory=list)
+
+
 def run_native_tests(
     project_root: Path,
     suites: list[NativeSuite],
@@ -41,6 +72,7 @@ def run_native_tests(
     work_dir: Path | None = None,
     run_id: str | None = None,
     artifact_layout: NativeArtifactLayout | None = None,
+    parallel: int | None = None,
 ) -> NativeRunResult:
     """Run each native suite in an isolated Godot process.
 
@@ -56,6 +88,10 @@ def run_native_tests(
         run_id: Optional identifier shared with the integration preflight.
         artifact_layout: Optional run-scoped layout for publishing an artifact
             index and retaining only the latest run.
+        parallel: Optional worker count for concurrent suite execution.
+            ``None`` or a value below 2 runs suites sequentially. Results are
+            always aggregated in discovery order regardless of completion
+            order.
 
     Returns:
         Aggregated native result. A process-level failure is represented as
@@ -71,12 +107,32 @@ def run_native_tests(
         run_id = run_id or uuid.uuid4().hex
         output_dir = work_dir or project_root / ".gd-tools" / "native"
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    context = _SuiteContext(
+        project_root=project_root,
+        godot_binary=godot_binary,
+        runner_script=runner_script,
+        process_timeout=process_timeout,
+        run_id=run_id,
+        output_dir=output_dir,
+        artifact_layout=artifact_layout,
+        coverage=coverage,
+    )
+    work_items = list(enumerate(suites))
+    if parallel is not None and parallel > 1:
+        with ThreadPoolExecutor(max_workers=parallel) as executor:
+            futures = [
+                executor.submit(_execute_suite, index, suite, context)
+                for index, suite in work_items
+            ]
+            outcomes = [future.result() for future in futures]
+    else:
+        outcomes = [
+            _execute_suite(index, suite, context) for index, suite in work_items
+        ]
+
     all_tests: list[NativeTestResult] = []
     coverage_shards: list[Path] = []
-    coverage_output = _resolve_path(
-        project_root,
-        coverage.output_path if coverage and coverage.output_path else None,
-    )
     has_failure = False
     has_error = False
     process_stdout: list[str] = []
@@ -84,160 +140,34 @@ def run_native_tests(
     suite_artifact_paths: list[dict[str, Any]] = []
     engine_warnings: list[str] = []
     coverage_omissions: list[dict[str, Any]] = []
-
-    for index, suite in enumerate(suites):
-        if artifact_layout is not None:
-            suite_paths = artifact_layout.suite_paths(index)
-            manifest_path = suite_paths["manifest"]
-            result_path = suite_paths["result"]
-            events_path = suite_paths["events"]
-            log_path = suite_paths["log"]
-            screenshot_path = suite_paths["screenshot_base"]
-            suite_artifact_paths.append(suite_paths)
-        else:
-            manifest_path = output_dir / f"suite-{index:04d}.manifest.json"
-            result_path = output_dir / f"suite-{index:04d}.result.json"
-            events_path = output_dir / f"suite-{index:04d}.events.ndjson"
-            log_path = output_dir / f"suite-{index:04d}.log"
-            screenshot_path = output_dir / f"suite-{index:04d}"
-        result_path.unlink(missing_ok=True)
-        events_path.unlink(missing_ok=True)
-        log_path.unlink(missing_ok=True)
-
-        suite_coverage = coverage or NativeCoverage()
-        if coverage and coverage.enabled:
-            shard_path = (
-                suite_paths["coverage"]
-                if artifact_layout is not None
-                else output_dir / f"suite-{index:04d}.coverage.json"
-            )
-            shard_path.unlink(missing_ok=True)
-            coverage_shards.append(shard_path)
-            suite_coverage = coverage.model_copy(
-                update={"output_path": shard_path}
-            )
-
-        manifest = NativeManifest(
-            project_root=project_root,
-            runtime=suite.runtime,
-            suites=[suite],
-            coverage=suite_coverage,
-        )
-        write_json_atomic(manifest_path, manifest)
-        env = os.environ.copy()
-        env.update(
-            {
-                "GD_TOOLS_NATIVE_MANIFEST": str(manifest_path),
-                "GD_TOOLS_NATIVE_RESULT": str(result_path),
-                "GD_TOOLS_NATIVE_EVENTS": str(events_path),
-                "GD_TOOLS_NATIVE_LOG": str(log_path),
-                "GD_TOOLS_NATIVE_SCREENSHOT": str(screenshot_path),
-                "GD_TOOLS_NATIVE_RUN_ID": run_id,
-            }
-        )
-        command = [godot_binary]
-        if (
-            suite.integration is None
-            or suite.integration.mode == NativeExecutionMode.HEADLESS
-        ):
-            command.append("--headless")
-        command.extend(
-            [
-                "--path",
-                str(project_root),
-                "--script",
-                runner_script,
-                "--log-file",
-                str(log_path),
-            ]
-        )
-
-        try:
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                env=env,
-                timeout=process_timeout,
-                check=False,
-            )
-        except (subprocess.TimeoutExpired, TimeoutError) as exc:
+    for outcome in outcomes:
+        all_tests.extend(outcome.tests)
+        if outcome.stdout:
+            process_stdout.append(outcome.stdout)
+        if outcome.stderr:
+            process_stderr.append(outcome.stderr)
+        if outcome.has_failure:
+            has_failure = True
+        if outcome.has_error:
             has_error = True
-            all_tests.append(
-                _process_error(
-                    suite.name,
-                    f"Godot process failed: {exc}",
-                )
-            )
-            continue
+        if outcome.suite_paths is not None:
+            suite_artifact_paths.append(outcome.suite_paths)
+        if outcome.coverage_shard is not None:
+            coverage_shards.append(outcome.coverage_shard)
+        # R5: omissions and warnings ride the existing channels. Every
+        # suite instruments the whole plan, so the same omission arrives
+        # from each shard; dedupe to keep the aggregate honest.
+        for warning in outcome.engine_warnings:
+            if warning not in engine_warnings:
+                engine_warnings.append(warning)
+        for omission in outcome.coverage_omissions:
+            if omission not in coverage_omissions:
+                coverage_omissions.append(omission)
 
-        if completed.stdout:
-            process_stdout.append(completed.stdout)
-        if completed.stderr:
-            process_stderr.append(completed.stderr)
-        parsed_result = _read_native_result(result_path)
-        if parsed_result is not None:
-            expected_returncode = {
-                "passed": 0,
-                "failed": 1,
-                "error": 2,
-                "cancelled": 1,
-            }[parsed_result.status]
-            if completed.returncode != expected_returncode:
-                has_error = True
-                all_tests.append(
-                    _process_error(
-                        suite.name,
-                        "Native result status "
-                        f"{parsed_result.status} disagrees with process exit "
-                        f"code {completed.returncode}",
-                    )
-                )
-                continue
-            parsed_result = parsed_result.model_copy(
-                update={
-                    "stdout": completed.stdout,
-                    "stderr": completed.stderr,
-                }
-            )
-            all_tests.extend(parsed_result.tests)
-            # R5: omissions and warnings ride the existing channels. Every
-            # suite instruments the whole plan, so the same omission arrives
-            # from each shard; dedupe to keep the aggregate honest.
-            for warning in parsed_result.engine_warnings:
-                if warning not in engine_warnings:
-                    engine_warnings.append(warning)
-            for omission in parsed_result.diagnostics.get(
-                "coverage_omissions", []
-            ):
-                if omission not in coverage_omissions:
-                    coverage_omissions.append(omission)
-            if artifact_layout is not None:
-                suite_artifact_paths[-1]["screenshots"] = [
-                    Path(test.diagnostics["screenshot"])
-                    for test in parsed_result.tests
-                    if test.diagnostics.get("screenshot")
-                ]
-            if parsed_result.status == "failed":
-                has_failure = True
-            elif parsed_result.status == "error":
-                has_error = True
-            continue
-
-        has_error = True
-        message_parts = [
-            f"Godot process exited with code {completed.returncode}",
-            completed.stdout.strip(),
-            completed.stderr.strip(),
-        ]
-        all_tests.append(
-            _process_error(
-                suite.name,
-                "; ".join(part for part in message_parts if part),
-            )
-        )
+    coverage_output = _resolve_path(
+        project_root,
+        coverage.output_path if coverage and coverage.output_path else None,
+    )
 
     merged_coverage_path: Path | None = None
     if coverage and coverage.enabled:
@@ -303,6 +233,166 @@ def run_native_tests(
         stdout="\n".join(process_stdout),
         stderr="\n".join(process_stderr),
     )
+
+
+def _execute_suite(
+    index: int,
+    suite: NativeSuite,
+    context: _SuiteContext,
+) -> _SuiteOutcome:
+    """Run one suite in an isolated Godot process and collect its outcome.
+
+    Side effects are confined to this suite's own artifact paths, so the
+    function is safe to run concurrently for distinct suites.
+    """
+    artifact_layout = context.artifact_layout
+    if artifact_layout is not None:
+        suite_paths = artifact_layout.suite_paths(index)
+        manifest_path = suite_paths["manifest"]
+        result_path = suite_paths["result"]
+        events_path = suite_paths["events"]
+        log_path = suite_paths["log"]
+        screenshot_path = suite_paths["screenshot_base"]
+    else:
+        manifest_path = context.output_dir / f"suite-{index:04d}.manifest.json"
+        result_path = context.output_dir / f"suite-{index:04d}.result.json"
+        events_path = context.output_dir / f"suite-{index:04d}.events.ndjson"
+        log_path = context.output_dir / f"suite-{index:04d}.log"
+        screenshot_path = context.output_dir / f"suite-{index:04d}"
+    result_path.unlink(missing_ok=True)
+    events_path.unlink(missing_ok=True)
+    log_path.unlink(missing_ok=True)
+
+    suite_coverage = context.coverage or NativeCoverage()
+    coverage_shard: Path | None = None
+    if context.coverage and context.coverage.enabled:
+        shard_path = (
+            suite_paths["coverage"]
+            if artifact_layout is not None
+            else context.output_dir / f"suite-{index:04d}.coverage.json"
+        )
+        shard_path.unlink(missing_ok=True)
+        coverage_shard = shard_path
+        suite_coverage = context.coverage.model_copy(
+            update={"output_path": shard_path}
+        )
+
+    manifest = NativeManifest(
+        project_root=context.project_root,
+        runtime=suite.runtime,
+        suites=[suite],
+        coverage=suite_coverage,
+    )
+    write_json_atomic(manifest_path, manifest)
+    env = os.environ.copy()
+    env.update(
+        {
+            "GD_TOOLS_NATIVE_MANIFEST": str(manifest_path),
+            "GD_TOOLS_NATIVE_RESULT": str(result_path),
+            "GD_TOOLS_NATIVE_EVENTS": str(events_path),
+            "GD_TOOLS_NATIVE_LOG": str(log_path),
+            "GD_TOOLS_NATIVE_SCREENSHOT": str(screenshot_path),
+            "GD_TOOLS_NATIVE_RUN_ID": context.run_id,
+        }
+    )
+    command = [context.godot_binary]
+    if (
+        suite.integration is None
+        or suite.integration.mode == NativeExecutionMode.HEADLESS
+    ):
+        command.append("--headless")
+    command.extend(
+        [
+            "--path",
+            str(context.project_root),
+            "--script",
+            context.runner_script,
+            "--log-file",
+            str(log_path),
+        ]
+    )
+
+    try:
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            timeout=context.process_timeout,
+            check=False,
+        )
+    except (subprocess.TimeoutExpired, TimeoutError) as exc:
+        return _SuiteOutcome(
+            tests=[_process_error(suite.name, f"Godot process failed: {exc}")],
+            has_error=True,
+            suite_paths=suite_paths if artifact_layout is not None else None,
+            coverage_shard=coverage_shard,
+        )
+
+    outcome = _SuiteOutcome(
+        tests=[],
+        stdout=completed.stdout,
+        stderr=completed.stderr,
+        suite_paths=suite_paths if artifact_layout is not None else None,
+        coverage_shard=coverage_shard,
+    )
+    parsed_result = _read_native_result(result_path)
+    if parsed_result is not None:
+        expected_returncode = {
+            "passed": 0,
+            "failed": 1,
+            "error": 2,
+            "cancelled": 1,
+        }[parsed_result.status]
+        if completed.returncode != expected_returncode:
+            outcome.has_error = True
+            outcome.tests.append(
+                _process_error(
+                    suite.name,
+                    "Native result status "
+                    f"{parsed_result.status} disagrees with process exit "
+                    f"code {completed.returncode}",
+                )
+            )
+            return outcome
+        parsed_result = parsed_result.model_copy(
+            update={
+                "stdout": completed.stdout,
+                "stderr": completed.stderr,
+            }
+        )
+        outcome.tests.extend(parsed_result.tests)
+        outcome.engine_warnings = list(parsed_result.engine_warnings)
+        outcome.coverage_omissions = list(
+            parsed_result.diagnostics.get("coverage_omissions", [])
+        )
+        if artifact_layout is not None:
+            suite_paths["screenshots"] = [
+                Path(test.diagnostics["screenshot"])
+                for test in parsed_result.tests
+                if test.diagnostics.get("screenshot")
+            ]
+        if parsed_result.status == "failed":
+            outcome.has_failure = True
+        elif parsed_result.status == "error":
+            outcome.has_error = True
+        return outcome
+
+    outcome.has_error = True
+    message_parts = [
+        f"Godot process exited with code {completed.returncode}",
+        completed.stdout.strip(),
+        completed.stderr.strip(),
+    ]
+    outcome.tests.append(
+        _process_error(
+            suite.name,
+            "; ".join(part for part in message_parts if part),
+        )
+    )
+    return outcome
 
 
 def _resolve_path(project_root: Path, path: Path | None) -> Path | None:

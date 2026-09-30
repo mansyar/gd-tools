@@ -1,6 +1,7 @@
 """Unit tests for native suite process orchestration."""
 
 import json
+import threading
 from pathlib import Path
 from subprocess import CompletedProcess, TimeoutExpired
 from unittest.mock import patch
@@ -522,3 +523,227 @@ def test_run_native_tests_records_expired_process_timeout(tmp_path):
     assert result.status == "error"
     assert result.tests[0].status == "error"
     assert "Godot process failed" in result.tests[0].message
+
+
+# --- parallel suite execution (Phase 2) ---
+
+
+def _result_for(suite_name: str, status: str = "passed") -> str:
+    return json.dumps(
+        {
+            "protocol_version": 2,
+            "run_id": "test-run",
+            "status": status,
+            "engine_warnings": [],
+            "diagnostics": {},
+            "tests": [
+                {
+                    "suite": suite_name,
+                    "name": "test_example",
+                    "status": status,
+                    "duration_seconds": 0.01,
+                    "attempts": 1,
+                    "message": "",
+                    "diagnostics": {},
+                }
+            ],
+        }
+    )
+
+
+def _suite_name_from_env(kwargs) -> str:
+    manifest = json.loads(
+        Path(kwargs["env"]["GD_TOOLS_NATIVE_MANIFEST"]).read_text()
+    )
+    return manifest["suites"][0]["name"]
+
+
+def test_parallel_runs_suites_concurrently(tmp_path):
+    """Two suites with parallel=2 overlap in time (barrier proves it)."""
+    barrier = threading.Barrier(2, timeout=5)
+    calls = []
+
+    def fake_run(args, **kwargs):
+        calls.append(_suite_name_from_env(kwargs))
+        barrier.wait()
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(
+            _result_for(_suite_name_from_env(kwargs)), encoding="utf-8"
+        )
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            parallel=2,
+        )
+
+    assert sorted(calls) == ["FirstSuite", "SecondSuite"]
+    assert result.status == "passed"
+    assert len(result.tests) == 2
+
+
+def test_parallel_bounded_worker_pool(tmp_path):
+    """Three suites with parallel=2: all run, peak concurrency is 2."""
+    lock = threading.Lock()
+    state = {"inflight": 0, "peak": 0}
+    barrier = threading.Barrier(2, timeout=5)
+    barrier_arrivals = {"count": 0}
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        with lock:
+            state["inflight"] += 1
+            state["peak"] = max(state["peak"], state["inflight"])
+            use_barrier = barrier_arrivals["count"] < 2
+            if use_barrier:
+                barrier_arrivals["count"] += 1
+        try:
+            if use_barrier:
+                barrier.wait()
+            result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+            result_path.write_text(_result_for(name), encoding="utf-8")
+            return CompletedProcess(args, 0, "stdout", "stderr")
+        finally:
+            with lock:
+                state["inflight"] -= 1
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite"), _suite("ThirdSuite")],
+            godot_binary="godot",
+            parallel=2,
+        )
+
+    assert state["peak"] == 2
+    assert result.status == "passed"
+    assert len(result.tests) == 3
+
+
+def test_parallel_results_in_discovery_order(tmp_path):
+    """Aggregated tests follow discovery order even when completion does not."""
+    release_first = threading.Event()
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        if name == "FirstSuite":
+            # Complete last: waits until SecondSuite has finished.
+            assert release_first.wait(timeout=5)
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        if name == "SecondSuite":
+            release_first.set()
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [
+                _suite("FirstSuite"),
+                _suite("SecondSuite"),
+                _suite("ThirdSuite"),
+            ],
+            godot_binary="godot",
+            parallel=3,
+        )
+
+    assert [test.suite for test in result.tests] == [
+        "FirstSuite",
+        "SecondSuite",
+        "ThirdSuite",
+    ]
+
+
+def test_parallel_failure_does_not_cancel_other_suites(tmp_path):
+    """A failing suite does not prevent its peers from completing."""
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        status = "failed" if name == "FirstSuite" else "passed"
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name, status), encoding="utf-8")
+        returncode = 1 if status == "failed" else 0
+        return CompletedProcess(args, returncode, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            parallel=2,
+        )
+
+    assert result.status == "failed"
+    assert [(test.suite, test.status) for test in result.tests] == [
+        ("FirstSuite", "failed"),
+        ("SecondSuite", "passed"),
+    ]
+
+
+def test_parallel_matches_sequential_results(tmp_path):
+    """A parallel run aggregates exactly like the sequential run."""
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    suites = [_suite("FirstSuite"), _suite("SecondSuite")]
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        sequential = run_native_tests(tmp_path, suites, godot_binary="godot")
+        parallel = run_native_tests(
+            tmp_path, suites, godot_binary="godot", parallel=2
+        )
+
+    assert parallel.status == sequential.status
+    assert [
+        (test.suite, test.name, test.status) for test in parallel.tests
+    ] == [(test.suite, test.name, test.status) for test in sequential.tests]
+    assert parallel.stdout == sequential.stdout
+    assert parallel.stderr == sequential.stderr
+
+
+def test_parallel_one_runs_suites_in_discovery_order(tmp_path):
+    """parallel=1 keeps the sequential path: ordered, one at a time."""
+    calls = []
+
+    def fake_run(args, **kwargs):
+        calls.append(_suite_name_from_env(kwargs))
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(
+            _result_for(_suite_name_from_env(kwargs)), encoding="utf-8"
+        )
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            parallel=1,
+        )
+
+    assert calls == ["FirstSuite", "SecondSuite"]
+    assert result.status == "passed"
