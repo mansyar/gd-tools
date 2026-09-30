@@ -1561,3 +1561,36 @@ def test_coverage_diff_regression_gate_exit_1():
             ["coverage", "diff", "--base", "b.json", "--fail-on-regression"],
         )
     assert result.exit_code == 1
+
+
+def test_test_watch_forwards_resolved_parallel():
+    """--watch inherits the resolved --parallel count for every re-run."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_watch_mode",
+            return_value=0,
+        ) as mock_watch,
+    ):
+        result = runner.invoke(cli, ["test", "--watch", "--parallel", "3"])
+    assert result.exit_code == 0
+    assert mock_watch.call_args.kwargs["parallel"] == 3
+
+
+def test_test_watch_uses_config_parallel_without_flag():
+    """Configured [test] parallel applies to watch mode when no flag given."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.test.parallel = 2
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_watch_mode",
+            return_value=0,
+        ) as mock_watch,
+    ):
+        result = runner.invoke(cli, ["test", "--watch"])
+    assert result.exit_code == 0
+    assert mock_watch.call_args.kwargs["parallel"] == 2

@@ -470,6 +470,7 @@ def test(
                     test_timeout=test_timeout,
                     show_uncovered=show_uncovered,
                     no_cache=no_cache,
+                    parallel=effective_parallel,
                 )
             )
         if selected_runtime == "native":
