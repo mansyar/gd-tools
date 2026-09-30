@@ -130,18 +130,21 @@ func _read_coverage_summary() -> Dictionary:
 		return {}
 	var hits_by_id := {}
 	for entry: Dictionary in data.get("files", []):
-		hits_by_id[entry.get("file_id")] = entry.get("hits", {})
+		hits_by_id[_json_id_key(entry.get("file_id"))] = entry.get(
+			"hits", {}
+		)
 	var covered_lines := 0
 	var total_lines := 0
 	var covered_branches := 0
 	var total_branches := 0
 	for file_plan: Dictionary in plan.get("files", []):
 		var hits: Dictionary = hits_by_id.get(
-			file_plan.get("file_id"), {}
+			_json_id_key(file_plan.get("file_id")), {}
 		)
 		for line_plan: Dictionary in file_plan.get("lines", []):
 			total_lines += 1
-			var hit := int(hits.get(line_plan.get("id", ""), 0)) > 0
+			var key := _json_id_key(line_plan.get("id", ""))
+			var hit := int(hits.get(key, 0)) > 0
 			if hit:
 				covered_lines += 1
 			if str(line_plan.get("branch_type", "")) != "":
@@ -230,6 +233,16 @@ func _latest_artifact_index() -> String:
 		run_id = artifacts_dir.get_next()
 	artifacts_dir.list_dir_end()
 	return best_path
+
+
+## Normalizes a numeric JSON value to its string key form.
+##
+## Godot parses JSON integers as floats, and ``str(0.0)`` yields
+## ``"0.0"`` — which would never match the ``"0"`` object keys in
+## coverage.json. Normalizing through ``int()`` first guarantees a
+## stable key on both sides of the lookup.
+func _json_id_key(value: Variant) -> String:
+	return str(int(value))
 
 
 func _load_json(path: String) -> Dictionary:
