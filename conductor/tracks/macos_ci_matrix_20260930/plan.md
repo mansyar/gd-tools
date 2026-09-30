@@ -7,7 +7,8 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
 
 ## Phase 1 — Enable macOS in CI
 
-- [ ] Task: Add macOS support to the `install-godot` composite action
+- [x] Task: Add macOS support to the `install-godot` composite action
+  (efb79ef)
   - Add a macOS branch to the asset selection in
     `.github/actions/install-godot/action.yml`
     (`Godot_v{v}-stable_macos.universal.zip`).
@@ -22,8 +23,10 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
     Godot versions).
   - `e2e`: add `macos-latest` to the `os` axis (runs for all 3 Godot
     versions).
-  - Review `timeout-minutes` per job for macOS runner speed; raise with
-    justification if needed.
+  - `timeout-minutes` review: no raises needed — unit (5 min) and
+    integration/e2e (20 min) budgets already absorb Windows, and macOS
+    hosted runners are typically comparable or faster; confirm via CI
+    observed runtimes in Task 3.
 - [ ] Task: Verify macOS runs green (iterative)
   - Push the branch, observe the CI run, diagnose and iterate until all
     macOS jobs pass.

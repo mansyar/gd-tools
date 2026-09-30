@@ -78,7 +78,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ['3.10', '3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
       fail-fast: false
       matrix:
         godot-version: ['4.5.2', '4.6.1', '4.7.1']
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -156,7 +156,7 @@ jobs:
       fail-fast: false
       matrix:
         godot-version: ['4.5.2', '4.6.1', '4.7.1']
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
 
