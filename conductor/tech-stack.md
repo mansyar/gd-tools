@@ -124,8 +124,8 @@
 - **Public API:** `GdToolsTest` / `GdToolsTestRunner`, plus `GdToolsTestContext` returned by `get_test_context()`
 - **Runtime mode:** Native execution is the default; `GutTest` suites are auto-routed through the compatibility bridge and the legacy GUT subprocess path is removed.
 - **Packaging:** One bundled native test addon with the Python distribution.
-- **Execution:** Suite-scoped Godot processes, fresh test instances, async-first test methods, and sequential execution by default.
-- **Integration protocol:** Native protocol v2. One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
+- **Execution:** Suite-scoped Godot processes, fresh test instances, async-first test methods, and sequential execution by default (opt-in bounded parallel worker pool via `--parallel N` / `[test].parallel`).
+- **Integration protocol:** Native protocol v3. One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
 - **Execution modes:** Headless by default; `windowed` suites run without `--headless`, require a real display, and fail with exit `2` when the renderer is headless.
 - **Artifacts:** `.gd-tools/artifacts/<run_id>/` holds a machine-readable index plus preflight and per-suite artifacts; only the latest run is retained.
 - **Coverage:** Native runtime owns activation; the versioned coverage plan schema (currently v2, which adds `excluded_lines` for no-cover annotations) is reused where possible for line and branch metrics.
