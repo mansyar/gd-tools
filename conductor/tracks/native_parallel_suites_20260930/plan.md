@@ -82,7 +82,7 @@ the end of every phase (pause for user sign-off before checkpointing).
   - [x] Produce manual verification plan and pause for user sign-off
   - [x] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
-## Phase 4 — E2E, Performance & Documentation
+## Phase 4 — E2E, Performance & Documentation [checkpoint: 14a6ec7]
 
 - [x] Task 1: Functional e2e — parallel vs sequential: identical outcomes,
   exit codes, discovery-ordered JUnit, coverage parity (marked for the e2e
@@ -91,11 +91,11 @@ the end of every phase (pause for user sign-off before checkpointing).
   workers completes faster than sequential (e8d78d1)
 - [x] Task 3: Documentation — `ARCHITECTURE.md` limitation removal + parallel
   model, `USER_GUIDE.md`, `README.md`, config reference (95cbdc0)
-- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
-  - [ ] Announce and run full verification command
-  - [ ] Produce manual verification plan and pause for user sign-off
-  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+- [x] Task 4: Phase Verification & Checkpoint (Refer to workflow.md) (14a6ec7)
+  - [x] Verify tests exist for every changed `.py`/`.gd` file in this phase
+  - [x] Announce and run full verification command
+  - [x] Produce manual verification plan and pause for user sign-off
+  - [x] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
 ---
 
