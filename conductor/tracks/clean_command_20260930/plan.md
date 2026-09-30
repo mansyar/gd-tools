@@ -36,27 +36,28 @@
 
 ## Phase 2 — CLI Wiring & UX
 
-- [ ] Task: Write failing CLI tests (Red)
+- [x] Task: Write failing CLI tests (Red) 62803b8
   - Click runner tests: `clean` with no flags → inventory + hint, exit 0,
     nothing deleted; `--dry-run` composition; summary output on real run;
     exit 2 path (mock unremovable target); `--all` help/override behavior
     (FR-1, FR-2, FR-5).
-- [ ] Task: Register `clean` command in `src/gd_tools/cli.py` (Green)
+- [x] Task: Register `clean` command in `src/gd_tools/cli.py` (Green) bdb9b95
   - Flags `--coverage --artifacts --baselines --cache --all --dry-run` with
     help text documenting targets and `--all` override; thin handler calling
     `run_clean`; output through the existing output/verbosity conventions.
-- [ ] Task: Style + full-suite gate
-  - `ruff check src/ tests/` and `black --check src/ tests/` clean;
-  - `CI=true pytest --cov=gd_tools --cov-branch` — global gates hold.
+- [x] Task: Style + full-suite gate bdb9b95
+  - Result: ruff + black clean; CI=true pytest --cov=gd_tools --cov-branch:
+    1443 passed, 6 skipped, 95.40% total (gates 80/70).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Docs & Closure
 
-- [ ] Task: USER_GUIDE documentation
+- [x] Task: USER_GUIDE documentation a9b3f04
   - New `gd-tools clean` section: flag table with verified targets, no-flag
     inventory behavior, protected paths, `--dry-run`, exit codes.
-- [ ] Task: Update ROADMAP Track 39 status to Delivered
-- [ ] Task: Final verification & commit
+- [x] Task: Update ROADMAP Track 39 status to Delivered a9b3f04
+- [x] Task: Final verification & commit a9b3f04
+  - Result: full gate green (1443 passed, 6 skipped, 95.40% coverage).
   - Re-run full gate (`ruff`, `black --check`, `CI=true pytest`); commit
     `feat(clean): add gd-tools clean command` (+ docs in same or follow-up
     `docs:` commit); attach git notes; mark all tasks `[x]` with SHAs.
