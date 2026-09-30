@@ -101,7 +101,8 @@
   by `generate_coverage_report`; regression: 202 unit+integration tests green,
   text/html/lcov formats exercised.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: 5a02475]
 
 ---
 
