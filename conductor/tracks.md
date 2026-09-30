@@ -127,3 +127,7 @@ _Archived tracks live in `./archive/`._
   events, full `--coverage` support, watch-mode inheritance, continue-on-failure
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
+
+---
+
+- [ ] **Track: Codecov Patch Ignore for Unmeasured Paths** (chore: exclude `src/gd_tools/addons/**` and `tests/**` from Codecov's coverage calc so the patch check stops failing on addon-touching PRs) *Link: [codecov_ignore_addons_20260930](./tracks/codecov_ignore_addons_20260930/index.md)*
