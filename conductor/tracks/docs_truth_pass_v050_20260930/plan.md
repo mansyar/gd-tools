@@ -46,6 +46,10 @@
     publication, bridge removal v0.6.0) listed as open.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions da8f98f
+
 ## Phase 3 — Final Verification & Closure [checkpoint: 7662a33]
 
 - [x] Task: Re-run sweep grep to confirm no stale claims remain
