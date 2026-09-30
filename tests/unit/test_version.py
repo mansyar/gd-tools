@@ -6,7 +6,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10
+    import tomli as tomllib  # type: ignore[no-redef]
+
 from gd_tools.version import collect_versions
+
+PYPROJECT = Path(__file__).resolve().parents[2] / "pyproject.toml"
 
 pytestmark = pytest.mark.unit
 
@@ -181,3 +188,10 @@ def test_collect_versions_return_structure():
         "gdtoolkit",
         "python",
     }
+
+
+def test_package_version_is_0_5_0():
+    """The package version matches the v0.5.0 release being prepared."""
+    with PYPROJECT.open("rb") as handle:
+        data = tomllib.load(handle)
+    assert data["project"]["version"] == "0.5.0"

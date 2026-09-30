@@ -176,6 +176,10 @@ class _SuiteContext:
     coverage: NativeCoverage | None
     parallel: int = 1
     registry: _ProcessRegistry = field(default_factory=_ProcessRegistry)
+    # Suites whose execution has started, in start order. The incomplete
+    # index published on interrupt lists only these, so suites that never
+    # began are not advertised as partially run.
+    attempted: list[str] = field(default_factory=list)
     abort_event: threading.Event = field(default_factory=threading.Event)
 
 
@@ -205,12 +209,14 @@ def _interrupt_message(context: _SuiteContext) -> str:
     return "Test run interrupted. In-flight Godot processes were killed."
 
 
-def _abort_run(context: _SuiteContext, suites: list[NativeSuite]) -> None:
+def _abort_run(context: _SuiteContext) -> None:
     """Kill every in-flight suite process and mark the run incomplete.
 
-    Suite paths are published without any realized artifacts (nothing was
-    verified as written at abort time), keeping ``suite_names`` and
-    ``suite_paths`` aligned for every suite in discovery order.
+    Only suites whose execution actually started are listed; the index is a
+    record of what happened, not of what was planned. Suite paths are
+    published without any realized artifacts (nothing was verified as
+    written at abort time), keeping ``suite_names`` and ``suite_paths``
+    aligned.
     """
     # Tell spawns racing this snapshot to clean up after themselves.
     context.abort_event.set()
@@ -224,8 +230,8 @@ def _abort_run(context: _SuiteContext, suites: list[NativeSuite]) -> None:
         publish_artifact_index(
             context.artifact_layout,
             status="incomplete",
-            suite_names=[suite.name for suite in suites],
-            suite_paths=[{} for _ in suites],
+            suite_names=list(context.attempted),
+            suite_paths=[{} for _ in context.attempted],
             preflight_paths=context.artifact_layout.preflight_paths(),
         )
     except ArtifactPublishError:
@@ -310,7 +316,7 @@ def run_native_tests(
                     # join return almost immediately.
                     _ignore_sigterm()
                     executor.shutdown(wait=False, cancel_futures=True)
-                    _abort_run(context, suites)
+                    _abort_run(context)
                     raise NativeInterruptError(
                         _interrupt_message(context)
                     ) from None
@@ -322,7 +328,7 @@ def run_native_tests(
                 ]
             except KeyboardInterrupt:
                 _ignore_sigterm()
-                _abort_run(context, suites)
+                _abort_run(context)
                 raise NativeInterruptError(
                     _interrupt_message(context)
                 ) from None
@@ -374,6 +380,15 @@ def run_native_tests(
                 _process_error(
                     "<coverage>",
                     "Unable to merge native coverage shards",
+                    diagnostics={
+                        "kind": "coverage",
+                        "expected": "valid protocol v1 coverage shards",
+                        "found": "missing or invalid shard",
+                        "remedy": (
+                            "re-run with --coverage and --no-cache, or "
+                            "run without --coverage"
+                        ),
+                    },
                 )
             )
 
@@ -441,6 +456,7 @@ def _execute_suite(
     Side effects are confined to this suite's own artifact paths, so the
     function is safe to run concurrently for distinct suites.
     """
+    context.attempted.append(suite.name)
     artifact_layout = context.artifact_layout
     if artifact_layout is not None:
         suite_paths = artifact_layout.suite_paths(index)
@@ -518,7 +534,7 @@ def _execute_suite(
     )
     try:
         stdout, stderr = process.communicate(timeout=context.process_timeout)
-    except (subprocess.TimeoutExpired, TimeoutError) as exc:
+    except (subprocess.TimeoutExpired, TimeoutError):
         _kill_process_tree(process.pid)
         with contextlib.suppress(Exception):
             # Re-call communicate() after the kill so the direct child is
@@ -527,7 +543,25 @@ def _execute_suite(
             process.communicate()
         context.registry.remove(process)
         return _SuiteOutcome(
-            tests=[_process_error(suite.name, f"Godot process failed: {exc}")],
+            tests=[
+                _process_error(
+                    suite.name,
+                    f"Godot process timed out after "
+                    f"{context.process_timeout:g}s "
+                    f"running suite {suite.name!r}",
+                    diagnostics={
+                        "kind": "process",
+                        "expected": (
+                            f"completion within {context.process_timeout:g}s"
+                        ),
+                        "found": "timeout",
+                        "remedy": (
+                            "increase the timeout (--timeout or "
+                            "[test].timeout_seconds) and re-run"
+                        ),
+                    },
+                )
+            ],
             has_error=True,
             suite_paths=suite_paths if artifact_layout is not None else None,
             coverage_shard=coverage_shard,
@@ -558,6 +592,18 @@ def _execute_suite(
                     "Native result status "
                     f"{parsed_result.status} disagrees with process exit "
                     f"code {returncode}",
+                    diagnostics={
+                        "kind": "protocol",
+                        "expected": (
+                            f"exit code {expected_returncode} for status "
+                            f"'{parsed_result.status}'"
+                        ),
+                        "found": f"exit code {returncode}",
+                        "remedy": (
+                            "re-run the suite directly to reproduce; "
+                            "report this if it persists"
+                        ),
+                    },
                 )
             )
             return outcome
@@ -585,8 +631,24 @@ def _execute_suite(
         return outcome
 
     outcome.has_error = True
+    if result_path.is_file():
+        # The runner wrote something it cannot be parsed as a protocol v3
+        # result: a protocol mismatch rather than an engine crash.
+        kind = "protocol"
+        remedy = (
+            "the runner wrote an unreadable result.json; verify the "
+            "gd-tools addon version matches the CLI protocol and re-run"
+        )
+        found = "unparseable result.json"
+    else:
+        kind = "engine"
+        remedy = (
+            f"inspect the engine log under {log_path.parent} and "
+            "re-run the suite directly"
+        )
+        found = "no result.json"
     message_parts = [
-        f"Godot process exited with code {returncode}",
+        f"Godot process exited with code {returncode} ({found})",
         stdout.strip(),
         stderr.strip(),
     ]
@@ -594,6 +656,12 @@ def _execute_suite(
         _process_error(
             suite.name,
             "; ".join(part for part in message_parts if part),
+            diagnostics={
+                "kind": kind,
+                "expected": "a parseable protocol v3 result.json",
+                "found": found,
+                "remedy": remedy,
+            },
         )
     )
     return outcome
@@ -693,11 +761,15 @@ def _read_native_result(path: Path) -> NativeRunResult | None:
         return None
 
 
-def _process_error(suite_name: str, message: str) -> NativeTestResult:
+def _process_error(
+    suite_name: str,
+    message: str,
+    diagnostics: dict[str, Any] | None = None,
+) -> NativeTestResult:
     return NativeTestResult(
         suite=suite_name,
         name="<process>",
         status="error",
         message=message,
-        diagnostics={"kind": "process"},
+        diagnostics=diagnostics or {"kind": "process"},
     )

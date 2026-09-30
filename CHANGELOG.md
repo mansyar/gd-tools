@@ -1,4 +1,4 @@
-## Unreleased
+## v0.5.0 (2026-09-30)
 
 ### Feat
 
@@ -7,10 +7,20 @@
 - **native-test**: `skip_test()` in `before_all` now skips the whole suite: every test (and every expanded parameterized case) is reported `skipped` with the recorded reason, no test body or per-test hook runs, and the skip is terminal (never consumes a retry). Per-test `skip_test()` behavior is unchanged. This closes the "no suite-level skip" known limitation in ARCHITECTURE.md.
 - **watch**: Add `gd-tools test --watch` — interactive watch mode for the native runtime. An initial full suite is followed by debounced re-runs mapped from changed `.gd` files by convention (`src/enemy.gd` → `test_enemy.gd`/`enemy_test.gd`, same-directory preferred), with an explicit full-suite fallback when nothing maps. Existing filters (`--suite`, `--test`, `--tag`) and `--coverage` apply to every run; rapid saves coalesce into one re-run and a save during a run queues exactly one follow-up. The screen is cleared between runs under a watching banner, `Ctrl+C` exits 0, and `--watch` rejects `--runtime gut` and `CI=true` with exit 2.
 - **coverage**: Add `coverage save-baseline` and `coverage diff` subcommands (codecov-style). `save-baseline` persists the latest coverage run as a self-contained baseline document with advisory metadata; `diff --base` reports per-file line and branch deltas (improved/regressed/unchanged/new/removed) with newly-uncovered line detail (`--show-lines`), deterministic JSON output (`--report-format json`), and CI gating (`--fail-on-regression` exits 1 on any per-file regression).
+- **coverage**: Support `# gd-tools: no cover` exclusion annotations. Single-line, block `start`/`end`, and func-line exclusions remove lines from instrumentation and from the coverage percentage denominator and `--min` gate; excluded lines are recorded in the plan JSON (plan version bumped to 2, which regenerates cached plans) and styled distinctly in the HTML report. Malformed annotations warn on stderr and never abort plan generation.
+- **native-test**: Deprecate the GUT compatibility bridge. Runs using `GutTest` suites print a one-time deprecation notice stating removal is planned for v0.6.0; the one-release migration window gives projects the full v0.5.0 cycle to move to `GdToolsTest`. Doctor and `init --with-gut` messaging now state the deprecation and the addon-vs-bridge conflict.
+- **native-test**: Mark interrupted test runs. `Ctrl+C` (or `SIGTERM`) during a test run kills the in-flight Godot process, publishes an `incomplete` artifact index listing exactly the suites already attempted, prints a notice pointing at the run directory, and exits 130. Complete runs are never marked incomplete.
 
 ### Fix
 
 - **native-test**: `GdToolsTest.wait_for_signal` is bounded and returns whether the signal was emitted. It was declared `-> bool` but could only ever return `true`, so a guard such as `if not wait_for_signal(sig): fail(...)` never reached the `fail` — the await blocked to the per-test timeout and the test was reported as `timeout` rather than `failed`, discarding the reason. A test waiting on a signal that never arrives now receives `false` at the wait budget (default `5.0`, matching the per-test default) instead of running to the per-test timeout, and the wait resolves as soon as the signal fires rather than when the budget runs out. The wait records no failure of its own.
+- **native-test**: Infrastructure failures (exit 2) now carry structured diagnostics. Timeout, engine-crash, unparseable-result, and protocol-mismatch failures report `expected` / `found` / `kind` / `remedy` — e.g. a timeout names its budget and points at `--timeout` / `[test].timeout_seconds`; an engine crash points at the engine log directory; the aggregate error surfaces the first remedy.
+
+### Known Limitations
+
+- Suites run sequentially; optional parallel execution is deferred (roadmap Phase 5).
+- The GUT compatibility bridge is deprecated in this release and planned for removal in v0.6.0. `GutTest` suites still run through it during the migration window; new suites should extend `GdToolsTest`.
+- There is no editor plugin integration (roadmap Phase 5 candidates: coverage heatmap dock, playtest coverage).
 
 ## v0.4.0 (2026-07-16)
 

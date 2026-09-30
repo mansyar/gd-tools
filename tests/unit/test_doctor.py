@@ -431,6 +431,7 @@ def test_check_gut_suites_reports_bridge_eligible_suites(
     assert result.name == "GUT Suites"
     assert "1" in result.message
     assert "compatibility bridge" in result.message
+    assert "deprecated" in result.message
     assert "docs/gut-migration.md" in result.message
 
 

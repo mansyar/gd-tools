@@ -2,7 +2,7 @@
 
 **Version:** 0.4.0
 **Date:** 2026-09-26
-**Status:** Native Scene and Resource Integration completed; migration Phases 3-5 outstanding
+**Status:** Native test runtime delivered through migration tooling (Phases 0-4); Phase 5 hardening and release in progress
 **Related docs:** [PRD.md](./PRD.md), [ROADMAP_v1.md](./ROADMAP_v1.md) (archived v1 roadmap, Tracks 0-22), [AUDIT_REPORT.md](./AUDIT_REPORT.md), [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
@@ -1239,7 +1239,7 @@ switch and provide inline coverage visualization.
 | **Modules** | `.github/workflows/ci.yml` |
 | **Effort** | 0.25 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Done (track `macos_ci_matrix_20260930`) |
 
 **Problem:**
 
@@ -1265,6 +1265,17 @@ that go untested.
 3. All integration tests pass on macOS (with Godot installed)
 4. All E2E tests pass on macOS
 5. CI pipeline completes in <15 minutes total (macOS runners are slower)
+
+**Outcome:** Delivered as track `macos_ci_matrix_20260930`. macOS runs at
+full parity on every PR: unit x 3 Pythons, integration and e2e x 3 Godot
+versions (9 macOS cells). The shared `install-godot` action gained a macOS
+branch (`Godot_v{v}-stable_macos.universal.zip`, `.app`-bundle extraction,
+quarantine strip + ad-hoc `codesign` to survive arm64 `Killed: 9`). No
+`godot.py` changes were needed — path/binary detection was already
+platform-neutral. Bonus fix surfaced by the wider matrix: a bare stdlib
+`tomllib` import in `tests/unit/test_version.py` broke Python 3.10
+collection on every OS; it now uses the codebase-standard `tomli`
+fallback. CI run 36684641137: all 27 jobs green.
 
 ---
 
@@ -1484,7 +1495,7 @@ its backup path. Unmodified files are overwritten silently (idempotent).
 | **Editor plugin API changes between Godot versions** | 35 | Target Godot 4.5+ only. Test on 4.5, 4.6, 4.7. Document version compatibility. |
 | **Playtesting coverage: game crash loses data** | 34 | Write coverage data periodically (every N seconds) to temp file. Final flush on exit. |
 | **Plan cache produces stale results** | 37 | Hash-based invalidation. `--no-cache` escape hatch. Log cache hit/miss. |
-| **macOS CI runners are slower / more expensive** | 36 | Only run integration/E2E on macOS (unit tests are OS-agnostic). Consider running macOS CI on schedule, not every PR. |
+| **macOS CI runners are slower / more expensive** | 36 | Resolved by Track `macos_ci_matrix_20260930`: macOS runs on every PR at full parity and the observed pipeline stays within budget; arm64 queue-time advisories on hosted runners are informational only. |
 | **Pre-commit framework version changes** | 29 | Generate standard `.pre-commit-hooks.yaml` format. Pin no framework version. |
 | **GitHub Actions annotation format changes** | 31 | Follow [official spec](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions). Test with real PRs. |
 
@@ -1518,7 +1529,7 @@ conductor_new_track
 
 4. **Tracks 36-39 (Robustness)** -- Can be picked up between feature
    tracks as time allows. Track 36 (macOS CI) is quickest and should be
-   done early to catch platform issues.
+   done early to catch platform issues. (Done — `macos_ci_matrix_20260930`.)
 
 ### Spec/Plan Template Per Track
 
@@ -1550,7 +1561,7 @@ Each Conductor track should produce:
 
 ## 8. Temporary: Native Test Runtime Migration Roadmap
 
-**Status:** In progress — Phases 0-2 delivered, Phases 3-5 outstanding
+**Status:** In progress — Phases 0-4 delivered; Phase 5 under way: crash recovery, diagnostics hardening, and the bridge deprecation are delivered, release preparation (v0.5.0) is in progress, and optional parallel execution and native runtime caching remain deferred
 **Purpose:** Replace the permanent GUT dependency with the native
 `GdToolsTest` runtime while preserving a bounded migration path.
 **Retirement condition:** Remove this temporary section after native tests
@@ -1628,24 +1639,34 @@ and produce the same user-facing result contract.
 
 ### Phase 4 — Migration Tooling
 
-- [ ] Add dry-run migration reports
-- [ ] Add opt-in rewrites for supported GUT constructs
-- [ ] Add unsupported-construct diagnostics
-- [ ] Add reviewable diffs and migration verification
-- [ ] Preserve `.gutconfig.json` while translating supported settings
+- [x] Add dry-run migration reports
+- [x] Add opt-in rewrites for supported GUT constructs
+- [x] Add unsupported-construct diagnostics
+- [x] Add reviewable diffs and migration verification
+- [x] Preserve `.gutconfig.json` while translating supported settings
 
 **Exit gate:** A representative GUT project can migrate without silent data
 loss or manual reconstruction of configuration.
 
+**Delivered:** `gd-tools migrate` scans GutTest suites, reports supported and
+unsupported constructs with a dry-run review, optionally rewrites suites to
+`GdToolsTest` with reviewable diffs, and translates supported `.gutconfig.json`
+settings while preserving the rest (Track `migration_tooling_20260929`).
+
 ### Phase 5 — Hardening and Release
 
-- [ ] Add crash recovery and diagnostics hardening
-- [ ] Add optional parallel execution
-- [ ] Integrate native runtime caching
-- [ ] Update `init`, `doctor`, CI, packaging, and documentation
+- [x] Add crash recovery and diagnostics hardening (interrupted runs mark
+  artifacts incomplete and exit 130; exit-2 failures carry structured
+  expected/found/remedy diagnostics — Track `native_release_readiness_20260930`)
+- [ ] Add optional parallel execution (deferred)
+- [ ] Integrate native runtime caching (deferred)
+- [ ] Update `init`, `doctor`, CI, packaging, and documentation (in progress;
+  bridge wording updated by `native_release_readiness_20260930`, release
+  documentation lands with v0.5.0)
 - [x] Run the Godot 4.5+ compatibility matrix
-- [ ] Publish the native runtime release
-- [ ] Remove the temporary bridge after its migration period
+- [ ] Publish the native runtime release (v0.5.0 preparation in progress)
+- [ ] Remove the temporary bridge after its migration period (deprecation
+  notice ships in v0.5.0; removal targeted for v0.6.0)
 - [ ] Fold durable decisions into the main roadmap and remove this section
 
 #### Verified compatibility matrix
@@ -1655,14 +1676,17 @@ combination below. The axes live in `.github/workflows/ci.yml` and are the one
 place to edit them; `GUT_VERSION_MAP` in `src/gd_tools/godot.py` lists the same
 versions and must be updated alongside (see Track 32).
 
-| Godot | Linux | Windows |
-| --- | --- | --- |
-| 4.5.2 | integration + e2e | integration + e2e |
-| 4.6.1 | integration + e2e | integration + e2e |
-| 4.7.1 | integration + e2e | integration + e2e |
+| Godot | Linux | Windows | macOS |
+| --- | --- | --- | --- |
+| 4.5.2 | integration + e2e | integration + e2e | integration + e2e |
+| 4.6.1 | integration + e2e | integration + e2e | integration + e2e |
+| 4.7.1 | integration + e2e | integration + e2e | integration + e2e |
 
-**macOS is not covered** and remains Track 36 — this matrix is not the full
-support claim in `conductor/product.md`.
+macOS was added by track `macos_ci_matrix_20260930` (Roadmap Track 36) and
+runs on every PR at full parity; the matrix now matches the full support
+claim in `conductor/product.md`. Note that macOS cells extract the Godot
+binary from the `.app` bundle and re-sign it ad hoc — see the
+`install-godot` action.
 
 Three limits of this matrix are known and deliberate:
 
@@ -1680,4 +1704,6 @@ Three limits of this matrix are known and deliberate:
    in `conductor/product.md`. `timeout-minutes` is a per-job cap, not a workflow
    budget, and the two Godot stages run in series. Verifying the matrix was
    judged worth the duration; a nightly schedule for the widest axes is the
-   lever if that becomes a problem.
+   lever if that becomes a problem. (Re-measured after the macOS cells landed:
+   the parity verification run completed in roughly six minutes of wall clock,
+   so the 13-minute figure no longer holds on the current pipeline.)

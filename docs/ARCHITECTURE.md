@@ -1303,7 +1303,6 @@ The GUT compatibility bridge inherits every limitation above and adds its
 own: it supports only the documented core subset of the GUT API
 ([docs/gut-migration.md](./gut-migration.md)). Suites using constructs
 outside that subset fail at preflight with per-file guidance instead of
-running incompletely. The bridge is a temporary migration path; after the
-bounded migration period it is removed and `extends GutTest` stops
-resolving (see
+running incompletely. The bridge is deprecated as of v0.5.0; it is
+removed in v0.6.0, after which `extends GutTest` stops resolving (see
 [Roadmap §8](./ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)).

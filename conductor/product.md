@@ -202,7 +202,8 @@ The migration is complete when:
    work reliably.
 5. Line and branch coverage work without a permanent native test autoload.
 6. GUT bridge users can migrate with reviewable changes.
-7. The bridge is removed after the bounded migration period.
+7. The bridge is removed after the bounded migration period (deprecated in
+   v0.5.0 with a one-time notice; removal targeted for v0.6.0).
 8. Documentation, CI, packaging, and release checks reflect the native
    runtime as the supported path.
 

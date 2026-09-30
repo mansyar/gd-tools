@@ -522,7 +522,7 @@ def test_run_native_tests_records_subprocess_timeout(tmp_path):
 
     assert result.status == "error"
     assert result.tests[0].status == "error"
-    assert "process timeout" in result.tests[0].message
+    assert "timed out after 60s" in result.tests[0].message
 
 
 def test_run_native_tests_records_expired_process_timeout(tmp_path):
@@ -548,7 +548,7 @@ def test_run_native_tests_records_expired_process_timeout(tmp_path):
 
     assert result.status == "error"
     assert result.tests[0].status == "error"
-    assert "Godot process failed" in result.tests[0].message
+    assert "timed out after 60s" in result.tests[0].message
 
 
 # --- parallel suite execution (Phase 2) ---
@@ -902,7 +902,7 @@ def test_parallel_timeout_fails_suite_and_queue_continues(tmp_path):
     timeout_tests = [t for t in result.tests if t.suite == "FirstSuite"]
     assert len(timeout_tests) == 1
     assert timeout_tests[0].status == "error"
-    assert "Godot process failed" in timeout_tests[0].message
+    assert "Godot process timed out after 60s" in timeout_tests[0].message
     assert result.status == "error"
 
 
@@ -1165,6 +1165,7 @@ def test_run_native_tests_interrupt_kills_processes_and_publishes_incomplete(
     layout = NativeArtifactLayout.create(tmp_path, "run-int")
 
     def fake_execute(index, suite, context):
+        context.attempted.append(suite.name)
         context.registry.add(_FakeProcess(pid=700 + index))
         if index == 0:
             return _SuiteOutcome(tests=[])
@@ -1190,6 +1191,8 @@ def test_run_native_tests_interrupt_kills_processes_and_publishes_incomplete(
     assert killed == [700, 701]
     payload = json.loads(layout.index_path.read_text(encoding="utf-8"))
     assert payload["status"] == "incomplete"
+    # Both suites had started execution when the interrupt hit (the second
+    # raised mid-flight), so both appear in the incomplete index.
     assert [entry["suite"] for entry in payload["suites"]] == [
         "FirstSuite",
         "SecondSuite",

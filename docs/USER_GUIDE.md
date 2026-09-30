@@ -24,7 +24,7 @@ For deep technical command surface details, see the [PRD](./PRD.md) section 5.
 |---|---|---|
 | Python | 3.10 | Required for modern type hints and tomllib support. |
 | Godot Engine | 4.5 | Must be accessible via PATH or a GODOT_BIN environment variable. |
-| GUT (Godot Unit Test) | 9.5.0 | Optional legacy compatibility runtime; not installed by default. |
+| GUT (Godot Unit Test) | 9.5.0 | Optional legacy addon; never required, conflicts with the compatibility bridge, and not installed by default. |
 
 The `gdtoolkit` package (providing `gdlint` and `gdformat`) is installed as
 a dependency of `gd-tools` -- no separate installation is needed.
@@ -363,7 +363,8 @@ symbol.
 Run GDScript tests using the bundled native runtime. Suites extending
 `GdToolsTest` and `GutTest` are detected automatically; `GutTest` suites run
 through the GUT compatibility bridge (see the
-[migration guide](./gut-migration.md)). The legacy `--runtime gut` flag has
+[migration guide](./gut-migration.md)). The bridge is deprecated as of
+v0.5.0 and will be removed in v0.6.0. The legacy `--runtime gut` flag has
 been removed and is rejected with migration guidance.
 
 **Usage:**
@@ -1668,79 +1669,60 @@ chain.
    ```
 4. Re-run `gd-tools doctor` to confirm detection.
 
-### 5.2 GUT Not Installed
+### 5.2 GUT Addon Installed (Conflict)
 
-**Symptom:** `Error: GUT is not installed` or doctor check "GUT
-Installed" fails.
+**Symptom:** Doctor check "GUT Installed" reports a warning.
 
-**Cause:** The GUT addon is not present in `addons/gut/`.
-
-**Resolution:**
-
-```bash
-gd-tools init
-```
-
-The `init` command downloads and installs the correct GUT version for the
-detected Godot version. If the download fails (network issues), you can
-manually install GUT from [the GUT GitHub
-repository](https://github.com/bitwes/Gut).
-
-### 5.3 Godot or GUT Version Mismatch
-
-**Symptom:** Doctor check "Godot Version" or "GUT Version" fails.
-
-**Cause:** The installed Godot version is below 4.5.0, or the GUT version
-does not match the expected version for the detected Godot.
+**Cause:** The GUT addon is present in `addons/gut/`. The built-in
+compatibility bridge provides `class_name GutTest` itself, so an installed
+GUT addon creates a duplicate class and preflight refuses to run the
+project. GUT is never required by gd-tools.
 
 **Resolution:**
 
-The GUT version mapping is:
+1. Remove `addons/gut/` from the project.
+2. Re-run `gd-tools doctor` to confirm the warning is gone.
+3. `GutTest` suites keep working through the compatibility bridge (no
+   addon needed); see the [migration guide](./gut-migration.md) to move
+   them onto `GdToolsTest`.
 
-| Godot Version | Expected GUT Version |
-|---|---|
-| 4.5 | 9.5.0 |
-| 4.6 | 9.6.0 |
-| 4.7 | 9.7.0 |
+### 5.3 Godot Version Mismatch
+
+**Symptom:** Doctor check "Godot Version" fails.
+
+**Cause:** The installed Godot version is below 4.5.0, which gd-tools
+requires.
+
+**Resolution:**
 
 1. Verify your Godot version: `godot --version`.
 2. If below 4.5.0, upgrade Godot from
    [godotengine.org](https://godotengine.org).
-3. Re-run `gd-tools init` to install the correct GUT version.
+3. Re-run `gd-tools doctor` to confirm detection.
+
+The installed GUT addon version, if any, is informational only: no
+gd-tools runtime uses the GUT addon.
 
 ### 5.4 Coverage Not Generating
 
 **Symptom:** `gd-tools test --coverage` runs tests but no coverage
 report appears in `.gd-tools/coverage/`.
 
-**Cause:** The coverage addon is not installed, the autoload is not
-registered, or the coverage environment variables are not set.
+**Cause:** The coverage addon is not installed, or the coverage plan is
+empty.
 
 **Resolution:**
 
-1. Run `gd-tools doctor` and verify these checks pass:
-   - Coverage Addon
-   - Autoload
-   - GUT Config (must contain `pre_run_script` and `post_run_script` keys)
-2. If any check fails, run `gd-tools init` to reinstall the coverage
-   components.
-3. Verify `.gutconfig.json` contains the hook script paths:
-   ```json
-   {
-     "pre_run_script": "addons/gd-tools-coverage/pre_run_hook.gd",
-     "post_run_script": "addons/gd-tools-coverage/post_run_hook.gd"
-   }
-   ```
-4. Ensure the `_GDTCoverage` autoload is registered in `project.godot`:
-   ```ini
-   [autoload]
-
-   _GDTCoverage="*res://addons/gd-tools-coverage/coverage.gd"
-   ```
-5. Re-run the coverage test:
+1. Run `gd-tools doctor` and verify the Coverage Addon check passes.
+2. If it fails, run `gd-tools init` to reinstall the coverage components.
+3. Re-run the coverage test:
    ```bash
    gd-tools test --coverage
    ```
+
+Native coverage does not use the `_GDTCoverage` autoload or
+`.gutconfig.json` hook scripts; those belong to the legacy GUT-hook path
+and only matter if you deployed them explicitly.
 
 ### 5.5 Native Runtime or Protocol Mismatch
 
