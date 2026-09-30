@@ -55,6 +55,7 @@ def run_native_test_command(
     paths: list[str] | None = None,
     show_uncovered: bool = False,
     no_cache: bool = False,
+    parallel: int | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -72,6 +73,8 @@ def run_native_test_command(
         paths: Optional test file or directory selectors.
         show_uncovered: Include uncovered lines in the coverage summary.
         no_cache: Bypass the coverage plan cache.
+        parallel: Optional worker count (1-32) for concurrent suite
+            execution; None or 1 runs suites sequentially.
 
     Returns:
         The normalized CLI-facing test result.

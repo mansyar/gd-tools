@@ -16,7 +16,7 @@ the end of every phase (pause for user sign-off before checkpointing).
   - [x] Write failing tests (Red): valid/invalid/boundary values
     (0, 1, 32, 33, non-int), absent-key default
   - [x] Implement (Green); config renderers expose the key
-- [ ] Task 2: `--parallel N` CLI flag in `cli.py`/`command.py`
+- [~] Task 2: `--parallel N` CLI flag in `cli.py`/`command.py`
   (flag overrides config; invalid values exit 2 with fix hint; default 4 when
   enabled without N)
   - [ ] Write failing tests (Red)
