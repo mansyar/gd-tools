@@ -60,12 +60,17 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
 
 ## Phase 3 — Documentation truth pass
 
-- [ ] Task: Update `docs/ROADMAP.md`
+- [x] Task: Update `docs/ROADMAP.md`
+  (e9b7a64)
   - §8 compatibility matrix: add a macOS column with verified
     combinations.
   - Remove/rewrite the "macOS is not covered" limitation notes.
   - Mark Roadmap Track 36 status as `Done` with an outcome summary.
-- [ ] Task: Update README platform wording
+- [x] Task: Update README platform wording — no change required
+  (README makes no per-OS claims; its only requirement statement is
+  platform-neutral: "requires Python 3.10+ and a Godot 4.5+ binary". The
+  platform support claim lives in `conductor/product.md` and ROADMAP §8,
+  which Task 9 updated.)
   - Align any platform-support wording with the verified state (no
     capability-table changes expected unless new facts emerged).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
