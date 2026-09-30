@@ -73,4 +73,5 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
   which Task 9 updated.)
   - Align any platform-support wording with the verified state (no
     capability-table changes expected unless new facts emerged).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: pending]
