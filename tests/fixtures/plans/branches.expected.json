@@ -1,11 +1,12 @@
 {
-  "version": 1,
+  "version": 2,
   "generated_by": "gd-tools",
   "files": [
     {
       "file_id": 0,
       "path": "res://branches.gd",
       "source_hash": "sha256:038fefe5f2b9634f19708c78a7743a62880a0ffe5dd4a84570becf6d593d26a9",
+      "excluded_lines": [],
       "lines": [
         {
           "line": 15,

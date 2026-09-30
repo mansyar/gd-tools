@@ -427,7 +427,7 @@ def test_bridge_cli_mixed_run_uses_native_contract(tmp_path, godot_bin):
     }
 
 
-def test_bridge_cli_run_with_coverage_produces_plan_schema_v1(
+def test_bridge_cli_run_with_coverage_produces_plan_schema_v2(
     tmp_path, godot_bin
 ):
     """`gd-tools test --coverage` reports bridge suites like native ones (AC-5)."""
@@ -438,7 +438,7 @@ def test_bridge_cli_run_with_coverage_produces_plan_schema_v1(
     assert result.returncode == 1, result.stdout + result.stderr
     coverage_dir = project / ".gd-tools" / "coverage"
     plan = json.loads((coverage_dir / "plan.json").read_text(encoding="utf-8"))
-    assert plan["version"] == 1
+    assert plan["version"] == 2
     planned_paths = [entry["path"] for entry in plan["files"]]
     assert "res://scripts/bridge_subject.gd" in planned_paths
 

@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Transient native coverage collector for the gd-tools test runner.
 ##
-## The Python side supplies the existing version-1 instrumentation plan. This
+## The Python side supplies the existing instrumentation plan. This
 ## class instruments scripts in memory, tracks hits through a static class
 ## callable, and writes the same JSON shape consumed by the Python reporter.
 
@@ -29,7 +29,9 @@ static func activate(plan_path: String, output_path: String) -> bool:
 		push_error("[gd-tools] Unable to read native coverage plan: %s" % plan_path)
 		return false
 	var parsed: Variant = JSON.parse_string(plan_file.get_as_text())
-	if typeof(parsed) != TYPE_DICTIONARY or int(parsed.get("version", -1)) != 1:
+	# Accept any schema version >= 1: the plan gained fields over time
+	# (excluded_lines in v2) but the instrumentation contract is stable.
+	if typeof(parsed) != TYPE_DICTIONARY or int(parsed.get("version", -1)) < 1:
 		push_error("[gd-tools] Unsupported native coverage plan format")
 		return false
 

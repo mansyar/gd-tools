@@ -119,6 +119,22 @@ def generate_html_report(
                     "css_class": css_class,
                 }
             )
+
+        # Excluded lines (``# gd-tools: no cover``) render in place,
+        # greyed out, but are not part of the coverage totals.
+        for excluded_num in file_plan.excluded_lines:
+            source_text = ""
+            if source_lines and 1 <= excluded_num <= len(source_lines):
+                source_text = source_lines[excluded_num - 1]
+            lines.append(
+                {
+                    "number": excluded_num,
+                    "hits": None,
+                    "source": source_text,
+                    "css_class": "excluded",
+                }
+            )
+        lines.sort(key=lambda entry: entry["number"])
         file_content = file_template.render(file_summary=fs, lines=lines)
         file_path = output_dir / f"file_{file_plan.file_id}.html"
         file_path.write_text(file_content, encoding="utf-8")

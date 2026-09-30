@@ -1,11 +1,12 @@
 {
-  "version": 1,
+  "version": 2,
   "generated_by": "gd-tools",
   "files": [
     {
       "file_id": 0,
       "path": "res://edge_cases_advanced.gd",
       "source_hash": "sha256:bb75dcb0285b3df710827c0aae9dbe473781928cae14b30840ef0fcad398b3bb",
+      "excluded_lines": [],
       "lines": [
         {
           "line": 26,

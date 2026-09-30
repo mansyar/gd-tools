@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path, PurePath
 
@@ -24,6 +26,13 @@ from rich.console import Console
 
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
+
+PLAN_VERSION = 2
+"""Current coverage plan JSON schema version.
+
+Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
+stale cached plans regenerate instead of silently dropping exclusions.
+"""
 
 # --- Data structures (FR-1) ---
 
@@ -54,12 +63,15 @@ class FilePlan:
         path: Godot resource path with ``res://`` prefix.
         source_hash: SHA-256 hash prefixed with ``sha256:``.
         lines: List of trackable points in this file.
+        excluded_lines: Sorted 1-based line numbers excluded from
+            instrumentation via ``# gd-tools: no cover`` annotations.
     """
 
     file_id: int
     path: str
     source_hash: str
     lines: list[LinePlan] = field(default_factory=list)
+    excluded_lines: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -67,7 +79,7 @@ class CoveragePlan:
     """Top-level container for a coverage plan.
 
     Attributes:
-        version: Schema version (currently 1).
+        version: Schema version (see :data:`PLAN_VERSION`).
         generated_by: Name of the tool that generated this plan.
         files: List of per-file plans.
     """
@@ -109,6 +121,7 @@ def write_plan_json(plan: CoveragePlan, output_path: str) -> None:
                 "file_id": fp.file_id,
                 "path": fp.path,
                 "source_hash": fp.source_hash,
+                "excluded_lines": fp.excluded_lines,
                 "lines": [
                     {
                         "line": lp.line,
@@ -151,9 +164,10 @@ def read_plan_json(path: str) -> CoveragePlan:
         raise CoveragePlanError("Plan JSON must be a JSON object")
 
     version = data.get("version")
-    if version != 1:
+    if version != PLAN_VERSION:
         raise CoveragePlanError(
-            f"Unsupported plan version: {version} (expected 1)"
+            f"Unsupported plan version: {version} (expected {PLAN_VERSION}). "
+            "Delete this plan file or re-run gd-tools to regenerate it."
         )
 
     if "generated_by" not in data:
@@ -190,6 +204,7 @@ def read_plan_json(path: str) -> CoveragePlan:
                 path=fdata["path"],
                 source_hash=fdata["source_hash"],
                 lines=lines,
+                excluded_lines=fdata.get("excluded_lines", []),
             )
         )
 
@@ -215,6 +230,182 @@ def parse_gdscript(source: str) -> Tree:
     return gd_parser.parse(source, gather_metadata=True)
 
 
+# --- Exclusion annotations (Track 30) ---
+
+ANNOTATION_TOKEN = "# gd-tools: no cover"
+
+_ANNOTATION_RE = re.compile(r"^gd-tools:\s*no cover(?:\s+(start|end))?$")
+_FUNC_DEF_RE = re.compile(r"^\s*(?:static\s+)?func\b")
+
+Annotation = tuple[int, str | None]
+"""A (1-based line number, "start" | "end" | None) pair."""
+
+
+def _scan_annotations(source: str) -> list[Annotation]:
+    """Scan source lines for ``# gd-tools: no cover`` comment annotations.
+
+    Only real comments match: text inside single- or triple-quoted
+    string literals is skipped by a lightweight per-line lexer.
+
+    Args:
+        source: Raw GDScript source code.
+
+    Returns:
+        Annotations in source order as ``(line, kind)`` pairs where
+        ``kind`` is ``"start"``, ``"end"``, or ``None`` (line form).
+    """
+    annotations: list[Annotation] = []
+    in_triple: str | None = None
+
+    for lineno, raw in enumerate(source.splitlines(), 1):
+        text = raw
+        if in_triple is not None:
+            end_idx = text.find(in_triple)
+            if end_idx == -1:
+                continue
+            text = text[end_idx + len(in_triple) :]
+            in_triple = None
+
+        comment: str | None = None
+        i = 0
+        while i < len(text):
+            ch = text[i]
+            if text.startswith('"""', i) or text.startswith("'''", i):
+                closer = text[i : i + 3]
+                j = text.find(closer, i + 3)
+                if j == -1:
+                    in_triple = closer
+                    break
+                i = j + 3
+                continue
+            if ch in ('"', "'"):
+                i += 1
+                closed = False
+                while i < len(text):
+                    if text[i] == "\\":
+                        i += 2
+                        continue
+                    if text[i] == ch:
+                        i += 1
+                        closed = True
+                        break
+                    i += 1
+                if not closed:
+                    break
+                continue
+            if ch == "#":
+                comment = text[i + 1 :]
+                break
+            i += 1
+
+        if comment is None:
+            continue
+        match = _ANNOTATION_RE.match(comment.strip())
+        if match:
+            annotations.append((lineno, match.group(1)))
+
+    return annotations
+
+
+def _func_span_end(lines: list[str], def_idx: int) -> int:
+    """Return the last 1-based line of the function whose def is at ``def_idx``.
+
+    A function body spans every subsequent non-blank line indented
+    deeper than the ``func`` definition line. Blank lines do not
+    extend the span.
+
+    Args:
+        lines: Source lines (0-indexed list).
+        def_idx: 0-based index of the ``func`` definition line.
+
+    Returns:
+        The last body line as a 1-based line number (the def line
+        itself when the body is empty).
+    """
+    def_indent = len(lines[def_idx]) - len(lines[def_idx].lstrip())
+    end = def_idx
+    for j in range(def_idx + 1, len(lines)):
+        stripped = lines[j].strip()
+        if not stripped:
+            continue
+        indent = len(lines[j]) - len(lines[j].lstrip())
+        if indent <= def_indent:
+            break
+        end = j
+    return end + 1
+
+
+def find_excluded_lines(source: str) -> tuple[list[int], list[str]]:
+    """Resolve ``# gd-tools: no cover`` annotations to excluded line numbers.
+
+    Semantics are flat (first-match, no nesting):
+
+    - An annotation (line or ``start`` form) on a ``func`` definition
+      line excludes the entire function body.
+    - ``start`` opens a block closed by the first matching ``end``;
+      a nested ``start`` is ignored with a warning, a ``start`` with
+      no ``end`` excludes to end of file with a warning, and a stray
+      ``end`` is ignored with a warning.
+    - Otherwise the annotation excludes its own line only.
+
+    Args:
+        source: Raw GDScript source code.
+
+    Returns:
+        A tuple of (sorted 1-based excluded line numbers, warning
+        messages without file context).
+    """
+    lines = source.splitlines()
+    annotations = _scan_annotations(source)
+
+    func_spans: dict[int, int] = {}
+    for idx, text in enumerate(lines):
+        if _FUNC_DEF_RE.match(text):
+            func_spans[idx + 1] = _func_span_end(lines, idx)
+
+    excluded: set[int] = set()
+    consumed: set[int] = set()
+    warnings: list[str] = []
+
+    # Function-level exclusions take precedence and are handled first.
+    for lineno, kind in annotations:
+        if lineno in func_spans and kind in (None, "start"):
+            excluded.update(range(lineno, func_spans[lineno] + 1))
+            consumed.add(lineno)
+
+    open_start: int | None = None
+    for lineno, kind in annotations:
+        if lineno in consumed or lineno in excluded:
+            continue
+        if kind == "start":
+            if open_start is None:
+                open_start = lineno
+            else:
+                warnings.append(
+                    f"line {lineno}: nested '{ANNOTATION_TOKEN} start' ignored"
+                )
+        elif kind == "end":
+            if open_start is not None:
+                excluded.update(range(open_start, lineno + 1))
+                open_start = None
+            else:
+                warnings.append(
+                    f"line {lineno}: '{ANNOTATION_TOKEN} end' without "
+                    "matching start ignored"
+                )
+        else:
+            excluded.add(lineno)
+
+    if open_start is not None:
+        warnings.append(
+            f"line {open_start}: unterminated '{ANNOTATION_TOKEN} start' "
+            "- excluding to end of file"
+        )
+        excluded.update(range(open_start, len(lines) + 1))
+
+    return sorted(excluded), warnings
+
+
 # --- Coverage Visitor (FR-2, FR-3) ---
 
 
@@ -228,9 +419,10 @@ class CoverageVisitor(Visitor):
         points: List of collected trackable points.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, excluded_lines: set[int] | None = None) -> None:
         self.points: list[LinePlan] = []
         self._next_id: int = 0
+        self._excluded_lines = excluded_lines or set()
 
     def _add_point(
         self,
@@ -246,6 +438,8 @@ class CoverageVisitor(Visitor):
             branch_type: Branch type string if ``point_type`` is
                 "branch", otherwise ``None``.
         """
+        if tree.meta.line in self._excluded_lines:
+            return
         self.points.append(
             LinePlan(
                 line=tree.meta.line,
@@ -371,6 +565,7 @@ def generate_plan(
 
     file_plans: list[FilePlan] = []
     console = Console()
+    stderr_console = Console(file=sys.stderr, soft_wrap=True)
     for file_id, gd_file in enumerate(gd_files):
         source = Path(gd_file).read_text(encoding="utf-8")
         source_hash = (
@@ -379,7 +574,8 @@ def generate_plan(
 
         try:
             tree = parse_gdscript(source)
-            visitor = CoverageVisitor()
+            excluded, warnings = find_excluded_lines(source)
+            visitor = CoverageVisitor(excluded_lines=set(excluded))
             visitor.visit(tree)
         except LarkError:
             console.print(
@@ -387,6 +583,11 @@ def generate_plan(
                 "syntax error prevents coverage parsing.[/yellow]"
             )
             continue
+
+        for warning in warnings:
+            stderr_console.print(
+                f"[yellow]Warning: '{gd_file}' {warning}[/yellow]"
+            )
 
         # Build res:// path
         rel_path = Path(gd_file).relative_to(project_root)
@@ -398,17 +599,37 @@ def generate_plan(
                 path=res_path,
                 source_hash=source_hash,
                 lines=visitor.points,
+                excluded_lines=excluded,
             )
         )
 
     return CoveragePlan(
-        version=1,
+        version=PLAN_VERSION,
         generated_by="gd-tools",
         files=file_plans,
     )
 
 
 # --- Plan Caching (Track 37) ---
+
+
+def _cached_plan_version(path: str) -> int | None:
+    """Peek at a cached plan file's schema version.
+
+    Args:
+        path: Path to the cached ``plan.json``.
+
+    Returns:
+        The schema version, or ``None`` when the file cannot be read,
+        is not valid JSON, or has no integer ``version`` field.
+    """
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if isinstance(data, dict) and isinstance(data.get("version"), int):
+        return data["version"]
+    return None
 
 
 def generate_plan_cached(
@@ -454,6 +675,16 @@ def generate_plan_cached(
 
     # --- Attempt cache hit ---
     if use_cache and cache_path is not None and Path(cache_path).exists():
+        cached_version = _cached_plan_version(cache_path)
+        if cached_version is not None and cached_version != PLAN_VERSION:
+            fresh_plan = generate_plan(project_root, exclude_dirs, test_dirs)
+            return fresh_plan, CacheStatus(
+                hit=False,
+                reason=(
+                    f"cache plan version outdated "
+                    f"(found {cached_version}, expected {PLAN_VERSION})"
+                ),
+            )
         try:
             cached_plan = read_plan_json(cache_path)
         except CoveragePlanError:

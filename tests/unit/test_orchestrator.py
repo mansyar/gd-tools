@@ -53,7 +53,7 @@ def _make_config(output_dir: str = ".gd-tools/coverage") -> GdToolsConfig:
 def _make_plan() -> CoveragePlan:
     """Create a minimal CoveragePlan for testing."""
     return CoveragePlan(
-        version=1,
+        version=2,
         generated_by="gd-tools",
         files=[
             FilePlan(
@@ -579,7 +579,7 @@ def _make_uncovered_file_summaries() -> list[FileSummary]:
 def _make_uncovered_plan() -> CoveragePlan:
     """Create a CoveragePlan matching the uncovered file summaries."""
     return CoveragePlan(
-        version=1,
+        version=2,
         generated_by="gd-tools",
         files=[
             FilePlan(
@@ -708,7 +708,7 @@ def test_save_coverage_baseline_writes_baseline(tmp_path):
     output_dir = tmp_path / ".gd-tools" / "coverage"
     output_dir.mkdir(parents=True)
     plan = CoveragePlan(
-        version=1,
+        version=2,
         generated_by="gd-tools",
         files=[
             FilePlan(

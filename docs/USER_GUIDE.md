@@ -1138,6 +1138,66 @@ jobs:
 | 1 | `--fail-on-regression` is set and at least one file regressed. |
 | 2 | The baseline or the current coverage data is missing or malformed, or a configuration/environment error occurred. |
 
+#### 3.7.6 Coverage exclusions
+
+Use `# gd-tools: no cover` annotations to exclude specific lines or
+blocks from coverage measurement. Excluded lines are removed from the
+coverage percentage entirely (they count in neither the covered nor
+the total figure), so debug-only code, platform-specific branches, and
+other intentionally untestable code no longer dilute your numbers.
+
+**Annotation forms:**
+
+```gdscript
+# 1. Line form -- excludes this line only.
+if OS.is_debug_build():  # gd-tools: no cover
+    _load_debug_tools()
+
+# 2. Block form -- excludes everything from the start line
+#    through the end line, inclusive.
+# gd-tools: no cover start
+func _dev_only_menu():
+    _build_debug_menu()
+    _hook_debug_shortcuts()
+# gd-tools: no cover end
+
+# 3. Function form -- placing the annotation on a `func` line
+#    excludes the entire function body.
+func _test_helper():  # gd-tools: no cover
+    return preload("res://test_helpers.gd")
+```
+
+The token must appear in a comment as
+`# gd-tools: no cover` (whitespace around the token is flexible; the
+optional `start`/`end` suffix selects the block form). Annotations
+inside string literals or docstrings are
+inert.
+
+**Edge-case semantics:**
+
+- Nesting is not tracked: a `start` inside an open block is ignored
+  with a warning, and the outer block governs.
+- An unterminated `start` excludes to the end of the file and warns.
+- A stray `end` with no open block is ignored and warns.
+- An annotation on a blank or comment-only line excludes just that
+  line.
+
+All annotation problems are **warnings, not errors**: plan generation
+continues, warnings are printed to stderr, and exit codes are
+unchanged.
+
+**How exclusions appear in reports:**
+
+- The instrumentation plan records the excluded lines in an
+  `excluded_lines` field (machine-readable truth).
+- The HTML report renders excluded lines in gray with strikethrough.
+- The terminal report appends a compact summary, e.g.
+  `Excluded: 12 lines across 3 files`, only when exclusions exist.
+- The plan cache is versioned: plans generated before the annotation
+  existed are regenerated automatically on the next run.
+- LCOV, Cobertura, and coverage-diff outputs are unchanged; excluded
+  lines simply never appear in their data.
+
 ### 3.8 gd-tools version
 
 Display the versions of all gd-tools components.
