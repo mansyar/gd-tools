@@ -9,7 +9,7 @@ every phase (pause for user sign-off before checkpointing).
 
 ---
 
-## Phase 1 — Crash-Recovery & Diagnostics Hardening
+## Phase 1 — Crash-Recovery & Diagnostics Hardening [checkpoint: 4e821bd]
 
 - [ ] Task 1: Interrupted-run cleanup and marking
   (Plan note — Tasks 1 and 2 merged after code discovery: `subprocess.run`
