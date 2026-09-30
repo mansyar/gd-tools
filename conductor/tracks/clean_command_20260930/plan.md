@@ -52,6 +52,9 @@
 
 ## Phase 3 — Docs & Closure [checkpoint: e6d6e38]
 
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions 522c31d
+
 - [x] Task: USER_GUIDE documentation a9b3f04
   - New `gd-tools clean` section: flag table with verified targets, no-flag
     inventory behavior, protected paths, `--dry-run`, exit codes.
