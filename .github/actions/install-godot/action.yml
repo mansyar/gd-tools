@@ -11,9 +11,10 @@ inputs:
 runs:
   using: composite
   steps:
-    # bash is available on both ubuntu and windows runners (Git Bash on the
-    # latter), so one script covers both. chmod/sudo are Linux-only concerns
-    # and are guarded below.
+    # bash is available on ubuntu, windows (Git Bash) and macOS runners, so
+    # one script covers all three. chmod/sudo are POSIX-only concerns and
+    # are guarded below; the macOS asset ships as a .app bundle, which the
+    # extraction glob handles separately.
     - name: Download and install Godot ${{ inputs.version }}
       id: install
       shell: bash
@@ -26,6 +27,11 @@ runs:
         if [ "$RUNNER_OS" = "Windows" ]; then
           asset="Godot_v${GODOT_VERSION}-stable_win64.exe.zip"
           target_name="godot.exe"
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          # Godot's macOS release asset is a universal (arm64 + x86_64)
+          # zip containing an .app bundle rather than a bare binary.
+          asset="Godot_v${GODOT_VERSION}-stable_macos.universal.zip"
+          target_name="godot"
         else
           asset="Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
           target_name="godot"
@@ -37,9 +43,13 @@ runs:
         unzip -q godot.zip -d godot-dist
 
         # Glob for the extracted binary rather than hardcoding its name, so a
-        # change in Godot's packaging cannot silently break CI.
+        # change in Godot's packaging cannot silently break CI. The macOS
+        # binary lives inside the .app bundle (Godot.app/Contents/MacOS/),
+        # so the search must descend below the bundle root.
         if [ "$RUNNER_OS" = "Windows" ]; then
           extracted=$(find godot-dist -maxdepth 1 -type f -name '*.exe' | head -n 1)
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          extracted=$(find godot-dist -type f -path '*Contents/MacOS/*' | head -n 1)
         else
           extracted=$(find godot-dist -maxdepth 1 -type f ! -name '*.zip' | head -n 1)
         fi
