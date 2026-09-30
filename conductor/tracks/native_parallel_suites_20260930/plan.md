@@ -76,11 +76,11 @@ the end of every phase (pause for user sign-off before checkpointing).
   path (ea095d3)
   - [x] Write failing tests (Red)
   - [x] Implement (Green)
-- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
-  - [ ] Announce and run full verification command
-  - [ ] Produce manual verification plan and pause for user sign-off
-  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+- [x] Task 4: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: 33159c7]
+  - [x] Verify tests exist for every changed `.py`/`.gd` file in this phase
+  - [x] Announce and run full verification command
+  - [x] Produce manual verification plan and pause for user sign-off
+  - [x] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
 ## Phase 4 — E2E, Performance & Documentation
 
