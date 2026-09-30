@@ -1,6 +1,9 @@
 """Unit tests for native suite process orchestration."""
 
+import itertools
 import json
+import signal
+import subprocess
 import threading
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -9,9 +12,16 @@ from unittest.mock import patch
 
 import pytest
 
+from gd_tools.errors import NativeInterruptError
+from gd_tools.native_test import orchestrator as orchestrator_module
 from gd_tools.native_test.artifacts import NativeArtifactLayout
 from gd_tools.native_test.orchestrator import (
+    _kill_process_tree,
     _merge_coverage_shards,
+    _raise_interrupt,
+    _sigterm_as_interrupt,
+    _spawn_process,
+    _SuiteOutcome,
     run_native_tests,
 )
 from gd_tools.native_test.protocol import (
@@ -81,8 +91,8 @@ def test_run_native_tests_uses_one_process_per_suite(tmp_path):
         return CompletedProcess(args, 0, "stdout", "stderr")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -118,8 +128,8 @@ def test_bridge_suite_manifest_declares_suite_runtime(tmp_path):
     )
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -158,8 +168,8 @@ def test_run_result_aggregates_engine_warnings_and_coverage_omissions(tmp_path):
         return CompletedProcess(args, 0, "", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -231,8 +241,8 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
         return CompletedProcess(args, 0, "", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -278,8 +288,8 @@ def test_run_native_tests_publishes_coverage_omissions_in_the_index(tmp_path):
         return CompletedProcess(args, 0, "", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -312,8 +322,8 @@ def test_run_native_tests_passes_screenshot_base_and_indexes_captures(
         return CompletedProcess(args, 0, "", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -337,8 +347,8 @@ def test_run_native_tests_republishes_index_when_retention_fails(tmp_path):
 
     with (
         patch(
-            "gd_tools.native_test.orchestrator.subprocess.run",
-            side_effect=fake_run,
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
         ),
         patch(
             "gd_tools.native_test.artifacts._prune_old_runs",
@@ -374,8 +384,8 @@ def test_run_native_tests_omits_headless_for_windowed_suite(tmp_path):
         return CompletedProcess(args, 0, "", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ) as run:
         result = run_native_tests(
             tmp_path,
@@ -402,8 +412,8 @@ def test_run_native_tests_continues_after_process_failure(tmp_path):
         return CompletedProcess(args, 0, "", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -427,8 +437,8 @@ def test_run_native_tests_rejects_inconsistent_process_result(tmp_path):
         return CompletedProcess(args, 1, "test failed", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -471,8 +481,8 @@ def test_run_native_tests_merges_coverage_shards(tmp_path):
         return CompletedProcess(args, 0, "", "")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -492,9 +502,16 @@ def test_run_native_tests_merges_coverage_shards(tmp_path):
 
 def test_run_native_tests_records_subprocess_timeout(tmp_path):
     """A subprocess timeout becomes an infrastructure result."""
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=TimeoutError("process timeout"),
+
+    def fake_run(args, **kwargs):
+        raise TimeoutError("process timeout")
+
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,
@@ -509,11 +526,18 @@ def test_run_native_tests_records_subprocess_timeout(tmp_path):
 
 def test_run_native_tests_records_expired_process_timeout(tmp_path):
     """A real subprocess.TimeoutExpired is an infrastructure result too."""
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=TimeoutExpired(
+
+    def fake_run(args, **kwargs):
+        raise TimeoutExpired(
             cmd=["godot"], timeout=5.0, output="partial", stderr="err"
+        )
+
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
         ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,
@@ -574,8 +598,8 @@ def test_parallel_runs_suites_concurrently(tmp_path):
         return CompletedProcess(args, 0, "stdout", "stderr")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -615,8 +639,8 @@ def test_parallel_bounded_worker_pool(tmp_path):
                 state["inflight"] -= 1
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -646,8 +670,8 @@ def test_parallel_results_in_discovery_order(tmp_path):
         return CompletedProcess(args, 0, "stdout", "stderr")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -679,8 +703,8 @@ def test_parallel_failure_does_not_cancel_other_suites(tmp_path):
         return CompletedProcess(args, returncode, "stdout", "stderr")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -707,8 +731,8 @@ def test_parallel_matches_sequential_results(tmp_path):
 
     suites = [_suite("FirstSuite"), _suite("SecondSuite")]
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         sequential = run_native_tests(tmp_path, suites, godot_binary="godot")
         parallel = run_native_tests(
@@ -736,8 +760,8 @@ def test_parallel_one_runs_suites_in_discovery_order(tmp_path):
         return CompletedProcess(args, 0, "stdout", "stderr")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -763,9 +787,12 @@ def test_parallel_timeout_fails_suite_and_queue_continues(tmp_path):
         result_path.write_text(_result_for(name), encoding="utf-8")
         return CompletedProcess(args, 0, "stdout", "stderr")
 
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,
@@ -798,9 +825,12 @@ def test_parallel_timeouts_are_independent_per_suite(tmp_path):
         result_path.write_text(_result_for(name), encoding="utf-8")
         return CompletedProcess(args, 0, "stdout", "stderr")
 
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,
@@ -831,8 +861,8 @@ def test_parallel_crashed_suite_does_not_block_queue(tmp_path):
         return CompletedProcess(args, 0, "stdout", "stderr")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         result = run_native_tests(
             tmp_path,
@@ -865,8 +895,8 @@ def test_parallel_junit_xml_preserves_discovery_order(tmp_path):
         return CompletedProcess(args, 0, "stdout", "stderr")
 
     with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
     ):
         native = run_native_tests(
             tmp_path,
@@ -881,3 +911,284 @@ def test_parallel_junit_xml_preserves_discovery_order(tmp_path):
     root = ET.parse(junit_path).getroot()
     classnames = [case.get("classname") for case in root.iter("testcase")]
     assert classnames == ["FirstSuite", "SecondSuite"]
+
+
+# --- Task 4: interrupt handling (Popen seam, registry, tree kill, abort) ---
+
+
+class _FakeProcess:
+    """Minimal process stand-in for the spawn seam and the registry."""
+
+    def __init__(self, pid):
+        self.pid = pid
+        self.returncode = None
+
+    def communicate(self, timeout=None):
+        return "stdout", "stderr"
+
+    def poll(self):
+        return self.returncode
+
+
+class _FakePopen:
+    """Adapts the existing CompletedProcess-style fakes to the Popen seam."""
+
+    _counter = itertools.count(1000)
+
+    def __init__(self, env, runner, args):
+        self.pid = next(self._counter)
+        self._env = env
+        self._runner = runner
+        self._args = args
+        self.returncode = None
+
+    def communicate(self, timeout=None):
+        outcome = self._runner(self._args, env=self._env)
+        if isinstance(outcome, CompletedProcess):
+            self.returncode = outcome.returncode
+            return outcome.stdout, outcome.stderr
+        raise outcome
+
+    def poll(self):
+        return self.returncode
+
+
+def _spawn_adapter(runner):
+    """Wrap a fake_run(args, **kwargs) into the _spawn_process seam."""
+
+    def adapt(command, *, env, registry):
+        process = _FakePopen(env, runner, command)
+        registry.add(process)
+        return process
+
+    return adapt
+
+
+def test_kill_process_tree_windows_uses_taskkill():
+    """On Windows the tree kill shells out to taskkill /T /F."""
+    with patch("gd_tools.native_test.orchestrator.subprocess.run") as taskkill:
+        _kill_process_tree(4242, _platform="win32")
+
+    taskkill.assert_called_once()
+    assert taskkill.call_args.args[0] == [
+        "taskkill",
+        "/T",
+        "/F",
+        "/PID",
+        "4242",
+    ]
+    assert taskkill.call_args.kwargs.get("check") is False
+
+
+def test_kill_process_tree_posix_kills_process_group(monkeypatch):
+    """On POSIX the kill targets the whole process group."""
+    calls = []
+    monkeypatch.setattr(
+        orchestrator_module.os, "getpgid", lambda pid: 99, raising=False
+    )
+    monkeypatch.setattr(
+        orchestrator_module.os,
+        "killpg",
+        lambda pgid, sig: calls.append((pgid, sig)),
+        raising=False,
+    )
+    if not hasattr(orchestrator_module.signal, "SIGKILL"):
+        monkeypatch.setattr(
+            orchestrator_module.signal, "SIGKILL", 9, raising=False
+        )
+
+    _kill_process_tree(4242, _platform="linux")
+
+    assert calls == [(99, signal.SIGKILL)]
+
+
+def test_kill_process_tree_posix_falls_back_to_single_kill(monkeypatch):
+    """If the group lookup fails, the direct kill is still attempted."""
+    kills = []
+
+    def boom(pid):
+        raise ProcessLookupError
+
+    def boom_killpg(pgid, sig):
+        raise AssertionError("killpg must not run when the lookup fails")
+
+    monkeypatch.setattr(orchestrator_module.os, "getpgid", boom, raising=False)
+    monkeypatch.setattr(
+        orchestrator_module.os, "killpg", boom_killpg, raising=False
+    )
+    if not hasattr(orchestrator_module.signal, "SIGKILL"):
+        monkeypatch.setattr(
+            orchestrator_module.signal, "SIGKILL", 9, raising=False
+        )
+    monkeypatch.setattr(
+        orchestrator_module.os,
+        "kill",
+        lambda pid, sig: kills.append(pid),
+        raising=False,
+    )
+
+    _kill_process_tree(4242, _platform="linux")
+
+    assert kills == [4242]
+
+
+def test_spawn_process_registers_process_and_uses_popen():
+    """_spawn_process creates the Popen with capture kwargs and registers."""
+    registry = orchestrator_module._ProcessRegistry()
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.Popen"
+    ) as popen_cls:
+        popen_cls.return_value = _FakeProcess(11)
+        process = _spawn_process(
+            ["godot", "--headless"], env={"X": "1"}, registry=registry
+        )
+
+    assert process is popen_cls.return_value
+    kwargs = popen_cls.call_args.kwargs
+    assert kwargs["stdout"] == subprocess.PIPE
+    assert kwargs["stderr"] == subprocess.PIPE
+    assert kwargs["text"] is True
+    assert kwargs["encoding"] == "utf-8"
+    assert kwargs["env"] == {"X": "1"}
+    assert registry.snapshot() == [process]
+
+
+def test_run_native_tests_interrupt_kills_processes_and_publishes_incomplete(
+    tmp_path,
+):
+    """A KeyboardInterrupt kills every in-flight tree and marks the run."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-int")
+
+    def fake_execute(index, suite, context):
+        context.registry.add(_FakeProcess(pid=700 + index))
+        if index == 0:
+            return _SuiteOutcome(tests=[])
+        raise KeyboardInterrupt
+
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._execute_suite",
+            side_effect=fake_execute,
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree") as kill,
+    ):
+        with pytest.raises(NativeInterruptError) as excinfo:
+            run_native_tests(
+                tmp_path,
+                [_suite("FirstSuite"), _suite("SecondSuite")],
+                godot_binary="godot",
+                artifact_layout=layout,
+            )
+
+    assert excinfo.value.exit_code == 130
+    killed = sorted(call.args[0] for call in kill.call_args_list)
+    assert killed == [700, 701]
+    payload = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "incomplete"
+    assert [entry["suite"] for entry in payload["suites"]] == [
+        "FirstSuite",
+        "SecondSuite",
+    ]
+
+
+def test_run_native_tests_parallel_interrupt_stops_dispatch_and_kills(
+    tmp_path,
+):
+    """A parallel interrupt cancels pending dispatch and kills workers."""
+    shutdown_calls = []
+
+    class _FakeFuture:
+        def __init__(self, args, raise_interrupt):
+            self._args = args
+            self._raise_interrupt = raise_interrupt
+
+        def result(self):
+            index, _suite_obj, context = self._args
+            context.registry.add(_FakeProcess(pid=800 + index))
+            if self._raise_interrupt:
+                raise KeyboardInterrupt
+            return _SuiteOutcome(tests=[])
+
+    class _FakeExecutor:
+        def __init__(self, max_workers=None):
+            self.max_workers = max_workers
+
+        def submit(self, fn, *args):
+            # First suite completes; the second is in flight when the
+            # interrupt reaches the dispatch loop.
+            index = args[0]
+            return _FakeFuture(args, raise_interrupt=index == 1)
+
+        def shutdown(self, wait=False, cancel_futures=False):
+            shutdown_calls.append((wait, cancel_futures))
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    executor = _FakeExecutor()
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator.ThreadPoolExecutor",
+            return_value=executor,
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree") as kill,
+    ):
+        with pytest.raises(NativeInterruptError) as excinfo:
+            run_native_tests(
+                tmp_path,
+                [_suite("FirstSuite"), _suite("SecondSuite")],
+                godot_binary="godot",
+                parallel=2,
+            )
+
+    assert excinfo.value.exit_code == 130
+    assert (False, True) in shutdown_calls
+    killed = sorted(call.args[0] for call in kill.call_args_list)
+    assert killed == [800, 801]
+
+
+def test_complete_run_never_publishes_incomplete_status(tmp_path):
+    """Regression: a successful parallel run publishes its terminal status."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-ok")
+
+    def runner(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(runner),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+            parallel=2,
+        )
+
+    assert result.status == "passed"
+    payload = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "passed"
+
+
+def test_sigterm_handler_raises_keyboard_interrupt():
+    """The SIGTERM conversion handler raises KeyboardInterrupt."""
+    with pytest.raises(KeyboardInterrupt):
+        _raise_interrupt(signal.SIGTERM, None)
+
+
+def test_sigterm_conversion_installs_and_restores_handler():
+    """_sigterm_as_interrupt swaps the handler in and restores it after."""
+    previous = signal.getsignal(signal.SIGTERM)
+    with _sigterm_as_interrupt():
+        assert signal.getsignal(signal.SIGTERM) is _raise_interrupt
+    assert signal.getsignal(signal.SIGTERM) is previous

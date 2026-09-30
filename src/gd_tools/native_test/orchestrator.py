@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
+import signal
 import subprocess
+import sys
 import tempfile
+import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -14,6 +18,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from gd_tools.errors import NativeInterruptError
 from gd_tools.native_test.artifacts import (
     ArtifactPublishError,
     NativeArtifactLayout,
@@ -32,6 +37,102 @@ from gd_tools.native_test.protocol import (
 DEFAULT_RUNNER_SCRIPT = "res://addons/gd-tools-test/gd_tools_test_runner.gd"
 
 
+class _ProcessRegistry:
+    """Thread-safe registry of the Godot processes spawned for a run.
+
+    Workers register their process before waiting on it and unregister once
+    it has been reaped, so the abort path can find and kill every process
+    still in flight when the run is interrupted.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._processes: set[Any] = set()
+
+    def add(self, process: Any) -> None:
+        with self._lock:
+            self._processes.add(process)
+
+    def remove(self, process: Any) -> None:
+        with self._lock:
+            self._processes.discard(process)
+
+    def snapshot(self) -> list[Any]:
+        with self._lock:
+            return list(self._processes)
+
+
+def _raise_interrupt(signum: int, frame: Any) -> None:
+    """Convert a SIGTERM delivery into a KeyboardInterrupt."""
+    raise KeyboardInterrupt
+
+
+@contextlib.contextmanager
+def _sigterm_as_interrupt():
+    """Treat SIGTERM like Ctrl+C for the duration of the context.
+
+    Only installed on the main thread (signal handlers must be), and only
+    when the platform defines SIGTERM. The previous handler is restored on
+    exit so the CLI never leaks its handler into callers.
+    """
+    if threading.current_thread() is not threading.main_thread() or not hasattr(
+        signal, "SIGTERM"
+    ):
+        yield
+        return
+    previous = signal.signal(signal.SIGTERM, _raise_interrupt)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+
+def _kill_process_tree(pid: int, *, _platform: str | None = None) -> None:
+    """Kill a process and all of its descendants, best effort.
+
+    Godot spawns child processes (e.g. for import steps), so killing only
+    the direct child would leak orphans. Windows uses ``taskkill /T /F``;
+    POSIX kills the whole process group (suites are started in their own
+    session via ``start_new_session``).
+    """
+    platform_name = _platform if _platform is not None else sys.platform
+    if platform_name.startswith("win"):
+        subprocess.run(
+            ["taskkill", "/T", "/F", "/PID", str(pid)],
+            capture_output=True,
+            check=False,
+        )
+        return
+    try:
+        os.killpg(os.getpgid(pid), signal.SIGKILL)
+    except OSError:
+        with contextlib.suppress(OSError):
+            os.kill(pid, signal.SIGKILL)
+
+
+def _spawn_process(
+    command: list[str],
+    *,
+    env: dict[str, str],
+    registry: _ProcessRegistry,
+):
+    """Start one Godot suite process and register it for abort handling."""
+    kwargs: dict[str, Any] = {
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+        "text": True,
+        "encoding": "utf-8",
+        "errors": "replace",
+        "env": env,
+    }
+    if os.name == "posix":
+        # Own session/process group so the tree kill can take descendants.
+        kwargs["start_new_session"] = True
+    process = subprocess.Popen(command, **kwargs)
+    registry.add(process)
+    return process
+
+
 @dataclass
 class _SuiteContext:
     """Constants shared by every per-suite worker invocation."""
@@ -44,6 +145,7 @@ class _SuiteContext:
     output_dir: Path
     artifact_layout: NativeArtifactLayout | None
     coverage: NativeCoverage | None
+    registry: _ProcessRegistry = field(default_factory=_ProcessRegistry)
 
 
 @dataclass
@@ -59,6 +161,44 @@ class _SuiteOutcome:
     coverage_shard: Path | None = None
     engine_warnings: list[str] = field(default_factory=list)
     coverage_omissions: list[dict[str, Any]] = field(default_factory=list)
+
+
+def _interrupt_message(context: _SuiteContext) -> str:
+    """User-facing message for an interrupted run."""
+    if context.artifact_layout is not None:
+        return (
+            "Test run interrupted. In-flight Godot processes were killed "
+            "and the run was marked incomplete under "
+            f"{context.artifact_layout.run_dir}."
+        )
+    return "Test run interrupted. In-flight Godot processes were killed."
+
+
+def _abort_run(context: _SuiteContext, suites: list[NativeSuite]) -> None:
+    """Kill every in-flight suite process and mark the run incomplete.
+
+    Suite paths are published without any realized artifacts (nothing was
+    verified as written at abort time), keeping ``suite_names`` and
+    ``suite_paths`` aligned for every suite in discovery order.
+    """
+    for process in context.registry.snapshot():
+        if process.poll() is None:
+            _kill_process_tree(process.pid)
+            context.registry.remove(process)
+    if context.artifact_layout is None:
+        return
+    try:
+        publish_artifact_index(
+            context.artifact_layout,
+            status="incomplete",
+            suite_names=[suite.name for suite in suites],
+            suite_paths=[{} for _ in suites],
+            preflight_paths=context.artifact_layout.preflight_paths(),
+        )
+    except ArtifactPublishError:
+        # The interrupt must surface even if the index cannot be written;
+        # the run marker still lets retention identify the directory.
+        pass
 
 
 def run_native_tests(
@@ -119,17 +259,27 @@ def run_native_tests(
         coverage=coverage,
     )
     work_items = list(enumerate(suites))
-    if parallel is not None and parallel > 1:
-        with ThreadPoolExecutor(max_workers=parallel) as executor:
-            futures = [
-                executor.submit(_execute_suite, index, suite, context)
-                for index, suite in work_items
-            ]
-            outcomes = [future.result() for future in futures]
-    else:
-        outcomes = [
-            _execute_suite(index, suite, context) for index, suite in work_items
-        ]
+    with _sigterm_as_interrupt():
+        try:
+            if parallel is not None and parallel > 1:
+                with ThreadPoolExecutor(max_workers=parallel) as executor:
+                    futures = [
+                        executor.submit(_execute_suite, index, suite, context)
+                        for index, suite in work_items
+                    ]
+                    outcomes = [future.result() for future in futures]
+            else:
+                outcomes = [
+                    _execute_suite(index, suite, context)
+                    for index, suite in work_items
+                ]
+        except KeyboardInterrupt:
+            if parallel is not None and parallel > 1:
+                # Let the executor drop queued work; running workers finish
+                # on their own once their processes are killed below.
+                executor.shutdown(wait=False, cancel_futures=True)
+            _abort_run(context, suites)
+            raise NativeInterruptError(_interrupt_message(context)) from None
 
     all_tests: list[NativeTestResult] = []
     coverage_shards: list[Path] = []
@@ -312,29 +462,25 @@ def _execute_suite(
         ]
     )
 
+    process = _spawn_process(command, env=env, registry=context.registry)
     try:
-        completed = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            env=env,
-            timeout=context.process_timeout,
-            check=False,
-        )
+        stdout, stderr = process.communicate(timeout=context.process_timeout)
     except (subprocess.TimeoutExpired, TimeoutError) as exc:
+        _kill_process_tree(process.pid)
+        context.registry.remove(process)
         return _SuiteOutcome(
             tests=[_process_error(suite.name, f"Godot process failed: {exc}")],
             has_error=True,
             suite_paths=suite_paths if artifact_layout is not None else None,
             coverage_shard=coverage_shard,
         )
+    context.registry.remove(process)
+    returncode = process.returncode
 
     outcome = _SuiteOutcome(
         tests=[],
-        stdout=completed.stdout,
-        stderr=completed.stderr,
+        stdout=stdout,
+        stderr=stderr,
         suite_paths=suite_paths if artifact_layout is not None else None,
         coverage_shard=coverage_shard,
     )
@@ -346,21 +492,21 @@ def _execute_suite(
             "error": 2,
             "cancelled": 1,
         }[parsed_result.status]
-        if completed.returncode != expected_returncode:
+        if returncode != expected_returncode:
             outcome.has_error = True
             outcome.tests.append(
                 _process_error(
                     suite.name,
                     "Native result status "
                     f"{parsed_result.status} disagrees with process exit "
-                    f"code {completed.returncode}",
+                    f"code {returncode}",
                 )
             )
             return outcome
         parsed_result = parsed_result.model_copy(
             update={
-                "stdout": completed.stdout,
-                "stderr": completed.stderr,
+                "stdout": stdout,
+                "stderr": stderr,
             }
         )
         outcome.tests.extend(parsed_result.tests)
@@ -382,9 +528,9 @@ def _execute_suite(
 
     outcome.has_error = True
     message_parts = [
-        f"Godot process exited with code {completed.returncode}",
-        completed.stdout.strip(),
-        completed.stderr.strip(),
+        f"Godot process exited with code {returncode}",
+        stdout.strip(),
+        stderr.strip(),
     ]
     outcome.tests.append(
         _process_error(
