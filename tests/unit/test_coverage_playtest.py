@@ -15,6 +15,7 @@ import pytest
 
 from gd_tools.config import GdToolsConfig
 from gd_tools.coverage.playtest import run_playtest_coverage
+from gd_tools.errors import GdToolsError
 from gd_tools.godot import GodotInfo
 
 GODOT_INFO = GodotInfo(path="godot-fake", version="4.7.1", is_valid=True)
@@ -34,7 +35,9 @@ def _make_project(tmp_path: Path, main_scene: str | None) -> Path:
     project = tmp_path / "proj"
     (project / "scripts").mkdir(parents=True)
     (project / "scripts" / "subject.gd").write_text(
-        "extends Node\n\nfunc score() -> int:\n\treturn 1\n",
+        "extends Node\n\n"
+        "func score() -> int:\n\treturn 1\n\n"
+        "func unused() -> void:\n\treturn\n",
         encoding="utf-8",
     )
     godot_file = 'config_version=5\n\n[application]\n\nconfig/name="P"\n'
@@ -141,3 +144,163 @@ def test_playtest_passes_timeout_to_godot_process(playtest_env):
     run_playtest_coverage(config, timeout=30)
 
     assert playtest_env["captured"]["timeout"] == 30
+
+
+# --- Phase 3: result collection & exit semantics ---
+
+
+def test_playtest_clean_exit_reports_hit_lines(playtest_env):
+    config = GdToolsConfig()
+    result = run_playtest_coverage(config, report_format="text")
+
+    plan = json.loads(
+        (
+            playtest_env["project"] / config.coverage.output_dir / "plan.json"
+        ).read_text(encoding="utf-8")
+    )
+    total_lines = sum(len(f["lines"]) for f in plan["files"])
+    report = result.output_path.read_text(encoding="utf-8")
+    assert "50.0%" in report
+    assert str(total_lines) in report
+
+
+def test_playtest_crash_with_data_warns_and_reports_partial(
+    playtest_env, monkeypatch
+):
+    warnings: list[str] = []
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.output.print_warning",
+        lambda message: warnings.append(message),
+    )
+
+    def crash_after_snapshot(
+        binary, project_path, args, env=None, timeout=None
+    ):
+        _fake_run_godot({})(binary, project_path, args, env, timeout)
+        return subprocess.CompletedProcess(
+            args=binary, returncode=1, stdout="", stderr="segfault"
+        )
+
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.run_godot", crash_after_snapshot
+    )
+    config = GdToolsConfig()
+    result = run_playtest_coverage(config, report_format="text")
+
+    assert result.output_path.is_file()
+    assert any("partial" in w.lower() for w in warnings)
+
+
+def test_playtest_timeout_collects_last_snapshot(playtest_env, monkeypatch):
+    warnings: list[str] = []
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.output.print_warning",
+        lambda message: warnings.append(message),
+    )
+
+    def snapshot_then_timeout(
+        binary, project_path, args, env=None, timeout=None
+    ):
+        _fake_run_godot({})(binary, project_path, args, env, timeout)
+        raise subprocess.TimeoutExpired(cmd=binary, timeout=timeout)
+
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.run_godot", snapshot_then_timeout
+    )
+    config = GdToolsConfig()
+    result = run_playtest_coverage(config, timeout=30, report_format="text")
+
+    assert result.output_path.is_file()
+    assert any("timeout" in w.lower() for w in warnings)
+
+
+def test_playtest_min_percent_below_threshold_raises_exit_1(playtest_env):
+    config = GdToolsConfig()
+    with pytest.raises(GdToolsError) as excinfo:
+        run_playtest_coverage(config, min_percent=99)
+    assert excinfo.value.exit_code == 1
+
+
+def test_playtest_min_percent_met_does_not_raise(playtest_env):
+    config = GdToolsConfig()
+    run_playtest_coverage(config, min_percent=50)
+
+
+def test_playtest_missing_main_scene_and_scene_raises_exit_2(
+    tmp_path, monkeypatch
+):
+    project = _make_project(tmp_path, main_scene=None)
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.find_project_root", lambda: project
+    )
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.find_godot", lambda config: GODOT_INFO
+    )
+    config = GdToolsConfig()
+
+    with pytest.raises(GdToolsError) as excinfo:
+        run_playtest_coverage(config)
+    assert excinfo.value.exit_code == 2
+    assert "--scene" in str(excinfo.value)
+
+
+def test_playtest_missing_project_raises_exit_2(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.find_project_root", lambda: tmp_path
+    )
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.find_godot", lambda config: GODOT_INFO
+    )
+    config = GdToolsConfig()
+
+    with pytest.raises(GdToolsError) as excinfo:
+        run_playtest_coverage(config)
+    assert excinfo.value.exit_code == 2
+    assert "project.godot" in str(excinfo.value)
+
+
+def test_playtest_launch_failure_without_data_raises_exit_2(
+    playtest_env, monkeypatch
+):
+    def fail_without_data(binary, project_path, args, env=None, timeout=None):
+        return subprocess.CompletedProcess(
+            args=binary, returncode=1, stdout="", stderr="boom"
+        )
+
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.run_godot", fail_without_data
+    )
+    config = GdToolsConfig()
+
+    with pytest.raises(GdToolsError) as excinfo:
+        run_playtest_coverage(config)
+    assert excinfo.value.exit_code == 2
+    assert "boom" in str(excinfo.value)
+
+
+def test_playtest_clean_exit_without_data_raises_exit_2(
+    playtest_env, monkeypatch
+):
+    def succeed_without_data(
+        binary, project_path, args, env=None, timeout=None
+    ):
+        return subprocess.CompletedProcess(
+            args=binary, returncode=0, stdout="", stderr=""
+        )
+
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.run_godot", succeed_without_data
+    )
+    config = GdToolsConfig()
+
+    with pytest.raises(GdToolsError) as excinfo:
+        run_playtest_coverage(config)
+    assert excinfo.value.exit_code == 2
+    assert "no coverage data" in str(excinfo.value).lower()
+
+
+def test_playtest_supports_lcov_report_format(playtest_env):
+    config = GdToolsConfig()
+    result = run_playtest_coverage(config, report_format="lcov")
+
+    assert result.output_path.suffix == ".info"

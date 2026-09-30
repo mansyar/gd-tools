@@ -10,12 +10,21 @@ same report formats as test coverage.
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
+from gd_tools import output
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
+from gd_tools.coverage.orchestrator import (
+    _print_coverage_table,
+    _print_threshold_footer,
+)
 from gd_tools.coverage.reporter import ReportResult
-from gd_tools.errors import CoveragePlaytestError
+from gd_tools.errors import (
+    CoveragePlaytestError,
+    CoverageThresholdError,
+)
 from gd_tools.godot import find_godot, run_godot
 
 PLAYTEST_ENV = "GD_TOOLS_COVERAGE_PLAYTEST"
@@ -98,19 +107,34 @@ def run_playtest_coverage(
             )
         args.append(main_scene)
 
-    run_godot(
-        godot_info.path,
-        project_root,
-        args,
-        env=env,
-        timeout=timeout,
-    )
+    try:
+        result = run_godot(
+            godot_info.path,
+            project_root,
+            args,
+            env=env,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        # --timeout auto-close: subprocess.run hard-killed the game, so
+        # only the periodic snapshots are on disk.  That is the expected
+        # outcome for a requested timeout, not a crash.
+        output.print_warning(
+            f"Playtest session reached the {timeout}s timeout; the game "
+            "was closed automatically. Reporting the last periodic "
+            "snapshot."
+        )
+        result = None
 
     effective_format = (
         report_format if report_format is not None else config.coverage.format
     )
     return _collect_and_report(
-        project_root, output_dir, coverage_path, effective_format
+        output_dir,
+        coverage_path,
+        effective_format,
+        min_percent=min_percent,
+        result=result,
     )
 
 
@@ -139,26 +163,49 @@ def _read_main_scene(project_root: Path) -> str | None:
 
 
 def _collect_and_report(
-    project_root: Path,
     output_dir: Path,
     coverage_path: Path,
     effective_format: str,
+    *,
+    min_percent: int | None,
+    result: subprocess.CompletedProcess | None,
 ) -> ReportResult:
     """Collect the coverage output and generate the report.
 
     Args:
-        project_root: Root directory of the Godot project.
         output_dir: Coverage output directory (already contains
             ``plan.json``).
         coverage_path: Path the tracker wrote the coverage data to.
         effective_format: Resolved report format (flag > config).
+        min_percent: Minimum coverage threshold, or ``None``.
+        result: The completed game process, or ``None`` when the
+            session ended via the ``--timeout`` auto-close.
 
     Returns:
         The generated :class:`ReportResult`.
 
     Raises:
-        CoveragePlaytestError: If no coverage data was produced.
+        CoveragePlaytestError: If the game crashed without producing
+            data, or no coverage data was produced at all.
+        CoverageThresholdError: If session coverage is below
+            ``min_percent``.
     """
+    if result is not None and result.returncode != 0:
+        if not coverage_path.is_file():
+            stderr_tail = (result.stderr or "").strip()
+            detail = f": {stderr_tail[-300:]}" if stderr_tail else ""
+            raise CoveragePlaytestError(
+                "[Error] Playtest session failed and produced no coverage "
+                "data.\n"
+                f"  Cause: The game exited with code {result.returncode}"
+                f"{detail}\n"
+                "  Fix: Run the game manually to reproduce the crash."
+            )
+        output.print_warning(
+            f"The game exited unexpectedly (exit code {result.returncode}). "
+            "Reporting partial data from the last periodic snapshot."
+        )
+
     if not coverage_path.is_file():
         raise CoveragePlaytestError(
             "[Error] Playtest produced no coverage data.\n"
@@ -168,4 +215,20 @@ def _collect_and_report(
         )
     plan = plan_generator.read_plan_json(str(output_dir / "plan.json"))
     data = reporter.read_coverage_json(coverage_path)
-    return reporter.generate_report(plan, data, output_dir, effective_format)
+
+    summary = reporter.compute_summary(plan, data)
+    _print_coverage_table(summary, min_percent)
+    _print_threshold_footer(summary, min_percent)
+
+    report = reporter.generate_report(plan, data, output_dir, effective_format)
+    if min_percent is not None and summary.line_rate * 100 < min_percent:
+        raise CoverageThresholdError(
+            f"[Error] Line coverage {summary.line_rate * 100:.1f}% is "
+            f"below minimum threshold {min_percent}%\n"
+            f"  Cause: Only {summary.covered_lines} of "
+            f"{summary.total_lines} lines were executed during the "
+            "playtest session.\n"
+            f"  Fix: Play more of the game or lower the --min threshold.",
+            report_result=report,
+        )
+    return report
