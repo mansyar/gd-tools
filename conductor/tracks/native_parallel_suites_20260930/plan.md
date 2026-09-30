@@ -33,7 +33,7 @@ the end of every phase (pause for user sign-off before checkpointing).
     user sign-off
   - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
-## Phase 2 — Parallel Execution Engine
+## Phase 2 — Parallel Execution Engine [checkpoint: 0fd0504]
 
 - [x] Task 1: Worker-pool scheduler in `native_test/orchestrator.py`
   (discovery-order queue, per-worker dispatch, mocked subprocesses in unit
@@ -56,11 +56,11 @@ the end of every phase (pause for user sign-off before checkpointing).
   - [x] Write failing tests (Red)
   - [x] Implement (Green)
   - [x] Regression: complete runs never marked incomplete
-- [~] Task 5: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
-  - [ ] Announce and run full verification command
-  - [ ] Produce manual verification plan and pause for user sign-off
-  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+- [x] Task 5: Phase Verification & Checkpoint (Refer to workflow.md) (0fd0504)
+  - [x] Verify tests exist for every changed `.py`/`.gd` file in this phase
+  - [x] Announce and run full verification command
+  - [x] Produce manual verification plan and pause for user sign-off
+  - [x] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
 ## Phase 3 — Protocol, Coverage & Watch Integration
 
