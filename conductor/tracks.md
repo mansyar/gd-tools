@@ -127,5 +127,3 @@ _Archived tracks live in `./archive/`._
   events, full `--coverage` support, watch-mode inheritance, continue-on-failure
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
----
-- [x] **Track: Clean Command** (feature: add gd-tools clean to remove .gd-tools/ artifacts - coverage output (incl. plan cache + baseline.json), artifacts/, baselines, native worker cache - with --coverage/--artifacts/--baselines/--cache/--all/--dry-run, no-flag inventory + hint (deletes nothing), hard-protected paths (addons/**, gd-tools.toml, .gutconfig.json, ~/.gd-tools), per-target CleanResult summary, exit 0 success/no-op/dry-run and exit 2 on removal failure) *Link: [clean_command_20260930](./tracks/clean_command_20260930/index.md)*
