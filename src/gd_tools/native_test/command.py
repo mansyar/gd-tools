@@ -181,6 +181,7 @@ def run_native_test_command(
         coverage=coverage_settings,
         work_dir=artifact_layout.native_dir,
         process_timeout=process_timeout,
+        parallel=parallel,
         run_id=run_id,
         artifact_layout=artifact_layout,
     )

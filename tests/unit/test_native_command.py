@@ -902,3 +902,185 @@ def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
     assert excinfo.value is error
     report_coverage.assert_called_once()
     assert report_coverage.call_args.args[2] is summary
+
+
+def test_run_native_command_forwards_parallel_to_orchestrator(tmp_path):
+    """The adapter passes the parallel worker count to the orchestrator."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=_native_result(),
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+    ):
+        run_native_test_command(_config(), parallel=4)
+
+    assert run.call_args.kwargs["parallel"] == 4
+
+
+def test_run_native_command_parallel_omitted_runs_sequential(tmp_path):
+    """parallel=None propagates the sequential default to the orchestrator."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=_native_result(),
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+    ):
+        run_native_test_command(_config())
+
+    assert run.call_args.kwargs["parallel"] is None
+
+
+def test_run_native_command_parallel_failed_tests_raise_exit_1(tmp_path):
+    """A failed suite under parallel still raises TestFailureError (exit 1)."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    failed = _native_result(
+        status="failed",
+        tests=[
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_ok",
+                status="passed",
+            ),
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_bad",
+                status="failed",
+            ),
+        ],
+    )
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=failed,
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+    ):
+        with pytest.raises(TestFailureError):
+            run_native_test_command(_config(), parallel=2)
+
+
+def test_run_native_command_parallel_infrastructure_error_exits_2(tmp_path):
+    """An infrastructure error under parallel still exits with code 2."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    error = _native_result(
+        status="error",
+        tests=[
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_ok",
+                status="error",
+                message="engine crashed",
+            ),
+        ],
+    )
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_preflight",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=error,
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+    ):
+        with pytest.raises(GdToolsError) as excinfo:
+            run_native_test_command(_config(), parallel=2)
+
+    assert excinfo.value.exit_code == 2

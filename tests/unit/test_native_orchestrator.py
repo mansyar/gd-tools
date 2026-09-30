@@ -2,6 +2,7 @@
 
 import json
 import threading
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from subprocess import CompletedProcess, TimeoutExpired
 from unittest.mock import patch
@@ -813,9 +814,7 @@ def test_parallel_timeouts_are_independent_per_suite(tmp_path):
             parallel=2,
         )
 
-    error_suites = [
-        t.suite for t in result.tests if t.status == "error"
-    ]
+    error_suites = [t.suite for t in result.tests if t.status == "error"]
     assert sorted(error_suites) == ["FirstSuite", "ThirdSuite"]
     assert result.status == "error"
 
@@ -847,3 +846,38 @@ def test_parallel_crashed_suite_does_not_block_queue(tmp_path):
         ("FirstSuite", "passed"),
         ("SecondSuite", "error"),
     ]
+
+
+def test_parallel_junit_xml_preserves_discovery_order(tmp_path):
+    """JUnit XML testcases stay in discovery order under parallel runs."""
+    from gd_tools.native_test.command import _to_test_result
+
+    release_first = threading.Event()
+
+    def fake_run(args, **kwargs):
+        name = _suite_name_from_env(kwargs)
+        if name == "FirstSuite":
+            assert release_first.wait(timeout=5)
+        result_path = Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"])
+        result_path.write_text(_result_for(name), encoding="utf-8")
+        if name == "SecondSuite":
+            release_first.set()
+        return CompletedProcess(args, 0, "stdout", "stderr")
+
+    with patch(
+        "gd_tools.native_test.orchestrator.subprocess.run",
+        side_effect=fake_run,
+    ):
+        native = run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            parallel=2,
+        )
+
+    junit_path = tmp_path / "results.xml"
+    _to_test_result(native, tmp_path, str(junit_path))
+
+    root = ET.parse(junit_path).getroot()
+    classnames = [case.get("classname") for case in root.iter("testcase")]
+    assert classnames == ["FirstSuite", "SecondSuite"]
