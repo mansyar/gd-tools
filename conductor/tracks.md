@@ -108,7 +108,7 @@ _Archived tracks live in `./archive/`._
   ./archive/native_release_readiness_20260930/)
   *Link: [native_release_readiness_20260930](./archive/native_release_readiness_20260930/index.md)*
 
-- [ ] **Track: macOS CI Matrix** (chore: add `macos-latest` to the CI test
+- [~] **Track: macOS CI Matrix** (chore: add `macos-latest` to the CI test
   matrix at full parity — unit, integration, e2e — extend the shared
   `install-godot` action with macOS support, fix macOS-specific issues that
   surface, and update the docs that currently record macOS as uncovered;
