@@ -11,11 +11,11 @@ the end of every phase (pause for user sign-off before checkpointing).
 
 ## Phase 1 — Configuration & API Surface
 
-- [ ] Task 1: Config key `[test] parallel` in `config.py`
+- [x] Task 1: Config key `[test] parallel` in `config.py` (505a0ab)
   (Pydantic validation, 1–32 bounds, absent = sequential)
-  - [ ] Write failing tests (Red): valid/invalid/boundary values
+  - [x] Write failing tests (Red): valid/invalid/boundary values
     (0, 1, 32, 33, non-int), absent-key default
-  - [ ] Implement (Green); config renderers expose the key
+  - [x] Implement (Green); config renderers expose the key
 - [ ] Task 2: `--parallel N` CLI flag in `cli.py`/`command.py`
   (flag overrides config; invalid values exit 2 with fix hint; default 4 when
   enabled without N)
