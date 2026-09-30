@@ -190,7 +190,7 @@ def test_install_action_is_a_composite_action():
 
 
 def test_install_action_selects_the_asset_per_platform():
-    """Linux, Windows and macOS ship different asset names; the step branches."""
+    """Linux, Windows and macOS ship different asset names."""
     text = ACTION_PATH.read_text(encoding="utf-8")
     assert "_linux.x86_64.zip" in text
     assert "_win64.exe.zip" in text
