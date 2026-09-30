@@ -112,5 +112,6 @@ _Archived tracks live in `./archive/`._
   matrix at full parity — unit, integration, e2e — extend the shared
   `install-godot` action with macOS support, fix macOS-specific issues that
   surface, and update the docs that currently record macOS as uncovered;
-  Roadmap Track 36)
-  *Link: [macos_ci_matrix_20260930](./tracks/macos_ci_matrix_20260930/index.md)*
+  Roadmap Track 36) (archived
+  ./archive/macos_ci_matrix_20260930/)
+  *Link: [macos_ci_matrix_20260930](./archive/macos_ci_matrix_20260930/index.md)*
