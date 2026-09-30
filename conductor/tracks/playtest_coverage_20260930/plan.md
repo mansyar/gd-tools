@@ -122,7 +122,8 @@
 
 - [x] Task 4.3: Refactor + full unit suite green (106/106 CLI tests).
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: f1f015a]
 
 ---
 
