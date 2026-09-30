@@ -235,7 +235,10 @@ def cli(verbose: bool, quiet: bool):
 @click.option(
     "--with-gut",
     is_flag=True,
-    help="Also install and enable the legacy GUT runtime.",
+    help=(
+        "Also install the GUT addon (deprecated: the addon conflicts "
+        "with the built-in compatibility bridge)."
+    ),
 )
 def init(non_interactive, with_gut):
     """Initialize a new gd-tools configuration."""
