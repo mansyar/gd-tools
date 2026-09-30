@@ -41,10 +41,14 @@ def _make_project(tmp_path: Path) -> Path:
     _write(gd / "coverage" / "coverage.json", COVERAGE_BYTES)
     _write(gd / "coverage" / "plan.json", 100)
     _write(gd / "coverage" / "baseline.json", BASELINE_BYTES)
-    _write(gd / "artifacts" / "run_20260930_0000" / "result.xml", ARTIFACT_BYTES)
+    _write(
+        gd / "artifacts" / "run_20260930_0000" / "result.xml", ARTIFACT_BYTES
+    )
     _write(gd / "native" / "worker0" / "scratch.txt", CACHE_BYTES)
     # Protected paths that must survive every destructive run.
-    _write(root / "addons" / "gd-tools-test" / ".backups" / "plugin.cfg.bak", 50)
+    _write(
+        root / "addons" / "gd-tools-test" / ".backups" / "plugin.cfg.bak", 50
+    )
     _write(root / "gd-tools.toml", 200)
     _write(root / ".gutconfig.json", 40)
     return root
@@ -118,14 +122,15 @@ def test_all_removes_every_target_directory(tmp_path):
 def test_all_keeps_protected_paths(tmp_path):
     root = _make_project(tmp_path)
     run_clean(all=True, project_root=root)
-    assert (root / "addons" / "gd-tools-test" / ".backups" / "plugin.cfg.bak").exists()
+    assert (
+        root / "addons" / "gd-tools-test" / ".backups" / "plugin.cfg.bak"
+    ).exists()
     assert (root / "gd-tools.toml").exists()
     assert (root / ".gutconfig.json").exists()
 
 
 def test_missing_target_reports_nothing_to_remove_without_error(tmp_path):
-    root = _make_project(tmp_path)
-    # No artifacts dir in this project.
+    root = tmp_path / "project"
     (root / ".gd-tools" / "coverage").mkdir(parents=True)
     result = run_clean(artifacts=True, project_root=root)
     entry = _status(result, "artifacts")
@@ -166,7 +171,9 @@ def test_all_subsumes_every_explicit_flag(tmp_path):
         cache=True,
         project_root=root,
     )
-    names = [entry.name for entry in result.targets if entry.status == "removed"]
+    names = [
+        entry.name for entry in result.targets if entry.status == "removed"
+    ]
     assert names == ["coverage", "artifacts", "cache"]
     assert result.freed_bytes == (
         COVERAGE_BYTES + 100 + BASELINE_BYTES + ARTIFACT_BYTES + CACHE_BYTES
