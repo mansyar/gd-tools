@@ -35,7 +35,7 @@ One install, one config, one mental model.
 | **Unified workflow** | One install, one config (`gd-tools.toml`), one mental model for test, lint, format, and coverage. Consistent terminal output with colored markers and summary footers across all commands. |
 | **Native test runtime** | Tests extend `GdToolsTest` and run inside Godot itself. Scene and resource integration tests reach the real scene tree through an explicit context object rather than a proxy. |
 | **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute -- native test and coverage addons deployed, configs generated. Existing `GutTest` suites run through the built-in compatibility bridge with no addon install. |
-| **Coverage gap-filling** | Production-quality line and branch coverage for GDScript -- HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. `# gd-tools: no cover` annotations exclude debug-only code from the numbers. |
+| **Coverage gap-filling** | Production-quality line and branch coverage for GDScript -- HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. `# gd-tools: no cover` annotations exclude debug-only code from the numbers. `coverage run` collects coverage during manual playtest sessions, not just automated tests. |
 | **CI/CD friendly** | Exit codes, `--check` flags, machine-readable output (JSON, JUnit XML, LCOV, Cobertura), no interactive prompts in CI mode. |
 | **Standalone compatibility** | gdlint and gdformat continue to work if invoked directly. `gd-tools` is a layer on top, not a lock-in. |
 
@@ -103,7 +103,7 @@ func test_health_starts_at_full() -> void:
 | `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
-| `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`, `save-baseline`, and `diff` (baseline comparison for CI regression gates). |
+| `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`, `save-baseline`, `diff` (baseline comparison for CI regression gates), and `run` (collect coverage during a manual playtest session). |
 | `gd-tools config` | Configuration management -- `show` (display resolved config), `validate` (check config validity). |
 | `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, gdtoolkit, Python, and GUT when installed) in a table or JSON. |
 | `gd-tools completion` | Generate shell completion scripts for bash, zsh, fish, or PowerShell. |

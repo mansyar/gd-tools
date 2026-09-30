@@ -1,3 +1,9 @@
+## Unreleased
+
+### Feat
+
+- **coverage**: Add `coverage run` -- collect coverage during a manual playtest session. Launches the game windowed (not headless) with the coverage tracker in playtest mode (`GD_TOOLS_COVERAGE_PLAYTEST=1`), letting the player exercise the game while hits are flushed to disk periodically (every 5 seconds, or `--timeout / 2` when `--timeout` is set) and again on game exit. On session end the full-project plan and collected hits flow through the existing reporter suite (`--report-format text|html|lcov|cobertura|json`), so `coverage show`, `save-baseline`, and `diff` work on playtest results unchanged. `--scene` launches a specific scene (default: the project's `run/main_scene`), `--timeout N` auto-closes the game after N seconds, and `--min N` gates the session result (exit 1) like every other coverage path. A crash or kill mid-session reports partial data from the last periodic snapshot with a warning; launch failures, invalid scenes, and missing projects exit 2 with structured diagnostics.
+
 ## v0.5.0 (2026-09-30)
 
 ### Feat

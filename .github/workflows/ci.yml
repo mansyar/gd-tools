@@ -133,7 +133,19 @@ jobs:
         with:
           version: ${{ matrix.godot-version }}
 
-      - name: Run integration tests
+      # The playtest-coverage integration tests launch Godot windowed
+      # (no --headless), which needs a display server.  Provide a
+      # virtual one on the display-less ubuntu runners.
+      - name: Install xvfb
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run integration tests (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pytest tests/integration/ -m integration --no-cov --durations=20 --junitxml=junit-integration.xml
+
+      - name: Run integration tests (Windows/macOS)
+        if: runner.os != 'Linux'
         run: pytest tests/integration/ -m integration --no-cov --durations=20 --junitxml=junit-integration.xml
 
       - name: Upload test results

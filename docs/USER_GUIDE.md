@@ -1199,6 +1199,75 @@ unchanged.
 - LCOV, Cobertura, and coverage-diff outputs are unchanged; excluded
   lines simply never appear in their data.
 
+#### 3.7.7 coverage run
+
+Collect coverage during a **manual playtest session**. Launches the game
+windowed (not headless) with the coverage tracker activated in playtest
+mode, lets you play normally, and produces the same reports as a test
+coverage run when the session ends.
+
+**Usage:**
+
+```bash
+gd-tools coverage run [OPTIONS]
+```
+
+**Flags:**
+
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `--scene` | string | Project's `run/main_scene` from `project.godot` | Scene to launch for the playtest session. |
+| `--timeout` | int | None (wait for manual close) | Automatically close the game after N seconds. Useful for scripted/automated playtest sessions. |
+| `--min` | int | None | Exit 1 when line coverage falls below this percentage. |
+| `--report-format` | string | Config `[coverage].format` | Report format (`text`, `html`, `lcov`, `cobertura`, `json`). |
+
+**Examples:**
+
+```bash
+# Play the game manually; coverage is reported when you close the window
+gd-tools coverage run
+
+# Launch a specific scene instead of the main scene
+gd-tools coverage run --scene res://scenes/level1.tscn
+
+# Automated session: auto-close after 60 seconds
+gd-tools coverage run --timeout 60
+
+# Gate the session result like any other coverage run
+gd-tools coverage run --min 50
+
+# Produce an HTML report of the session
+gd-tools coverage run --report-format html
+```
+
+**How it works:**
+
+- A full-project coverage plan is generated (same plan as test
+  coverage, honoring `# gd-tools: no cover` annotations and the
+  `[coverage]` includes/excludes in `gd-tools.toml`).
+- The game is launched windowed with the coverage addon's tracker in
+  playtest mode (`GD_TOOLS_COVERAGE_PLAYTEST=1`).
+- Hits are flushed to disk periodically (every 5 seconds, or
+  `--timeout / 2` when `--timeout` is set) and again when the game
+  exits, so data survives a crash: the report is built from the last
+  periodic snapshot.
+- After the session, the summary table and threshold footer print and
+  the report is written to `[coverage].output_dir` -- reuse
+  `coverage show`, `coverage report`, `coverage save-baseline`, and
+  `coverage diff` on the result as usual.
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Session completed and the report was generated. |
+| 1 | `--min` threshold not met. |
+| 2 | Configuration error, invalid scene, missing project, launch failure, or no coverage data produced. |
+
+**Requires:** the coverage addon installed (`gd-tools init`) with the
+`_GDTCoverage` autoload registered. If the game crashes, a warning
+notes that partial data from the last periodic snapshot was reported.
+
 ### 3.8 gd-tools version
 
 Display the versions of all gd-tools components.

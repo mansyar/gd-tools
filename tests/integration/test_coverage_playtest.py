@@ -18,9 +18,12 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
 from conftest import import_godot_project
 
 from gd_tools.init import register_coverage_autoload
+
+pytestmark = pytest.mark.integration
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 AUTOLOAD_FIXTURE = FIXTURES_DIR / "autoload_coverage"
