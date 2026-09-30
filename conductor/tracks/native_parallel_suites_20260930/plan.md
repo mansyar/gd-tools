@@ -68,10 +68,10 @@ the end of every phase (pause for user sign-off before checkpointing).
   protocol minor version bump per versioned-JSON convention (392a6be)
   - [x] Write failing tests (Red)
   - [x] Implement (Green)
-- [ ] Task 2: Coverage under parallel — per-suite data files compose with the
-  existing merge path; merged report structurally identical to sequential
-  - [ ] Write failing tests (Red)
-  - [ ] Implement (Green)
+- [x] Task 2: Coverage under parallel — per-suite data files compose with the
+  existing merge path; merged report structurally identical to sequential (237856f)
+  - [x] Write failing tests (Red)
+  - [x] Implement (Green)
 - [ ] Task 3: Watch mode inherits `--parallel`/config through the shared run
   path
   - [ ] Write failing tests (Red)
