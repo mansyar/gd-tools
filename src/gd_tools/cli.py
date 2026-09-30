@@ -36,9 +36,11 @@ from .coverage.orchestrator import (
     save_coverage_baseline,
     show_coverage_summary,
 )
+from .coverage.playtest import run_playtest_coverage
 from .doctor import format_doctor_table, run_doctor
 from .errors import (
     ConfigError,
+    CoveragePlaytestError,
     CoverageThresholdError,
     GdToolsError,
     TestFailureError,
@@ -842,6 +844,60 @@ def diff_cmd(base, show_lines, report_format, fail_on_regression):
             report_format=report_format.lower(),
             fail_on_regression=fail_on_regression,
         )
+    except GdToolsError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(e.exit_code)
+
+
+@coverage.command()
+@click.option(
+    "--scene",
+    help="Scene to launch for the playtest session "
+    "(default: the project's main scene).",
+)
+@click.option(
+    "--timeout",
+    type=int,
+    help="Automatically close the game after N seconds.",
+)
+@click.option(
+    "--min",
+    "min_percent",
+    type=int,
+    help="Exit 1 when line coverage falls below this percentage.",
+)
+@click.option(
+    "--report-format",
+    type=click.Choice(["text", "html", "lcov", "cobertura", "json"]),
+    help="Report format (default: the configured coverage format).",
+)
+def run(scene, timeout, min_percent, report_format):
+    """Collect coverage during a manual playtest session."""
+    try:
+        config = load_config()
+    except ConfigError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
+    try:
+        result = run_playtest_coverage(
+            config,
+            scene=scene,
+            timeout=timeout,
+            min_percent=min_percent,
+            report_format=report_format,
+        )
+        click.echo(f"Report written to: {result.output_path}")
+    except CoverageThresholdError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(1)
+    except CoveragePlaytestError as e:
+        click.echo(f"Error: {e}", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()

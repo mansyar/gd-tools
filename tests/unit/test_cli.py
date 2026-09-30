@@ -15,6 +15,7 @@ from gd_tools.verbosity import Verbosity, get_verbosity
 from gd_tools.errors import (
     ConfigError,
     CoveragePlanError,
+    CoveragePlaytestError,
     CoverageThresholdError,
     GdToolsError,
     TestFailureError,
@@ -1478,3 +1479,116 @@ def test_coverage_diff_regression_gate_exit_1():
             ["coverage", "diff", "--base", "b.json", "--fail-on-regression"],
         )
     assert result.exit_code == 1
+
+
+# --- coverage run (playtest coverage) ---
+
+
+def test_coverage_run_is_registered():
+    """Test coverage --help lists the run subcommand."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "--help"])
+    assert result.exit_code == 0
+    assert "run" in result.output
+
+
+def test_coverage_run_help_shows_flags():
+    """Test coverage run --help shows --scene, --timeout, --min, --report-format."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "run", "--help"])
+    assert result.exit_code == 0
+    assert "--scene" in result.output
+    assert "--timeout" in result.output
+    assert "--min" in result.output
+    assert "--report-format" in result.output
+
+
+def test_coverage_run_calls_orchestrator():
+    """Flags reach run_playtest_coverage unchanged."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = MagicMock()
+    mock_result.output_path = Path("report.txt")
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_playtest_coverage",
+            return_value=mock_result,
+        ) as mock_run,
+    ):
+        result = runner.invoke(
+            cli,
+            [
+                "coverage",
+                "run",
+                "--scene",
+                "res://scenes/level1.tscn",
+                "--timeout",
+                "60",
+                "--min",
+                "50",
+                "--report-format",
+                "json",
+            ],
+        )
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(
+        mock_config,
+        scene="res://scenes/level1.tscn",
+        timeout=60,
+        min_percent=50,
+        report_format="json",
+    )
+
+
+def test_coverage_run_success_exit_0():
+    """A completed playtest session echoes the report path and exits 0."""
+    runner = CliRunner()
+    mock_result = MagicMock()
+    mock_result.output_path = Path("coverage_report.txt")
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch("gd_tools.cli.run_playtest_coverage", return_value=mock_result),
+    ):
+        result = runner.invoke(cli, ["coverage", "run"])
+    assert result.exit_code == 0
+    assert "Report written to: coverage_report.txt" in result.output
+
+
+def test_coverage_run_config_error_exit_2():
+    """Test coverage run exits 2 when load_config raises ConfigError."""
+    runner = CliRunner()
+    with patch(
+        "gd_tools.cli.load_config",
+        side_effect=ConfigError("Invalid config"),
+    ):
+        result = runner.invoke(cli, ["coverage", "run"])
+    assert result.exit_code == 2
+
+
+def test_coverage_run_threshold_error_exit_1():
+    """A --min gate failure raises CoverageThresholdError mapped to exit 1."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.run_playtest_coverage",
+            side_effect=CoverageThresholdError("Coverage below minimum"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "run", "--min", "80"])
+    assert result.exit_code == 1
+
+
+def test_coverage_run_playtest_error_exit_2():
+    """Invalid scene / missing project / launch failure exits 2."""
+    runner = CliRunner()
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.run_playtest_coverage",
+            side_effect=CoveragePlaytestError("No main scene configured"),
+        ),
+    ):
+        result = runner.invoke(cli, ["coverage", "run"])
+    assert result.exit_code == 2
