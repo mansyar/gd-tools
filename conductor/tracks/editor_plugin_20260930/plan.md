@@ -8,12 +8,12 @@ verification, conventional commits with git notes.
 
 ## Phase 1 — Python Deployment Infrastructure (TDD)
 
-- [ ] Task: Write failing unit tests for editor-plugin deployment
-  - [ ] `tests/unit/test_init.py`: init deploys `addons/gd-tools-editor/` files (plugin.cfg, plugin.gd, dock.gd, coverage_overlay.gd); idempotent re-init; smart backup on modified files; wheel packaging includes the new addon dir
-  - [ ] `tests/unit/test_doctor.py`: doctor reports editor-plugin presence/staleness status
-- [ ] Task: Implement deployment — `src/gd_tools/init.py` (editor addon install + smart backup), `src/gd_tools/addon_check.py` / `src/gd_tools/doctor.py` (verification), `pyproject.toml` package data
-- [ ] Task: Refactor + coverage check (≥80% line / ≥70% branch on touched modules); `ruff` + `black` clean
-- [ ] Task: Commit `feat(init): deploy gd-tools editor plugin addon` + git note
+- [x] Task: Write failing unit tests for editor-plugin deployment
+  - [x] `tests/unit/test_init.py`: init deploys `addons/gd-tools-editor/` files (plugin.cfg, plugin.gd, dock.gd, coverage_overlay.gd); idempotent re-init; smart backup on modified files; wheel packaging includes the new addon dir
+  - [x] `tests/unit/test_doctor.py`: doctor reports editor-plugin presence/staleness status
+- [x] Task: Implement deployment — `src/gd_tools/init.py` (editor addon install + smart backup), `src/gd_tools/addon_check.py` / `src/gd_tools/doctor.py` (verification), `pyproject.toml` package data
+- [x] Task: Refactor + coverage check (≥80% line / ≥70% branch on touched modules); `ruff` + `black` clean
+- [x] Task: Commit `feat(init): deploy gd-tools editor plugin addon` + git note (59ebd27)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md — manual verify: `pip install -e .` → `gd-tools init` in fixture project → confirm addon files deployed; `gd-tools doctor` reports status)
 
 ## Phase 2 — Dock Panel (GDScript, manual-checklist verified)
