@@ -73,5 +73,12 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
   which Task 9 updated.)
   - Align any platform-support wording with the verified state (no
     capability-table changes expected unless new facts emerged).
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
   [checkpoint: a8ace80]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions
+  (a21970f — shortened the asset-per-platform docstring in
+  `tests/unit/test_ci_matrix.py` to satisfy the 80-column rule;
+  31/31 contract tests pass, ruff + black clean)
