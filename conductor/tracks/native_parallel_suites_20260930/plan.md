@@ -16,12 +16,12 @@ the end of every phase (pause for user sign-off before checkpointing).
   - [x] Write failing tests (Red): valid/invalid/boundary values
     (0, 1, 32, 33, non-int), absent-key default
   - [x] Implement (Green); config renderers expose the key
-- [~] Task 2: `--parallel N` CLI flag in `cli.py`/`command.py`
+- [x] Task 2: `--parallel N` CLI flag in `cli.py`/`command.py` (6533c26)
   (flag overrides config; invalid values exit 2 with fix hint; default 4 when
   enabled without N)
-  - [ ] Write failing tests (Red)
-  - [ ] Implement (Green)
-- [ ] Task 3: `N = 1` routes to the existing sequential path — regression
+  - [x] Write failing tests (Red)
+  - [x] Implement (Green)
+- [~] Task 3: `N = 1` routes to the existing sequential path — regression
   tests prove zero behavior change (no pool machinery engaged)
 - [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase

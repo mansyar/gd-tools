@@ -371,6 +371,20 @@ def test_test_parallel_out_of_range_exits_2(value):
     mock_run.assert_not_called()
 
 
+def test_test_parallel_one_forwarded():
+    """--parallel 1 is a valid request that pins sequential execution."""
+    result, mock_run = _invoke_test_with_parallel(["test", "--parallel", "1"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 1
+
+
+def test_test_parallel_one_from_config():
+    """test.parallel = 1 in config pins sequential execution."""
+    result, mock_run = _invoke_test_with_parallel(["test"], config_parallel=1)
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["parallel"] == 1
+
+
 def test_lint_exit_code_2_config_error():
     """Test lint exits with code 2 when config loading fails."""
     runner = CliRunner()
