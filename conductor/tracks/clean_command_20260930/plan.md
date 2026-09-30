@@ -34,7 +34,7 @@
   - Result: 21 passed; clean.py 95% combined (line+branch); gates met.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) a4740e8
 
-## Phase 2 — CLI Wiring & UX
+## Phase 2 — CLI Wiring & UX [checkpoint: f51b9c1]
 
 - [x] Task: Write failing CLI tests (Red) 62803b8
   - Click runner tests: `clean` with no flags → inventory + hint, exit 0,
@@ -48,9 +48,9 @@
 - [x] Task: Style + full-suite gate bdb9b95
   - Result: ruff + black clean; CI=true pytest --cov=gd_tools --cov-branch:
     1443 passed, 6 skipped, 95.40% total (gates 80/70).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) f51b9c1
 
-## Phase 3 — Docs & Closure
+## Phase 3 — Docs & Closure [checkpoint: e6d6e38]
 
 - [x] Task: USER_GUIDE documentation a9b3f04
   - New `gd-tools clean` section: flag table with verified targets, no-flag
@@ -61,4 +61,4 @@
   - Re-run full gate (`ruff`, `black --check`, `CI=true pytest`); commit
     `feat(clean): add gd-tools clean command` (+ docs in same or follow-up
     `docs:` commit); attach git notes; mark all tasks `[x]` with SHAs.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) e6d6e38
