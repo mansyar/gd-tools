@@ -51,19 +51,19 @@ every phase (pause for user sign-off before checkpointing).
 
 ## Phase 3 — Documentation Truth Pass
 
-- [ ] Task 1: `docs/ROADMAP.md`
-  - [ ] Fix stale "Phases 3–5 outstanding" header
-  - [ ] Check off delivered Phase 4 checkboxes
-  - [ ] Rewrite Phase 5 status: hardening + deprecation delivered by this track; parallel execution and runtime caching remain deferred
-- [ ] Task 2: `README.md`
-  - [ ] Update known-limitations table (parameterized tests supported; bridge = Deprecated)
-  - [ ] Verify CLI examples against actual current output
-- [ ] Task 3: `docs/ARCHITECTURE.md` + `docs/USER_GUIDE.md`
-  - [ ] Remove/reword bridge-era statements (GUT-as-default, bridge-as-new)
-  - [ ] State the deprecation timeline consistently (deprecated 0.5, removed 0.6)
-- [ ] Task 4: `doctor` / `init` wording alignment
-  - [ ] Update bridge status wording in doctor output and init messaging
-  - [ ] Update any tests asserting doctor/init output wording
+- [x] Task 1: `docs/ROADMAP.md` (commit 71f9672)
+  - [x] Fix stale "Phases 3–5 outstanding" header
+  - [x] Check off delivered Phase 4 checkboxes
+  - [x] Rewrite Phase 5 status: hardening + deprecation delivered by this track; parallel execution and runtime caching remain deferred
+- [x] Task 2: `README.md` (commit 71f9672)
+  - [x] Update known-limitations table (parameterized tests supported; bridge = Deprecated)
+  - [x] Verify CLI examples against actual current output (also fixed stale coverage subcommand list: added `save-baseline` and `diff`)
+- [x] Task 3: `docs/ARCHITECTURE.md` + `docs/USER_GUIDE.md` (commit 71f9672)
+  - [x] Remove/reword bridge-era statements (GUT-as-default, bridge-as-new)
+  - [x] State the deprecation timeline consistently (deprecated 0.5, removed 0.6)
+- [x] Task 4: `doctor` / `init` wording alignment (commit 72484ed)
+  - [x] Update bridge status wording in doctor output and init messaging
+  - [x] Update any tests asserting doctor/init output wording (Red: new "deprecated" assertion in test_check_gut_suites_reports_bridge_eligible_suites)
 - [ ] Task 5: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command
