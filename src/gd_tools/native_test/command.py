@@ -139,7 +139,8 @@ def _run_native_test_command(
     if not godot_info.is_valid:
         raise GdToolsError(
             f"Godot {godot_info.version} is not supported; "
-            "gd-tools requires Godot 4.5+"
+            "gd-tools requires Godot 4.5+. Install a supported Godot "
+            "or set godot.binary in gd-tools.toml"
         )
 
     test_dirs = _test_directories(project_root, paths, config)
@@ -343,7 +344,10 @@ def _import_project(
             timeout=timeout,
         )
     except subprocess.TimeoutExpired:
-        raise GdToolsError(f"Godot import timed out after {timeout}s") from None
+        raise GdToolsError(
+            f"Godot import timed out after {timeout}s; re-run with a "
+            "larger --timeout (a first import may take longer)"
+        ) from None
 
 
 def _prepare_coverage(
@@ -381,14 +385,20 @@ def _prepare_coverage(
 
 
 def _raise_for_native_error(result: NativeRunResult) -> None:
-    if result.status == "error":
-        messages = "; ".join(
-            test.message for test in result.tests if test.message
-        )
-        raise GdToolsError(
-            messages
-            or "Native test runtime encountered an infrastructure error"
-        )
+    if result.status != "error":
+        return
+    messages = "; ".join(test.message for test in result.tests if test.message)
+    detail = (
+        messages or "Native test runtime encountered an infrastructure error"
+    )
+    remedies = [
+        test.diagnostics["remedy"]
+        for test in result.tests
+        if test.diagnostics.get("remedy")
+    ]
+    if remedies:
+        detail = f"{detail} Remedy: {remedies[0]}"
+    raise GdToolsError(detail)
 
 
 def _generate_native_report(

@@ -163,12 +163,22 @@ def run_native_tests(
                 timeout=process_timeout,
                 check=False,
             )
-        except (subprocess.TimeoutExpired, TimeoutError) as exc:
+        except (subprocess.TimeoutExpired, TimeoutError):
             has_error = True
             all_tests.append(
                 _process_error(
                     suite.name,
-                    f"Godot process failed: {exc}",
+                    f"Godot process timed out after {process_timeout:g}s "
+                    f"running suite {suite.name!r}",
+                    diagnostics={
+                        "kind": "process",
+                        "expected": f"completion within {process_timeout:g}s",
+                        "found": "timeout",
+                        "remedy": (
+                            "increase the timeout (--timeout or "
+                            "[test].timeout_seconds) and re-run"
+                        ),
+                    },
                 )
             )
             continue
@@ -206,6 +216,18 @@ def run_native_tests(
                         "Native result status "
                         f"{parsed_result.status} disagrees with process exit "
                         f"code {completed.returncode}",
+                        diagnostics={
+                            "kind": "protocol",
+                            "expected": (
+                                f"exit code {expected_returncode} for status "
+                                f"'{parsed_result.status}'"
+                            ),
+                            "found": f"exit code {completed.returncode}",
+                            "remedy": (
+                                "re-run the suite directly to reproduce; "
+                                "report this if it persists"
+                            ),
+                        },
                     )
                 )
                 continue
@@ -240,8 +262,25 @@ def run_native_tests(
             continue
 
         has_error = True
+        if result_path.is_file():
+            # The runner wrote something it cannot be parsed as a protocol
+            # v2 result: a protocol mismatch rather than an engine crash.
+            kind = "protocol"
+            remedy = (
+                "the runner wrote an unreadable result.json; verify the "
+                "gd-tools addon version matches the CLI protocol and re-run"
+            )
+            found = "unparseable result.json"
+        else:
+            kind = "engine"
+            remedy = (
+                f"inspect the engine log under {log_path.parent} and "
+                "re-run the suite directly"
+            )
+            found = "no result.json"
         message_parts = [
-            f"Godot process exited with code {completed.returncode}",
+            f"Godot process exited with code {completed.returncode} "
+            f"({found})",
             completed.stdout.strip(),
             completed.stderr.strip(),
         ]
@@ -249,6 +288,12 @@ def run_native_tests(
             _process_error(
                 suite.name,
                 "; ".join(part for part in message_parts if part),
+                diagnostics={
+                    "kind": kind,
+                    "expected": "a parseable protocol v2 result.json",
+                    "found": found,
+                    "remedy": remedy,
+                },
             )
         )
 
@@ -261,6 +306,15 @@ def run_native_tests(
                 _process_error(
                     "<coverage>",
                     "Unable to merge native coverage shards",
+                    diagnostics={
+                        "kind": "coverage",
+                        "expected": "valid protocol v1 coverage shards",
+                        "found": "missing or invalid shard",
+                        "remedy": (
+                            "re-run with --coverage and --no-cache, or "
+                            "run without --coverage"
+                        ),
+                    },
                 )
             )
 
@@ -436,11 +490,15 @@ def _publish_incomplete_index(
         pass
 
 
-def _process_error(suite_name: str, message: str) -> NativeTestResult:
+def _process_error(
+    suite_name: str,
+    message: str,
+    diagnostics: dict[str, Any] | None = None,
+) -> NativeTestResult:
     return NativeTestResult(
         suite=suite_name,
         name="<process>",
         status="error",
         message=message,
-        diagnostics={"kind": "process"},
+        diagnostics=diagnostics or {"kind": "process"},
     )
