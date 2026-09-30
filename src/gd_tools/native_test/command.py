@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import signal
 import subprocess
+import threading
 import uuid
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -42,6 +44,58 @@ from gd_tools.test_runner import TestDetail, TestResult, format_test_results
 
 
 def run_native_test_command(
+    config: GdToolsConfig,
+    coverage: bool = False,
+    min_percent: int | None = None,
+    suite: str | None = None,
+    test_name: str | None = None,
+    junit_xml: str | None = None,
+    no_exit_code: bool = False,
+    timeout: int | None = 300,
+    tags: list[str] | None = None,
+    test_timeout: float | None = None,
+    paths: list[str] | None = None,
+    show_uncovered: bool = False,
+    no_cache: bool = False,
+) -> TestResult:
+    """Run native tests and return the existing CLI-facing result model.
+
+    SIGTERM is converted to ``KeyboardInterrupt`` on platforms that deliver
+    it (POSIX; the registration is inert on Windows) so an external kill
+    takes the same cleanup path as Ctrl+C, and the previous handler is
+    restored when the command returns. See ``_run_native_test_command`` for
+    the parameter documentation.
+    """
+    previous_sigterm = None
+    if threading.current_thread() is threading.main_thread():
+        previous_sigterm = signal.signal(signal.SIGTERM, _raise_interrupt)
+    try:
+        return _run_native_test_command(
+            config,
+            coverage=coverage,
+            min_percent=min_percent,
+            suite=suite,
+            test_name=test_name,
+            junit_xml=junit_xml,
+            no_exit_code=no_exit_code,
+            timeout=timeout,
+            tags=tags,
+            test_timeout=test_timeout,
+            paths=paths,
+            show_uncovered=show_uncovered,
+            no_cache=no_cache,
+        )
+    finally:
+        if previous_sigterm is not None:
+            signal.signal(signal.SIGTERM, previous_sigterm)
+
+
+def _raise_interrupt(signum: int, frame: object) -> None:
+    """Convert SIGTERM into the interrupt cleanup path."""
+    raise KeyboardInterrupt
+
+
+def _run_native_test_command(
     config: GdToolsConfig,
     coverage: bool = False,
     min_percent: int | None = None,
@@ -164,23 +218,35 @@ def run_native_test_command(
         except ArtifactPublishError:
             pass
         raise
+    except KeyboardInterrupt:
+        # An interrupt during preflight leaves no index at all; record the
+        # run as incomplete so it is never mistaken for a finished one.
+        _report_interrupted_run(artifact_layout)
+        raise
     suites = preflight_result.suites
-    coverage_settings, _ = _prepare_coverage(
-        config,
-        project_root,
-        coverage=coverage,
-        no_cache=no_cache,
-    )
-    native_result = run_native_tests(
-        project_root,
-        suites,
-        godot_info.path,
-        coverage=coverage_settings,
-        work_dir=artifact_layout.native_dir,
-        process_timeout=process_timeout,
-        run_id=run_id,
-        artifact_layout=artifact_layout,
-    )
+    try:
+        coverage_settings, _ = _prepare_coverage(
+            config,
+            project_root,
+            coverage=coverage,
+            no_cache=no_cache,
+        )
+        native_result = run_native_tests(
+            project_root,
+            suites,
+            godot_info.path,
+            coverage=coverage_settings,
+            work_dir=artifact_layout.native_dir,
+            process_timeout=process_timeout,
+            run_id=run_id,
+            artifact_layout=artifact_layout,
+        )
+    except KeyboardInterrupt:
+        # The orchestrator has already published the incomplete index for
+        # interrupts during suite execution; report either way so the user
+        # always sees where the partial artifacts live.
+        _report_interrupted_run(artifact_layout)
+        raise
     infrastructure_error = native_result.status == "error"
     failed_count = sum(
         test.status in {"failed", "timeout", "error", "crashed"}
@@ -223,6 +289,31 @@ def run_native_test_command(
         test_failure.result = result
         raise test_failure
     return result
+
+
+def _report_interrupted_run(artifact_layout: NativeArtifactLayout) -> None:
+    """Report an interrupted run and mark its artifacts incomplete.
+
+    The orchestrator publishes the incomplete index for interrupts that land
+    during suite execution. This covers the earlier phases (import, plan
+    preparation, preflight) and publishes only when no index exists yet, so
+    a richer orchestrator-published index is never overwritten.
+    """
+    if not artifact_layout.index_path.exists():
+        try:
+            publish_artifact_index(
+                artifact_layout,
+                status="incomplete",
+                suite_names=[],
+                suite_paths=[],
+                preflight_paths=artifact_layout.preflight_paths(),
+            )
+        except (ArtifactPublishError, OSError, ValueError):
+            pass
+    output.print_error(
+        f"Run interrupted: artifacts marked incomplete at "
+        f"{artifact_layout.run_dir}"
+    )
 
 
 def _test_directories(

@@ -14,7 +14,7 @@ from typing import Any
 from gd_tools.native_test.protocol import NATIVE_PROTOCOL_VERSION
 
 _SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
-_VALID_STATUSES = {"passed", "failed", "error", "cancelled"}
+_VALID_STATUSES = {"passed", "failed", "error", "cancelled", "incomplete"}
 
 # Written the moment a run starts, before any artifact directory exists, so a
 # run that dies before publishing its index is still recognizable to retention.

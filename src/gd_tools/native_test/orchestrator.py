@@ -172,6 +172,19 @@ def run_native_tests(
                 )
             )
             continue
+        except KeyboardInterrupt:
+            # subprocess.run kills the in-flight Godot child when the
+            # interrupt arrives (its Popen context manager kills on any
+            # exception), and this loop stops spawning further suites once
+            # the interrupt propagates. Record the run as incomplete so an
+            # interrupted run is never mistaken for a passing one, then let
+            # the interrupt keep propagating to the CLI.
+            _publish_incomplete_index(
+                artifact_layout,
+                [attempted.name for attempted in suites[: index + 1]],
+                suite_artifact_paths,
+            )
+            raise
 
         if completed.stdout:
             process_stdout.append(completed.stdout)
@@ -397,6 +410,30 @@ def _read_native_result(path: Path) -> NativeRunResult | None:
         )
     except (OSError, ValidationError, ValueError):
         return None
+
+
+def _publish_incomplete_index(
+    artifact_layout: NativeArtifactLayout | None,
+    attempted_suites: list[str],
+    suite_artifact_paths: list[dict[str, Any]],
+) -> None:
+    """Publish an artifact index recording an interrupted run.
+
+    Best-effort: a publish failure must not mask the interrupt, so the
+    exception is swallowed and the interrupt keeps propagating either way.
+    """
+    if artifact_layout is None:
+        return
+    try:
+        publish_artifact_index(
+            artifact_layout,
+            status="incomplete",
+            suite_names=attempted_suites,
+            suite_paths=suite_artifact_paths,
+            preflight_paths=artifact_layout.preflight_paths(),
+        )
+    except (ArtifactPublishError, ValueError, OSError):
+        pass
 
 
 def _process_error(suite_name: str, message: str) -> NativeTestResult:

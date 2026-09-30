@@ -464,6 +464,11 @@ def test(
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
         ctx.exit(1)
+    except KeyboardInterrupt:
+        # The command layer already reported the interrupted run; exit with
+        # the conventional SIGINT code instead of a traceback.
+        ctx = click.get_current_context()
+        ctx.exit(130)
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
