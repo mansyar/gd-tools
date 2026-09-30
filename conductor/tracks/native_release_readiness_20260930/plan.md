@@ -88,6 +88,14 @@ every phase (pause for user sign-off before checkpointing).
 
 ---
 
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions — commit d2cac87
+  - [x] Applied: init.py warning reworded to trigger-neutral (review finding Low-1; `--with-gut` text appeared even when the GUT branch was auto-triggered by `config.test.runtime == "gut"`)
+  - [x] Deferred as deliberate design choices (Low-2, Low-3): single-remedy aggregation in `_raise_for_native_error`; `diagnostics or {"kind": "process"}` default
+
+---
+
 ## Definition of Done
 - All spec functional requirements implemented and tested
 - Coverage targets met on `src/gd_tools/*.py`
