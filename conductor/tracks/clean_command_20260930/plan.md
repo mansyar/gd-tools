@@ -8,7 +8,7 @@
   tests. Commits follow `<type>(<scope>): <desc>` with git notes; tasks are
   marked `[x]` with 7-char SHAs.
 
-## Phase 1 — `clean.py` Core (TDD)
+## Phase 1 — `clean.py` Core (TDD) [checkpoint: a4740e8]
 
 - [x] Task: Write failing unit tests for `run_clean` (Red) 05b8224
   - `tests/unit/test_clean.py` with `tmp_path` project fixtures creating
@@ -32,7 +32,7 @@
   - Refactor if needed after green.
 - [x] Task: Run coverage gate for `clean.py` 4055849
   - Result: 21 passed; clean.py 95% combined (line+branch); gates met.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) a4740e8
 
 ## Phase 2 — CLI Wiring & UX
 
