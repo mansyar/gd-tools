@@ -127,3 +127,12 @@ _Archived tracks live in `./archive/`._
   events, full `--coverage` support, watch-mode inheritance, continue-on-failure
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
+
+---
+
+- [ ] **Track: Docs Truth Pass v0.5.0** (chore: sweep README, CHANGELOG,
+  ARCHITECTURE, and ROADMAP for claims made stale by v0.5.0 - parallel
+  suite execution, `parameterize()`, suite-level `skip_test()` - verify each
+  rewritten claim against the implementation, fix only false claims, and
+  update ROADMAP Phase 5 status markers)
+  *Link: [docs_truth_pass_v050_20260930](./tracks/docs_truth_pass_v050_20260930/index.md)*

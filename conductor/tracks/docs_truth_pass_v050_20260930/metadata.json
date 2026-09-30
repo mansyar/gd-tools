@@ -1,0 +1,9 @@
+{
+  "track_id": "docs_truth_pass_v050_20260930",
+  "type": "chore",
+  "status": "new",
+  "branch": "feature/docs-truth-pass-20260930",
+  "created": "2026-09-30",
+  "description": "Documentation truth pass: align README, CHANGELOG, ARCHITECTURE, and ROADMAP claims with shipped v0.5.0 features (parallel execution, parameterize(), suite-level skip_test).",
+  "followed_by": "Track 39 (Clean Command) as the next sequential track"
+}
