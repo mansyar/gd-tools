@@ -89,8 +89,8 @@ the end of every phase (pause for user sign-off before checkpointing).
   suite; smoke-compatible selection) (9ff7a1d)
 - [x] Task 2: Performance e2e in `tests/performance/` — M-suite run with N
   workers completes faster than sequential (e8d78d1)
-- [ ] Task 3: Documentation — `ARCHITECTURE.md` limitation removal + parallel
-  model, `USER_GUIDE.md`, `README.md`, config reference
+- [x] Task 3: Documentation — `ARCHITECTURE.md` limitation removal + parallel
+  model, `USER_GUIDE.md`, `README.md`, config reference (95cbdc0)
 - [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command
