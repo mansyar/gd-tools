@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import pytest
 
@@ -2406,3 +2407,72 @@ def test_native_suite_skip_in_before_all_skips_every_test(godot_bin, tmp_path):
         assert entry["attempts"] == 1
     # Test bodies and hooks must never have run.
     assert not (project / "suite_skip_hook_ran.txt").exists()
+
+
+@pytest.mark.e2e_smoke
+def test_native_parallel_run_matches_sequential_outcomes(
+    godot_bin, tmp_path, monkeypatch
+):
+    """A parallel CLI run produces the same outcomes as the sequential run.
+
+    Exit status, the discovery-ordered JUnit test list, and the merged
+    coverage report must be structurally identical across both modes on
+    the same fixture project.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    shutil.rmtree(project / "test")
+    (project / "test").mkdir()
+    suite_names = [
+        "ParallelAlphaSuite",
+        "ParallelBetaSuite",
+        "ParallelGammaSuite",
+    ]
+    for index, suite_name in enumerate(suite_names):
+        (project / "test" / f"parallel_{index}_suite.gd").write_text(
+            "extends GdToolsTest\n\n\n"
+            "func test_always_passes() -> void:\n"
+            "    assert_true(true)\n",
+            encoding="utf-8",
+        )
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"]),
+    )
+
+    def _run(parallel):
+        return run_native_test_command(
+            config,
+            coverage=True,
+            junit_xml=str(tmp_path / f"junit-{parallel}.xml"),
+            timeout=30,
+            parallel=parallel,
+        )
+
+    sequential = _run(None)
+    sequential_junit = ET.parse(tmp_path / "junit-None.xml")
+    sequential_cases = [
+        (case.get("classname"), case.get("name"))
+        for case in sequential_junit.getroot().iter("testcase")
+    ]
+    sequential_coverage = json.loads(
+        sequential.coverage_data_path.read_text(encoding="utf-8")
+    )
+    sequential_coverage.pop("generated_at")
+
+    parallel = _run(2)
+    parallel_junit = ET.parse(tmp_path / "junit-2.xml")
+    parallel_cases = [
+        (case.get("classname"), case.get("name"))
+        for case in parallel_junit.getroot().iter("testcase")
+    ]
+    parallel_coverage = json.loads(
+        parallel.coverage_data_path.read_text(encoding="utf-8")
+    )
+    parallel_coverage.pop("generated_at")
+
+    assert parallel.total == sequential.total
+    assert parallel.failed == sequential.failed
+    assert parallel_cases == sequential_cases
+    assert parallel_cases, "expected JUnit test cases in both runs"
+    assert parallel_coverage == sequential_coverage
