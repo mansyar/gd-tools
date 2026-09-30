@@ -28,12 +28,11 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
     integration/e2e (20 min) budgets already absorb Windows, and macOS
     hosted runners are typically comparable or faster; confirm via CI
     observed runtimes in Task 3.
-- [~] Task: Verify macOS runs green (iterative)
-  - Push the branch, observe the CI run, diagnose and iterate until all
-    macOS jobs pass.
-  - Announce each push/watch cycle; max two self-correction attempts per
-    failure before escalating to the user.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Verify macOS runs green (iterative)
+  (run 36684641137 — success; iteration 2 fixed `Killed: 9` via
+  quarantine strip + ad-hoc re-sign, d1e9ff3)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: 0aba077]
 
 ## Phase 2 — Fix macOS-specific issues surfaced by CI (conditional)
 
@@ -56,7 +55,8 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
   Stage 1 before macOS jobs could run)
   - Only if (b) issues exist: adjust fixtures/assertions to be
     platform-neutral; document why.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: 0aba077]
 
 ## Phase 3 — Documentation truth pass
 
