@@ -1436,6 +1436,11 @@ by `gd-tools init`), `gd-tools.toml`, `.gutconfig.json`, and the user-level
 cache in your home directory. `clean` only removes the fixed targets above
 under the project's `.gd-tools/` directory.
 
+> **Note:** `clean` targets the default coverage location
+> (`.gd-tools/coverage`). If you moved the coverage output via
+> `[coverage].output_dir` in `gd-tools.toml`, `--coverage` will not match
+> it; remove the custom directory manually.
+
 **Examples:**
 
 ```bash

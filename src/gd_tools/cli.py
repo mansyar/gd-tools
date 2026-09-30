@@ -19,7 +19,17 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from . import __version__, output
-from .clean import CleanResult, run_clean
+from .clean import (
+    STATUS_ABSENT,
+    STATUS_FAILED,
+    STATUS_NOTHING,
+    STATUS_PRESENT,
+    STATUS_REMOVED,
+    STATUS_SUBSUMED,
+    STATUS_WOULD_REMOVE,
+    CleanResult,
+    run_clean,
+)
 from .config import (
     check_deprecated_settings,
     find_project_root,
@@ -328,16 +338,6 @@ def _render_clean(result: CleanResult, inventory: bool, dry_run: bool) -> None:
         inventory: Whether this was a no-flag inventory run.
         dry_run: Whether deletion was suppressed.
     """
-    from .clean import (
-        STATUS_ABSENT,
-        STATUS_FAILED,
-        STATUS_NOTHING,
-        STATUS_PRESENT,
-        STATUS_REMOVED,
-        STATUS_SUBSUMED,
-        STATUS_WOULD_REMOVE,
-    )
-
     if inventory:
         output.print_info("gd-tools artifacts inventory (.gd-tools/):")
         for entry in result.targets:
@@ -432,6 +432,10 @@ def _render_clean(result: CleanResult, inventory: bool, dry_run: bool) -> None:
 )
 def clean(coverage, artifacts, baselines, cache, clean_all, dry_run):
     """Remove generated artifacts under .gd-tools (inventory only with no flags)."""
+    try:
+        project_root = find_project_root()
+    except ConfigError:
+        project_root = Path.cwd()
     result = run_clean(
         coverage=coverage,
         artifacts=artifacts,
@@ -439,6 +443,7 @@ def clean(coverage, artifacts, baselines, cache, clean_all, dry_run):
         cache=cache,
         all=clean_all,
         dry_run=dry_run,
+        project_root=project_root,
     )
     inventory = not (coverage or artifacts or baselines or cache or clean_all)
     _render_clean(result, inventory=inventory, dry_run=dry_run)

@@ -7,6 +7,7 @@ command returns an inventory (sizes and presence) and removes nothing.
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -137,8 +138,6 @@ def _remove_path(path: Path) -> None:
         OSError: If the removal fails.
     """
     if path.is_dir():
-        import shutil
-
         shutil.rmtree(path)
     else:
         path.unlink()
