@@ -1,0 +1,107 @@
+# Implementation Plan — Parallel Suite Execution
+
+**Track:** `native_parallel_suites_20260930` · **Type:** Feature
+**Spec:** [spec.md](./spec.md)
+
+Execution follows `conductor/workflow.md`: TDD (tests before code), task
+markers, git notes per task commit, and a Phase Verification & Checkpoint at
+the end of every phase (pause for user sign-off before checkpointing).
+
+---
+
+## Phase 1 — Configuration & API Surface
+
+- [ ] Task 1: Config key `[test] parallel` in `config.py`
+  (Pydantic validation, 1–32 bounds, absent = sequential)
+  - [ ] Write failing tests (Red): valid/invalid/boundary values
+    (0, 1, 32, 33, non-int), absent-key default
+  - [ ] Implement (Green); config renderers expose the key
+- [ ] Task 2: `--parallel N` CLI flag in `cli.py`/`command.py`
+  (flag overrides config; invalid values exit 2 with fix hint; default 4 when
+  enabled without N)
+  - [ ] Write failing tests (Red)
+  - [ ] Implement (Green)
+- [ ] Task 3: `N = 1` routes to the existing sequential path — regression
+  tests prove zero behavior change (no pool machinery engaged)
+- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
+  - [ ] Announce and run full verification command
+    (`ruff`, `black --check`, `CI=true pytest` with coverage)
+  - [ ] Produce manual verification plan (CLI feature variant) and pause for
+    user sign-off
+  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+
+## Phase 2 — Parallel Execution Engine
+
+- [ ] Task 1: Worker-pool scheduler in `native_test/orchestrator.py`
+  (discovery-order queue, per-worker dispatch, mocked subprocesses in unit
+  tests)
+  - [ ] Write failing tests (Red): concurrency bound respected, dispatch
+    order, all suites executed
+  - [ ] Implement (Green)
+- [ ] Task 2: Per-worker timeout enforcement + continue-after-failure
+  semantics (timed-out/crashed suite fails its slot; next suite dispatched; no
+  cross-suite cancellation)
+  - [ ] Write failing tests (Red)
+  - [ ] Implement (Green)
+- [ ] Task 3: Result aggregation — ordered summary + discovery-ordered JUnit
+  XML + unchanged exit-code precedence in `command.py`
+  - [ ] Write failing tests (Red)
+  - [ ] Implement (Green)
+- [ ] Task 4: Interrupt handling — stop dispatch, kill all in-flight process
+  trees (POSIX + Windows `taskkill /T`/Job Object strategy behind a testable
+  seam), incomplete artifact index, exit 130
+  - [ ] Write failing tests (Red)
+  - [ ] Implement (Green)
+  - [ ] Regression: complete runs never marked incomplete
+- [ ] Task 5: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
+  - [ ] Announce and run full verification command
+  - [ ] Produce manual verification plan and pause for user sign-off
+  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+
+## Phase 3 — Protocol, Coverage & Watch Integration
+
+- [ ] Task 1: NDJSON progress events carry suite identifier + worker slot;
+  protocol minor version bump per versioned-JSON convention
+  - [ ] Write failing tests (Red)
+  - [ ] Implement (Green)
+- [ ] Task 2: Coverage under parallel — per-suite data files compose with the
+  existing merge path; merged report structurally identical to sequential
+  - [ ] Write failing tests (Red)
+  - [ ] Implement (Green)
+- [ ] Task 3: Watch mode inherits `--parallel`/config through the shared run
+  path
+  - [ ] Write failing tests (Red)
+  - [ ] Implement (Green)
+- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
+  - [ ] Announce and run full verification command
+  - [ ] Produce manual verification plan and pause for user sign-off
+  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+
+## Phase 4 — E2E, Performance & Documentation
+
+- [ ] Task 1: Functional e2e — parallel vs sequential: identical outcomes,
+  exit codes, discovery-ordered JUnit, coverage parity (marked for the e2e
+  suite; smoke-compatible selection)
+- [ ] Task 2: Performance e2e in `tests/performance/` — M-suite run with N
+  workers completes faster than sequential
+- [ ] Task 3: Documentation — `ARCHITECTURE.md` limitation removal + parallel
+  model, `USER_GUIDE.md`, `README.md`, config reference
+- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
+  - [ ] Announce and run full verification command
+  - [ ] Produce manual verification plan and pause for user sign-off
+  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+
+---
+
+## Definition of Done
+
+- All spec functional requirements implemented and tested; sequential default
+  behavior unchanged
+- Coverage targets met on `src/gd_tools/*.py` (≥80% line / ≥70% branch)
+- `ruff` + `black` clean; docs complete and truthful
+- All plan tasks marked `[x]` with commit hashes; git notes attached
+- All phase checkpoints signed off
