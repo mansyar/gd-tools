@@ -29,9 +29,9 @@ every phase (pause for user sign-off before checkpointing).
     orchestrator) and converts SIGTERM to `KeyboardInterrupt`; the CLI
     exits 130 (commit 03c5531)
   - [x] Regression test: complete runs are never marked incomplete
-- [ ] Task 2: Actionable exit-2 diagnostics
-  - [ ] Write failing tests (Red): environment/config/protocol/engine failures emit structured diagnostics (what failed, expected vs. found, suggested fix)
-  - [ ] Implement diagnostics on existing exit-2 paths (Green; no exit-code redesign)
+- [x] Task 2: Actionable exit-2 diagnostics
+  - [x] Write failing tests (Red): environment/config/protocol/engine failures emit structured diagnostics (what failed, expected vs. found, suggested fix) (6/6 failed on first run)
+  - [x] Implement diagnostics on existing exit-2 paths (Green; no exit-code redesign) (commit 88d1617)
 - [ ] Task 3: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command (`ruff`, `black --check`, `CI=true pytest` with coverage)
