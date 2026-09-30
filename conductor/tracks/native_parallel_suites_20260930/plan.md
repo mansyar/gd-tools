@@ -84,9 +84,9 @@ the end of every phase (pause for user sign-off before checkpointing).
 
 ## Phase 4 — E2E, Performance & Documentation
 
-- [ ] Task 1: Functional e2e — parallel vs sequential: identical outcomes,
+- [x] Task 1: Functional e2e — parallel vs sequential: identical outcomes,
   exit codes, discovery-ordered JUnit, coverage parity (marked for the e2e
-  suite; smoke-compatible selection)
+  suite; smoke-compatible selection) (9ff7a1d)
 - [ ] Task 2: Performance e2e in `tests/performance/` — M-suite run with N
   workers completes faster than sequential
 - [ ] Task 3: Documentation — `ARCHITECTURE.md` limitation removal + parallel
