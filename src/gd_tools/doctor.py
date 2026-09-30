@@ -311,7 +311,8 @@ def check_gut_suites(
         passed=True,
         message=(
             f"{len(found)} GUT-style suite(s) will run through the "
-            f"compatibility bridge: {listing}. See docs/gut-migration.md."
+            f"compatibility bridge (deprecated in v0.5.0, removed in "
+            f"v0.6.0): {listing}. See docs/gut-migration.md."
         ),
     )
 

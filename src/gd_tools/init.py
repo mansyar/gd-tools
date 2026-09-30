@@ -672,6 +672,12 @@ def run_init(
     actions.append("Deployed native test addon")
 
     if with_gut:
+        console.print(
+            "[yellow]Installing the GUT addon (deprecated: the addon "
+            "conflicts with the built-in compatibility bridge, duplicate "
+            "class_name GutTest). Consider removing addons/gut after "
+            "init. See docs/gut-migration.md.[/yellow]"
+        )
         gut_version = get_gut_version_for_godot(godot_version)
         is_installed = is_gut_installed(project_root)
         if is_installed:
@@ -699,7 +705,10 @@ def run_init(
         update_gutconfig(project_root, config)
         actions.append("Created/updated .gutconfig.json")
     else:
-        actions.append("GUT left uninstalled (legacy runtime is opt-in)")
+        actions.append(
+            "GUT addon left uninstalled (not required; the built-in "
+            "compatibility bridge covers GutTest suites)"
+        )
 
     install_coverage_addon(project_root)
     actions.append("Deployed coverage addon")

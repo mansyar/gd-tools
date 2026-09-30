@@ -502,7 +502,7 @@ def test_run_native_tests_records_subprocess_timeout(tmp_path):
 
     assert result.status == "error"
     assert result.tests[0].status == "error"
-    assert "process timeout" in result.tests[0].message
+    assert "timed out after 60s" in result.tests[0].message
 
 
 def test_run_native_tests_records_expired_process_timeout(tmp_path):
@@ -521,4 +521,4 @@ def test_run_native_tests_records_expired_process_timeout(tmp_path):
 
     assert result.status == "error"
     assert result.tests[0].status == "error"
-    assert "Godot process failed" in result.tests[0].message
+    assert "timed out after 60s" in result.tests[0].message

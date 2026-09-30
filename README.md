@@ -23,7 +23,8 @@ Tests are written against `GdToolsTest`, a native GDScript base class that runs
 inside your Godot project, so a test can touch the real scene tree, await real
 signals, and assert on real engine objects without leaving the engine. Existing
 suites that `extend GutTest` run through the built-in compatibility bridge --
-no GUT addon required -- while projects migrate.
+no GUT addon required -- while projects migrate. The bridge is deprecated as of
+v0.5.0 and will be removed in v0.6.0.
 
 One install, one config, one mental model.
 
@@ -79,7 +80,8 @@ coverage addon files, they are automatically backed up to
 
 The legacy GUT runtime has been replaced by the built-in compatibility bridge:
 suites extending `GutTest` run on the native runtime with no GUT addon
-installed. See the [migration guide](./docs/gut-migration.md) for the
+installed. The bridge is deprecated as of v0.5.0 and will be removed in
+v0.6.0. See the [migration guide](./docs/gut-migration.md) for the
 supported subset and the steps to move fully onto `GdToolsTest`.
 
 A test suite is any class extending `GdToolsTest`:
@@ -101,7 +103,7 @@ func test_health_starts_at_full() -> void:
 | `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
-| `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`. |
+| `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`, `save-baseline`, and `diff` (baseline comparison for CI regression gates). |
 | `gd-tools config` | Configuration management -- `show` (display resolved config), `validate` (check config validity). |
 | `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, gdtoolkit, Python, and GUT when installed) in a table or JSON. |
 | `gd-tools completion` | Generate shell completion scripts for bash, zsh, fish, or PowerShell. |
@@ -153,8 +155,7 @@ re-run, and a save during a running suite queues exactly one follow-up run.
 
 The native runtime is the default and the forward path. Suites extending
 `GutTest` run through the built-in compatibility bridge on the same native
-runner; the bridge is a temporary, one-release migration path planned for
-removal once projects have moved.
+runner; the bridge is deprecated as of v0.5.0 and will be removed in v0.6.0.
 
 | Capability | Native runtime (`GdToolsTest`) | Bridge (`GutTest`) |
 |------------|----------------|--------------|
@@ -170,15 +171,16 @@ removal once projects have moved.
 | Line and branch coverage | Yes | Yes |
 | JUnit XML output | Yes | Yes |
 | Mocking and stubbing | `double()`, `partial_double()`, `stub()` (`.to_return`/`.to_call_super`), `assert_called*` family | Same -- inherited from `GdToolsTest` with identical semantics |
-| Parameterized tests | Not supported | Not supported -- preflight rejects `parameterize()` |
+| Parameterized tests | `parameterize()` in `before_all`, values injected via `use_parameters` | Not supported -- preflight rejects `parameterize()` |
 | Skipping a test at runtime | `skip_test()` and `pending_test()` | Yes |
 | Parallel execution | Not yet -- suites run sequentially | Same |
 | Editor plugin | Not yet | Not applicable |
 
-**Known limitations of the native runtime.** It is new, and the gaps above are
-real. A project that depends on parameterized tests has no supported
-execution path yet -- the bridge deliberately refuses those constructs at
-preflight rather than mis-running them. See the
+**Known limitations.** Parameterized tests are native-only -- the bridge
+deliberately refuses `parameterize()` at preflight rather than mis-running
+them, so such suites must migrate to `GdToolsTest`. Suites run sequentially;
+parallel execution is planned but not yet available. The bridge itself is
+deprecated as of v0.5.0 and will be removed in v0.6.0. See the
 [migration guide](./docs/gut-migration.md) for the bridge's supported subset,
 [User Guide](./docs/USER_GUIDE.md#34-test) for the full flag reference, and
 [Roadmap](./docs/ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)
