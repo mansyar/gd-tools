@@ -1574,7 +1574,9 @@ def test_test_watch_forwards_resolved_parallel():
             return_value=0,
         ) as mock_watch,
     ):
-        result = runner.invoke(cli, ["test", "--watch", "--parallel", "3"])
+        result = runner.invoke(
+            cli, ["test", "--watch", "--parallel", "3"], env={"CI": "false"}
+        )
     assert result.exit_code == 0
     assert mock_watch.call_args.kwargs["parallel"] == 3
 
@@ -1591,6 +1593,6 @@ def test_test_watch_uses_config_parallel_without_flag():
             return_value=0,
         ) as mock_watch,
     ):
-        result = runner.invoke(cli, ["test", "--watch"])
+        result = runner.invoke(cli, ["test", "--watch"], env={"CI": "false"})
     assert result.exit_code == 0
     assert mock_watch.call_args.kwargs["parallel"] == 2
