@@ -9,7 +9,7 @@ the end of every phase (pause for user sign-off before checkpointing).
 
 ---
 
-## Phase 1 — Configuration & API Surface
+## Phase 1 — Configuration & API Surface [checkpoint: ec8d653]
 
 - [x] Task 1: Config key `[test] parallel` in `config.py` (505a0ab)
   (Pydantic validation, 1–32 bounds, absent = sequential)
@@ -25,7 +25,7 @@ the end of every phase (pause for user sign-off before checkpointing).
   tests prove zero behavior change (no pool machinery engaged) (ab8c73f;
   CLI-level pin; orchestrator-level sequential-path regression lands with
   the parallel branch in Phase 2 Task 1)
-- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task 4: Phase Verification & Checkpoint (Refer to workflow.md) (ec8d653)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command
     (`ruff`, `black --check`, `CI=true pytest` with coverage)
