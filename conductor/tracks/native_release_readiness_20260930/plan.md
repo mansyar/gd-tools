@@ -72,15 +72,15 @@ every phase (pause for user sign-off before checkpointing).
 
 ## Phase 4 — Release Preparation (v0.5.0)
 
-- [ ] Task 1: Version bump
-  - [ ] Bump to `0.5.0` in `pyproject.toml` and version-displayed surfaces
-  - [ ] Update version tests
-- [ ] Task 2: CHANGELOG finalization
-  - [ ] Convert Unreleased section to v0.5.0 (date placeholder until publish) with accurate Known Limitations
-- [ ] Task 3: Pre-release gate
-  - [ ] `ruff check src/ tests/` and `black --check src/ tests/` clean
-  - [ ] `CI=true pytest` with coverage targets met (≥80% line / ≥70% branch)
-  - [ ] `python -m build` produces 0.5.0 wheel + tarball; `twine check` passes
+- [x] Task 1: Version bump (commit 58b8823)
+  - [x] Bump to `0.5.0` in `pyproject.toml` and version-displayed surfaces (`[project]` and `[tool.commitizen]`; `__init__.py` reads installed metadata dynamically)
+  - [x] Update version tests (new `test_package_version_is_0_5_0` appended to the existing `collect_versions` suite in `tests/unit/test_version.py` — Red failed on 0.4.0; initial write clobbered the file and was restored+amended)
+- [x] Task 2: CHANGELOG finalization (commit 58b8823)
+  - [x] Convert Unreleased section to v0.5.0 (date placeholder until publish) with accurate Known Limitations (dated 2026-09-30; this track's feats/fixes added; limitations = sequential suites, bridge deprecated 0.5→0.6, no editor plugin)
+- [x] Task 3: Pre-release gate
+  - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean
+  - [x] `CI=true pytest` with coverage targets met (≥80% line / ≥70% branch) — 1317 passed / 2 skipped, 95.46%
+  - [x] `python -m build` produces 0.5.0 wheel + tarball; `twine check` passes (built via `pyproject-build` — a local gitignored `build/` dir shadows `python -m build`; `twine` installed into the venv: both artifacts PASSED)
 - [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Full verification command run and green
   - [ ] Produce manual verification plan (release-readiness checklist) and pause for user sign-off
