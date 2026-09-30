@@ -2,7 +2,7 @@
 
 **Version:** 0.4.0
 **Date:** 2026-09-26
-**Status:** Native Scene and Resource Integration completed; migration Phases 3-5 outstanding
+**Status:** Native test runtime delivered through migration tooling (Phases 0-4); Phase 5 hardening and release in progress
 **Related docs:** [PRD.md](./PRD.md), [ROADMAP_v1.md](./ROADMAP_v1.md) (archived v1 roadmap, Tracks 0-22), [AUDIT_REPORT.md](./AUDIT_REPORT.md), [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
@@ -1550,7 +1550,7 @@ Each Conductor track should produce:
 
 ## 8. Temporary: Native Test Runtime Migration Roadmap
 
-**Status:** In progress — Phases 0-2 delivered, Phases 3-5 outstanding
+**Status:** In progress — Phases 0-4 delivered; Phase 5 under way: crash recovery, diagnostics hardening, and the bridge deprecation are delivered, release preparation (v0.5.0) is in progress, and optional parallel execution and native runtime caching remain deferred
 **Purpose:** Replace the permanent GUT dependency with the native
 `GdToolsTest` runtime while preserving a bounded migration path.
 **Retirement condition:** Remove this temporary section after native tests
@@ -1628,24 +1628,34 @@ and produce the same user-facing result contract.
 
 ### Phase 4 — Migration Tooling
 
-- [ ] Add dry-run migration reports
-- [ ] Add opt-in rewrites for supported GUT constructs
-- [ ] Add unsupported-construct diagnostics
-- [ ] Add reviewable diffs and migration verification
-- [ ] Preserve `.gutconfig.json` while translating supported settings
+- [x] Add dry-run migration reports
+- [x] Add opt-in rewrites for supported GUT constructs
+- [x] Add unsupported-construct diagnostics
+- [x] Add reviewable diffs and migration verification
+- [x] Preserve `.gutconfig.json` while translating supported settings
 
 **Exit gate:** A representative GUT project can migrate without silent data
 loss or manual reconstruction of configuration.
 
+**Delivered:** `gd-tools migrate` scans GutTest suites, reports supported and
+unsupported constructs with a dry-run review, optionally rewrites suites to
+`GdToolsTest` with reviewable diffs, and translates supported `.gutconfig.json`
+settings while preserving the rest (Track `migration_tooling_20260929`).
+
 ### Phase 5 — Hardening and Release
 
-- [ ] Add crash recovery and diagnostics hardening
-- [ ] Add optional parallel execution
-- [ ] Integrate native runtime caching
-- [ ] Update `init`, `doctor`, CI, packaging, and documentation
+- [x] Add crash recovery and diagnostics hardening (interrupted runs mark
+  artifacts incomplete and exit 130; exit-2 failures carry structured
+  expected/found/remedy diagnostics — Track `native_release_readiness_20260930`)
+- [ ] Add optional parallel execution (deferred)
+- [ ] Integrate native runtime caching (deferred)
+- [ ] Update `init`, `doctor`, CI, packaging, and documentation (in progress;
+  bridge wording updated by `native_release_readiness_20260930`, release
+  documentation lands with v0.5.0)
 - [x] Run the Godot 4.5+ compatibility matrix
-- [ ] Publish the native runtime release
-- [ ] Remove the temporary bridge after its migration period
+- [ ] Publish the native runtime release (v0.5.0 preparation in progress)
+- [ ] Remove the temporary bridge after its migration period (deprecation
+  notice ships in v0.5.0; removal targeted for v0.6.0)
 - [ ] Fold durable decisions into the main roadmap and remove this section
 
 #### Verified compatibility matrix
