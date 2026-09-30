@@ -7,7 +7,7 @@
   `ruff`/`black`), surgical edits, proper commit messages, git notes on
   checkpoint commits.
 
-## Phase 1 — Sweep & Evidence Collection
+## Phase 1 — Sweep & Evidence Collection [checkpoint: 33fe1ed]
 
 - [x] Task: Grep all markdown for stale v0.5.0 claims
   - Sweep `README.md`, `CHANGELOG.md`, `ARCHITECTURE.md`, `docs/ROADMAP.md`,
@@ -20,7 +20,7 @@
     native runtime, preflight behavior) and record verdict: stale / accurate.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — Apply Verified Fixes
+## Phase 2 — Apply Verified Fixes [checkpoint: e1f52e4]
 
 - [x] Task: Fix README.md
   - Known limitations paragraph (~lines 186-187): replace sequential-only
@@ -44,12 +44,12 @@
   - Mark Phase 5 "optional parallel execution (deferred)" as delivered.
   - Keep remaining deferred items (native runtime caching, v0.5.0
     publication, bridge removal v0.6.0) listed as open.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Final Verification & Closure
+## Phase 3 — Final Verification & Closure [checkpoint: 7662a33]
 
-- [ ] Task: Re-run sweep grep to confirm no stale claims remain
+- [x] Task: Re-run sweep grep to confirm no stale claims remain
   - Confirm no non-doc files were touched (`git status` clean of code/config).
-- [ ] Task: Commit docs changes (`docs: ...`) and update plan statuses
+- [x] Task: Commit docs changes (`docs: ...`) and update plan statuses
   - Mark completed tasks `[x]` with commit SHA, commit plan update.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

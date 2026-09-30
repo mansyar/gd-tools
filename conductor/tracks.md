@@ -130,7 +130,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Docs Truth Pass v0.5.0** (chore: sweep README, CHANGELOG,
+- [x] **Track: Docs Truth Pass v0.5.0** (chore: sweep README, CHANGELOG,
   ARCHITECTURE, and ROADMAP for claims made stale by v0.5.0 - parallel
   suite execution, `parameterize()`, suite-level `skip_test()` - verify each
   rewritten claim against the implementation, fix only false claims, and
