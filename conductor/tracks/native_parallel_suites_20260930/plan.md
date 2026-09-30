@@ -72,10 +72,10 @@ the end of every phase (pause for user sign-off before checkpointing).
   existing merge path; merged report structurally identical to sequential (237856f)
   - [x] Write failing tests (Red)
   - [x] Implement (Green)
-- [ ] Task 3: Watch mode inherits `--parallel`/config through the shared run
-  path
-  - [ ] Write failing tests (Red)
-  - [ ] Implement (Green)
+- [x] Task 3: Watch mode inherits `--parallel`/config through the shared run
+  path (ea095d3)
+  - [x] Write failing tests (Red)
+  - [x] Implement (Green)
 - [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command
