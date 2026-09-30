@@ -10,9 +10,8 @@ extends SceneTree
 signal test_call_completed
 
 const PROTOCOL_VERSION := 2
-const TEST_CONTEXT_SCRIPT = preload(
-	"res://addons/gd-tools-test/gd_tools_test_context.gd"
-)
+const TEST_CONTEXT_SCRIPT = preload("res://addons/gd-tools-test/gd_tools_test_context.gd")
+const PARAMETER_NAMING = preload("res://addons/gd-tools-test/gd_tools_parameter_naming.gd")
 
 var _test_results: Array[Dictionary] = []
 var _run_status := "passed"
@@ -89,8 +88,7 @@ func _run_suite(suite_data: Dictionary) -> void:
 	var suite_path := str(suite_data.get("path", ""))
 	var integration: Variant = suite_data.get("integration", {})
 	_current_windowed = (
-		typeof(integration) == TYPE_DICTIONARY
-		and integration.get("mode", "headless") == "windowed"
+		typeof(integration) == TYPE_DICTIONARY and integration.get("mode", "headless") == "windowed"
 	)
 	_screenshot_path = OS.get_environment("GD_TOOLS_NATIVE_SCREENSHOT")
 	if _current_windowed and DisplayServer.get_name() == "headless":
@@ -117,11 +115,7 @@ func _run_suite(suite_data: Dictionary) -> void:
 
 	var prerun_failure_count := suite_context.get_failures().size()
 	if suite_context.has_method("prerun_setup"):
-		var prerun_result := await _run_optional_call(
-			suite_context,
-			"prerun_setup",
-			suite_timeout
-		)
+		var prerun_result := await _run_optional_call(suite_context, "prerun_setup", suite_timeout)
 		_record_hook_result(
 			suite_name,
 			"prerun_setup",
@@ -132,15 +126,8 @@ func _run_suite(suite_data: Dictionary) -> void:
 
 	var before_failure_count := suite_context.get_failures().size()
 	if suite_context.has_method("before_all"):
-		var before_result := await _run_optional_call(
-			suite_context,
-			"before_all",
-			suite_timeout
-		)
-		var before_failures := _failures_since(
-			suite_context,
-			before_failure_count
-		)
+		var before_result := await _run_optional_call(suite_context, "before_all", suite_timeout)
+		var before_failures := _failures_since(suite_context, before_failure_count)
 		_record_hook_result(
 			suite_name,
 			"before_all",
@@ -148,21 +135,21 @@ func _run_suite(suite_data: Dictionary) -> void:
 			bool(before_result.get("timed_out", false)),
 			suite_timeout
 		)
+	# `skip_test()` inside `before_all` runs on the suite instance, so the
+	# per-test skip flag would otherwise be invisible. Propagate it so every
+	# test (and every expanded case) is reported skipped with the reason.
+	var suite_skip_reason := ""
+	if bool(suite_context.get("_gd_tools_skipped")):
+		suite_skip_reason = str(suite_context.get("_gd_tools_skip_reason"))
 
 	for test_data in suite_data.get("tests", []):
-		await _run_test(suite_context, script, suite_name, test_data)
+		for case_data in _expand_test_cases(script, test_data):
+			await _run_test(suite_context, script, suite_name, case_data, suite_skip_reason)
 
 	var after_failure_count := suite_context.get_failures().size()
 	if suite_context.has_method("after_all"):
-		var after_result := await _run_optional_call(
-			suite_context,
-			"after_all",
-			suite_timeout
-		)
-		var after_failures := _failures_since(
-			suite_context,
-			after_failure_count
-		)
+		var after_result := await _run_optional_call(suite_context, "after_all", suite_timeout)
+		var after_failures := _failures_since(suite_context, after_failure_count)
 		_record_hook_result(
 			suite_name,
 			"after_all",
@@ -174,9 +161,7 @@ func _run_suite(suite_data: Dictionary) -> void:
 	var postrun_failure_count := suite_context.get_failures().size()
 	if suite_context.has_method("postrun_teardown"):
 		var postrun_result := await _run_optional_call(
-			suite_context,
-			"postrun_teardown",
-			suite_timeout
+			suite_context, "postrun_teardown", suite_timeout
 		)
 		_record_hook_result(
 			suite_name,
@@ -188,6 +173,54 @@ func _run_suite(suite_data: Dictionary) -> void:
 
 	suite_context.queue_free()
 	await process_frame
+
+
+func _expand_test_cases(script: GDScript, test_data: Dictionary) -> Array:
+	## Expand a manifest test carrying parameter metadata into per-case entries.
+	##
+	## Signature-parameterized methods (arity > 0) receive their value set as
+	## call arguments; zero-argument ``use_parameters`` methods read the
+	## current case index from the instance instead. A declaration with an
+	## empty values list collapses to a single skipped entry.
+	var parameters: Variant = test_data.get("parameters")
+	if typeof(parameters) != TYPE_DICTIONARY:
+		return [test_data]
+	var values: Variant = (parameters as Dictionary).get("values", [])
+	if typeof(values) != TYPE_ARRAY:
+		return [test_data]
+	var method_name := str(test_data.get("name", ""))
+	if (values as Array).is_empty():
+		var skipped: Dictionary = test_data.duplicate(true)
+		skipped.erase("parameters")
+		skipped["skip_reason"] = "No parameter values declared."
+		return [skipped]
+	var arity := _method_arity(script, method_name)
+	var cases: Array = []
+	for case_index in (values as Array).size():
+		var value_set := PARAMETER_NAMING.normalize_value_set(values[case_index])
+		var case_data: Dictionary = test_data.duplicate(true)
+		case_data.erase("parameters")
+		case_data["name"] = (method_name + PARAMETER_NAMING.case_suffix(value_set, case_index))
+		case_data["method"] = method_name
+		if arity > 0:
+			case_data["parameters_values"] = value_set
+		case_data["parameters_index"] = case_index
+		cases.append(case_data)
+	return cases
+
+
+func _method_arity(script: GDScript, method_name: String) -> int:
+	for method_value: Variant in script.get_script_method_list():
+		if typeof(method_value) != TYPE_DICTIONARY:
+			continue
+		var method: Dictionary = method_value
+		if str(method.get("name", "")) != method_name:
+			continue
+		var arguments: Variant = method.get("args", [])
+		if typeof(arguments) != TYPE_ARRAY:
+			return 0
+		return (arguments as Array).size()
+	return 0
 
 
 func _suite_timeout(suite_data: Dictionary) -> float:
@@ -205,13 +238,29 @@ func _suite_timeout(suite_data: Dictionary) -> float:
 
 
 func _run_test(
-		suite_context: GdToolsTest,
-		script: GDScript,
-		suite_name: String,
-		test_data: Dictionary
+	suite_context: GdToolsTest,
+	script: GDScript,
+	suite_name: String,
+	test_data: Dictionary,
+	suite_skip_reason: String = ""
 ) -> void:
 	var test_name := str(test_data.get("name", ""))
 	_emit_event({"event": "test_started", "suite": suite_name, "name": test_name})
+	var skip_reason := str(test_data.get("skip_reason", ""))
+	if skip_reason.is_empty():
+		skip_reason = suite_skip_reason
+	if not skip_reason.is_empty():
+		_record_test_result(suite_name, test_name, "skipped", 0.0, skip_reason, {})
+		_emit_event(
+			{
+				"event": "test_finished",
+				"suite": suite_name,
+				"name": test_name,
+				"status": "skipped",
+				"attempts": 1,
+			}
+		)
+		return
 	var retry_count := max(int(test_data.get("retries", 0)), 0)
 	var attempt := 1
 	var total_duration := 0.0
@@ -219,10 +268,7 @@ func _run_test(
 
 	while true:
 		var attempt_result: Dictionary = await _run_test_attempt(
-			suite_context,
-			script,
-			test_name,
-			test_data
+			suite_context, script, test_name, test_data
 		)
 		total_duration += float(attempt_result.get("duration_seconds", 0.0))
 		final_result = attempt_result
@@ -244,20 +290,19 @@ func _run_test(
 		str(final_result.get("started_at", "")),
 		str(final_result.get("finished_at", ""))
 	)
-	_emit_event({
-		"event": "test_finished",
-		"suite": suite_name,
-		"name": test_name,
-		"status": final_status,
-		"attempts": attempt,
-	})
+	_emit_event(
+		{
+			"event": "test_finished",
+			"suite": suite_name,
+			"name": test_name,
+			"status": final_status,
+			"attempts": attempt,
+		}
+	)
 
 
 func _run_test_attempt(
-		suite_context: GdToolsTest,
-		script: GDScript,
-		test_name: String,
-		test_data: Dictionary
+	suite_context: GdToolsTest, script: GDScript, test_name: String, test_data: Dictionary
 ) -> Dictionary:
 	var test_context = _new_test_context(script, suite_context)
 	if test_context == null:
@@ -273,14 +318,9 @@ func _run_test_attempt(
 	get_root().add_child(test_context)
 	var started_ticks := Time.get_ticks_msec()
 	var started_at := _timestamp()
-	var integration_result := _prepare_integration(
-			test_context,
-			test_data.get("integration", {})
-	)
+	var integration_result := _prepare_integration(test_context, test_data.get("integration", {}))
 	if not bool(integration_result.get("ok", false)):
-		var setup_message := str(
-				integration_result.get("message", "Unable to prepare integration")
-		)
+		var setup_message := str(integration_result.get("message", "Unable to prepare integration"))
 		await _teardown_integration(test_context)
 		test_context.queue_free()
 		await process_frame
@@ -292,20 +332,21 @@ func _run_test_attempt(
 			"started_at": started_at,
 			"finished_at": _timestamp(),
 		}
-	var timeout_seconds := max(
-			float(test_data.get("timeout_seconds", 5.0)),
-			0.001
-	)
+	var timeout_seconds := max(float(test_data.get("timeout_seconds", 5.0)), 0.001)
 	_begin_test_timeout(timeout_seconds)
 	var timed_out := false
+	var method_name := str(test_data.get("method", test_name))
 
 	if test_context.has_method("before_each"):
 		await _await_test_call(test_context, "before_each")
 		timed_out = _test_timeout_reached
 
 	if not timed_out:
-		if test_context.has_method(test_name):
-			await _await_test_call(test_context, test_name)
+		if test_context.has_method(method_name):
+			test_context._gd_tools_case_index = int(test_data.get("parameters_index", 0))
+			await _await_test_call(
+				test_context, method_name, test_data.get("parameters_values", [])
+			)
 			if _test_timeout_reached:
 				timed_out = true
 		else:
@@ -314,7 +355,7 @@ func _run_test_attempt(
 			var missing_result := {
 				"status": "error",
 				"duration_seconds": float(Time.get_ticks_msec() - started_ticks) / 1000.0,
-				"message": "Test method not found: %s" % test_name,
+				"message": "Test method not found: %s" % method_name,
 				"diagnostics": {},
 				"started_at": started_at,
 				"finished_at": _timestamp(),
@@ -329,20 +370,13 @@ func _run_test_attempt(
 	var cleanup_timed_out := false
 	if test_context.has_method("after_each"):
 		if timed_out:
-			await _run_cleanup(
-				test_context,
-				"after_each",
-				timeout_seconds
-			)
+			await _run_cleanup(test_context, "after_each", timeout_seconds)
 		else:
 			await _await_test_call(test_context, "after_each")
 		cleanup_timed_out = _test_timeout_reached
 		if cleanup_timed_out:
 			timed_out = true
-		cleanup_failures = _failures_since(
-				test_context,
-				cleanup_failure_start
-		)
+		cleanup_failures = _failures_since(test_context, cleanup_failure_start)
 
 	var failures: Array[Dictionary] = test_context.get_failures()
 	var status := "failed" if not failures.is_empty() else "passed"
@@ -363,25 +397,19 @@ func _run_test_attempt(
 			else "after_each failed: %s" % _failure_message(cleanup_failures)
 		)
 		message = (
-			"%s; %s" % [message, cleanup_message]
-			if not message.is_empty()
-			else cleanup_message
+			"%s; %s" % [message, cleanup_message] if not message.is_empty() else cleanup_message
 		)
 	elif timed_out:
 		status = "timeout"
 		message = "Test timed out after %.3f seconds" % timeout_seconds
 	var diagnostics := {"failures": failures}
 	if _current_windowed and status in ["failed", "timeout", "error"]:
-		var screenshot_result := await _capture_failure_screenshot(
-			test_context, test_name
-		)
+		var screenshot_result := await _capture_failure_screenshot(test_context, test_name)
 		if not bool(screenshot_result.get("ok", false)):
 			status = "error"
 			# Keep the real cause visible: a missing screenshot must not erase
 			# the assertion or cleanup failure that actually failed the test.
-			var detail := str(
-				screenshot_result.get("message", "unknown screenshot error")
-			)
+			var detail := str(screenshot_result.get("message", "unknown screenshot error"))
 			message = (
 				"%s (screenshot capture failed: %s)" % [message, detail]
 				if not message.is_empty()
@@ -406,16 +434,11 @@ func _run_test_attempt(
 	}
 
 
-func _prepare_integration(
-		test_context: GdToolsTest,
-		integration_value: Variant
-) -> Dictionary:
+func _prepare_integration(test_context: GdToolsTest, integration_value: Variant) -> Dictionary:
 	var integration: Dictionary = {}
 	if typeof(integration_value) == TYPE_DICTIONARY:
 		integration = integration_value
-	var resource_result := _load_integration_resources(
-			integration.get("resources", {})
-	)
+	var resource_result := _load_integration_resources(integration.get("resources", {}))
 	if not bool(resource_result.get("ok", false)):
 		return resource_result
 	var scene_result := _load_integration_scene(integration.get("scene", null))
@@ -433,23 +456,22 @@ func _prepare_integration(
 
 func _load_integration_resources(resource_value: Variant) -> Dictionary:
 	if typeof(resource_value) != TYPE_DICTIONARY:
-		return _integration_error(
-			"Integration resources must be a logical-name to path dictionary"
-		)
+		return _integration_error("Integration resources must be a logical-name to path dictionary")
 	var resources: Dictionary = {}
 	for logical_name_value in resource_value:
 		var logical_name := str(logical_name_value)
 		var resource_path := str(resource_value[logical_name_value])
 		if not ResourceLoader.exists(resource_path):
 			return _integration_error(
-				"Unable to load integration resource '%s' at '%s'"
-				% [logical_name, resource_path]
+				"Unable to load integration resource '%s' at '%s'" % [logical_name, resource_path]
 			)
 		var resource := ResourceLoader.load(resource_path) as Resource
 		if resource == null:
 			return _integration_error(
-				"Integration resource '%s' did not load as Resource: %s"
-				% [logical_name, resource_path]
+				(
+					"Integration resource '%s' did not load as Resource: %s"
+					% [logical_name, resource_path]
+				)
 			)
 		# ResourceLoader caches instances, so a per-attempt duplicate is what
 		# keeps a retained, mutated resource from leaking into a retry.
@@ -465,14 +487,10 @@ func _load_integration_scene(scene_value: Variant) -> Dictionary:
 		return _integration_error("Unable to load integration scene: %s" % scene_path)
 	var packed_scene := ResourceLoader.load(scene_path) as PackedScene
 	if packed_scene == null:
-		return _integration_error(
-			"Integration scene did not load as PackedScene: %s" % scene_path
-		)
+		return _integration_error("Integration scene did not load as PackedScene: %s" % scene_path)
 	var scene_root := packed_scene.instantiate()
 	if scene_root == null:
-		return _integration_error(
-			"Integration scene could not be instantiated: %s" % scene_path
-		)
+		return _integration_error("Integration scene could not be instantiated: %s" % scene_path)
 	return {"ok": true, "root": scene_root}
 
 
@@ -480,9 +498,7 @@ func _integration_error(message: String) -> Dictionary:
 	return {"ok": false, "message": message}
 
 
-func _capture_failure_screenshot(
-		test_context: GdToolsTest, test_name: String
-) -> Dictionary:
+func _capture_failure_screenshot(test_context: GdToolsTest, test_name: String) -> Dictionary:
 	if _screenshot_path.is_empty():
 		return {
 			"ok": false,
@@ -516,25 +532,17 @@ func _teardown_integration(test_context: GdToolsTest) -> void:
 	await process_frame
 
 
-func _new_test_context(
-		script: GDScript,
-		suite_context: GdToolsTest
-):
+func _new_test_context(script: GDScript, suite_context: GdToolsTest):
 	var test_context = script.new()
 	if not (test_context is GdToolsTest):
 		return null
 	test_context.clear_failures()
-	test_context._gd_tools_set_suite_state(
-		suite_context._gd_tools_get_suite_state()
-	)
+	test_context._gd_tools_set_suite_state(suite_context._gd_tools_get_suite_state())
 	_copy_script_properties(suite_context, test_context)
 	return test_context
 
 
-func _copy_script_properties(
-		source: GdToolsTest,
-		target: GdToolsTest
-) -> void:
+func _copy_script_properties(source: GdToolsTest, target: GdToolsTest) -> void:
 	for property in source.get_property_list():
 		var property_name := str(property.get("name", ""))
 		var usage := int(property.get("usage", 0))
@@ -546,9 +554,7 @@ func _copy_script_properties(
 
 
 func _run_optional_call(
-		context: GdToolsTest,
-		method_name: String,
-		timeout_seconds: float
+	context: GdToolsTest, method_name: String, timeout_seconds: float
 ) -> Dictionary:
 	_begin_test_timeout(timeout_seconds)
 	_test_completed = false
@@ -557,11 +563,7 @@ func _run_optional_call(
 	return {"timed_out": _test_timeout_reached}
 
 
-func _run_cleanup(
-		context: GdToolsTest,
-		method_name: String,
-		timeout_seconds: float
-) -> void:
+func _run_cleanup(context: GdToolsTest, method_name: String, timeout_seconds: float) -> void:
 	# A cleanup hook differs from a suite hook only in intent, not in
 	# mechanism: both arm a fresh timer and await it. The await is load
 	# bearing - without it this stops being a coroutine, and the caller's
@@ -575,9 +577,7 @@ func _activate_coverage(coverage_data: Dictionary) -> bool:
 	var plan_path := str(coverage_data.get("plan_path", ""))
 	var output_path := str(coverage_data.get("output_path", ""))
 	if plan_path.is_empty() or output_path.is_empty():
-		_finish_with_error(
-			"Native coverage requires both plan_path and output_path"
-		)
+		_finish_with_error("Native coverage requires both plan_path and output_path")
 		return false
 	if not GdToolsNativeCoverage.activate(plan_path, output_path):
 		_finish_with_error("Unable to activate native coverage")
@@ -613,10 +613,7 @@ func _begin_test_timeout(timeout_seconds: float) -> void:
 	_test_timeout_reached = false
 	_test_completed = false
 	var timer := create_timer(timeout_seconds)
-	timer.timeout.connect(
-			_on_test_timeout.bind(_active_test_token),
-			CONNECT_ONE_SHOT
-	)
+	timer.timeout.connect(_on_test_timeout.bind(_active_test_token), CONNECT_ONE_SHOT)
 
 
 func _on_test_timeout(token: int) -> void:
@@ -626,26 +623,27 @@ func _on_test_timeout(token: int) -> void:
 	test_call_completed.emit()
 
 
-func _await_test_call(context: GdToolsTest, method_name: String) -> void:
+func _await_test_call(context: GdToolsTest, method_name: String, arguments: Array = []) -> void:
 	# Awaits the timer already armed for this attempt. Deliberately does
 	# NOT arm one: re-arming here would hand every hook a fresh budget and
 	# change what a declared timeout_seconds means, since a test attempt
 	# gets one budget for before_each, the body and after_each together.
 	# Arming happens once per attempt, in _begin_test_timeout.
 	_test_completed = false
-	_invoke_test(context, method_name, _active_test_token)
+	_invoke_test(context, method_name, _active_test_token, arguments)
 	await test_call_completed
 
 
 func _invoke_test(
-		context: GdToolsTest,
-		method_name: String,
-		token: int
+	context: GdToolsTest, method_name: String, token: int, arguments: Array = []
 ) -> void:
 	await process_frame
 	if token != _active_test_token:
 		return
-	await context.call(method_name)
+	if arguments.is_empty():
+		await context.call(method_name)
+	else:
+		await context.callv(method_name, arguments)
 	if token != _active_test_token or _test_timeout_reached:
 		return
 	_test_completed = true
@@ -658,11 +656,11 @@ func _record_suite_error(suite_name: String, message: String) -> void:
 
 
 func _record_hook_result(
-		suite_name: String,
-		hook_name: String,
-		failures: Array[Dictionary],
-		timed_out: bool,
-		timeout_seconds: float
+	suite_name: String,
+	hook_name: String,
+	failures: Array[Dictionary],
+	timed_out: bool,
+	timeout_seconds: float
 ) -> void:
 	if timed_out:
 		_record_test_result(
@@ -675,19 +673,11 @@ func _record_hook_result(
 		)
 	elif not failures.is_empty():
 		_record_test_result(
-			suite_name,
-			hook_name,
-			"failed",
-			0.0,
-			_failure_message(failures),
-			{"failures": failures}
+			suite_name, hook_name, "failed", 0.0, _failure_message(failures), {"failures": failures}
 		)
 
 
-func _failures_since(
-		context: GdToolsTest,
-		start_index: int
-) -> Array[Dictionary]:
+func _failures_since(context: GdToolsTest, start_index: int) -> Array[Dictionary]:
 	var failures := context.get_failures()
 	if start_index >= failures.size():
 		return []
@@ -695,31 +685,36 @@ func _failures_since(
 
 
 func _record_test_result(
-		suite_name: String,
-		test_name: String,
-		status: String,
-		duration: float,
-		message: String,
-		diagnostics: Dictionary,
-		attempts: int = 1,
-		started_at: String = "",
-		finished_at: String = ""
+	suite_name: String,
+	test_name: String,
+	status: String,
+	duration: float,
+	message: String,
+	diagnostics: Dictionary,
+	attempts: int = 1,
+	started_at: String = "",
+	finished_at: String = ""
 ) -> void:
 	if status == "failed" or status == "timeout":
 		_run_status = "failed"
 	elif status == "error" and _run_status != "failed":
 		_run_status = "error"
-	_test_results.append({
-		"suite": suite_name,
-		"name": test_name,
-		"status": status,
-		"duration_seconds": duration,
-		"attempts": attempts,
-		"message": message,
-		"diagnostics": diagnostics,
-		"started_at": started_at,
-		"finished_at": finished_at,
-	})
+	(
+		_test_results
+		. append(
+			{
+				"suite": suite_name,
+				"name": test_name,
+				"status": status,
+				"duration_seconds": duration,
+				"attempts": attempts,
+				"message": message,
+				"diagnostics": diagnostics,
+				"started_at": started_at,
+				"finished_at": finished_at,
+			}
+		)
+	)
 
 
 func _failure_message(failures: Array[Dictionary]) -> String:
@@ -752,16 +747,12 @@ func _snapshot_activation_errors() -> void:
 		return
 	var activation_errors: Array[String] = []
 	var ignored_warnings: Array[String] = []
-	_scan_engine_lines(
-			file.get_as_text(), activation_errors, ignored_warnings
-	)
+	_scan_engine_lines(file.get_as_text(), activation_errors, ignored_warnings)
 	file.close()
 	_activation_engine_errors = activation_errors
 
 
-func _scan_engine_lines(
-	text: String, errors: Array[String], warnings: Array[String]
-) -> void:
+func _scan_engine_lines(text: String, errors: Array[String], warnings: Array[String]) -> void:
 	for line in text.split("\n"):
 		var normalized := str(line).strip_edges()
 		# `SCRIPT ERROR:` is how GDScript reports a parse error, an invalid call,
@@ -823,8 +814,10 @@ func _finish_with_status() -> void:
 		for omission in GdToolsNativeCoverage.get_omitted():
 			_coverage_omissions.append(omission)
 			_engine_warnings.append(
-				"Coverage target omitted: %s. %s Fix: %s"
-				% [omission["path"], omission["reason"], omission["fix"]]
+				(
+					"Coverage target omitted: %s. %s Fix: %s"
+					% [omission["path"], omission["reason"], omission["fix"]]
+				)
 			)
 	if not _engine_errors.is_empty():
 		_run_status = "error"

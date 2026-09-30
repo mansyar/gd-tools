@@ -331,32 +331,36 @@ def test_preflight_rejects_malformed_declarations(
     assert expected_error in payload["error"]
 
 
-def test_preflight_rejects_overrides_for_parameterized_tests(
+def test_preflight_resolves_overrides_for_parameterized_tests(
     godot_bin, tmp_path
 ):
-    """A test method with parameters is not a runnable test, so it is unknown.
+    """A parameterized method is a known test once its declaration matches.
 
-    Python discovery only selects no-argument ``test_*`` methods, so an
-    override targeting a parameterized method must be reported rather than
-    silently accepted and then never executed.
+    Python discovery includes parameterized ``test_*`` methods, so an
+    override targeting one must merge like any other test when a
+    ``before_all`` declaration provides matching parameters.
     """
     integration = {
         "tests": {
-            "test_parameterized": {
+            "test_ranked": {
                 "scene": "res://scenes/main.tscn",
             }
         }
     }
+    body = (
+        "func before_all() -> void:\n"
+        '\tparameterize(["value"], [[1], [2]])\n'
+        "\n"
+        "func test_ranked(value: int) -> void:\n"
+        "\tpass"
+    )
     project = _prepare_project(
         tmp_path,
         godot_bin,
         {
-            "test/integration_suite.gd": _suite_source(
-                integration,
-                body=(
-                    "func test_parameterized(value: int = 1) -> void:\n"
-                    "\tpass"
-                ),
+            "test/integration_suite.gd": _suite_source(integration, body=body),
+            "scenes/main.tscn": (
+                '[gd_scene format=3]\n\n[node name="Main" type="Node"]\n'
             ),
         },
     )
@@ -365,15 +369,255 @@ def test_preflight_rejects_overrides_for_parameterized_tests(
     process = _run_preflight(
         project,
         godot_bin,
-        _manifest(project),
+        _manifest(project, tests=["test_ranked"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    tests = {test["name"]: test for test in payload["suites"][0]["tests"]}
+    assert tests["test_ranked"]["integration"] == {
+        "scene": "res://scenes/main.tscn",
+        "resources": {},
+    }
+    assert tests["test_ranked"]["parameters"] == {
+        "names": ["value"],
+        "values": [[1], [2]],
+    }
+
+
+def test_preflight_resolves_parameterize_declaration_metadata(
+    godot_bin, tmp_path
+):
+    """A matching declaration records per-case metadata on its method."""
+    body = (
+        "func before_all() -> void:\n"
+        '\tparameterize(["value", "label"], [[1, "admin"], [2, "user"]])\n'
+        "\n"
+        "func test_ranked(value: int, label: String) -> void:\n"
+        "\tpass\n"
+        "func test_plain() -> void:\n"
+        "\tpass"
+    )
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-parameters.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked", "test_plain"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    tests = {test["name"]: test for test in payload["suites"][0]["tests"]}
+    assert tests["test_ranked"]["parameters"] == {
+        "names": ["value", "label"],
+        "values": [[1, "admin"], [2, "user"]],
+    }
+    assert "parameters" not in tests["test_plain"]
+
+
+def test_preflight_accepts_empty_parameter_values(godot_bin, tmp_path):
+    """An empty values list is a valid declaration resolved as skipped."""
+    body = (
+        "func before_all() -> void:\n"
+        '\tparameterize(["value"], [])\n'
+        "\n"
+        "func test_ranked(value: int) -> void:\n"
+        "\tpass"
+    )
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-empty-parameters.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    tests = {test["name"]: test for test in payload["suites"][0]["tests"]}
+    assert tests["test_ranked"]["parameters"] == {
+        "names": ["value"],
+        "values": [],
+    }
+
+
+@pytest.mark.parametrize(
+    ("body", "expected_error"),
+    [
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize(["value", "label"], [[1, "admin"], [2]])\n'
+                "\n"
+                "func test_ranked(value: int, label: String) -> void:\n"
+                "\tpass"
+            ),
+            "parameter set 1 has 1 value(s); expected 2",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize("value", [[1]])\n'
+                "\n"
+                "func test_ranked(value: int) -> void:\n"
+                "\tpass"
+            ),
+            "parameterize names must be an array of strings",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                "\tparameterize([1], [[1]])\n"
+                "\n"
+                "func test_ranked(value: int) -> void:\n"
+                "\tpass"
+            ),
+            "parameterize names must be non-empty strings",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize(["value", "value"], [[1, 2]])\n'
+                "\n"
+                "func test_ranked(value: int, label: int) -> void:\n"
+                "\tpass"
+            ),
+            "duplicate parameter name 'value'",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize(["value", " "], [[1, 2]])\n'
+                "\n"
+                "func test_ranked(value: int, label: int) -> void:\n"
+                "\tpass"
+            ),
+            "parameterize names must be non-empty strings",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                "\tparameterize([], [])\n"
+                "\n"
+                "func test_ranked(value: int) -> void:\n"
+                "\tpass"
+            ),
+            "parameterize names must not be empty",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize(["value"], [1, 2])\n'
+                "\n"
+                "func test_ranked(value: int) -> void:\n"
+                "\tpass"
+            ),
+            "parameter set 0 must be an array",
+        ),
+        (
+            (
+                "const LIMIT := 3\n"
+                "func before_all() -> void:\n"
+                '\tparameterize(["value"], [[LIMIT]])\n'
+                "\n"
+                "func test_ranked(value: int) -> void:\n"
+                "\tpass"
+            ),
+            "must be literal values",
+        ),
+        (
+            "func test_ranked(value: int) -> void:\n\tpass",
+            "no parameterize declaration was found in before_all",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize(["value"], [[1]])\n'
+                "\n"
+                "func test_ranked(value: int, extra: int) -> void:\n"
+                "\tpass"
+            ),
+            "takes 2 parameters but the parameterize declaration provides 1",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize(["value"], [[1]])\n'
+                "\n"
+                "func test_plain() -> void:\n"
+                "\tpass"
+            ),
+            "does not match any test method",
+        ),
+        (
+            (
+                "func before_all() -> void:\n"
+                '\tparameterize(["value"], [[1]])\n'
+                '\tparameterize(["label"], [["a"]])\n'
+                "\n"
+                "func test_ranked(value: int) -> void:\n"
+                "\tpass"
+            ),
+            "exactly one parameterize declaration",
+        ),
+    ],
+    ids=[
+        "mismatched-lengths",
+        "names-not-array",
+        "name-not-string",
+        "duplicate-names",
+        "blank-name",
+        "empty-names",
+        "value-sets-not-arrays",
+        "unresolvable-expression",
+        "missing-declaration",
+        "arity-mismatch",
+        "declaration-without-test",
+        "multiple-declarations",
+    ],
+)
+def test_preflight_rejects_parameterize_declarations(
+    godot_bin,
+    tmp_path,
+    body,
+    expected_error,
+):
+    """Malformed parameterize declarations produce exit-code-2 diagnostics."""
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-parameterize-invalid.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked"]),
         result_path,
     )
 
     assert process.returncode == 2, process.stdout + process.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["protocol_version"] == 2
     assert payload["status"] == "error"
     assert payload["suites"] == []
-    assert "unknown test 'test_parameterized'" in payload["error"]
+    assert "res://test/integration_suite.gd" in payload["error"]
+    assert expected_error in payload["error"]
 
 
 def test_preflight_rejects_protocol_v1(godot_bin, tmp_path):
@@ -452,3 +696,305 @@ def test_preflight_does_not_instantiate_or_execute_suite(godot_bin, tmp_path):
 
     assert process.returncode == 0, process.stdout + process.stderr
     assert not (project / "preflight-side-effect.txt").exists()
+
+
+def test_preflight_resolves_use_parameters_declarations(godot_bin, tmp_path):
+    """A use_parameters literal inside a test body records case metadata.
+
+    The array form yields one unnamed value per case; the dictionary form
+    uses the dictionary keys as parameter names and its values as the case
+    values, matching the GUT legacy convention.
+    """
+    body = dedent("""
+        func test_item() -> void:
+        \tvar item = use_parameters(["alpha", "beta"])
+        \tassert_eq(item, "alpha")
+
+        func test_flag() -> void:
+        \tvar flag = use_parameters({"on": true, "off": false})
+        \tassert_true(flag is bool)
+        """).strip()
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-use-parameters.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_item", "test_flag"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    tests = {test["name"]: test for test in payload["suites"][0]["tests"]}
+    assert tests["test_item"]["parameters"] == {
+        "names": ["value"],
+        "values": [["alpha"], ["beta"]],
+    }
+    assert tests["test_flag"]["parameters"] == {
+        "names": ["value"],
+        "values": [["on"], ["off"]],
+    }
+
+
+@pytest.mark.parametrize(
+    ("body", "expected_error"),
+    [
+        (
+            dedent("""
+                func test_item() -> void:
+                \tvar first = use_parameters(["alpha"])
+                \tvar second = use_parameters(["beta"])
+                """).strip(),
+            "exactly one use_parameters call",
+        ),
+        (
+            dedent("""
+                func before_all() -> void:
+                \tparameterize(["value"], [[1]])
+
+                func test_item(value: int) -> void:
+                \tvar item = use_parameters(["alpha"])
+                """).strip(),
+            "cannot combine signature parameters with use_parameters",
+        ),
+        (
+            dedent("""
+                const LIMIT := 3
+
+                func test_item() -> void:
+                \tvar item = use_parameters([LIMIT])
+                """).strip(),
+            "must be literal values",
+        ),
+    ],
+    ids=[
+        "multiple-calls",
+        "combine-signature",
+        "unresolvable-expression",
+    ],
+)
+def test_preflight_rejects_use_parameters_declarations(
+    godot_bin, tmp_path, body, expected_error
+):
+    """Malformed use_parameters declarations produce exit-code-2 diagnostics."""
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-use-parameters-invalid.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_item"]),
+        result_path,
+    )
+
+    assert process.returncode == 2, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "error"
+    assert payload["suites"] == []
+    assert "res://test/integration_suite.gd" in payload["error"]
+    assert expected_error in payload["error"]
+
+
+def test_preflight_trims_case_selector_to_matching_value_set(
+    godot_bin, tmp_path
+):
+    """A ``name[case]`` selector filters the declaration to the selected case.
+
+    The manifest entry is rewritten to the owning method so the runner
+    receives one case whose values are exactly the selected value set.
+    """
+    body = dedent("""
+        func before_all() -> void:
+        \tparameterize(["value", "label"], [[1, "admin"], [2, "user"]])
+
+        func test_ranked(value: int, label: String) -> void:
+        \tpass
+        """).strip()
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-case-selector.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked[1-admin]"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    tests = payload["suites"][0]["tests"]
+    assert len(tests) == 1
+    assert tests[0]["name"] == "test_ranked"
+    assert tests[0]["parameters"] == {
+        "names": ["value", "label"],
+        "values": [[1, "admin"]],
+    }
+
+
+@pytest.mark.parametrize(
+    ("selector", "expected_error"),
+    [
+        ("test_ranked[nobody]", "has no case '[nobody]'"),
+        ("test_plain[admin]", "is not parameterized"),
+    ],
+    ids=["unknown-case", "non-parameterized"],
+)
+def test_preflight_rejects_invalid_case_selectors(
+    godot_bin, tmp_path, selector, expected_error
+):
+    """Case selectors that address no case produce exit-code-2 diagnostics."""
+    body = dedent("""
+        func before_all() -> void:
+        \tparameterize(["value", "label"], [[1, "admin"], [2, "user"]])
+
+        func test_ranked(value: int, label: String) -> void:
+        \tpass
+
+        func test_plain() -> void:
+        \tpass
+        """).strip()
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": _suite_source(body=body)},
+    )
+    result_path = tmp_path / "preflight-case-selector-invalid.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=[selector]),
+        result_path,
+    )
+
+    assert process.returncode == 2, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "error"
+    assert payload["suites"] == []
+    assert "res://test/integration_suite.gd" in payload["error"]
+    assert expected_error in payload["error"]
+
+
+def test_preflight_resolves_parameterize_for_bridge_suites(godot_bin, tmp_path):
+    """Bridge (GutTest) suites get the same parameterization resolution.
+
+    The bridge shim inherits the native machinery, so preflight resolves a
+    ``before_all`` declaration on a GutTest suite and attaches parameters
+    metadata exactly as it does for GdToolsTest suites.
+    """
+    body = dedent("""
+        func before_all() -> void:
+        \tparameterize(["value", "label"], [[1, "admin"], [2, "user"]])
+
+        func test_ranked(value: int, label: String) -> void:
+        \tpass
+        """).strip()
+    bridge_source = (
+        "extends GutTest\nclass_name BridgePreflightSuite\n\n" + body
+    )
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": bridge_source},
+    )
+    result_path = tmp_path / "preflight-bridge-parameterize.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    suite = payload["suites"][0]
+    test = suite["tests"][0]
+    assert test["parameters"] == {
+        "names": ["value", "label"],
+        "values": [[1, "admin"], [2, "user"]],
+    }
+
+
+def test_preflight_rejects_malformed_bridge_declarations(godot_bin, tmp_path):
+    """Malformed bridge declarations inherit preflight validation (exit 2)."""
+    body = dedent("""
+        func before_all() -> void:
+        \tparameterize(["value"], [[1, "admin"], [2, "user"]])
+
+        func test_ranked(value: int) -> void:
+        \tpass
+        """).strip()
+    bridge_source = "extends GutTest\nclass_name BridgeInvalidSuite\n\n" + body
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": bridge_source},
+    )
+    result_path = tmp_path / "preflight-bridge-invalid.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked"]),
+        result_path,
+    )
+
+    assert process.returncode == 2, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "error"
+    assert payload["suites"] == []
+    assert "res://test/integration_suite.gd" in payload["error"]
+    assert "parameter set 0 has 2 value(s); expected 1" in payload["error"]
+
+
+def test_preflight_ignores_api_mentions_in_string_literals(godot_bin, tmp_path):
+    """Mentions of the parameterization APIs inside strings are not declarations.
+
+    A before_all line like ``var hint := "call parameterize(names, values)``
+    must not be mistaken for a live declaration, and a string in a test body
+    mentioning ``use_parameters`` must not resolve as one either.
+    """
+    body = dedent("""
+        func before_all() -> void:
+        \tvar hint := "call parameterize(names, values) before writing tests."
+        \tparameterize(["value"], [[1], [2]])
+
+        func test_ranked(value: int) -> void:
+        \tvar note := "the legacy form is use_parameters(values) in the body."
+        \tassert_true(value > 0)
+        """).strip()
+    source = _suite_source(body=body)
+    project = _prepare_project(
+        tmp_path,
+        godot_bin,
+        {"test/integration_suite.gd": source},
+    )
+    result_path = tmp_path / "preflight-string-mentions.json"
+
+    process = _run_preflight(
+        project,
+        godot_bin,
+        _manifest(project, tests=["test_ranked"]),
+        result_path,
+    )
+
+    assert process.returncode == 0, process.stdout + process.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "ok"
+    suite = payload["suites"][0]
+    test = suite["tests"][0]
+    assert test["parameters"] == {"names": ["value"], "values": [[1], [2]]}

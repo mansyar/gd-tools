@@ -22,11 +22,11 @@ MIGRATION_DOC = "docs/gut-migration.md"
 # Mocking constructs (``double``, ``partial_double``, ``stub``,
 # ``assert_called*``) are NOT listed: the native runtime implements them and
 # the bridge inherits them from ``GdToolsTest``.
+# Parameterization (``parameterize``/``use_parameters``) is native now, so it
+# is no longer listed: bridge suites use the same declaration validation,
+# case expansion, and naming as native suites.
 _UNSUPPORTED_NAMES: tuple[str, ...] = sorted(
     (
-        # Parameterization.
-        "parameterize",
-        "use_parameters",
         # Property, orphan, and interactive assertions.
         "assert_setget",
         "assert_accessors",
