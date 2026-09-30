@@ -150,4 +150,5 @@
   - [ ] Coverage gates met on `src/gd_tools/`
   - [ ] Manual playtest smoke-test checklist presented to the user
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: 5a8d93e]
