@@ -9,7 +9,7 @@
 
 ## Phase 1 — Sweep & Evidence Collection
 
-- [ ] Task: Grep all markdown for stale v0.5.0 claims
+- [x] Task: Grep all markdown for stale v0.5.0 claims
   - Sweep `README.md`, `CHANGELOG.md`, `ARCHITECTURE.md`, `docs/ROADMAP.md`,
     and all other reachable `.md` files for: "sequentially", "parallel",
     "parameterize", "skip_test", "watch", "baseline", "diff", "no cover",
@@ -22,19 +22,25 @@
 
 ## Phase 2 — Apply Verified Fixes
 
-- [ ] Task: Fix README.md
+- [x] Task: Fix README.md
   - Known limitations paragraph (~lines 186-187): replace sequential-only
     claim with shipped `--parallel N` behavior.
   - Bridge capability table: update `parameterize()` row (no longer
     "unsupported / preflight rejects").
   - Any other sweep-confirmed stale lines only.
-- [ ] Task: Fix CHANGELOG.md
+- [x] Task: Fix CHANGELOG.md
   - Rewrite v0.5.0 "Known Limitations" bullets in place to reflect current
     reality.
   - Add a `Fixed` bullet noting the documentation correction.
-- [ ] Task: Fix ARCHITECTURE.md
+- [x] Task: Fix ARCHITECTURE.md
+  - Sweep verdict: Known-limitations section is already accurate (only "No
+    editor integration" listed, which is true); no changes required.
   - Known-limitations section: apply sweep-confirmed corrections only.
-- [ ] Task: Fix docs/ROADMAP.md
+- [x] Task: Fix docs/ROADMAP.md
+  - Also fixed (sweep-confirmed): foundation-defers paragraph (lines 45-49),
+    Phase 5 status line (line 1564), and docs/PRD.md Non-Goals #1 +
+    Current-runtime-limits sentence (parameterized tests and parallel
+    execution shipped).
   - Mark Phase 5 "optional parallel execution (deferred)" as delivered.
   - Keep remaining deferred items (native runtime caching, v0.5.0
     publication, bridge removal v0.6.0) listed as open.
