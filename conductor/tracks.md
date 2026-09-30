@@ -91,8 +91,8 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Coverage Exclusion Annotations**
-  *Link: [coverage_exclusions_20260930](./tracks/coverage_exclusions_20260930/index.md)* -
+- [x] **Track: Coverage Exclusion Annotations** (archived → `./archive/coverage_exclusions_20260930/`)
+  *Link: [coverage_exclusions_20260930](./archive/coverage_exclusions_20260930/index.md)* -
   support `# gd-tools: no cover` annotations (single-line, block
   `start`/`end`, and func-line exclusion) so users can exclude lines from
   coverage instrumentation. Excluded lines are recorded in the plan JSON
