@@ -88,3 +88,8 @@ _Archived tracks live in `./archive/`._
   marker selecting 3-5 critical-path tests for the unchanged 6-job PR matrix
   while the full E2E suite moves to nightly + `workflow_dispatch`. Acceptance:
   PR CI wall time <= 10 minutes.
+
+- [ ] **Track: Native Release Readiness (v0.5.0)** (chore/release: docs truth
+  pass, bounded crash-recovery + exit-2 diagnostics hardening, GUT bridge
+  deprecation notice for v0.6.0 removal, v0.5.0 release preparation)
+  *Link: [native_release_readiness_20260930](./tracks/native_release_readiness_20260930/index.md)*
