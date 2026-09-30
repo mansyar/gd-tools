@@ -91,5 +91,6 @@ _Archived tracks live in `./archive/`._
 
 - [x] **Track: Native Release Readiness (v0.5.0)** (chore/release: docs truth
   pass, bounded crash-recovery + exit-2 diagnostics hardening, GUT bridge
-  deprecation notice for v0.6.0 removal, v0.5.0 release preparation)
-  *Link: [native_release_readiness_20260930](./tracks/native_release_readiness_20260930/index.md)*
+  deprecation notice for v0.6.0 removal, v0.5.0 release preparation) (archived →
+  ./archive/native_release_readiness_20260930/)
+  *Link: [native_release_readiness_20260930](./archive/native_release_readiness_20260930/index.md)*
