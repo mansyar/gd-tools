@@ -16,7 +16,8 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
     (POSIX path — no `cygpath` on macOS).
   - Keep the existing glob-based extraction diagnostic (`::error` if no
     binary found).
-- [ ] Task: Add `macos-latest` to all CI stages
+- [x] Task: Add `macos-latest` to all CI stages
+  (0e9b679)
   - `matrix-unit`: add `macos-latest` to the `os` axis (runs for all 3
     Python versions).
   - `integration`: add `macos-latest` to the `os` axis (runs for all 3
