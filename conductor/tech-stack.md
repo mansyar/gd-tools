@@ -131,4 +131,4 @@
 - **Coverage:** Native runtime owns activation; existing coverage plan schema v1 is reused where possible for line and branch metrics.
 - **Dependencies:** No new third-party GDScript runtime dependency. GUT is optional during the bounded migration period.
 - **Compatibility:** `.gutconfig.json` is not read by the bridge; `gd-tools migrate` translates its mapped options into `gd-tools.toml` (merge, never clobber) and preserves the file. `gd-tools.toml` is canonical.
-- **Exit condition:** Remove the temporary bridge and fold the durable decisions into the main roadmap after native migration is complete.
+- **Exit condition:** Remove the temporary bridge and fold the durable decisions into the main roadmap after native migration is complete (deprecation notice ships in v0.5.0; removal targeted for v0.6.0).
