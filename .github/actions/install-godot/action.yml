@@ -62,6 +62,13 @@ runs:
         if [ "$RUNNER_OS" != "Windows" ]; then
           chmod +x "$extracted"
         fi
+        if [ "$RUNNER_OS" = "macOS" ]; then
+          # macOS arm64 kills executables whose signature does not verify
+          # ("Killed: 9"). Clear any quarantine xattr and ad-hoc re-sign so
+          # the extracted binary is launchable on hosted runners.
+          xattr -dr com.apple.quarantine "$extracted" 2>/dev/null || true
+          codesign --force --sign - "$extracted"
+        fi
 
         install_dir="$GITHUB_WORKSPACE/.godot-bin"
         mkdir -p "$install_dir"
