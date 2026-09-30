@@ -304,3 +304,24 @@ def test_playtest_supports_lcov_report_format(playtest_env):
     result = run_playtest_coverage(config, report_format="lcov")
 
     assert result.output_path.suffix == ".info"
+
+
+# --- periodic flush interval ---
+
+
+def test_playtest_sets_flush_interval_from_timeout(playtest_env):
+    """The periodic flush interval is derived from --timeout (timeout / 2)."""
+    config = GdToolsConfig()
+    run_playtest_coverage(config, timeout=8)
+
+    env = playtest_env["captured"]["env"]
+    assert env["GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL"] == "4.0"
+
+
+def test_playtest_uses_default_interval_without_timeout(playtest_env):
+    """Without --timeout the default 5s flush interval is used."""
+    config = GdToolsConfig()
+    run_playtest_coverage(config)
+
+    env = playtest_env["captured"]["env"]
+    assert env["GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL"] == "5.0"

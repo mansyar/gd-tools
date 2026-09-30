@@ -33,6 +33,8 @@ PLAN_ENV = "GD_TOOLS_COVERAGE_PLAN"
 
 OUTPUT_ENV = "GD_TOOLS_COVERAGE_OUTPUT"
 
+INTERVAL_ENV = "GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL"
+
 _MAIN_SCENE_PATTERN = re.compile(r"(?m)^run/main_scene\s*=\s*\"([^\"]+)\"")
 
 
@@ -87,10 +89,15 @@ def run_playtest_coverage(
         plan_generator.write_plan_json(plan, str(output_dir / "plan.json"))
 
     coverage_path = output_dir / "coverage.json"
+    # Derive the flush interval from --timeout so at least one periodic
+    # snapshot is guaranteed to land before the auto-close kill; the
+    # exit flush cannot run when the process is terminated hard.
+    interval = min(5.0, timeout / 2) if timeout is not None else 5.0
     env = {
         PLAN_ENV: str(output_dir / "plan.json"),
         OUTPUT_ENV: str(coverage_path),
         PLAYTEST_ENV: "1",
+        INTERVAL_ENV: str(interval),
     }
 
     args: list[str] = []
