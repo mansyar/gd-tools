@@ -28,7 +28,7 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
     integration/e2e (20 min) budgets already absorb Windows, and macOS
     hosted runners are typically comparable or faster; confirm via CI
     observed runtimes in Task 3.
-- [ ] Task: Verify macOS runs green (iterative)
+- [~] Task: Verify macOS runs green (iterative)
   - Push the branch, observe the CI run, diagnose and iterate until all
     macOS jobs pass.
   - Announce each push/watch cycle; max two self-correction attempts per
@@ -46,7 +46,10 @@ Workflow rules: `conductor/workflow.md` (tests required for source code
     platform-specific behavior via mocks/monkeypatched platform info
     (tests must pass on all 3 OSes), then implement the minimal fix in
     `godot.py` (or the related module). Red → Green → refactor.
-- [ ] Task: Fix test-fixture assumptions
+- [x] Task: Fix test-fixture assumptions
+  (c467b31 — done early: the CI contract tests in
+  `tests/unit/test_ci_matrix.py` pinned the old matrix shape and blocked
+  Stage 1 before macOS jobs could run)
   - Only if (b) issues exist: adjust fixtures/assertions to be
     platform-neutral; document why.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
