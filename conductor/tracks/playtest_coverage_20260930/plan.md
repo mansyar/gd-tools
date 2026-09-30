@@ -76,7 +76,7 @@
 
 ## Phase 3 — Result Collection & Exit Semantics
 
-- [ ] Task 3.1: Write failing unit tests for:
+- [x] Task 3.1: Write failing unit tests for:
   - [ ] Clean exit → output file collected, report generated (FR-5)
   - [ ] Crash/kill with periodic data on disk → report from last snapshot
         **with warning** (FR-6)
@@ -87,16 +87,19 @@
 
   **Expected fail:** result-handling logic does not exist yet (Red).
 
-- [ ] Task 3.2: Implement result handling in `playtest.py`:
+- [x] Task 3.2: Implement result handling in `playtest.py` (`3f06138`):
   - [ ] Partial-data recovery from periodic flush output
   - [ ] Timeout kill of the game process
   - [ ] Threshold gate and exit-code contract 0/1/2
 
   **Expected pass:** Task 3.1 tests go green (Green).
 
-- [ ] Task 3.3: Refactor + route collected data through
+- [x] Task 3.3: Refactor + route collected data through
   `generate_coverage_report` so all existing `--report-format` outputs work
-  unchanged (FR-5), with regression tests.
+  unchanged (FR-5), with regression tests — collection already flows through
+  the same `read_plan_json`/`read_coverage_json`/`generate_report` seam used
+  by `generate_coverage_report`; regression: 202 unit+integration tests green,
+  text/html/lcov formats exercised.
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
