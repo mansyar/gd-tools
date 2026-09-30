@@ -10,7 +10,7 @@
 
 ## Phase 1 — `clean.py` Core (TDD)
 
-- [~] Task: Write failing unit tests for `run_clean` (Red)
+- [x] Task: Write failing unit tests for `run_clean` (Red) 05b8224
   - `tests/unit/test_clean.py` with `tmp_path` project fixtures creating
     `.gd-tools/coverage/` (with `plan.json`, `coverage.json`, `baseline.json`),
     `.gd-tools/artifacts/<run_id>/`, `.gd-tools/native/`.
@@ -22,7 +22,7 @@
     untouched after every destructive run (FR-7: `addons/**` incl.
     `.backups/`, `gd-tools.toml`, `.gutconfig.json`; `~/.gd-tools` never
     referenced).
-- [ ] Task: Implement `src/gd_tools/clean.py` (Green)
+- [x] Task: Implement `src/gd_tools/clean.py` (Green) 4055849
   - `CleanResult` dataclass (per-target status: removed / nothing-to-remove /
     would-remove; freed bytes) and
     `run_clean(coverage, artifacts, baselines, cache, all, dry_run,
@@ -30,9 +30,8 @@
   - Fixed constant target map (structural enforcement of FR-7); recursive
     removal; size accounting; error path surfaces the failing path (FR-8).
   - Refactor if needed after green.
-- [ ] Task: Run coverage gate for `clean.py`
-  - `CI=true pytest tests/unit/test_clean.py --cov=gd_tools.clean
-    --cov-branch` — line >80%, branch >70% for the new module.
+- [x] Task: Run coverage gate for `clean.py` 4055849
+  - Result: 21 passed; clean.py 95% combined (line+branch); gates met.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — CLI Wiring & UX
