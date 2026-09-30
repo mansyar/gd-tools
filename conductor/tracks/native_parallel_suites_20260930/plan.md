@@ -106,7 +106,7 @@ the end of every phase (pause for user sign-off before checkpointing).
   (`abort_event`), M2 timeout reaping, M3/M4 honest routing + worker-slot
   claims, H2-H5 doc truth fixes, low-severity cleanups (annotations,
   CHANGELOG spacing, benchmark docstrings, GDScript event-line wrapping,
-  POSIX test skips) (see `fix(conductor)` commit sha)
+  POSIX test skips) (6874a77)
 
 ---
 
