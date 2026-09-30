@@ -107,3 +107,11 @@ _Archived tracks live in `./archive/`._
   deprecation notice for v0.6.0 removal, v0.5.0 release preparation) (archived →
   ./archive/native_release_readiness_20260930/)
   *Link: [native_release_readiness_20260930](./archive/native_release_readiness_20260930/index.md)*
+
+- [x] **Track: macOS CI Matrix** (chore: add `macos-latest` to the CI test
+  matrix at full parity — unit, integration, e2e — extend the shared
+  `install-godot` action with macOS support, fix macOS-specific issues that
+  surface, and update the docs that currently record macOS as uncovered;
+  Roadmap Track 36) (archived
+  ./archive/macos_ci_matrix_20260930/)
+  *Link: [macos_ci_matrix_20260930](./archive/macos_ci_matrix_20260930/index.md)*

@@ -1239,7 +1239,7 @@ switch and provide inline coverage visualization.
 | **Modules** | `.github/workflows/ci.yml` |
 | **Effort** | 0.25 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Done (track `macos_ci_matrix_20260930`) |
 
 **Problem:**
 
@@ -1265,6 +1265,17 @@ that go untested.
 3. All integration tests pass on macOS (with Godot installed)
 4. All E2E tests pass on macOS
 5. CI pipeline completes in <15 minutes total (macOS runners are slower)
+
+**Outcome:** Delivered as track `macos_ci_matrix_20260930`. macOS runs at
+full parity on every PR: unit x 3 Pythons, integration and e2e x 3 Godot
+versions (9 macOS cells). The shared `install-godot` action gained a macOS
+branch (`Godot_v{v}-stable_macos.universal.zip`, `.app`-bundle extraction,
+quarantine strip + ad-hoc `codesign` to survive arm64 `Killed: 9`). No
+`godot.py` changes were needed — path/binary detection was already
+platform-neutral. Bonus fix surfaced by the wider matrix: a bare stdlib
+`tomllib` import in `tests/unit/test_version.py` broke Python 3.10
+collection on every OS; it now uses the codebase-standard `tomli`
+fallback. CI run 36684641137: all 27 jobs green.
 
 ---
 
@@ -1484,7 +1495,7 @@ its backup path. Unmodified files are overwritten silently (idempotent).
 | **Editor plugin API changes between Godot versions** | 35 | Target Godot 4.5+ only. Test on 4.5, 4.6, 4.7. Document version compatibility. |
 | **Playtesting coverage: game crash loses data** | 34 | Write coverage data periodically (every N seconds) to temp file. Final flush on exit. |
 | **Plan cache produces stale results** | 37 | Hash-based invalidation. `--no-cache` escape hatch. Log cache hit/miss. |
-| **macOS CI runners are slower / more expensive** | 36 | Only run integration/E2E on macOS (unit tests are OS-agnostic). Consider running macOS CI on schedule, not every PR. |
+| **macOS CI runners are slower / more expensive** | 36 | Resolved by Track `macos_ci_matrix_20260930`: macOS runs on every PR at full parity and the observed pipeline stays within budget; arm64 queue-time advisories on hosted runners are informational only. |
 | **Pre-commit framework version changes** | 29 | Generate standard `.pre-commit-hooks.yaml` format. Pin no framework version. |
 | **GitHub Actions annotation format changes** | 31 | Follow [official spec](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions). Test with real PRs. |
 
@@ -1518,7 +1529,7 @@ conductor_new_track
 
 4. **Tracks 36-39 (Robustness)** -- Can be picked up between feature
    tracks as time allows. Track 36 (macOS CI) is quickest and should be
-   done early to catch platform issues.
+   done early to catch platform issues. (Done — `macos_ci_matrix_20260930`.)
 
 ### Spec/Plan Template Per Track
 
@@ -1665,14 +1676,17 @@ combination below. The axes live in `.github/workflows/ci.yml` and are the one
 place to edit them; `GUT_VERSION_MAP` in `src/gd_tools/godot.py` lists the same
 versions and must be updated alongside (see Track 32).
 
-| Godot | Linux | Windows |
-| --- | --- | --- |
-| 4.5.2 | integration + e2e | integration + e2e |
-| 4.6.1 | integration + e2e | integration + e2e |
-| 4.7.1 | integration + e2e | integration + e2e |
+| Godot | Linux | Windows | macOS |
+| --- | --- | --- | --- |
+| 4.5.2 | integration + e2e | integration + e2e | integration + e2e |
+| 4.6.1 | integration + e2e | integration + e2e | integration + e2e |
+| 4.7.1 | integration + e2e | integration + e2e | integration + e2e |
 
-**macOS is not covered** and remains Track 36 — this matrix is not the full
-support claim in `conductor/product.md`.
+macOS was added by track `macos_ci_matrix_20260930` (Roadmap Track 36) and
+runs on every PR at full parity; the matrix now matches the full support
+claim in `conductor/product.md`. Note that macOS cells extract the Godot
+binary from the `.app` bundle and re-sign it ad hoc — see the
+`install-godot` action.
 
 Three limits of this matrix are known and deliberate:
 
@@ -1690,4 +1704,6 @@ Three limits of this matrix are known and deliberate:
    in `conductor/product.md`. `timeout-minutes` is a per-job cap, not a workflow
    budget, and the two Godot stages run in series. Verifying the matrix was
    judged worth the duration; a nightly schedule for the widest axes is the
-   lever if that becomes a problem.
+   lever if that becomes a problem. (Re-measured after the macOS cells landed:
+   the parity verification run completed in roughly six minutes of wall clock,
+   so the 13-minute figure no longer holds on the current pipeline.)
