@@ -104,7 +104,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Parallel Suite Execution** (Targets v0.6.0)
+- [x] **Track: Parallel Suite Execution** (Targets v0.6.0)
   *Link: [native_parallel_suites_20260930](./tracks/native_parallel_suites_20260930/index.md)* -
   opt-in bounded worker pool for `gd-tools test`: `--parallel N` flag plus
   `[test] parallel` config (1–32, default 4, N=1 = sequential path),

@@ -1,7 +1,7 @@
 {
   "track_id": "native_parallel_suites_20260930",
   "type": "feature",
-  "status": "new",
+  "status": "completed",
   "created_at": "2026-09-30T00:00:00Z",
   "updated_at": "2026-09-30T00:00:00Z",
   "description": "Parallel Suite Execution - opt-in bounded worker pool for gd-tools test: --parallel N flag plus [test] parallel config, discovery-order scheduling, deterministic ordered results, full coverage support, watch-mode inheritance, process-tree interrupt safety, and in-track documentation."
