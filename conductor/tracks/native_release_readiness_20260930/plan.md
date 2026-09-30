@@ -11,18 +11,28 @@ every phase (pause for user sign-off before checkpointing).
 
 ## Phase 1 — Crash-Recovery & Diagnostics Hardening
 
-- [ ] Task 1: Orphan process cleanup on interruption
-  - [ ] Write failing tests (Red): interrupted `gd-tools test` run terminates spawned Godot child processes (SIGINT/SIGTERM propagation; no orphans after run)
-  - [ ] Implement minimal cleanup in the native orchestrator (Green)
-  - [ ] Confirm decided exit code for interrupted runs (130 vs 2) and encode it in tests
-- [ ] Task 2: Crash-safe incomplete-run artifact marking
-  - [ ] Write failing tests (Red): a run terminated before completion writes a machine-readable incomplete marker under `.gd-tools/artifacts/<run_id>/` and prints a human notice
-  - [ ] Implement marker + terminal notice (Green)
-  - [ ] Verify complete runs are never marked incomplete (regression test)
-- [ ] Task 3: Actionable exit-2 diagnostics
+- [ ] Task 1: Interrupted-run cleanup and marking
+  (Plan note — Tasks 1 and 2 merged after code discovery: `subprocess.run`
+  already kills the in-flight child on `KeyboardInterrupt` via the `Popen`
+  context manager, and the loop already stops spawning later suites, so
+  orphan cleanup is a stdlib guarantee to document, not new code. The
+  testable gaps are the incomplete artifact index, the human notice, and
+  the exit code. Decision: interrupted runs exit **130**.)
+  - [x] Write failing tests (Red): interrupt during a run publishes
+    `artifacts.json` with status `incomplete`, attempts no further suites,
+    and propagates `KeyboardInterrupt`; the CLI prints a human notice and
+    exits 130; SIGTERM converts to the same cleanup path where deliverable
+    (6 of 7 failed on first run; complete-run regression passed as expected)
+  - [x] Implement (Green): orchestrator interrupt handler publishes the
+    incomplete index and re-raises; the command layer prints the notice
+    (and publishes the incomplete index if the interrupt landed before the
+    orchestrator) and converts SIGTERM to `KeyboardInterrupt`; the CLI
+    exits 130 (commit 03c5531)
+  - [x] Regression test: complete runs are never marked incomplete
+- [ ] Task 2: Actionable exit-2 diagnostics
   - [ ] Write failing tests (Red): environment/config/protocol/engine failures emit structured diagnostics (what failed, expected vs. found, suggested fix)
   - [ ] Implement diagnostics on existing exit-2 paths (Green; no exit-code redesign)
-- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
+- [ ] Task 3: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command (`ruff`, `black --check`, `CI=true pytest` with coverage)
   - [ ] Produce manual verification plan (CLI feature variant) and pause for user sign-off
