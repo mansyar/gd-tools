@@ -50,13 +50,13 @@ the end of every phase (pause for user sign-off before checkpointing).
   XML + unchanged exit-code precedence in `command.py` (36fd158)
   - [x] Write failing tests (Red) — caught the adapter dropping `parallel`
   - [x] Implement (Green)
-- [ ] Task 4: Interrupt handling — stop dispatch, kill all in-flight process
+- [x] Task 4: Interrupt handling — stop dispatch, kill all in-flight process
   trees (POSIX + Windows `taskkill /T`/Job Object strategy behind a testable
-  seam), incomplete artifact index, exit 130
-  - [ ] Write failing tests (Red)
-  - [ ] Implement (Green)
-  - [ ] Regression: complete runs never marked incomplete
-- [ ] Task 5: Phase Verification & Checkpoint (Refer to workflow.md)
+  seam), incomplete artifact index, exit 130 (5f850d1)
+  - [x] Write failing tests (Red)
+  - [x] Implement (Green)
+  - [x] Regression: complete runs never marked incomplete
+- [~] Task 5: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command
   - [ ] Produce manual verification plan and pause for user sign-off
