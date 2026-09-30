@@ -127,3 +127,11 @@ _Archived tracks live in `./archive/`._
   events, full `--coverage` support, watch-mode inheritance, continue-on-failure
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
+
+---
+
+- [ ] **Track: Godot Editor Plugin** (Roadmap Track 35 — editor plugin deployed
+  by `gd-tools init` with a test/coverage dock panel (async runs, summary +
+  failures, friendly missing-CLI fallback) and a `CodeEdit` coverage heatmap
+  overlay reading `.gd-tools/` artifacts; lint margin descoped)
+  *Link: [editor_plugin_20260930](./tracks/editor_plugin_20260930/index.md)*
