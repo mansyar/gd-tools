@@ -1710,3 +1710,36 @@ def test_test_watch_uses_config_parallel_without_flag():
         result = runner.invoke(cli, ["test", "--watch"], env={"CI": "false"})
     assert result.exit_code == 0
     assert mock_watch.call_args.kwargs["parallel"] == 2
+
+
+# --- global --project option ---
+
+
+def test_project_option_sets_explicit_root(tmp_path):
+    """Test --project anchors find_project_root for subcommands."""
+    (tmp_path / "project.godot").touch()
+    runner = CliRunner()
+    with patch("gd_tools.cli.set_explicit_project_root") as mock_set:
+        result = runner.invoke(cli, ["--project", str(tmp_path), "version"])
+    assert result.exit_code == 0
+    mock_set.assert_called_once()
+
+
+def test_project_option_rejects_missing_directory(tmp_path):
+    """Test --project exits with a usage error for a nonexistent path."""
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["--project", str(tmp_path / "nope"), "version"]
+    )
+    assert result.exit_code == 2
+    assert "--project" in result.output
+
+
+def test_project_short_option_accepted(tmp_path):
+    """Test the -p shorthand is accepted like --project."""
+    (tmp_path / "project.godot").touch()
+    runner = CliRunner()
+    with patch("gd_tools.cli.set_explicit_project_root") as mock_set:
+        result = runner.invoke(cli, ["-p", str(tmp_path), "version"])
+    assert result.exit_code == 0
+    mock_set.assert_called_once()

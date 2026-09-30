@@ -174,10 +174,32 @@ class GdToolsConfig(BaseModel):
         return v
 
 
+# Module-level explicit project root (set by the CLI's global
+# ``--project`` option). When set, ``find_project_root`` returns it
+# directly instead of walking up from the working directory.
+_explicit_project_root: Path | None = None
+
+
+def set_explicit_project_root(path: Path | None) -> None:
+    """Anchor project discovery to an explicit root directory.
+
+    Args:
+        path: Directory to treat as the project root, or ``None`` to
+            clear the anchor and restore cwd-based discovery.
+    """
+    global _explicit_project_root
+    _explicit_project_root = path.resolve() if path is not None else None
+
+
 def find_project_root(
     start_path: Path | None = None,
 ) -> Path:
     """Walk up from start_path to find the nearest project.godot.
+
+    When an explicit project root has been set (via
+    :func:`set_explicit_project_root`, wired to the CLI's global
+    ``--project`` option), it is returned directly and the walk is
+    skipped.
 
     Args:
         start_path: Directory to start searching from.
@@ -188,8 +210,16 @@ def find_project_root(
 
     Raises:
         ConfigError: If ``project.godot`` is not found in any
-            parent directory.
+            parent directory, or if the explicit root does not
+            contain ``project.godot``.
     """
+    if _explicit_project_root is not None:
+        if (_explicit_project_root / "project.godot").is_file():
+            return _explicit_project_root
+        raise ConfigError(
+            "--project directory does not contain project.godot: "
+            f"{_explicit_project_root}"
+        )
     if start_path is None:
         start_path = Path.cwd()
     current = start_path.resolve()
