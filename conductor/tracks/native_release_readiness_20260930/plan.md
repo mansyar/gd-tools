@@ -81,10 +81,10 @@ every phase (pause for user sign-off before checkpointing).
   - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean
   - [x] `CI=true pytest` with coverage targets met (≥80% line / ≥70% branch) — 1317 passed / 2 skipped, 95.46%
   - [x] `python -m build` produces 0.5.0 wheel + tarball; `twine check` passes (built via `pyproject-build` — a local gitignored `build/` dir shadows `python -m build`; `twine` installed into the venv: both artifacts PASSED)
-- [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] Full verification command run and green
-  - [ ] Produce manual verification plan (release-readiness checklist) and pause for user sign-off
-  - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
+- [x] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Full verification command run and green (ruff clean, black 132 unchanged, 1317 passed / 2 skipped / 95.46%)
+  - [x] Produce manual verification plan (release-readiness checklist) and pause for user sign-off (approved 2026-09-30)
+  - [x] Checkpoint commit + git note + `[checkpoint: 2dcb333]` in plan.md
 
 ---
 
