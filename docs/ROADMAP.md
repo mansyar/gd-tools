@@ -1409,7 +1409,15 @@ points. No limitations found; all 8 patterns are fully tracked.
 | **Modules** | `src/gd_tools/cli.py`, `src/gd_tools/clean.py` (new) |
 | **Effort** | 0.25 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Delivered (v0.5.0) |
+
+**Delivered:** `gd-tools clean` ships with an extended flag surface beyond
+the original roadmap scope: `--coverage`, `--artifacts`, `--baselines`,
+`--cache`, `--all`, and `--dry-run`. With no flags the command prints an
+inventory of `.gd-tools/` targets and a hint, deleting nothing. Protected
+paths (`addons/**` including `.backups/`, `gd-tools.toml`,
+`.gutconfig.json`, and the user-level home cache) are never touched.
+Track: `clean_command_20260930`.
 
 **Problem:**
 
@@ -1418,20 +1426,22 @@ cached data) without manually deleting directories. Users may not know
 what's safe to delete.
 
 **Scope:**
-- `gd-tools clean` command with optional flags:
-  - `--coverage` -- Remove `.gd-tools/coverage/` (plan, data, reports)
-  - `--cache` -- Remove `.gd-tools/cache/` (if plan caching exists)
-  - `--all` -- Remove entire `.gd-tools/` directory
-  - No flags -- prompt interactively (or remove coverage artifacts by default)
+- `gd-tools clean` command with optional flags (delivered surface):
+  - `--coverage` -- Remove `.gd-tools/coverage/` (plan cache, data, reports, baseline)
+  - `--artifacts` -- Remove `.gd-tools/artifacts/` (added during delivery: per-run native artifacts)
+  - `--baselines` -- Remove only `.gd-tools/coverage/baseline.json` (added during delivery)
+  - `--cache` -- Remove `.gd-tools/native/` (the native worker scratch directory; the plan cache lives inside the coverage output, so no separate `.gd-tools/cache/` exists)
+  - `--all` -- Remove every target directory under `.gd-tools/` (the `.gd-tools/` directory itself is kept)
+  - No flags -- print an inventory of targets with sizes plus a hint; nothing is deleted (safer than the originally planned interactive prompt or coverage-by-default)
 - `--dry-run` flag to show what would be deleted without deleting
-- Prints a summary of what was removed
-- Does NOT remove `addons/` (those are project files, not generated)
+- Prints a summary of what was removed (with humanized freed-byte totals)
+- Does NOT remove `addons/` (those are project files, not generated), including the `.backups/` copies made by `gd-tools init`
 - Does NOT remove `gd-tools.toml` or `.gutconfig.json` (user config)
 
 **Deliverables:**
-- `clean.py` with `run_clean(coverage, cache, all, dry_run) -> CleanResult`
+- `clean.py` with `run_clean(coverage, artifacts, baselines, cache, all, dry_run, project_root) -> CleanResult` (per-target status + freed bytes)
 - `clean` command in `cli.py`
-- Unit tests with temp directories
+- Unit tests with temp directories (core module + CLI)
 - Documentation in USER_GUIDE
 
 **Success Criteria:**

@@ -1403,7 +1403,64 @@ gd-tools completion powershell | Out-String | Add-Content $PROFILE
 | 2 | Invalid shell argument (not one of `bash`, `zsh`, `fish`, `powershell`). |
 
 
-### 3.11 Global Verbosity Flags
+### 3.11 gd-tools clean
+
+Remove generated artifacts under `.gd-tools/`. With no flags, the command
+prints an inventory of what exists (with sizes) and a hint — it deletes
+nothing, so it is safe to run anywhere, including CI.
+
+**Usage:**
+
+```bash
+gd-tools clean [flags]
+```
+
+**Options:**
+
+| Flag | Target | Description |
+|---|---|---|
+| `--coverage` | `.gd-tools/coverage` | Remove the coverage output directory, including the plan cache (`plan.json`) and `baseline.json`. |
+| `--artifacts` | `.gd-tools/artifacts` | Remove native test artifacts (per-run diagnostics, JUnit XML, screenshots). |
+| `--baselines` | `.gd-tools/coverage/baseline.json` | Remove only the saved coverage baseline. |
+| `--cache` | `.gd-tools/native` | Remove the native worker scratch directory. |
+| `--all` | all of the above | Remove every target directory (overrides individual flags). |
+| `--dry-run` | — | Report what would be removed, with sizes, without deleting anything. |
+
+`--dry-run` composes with any selection, including `--all`. Overlapping
+selections are handled gracefully: `--baselines` is subsumed by
+`--coverage`, and explicit flags are subsumed by `--all` (the summary
+counts each byte exactly once).
+
+**Never touched:** the `addons/` tree (including `.backups/` copies made
+by `gd-tools init`), `gd-tools.toml`, `.gutconfig.json`, and the user-level
+cache in your home directory. `clean` only removes the fixed targets above
+under the project's `.gd-tools/` directory.
+
+**Examples:**
+
+```bash
+# See what gd-tools artifacts exist and their sizes (deletes nothing)
+gd-tools clean
+
+# Preview what --all would remove
+gd-tools clean --all --dry-run
+
+# Remove only coverage output
+gd-tools clean --coverage
+
+# Full reset of generated artifacts
+gd-tools clean --all
+```
+
+**Exit Codes:**
+
+| Code | Condition |
+|---|---|
+| 0 | Targets removed, nothing to remove, dry run, or inventory. |
+| 2 | One or more targets could not be removed (the failing path is printed). |
+
+
+### 3.12 Global Verbosity Flags
 
 `gd-tools` provides two global flags that control how much output a
 command produces. These flags are placed **before** the subcommand and
