@@ -6,7 +6,7 @@ verification, conventional commits with git notes.
 
 ---
 
-## Phase 1 — Python Deployment Infrastructure (TDD)
+## Phase 1 — Python Deployment Infrastructure (TDD) [checkpoint: 9b6ea8c]
 
 - [x] Task: Write failing unit tests for editor-plugin deployment
   - [x] `tests/unit/test_init.py`: init deploys `addons/gd-tools-editor/` files (plugin.cfg, plugin.gd, dock.gd, coverage_overlay.gd); idempotent re-init; smart backup on modified files; wheel packaging includes the new addon dir
