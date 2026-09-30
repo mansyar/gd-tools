@@ -40,9 +40,9 @@ every phase (pause for user sign-off before checkpointing).
 
 ## Phase 2 — GUT Bridge Deprecation
 
-- [ ] Task 1: One-time deprecation notice for GUT-style suites
-  - [ ] Write failing tests (Red): running a GUT-style suite prints a deprecation notice exactly once per run stating removal is planned for v0.6.0; native suites print nothing new
-  - [ ] Implement notice in the bridge path (Green)
+- [x] Task 1: One-time deprecation notice for GUT-style suites
+  - [x] Write failing tests (Red): running a GUT-style suite prints a deprecation notice exactly once per run stating removal is planned for v0.6.0; native suites print nothing new (1/2 failed on first run)
+  - [x] Implement notice in the bridge path (Green) (commit cdbd0da)
 - [ ] Task 2: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed file in this phase
   - [ ] Announce and run full verification command
