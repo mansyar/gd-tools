@@ -673,8 +673,8 @@ def run_init(
 
     if with_gut:
         console.print(
-            "[yellow]Warning: --with-gut installs the GUT addon, which "
-            "conflicts with the built-in compatibility bridge (duplicate "
+            "[yellow]Installing the GUT addon (deprecated: the addon "
+            "conflicts with the built-in compatibility bridge, duplicate "
             "class_name GutTest). Consider removing addons/gut after "
             "init. See docs/gut-migration.md.[/yellow]"
         )
