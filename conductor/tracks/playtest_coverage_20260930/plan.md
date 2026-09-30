@@ -42,7 +42,8 @@
   - [ ] Existing tracker/instrumentation tests stay green (hook path unaffected)
   - [ ] Coverage gates on affected Python code still met
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: 99fe07f]
 
 ---
 
