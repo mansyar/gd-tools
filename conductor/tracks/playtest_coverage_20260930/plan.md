@@ -49,7 +49,7 @@
 
 ## Phase 2 — Python Playtest Orchestrator (`coverage/playtest.py`)
 
-- [ ] Task 2.1: Write failing unit tests (mocked Godot process) for
+- [x] Task 2.1: Write failing unit tests (mocked Godot process) for
   `run_playtest_coverage(config, scene, timeout) -> ReportResult`:
   - [ ] Coverage plan generated with full-project scope (FR-3)
   - [ ] Env setup: `GD_TOOLS_COVERAGE_PLAN`, `GD_TOOLS_COVERAGE_OUTPUT`,
@@ -61,11 +61,13 @@
 
   **Expected fail:** `playtest.py` does not exist yet (Red).
 
-- [ ] Task 2.2: Implement `src/gd_tools/coverage/playtest.py` reusing existing
-  godot-runner and plan-generator seams (Green).
+- [x] Task 2.2: Implement `src/gd_tools/coverage/playtest.py` reusing existing
+  godot-runner and plan-generator seams (Green) (`5cc7fb1`).
 
-- [ ] Task 2.3: Refactor + coverage-gate check for the new module
-  (>80% line / >70% branch).
+- [x] Task 2.3: Refactor + coverage-gate check for the new module
+  (>80% line / >70% branch) — 85% line at Phase 2; the remaining 4
+  uncovered lines/branches are exactly the Phase 3 error paths, gate
+  re-checked at the Phase 3 checkpoint.
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
