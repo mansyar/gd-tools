@@ -64,10 +64,10 @@ the end of every phase (pause for user sign-off before checkpointing).
 
 ## Phase 3 — Protocol, Coverage & Watch Integration
 
-- [~] Task 1: NDJSON progress events carry suite identifier + worker slot;
-  protocol minor version bump per versioned-JSON convention
-  - [ ] Write failing tests (Red)
-  - [ ] Implement (Green)
+- [x] Task 1: NDJSON progress events carry suite identifier + worker slot;
+  protocol minor version bump per versioned-JSON convention (392a6be)
+  - [x] Write failing tests (Red)
+  - [x] Implement (Green)
 - [ ] Task 2: Coverage under parallel — per-suite data files compose with the
   existing merge path; merged report structurally identical to sequential
   - [ ] Write failing tests (Red)
