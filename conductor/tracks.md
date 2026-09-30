@@ -118,7 +118,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Coverage During Playtesting** (feature: `gd-tools coverage run`
+- [x] **Track: Coverage During Playtesting** (feature: `gd-tools coverage run`
   launches the game windowed and instrumented, collects coverage during live
   gameplay via an env-activated playtest mode in the coverage autoload
   (periodic + exit flush), and reports through the existing reporter suite with
