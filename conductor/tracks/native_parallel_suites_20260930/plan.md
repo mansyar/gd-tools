@@ -21,8 +21,10 @@ the end of every phase (pause for user sign-off before checkpointing).
   enabled without N)
   - [x] Write failing tests (Red)
   - [x] Implement (Green)
-- [~] Task 3: `N = 1` routes to the existing sequential path — regression
-  tests prove zero behavior change (no pool machinery engaged)
+- [x] Task 3: `N = 1` routes to the existing sequential path — regression
+  tests prove zero behavior change (no pool machinery engaged) (ab8c73f;
+  CLI-level pin; orchestrator-level sequential-path regression lands with
+  the parallel branch in Phase 2 Task 1)
 - [ ] Task 4: Phase Verification & Checkpoint (Refer to workflow.md)
   - [ ] Verify tests exist for every changed `.py`/`.gd` file in this phase
   - [ ] Announce and run full verification command
