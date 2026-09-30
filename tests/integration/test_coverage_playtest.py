@@ -79,6 +79,8 @@ DRIVER_SOURCE = (
             "\t\ttracker.notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)",
             "\t\tif FileAccess.file_exists(output):",
             '\t\t\tprint("EXIT_FLUSH_OK")',
+            '\telif mode == "notify_exit_no_output":',
+            "\t\ttracker.notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)",
             '\telif mode == "wait_periodic":',
             "\t\tawait create_timer(1.0).timeout",
             "\t\tif FileAccess.file_exists(output):",
@@ -223,6 +225,26 @@ def test_playtest_periodic_flush_writes_before_exit(godot_bin, tmp_path):
 
     data = json.loads(output_path.read_text(encoding="utf-8"))
     assert data["files"][0]["hits"]
+
+
+def test_playtest_without_output_env_exits_cleanly(godot_bin, tmp_path):
+    """Playtest mode with no output path warns once, not again at exit."""
+    project = _prepare_playtest_project(tmp_path, godot_bin)
+    result, output_path = _run_playtest(
+        tmp_path,
+        project,
+        godot_bin,
+        _playtest_plan(),
+        {
+            "GD_TOOLS_COVERAGE_PLAYTEST": "1",
+            "GD_TOOLS_COVERAGE_OUTPUT": "",
+        },
+        driver_mode="notify_exit_no_output",
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Cannot write coverage output" not in result.stderr
+    assert "SCRIPT ERROR" not in result.stderr
+    assert not output_path.exists()
 
 
 def test_playtest_inactive_without_env(godot_bin, tmp_path):

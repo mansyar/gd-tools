@@ -141,7 +141,7 @@ def merge_coverage_files(
     return merged
 
 
-def _print_coverage_table(
+def print_coverage_table(
     summary: CoverageSummary, min_percent: int | None = None
 ) -> None:
     """Print a Rich coverage summary table to stdout.
@@ -189,7 +189,7 @@ def _print_coverage_table(
     output.print_table(table)
 
 
-def _print_threshold_footer(
+def print_threshold_footer(
     summary: CoverageSummary, min_percent: int | None = None
 ) -> None:
     """Print a summary footer with threshold pass/fail status.
@@ -319,7 +319,7 @@ def _print_coverage_inline(
             f"Coverage: {line_pct:.1f}% lines, {branch_pct:.1f}% branches"
         )
 
-    _print_threshold_footer(summary, min_percent)
+    print_threshold_footer(summary, min_percent)
 
     if partial:
         assert omissions is not None
@@ -388,10 +388,10 @@ def show_coverage_summary(
         )
 
     # Print Rich terminal table with color-coded rates.
-    _print_coverage_table(summary, min_percent)
+    print_coverage_table(summary, min_percent)
 
     # Print summary footer with threshold status.
-    _print_threshold_footer(summary, min_percent)
+    print_threshold_footer(summary, min_percent)
 
     # Print uncovered detail panels (always shown for coverage show).
     panels = reporter.render_uncovered_panels(file_summaries, plan)

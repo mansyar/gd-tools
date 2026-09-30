@@ -318,6 +318,35 @@ def test_playtest_sets_flush_interval_from_timeout(playtest_env):
     assert env["GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL"] == "4.0"
 
 
+def test_playtest_does_not_report_stale_coverage_data(
+    playtest_env, monkeypatch
+):
+    """A session with no new data must fail even if old coverage.json exists."""
+    project = playtest_env["project"]
+    output_dir = project / ".gd-tools" / "coverage"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stale = {
+        "version": 1,
+        "generated_at": "2026-01-01T00:00:00Z",
+        "files": [{"file_id": 1, "hits": {"1": 99}}],
+    }
+    (output_dir / "coverage.json").write_text(
+        json.dumps(stale), encoding="utf-8"
+    )
+
+    def _no_data_run_godot(binary, project_path, args, env=None, timeout=None):
+        return subprocess.CompletedProcess(
+            [binary, "--path", str(project_path), *args], returncode=0
+        )
+
+    monkeypatch.setattr(
+        "gd_tools.coverage.playtest.run_godot", _no_data_run_godot
+    )
+    with pytest.raises(GdToolsError) as excinfo:
+        run_playtest_coverage(GdToolsConfig())
+    assert excinfo.value.exit_code == 2
+
+
 def test_playtest_uses_default_interval_without_timeout(playtest_env):
     """Without --timeout the default 5s flush interval is used."""
     config = GdToolsConfig()

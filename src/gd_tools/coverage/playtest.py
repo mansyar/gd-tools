@@ -17,8 +17,8 @@ from gd_tools import output
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
 from gd_tools.coverage.orchestrator import (
-    _print_coverage_table,
-    _print_threshold_footer,
+    print_coverage_table,
+    print_threshold_footer,
 )
 from gd_tools.coverage.reporter import ReportResult
 from gd_tools.errors import (
@@ -89,6 +89,9 @@ def run_playtest_coverage(
         plan_generator.write_plan_json(plan, str(output_dir / "plan.json"))
 
     coverage_path = output_dir / "coverage.json"
+    # Remove any stale data from a previous session so a session that
+    # produces nothing cannot silently report the previous run's hits.
+    coverage_path.unlink(missing_ok=True)
     # Derive the flush interval from --timeout so at least one periodic
     # snapshot is guaranteed to land before the auto-close kill; the
     # exit flush cannot run when the process is terminated hard.
@@ -224,8 +227,8 @@ def _collect_and_report(
     data = reporter.read_coverage_json(coverage_path)
 
     summary = reporter.compute_summary(plan, data)
-    _print_coverage_table(summary, min_percent)
-    _print_threshold_footer(summary, min_percent)
+    print_coverage_table(summary, min_percent)
+    print_threshold_footer(summary, min_percent)
 
     report = reporter.generate_report(plan, data, output_dir, effective_format)
     if min_percent is not None and summary.line_rate * 100 < min_percent:

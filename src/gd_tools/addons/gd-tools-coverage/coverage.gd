@@ -161,6 +161,10 @@ func _stop_playtest(flush: bool) -> void:
 	if not _playtest_active:
 		return
 	_playtest_active = false
+	if _playtest_output_path.is_empty():
+		# _start_playtest_mode already warned about the missing output
+		# path; do not spam another error on every shutdown flush.
+		return
 	if _playtest_timer != null:
 		_playtest_timer.stop()
 		_playtest_timer.queue_free()
