@@ -18,12 +18,13 @@ verification, conventional commits with git notes.
 
 ## Phase 2 — Dock Panel (GDScript, manual-checklist verified)
 
-- [ ] Task: `plugin.cfg` + `plugin.gd` — EditorPlugin registration, dock instantiation, enable/disable cleanliness
-- [ ] Task: `dock.gd` — UI layout (Run Tests / Run Coverage buttons, progress state, results area)
-- [ ] Task: Async process runner — non-blocking invocation of `gd-tools test` / `gd-tools test --coverage` (argument-list form), in-progress state, re-click guard, friendly "gd-tools not found" fallback with install hint
-- [ ] Task: Results parsing — read `.gd-tools/artifacts/<run_id>/` machine-readable index (JSON via Godot's native parser) → pass/fail/skip counts, duration, failed-test assertion messages, artifact path; coverage summary after coverage runs
+- [x] Task: `plugin.cfg` + `plugin.gd` — EditorPlugin registration, dock instantiation, enable/disable cleanliness
+- [x] Task: `dock.gd` — UI layout (Run Tests / Run Coverage buttons, progress state, results area)
+- [x] Task: Async process runner — non-blocking invocation of `gd-tools test` / `gd-tools test --coverage` (argument-list form), in-progress state, re-click guard, friendly "gd-tools not found" fallback with install hint (anchored via the new global `--project` CLI option — user-approved scope addition)
+- [x] Task: Results parsing — read `.gd-tools/artifacts/<run_id>/` machine-readable index (JSON via Godot's native parser) → pass/fail/skip counts, duration, failed-test assertion messages, artifact path; coverage summary after coverage runs
 - [ ] Task: Manual testing checklist for dock behavior (in track docs; executed at checkpoint)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md — manual verify on Godot 4.5: enable plugin, run tests + coverage from dock, confirm async UX, missing-CLI fallback)
+- [x] Task: Manual checklist — document editor UI verification steps (`manual_checklist.md`, Phase 2 section)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md - manual verify on Godot 4.5: enable plugin, run tests + coverage from dock, confirm async UX, missing-CLI fallback)
 
 ## Phase 3 — Coverage Heatmap Overlay (GDScript, manual-checklist verified)
 
