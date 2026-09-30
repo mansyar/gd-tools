@@ -49,7 +49,7 @@ every phase (pause for user sign-off before checkpointing).
   - [ ] Produce manual verification plan and pause for user sign-off
   - [ ] Checkpoint commit + git note + `[checkpoint: <sha>]` in plan.md
 
-## Phase 3 — Documentation Truth Pass
+## Phase 3 — Documentation Truth Pass [checkpoint: 38144b0]
 
 - [x] Task 1: `docs/ROADMAP.md` (commit 71f9672)
   - [x] Fix stale "Phases 3–5 outstanding" header
