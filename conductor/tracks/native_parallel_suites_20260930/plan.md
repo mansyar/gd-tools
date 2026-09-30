@@ -41,15 +41,15 @@ the end of every phase (pause for user sign-off before checkpointing).
   - [x] Write failing tests (Red): concurrency bound respected, dispatch
     order, all suites executed
   - [x] Implement (Green)
-- [~] Task 2: Per-worker timeout enforcement + continue-after-failure
+- [x] Task 2: Per-worker timeout enforcement + continue-after-failure
   semantics (timed-out/crashed suite fails its slot; next suite dispatched; no
-  cross-suite cancellation)
-  - [ ] Write failing tests (Red)
-  - [ ] Implement (Green)
-- [ ] Task 3: Result aggregation — ordered summary + discovery-ordered JUnit
-  XML + unchanged exit-code precedence in `command.py`
-  - [ ] Write failing tests (Red)
-  - [ ] Implement (Green)
+  cross-suite cancellation) (e623db1)
+  - [x] Write failing tests (Red)
+  - [x] Implement (Green)
+- [x] Task 3: Result aggregation — ordered summary + discovery-ordered JUnit
+  XML + unchanged exit-code precedence in `command.py` (36fd158)
+  - [x] Write failing tests (Red) — caught the adapter dropping `parallel`
+  - [x] Implement (Green)
 - [ ] Task 4: Interrupt handling — stop dispatch, kill all in-flight process
   trees (POSIX + Windows `taskkill /T`/Job Object strategy behind a testable
   seam), incomplete artifact index, exit 130
