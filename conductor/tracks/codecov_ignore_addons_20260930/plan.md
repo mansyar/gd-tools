@@ -10,8 +10,9 @@ track's own PR.
       `src/gd_tools/addons/**` and `tests/**` plus an explanatory comment;
       leave `coverage.status.patch` untouched. Commit
       `chore(codecov): ignore unmeasured addons and tests in patch status`. (25a4def)
-- [ ] Task 1.2: Push branch, open PR, and verify `codecov/patch` reports
+- [x] Task 1.2: Push branch, open PR, and verify `codecov/patch` reports
       success and the `CI` workflow is green; merge PR and confirm post-merge
-      CI on main.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      CI on main. (PR #22: all checks pass, codecov/patch pass)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
+  [checkpoint: 64773bf]
