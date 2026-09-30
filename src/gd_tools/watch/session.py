@@ -70,6 +70,7 @@ def run_watch_mode(
     test_timeout: float | None = None,
     show_uncovered: bool = False,
     no_cache: bool = False,
+    parallel: int | None = None,
     event_source: WatchdogEventSource | None = None,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
@@ -96,6 +97,7 @@ def run_watch_mode(
         test_timeout: Optional per-test timeout override in seconds.
         show_uncovered: Include uncovered lines in coverage summaries.
         no_cache: Bypass the coverage plan cache.
+        parallel: Optional worker count forwarded to every watch re-run.
         event_source: Injectable event source (defaults to watchdog).
         clock: Injectable clock for debounce timing.
         sleep: Injectable sleep used between poll ticks.
@@ -167,6 +169,7 @@ def run_watch_mode(
                 test_timeout=test_timeout,
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,
+                parallel=parallel,
             )
         except TestFailureError as exc:
             return _watch_result(getattr(exc, "result", None), "failed")

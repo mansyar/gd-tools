@@ -134,7 +134,9 @@ through the built-in compatibility bridge (no GUT addon required).
 - The default per-test timeout is configurable independently from the Godot
   process/import timeout.
 - Suites run in isolated Godot processes by default.
-- Tests run sequentially by default; optional parallelism is deferred.
+- Tests run sequentially by default; opt-in parallel execution (`--parallel N`
+  / `[test].parallel`, 1–32 workers) runs suites concurrently while preserving
+  discovery-order output, coverage parity, and interrupt safety.
 - Headless execution is the default; windowed execution is explicit and
   requires a real display; there is no automatic fallback to headless.
 - The runtime has no new third-party runtime dependency.

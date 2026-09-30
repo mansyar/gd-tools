@@ -80,6 +80,7 @@ def _run_watch(
     events,
     output,
     clock,
+    parallel=None,
 ):
     with (
         patch(
@@ -103,6 +104,7 @@ def _run_watch(
             clock=clock,
             sleep=lambda _seconds: clock.advance(0.5),
             output=output.append,
+            parallel=parallel,
         )
     return code, mock_native
 
@@ -323,3 +325,35 @@ def test_debounce_seconds_is_forwarded_to_the_loop(tmp_path):
         )
     assert code == 0
     assert mock_loop.call_args.kwargs["debounce_seconds"] == 0.05
+
+
+def test_watch_runs_inherit_parallel_override(tmp_path):
+    """An explicit parallel count reaches every watch-triggered run."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    fake_native = MagicMock(side_effect=KeyboardInterrupt)
+    code, mock_native = _run_watch(
+        tmp_path,
+        _config(tmp_path),
+        fake_native,
+        [("tests/test_enemy.gd", "modified")],
+        output,
+        clock,
+        parallel=4,
+    )
+    assert code == 0
+    assert mock_native.call_args.kwargs["parallel"] == 4
+
+
+def test_watch_runs_default_to_sequential(tmp_path):
+    """Without a parallel override, watch runs stay on the shared path."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    fake_native = MagicMock(side_effect=KeyboardInterrupt)
+    code, mock_native = _run_watch(
+        tmp_path, _config(tmp_path), fake_native, [], output, clock
+    )
+    assert code == 0
+    assert mock_native.call_args.kwargs["parallel"] is None

@@ -802,3 +802,89 @@ def test_format_config_toml_defaults():
     assert "coverage" in parsed
     assert parsed["test"]["test_dirs"] == ["test", "tests"]
     assert parsed["format"]["max_line_length"] == 100
+
+
+# --- Parallel execution config ---
+
+
+def test_test_config_parallel_defaults_to_none():
+    """Test TestConfig defaults parallel to None (sequential)."""
+    config = TestConfig()
+    assert config.parallel is None
+
+
+@pytest.mark.parametrize("value", [1, 2, 4, 32])
+def test_test_config_parallel_valid_values(value):
+    """Test TestConfig accepts parallel values within [1, 32]."""
+    config = TestConfig(parallel=value)
+    assert config.parallel == value
+
+
+@pytest.mark.parametrize("value", [0, -1, 33, 100])
+def test_test_config_parallel_out_of_range(value):
+    """Test TestConfig rejects parallel outside [1, 32]."""
+    with pytest.raises(ValidationError):
+        TestConfig(parallel=value)
+
+
+def test_test_config_parallel_rejects_non_integer():
+    """Test TestConfig rejects a non-integer parallel value."""
+    with pytest.raises(ValidationError):
+        TestConfig(parallel="four")
+
+
+def test_load_config_parallel_present(tmp_path):
+    """Test load_config reads [test] parallel from TOML."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\nparallel = 4\n")
+    config = load_config(project_root=tmp_path)
+    assert config.test.parallel == 4
+
+
+def test_load_config_parallel_absent_is_none(tmp_path):
+    """Test load_config leaves parallel None when absent from TOML."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text('[test]\nprefix = "check_"\n')
+    config = load_config(project_root=tmp_path)
+    assert config.test.parallel is None
+
+
+def test_load_config_parallel_out_of_range_raises(tmp_path):
+    """Test load_config raises ConfigError for out-of-range parallel."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\nparallel = 33\n")
+    with pytest.raises(ConfigError):
+        load_config(project_root=tmp_path)
+
+
+def test_save_config_parallel_round_trip(tmp_path):
+    """Test save_config + load_config round-trips a parallel value."""
+    original = GdToolsConfig(test=TestConfig(parallel=4))
+    save_config(original, project_root=tmp_path)
+    loaded = load_config(project_root=tmp_path)
+    assert loaded.test.parallel == 4
+
+
+def test_save_config_parallel_none_omitted(tmp_path):
+    """Test save_config omits parallel=None from the TOML file."""
+    original = GdToolsConfig()
+    save_config(original, project_root=tmp_path)
+    content = (tmp_path / "gd-tools.toml").read_text()
+    assert "parallel" not in content
+
+
+def test_format_config_toml_parallel_roundtrip():
+    """Test format_config_toml round-trips a parallel value."""
+    original = GdToolsConfig(test=TestConfig(parallel=8))
+    toml_str = format_config_toml(original)
+    parsed = tomllib.loads(toml_str)
+    restored = GdToolsConfig(**parsed)
+    assert restored == original
+
+
+def test_format_config_json_includes_parallel():
+    """Test format_config_json includes the parallel key."""
+    config = GdToolsConfig(test=TestConfig(parallel=4))
+    json_str = format_config_json(config)
+    parsed = json.loads(json_str)
+    assert parsed["test"]["parallel"] == 4

@@ -42,9 +42,10 @@ gd-tools init --with-gut       # opt into legacy bootstrap files
 gd-tools test --runtime gut    # use the existing GUT runner
 ```
 
-The foundation defers broad mocking, parameterized tests, parallel execution,
+The foundation deferred broad mocking, parameterized tests, parallel execution,
 editor UI, automatic migration, and GUT removal to follow-up tracks. Scene and
-resource integration shipped with the native scene-integration track. The
+resource integration shipped with the native scene-integration track, and
+parameterized tests and parallel suite execution shipped with v0.5.0. The
 compatibility bridge is limited to the core subset required for the
 transition and is not a long-term public API.
 
@@ -1561,7 +1562,7 @@ Each Conductor track should produce:
 
 ## 8. Temporary: Native Test Runtime Migration Roadmap
 
-**Status:** In progress — Phases 0-4 delivered; Phase 5 under way: crash recovery, diagnostics hardening, and the bridge deprecation are delivered, release preparation (v0.5.0) is in progress, and optional parallel execution and native runtime caching remain deferred
+**Status:** In progress — Phases 0-4 delivered; Phase 5 under way: crash recovery, diagnostics hardening, the bridge deprecation, parameterized tests, and parallel suite execution are delivered, release preparation (v0.5.0) is in progress, and native runtime caching remains deferred
 **Purpose:** Replace the permanent GUT dependency with the native
 `GdToolsTest` runtime while preserving a bounded migration path.
 **Retirement condition:** Remove this temporary section after native tests
@@ -1658,7 +1659,8 @@ settings while preserving the rest (Track `migration_tooling_20260929`).
 - [x] Add crash recovery and diagnostics hardening (interrupted runs mark
   artifacts incomplete and exit 130; exit-2 failures carry structured
   expected/found/remedy diagnostics — Track `native_release_readiness_20260930`)
-- [ ] Add optional parallel execution (deferred)
+- [x] Add optional parallel execution (`--parallel N` / `[test].parallel`,
+  1-32, default 4 — Track `native_parallel_suites_20260930`)
 - [ ] Integrate native runtime caching (deferred)
 - [ ] Update `init`, `doctor`, CI, packaging, and documentation (in progress;
   bridge wording updated by `native_release_readiness_20260930`, release

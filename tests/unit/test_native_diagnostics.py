@@ -1,5 +1,6 @@
 """Unit tests for actionable exit-2 diagnostics on native test failures."""
 
+import itertools
 import json
 import subprocess
 from pathlib import Path
@@ -24,6 +25,38 @@ from gd_tools.native_test.protocol import (
 
 pytestmark = pytest.mark.unit
 
+_POPEN_IDS = itertools.count(900)
+
+
+class _FakePopen:
+    """Minimal Popen stand-in driving a fake runner through communicate()."""
+
+    def __init__(self, command, runner, env):
+        self.pid = next(_POPEN_IDS)
+        self._runner = runner
+        self._args = command
+        self._env = env
+        self.returncode = None
+
+    def communicate(self, timeout=None):
+        result = self._runner(self._args, env=self._env)
+        self.returncode = result.returncode
+        return result.stdout, result.stderr
+
+    def poll(self):
+        return self.returncode
+
+
+def _spawn_adapter(runner):
+    """Adapt a ``CompletedProcess``-style fake to the Popen spawn seam."""
+
+    def adapt(command, *, env, registry, abort_event=None):
+        process = _FakePopen(command, runner, env)
+        registry.add(process)
+        return process
+
+    return adapt
+
 
 def _suite(name: str) -> NativeSuite:
     return NativeSuite(
@@ -34,11 +67,11 @@ def _suite(name: str) -> NativeSuite:
 
 
 def _write_result(result_path: Path) -> None:
-    """Write a minimal protocol v2 result JSON the runner would produce."""
+    """Write a minimal protocol v3 result JSON the runner would produce."""
     result_path.write_text(
         json.dumps(
             {
-                "protocol_version": 2,
+                "protocol_version": 3,
                 "run_id": "test-run",
                 "status": "passed",
                 "engine_warnings": [],
@@ -73,11 +106,14 @@ def test_timeout_diagnostic_names_suite_and_remedy(tmp_path):
 
     def fake_run(args, **kwargs):
         attempts.append(args)
-        raise subprocess.TimeoutExpired(cmd=args, timeout=kwargs["timeout"])
+        raise subprocess.TimeoutExpired(cmd=args, timeout=12.0)
 
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,
@@ -101,9 +137,12 @@ def test_missing_result_diagnostic_points_to_engine_log(tmp_path):
     def fake_run(args, **kwargs):
         return CompletedProcess(args, 3, "engine stdout", "engine stderr")
 
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,
@@ -125,9 +164,12 @@ def test_invalid_result_diagnostic_is_protocol(tmp_path):
         target.write_text("{not json", encoding="utf-8")
         return CompletedProcess(args, 0, "", "")
 
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,
@@ -149,9 +191,12 @@ def test_returncode_mismatch_states_expected_and_found(tmp_path):
         _write_result(target)
         return CompletedProcess(args, 1, "", "")
 
-    with patch(
-        "gd_tools.native_test.orchestrator.subprocess.run",
-        side_effect=fake_run,
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._spawn_process",
+            side_effect=_spawn_adapter(fake_run),
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
     ):
         result = run_native_tests(
             tmp_path,

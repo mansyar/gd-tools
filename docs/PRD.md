@@ -55,8 +55,8 @@ respecting the realities of the Godot/GDScript ecosystem.
 
 1. **Not a general-purpose mocking or editor test framework.** The native
    runtime provides focused assertions, async waits, lifecycle hooks, and
-   declarative scene/resource integration; broader mocking, parameterized
-   tests, and editor tooling are future work. GUT remains an explicit legacy
+   declarative scene/resource integration; broader mocking and editor
+   tooling are future work. GUT remains an explicit legacy
    fallback during migration.
 2. **Not a linter/formatter engine.** We use gdtoolkit. We do not implement
    our own static analysis or code formatting rules.
@@ -211,9 +211,8 @@ in the test diagnostics and JUnit XML. Each run publishes a machine-readable
 index under `.gd-tools/artifacts/<run_id>/` covering preflight and per-suite
 artifacts, and retains only the latest run.
 
-**Current runtime limits:** broad mocking, parameterized tests, multiple primary
-scenes, automatic resource assignment, parallel execution, editor UI, and
-automatic GUT migration are not included.
+**Current runtime limits:** broad mocking, multiple primary scenes, automatic
+resource assignment, editor UI, and automatic GUT migration are not included.
 
 ### `gd-tools lint`
 
