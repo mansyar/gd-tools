@@ -69,7 +69,8 @@
   uncovered lines/branches are exactly the Phase 3 error paths, gate
   re-checked at the Phase 3 checkpoint.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  [checkpoint: 0c83394]
 
 ---
 
