@@ -1,0 +1,10 @@
+{
+  "track_id": "clean_command_20260930",
+  "title": "Clean Command (Roadmap Track 39)",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-09-30",
+  "branch": "feature/clean-command-20260930",
+  "risk": "low",
+  "notes": "Implements docs/ROADMAP.md Track 39 (Phase 9): gd-tools clean with extended flag surface (--coverage, --artifacts, --baselines, --cache, --all, --dry-run), no-flag inventory + hint, hard-protected paths (addons/**, gd-tools.toml, .gutconfig.json, ~/.gd-tools)."
+}

@@ -70,6 +70,7 @@ This positioning avoids leading with the riskiest, most complex feature while ma
 | **Migration-friendly testing** | A bounded GUT bridge supports gradual migration from existing suites without making GUT a permanent architectural dependency. |
 | **Standalone compatibility** | gdlint and gdformat continue to work if invoked directly. GUT remains available through the temporary bridge. `gd-tools` is a layer on top, not a lock-in. |
 | **Convention over configuration** | Sensible defaults out of the box; config for when conventions don't fit. |
+| **Workspace hygiene** | `gd-tools clean` removes generated artifacts under `.gd-tools/` (coverage output, native artifacts, baselines, worker cache) with a safe no-flag inventory, `--dry-run`, and hard protection for project files and addons. |
 
 ## 6. Design Philosophy
 
