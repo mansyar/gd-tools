@@ -26,13 +26,13 @@ verification, conventional commits with git notes.
 - [x] Task: Manual checklist — document editor UI verification steps (`manual_checklist.md`, Phase 2 section)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md - manual verify on Godot 4.5: enable plugin, run tests + coverage from dock, confirm async UX, missing-CLI fallback)
 
-## Phase 3 — Coverage Heatmap Overlay (GDScript, manual-checklist verified)
+## Phase 3 — Coverage Heatmap Overlay (GDScript, manual-checklist verified) [checkpoint: 939d7f5]
 
 - [x] Task: `coverage_overlay.gd` — hook script editor `CodeEdit`, read per-file line/branch status from `.gd-tools/coverage/` artifacts, apply line background colors (green/red/yellow)
 - [x] Task: Sync logic — auto-refresh when dock coverage run completes; load on editor open if artifacts exist; stale flag when source files are newer than coverage data (never show stale as fresh)
 - [x] Task: Responsiveness guard — bounded per-file work on script open (no editor lag)
 - [x] Task: Extend manual testing checklist (overlay colors, stale flag, toggle off/on)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md — manual verify: coverage run → open scripts → confirm green/red/yellow; touch a source file → confirm stale flag)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md — manual verify: coverage run → open scripts → confirm green/red/yellow; touch a source file → confirm stale flag)
 
 ## Phase 4 — Documentation & Integration
 
