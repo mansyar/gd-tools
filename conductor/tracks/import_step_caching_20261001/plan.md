@@ -55,14 +55,14 @@
 
 **Purpose:** Prove the performance claim with the repo's opt-in benchmark harness, matching the preflight-cache track's evidence standard.
 
-- [ ] Task: Extend the benchmark harness for warm/cold import measurement
-  - [ ] Measure cold runs (cache miss → import executes) on the benchmark fixture.
-  - [ ] Measure warm runs (cache hit → import skipped) on the benchmark fixture.
-  - [ ] Record startup and total wall time; document benchmark conditions and known variance.
-- [ ] Task: Assert strict improvement and record the measured gain in the spec
-  - [ ] Add a benchmark assertion that warm runs are strictly faster and the import process is eliminated.
-  - [ ] Record the measured wall-time gain in `spec.md` NFR-1 (revising the figure, not the strict-improvement requirement, if evidence demands, with justification).
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Extend the benchmark harness for warm/cold import measurement [97c4467]
+  - [x] Measure cold runs (cache miss → import executes) on the benchmark fixture.
+  - [x] Measure warm runs (cache hit → import skipped) on the benchmark fixture.
+  - [x] Record startup and total wall time; document benchmark conditions and known variance.
+- [x] Task: Assert strict improvement and record the measured gain in the spec [97c4467]
+  - [x] Add a benchmark assertion that warm runs are strictly faster and the import process is eliminated.
+  - [x] Record the measured wall-time gain in `spec.md` NFR-1 (revising the figure, not the strict-improvement requirement, if evidence demands, with justification).
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: ad25086]
 
 ## Phase 4 — Documentation and quality gates
 
