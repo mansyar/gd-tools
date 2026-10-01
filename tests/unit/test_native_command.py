@@ -276,7 +276,7 @@ def test_run_native_command_preflights_once_before_suite_processes(
     )
 
 
-def _run_with_preflight_capture(tmp_path, suites):
+def _run_with_preflight_capture(tmp_path, suites, **command_kwargs):
     """Drive run_native_test_command and capture the preflight manifest."""
     captured: dict = {}
 
@@ -317,7 +317,7 @@ def _run_with_preflight_capture(tmp_path, suites):
         patch("gd_tools.native_test.command.format_test_results"),
         patch("gd_tools.native_test.command.output.print_info") as notice,
     ):
-        run_native_test_command(_config())
+        run_native_test_command(_config(), **command_kwargs)
         captured["notice_calls"] = notice.call_args_list
 
     return captured
@@ -345,6 +345,17 @@ def test_preflight_cache_uses_project_scoped_directory(tmp_path):
     assert captured["kwargs"]["cache_dir"] == (
         tmp_path / ".gd-tools" / "native" / "preflight-cache"
     )
+
+
+def test_no_cache_flag_bypasses_the_preflight_cache(tmp_path):
+    """``--no-cache`` disables both preflight-cache read and write."""
+    captured = _run_with_preflight_capture(
+        tmp_path,
+        [NativeSuite(name="ExampleSuite", path="res://test/example.gd")],
+        no_cache=True,
+    )
+
+    assert captured["kwargs"]["use_cache"] is False
 
 
 def test_preflight_manifest_declares_gut_runtime_for_bridge_runs(tmp_path):

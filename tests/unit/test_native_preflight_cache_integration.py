@@ -86,6 +86,42 @@ def _key_for(project_root: Path, manifest: NativeManifest) -> str:
     )
 
 
+def test_use_cache_false_skips_load_and_store(tmp_path):
+    """``use_cache=False`` runs the real preflight and writes no entry."""
+    _project(tmp_path)
+    manifest = _manifest(tmp_path)
+    cache_dir = tmp_path / ".gd-tools" / "native" / "preflight-cache"
+
+    with patch(
+        "gd_tools.native_test.preflight_cache.run_native_preflight"
+    ) as run:
+        run.return_value = _ok_result(manifest)
+        first = run_preflight_cached(
+            tmp_path,
+            manifest,
+            godot_binary="godot",
+            godot_version="4.5.2",
+            run_dir=tmp_path / "artifacts" / "r1" / "preflight",
+            cache_dir=cache_dir,
+            timeout_seconds=30.0,
+            use_cache=False,
+        )
+        second = run_preflight_cached(
+            tmp_path,
+            manifest,
+            godot_binary="godot",
+            godot_version="4.5.2",
+            run_dir=tmp_path / "artifacts" / "r2" / "preflight",
+            cache_dir=cache_dir,
+            timeout_seconds=30.0,
+            use_cache=False,
+        )
+
+    assert run.call_count == 2
+    assert first == second == _ok_result(manifest)
+    assert not cache_dir.exists() or not list(cache_dir.iterdir())
+
+
 def test_hit_skips_real_preflight_and_copies_artifacts(tmp_path):
     """A warm run spawns no preflight process and materializes artifacts."""
     _project(tmp_path)
