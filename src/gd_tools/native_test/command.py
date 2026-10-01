@@ -383,17 +383,18 @@ def _narrow_changed_suites(
     file (the same contract as watch mode).
     """
     source = "working tree vs HEAD" if base is None else f"base '{base}'"
-    selected, unmapped = select_suites_for_changes(
-        changed_files, project_root, suites
-    )
+    # Normalize to project-relative POSIX strings so selection, notices,
+    # and verbose detail display identically on every platform.
+    changed = [path.as_posix() for path in changed_files]
+    selected, unmapped = select_suites_for_changes(changed, project_root, suites)
     output.print_info(
         f"--changed: {len(selected)} of {len(suites)} suites selected "
         f"({source})"
     )
-    for path in sorted(changed_files):
+    for path in sorted(changed):
         mapped = map_changed_file(project_root / path, project_root, suites)
         detail = mapped if mapped is not None else "no mapping"
-        output.print_verbose(f"  {path.as_posix()} -> {detail}")
+        output.print_verbose(f"  {path} -> {detail}")
     if unmapped:
         for path in unmapped:
             output.print_info(

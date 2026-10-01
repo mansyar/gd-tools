@@ -45,20 +45,20 @@ before touching the CLI.
 command's discovery→orchestration flow with the specified reporting and
 exit semantics.
 
-- [ ] Task: Add failing CLI integration tests (Red)
-  - [ ] Cover `--changed` narrowing discovery output to mapped suites before orchestration.
-  - [ ] Cover `--base <ref>` switching the change source.
-  - [ ] Cover full-suite fallback notice naming unmapped files (e.g. changed `project.godot`).
-  - [ ] Cover empty change set → exit 0, "no changes detected", no Godot processes launched.
-  - [ ] Cover not-a-repo / invalid ref → exit 2 with actionable message.
-  - [ ] Cover the always-on summary line and `--verbose` per-file mapping detail.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement the CLI flags and test-command wiring (Green)
-  - [ ] Add `--changed` and `--base` click options to the `test` command.
-  - [ ] Narrow discovered suites via the shared selection function before orchestration.
-  - [ ] Implement summary line and `--verbose` reporting consistent with preflight-cache hit/miss style.
-  - [ ] Map collection errors to exit code 2 with actionable diagnostics.
-  - [ ] Run targeted tests to Green.
+- [x] Task: Add failing CLI integration tests (Red) [commit: `10e681f`]
+  - [x] Cover `--changed` narrowing discovery output to mapped suites before orchestration.
+  - [x] Cover `--base <ref>` switching the change source.
+  - [x] Cover full-suite fallback notice naming unmapped files (e.g. changed `project.godot`).
+  - [x] Cover empty change set → exit 0, "no changes detected", no Godot processes launched.
+  - [x] Cover not-a-repo / invalid ref → exit 2 with actionable message.
+  - [x] Cover the always-on summary line and `--verbose` per-file mapping detail.
+  - [x] Confirm the expected Red phase.
+- [x] Task: Implement the CLI flags and test-command wiring (Green) [commit: `d87318c`]
+  - [x] Add `--changed` and `--base` click options to the `test` command.
+  - [x] Narrow discovered suites via the shared selection function before orchestration.
+  - [x] Implement summary line and `--verbose` reporting consistent with preflight-cache hit/miss style.
+  - [x] Map collection errors to exit code 2 with actionable diagnostics.
+  - [x] Run targeted tests to Green.
 - [ ] Task: Add composition tests (Red → Green)
   - [ ] `--changed` + `--parallel N` runs narrowed suites concurrently.
   - [ ] `--changed` + `--coverage` produces valid coverage scoped to executed suites.

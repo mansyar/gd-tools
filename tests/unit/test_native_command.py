@@ -1361,3 +1361,212 @@ def test_changed_verbose_prints_per_file_mapping(tmp_path):
         and "res://tests/test_enemy.gd" in call.args[0]
         for call in verbose.call_args_list
     )
+
+
+def test_changed_composes_with_parallel(tmp_path):
+    """--changed + --parallel runs the narrowed suites concurrently."""
+    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
+    player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[enemy, player],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("src/enemy.gd")],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            side_effect=lambda project_root, manifest, **kw: _preflight(
+                list(manifest.suites)
+            ),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch("gd_tools.native_test.command.output.print_info"),
+    ):
+        run_native_test_command(_config(), changed=True, parallel=2)
+
+    assert [suite.path for suite in run.call_args.args[1]] == [
+        "res://tests/test_enemy.gd"
+    ]
+    assert run.call_args.kwargs["parallel"] == 2
+
+
+def test_changed_composes_with_coverage(tmp_path):
+    """--changed + --coverage instruments only the executed (narrowed) suites."""
+    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
+    player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[enemy, player],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("src/enemy.gd")],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=("coverage-settings", None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            side_effect=lambda project_root, manifest, **kw: _preflight(
+                list(manifest.suites)
+            ),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch("gd_tools.native_test.command.output.print_info"),
+    ):
+        run_native_test_command(_config(), changed=True, coverage=True)
+
+    assert [suite.path for suite in run.call_args.args[1]] == [
+        "res://tests/test_enemy.gd"
+    ]
+    assert run.call_args.kwargs["coverage"] == "coverage-settings"
+
+
+def test_changed_with_suite_filter_maps_within_selection(tmp_path):
+    """--suite narrows discovery first; --changed maps within that
+    selection (the already-filtered suites are the mapping domain)."""
+    player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[player],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("src/player.gd")],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            side_effect=lambda project_root, manifest, **kw: _preflight(
+                list(manifest.suites)
+            ),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch("gd_tools.native_test.command.output.print_info"),
+    ):
+        run_native_test_command(_config(), changed=True)
+
+    assert [suite.path for suite in run.call_args.args[1]] == [
+        "res://tests/test_player.gd"
+    ]
+
+
+def test_changed_with_suite_filter_falls_back_to_filtered_selection(tmp_path):
+    """A change mapping outside the --suite selection falls back to the
+    filtered selection, not the full discovery set."""
+    player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
+    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[player],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("src/enemy.gd")],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            side_effect=lambda project_root, manifest, **kw: _preflight(
+                list(manifest.suites)
+            ),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch(
+            "gd_tools.native_test.command.output.print_info"
+        ) as notice,
+    ):
+        run_native_test_command(_config(), changed=True)
+
+    assert [suite.path for suite in run.call_args.args[1]] == [
+        "res://tests/test_player.gd"
+    ]
+    assert any(
+        "No suite mapped for 'src/enemy.gd'" in call.args[0]
+        for call in notice.call_args_list
+    )
