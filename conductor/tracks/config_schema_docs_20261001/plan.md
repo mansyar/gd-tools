@@ -25,16 +25,16 @@
 - [x] Task: Commit (`feat(config): add config schema command exposing JSON Schema`) + attach git note [a08b39e]
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: fb7b5b9]
 
-## Phase 3: Checked-in Snapshot + Sync Test + README
+## Phase 3: Checked-in Snapshot + Sync Test + README [checkpoint: 0c3860a]
 - [x] Task: Write failing sync test (Red)
   - [x] Test: `docs/gd-tools.schema.json` is byte-identical to current model schema output; failure message includes the regeneration command
 - [x] Task: Generate and commit `docs/gd-tools.schema.json` (Green) [2f5b1f7]
 - [x] Task: Document schema usage in README (`$schema` key example + editor-side association for taplo/VS Code Even Better TOML) [2f5b1f7]
 - [x] Task: Commit (`feat(config): check in generated JSON Schema snapshot with sync test`) + attach git note [2f5b1f7]
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: 0c3860a]
 
 ## Phase 4: Docs Truth Pass
-- [ ] Task: Fix CHANGELOG v0.5.0 "Known Limitations" stale editor-plugin claim
+- [~] Task: Fix CHANGELOG v0.5.0 "Known Limitations" stale editor-plugin claim
 - [ ] Task: Refresh stale ROADMAP Phase 5 checkboxes/status entries to match delivered reality
 - [ ] Task: Targeted sweep of README + `docs/` for demonstrably false claims; correct only verified drift
 - [ ] Task: Update CHANGELOG Unreleased section with schema feature + docs fixes
