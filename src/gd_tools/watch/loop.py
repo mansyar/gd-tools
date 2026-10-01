@@ -9,7 +9,7 @@ from typing import Protocol
 
 from gd_tools.native_test.protocol import NativeRunResult, NativeSuite
 from gd_tools.watch.coalescer import DEFAULT_DEBOUNCE_SECONDS, RunCoalescer
-from gd_tools.watch.mapping import map_changed_file
+from gd_tools.watch.mapping import select_suites_for_changes
 from gd_tools.watch.observer import FileEvent
 from gd_tools.watch.scope import WatchAction, classify_event
 
@@ -80,16 +80,9 @@ def watch_loop(
                 if coalescer.should_run():
                     coalescer.start_run()
                     suites = discover()
-                    mapped_paths: set[str] = set()
-                    unmapped: list[str] = []
-                    for path in sorted(changed):
-                        mapped = map_changed_file(
-                            project_root / path, project_root, suites
-                        )
-                        if mapped is None:
-                            unmapped.append(path)
-                        else:
-                            mapped_paths.add(mapped)
+                    selected, unmapped = select_suites_for_changes(
+                        changed, project_root, suites
+                    )
                     if unmapped:
                         for path in unmapped:
                             output(
@@ -98,13 +91,7 @@ def watch_loop(
                             )
                         run(suites)
                     else:
-                        run(
-                            [
-                                suite
-                                for suite in suites
-                                if suite.path in mapped_paths
-                            ]
-                        )
+                        run(selected)
                     changed.clear()
                     coalescer.finish_run()
             else:

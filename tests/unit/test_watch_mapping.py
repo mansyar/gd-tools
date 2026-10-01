@@ -141,7 +141,9 @@ class TestSelectSuitesForChanges:
             ["src/enemy.gd", "src/unknown.gd"], tmp_path, suites
         )
 
-        assert selected == []
+        assert [suite.path for suite in selected] == [
+            "res://tests/test_enemy.gd"
+        ]
         assert unmapped == ["src/unknown.gd"]
 
     def test_deleted_path_maps_by_name(self, tmp_path):
