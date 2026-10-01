@@ -38,6 +38,7 @@ from gd_tools.native_test.protocol import (
     NativeCoverage,
     NativeManifest,
     NativeRunResult,
+    NativeSuite,
     RuntimeMode,
 )
 from gd_tools.test_runner import TestDetail, TestResult, format_test_results
@@ -370,10 +371,10 @@ def _report_interrupted_run(artifact_layout: NativeArtifactLayout) -> None:
 
 def _narrow_changed_suites(
     project_root: Path,
-    suites: list,
+    suites: list[NativeSuite],
     changed_files: list[Path],
     base: str | None,
-) -> list:
+) -> list[NativeSuite]:
     """Narrow discovered suites to those mapped from the changed files.
 
     Prints the always-on summary line and the per-file mapping detail

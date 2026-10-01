@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from gd_tools.changes import collect_changed_files
-from gd_tools.errors import GdToolsError
+from gd_tools.errors import GitChangeError, GdToolsError
 
 pytestmark = pytest.mark.unit
 
@@ -159,3 +159,16 @@ def test_base_mode_outside_git_repo_raises_exit_2(tmp_path):
     assert exc_info.value.exit_code == 2
     assert "git repository" in str(exc_info.value)
     assert "nosuchref" not in str(exc_info.value)
+
+
+def test_missing_git_binary_raises_actionable_error(tmp_path):
+    """A missing git binary becomes an actionable exit-2 GitChangeError."""
+    with patch(
+        "gd_tools.changes.subprocess.run",
+        side_effect=FileNotFoundError("git"),
+    ):
+        with pytest.raises(GitChangeError) as exc_info:
+            collect_changed_files(tmp_path)
+
+    assert exc_info.value.exit_code == 2
+    assert "git not found" in str(exc_info.value)

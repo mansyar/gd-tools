@@ -65,13 +65,19 @@ def _git(args: list[str], project_root: Path) -> subprocess.CompletedProcess:
     Raises:
         GitChangeError: With an actionable message when git fails.
     """
-    result = subprocess.run(
-        ["git", *args],
-        cwd=project_root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        raise GitChangeError(
+            "git not found: --changed requires git on PATH. Install git "
+            "or add it to PATH, then retry."
+        ) from None
     if result.returncode == 0:
         return result
     if "not a git repository" in (result.stderr or "").lower():
