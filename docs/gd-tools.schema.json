@@ -1,0 +1,196 @@
+{
+  "$defs": {
+    "CoverageConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for code coverage.\n\nAttributes:\n    enabled: Whether coverage is enabled.\n    min_percent: Minimum coverage percentage threshold.\n    format: Report format (html, lcov, cobertura, text).\n    output_dir: Directory for coverage data and reports.\n    exclude: Directories excluded from coverage measurement.\n    test_dirs: Directories containing test files.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "min_percent": {
+          "default": 0,
+          "title": "Min Percent",
+          "type": "integer"
+        },
+        "format": {
+          "default": "html",
+          "title": "Format",
+          "type": "string"
+        },
+        "output_dir": {
+          "default": ".gd-tools/coverage",
+          "title": "Output Dir",
+          "type": "string"
+        },
+        "exclude": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude",
+          "type": "array"
+        },
+        "test_dirs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Test Dirs",
+          "type": "array"
+        }
+      },
+      "title": "CoverageConfig",
+      "type": "object"
+    },
+    "FormatConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for formatting.\n\nAttributes:\n    exclude: List of directories excluded from formatting.\n    max_line_length: Maximum line length for formatted output.",
+      "properties": {
+        "exclude": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude",
+          "type": "array"
+        },
+        "max_line_length": {
+          "default": 100,
+          "title": "Max Line Length",
+          "type": "integer"
+        }
+      },
+      "title": "FormatConfig",
+      "type": "object"
+    },
+    "GodotConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for the Godot binary.\n\nAttributes:\n    binary: Path to the Godot binary. If None, auto-detection\n        is used (Track 4).",
+      "properties": {
+        "binary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Binary"
+        }
+      },
+      "title": "GodotConfig",
+      "type": "object"
+    },
+    "LintConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for linting.\n\nAttributes:\n    exclude: List of directories excluded from linting.",
+      "properties": {
+        "exclude": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude",
+          "type": "array"
+        }
+      },
+      "title": "LintConfig",
+      "type": "object"
+    },
+    "TestConfig": {
+      "additionalProperties": false,
+      "description": "Configuration for test discovery and GUT.\n\nAttributes:\n    test_dirs: Directories containing test files.\n    prefix: Test file prefix (GUT convention).\n    suffix: Test file suffix.\n    gutconfig: Path to the GUT config file.\n    runtime: Test execution runtime (native or legacy GUT).\n    timeout_seconds: Default per-test timeout for native async tests.\n    retries: Number of explicit opt-in retries per native test.\n    tags: Optional native suite tag filters.\n    parallel: Number of suites to run concurrently (1-32), or\n        None for sequential execution.",
+      "properties": {
+        "test_dirs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Test Dirs",
+          "type": "array"
+        },
+        "prefix": {
+          "default": "test_",
+          "title": "Prefix",
+          "type": "string"
+        },
+        "suffix": {
+          "default": ".gd",
+          "title": "Suffix",
+          "type": "string"
+        },
+        "gutconfig": {
+          "default": ".gutconfig.json",
+          "title": "Gutconfig",
+          "type": "string"
+        },
+        "runtime": {
+          "default": "native",
+          "enum": [
+            "native",
+            "gut"
+          ],
+          "title": "Runtime",
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "default": 5.0,
+          "exclusiveMinimum": 0,
+          "title": "Timeout Seconds",
+          "type": "number"
+        },
+        "retries": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Retries",
+          "type": "integer"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "parallel": {
+          "anyOf": [
+            {
+              "maximum": 32,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parallel"
+        }
+      },
+      "title": "TestConfig",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Configuration schema for gd-tools.toml (gd-tools 0.5.0).",
+  "properties": {
+    "godot": {
+      "$ref": "#/$defs/GodotConfig"
+    },
+    "test": {
+      "$ref": "#/$defs/TestConfig"
+    },
+    "lint": {
+      "$ref": "#/$defs/LintConfig"
+    },
+    "format": {
+      "$ref": "#/$defs/FormatConfig"
+    },
+    "coverage": {
+      "$ref": "#/$defs/CoverageConfig"
+    }
+  },
+  "title": "gd-tools configuration (gd-tools.toml)",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mansyar/gd-tools/main/docs/gd-tools.schema.json"
+}

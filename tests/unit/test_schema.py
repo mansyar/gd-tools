@@ -1,11 +1,16 @@
 """Unit tests for the gd-tools.toml JSON Schema generation."""
 
 import json
+from pathlib import Path
 
 import pytest
 
 from gd_tools.config import GdToolsConfig
-from gd_tools.schema import SCHEMA_DRAFT_URL, generate_schema
+from gd_tools.schema import (
+    SCHEMA_DRAFT_URL,
+    generate_schema,
+    generate_schema_text,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -52,7 +57,6 @@ def test_generate_schema_reflects_live_model_fields():
 def test_generate_schema_tracks_model_changes():
     """Passing a modified model produces a schema that reflects it."""
     from pydantic import create_model
-    from pydantic.fields import FieldInfo
 
     Extended = create_model(
         "ExtendedConfig",
@@ -73,3 +77,24 @@ def test_generate_schema_serializes_to_json():
     """The schema dict round-trips through json.dumps."""
     text = json.dumps(generate_schema())
     assert json.loads(text)["title"]
+
+
+def test_checked_in_schema_snapshot_is_current():
+    """docs/gd-tools.schema.json is byte-identical to the generated schema.
+
+    If this fails, the checked-in snapshot has drifted from the config
+    model. Regenerate it with:
+        gd-tools config schema --output docs/gd-tools.schema.json
+    and commit the result.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    snapshot = repo_root / "docs" / "gd-tools.schema.json"
+    assert snapshot.exists(), (
+        "docs/gd-tools.schema.json is missing. Regenerate it with:\n"
+        "    gd-tools config schema --output docs/gd-tools.schema.json"
+    )
+    assert snapshot.read_text(encoding="utf-8") == generate_schema_text(), (
+        "docs/gd-tools.schema.json is out of date with the config model. "
+        "Regenerate it with:\n"
+        "    gd-tools config schema --output docs/gd-tools.schema.json"
+    )
