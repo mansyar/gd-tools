@@ -19,9 +19,9 @@ Green (implementation) → commit → git note → plan update.
 - [x] Task: Implement `--runtime gut` explicit error in `cli.py`; remove `init --with-gut` `75aa1a4`
   - [ ] `--runtime gut` → exit 2, v0.6.0 removal message + `gd-tools migrate` pointer
   - [ ] Delete `--with-gut` option and its scaffolding path; remove deprecation notices in `command.py` / `init.py`
-- [ ] Task: Remove bridge-only tests and fixtures
-  - [ ] Delete bridge unit/integration/e2e tests and `.gutconfig.json` / GUT-project fixtures not used by `migrate` tests
-  - [ ] Verify full suite green: `CI=true pytest`
+- [x] Task: Remove bridge-only tests and fixtures `0876ea2`
+  - [x] Delete bridge unit/integration/e2e tests and `.gutconfig.json` / GUT-project fixtures not used by `migrate` tests
+  - [x] Verify full suite green: `CI=true pytest`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Doctor Advisor, Config Validation & Migrate Updates
