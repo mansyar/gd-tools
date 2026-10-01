@@ -26,7 +26,7 @@ Workflow step 3). Verification is via search checks and diff inspection.
 - [x] Task: Verify bridge-deprecation notes keep "deprecated v0.5.0 / removed v0.6.0" framing (NFR-3)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-[checkpoint: pending]
+[checkpoint: f656e37]
 
 ## Phase 3: Reconcile README, USER_GUIDE, and PRD with Shipped Reality
 
