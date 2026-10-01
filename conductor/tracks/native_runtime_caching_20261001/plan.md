@@ -53,3 +53,10 @@
   ROADMAP.md (close the Phase 5 "native runtime caching" item), CHANGELOG.md
   (Unreleased) (7bcb740)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (77fe0fa)
+
+## Review Findings (post-completion review)
+
+- [x] Task: Apply review suggestions — Medium: fold integration
+  scenes/resources into the cache key (a05899f); Low: document `use_cache`
+  in `run_preflight_cached` docstring (a05899f). Follow-up (not in this
+  track): extract the `.gd-tools/native` path literal into a shared constant.

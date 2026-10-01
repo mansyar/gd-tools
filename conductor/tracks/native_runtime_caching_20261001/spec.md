@@ -25,7 +25,7 @@ The native test command flow is: discovery (pure Python) → `_import_project` (
 
 - **NFR-1** — A cache-hit run produces results, exit codes, coverage output, and artifacts identical to a cold run.
 - **NFR-2** — No new runtime dependencies.
-- **NFR-3** — Repeat-run wall clock on the unchanged dogfood `spike/` project improves by **≥30%** (measured via the existing `tests/performance/` harness).
+- **NFR-3** — On a repeat run with unchanged inputs, the headless preflight Godot process is eliminated entirely (served from cache), verified functionally via the `--verbose` hit marker. End-to-end wall-clock improvement is measured by the `tests/performance/` harness and reported honestly; on the small dogfood fixture the measured gain is ~14% (the preflight is a small fraction of a run that is dominated by the headless import and suite processes), and the gain grows with project size and scene complexity. The benchmark asserts a warm repeat run is strictly faster than the cold run and that the preflight process does not spawn. *(Revised 2026-10-01: the original "≥30%" gate was set before measurement and is not achievable by preflight caching alone; user approved the revision.)*
 
 ## Acceptance Criteria
 
@@ -34,7 +34,7 @@ The native test command flow is: discovery (pure Python) → `_import_project` (
 - **AC-3** — `--no-cache` bypasses cache read and write.
 - **AC-4** — A corrupt cache file fails open: the run succeeds with a real preflight.
 - **AC-5** — The artifact index of a cache-hit run still contains `preflight.manifest.json` and `preflight.result.json`.
-- **AC-6** — The benchmark evidences the ≥30% repeat-run speedup on the dogfood fixture.
+- **AC-6** — The benchmark evidences that a warm repeat run is strictly faster than the cold run and that the preflight Godot process is skipped on a cache hit.
 - **AC-7** — Unit and e2e coverage for hit, miss, invalidation, `--no-cache`, and fail-open paths.
 
 ## Out of Scope
