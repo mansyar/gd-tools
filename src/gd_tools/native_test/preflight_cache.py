@@ -85,7 +85,9 @@ def compute_cache_key(
         components.append(suite.model_dump_json())
         source_hash = _hash_file(_resolve_res_path(suite.path, project_root))
         components.append(f"{suite.path}:{source_hash}")
-    components.append(f"project.godot:{_hash_file(project_root / 'project.godot')}")
+    components.append(
+        f"project.godot:{_hash_file(project_root / 'project.godot')}"
+    )
     addon_scripts = sorted(project_root.glob(_ADDON_SCRIPT_GLOB))
     for script in addon_scripts:
         relative = script.relative_to(project_root).as_posix()
@@ -94,7 +96,9 @@ def compute_cache_key(
     return digest.hexdigest()
 
 
-def load_cached_preflight(cache_dir: Path, cache_key: str) -> NativePreflightResult | None:
+def load_cached_preflight(
+    cache_dir: Path, cache_key: str
+) -> NativePreflightResult | None:
     """Load a cached preflight result, failing open as a miss.
 
     Args:

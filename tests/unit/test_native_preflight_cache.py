@@ -20,13 +20,15 @@ from gd_tools.native_test.protocol import (
 pytestmark = pytest.mark.unit
 
 
-def _write_project(root, *, godot_content="[application]\n", addon_content="# addon\n"):
+def _write_project(
+    root, *, godot_content="[application]\n", addon_content="# addon\n"
+):
     """Create a minimal Godot project with one bundled addon script."""
     (root / "addons" / "gd-tools-test").mkdir(parents=True, exist_ok=True)
     (root / "project.godot").write_text(godot_content, encoding="utf-8")
-    (root / "addons" / "gd-tools-test" / "gd_tools_test_preflight.gd").write_text(
-        addon_content, encoding="utf-8"
-    )
+    (
+        root / "addons" / "gd-tools-test" / "gd_tools_test_preflight.gd"
+    ).write_text(addon_content, encoding="utf-8")
     (root / "test").mkdir(exist_ok=True)
     (root / "test" / "suite.gd").write_text(
         "extends GdToolsTest\n", encoding="utf-8"
@@ -44,7 +46,9 @@ def _result() -> NativePreflightResult:
 def test_cache_key_is_deterministic_for_identical_inputs(tmp_path):
     """The same project state produces the same cache key across calls."""
     _write_project(tmp_path)
-    first = compute_cache_key([_suite()], project_root=tmp_path, godot_version="4.5.2")
+    first = compute_cache_key(
+        [_suite()], project_root=tmp_path, godot_version="4.5.2"
+    )
     second = compute_cache_key(
         [_suite()], project_root=tmp_path, godot_version="4.5.2"
     )
@@ -61,8 +65,9 @@ def test_cache_key_is_deterministic_for_identical_inputs(tmp_path):
         lambda root: (root / "project.godot").write_text(
             "[application]\nconfig_version=6\n", encoding="utf-8"
         ),
-        lambda root: (root / "addons" / "gd-tools-test" / "gd_tools_test_preflight.gd")
-        .write_text("# addon v2\n", encoding="utf-8"),
+        lambda root: (
+            root / "addons" / "gd-tools-test" / "gd_tools_test_preflight.gd"
+        ).write_text("# addon v2\n", encoding="utf-8"),
     ],
     ids=["test-file", "project-godot", "addon-file"],
 )
