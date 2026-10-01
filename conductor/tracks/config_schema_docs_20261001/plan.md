@@ -23,10 +23,10 @@
 - [x] Task: Implement `schema` subcommand in the config command group (Green) [a08b39e]
 - [x] Task: Refactor & verify coverage for the new module (≥80% line / ≥70% branch) [a08b39e — schema.py 100% line]
 - [x] Task: Commit (`feat(config): add config schema command exposing JSON Schema`) + attach git note [a08b39e]
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: fb7b5b9]
 
 ## Phase 3: Checked-in Snapshot + Sync Test + README
-- [ ] Task: Write failing sync test (Red)
+- [~] Task: Write failing sync test (Red)
   - [ ] Test: `docs/gd-tools.schema.json` is byte-identical to current model schema output; failure message includes the regeneration command
 - [ ] Task: Generate and commit `docs/gd-tools.schema.json` (Green)
 - [ ] Task: Document schema usage in README (`$schema` key example + editor-side association for taplo/VS Code Even Better TOML)
