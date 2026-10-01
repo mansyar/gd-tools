@@ -41,7 +41,7 @@
 - [x] Task: Refactor and verify coverage gates (b673a51)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: fa628ac]
 
-## Phase 4 — Benchmark, Clean Regression & Docs
+## Phase 4 — Benchmark, Clean Regression & Docs [checkpoint: 77fe0fa]
 
 - [x] Task: Write a repeat-run benchmark in `tests/performance/` against the
   dogfood `spike/` project measuring cold vs. cached wall clock; run it and
