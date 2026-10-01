@@ -59,4 +59,5 @@
   - [x] `CHANGELOG.md` — Unreleased feature entry
   *Commit: 1a304eb*
 - [x] Task: Full regression run (unit + integration + e2e) and CI-parity checks (`ruff`, `black`, `CI=true pytest`) — *ruff/black clean; 1522 passed, 7 skipped; coverage 90.34%*
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  *[checkpoint: 69baa58]*
