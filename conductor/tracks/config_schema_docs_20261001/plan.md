@@ -42,6 +42,6 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: a3160cc]
 
 ## Phase 5: Track Finalization
-- [~] Task: Full quality gate: `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch`
-- [ ] Task: Verify all acceptance criteria from spec.md
+- [x] Task: Full quality gate: `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch` [ruff/black clean; unit+integration 1359 passed / 3 skipped; coverage 94.16%; e2e_smoke 5 passed; one flaky perf-timing failure (test_performance_100_files, plan generator untouched by this track) passed on isolated re-run]
+- [x] Task: Verify all acceptance criteria from spec.md [all 6 checked in spec.md]
 - [ ] Task: Commit (`conductor(plan): mark track complete`) + final checkpoint (Refer to workflow.md)

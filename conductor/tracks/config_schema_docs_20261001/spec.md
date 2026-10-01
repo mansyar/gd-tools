@@ -23,12 +23,12 @@ Publish a JSON Schema for `gd-tools.toml` so users get editor autocomplete, inli
 
 ## Acceptance Criteria
 
-- [ ] `gd-tools.toml` with `$schema = "..."` passes `config validate` and test preflight; a typo'd key still errors.
-- [ ] `gd-tools config schema` prints valid JSON Schema; `--output` writes it; exit code 0.
-- [ ] `docs/gd-tools.schema.json` exists and a sync test passes; deliberately corrupting the model makes the test fail with a clear message.
-- [ ] An invalid `gd-tools.toml` validated in an editor against the schema surfaces the error before running the CLI (spot-check with a schema-aware editor).
-- [ ] CHANGELOG "Known Limitations" no longer claims the editor plugin is missing; ROADMAP Phase 5 checkboxes match reality; README/docs claims sweep is complete with no known false statements remaining.
-- [ ] All tests pass; CI green.
+- [x] `gd-tools.toml` with `$schema = "..."` passes `config validate` and test preflight; a typo'd key still errors.
+- [x] `gd-tools config schema` prints valid JSON Schema; `--output` writes it; exit code 0.
+- [x] `docs/gd-tools.schema.json` exists and a sync test passes; deliberately corrupting the model makes the test fail with a clear message.
+- [x] An invalid `gd-tools.toml` validated in an editor against the schema surfaces the error before running the CLI (spot-check with a schema-aware editor).
+- [x] CHANGELOG "Known Limitations" no longer claims the editor plugin is missing; ROADMAP Phase 5 checkboxes match reality; README/docs claims sweep is complete with no known false statements remaining.
+- [x] All tests pass; CI green.
 
 ## Out of Scope
 

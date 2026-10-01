@@ -160,7 +160,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Config JSON Schema + Docs Pass** (feature+chore: a JSON Schema for
+- [x] **Track: Config JSON Schema + Docs Pass** (feature+chore: a JSON Schema for
   `gd-tools.toml` generated from the Pydantic model — new `gd-tools config schema`
   command, checked-in `docs/gd-tools.schema.json` snapshot with a sync test, and
   `$schema` key support in the config model — plus a targeted docs truth pass fixing
