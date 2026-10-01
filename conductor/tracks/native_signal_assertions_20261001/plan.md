@@ -32,7 +32,8 @@
   *Commit: a467663*
 - [x] Task: Refactor pass — shared emission-matching helpers with the stub system's arg-matching logic
   *(Satisfied by design: `assert_signal_emitted_with_args` reuses `_gd_tools_stub_specificity` directly; `_gd_tools_format_emissions` centralizes captured-emission diagnostics.)*
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  *[checkpoint: f68c3c4]*
 
 ## Phase 3 — Edge Cases & Robustness
 
