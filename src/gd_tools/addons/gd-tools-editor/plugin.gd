@@ -30,6 +30,7 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	if _overlay:
+		_overlay.clear()
 		_overlay.queue_free()
 		_overlay = null
 	if _dock:

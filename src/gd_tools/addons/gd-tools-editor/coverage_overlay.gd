@@ -50,7 +50,10 @@ func refresh() -> void:
 
 ## Removes all painted colors (used when the plugin is disabled).
 func clear() -> void:
-	if _painted_code_edit != null:
+	if (
+		_painted_code_edit != null
+		and is_instance_valid(_painted_code_edit)
+	):
 		for line: int in _painted_lines:
 			_painted_code_edit.set_line_background_color(
 				line, TRANSPARENT
