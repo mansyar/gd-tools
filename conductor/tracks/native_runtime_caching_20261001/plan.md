@@ -21,11 +21,11 @@
 
 ## Phase 2 — Command Flow Integration
 
-- [~] Task: Write failing unit/integration tests: cache hit skips
+- [x] Task: Write failing unit/integration tests: cache hit skips
   `run_native_preflight()` (no Godot preflight process spawned) and copies the
   cached manifest/result into the run's `preflight_dir`; miss runs the real
-  preflight and populates the cache → verify Red
-- [ ] Task: Wire cache lookup/store into the native test command flow in
+  preflight and populates the cache → verify Red (e9329e9)
+- [~] Task: Wire cache lookup/store into the native test command flow in
   `src/gd_tools/native_test/command.py` between suite discovery and preflight →
   verify Green
 - [ ] Task: Refactor and verify coverage gates
