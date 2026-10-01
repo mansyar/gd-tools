@@ -35,10 +35,11 @@
 
 - [x] Task: Write failing tests for `--no-cache` on `gd-tools test` (bypasses
   read and write) and `--verbose` hit/miss output with reason → verify Red
-- [ ] Task: Plumb the flag through `cli.py` → `command.py` and add verbose
-  logging → verify Green
-- [ ] Task: Refactor and verify coverage gates
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  (7828ff1)
+- [x] Task: Plumb the flag through `cli.py` → `command.py` and add verbose
+  logging → verify Green (b673a51)
+- [x] Task: Refactor and verify coverage gates (b673a51)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Benchmark, Clean Regression & Docs
 
