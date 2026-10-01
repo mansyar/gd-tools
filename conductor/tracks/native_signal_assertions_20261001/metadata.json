@@ -1,0 +1,8 @@
+{
+  "track_id": "native_signal_assertions_20261001",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-01T00:00:00Z",
+  "description": "Add a watch_signals-based capture model with assert_signal_emitted, assert_signal_not_emitted, assert_signal_emit_count, assert_signal_emitted_with_args, and the awaitable assert_signal_emitted_after helper to the native GdToolsTest runtime, with per-test lifecycle isolation and rich failure diagnostics."
+}
