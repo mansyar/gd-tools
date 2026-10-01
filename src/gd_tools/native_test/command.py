@@ -212,7 +212,7 @@ def _run_native_test_command(
             godot_binary=godot_info.path,
             godot_version=godot_info.version,
             run_dir=artifact_layout.preflight_dir,
-            cache_dir=artifact_layout.native_dir / "preflight-cache",
+            cache_dir=project_root / ".gd-tools" / "native" / "preflight-cache",
             timeout_seconds=process_timeout,
         )
     except NativePreflightError:

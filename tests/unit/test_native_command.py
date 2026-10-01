@@ -282,6 +282,7 @@ def _run_with_preflight_capture(tmp_path, suites):
 
     def fake_preflight(project_root, manifest, **kwargs):
         captured["manifest"] = manifest
+        captured["kwargs"] = kwargs
         return _preflight(suites)
 
     with (
@@ -332,6 +333,18 @@ def test_preflight_manifest_declares_native_runtime_for_native_only_runs(
     )["manifest"]
 
     assert manifest.runtime == RuntimeMode.NATIVE
+
+
+def test_preflight_cache_uses_project_scoped_directory(tmp_path):
+    """The cache lives at project scope so entries survive across run ids."""
+    captured = _run_with_preflight_capture(
+        tmp_path,
+        [NativeSuite(name="ExampleSuite", path="res://test/example.gd")],
+    )
+
+    assert captured["kwargs"]["cache_dir"] == (
+        tmp_path / ".gd-tools" / "native" / "preflight-cache"
+    )
 
 
 def test_preflight_manifest_declares_gut_runtime_for_bridge_runs(tmp_path):
