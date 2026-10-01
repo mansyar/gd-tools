@@ -33,7 +33,7 @@
 
 ## Phase 3 — CLI Flag & Verbose UX
 
-- [ ] Task: Write failing tests for `--no-cache` on `gd-tools test` (bypasses
+- [~] Task: Write failing tests for `--no-cache` on `gd-tools test` (bypasses
   read and write) and `--verbose` hit/miss output with reason → verify Red
 - [ ] Task: Plumb the flag through `cli.py` → `command.py` and add verbose
   logging → verify Green

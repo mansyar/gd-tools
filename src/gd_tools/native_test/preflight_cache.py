@@ -167,13 +167,15 @@ def run_preflight_cached(
     run_dir: Path,
     cache_dir: Path,
     timeout_seconds: float,
+    use_cache: bool = True,
 ) -> NativePreflightResult:
     """Resolve the integration preflight through the content-hash cache.
 
     On a cache hit the cached result is served and the preflight manifest
     and result artifacts are materialized in ``run_dir`` so the artifact
     index contract is unchanged. On a miss the real preflight runs and a
-    successful result is stored.
+    successful result is stored. With ``use_cache=False`` both the lookup
+    and the store are skipped and the real preflight always runs.
 
     Args:
         project_root: Resolved Godot project root.
@@ -194,7 +196,7 @@ def run_preflight_cached(
     cache_key = compute_cache_key(
         manifest.suites, project_root=project_root, godot_version=godot_version
     )
-    cached = load_cached_preflight(cache_dir, cache_key)
+    cached = load_cached_preflight(cache_dir, cache_key) if use_cache else None
     if cached is not None:
         try:
             write_json_atomic(run_dir / "preflight.manifest.json", manifest)
@@ -212,6 +214,6 @@ def run_preflight_cached(
         run_dir=run_dir,
         timeout_seconds=timeout_seconds,
     )
-    if result.status == "ok":
+    if use_cache and result.status == "ok":
         store_cached_preflight(cache_dir, cache_key, result)
     return result

@@ -536,8 +536,8 @@ def _validate_parallel(
 @click.option(
     "--no-cache",
     is_flag=True,
-    help="Force plan regeneration, bypassing the coverage plan cache. "
-    "Only effective with --coverage.",
+    help="Bypass caching: regenerate the coverage plan and re-run the "
+    "integration preflight instead of serving cached results.",
 )
 @click.option(
     "--watch",

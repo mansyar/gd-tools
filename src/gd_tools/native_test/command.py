@@ -127,7 +127,7 @@ def _run_native_test_command(
         test_timeout: Optional per-test timeout override in seconds.
         paths: Optional test file or directory selectors.
         show_uncovered: Include uncovered lines in the coverage summary.
-        no_cache: Bypass the coverage plan cache.
+        no_cache: Bypass the coverage plan cache and the preflight cache.
         parallel: Optional worker count (1-32) for concurrent suite
             execution; None or 1 runs suites sequentially.
 
@@ -214,6 +214,7 @@ def _run_native_test_command(
             run_dir=artifact_layout.preflight_dir,
             cache_dir=project_root / ".gd-tools" / "native" / "preflight-cache",
             timeout_seconds=process_timeout,
+            use_cache=not no_cache,
         )
     except NativePreflightError:
         try:
