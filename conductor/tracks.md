@@ -151,9 +151,9 @@ _Archived tracks live in `./archive/`._
   failures, friendly missing-CLI fallback) and a `CodeEdit` coverage heatmap
   overlay reading `.gd-tools/` artifacts; lint margin descoped)
   *Link: [editor_plugin_20260930](./archive/editor_plugin_20260930/index.md)*
-- [x] **Track: Native Signal Assertions** (`watch_signals` capture model with
+- [x] **Track: Native Signal Assertions** (archived  `./archive/native_signal_assertions_20261001`) (`watch_signals` capture model with
   `assert_signal_emitted`, `assert_signal_not_emitted`, `assert_signal_emit_count`,
   `assert_signal_emitted_with_args`, and the awaitable `assert_signal_emitted_after`
   helper; per-test lifecycle isolation, unwatched-target guidance, rich diagnostics,
   no protocol change)
-  *Link: [native_signal_assertions_20261001](./tracks/native_signal_assertions_20261001/index.md)*
+  *Link: [native_signal_assertions_20261001](./archive/native_signal_assertions_20261001/index.md)*
