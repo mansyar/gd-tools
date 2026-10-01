@@ -2,6 +2,8 @@
 
 ### Feat
 
+- **config**: Add `gd-tools config schema` — print or write the JSON Schema for `gd-tools.toml`. The schema is generated live from the installed version's Pydantic config model (never hardcoded), declared as draft 2020-12 with a stable `$id`, and mirrors `extra='forbid'` so editors flag unknown keys. `gd-tools config schema` prints pretty-printed JSON to stdout; `--output <path>` writes it to a file, creating parent directories (unwritable targets exit 2). `gd-tools.toml` now accepts a top-level `"$schema"` key (accepted and ignored — it carries no runtime meaning) so editors can reference the schema for autocomplete and inline validation. A checked-in snapshot (`docs/gd-tools.schema.json`) with a byte-identical sync test keeps the published schema from drifting; see the README's "Editor Autocomplete & Validation" section for VS Code (Even Better TOML) and taplo setup.
+
 - **native-test**: Add signal assertions to the native runtime. `watch_signals(obj)` records every emission of every declared signal on any Object (Node, RefCounted, or double) for the current test. `assert_signal_emitted`, `assert_signal_not_emitted`, and `assert_signal_emit_count` assert on the recording with rich diagnostics (emission count, expected vs actual, and a compact captured-emission list); `assert_signal_emitted_with_args` passes when any recorded emission matches element-wise, using the same `"any"` per-element wildcard as stub argument matching; and `await assert_signal_emitted_after(signal, timeout_seconds := 5.0)` awaits an emission and fails with a timeout diagnostic naming the signal. Watches auto-reset between tests (hooks, parameterized cases, and retries included); asserting against an unwatched object fails with guidance pointing at `watch_signals`; and freeing a watched object mid-test tears down safely. No protocol changes: failures are plain failure entries.
 
 - **native-test**: Add preflight caching for faster repeat runs. The integration preflight (a headless Godot process that validates scenes/resources and enriches suite discovery) is cached under `.gd-tools/native/preflight-cache/`, keyed by a SHA-256 digest of the discovered suites, test-file contents, `project.godot`, the Godot binary version, and the bundled addon scripts. A repeat run on unchanged inputs skips the preflight process entirely and materializes identical preflight artifacts from the cache, so results, exit codes, and the artifact index are unchanged. The cache is transparent: hit/miss reasons are reported under `--verbose` only, corrupt or unreadable entries fail open into a real preflight, and `gd-tools clean --cache` removes it. The existing `--no-cache` flag bypasses both the coverage plan cache and the preflight cache (read and write). Measured on the benchmark fixture, repeat runs are strictly faster (the preflight process is eliminated; end-to-end gain scales with project size).
@@ -29,7 +31,6 @@
 ### Known Limitations
 
 - The GUT compatibility bridge is deprecated in this release and planned for removal in v0.6.0. `GutTest` suites still run through it during the migration window; new suites should extend `GdToolsTest`.
-- There is no editor plugin integration (roadmap Phase 5 candidates: coverage heatmap dock, playtest coverage).
 
 ## v0.4.0 (2026-07-16)
 

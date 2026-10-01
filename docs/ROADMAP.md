@@ -1674,11 +1674,10 @@ settings while preserving the rest (Track `migration_tooling_20260929`).
 - [x] Integrate native runtime caching (preflight cache under
   `.gd-tools/native/preflight-cache/`, SHA-256 keyed, `--no-cache` bypass,
   fail-open — Track `native_runtime_caching_20261001`)
-- [ ] Update `init`, `doctor`, CI, packaging, and documentation (in progress;
-  bridge wording updated by `native_release_readiness_20260930`, release
-  documentation lands with v0.5.0)
+- [x] Update `init`, `doctor`, CI, packaging, and documentation (shipped with
+  v0.5.0 — Track `native_release_readiness_20260930`)
 - [x] Run the Godot 4.5+ compatibility matrix
-- [ ] Publish the native runtime release (v0.5.0 preparation in progress)
+- [x] Publish the native runtime release (v0.5.0, 2026-09-30)
 - [ ] Remove the temporary bridge after its migration period (deprecation
   notice ships in v0.5.0; removal targeted for v0.6.0)
 - [ ] Fold durable decisions into the main roadmap and remove this section
