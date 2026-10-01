@@ -168,3 +168,14 @@ _Archived tracks live in `./archive/`._
   helper; per-test lifecycle isolation, unwatched-target guidance, rich diagnostics,
   no protocol change)
   *Link: [native_signal_assertions_20261001](./archive/native_signal_assertions_20261001/index.md)*
+
+---
+
+- [ ] **Track: Roadmap & Docs Truth Pass** (chore/docs: fold the temporary
+  native-runtime migration roadmap (`docs/ROADMAP.md` §8) into the main
+  roadmap with anchor links rewritten, refresh `ARCHITECTURE.md` known
+  limitations against shipped tracks, and reconcile README / USER_GUIDE /
+  PRD factual claims with the shipped v0.5.0 feature set; explicit Phase 5
+  leftover, no `src/` changes, clears the path for the v0.6.0
+  bridge-removal track)
+  *Link: [roadmap_docs_truth_pass_20261001](./tracks/roadmap_docs_truth_pass_20261001/index.md)*
