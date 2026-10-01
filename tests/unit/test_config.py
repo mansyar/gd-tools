@@ -988,13 +988,16 @@ def test_gdtools_config_schema_key_not_in_dump():
     assert "schema_" not in dumped
 
 
-def test_gdtools_config_schema_key_round_trips_clean():
+def test_gdtools_config_schema_key_round_trips_clean(tmp_path):
     """save_config of a model that consumed $schema writes no $schema key."""
-    import tomli_w  # noqa: F401
-
     config = GdToolsConfig(**{"$schema": "./gd-tools.schema.json"})
-    data = config.model_dump(exclude_none=True)
-    assert "$schema" not in data
+    save_config(config, tmp_path)
+    written = (tmp_path / "gd-tools.toml").read_text(encoding="utf-8")
+    assert "$schema" not in written
+    # The written file reloads cleanly through load_config.
+    (tmp_path / "project.godot").touch()
+    reloaded = load_config(project_root=tmp_path)
+    assert reloaded == GdToolsConfig()
 
 
 def test_gdtools_config_unknown_key_still_rejected():

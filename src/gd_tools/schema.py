@@ -10,7 +10,7 @@ import json
 
 from pydantic import BaseModel
 
-from gd_tools.config import GdToolsConfig
+from .config import GdToolsConfig
 from . import __version__ as _gd_tools_version
 
 SCHEMA_DRAFT_URL = "https://json-schema.org/draft/2020-12/schema"

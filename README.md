@@ -332,9 +332,10 @@ meaning.
 - **taplo** (CLI / LSP): the `"$schema"` key works out of the box, or
   add a `schema` entry to your `taplo.toml` pointing at the URL above.
 
-The schema is regenerated with `gd-tools config schema
---output docs/gd-tools.schema.json`; a unit test keeps the checked-in
-snapshot in sync with the installed version's config model.
+The schema is regenerated with
+`gd-tools config schema --output docs/gd-tools.schema.json`;
+a unit test keeps the checked-in snapshot in sync with the installed
+version's config model.
 
 See the [User Guide](./docs/USER_GUIDE.md) for a full configuration reference
 with all keys, defaults, and examples.
