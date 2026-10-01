@@ -5,15 +5,15 @@ Workflow step 3). Verification is via search checks and diff inspection.
 
 ## Phase 1: Fold Migration Roadmap §8 into the Main Roadmap
 
-- [ ] Task: Inventory §8 anchors and dependencies
-  - [ ] Search the repo for all links to `ROADMAP.md#8-...` and record target files/lines (expected: `ARCHITECTURE.md`, `conductor/product.md`, `docs/gut-migration.md`)
-  - [ ] Identify "durable decisions" in §8 (runtime model, migration boundary, success criteria) vs. transient phase-checklist content
-- [ ] Task: Fold durable content into main roadmap sections
-  - [ ] Move/merge durable decisions into the appropriate main roadmap sections (Native Runtime Transition overview + remaining Phase 5 items)
-  - [ ] Record remaining Phase 5 items with "removal targeted for v0.6.0" framing preserved
-  - [ ] Delete §8 entirely (no tombstone)
-- [ ] Task: Rewrite all §8 anchor links to the new anchors
-- [ ] Task: Verify no dangling `#8-...` anchors remain repo-wide (search check)
+- [x] Task: Inventory §8 anchors and dependencies
+  - [x] Search the repo for all links to `ROADMAP.md#8-...` and record target files/lines (expected: `ARCHITECTURE.md`, `conductor/product.md`, `docs/gut-migration.md`)
+  - [x] Identify "durable decisions" in §8 (runtime model, migration boundary, success criteria) vs. transient phase-checklist content
+- [x] Task: Fold durable content into main roadmap sections
+  - [x] Move/merge durable decisions into the appropriate main roadmap sections (Native Runtime Transition overview + remaining Phase 5 items)
+  - [x] Record remaining Phase 5 items with "removal targeted for v0.6.0" framing preserved
+  - [x] Delete §8 entirely (no tombstone)
+- [x] Task: Rewrite all §8 anchor links to the new anchors
+- [x] Task: Verify no dangling `#8-...` anchors remain repo-wide (search check)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Refresh ARCHITECTURE.md Known Limitations
