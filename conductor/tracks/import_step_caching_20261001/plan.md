@@ -25,7 +25,7 @@
 - [x] Task: Add import-cache coverage and style gates [5188e38]
   - [ ] Verify `import_cache.py` meets the >80% line / >70% branch coverage gates.
   - [ ] Run `ruff check` and `black --check`.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 49401c2]
 
 ## Phase 2 — Pipeline integration
 
