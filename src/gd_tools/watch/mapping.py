@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 from gd_tools.native_test.protocol import NativeSuite
@@ -63,3 +63,38 @@ def map_changed_file(
                 return suite.path
 
     return None
+
+
+def select_suites_for_changes(
+    changed: Iterable[str],
+    project_root: Path,
+    suites: Sequence[NativeSuite],
+) -> tuple[list[NativeSuite], list[str]]:
+    """Partition changed files into selected suites and unmapped paths.
+
+    Maps each changed project-relative path with :func:`map_changed_file`
+    and collects the matched suites (deduplicated, in discovery order).
+    Paths that map to no selected suite are returned separately so the
+    caller can apply its fallback policy (watch mode and ``test
+    --changed`` both fall back to the full suite).
+
+    Args:
+        changed: Project-relative paths of changed files, in any order.
+        project_root: Root of the Godot project containing ``project.godot``.
+        suites: Currently selected native suites from discovery.
+
+    Returns:
+        A ``(selected, unmapped)`` tuple: the suites to re-run in
+        discovery order, and the sorted changed paths that mapped to
+        nothing.
+    """
+    mapped_paths: set[str] = set()
+    unmapped: list[str] = []
+    for path in sorted(changed):
+        mapped = map_changed_file(project_root / path, project_root, suites)
+        if mapped is None:
+            unmapped.append(path)
+        else:
+            mapped_paths.add(mapped)
+    selected = [suite for suite in suites if suite.path in mapped_paths]
+    return selected, unmapped
