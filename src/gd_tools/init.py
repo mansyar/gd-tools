@@ -78,6 +78,13 @@ NATIVE_TEST_ADDON_FILES = [
     "gd_tools_native_coverage.gd",
 ]
 
+EDITOR_PLUGIN_FILES = [
+    "plugin.cfg",
+    "plugin.gd",
+    "dock.gd",
+    "coverage_overlay.gd",
+]
+
 COVERAGE_AUTOLOAD_PATH = "res://addons/gd-tools-coverage/coverage.gd"
 
 console = Console()
@@ -384,6 +391,44 @@ def install_native_test_addon(project_root: Path) -> None:
     target_dir.mkdir(parents=True, exist_ok=True)
     backups_dir = target_dir / ".backups"
     for file_name in NATIVE_TEST_ADDON_FILES:
+        source_file = source_dir / file_name
+        target_file = target_dir / file_name
+        if (
+            target_file.exists()
+            and target_file.read_bytes() != source_file.read_bytes()
+        ):
+            backups_dir.mkdir(parents=True, exist_ok=True)
+            backup_path = backups_dir / f"{file_name}.bak"
+            shutil.copy2(target_file, backup_path)
+            console.print(
+                f"[yellow]Warning: {file_name} was modified. "
+                f"Backed up to {backup_path} before overwriting.[/yellow]"
+            )
+        shutil.copy2(source_file, target_file)
+    (target_dir / "_version.txt").write_text(
+        f"{__version__}\n", encoding="utf-8"
+    )
+
+
+def install_editor_plugin(project_root: Path) -> None:
+    """Copy the bundled editor plugin addon to the project.
+
+    Deploys ``plugin.cfg``, ``plugin.gd``, ``dock.gd``, and
+    ``coverage_overlay.gd`` from the package data to
+    ``project_root/addons/gd-tools-editor/``. Existing files that
+    differ from the bundled version are backed up to the per-addon
+    ``.backups/`` directory before replacement, with a yellow
+    warning printed. Writes a ``_version.txt`` stamp with the
+    current package version.
+
+    Args:
+        project_root: Path to the Godot project root.
+    """
+    source_dir = Path(__file__).parent / "addons" / "gd-tools-editor"
+    target_dir = project_root / "addons" / "gd-tools-editor"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    backups_dir = target_dir / ".backups"
+    for file_name in EDITOR_PLUGIN_FILES:
         source_file = source_dir / file_name
         target_file = target_dir / file_name
         if (
@@ -713,6 +758,9 @@ def run_init(
     install_coverage_addon(project_root)
     actions.append("Deployed coverage addon")
     actions.append(f"Wrote addon version file (v{__version__})")
+
+    install_editor_plugin(project_root)
+    actions.append("Deployed editor plugin addon")
 
     create_config_file(project_root, config)
     actions.append("Ensured gd-tools.toml exists")

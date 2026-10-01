@@ -6,6 +6,7 @@ serialization, and rc-file generation.
 
 import io
 import json
+from pathlib import Path
 
 import yaml
 import pytest
@@ -35,6 +36,7 @@ from gd_tools.config import (
     generate_gdlintrc,
     load_config,
     save_config,
+    set_explicit_project_root,
     validate_paths,
 )
 from gd_tools.errors import ConfigError
@@ -888,3 +890,74 @@ def test_format_config_json_includes_parallel():
     json_str = format_config_json(config)
     parsed = json.loads(json_str)
     assert parsed["test"]["parallel"] == 4
+
+
+# --- explicit project root (--project anchor) ---
+
+
+@pytest.fixture()
+def reset_explicit_root():
+    """Reset the explicit project root after each test."""
+    yield
+    set_explicit_project_root(None)
+
+
+@pytest.mark.usefixtures("reset_explicit_root")
+def test_find_project_root_explicit_overrides_start_path(tmp_path):
+    """Test an explicit project root wins over any start path."""
+    other = tmp_path / "other"
+    other.mkdir()
+    (other / "project.godot").touch()
+    explicit = tmp_path / "explicit"
+    explicit.mkdir()
+    (explicit / "project.godot").touch()
+    set_explicit_project_root(explicit)
+    result = find_project_root(start_path=other)
+    assert result == explicit
+
+
+@pytest.mark.usefixtures("reset_explicit_root")
+def test_find_project_root_explicit_used_without_start_path(
+    tmp_path, monkeypatch
+):
+    """Test an explicit project root short-circuits the cwd walk."""
+    explicit = tmp_path / "explicit"
+    explicit.mkdir()
+    (explicit / "project.godot").touch()
+    set_explicit_project_root(explicit)
+    empty = tmp_path / "elsewhere"
+    empty.mkdir()
+    monkeypatch.chdir(empty)
+    result = find_project_root()
+    assert result == explicit
+
+
+@pytest.mark.usefixtures("reset_explicit_root")
+def test_find_project_root_explicit_missing_project_godot_raises(tmp_path):
+    """Test an explicit root without project.godot raises ConfigError."""
+    set_explicit_project_root(tmp_path)
+    with pytest.raises(ConfigError):
+        find_project_root()
+
+
+@pytest.mark.usefixtures("reset_explicit_root")
+def test_find_project_root_explicit_reset_restores_walk(tmp_path):
+    """Test clearing the explicit root restores cwd-based discovery."""
+    set_explicit_project_root(None)
+    (tmp_path / "project.godot").touch()
+    result = find_project_root(start_path=tmp_path)
+    assert result == tmp_path
+
+
+@pytest.mark.usefixtures("reset_explicit_root")
+def test_set_explicit_project_root_resolves_relative_path(
+    tmp_path, monkeypatch
+):
+    """Test a relative explicit root is resolved against the cwd."""
+    nested = tmp_path / "proj"
+    nested.mkdir()
+    (nested / "project.godot").touch()
+    monkeypatch.chdir(tmp_path)
+    set_explicit_project_root(Path("proj"))
+    result = find_project_root()
+    assert result == nested

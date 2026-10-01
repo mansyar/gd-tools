@@ -1183,7 +1183,7 @@ offers.
 | **Modules** | `src/gd_tools/addons/gd-tools-editor/` (new GDScript plugin) |
 | **Effort** | 3-5 days |
 | **Risk** | MEDIUM-HIGH -- Godot editor API, GDScript UI, plugin distribution |
-| **Status** | Planned |
+| **Status** | Delivered (2026-10-01) -- dock panel with async test/coverage runs, coverage heatmap overlay, deployed by `gd-tools init` |
 
 **Problem:**
 

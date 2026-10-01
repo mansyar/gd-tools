@@ -1,0 +1,9 @@
+{
+  "track_id": "editor_plugin_20260930",
+  "name": "Godot Editor Plugin",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-09-30",
+  "roadmap_track": 35,
+  "branch": "feature/editor-plugin-20260930"
+}
