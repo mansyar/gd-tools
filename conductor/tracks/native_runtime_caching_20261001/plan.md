@@ -16,7 +16,7 @@
 - [x] Task: Implement `src/gd_tools/native_test/preflight_cache.py` —
   `load_cached_preflight()` / `store_cached_preflight()` using
   `write_json_atomic`, schema-versioned payload → verify Green
-- [~] Task: Refactor and verify coverage gates for the new module
+- [x] Task: Refactor and verify coverage gates for the new module (e5bac86)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Command Flow Integration
