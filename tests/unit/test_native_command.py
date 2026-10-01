@@ -2,6 +2,7 @@
 
 import json
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -11,6 +12,7 @@ from gd_tools.errors import (
     ConfigError,
     CoverageThresholdError,
     GdToolsError,
+    GitChangeError,
     TestFailureError,
 )
 from gd_tools.native_test.command import (
@@ -1108,3 +1110,252 @@ def test_run_native_command_parallel_infrastructure_error_exits_2(tmp_path):
             run_native_test_command(_config(), parallel=2)
 
     assert excinfo.value.exit_code == 2
+
+
+def test_changed_empty_change_set_exits_early_without_godot(tmp_path):
+    """--changed with no changes reports and returns before any Godot work."""
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[],
+        ) as collect,
+        patch("gd_tools.native_test.command.find_godot") as find_godot,
+        patch(
+            "gd_tools.native_test.command.output.print_info"
+        ) as notice,
+    ):
+        result = run_native_test_command(_config(), changed=True)
+
+    assert result.total == 0
+    find_godot.assert_not_called()
+    assert "no changes detected" in notice.call_args.args[0]
+
+
+def test_changed_narrows_discovery_to_mapped_suites(tmp_path):
+    """--changed runs only the suites mapped from the changed files."""
+    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
+    player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[enemy, player],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("src/enemy.gd")],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([enemy, player]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch(
+            "gd_tools.native_test.command.output.print_info"
+        ) as notice,
+    ):
+        run_native_test_command(_config(), changed=True)
+
+    executed = run.call_args.args[1]
+    assert [suite.path for suite in executed] == ["res://tests/test_enemy.gd"]
+    assert any(
+        "--changed: 1 of 2 suites selected" in call.args[0]
+        for call in notice.call_args_list
+    )
+
+
+def test_changed_unmapped_file_falls_back_to_full_suite(tmp_path):
+    """A change that maps to no suite runs everything with a notice."""
+    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
+    player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[enemy, player],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("project.godot")],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([enemy, player]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch(
+            "gd_tools.native_test.command.output.print_info"
+        ) as notice,
+    ):
+        run_native_test_command(_config(), changed=True)
+
+    executed = run.call_args.args[1]
+    assert [suite.path for suite in executed] == [
+        "res://tests/test_enemy.gd",
+        "res://tests/test_player.gd",
+    ]
+    assert any(
+        "No suite mapped for 'project.godot'" in call.args[0]
+        for call in notice.call_args_list
+    )
+
+
+def test_changed_base_flag_switches_the_change_source(tmp_path):
+    """--base forwards the ref to change collection."""
+    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[enemy],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("src/enemy.gd")],
+        ) as collect,
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([enemy]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+    ):
+        run_native_test_command(_config(), changed=True, base="main")
+
+    collect.assert_called_once_with(tmp_path, "main")
+
+
+def test_changed_collection_error_propagates_exit_2(tmp_path):
+    """Git failures surface as GdToolsError (exit 2) with the message."""
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            side_effect=GitChangeError(
+                "Not a git repository: --changed requires the project to "
+                "be tracked by git."
+            ),
+        ),
+        pytest.raises(GitChangeError) as exc_info,
+    ):
+        run_native_test_command(_config(), changed=True)
+
+    assert exc_info.value.exit_code == 2
+
+
+def test_changed_verbose_prints_per_file_mapping(tmp_path):
+    """--verbose prints each changed file's mapping detail."""
+    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
+    player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
+    native = _native_result()
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[enemy, player],
+        ),
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=[Path("src/enemy.gd")],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([enemy, player]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+        patch(
+            "gd_tools.native_test.command.output.print_verbose"
+        ) as verbose,
+    ):
+        run_native_test_command(_config(), changed=True)
+
+    assert any(
+        "src/enemy.gd" in call.args[0]
+        and "res://tests/test_enemy.gd" in call.args[0]
+        for call in verbose.call_args_list
+    )
