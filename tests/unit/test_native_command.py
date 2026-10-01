@@ -1166,7 +1166,9 @@ def test_changed_narrows_discovery_to_mapped_suites(tmp_path):
         ),
         patch(
             "gd_tools.native_test.command.run_preflight_cached",
-            return_value=_preflight([enemy, player]),
+            side_effect=lambda project_root, manifest, **kw: _preflight(
+                list(manifest.suites)
+            ),
         ),
         patch(
             "gd_tools.native_test.command.run_native_tests",

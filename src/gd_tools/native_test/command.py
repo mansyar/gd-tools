@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from gd_tools import output
+from gd_tools.changes import collect_changed_files
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
 from gd_tools.coverage.orchestrator import _report_coverage
@@ -40,6 +41,7 @@ from gd_tools.native_test.protocol import (
     RuntimeMode,
 )
 from gd_tools.test_runner import TestDetail, TestResult, format_test_results
+from gd_tools.watch.mapping import map_changed_file, select_suites_for_changes
 
 
 def run_native_test_command(
@@ -57,6 +59,8 @@ def run_native_test_command(
     show_uncovered: bool = False,
     no_cache: bool = False,
     parallel: int | None = None,
+    changed: bool = False,
+    base: str | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -85,6 +89,8 @@ def run_native_test_command(
             show_uncovered=show_uncovered,
             no_cache=no_cache,
             parallel=parallel,
+            changed=changed,
+            base=base,
         )
     finally:
         if previous_sigterm is not None:
@@ -111,6 +117,8 @@ def _run_native_test_command(
     show_uncovered: bool = False,
     no_cache: bool = False,
     parallel: int | None = None,
+    changed: bool = False,
+    base: str | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -130,6 +138,10 @@ def _run_native_test_command(
         no_cache: Bypass the coverage plan cache and the preflight cache.
         parallel: Optional worker count (1-32) for concurrent suite
             execution; None or 1 runs suites sequentially.
+        changed: Only run suites mapped from git-changed files; falls
+            back to the full suite when a change maps to no suite.
+        base: With ``changed``, diff from ``merge-base(ref, HEAD)`` instead
+            of the working tree.
 
     Returns:
         The normalized CLI-facing test result.
@@ -139,6 +151,30 @@ def _run_native_test_command(
         TestFailureError: When tests fail and ``no_exit_code`` is false.
     """
     project_root = find_project_root()
+
+    changed_files: list[Path] = []
+    if changed:
+        source = "working tree vs HEAD" if base is None else f"base '{base}'"
+        changed_files = collect_changed_files(project_root, base)
+        if not changed_files:
+            output.print_info(
+                f"--changed: no changes detected ({source}); "
+                "nothing to run."
+            )
+            return TestResult(
+                total=0,
+                passed=0,
+                failed=0,
+                skipped=0,
+                duration=0.0,
+                junit_xml_path=project_root / ".gd-tools" / "results.xml",
+                coverage_data_path=None,
+                artifact_index_path=None,
+                stdout="",
+                stderr="",
+                test_details=[],
+            )
+
     godot_info = find_godot(config.godot)
     if not godot_info.is_valid:
         raise GdToolsError(
@@ -171,6 +207,10 @@ def _run_native_test_command(
         raise ConfigError(
             "No test suites were found. Add a suite extending GdToolsTest "
             "(native) or GutTest (compatibility bridge)."
+        )
+    if changed:
+        suites = _narrow_changed_suites(
+            project_root, suites, changed_files, base
         )
     scan_bridge_suites(project_root, suites)
 
@@ -327,6 +367,40 @@ def _report_interrupted_run(artifact_layout: NativeArtifactLayout) -> None:
         f"Run interrupted: artifacts marked incomplete at "
         f"{artifact_layout.run_dir}"
     )
+
+
+def _narrow_changed_suites(
+    project_root: Path,
+    suites: list,
+    changed_files: list[Path],
+    base: str | None,
+) -> list:
+    """Narrow discovered suites to those mapped from the changed files.
+
+    Prints the always-on summary line and the per-file mapping detail
+    under ``--verbose``. Falls back to the full suite list when any
+    changed file maps to no selected suite, with a notice per unmapped
+    file (the same contract as watch mode).
+    """
+    source = "working tree vs HEAD" if base is None else f"base '{base}'"
+    selected, unmapped = select_suites_for_changes(
+        changed_files, project_root, suites
+    )
+    output.print_info(
+        f"--changed: {len(selected)} of {len(suites)} suites selected "
+        f"({source})"
+    )
+    for path in sorted(changed_files):
+        mapped = map_changed_file(project_root / path, project_root, suites)
+        detail = mapped if mapped is not None else "no mapping"
+        output.print_verbose(f"  {path.as_posix()} -> {detail}")
+    if unmapped:
+        for path in unmapped:
+            output.print_info(
+                f"No suite mapped for '{path}'; running full suite."
+            )
+        return list(suites)
+    return selected
 
 
 def _test_directories(

@@ -5,7 +5,7 @@
 - **Status:** New
 - **Specification:** [`spec.md`](./spec.md)
 
-## Phase 1 — Change detection and shared suite-selection core
+## Phase 1 — Change detection and shared suite-selection core [checkpoint: `f97c1d9`]
 
 **Purpose:** Establish the git change-collection boundary and extract the
 watch loop's mapping logic into a shared, unit-testable selection function

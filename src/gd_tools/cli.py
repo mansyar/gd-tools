@@ -556,6 +556,17 @@ def _validate_parallel(
     help="Watch .gd files and re-run affected tests on change "
     "(native runtime only, interactive sessions).",
 )
+@click.option(
+    "--changed",
+    is_flag=True,
+    help="Run only the suites mapped from git-changed files (uncommitted "
+    "vs HEAD). A change that maps to no suite runs the full suite.",
+)
+@click.option(
+    "--base",
+    help="With --changed: diff from merge-base of this ref and HEAD "
+    "instead of the working tree (for CI on pull requests).",
+)
 def test(
     paths,
     runtime,
@@ -572,6 +583,8 @@ def test(
     show_uncovered,
     no_cache,
     watch,
+    changed,
+    base,
 ):
     """Run GDScript tests with the native runtime.
 
@@ -580,6 +593,21 @@ def test(
     """
     if runtime == "gut":
         _reject_legacy_runtime("--runtime gut")
+    if base is not None and not changed:
+        click.echo(
+            "Error: --base requires --changed.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+    if changed and watch:
+        click.echo(
+            "Error: --changed and --watch cannot be combined; --watch "
+            "already selects suites per change.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
     try:
         config = load_config()
     except ConfigError as e:
@@ -664,6 +692,8 @@ def test(
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,
                 parallel=effective_parallel,
+                changed=changed,
+                base=base,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)
