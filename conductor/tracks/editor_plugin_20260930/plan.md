@@ -44,6 +44,9 @@ verification, conventional commits with git notes.
 
 ---
 
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions (9304277) — overlay clear() on plugin disable + is_instance_valid guard in clear()
+
 ## Testing Approach Note
 
 Phase 2/3 GDScript files are shipped plugin UI code that cannot run in headless
