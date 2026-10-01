@@ -54,10 +54,13 @@ respecting the realities of the Godot/GDScript ecosystem.
 ### Non-Goals
 
 1. **Not a general-purpose mocking or editor test framework.** The native
-   runtime provides focused assertions, async waits, lifecycle hooks, and
-   declarative scene/resource integration; broader mocking and editor
-   tooling are future work. GUT remains an explicit legacy
-   fallback during migration.
+   runtime provides focused assertions, async waits, lifecycle hooks,
+   declarative scene/resource integration, mocking/stubbing, and parameterized
+   tests; it is not a full IDE test framework. The bundled editor plugin
+   (test/coverage dock with a coverage heatmap overlay) covers run-and-inspect
+   workflows only. The GUT compatibility bridge — deprecated as of v0.5.0,
+   removal targeted for v0.6.0 — is the migration path for legacy GUT suites,
+   not a supported runtime.
 2. **Not a linter/formatter engine.** We use gdtoolkit. We do not implement
    our own static analysis or code formatting rules.
 3. **Not a Godot plugin manager.** We bootstrap our own native and coverage
@@ -65,8 +68,10 @@ respecting the realities of the Godot/GDScript ecosystem.
 4. **No C# support.** GDScript only. C# projects should use coverlet + GoDotTest.
 5. **No Godot < 4.5 support.** The coverage instrumentation relies on Godot 4.x
    Script APIs. Older versions are out of scope.
-6. **No IDE/editor integration in v1.** CLI only. Editor plugins are a future
-   possibility.
+6. **No deep IDE integration.** The workflow is CLI-first. The editor plugin
+   deployed by `gd-tools init` provides a test/coverage dock and a coverage
+   heatmap overlay, but the tool is not an IDE — there is no in-editor test
+   authoring, debugging, or source navigation.
 
 ---
 
@@ -126,7 +131,7 @@ respecting the realities of the Godot/GDScript ecosystem.
 ```
 gd-tools init                    Bootstrap native runtime (add `--with-gut` for legacy)
 gd-tools doctor                  Diagnose environment and configuration
-gd-tools test [options] [paths]   Run tests via native runtime (or `--runtime gut`)
+gd-tools test [options] [paths]   Run tests via the native runtime (GutTest suites route through the compatibility bridge)
 gd-tools lint [paths]...           Lint GDScript files via gdlint
 gd-tools format [options] [paths]...  Format GDScript files via gdformat
 gd-tools coverage report          Generate report from last coverage run
@@ -141,7 +146,7 @@ gd-tools completion [shell]      Generate shell completion script (bash, zsh, fi
 ### `gd-tools test`
 
 ```
-gd-tools test [paths]... [--runtime native|gut] [--coverage] [--min N] [--suite NAME]
+gd-tools test [paths]... [--coverage] [--min N] [--suite NAME]
               [--test NAME] [--tag TAG] [--test-timeout SECONDS] [--timeout SECONDS]
               [--junit-xml PATH] [--no-exit-code] [--show-uncovered]
 ```
@@ -149,7 +154,6 @@ gd-tools test [paths]... [--runtime native|gut] [--coverage] [--min N] [--suite 
 | Flag/Arg         | Description                                              |
 |------------------|----------------------------------------------------------|
 | `paths`          | One or more test files/directories to run (files are exact) |
-| `--runtime`      | `native` (default) or `gut` (explicit legacy compatibility path) |
 | `--coverage`     | Enable coverage instrumentation during test run         |
 | `--min N`        | Fail if coverage falls below N% (requires `--coverage`) |
 | `--suite NAME`   | Run only the named test suite                            |
@@ -162,8 +166,7 @@ gd-tools test [paths]... [--runtime native|gut] [--coverage] [--min N] [--suite 
 | `--show-uncovered` | Show uncovered lines and branches when coverage < 100% (requires `--coverage`) |
 
 When `paths` are provided, they override `test_dirs` from config. The native
-runtime accepts exact files or recursively scanned directories; the legacy
-runtime formats them as `res://path/` for GUT's `-gdir` flag.
+runtime accepts exact files or recursively scanned directories.
 
 **Exit codes:** 0 = pass, 1 = test failures, 2 = environment/config error.
 
@@ -181,8 +184,9 @@ assertion diagnostics plus Godot engine errors/warnings.
 
 Native coverage is activated transiently for the run and merged from per-suite
 shards into the existing plan-v1 coverage data. It does not require a permanent
-autoload. The legacy GUT path remains selectable with `--runtime gut` until the
-compatibility bridge is retired.
+autoload. Legacy `GutTest` suites run through the compatibility bridge —
+deprecated as of v0.5.0, removal targeted for v0.6.0 — with no separate
+runtime selectable.
 
 ### Scene and resource integration
 
@@ -391,7 +395,8 @@ retries = 0
 # Test file prefix/suffix (GUT convention retained for the legacy runtime).
 prefix = "test_"
 suffix = ".gd"
-# GUT config file path (used only by --runtime gut).
+# Legacy GUT config file path (not read by the native runtime or the bridge;
+# migration tooling translates supported settings into gd-tools.toml).
 gutconfig = ".gutconfig.json"
 
 [lint]
@@ -469,20 +474,23 @@ Download URL: `https://github.com/bitwes/Gut/archive/refs/tags/v{VERSION}.zip`
 
 ### Legacy GUT compatibility
 
-GUT remains a migration path, not the default runtime. Use
-`gd-tools init --with-gut` to install and enable it, or select
-`--runtime gut` on an already configured project. The native runtime does not
-register a GUT editor plugin, `.gutconfig.json`, or the `_GDTCoverage` autoload.
+The GUT compatibility bridge is the migration path, not a separate runtime:
+suites extending `GutTest` run on the native runner with no GUT addon
+installed. The bridge is deprecated as of v0.5.0; removal is targeted for
+v0.6.0 (see [docs/gut-migration.md](./gut-migration.md)). `gd-tools init
+--with-gut` still opts into legacy bootstrap files. The native runtime does
+not register a GUT editor plugin, `.gutconfig.json`, or the `_GDTCoverage`
+autoload.
 
-### Plugin Enabling in `project.godot` (legacy only)
+### GUT Editor Plugin Enabling in `project.godot` (legacy installs only)
 
 ```ini
 [editor_plugins]
 enabled=PackedStringArray("res://addons/gut/plugin.gd")
 ```
 
-- Added only by `gd-tools init --with-gut` or legacy configuration.
-- Idempotent: check if already present before adding.
+- Applies only to projects that installed GUT themselves; `gd-tools` no
+  longer downloads or deploys GUT.
 - The native runtime is headless and does not require an editor plugin.
 
 ### Coverage Addon Bundling
@@ -1140,14 +1148,16 @@ first:
 
 ## 17. Future Roadmap (Post-v1)
 
-- **`gd-tools coverage run`** — Coverage during manual playtesting (instrument
-  the game, play, collect coverage).
-- **Editor plugin** — Godot editor dock for running tests and viewing coverage
-  inline.
-- **Watch mode** — `gd-tools test --watch` re-runs affected tests on file
-  change.
-- **Coverage diff** — Show coverage changes between branches (like `codecov`).
-- **GdUnit4 support** — Alternative test framework support (currently GUT only).
+Delivered since v1 (see the [roadmap](./ROADMAP.md#native-runtime-transition-completed-foundation)
+and the CHANGELOG for details): `gd-tools coverage run` (playtest coverage),
+the editor plugin (test/coverage dock with a coverage heatmap overlay), watch
+mode (`gd-tools test --watch`), `--changed` suite selection, and coverage diff
+(`coverage save-baseline` / `coverage diff`).
+
+Still future:
+
+- **GdUnit4 support** — Alternative test framework support (GUT compatibility
+  bridge handles legacy GUT suites until v0.6.0).
 - **Pre-commit hooks** — `gd-tools install-hooks` for pre-commit framework
   integration.
 

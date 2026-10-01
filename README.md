@@ -312,6 +312,7 @@ gutconfig = ".gutconfig.json"  # legacy; not read by the native runtime or the b
 runtime = "native"        # native (default); "gut" is no longer a runnable runtime
 timeout_seconds = 5.0     # default per-test timeout for async native tests
 retries = 0               # opt-in retries per native test
+# parallel = 4            # opt-in parallel suite execution (1-32; unset runs sequentially)
 tags = []                 # native suite tag filters
 
 [lint]
