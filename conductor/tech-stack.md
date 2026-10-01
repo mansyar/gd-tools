@@ -48,6 +48,7 @@
 | **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
 | **Native Test Addon** (`addons/gd-tools-test/`) | `GdToolsTest` base class, transient native runner, assertions, lifecycle management, and native coverage integration. Ships as package data; no new runtime dependency. Files: `gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`, `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd` — all five are managed by `gd-tools init` and verified by `gd-tools doctor`. |
 | **GUT** (legacy, discouraged) | GDScript test framework downloadable via `gd-tools init --with-gut`. Conflicts with the compatibility bridge's own `class_name GutTest`; `doctor` warns when it is installed. Not a native runtime dependency. Version-mapped to Godot version during the migration period (4.5→9.5.0, 4.6→9.6.0, 4.7→9.7.0). |
+| **Editor Plugin** (`addons/gd-tools-editor/`) | Godot editor plugin: test/coverage dock panel (async CLI runs, results summary, missing-CLI fallback) and a `CodeEdit` coverage heatmap overlay (green/red/yellow line backgrounds from `.gd-tools/` artifacts). Ships as package data. Files: `plugin.gd`, `dock.gd`, `coverage_overlay.gd` — deployed by `gd-tools init` and verified by `gd-tools doctor`. |
 
 ---
 

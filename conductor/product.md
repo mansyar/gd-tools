@@ -85,7 +85,10 @@ This positioning avoids leading with the riskiest, most complex feature while ma
 3. Not a Godot plugin manager — we bootstrap the native test addon, coverage addon, and optional GUT bridge only.
 4. No C# support — GDScript only.
 5. No Godot < 4.5 support.
-6. No IDE/editor integration in v1 — CLI only.
+6. No IDE/editor integration in v1 — CLI only. (Post-v1 evolution: the
+   `gd-tools` editor plugin — a test/coverage dock and inline coverage
+   heatmap overlay — is now deployed by `gd-tools init`; see Roadmap
+   Track 35.)
 
 ## 8. Success Criteria
 
