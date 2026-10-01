@@ -34,11 +34,11 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: 0c3860a]
 
 ## Phase 4: Docs Truth Pass
-- [~] Task: Fix CHANGELOG v0.5.0 "Known Limitations" stale editor-plugin claim
-- [ ] Task: Refresh stale ROADMAP Phase 5 checkboxes/status entries to match delivered reality
-- [ ] Task: Targeted sweep of README + `docs/` for demonstrably false claims; correct only verified drift
-- [ ] Task: Update CHANGELOG Unreleased section with schema feature + docs fixes
-- [ ] Task: Commit (`docs: truth pass — correct stale claims and record schema feature`) + attach git note
+- [x] Task: Fix CHANGELOG v0.5.0 "Known Limitations" stale editor-plugin claim [74c2345]
+- [x] Task: Refresh stale ROADMAP Phase 5 checkboxes/status entries to match delivered reality [74c2345]
+- [x] Task: Targeted sweep of README + `docs/` for demonstrably false claims; correct only verified drift [74c2345 — Tracks 31/32 "Planned" verified accurate; GUT_VERSION_MAP reference verified]
+- [x] Task: Update CHANGELOG Unreleased section with schema feature + docs fixes [74c2345]
+- [x] Task: Commit (`docs: truth pass — correct stale claims and record schema feature`) + attach git note [74c2345]
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5: Track Finalization
