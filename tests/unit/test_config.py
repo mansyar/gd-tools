@@ -1000,9 +1000,7 @@ def test_gdtools_config_schema_key_round_trips_clean():
 def test_gdtools_config_unknown_key_still_rejected():
     """extra='forbid' still rejects typo'd keys other than $schema."""
     with pytest.raises(ValidationError):
-        GdToolsConfig(
-            **{"$schema": "./gd-tools.schema.json", "typo_key": 1}
-        )
+        GdToolsConfig(**{"$schema": "./gd-tools.schema.json", "typo_key": 1})
 
 
 def test_gdtools_config_unknown_section_still_rejected():
