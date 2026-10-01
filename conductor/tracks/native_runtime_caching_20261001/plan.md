@@ -31,7 +31,7 @@
 - [x] Task: Refactor and verify coverage gates (bc1744f)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: 5fbc7c5]
 
-## Phase 3 — CLI Flag & Verbose UX
+## Phase 3 — CLI Flag & Verbose UX [checkpoint: fa628ac]
 
 - [x] Task: Write failing tests for `--no-cache` on `gd-tools test` (bypasses
   read and write) and `--verbose` hit/miss output with reason → verify Red
@@ -39,7 +39,7 @@
 - [x] Task: Plumb the flag through `cli.py` → `command.py` and add verbose
   logging → verify Green (b673a51)
 - [x] Task: Refactor and verify coverage gates (b673a51)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: fa628ac]
 
 ## Phase 4 — Benchmark, Clean Regression & Docs
 
