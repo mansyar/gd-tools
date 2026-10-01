@@ -11,7 +11,7 @@
 - [x] Task: Implement `$schema` handling in the Pydantic root model (Green) [2504034]
 - [x] Task: Verify coverage for the changed module (≥80% line / ≥70% branch) [2504034 — config.py 99% line / 96% branch]
 - [x] Task: Commit (`feat(config): accept and ignore $schema key in gd-tools.toml`) + attach git note [2504034]
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: ab2a834]
 
 ## Phase 2: `gd-tools config schema` Command
 - [ ] Task: Write failing tests for the schema command (Red)
