@@ -19,7 +19,7 @@
 - [x] Task: Refactor and verify coverage gates for the new module (e5bac86)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — Command Flow Integration
+## Phase 2 — Command Flow Integration [checkpoint: 5fbc7c5]
 
 - [x] Task: Write failing unit/integration tests: cache hit skips
   `run_native_preflight()` (no Godot preflight process spawned) and copies the
@@ -28,8 +28,8 @@
 - [x] Task: Wire cache lookup/store into the native test command flow in
   `src/gd_tools/native_test/command.py` between suite discovery and preflight →
   verify Green (b79beed)
-- [~] Task: Refactor and verify coverage gates
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Refactor and verify coverage gates (bc1744f)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: 5fbc7c5]
 
 ## Phase 3 — CLI Flag & Verbose UX
 
