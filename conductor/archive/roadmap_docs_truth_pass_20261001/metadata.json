@@ -1,0 +1,8 @@
+{
+  "track_id": "roadmap_docs_truth_pass_20261001",
+  "type": "chore",
+  "status": "complete",
+  "created_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-01T00:00:00Z",
+  "description": "Documentation truth pass: fold the temporary native-runtime migration roadmap (ROADMAP.md §8) into the main roadmap, refresh ARCHITECTURE.md known limitations against shipped tracks, and reconcile README/USER_GUIDE/PRD factual claims with the shipped v0.5.0 feature set. Explicit Phase 5 leftover; clears the path for the v0.6.0 bridge-removal track."
+}

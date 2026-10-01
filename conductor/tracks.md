@@ -171,6 +171,14 @@ _Archived tracks live in `./archive/`._
 
 ---
 
+- [x] **Track: Roadmap & Docs Truth Pass** (archived →
+  `./archive/roadmap_docs_truth_pass_20261001/`) - fold the temporary
+  native-runtime migration roadmap (`docs/ROADMAP.md` §8) into the main
+  roadmap with anchor links rewritten, refresh `ARCHITECTURE.md` known
+  limitations against shipped tracks, and reconcile README / USER_GUIDE /
+  PRD factual claims with the shipped v0.5.0 feature set; explicit Phase 5
+  leftover, no `src/` changes, clears the path for the v0.6.0
+  bridge-removal track
 - [x] **Track: Config JSON Schema + Docs Pass** (feature+chore: a JSON Schema for
   `gd-tools.toml` generated from the Pydantic model — new `gd-tools config schema`
   command, checked-in `docs/gd-tools.schema.json` snapshot with a sync test, and

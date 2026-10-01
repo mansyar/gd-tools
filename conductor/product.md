@@ -222,5 +222,5 @@ The migration is complete when:
 8. Documentation, CI, packaging, and release checks reflect the native
    runtime as the supported path.
 
-See the temporary migration roadmap in
-[docs/ROADMAP.md](../docs/ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap).
+See the [native runtime transition section](../docs/ROADMAP.md#native-runtime-transition-completed-foundation)
+in the roadmap for the transition status and remaining work.
