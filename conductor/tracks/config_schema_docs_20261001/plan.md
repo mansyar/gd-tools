@@ -3,14 +3,14 @@
 **Track:** `config_schema_docs_20261001`
 
 ## Phase 1: `$schema` Key Support in Config Model
-- [ ] Task: Write failing tests for `$schema` key acceptance (Red)
-  - [ ] Test: `gd-tools.toml` with `$schema = "..."` loads and validates successfully
-  - [ ] Test: `$schema` key does not appear in the parsed config model dump
-  - [ ] Test: unknown typo'd keys still fail validation (`extra='forbid'` unchanged)
-  - [ ] Test: `config validate` on a `$schema`-bearing config exits 0
-- [ ] Task: Implement `$schema` handling in the Pydantic root model (Green)
-- [ ] Task: Verify coverage for the changed module (≥80% line / ≥70% branch)
-- [ ] Task: Commit (`feat(config): accept and ignore $schema key in gd-tools.toml`) + attach git note
+- [x] Task: Write failing tests for `$schema` key acceptance (Red)
+  - [x] Test: `gd-tools.toml` with `$schema = "..."` loads and validates successfully
+  - [x] Test: `$schema` key does not appear in the parsed config model dump
+  - [x] Test: unknown typo'd keys still fail validation (`extra='forbid'` unchanged)
+  - [x] Test: `config validate` on a `$schema`-bearing config exits 0
+- [x] Task: Implement `$schema` handling in the Pydantic root model (Green) [2504034]
+- [x] Task: Verify coverage for the changed module (≥80% line / ≥70% branch) [2504034 — config.py 99% line / 96% branch]
+- [x] Task: Commit (`feat(config): accept and ignore $schema key in gd-tools.toml`) + attach git note [2504034]
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: `gd-tools config schema` Command
