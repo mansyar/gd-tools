@@ -146,7 +146,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: `test --changed` — Affected-Suite Selection** (feature: add
+- [x] **Track: `test --changed` — Affected-Suite Selection** (feature: add
   `gd-tools test --changed [--base <ref>]` to run only suites affected by
   changed files — working tree or git ref via merge-base — reusing the
   watch-mode file→suite mapping as shared selection logic, with full-suite

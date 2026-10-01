@@ -70,7 +70,7 @@ exit semantics.
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 3 — E2E validation, documentation, and track close-out [checkpoint: `PENDING`]
+## Phase 3 — E2E validation, documentation, and track close-out [checkpoint: `9aa5ac2`]
 
 **Purpose:** Prove the feature end-to-end on a real git-backed Godot
 fixture project and land user-facing documentation.
