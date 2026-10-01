@@ -90,3 +90,7 @@ fixture project and land user-facing documentation.
   - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`.
   - [x] Perform the workflow's manual verification and obtain user confirmation.
   - [x] Create the final checkpoint commit, git note, and recorded SHA.
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions [commit: `2d28f32`]
