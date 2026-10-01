@@ -39,7 +39,7 @@ before touching the CLI.
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 2 — CLI integration for `--changed` / `--base`
+## Phase 2 — CLI integration for `--changed` / `--base` [checkpoint: `7f65608`]
 
 **Purpose:** Wire change collection and shared selection into the `test`
 command's discovery→orchestration flow with the specified reporting and

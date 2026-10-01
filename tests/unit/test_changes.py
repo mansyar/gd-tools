@@ -82,7 +82,7 @@ def test_base_mode_diffs_from_merge_base(tmp_path):
                 args, 0, stdout="abc1234\n", stderr=""
             )
         assert args[1] == "diff"
-        assert args[2:4] == ["--name-only", "abc1234"]
+        assert args[2:5] == ["--name-only", "abc1234", "HEAD"]
         return subprocess.CompletedProcess(
             args, 0, stdout="src/enemy.gd\nsrc/player.gd\n", stderr=""
         )

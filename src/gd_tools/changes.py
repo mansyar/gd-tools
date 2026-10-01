@@ -46,7 +46,8 @@ def collect_changed_files(
         return _parse_porcelain(result.stdout)
     merge_base = _git(["merge-base", base, "HEAD"], project_root)
     result = _git(
-        ["diff", "--name-only", merge_base.stdout.strip()], project_root
+        ["diff", "--name-only", merge_base.stdout.strip(), "HEAD"],
+        project_root,
     )
     return _parse_name_only(result.stdout)
 
