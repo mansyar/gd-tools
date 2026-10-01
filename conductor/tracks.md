@@ -186,3 +186,14 @@ _Archived tracks live in `./archive/`._
   the stale CHANGELOG "Known Limitations" editor-plugin claim, ROADMAP Phase 5
   checkboxes, and other demonstrably false docs claims)
   *Link: [config_schema_docs_20261001](./archive/config_schema_docs_20261001/index.md)*
+
+---
+
+- [ ] **Track: GUT Bridge Removal (v0.6.0)** (refactor: remove the deprecated
+  GUT Compatibility Bridge runtime — `GutTest` shim, `extends GutTest`
+  auto-routing, bridge normalization — make the native runtime the sole test
+  runtime with explicit v0.6.0 removal errors for `--runtime gut` and GUT
+  config values, keep `gd-tools migrate` and its scanner as the permanent
+  migration path, reframe `doctor` as a migration advisor, and prepare the
+  v0.6.0 release: version bump, CHANGELOG, full docs truth pass)
+  *Link: [gut_bridge_removal_20261001](./tracks/gut_bridge_removal_20261001/index.md)*
