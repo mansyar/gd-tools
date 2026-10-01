@@ -141,9 +141,9 @@ files).
 After the bounded migration period the bridge itself is removed and
 `extends GutTest` stops resolving. Plan your suites to end on
 `extends GdToolsTest`; the bridge exists to make that move incremental
-rather than big-bang. See
-[Roadmap §8](./ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)
-for the migration roadmap status.
+rather than big-bang. See the [Native Runtime Transition
+section](./ROADMAP.md#native-runtime-transition-completed-foundation)
+in the roadmap for the migration status.
 
 The native runtime now covers signal assertions directly on `GdToolsTest`:
 `watch_signals`, `assert_signal_emitted`, `assert_signal_not_emitted`,

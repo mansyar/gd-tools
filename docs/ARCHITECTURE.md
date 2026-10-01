@@ -12,8 +12,8 @@ For the full product specification, see [PRD Section
 10](./PRD.md#10-coverage-architecture). For the original proof-of-concept
 spike, see [SPIKE: Coverage
 Instrumentation](./SPIKE_coverage_instrumentation.md). For the native runtime
-migration roadmap, see [ROADMAP Section
-8](./ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap).
+migration status, see the [Native Runtime Transition
+section](./ROADMAP.md#native-runtime-transition-completed-foundation).
 
 ---
 
@@ -1286,7 +1286,7 @@ Isolation over throughput. See [8.2](#82-isolation-model).
 | Topic | Document | Section |
 |-------|----------|---------|
 | Coverage system architecture | This document | Part I, Sections 1-7 |
-| Native runtime migration roadmap | [ROADMAP](./ROADMAP.md) | Section 8 |
+| Native runtime migration roadmap | [ROADMAP](./ROADMAP.md) | Native Runtime Transition |
 | Native product decisions | [Conductor product definition](../conductor/product.md) | Section 9 |
 | `gd-tools test` command reference | [User Guide](./USER_GUIDE.md) | Section 3.4 |
 | Native runtime configuration keys | [User Guide](./USER_GUIDE.md) | Section 2.3 |
@@ -1306,4 +1306,5 @@ own: it supports only the documented core subset of the GUT API
 outside that subset fail at preflight with per-file guidance instead of
 running incompletely. The bridge is deprecated as of v0.5.0; it is
 removed in v0.6.0, after which `extends GutTest` stops resolving (see
-[Roadmap §8](./ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)).
+the [Native Runtime Transition
+section](./ROADMAP.md#native-runtime-transition-completed-foundation)).

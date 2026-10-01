@@ -212,7 +212,7 @@ bridge itself is
 deprecated as of v0.5.0 and will be removed in v0.6.0. See the
 [migration guide](./docs/gut-migration.md) for the bridge's supported subset,
 [User Guide](./docs/USER_GUIDE.md#34-test) for the full flag reference, and
-[Roadmap](./docs/ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)
+[Roadmap](./docs/ROADMAP.md#native-runtime-transition-completed-foundation)
 for what is planned.
 
 ### Verbosity Control
