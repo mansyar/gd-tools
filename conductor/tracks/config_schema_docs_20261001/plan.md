@@ -26,11 +26,11 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: fb7b5b9]
 
 ## Phase 3: Checked-in Snapshot + Sync Test + README
-- [~] Task: Write failing sync test (Red)
-  - [ ] Test: `docs/gd-tools.schema.json` is byte-identical to current model schema output; failure message includes the regeneration command
-- [ ] Task: Generate and commit `docs/gd-tools.schema.json` (Green)
-- [ ] Task: Document schema usage in README (`$schema` key example + editor-side association for taplo/VS Code Even Better TOML)
-- [ ] Task: Commit (`feat(config): check in generated JSON Schema snapshot with sync test`) + attach git note
+- [x] Task: Write failing sync test (Red)
+  - [x] Test: `docs/gd-tools.schema.json` is byte-identical to current model schema output; failure message includes the regeneration command
+- [x] Task: Generate and commit `docs/gd-tools.schema.json` (Green) [2f5b1f7]
+- [x] Task: Document schema usage in README (`$schema` key example + editor-side association for taplo/VS Code Even Better TOML) [2f5b1f7]
+- [x] Task: Commit (`feat(config): check in generated JSON Schema snapshot with sync test`) + attach git note [2f5b1f7]
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Docs Truth Pass
