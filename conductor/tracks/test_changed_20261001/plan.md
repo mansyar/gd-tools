@@ -11,33 +11,33 @@
 watch loop's mapping logic into a shared, unit-testable selection function
 before touching the CLI.
 
-- [ ] Task: Add failing tests for git change collection (Red)
-  - [ ] Cover working-tree mode: staged, unstaged, untracked, and deleted files via `git status --porcelain`.
-  - [ ] Cover `--base` mode: `git diff --name-only merge-base(ref, HEAD)` semantics.
-  - [ ] Cover not-a-git-repo → typed error (maps to exit 2).
-  - [ ] Cover invalid `--base` ref → typed error (maps to exit 2).
-  - [ ] Cover empty change set.
-  - [ ] Mock git subprocess invocations (no real repos in unit tests).
-  - [ ] Run targeted tests and confirm the expected Red phase.
-- [ ] Task: Implement `collect_changed_files` module (Green)
-  - [ ] Add the minimal change-collection boundary (new module under `src/gd_tools/`).
-  - [ ] Parse `git status --porcelain` and `git diff --name-only` output with `pathlib` handling.
-  - [ ] Resolve merge-base for `--base` mode; validate the ref.
-  - [ ] Raise actionable, typed errors for repo/ref failures (exit-2 semantics).
-  - [ ] Run targeted tests to Green.
-- [ ] Task: Add failing tests for shared suite selection (Red)
-  - [ ] Extract the watch loop's mapping block (changed paths → mapped suites | unmapped list) into a reusable function co-located with `watch/mapping.py`.
-  - [ ] Cover: mapped-only selection, unmapped fallback partition, deleted paths, respect for already-filtered suite lists.
-  - [ ] Confirm the expected Red phase.
-- [ ] Task: Implement selection function and refactor watch loop (Green)
-  - [ ] Implement the shared selection function.
-  - [ ] Refactor `watch/loop.py` to use it — no behavior change (surgical refactor).
-  - [ ] Run the full watch-mode regression tests to Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run targeted unit tests and static checks (`ruff check`, `black --check`).
-  - [ ] Verify watch-mode regression tests pass unchanged.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+- [x] Task: Add failing tests for git change collection (Red) [commit: `a1bd066`]
+  - [x] Cover working-tree mode: staged, unstaged, untracked, and deleted files via `git status --porcelain`.
+  - [x] Cover `--base` mode: `git diff --name-only merge-base(ref, HEAD)` semantics.
+  - [x] Cover not-a-git-repo → typed error (maps to exit 2).
+  - [x] Cover invalid `--base` ref → typed error (maps to exit 2).
+  - [x] Cover empty change set.
+  - [x] Mock git subprocess invocations (no real repos in unit tests).
+  - [x] Run targeted tests and confirm the expected Red phase.
+- [x] Task: Implement `collect_changed_files` module (Green) [commit: `d09a732`]
+  - [x] Add the minimal change-collection boundary (new module under `src/gd_tools/`).
+  - [x] Parse `git status --porcelain` and `git diff --name-only` output with `pathlib` handling.
+  - [x] Resolve merge-base for `--base` mode; validate the ref.
+  - [x] Raise actionable, typed errors for repo/ref failures (exit-2 semantics).
+  - [x] Run targeted tests to Green.
+- [x] Task: Add failing tests for shared suite selection (Red) [commit: `8c8a0f5`]
+  - [x] Extract the watch loop's mapping block (changed paths → mapped suites | unmapped list) into a reusable function co-located with `watch/mapping.py`.
+  - [x] Cover: mapped-only selection, unmapped fallback partition, deleted paths, respect for already-filtered suite lists.
+  - [x] Confirm the expected Red phase.
+- [x] Task: Implement selection function and refactor watch loop (Green) [commit: `2b111b9`]
+  - [x] Implement the shared selection function.
+  - [x] Refactor `watch/loop.py` to use it — no behavior change (surgical refactor).
+  - [x] Run the full watch-mode regression tests to Green.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Run targeted unit tests and static checks (`ruff check`, `black --check`).
+  - [x] Verify watch-mode regression tests pass unchanged.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 2 — CLI integration for `--changed` / `--base`
 
