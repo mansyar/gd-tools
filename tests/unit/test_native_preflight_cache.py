@@ -14,6 +14,7 @@ from gd_tools.native_test.preflight_cache import (
 from gd_tools.native_test.protocol import (
     NativePreflightResult,
     NativeSuite,
+    NativeSuiteIntegration,
     RuntimeMode,
 )
 
@@ -82,6 +83,45 @@ def test_cache_key_changes_when_project_inputs_change(tmp_path, mutate):
         [_suite()], project_root=tmp_path, godot_version="4.5.2"
     )
     assert before != after
+
+
+def _integration_suite(path: str = "res://test/suite.gd") -> NativeSuite:
+    return NativeSuite(
+        name="Suite",
+        path=path,
+        runtime=RuntimeMode.NATIVE,
+        integration=NativeSuiteIntegration(
+            scene="res://scenes/arena.tscn",
+            resources={"Player": "res://scenes/player.tscn"},
+        ),
+    )
+
+
+def test_cache_key_changes_when_integration_inputs_change(tmp_path):
+    """Integration scene/resource content changes invalidate the key."""
+    _write_project(tmp_path)
+    scenes = tmp_path / "scenes"
+    scenes.mkdir()
+    (scenes / "arena.tscn").write_text("[node]\n", encoding="utf-8")
+    (scenes / "player.tscn").write_text("[node]\n", encoding="utf-8")
+    suite = _integration_suite()
+    base = compute_cache_key(
+        [suite], project_root=tmp_path, godot_version="4.5.2"
+    )
+
+    (scenes / "arena.tscn").write_text(
+        "[node]\n# changed\n", encoding="utf-8"
+    )
+    changed_scene = compute_cache_key(
+        [suite], project_root=tmp_path, godot_version="4.5.2"
+    )
+    assert changed_scene != base
+
+    (scenes / "player.tscn").unlink()
+    missing_resource = compute_cache_key(
+        [suite], project_root=tmp_path, godot_version="4.5.2"
+    )
+    assert missing_resource != changed_scene
 
 
 def test_cache_key_changes_with_godot_version_or_suite_set(tmp_path):
