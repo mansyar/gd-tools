@@ -189,7 +189,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Import-Step Caching** (feature: skip the unconditional
+- [~] **Track: Import-Step Caching** (feature: skip the unconditional
   `godot --headless --import` on unchanged projects via a content-hash
   import-freshness cache under `.gd-tools/native/import-cache/`, mirroring the
   preflight-cache conventions — fail-open, `--no-cache` bypass, verbose
