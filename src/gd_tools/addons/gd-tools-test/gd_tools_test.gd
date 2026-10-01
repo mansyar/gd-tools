@@ -721,8 +721,8 @@ func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> boo
 
 
 ## Maximum number of signal arguments a watched emission can capture per
-## signal. Real-world signals stay far below this; emissions with more
-## arguments still record, but only the first arguments here are kept.
+## signal. Signals declaring more arguments than this are not captured;
+## assertions against them will report no emissions.
 const _GD_TOOLS_SIGNAL_ARG_SLOTS := 10
 
 
@@ -732,7 +732,9 @@ func watch_signals(target: Object) -> void:
 	## Recordings are scoped to the current test: watchers disconnect
 	## automatically at test end and never leak into other tests. Any Object
 	## can be watched, including doubles. Assertions on an unwatched object
-	## fail with guidance instead of silently passing.
+	## fail with guidance instead of silently passing. Note that watching
+	## keeps a reference to `target` until test end, extending the lifetime
+	## of RefCounted objects.
 	if target == null or not is_instance_valid(target):
 		_gd_tools_record_failure(
 			"watch_signals",
@@ -1033,10 +1035,7 @@ func _gd_tools_record_watched_emission(
 	var entry: Dictionary = _gd_tools_signal_watchers.get(instance_id, {})
 	if entry.is_empty():
 		return
-	(
-		entry["emissions"]
-		. append({"signal": signal_name, "args": args})
-	)
+	entry["emissions"].append({"signal": signal_name, "args": args})
 
 
 func _gd_tools_double_calls(target: Object, method: String) -> Array:
