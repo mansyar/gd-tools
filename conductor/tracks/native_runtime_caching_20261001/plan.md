@@ -49,7 +49,7 @@
   spec NFR-3/AC-6 revised 2026-10-01) (9980661)
 - [x] Task: Add a regression test that `gd-tools clean --cache` removes
   `preflight-cache/` (9e5163b)
-- [~] Task: Update documentation — README (test command + cache note),
+- [x] Task: Update documentation — README (test command + cache note),
   ROADMAP.md (close the Phase 5 "native runtime caching" item), CHANGELOG.md
-  (Unreleased)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  (Unreleased) (7bcb740)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
