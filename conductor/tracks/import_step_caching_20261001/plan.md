@@ -46,7 +46,7 @@
   - [ ] Honor the global `--no-cache` flag end-to-end.
   - [ ] Emit verbose hit/miss messages.
   - [ ] Run the pipeline tests to Green, then the full unit suite for regressions.
-- [ ] Task: Add integration-level regression coverage
+- [x] Task: Add integration-level regression coverage [599d657]
   - [ ] Verify JUnit XML / JSON report outputs and exit-code conventions are unchanged by the gating.
   - [ ] Verify watch-mode sessions observe a cache miss after any file change and a hit on unchanged resume (no watch-specific code paths).
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
