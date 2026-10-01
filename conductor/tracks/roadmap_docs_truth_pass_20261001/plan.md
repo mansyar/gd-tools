@@ -20,11 +20,13 @@ Workflow step 3). Verification is via search checks and diff inspection.
 
 ## Phase 2: Refresh ARCHITECTURE.md Known Limitations
 
-- [ ] Task: Cross-check every stated limitation against shipped tracks
-  - [ ] Mark/remove closed limitations (parameterized tests, suite-level skip, signal assertions, editor plugin)
-  - [ ] Keep true remaining limitations (headless-only runtime, bridge core-subset constraint, etc.) with accurate wording
-- [ ] Task: Verify bridge-deprecation notes keep "deprecated v0.5.0 / removed v0.6.0" framing (NFR-3)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Cross-check every stated limitation against shipped tracks
+  - [x] Mark/remove closed limitations (parameterized tests, suite-level skip, signal assertions, editor plugin)
+  - [x] Keep true remaining limitations (headless-only runtime, bridge core-subset constraint, etc.) with accurate wording
+- [x] Task: Verify bridge-deprecation notes keep "deprecated v0.5.0 / removed v0.6.0" framing (NFR-3)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+[checkpoint: pending]
 
 ## Phase 3: Reconcile README, USER_GUIDE, and PRD with Shipped Reality
 
