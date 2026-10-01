@@ -9,10 +9,10 @@
 
 ## Phase 1 — Preflight Cache Core
 
-- [ ] Task: Write failing unit tests for the preflight cache module — cache-key
+- [x] Task: Write failing unit tests for the preflight cache module — cache-key
   computation (suite set, test-file hashes, `project.godot`, Godot version,
   addon file hashes, schema version), hit/miss read, atomic store, corrupt-file
-  and OSError fail-open behavior → verify Red
+  and OSError fail-open behavior → verify Red (1631d55)
 - [ ] Task: Implement `src/gd_tools/native_test/preflight_cache.py` —
   `load_cached_preflight()` / `store_cached_preflight()` using
   `write_json_atomic`, schema-versioned payload → verify Green
