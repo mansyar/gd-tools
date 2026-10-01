@@ -253,5 +253,6 @@ def test_native_cli_explicit_gut_runtime_is_rejected_with_guidance(
 
     assert result.returncode == 2
     output = result.stdout + result.stderr
-    assert "compatibility bridge" in output
+    assert "removed in v0.6.0" in output
+    assert "gd-tools migrate" in output
     assert "docs/gut-migration.md" in output
