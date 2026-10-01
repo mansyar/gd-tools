@@ -37,13 +37,15 @@
 
 ## Phase 3 — Edge Cases & Robustness
 
-- [ ] Task: Edge-case tests (Red)
-  - [ ] Signals on doubles created by `double()`/`partial_double()`
-  - [ ] Emissions during `before_all`/`before_test` hooks scoped correctly
-  - [ ] Watched object freed mid-test (no dangling-reference error at teardown)
-  - [ ] Multiple `watch_signals` calls on different objects in one test
-- [ ] Task: Implement fixes/handling for failing edge cases (Green)
-- [ ] Task: Run full suite + coverage gates (`CI=true pytest --cov=gd_tools --cov-branch`, `ruff check`, `black --check`)
+- [x] Task: Edge-case tests (Red)
+  - [x] Signals on doubles created by `double()`/`partial_double()` — doubles inherit declared signals; watchable as ordinary Objects
+  - [x] Emissions during `before_all`/`before_each` hooks scoped correctly — separate `signal_hook_scope_suite.gd` proves `before_each` watches/emissions are captured in the test body
+  - [x] Watched object freed mid-test (no dangling-reference error at teardown) — reset walks the registry with validity guards
+  - [x] Multiple `watch_signals` calls on different objects in one test — per-object registry isolation
+  *Outcome: all four cases already green under the Phase 1/2 design; tests pin the contracts rather than drive fixes (no Green changes required). New fixture: `scripts/signal_subject.gd` (doubles inherit `ping`).*
+  *Commit: 6027cd2*
+- [x] Task: Implement fixes/handling for failing edge cases (Green) — *none required; see Red outcome above*
+- [x] Task: Run full suite + coverage gates (`CI=true pytest --cov=gd_tools --cov-branch`, `ruff check`, `black --check`) — *ruff/black clean; 1522 passed, 7 skipped; coverage 94.41%*
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Documentation & Integration
