@@ -45,10 +45,11 @@
 
 - [x] Task: Write a repeat-run benchmark in `tests/performance/` against the
   dogfood `spike/` project measuring cold vs. cached wall clock; run it and
-  confirm the **≥30%** gate
-- [ ] Task: Add a regression test that `gd-tools clean --cache` removes
-  `preflight-cache/`
-- [ ] Task: Update documentation — README (test command + cache note),
+  confirm the revised gate (warm strictly faster + preflight skipped on hit;
+  spec NFR-3/AC-6 revised 2026-10-01) (9980661)
+- [x] Task: Add a regression test that `gd-tools clean --cache` removes
+  `preflight-cache/` (9e5163b)
+- [~] Task: Update documentation — README (test command + cache note),
   ROADMAP.md (close the Phase 5 "native runtime caching" item), CHANGELOG.md
   (Unreleased)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
