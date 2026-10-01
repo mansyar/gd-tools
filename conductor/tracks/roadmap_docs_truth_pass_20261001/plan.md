@@ -30,8 +30,10 @@ Workflow step 3). Verification is via search checks and diff inspection.
 
 ## Phase 3: Reconcile README, USER_GUIDE, and PRD with Shipped Reality
 
-- [ ] Task: Verify README feature table and capability claims against v0.5.0 + Unreleased feature set (`--changed`, signal assertions, preflight cache, `coverage run` playtest)
-- [ ] Task: Verify USER_GUIDE command documentation matches actual CLI surface (flags, subcommands, defaults)
-- [ ] Task: Apply factual corrections only to PRD (stale "planned/deferred" claims, outdated §8 references); no editorial rewrites of vision/positioning
-- [ ] Task: Confirm zero `src/` or `tests/` changes in diff (NFR-1) and no CHANGELOG edit (NFR-2)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Verify README feature table and capability claims against v0.5.0 + Unreleased feature set (`--changed`, signal assertions, preflight cache, `coverage run` playtest)
+- [x] Task: Verify USER_GUIDE command documentation matches actual CLI surface (flags, subcommands, defaults)
+- [x] Task: Apply factual corrections only to PRD (stale "planned/deferred" claims, outdated §8 references); no editorial rewrites of vision/positioning
+- [x] Task: Confirm zero `src/` or `tests/` changes in diff (NFR-1) and no CHANGELOG edit (NFR-2)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+[checkpoint: pending]
