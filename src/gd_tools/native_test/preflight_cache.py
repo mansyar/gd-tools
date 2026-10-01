@@ -87,6 +87,15 @@ def compute_cache_key(
         components.append(suite.model_dump_json())
         source_hash = _hash_file(_resolve_res_path(suite.path, project_root))
         components.append(f"{suite.path}:{source_hash}")
+        integration = suite.integration
+        if integration is not None:
+            integration_inputs: list[str] = []
+            if integration.scene is not None:
+                integration_inputs.append(integration.scene)
+            integration_inputs.extend(integration.resources.values())
+            for resource_path in integration_inputs:
+                resolved = _resolve_res_path(resource_path, project_root)
+                components.append(f"{resource_path}:{_hash_file(resolved)}")
     components.append(
         f"project.godot:{_hash_file(project_root / 'project.godot')}"
     )
@@ -185,6 +194,8 @@ def run_preflight_cached(
         run_dir: Preflight artifact directory for this run.
         cache_dir: Directory holding the preflight cache entries.
         timeout_seconds: Godot process timeout for a real preflight.
+        use_cache: When ``False``, skip both the cache lookup and the
+            store, so the real preflight always runs.
 
     Returns:
         The effective preflight result for this run.

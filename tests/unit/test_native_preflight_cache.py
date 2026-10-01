@@ -109,9 +109,7 @@ def test_cache_key_changes_when_integration_inputs_change(tmp_path):
         [suite], project_root=tmp_path, godot_version="4.5.2"
     )
 
-    (scenes / "arena.tscn").write_text(
-        "[node]\n# changed\n", encoding="utf-8"
-    )
+    (scenes / "arena.tscn").write_text("[node]\n# changed\n", encoding="utf-8")
     changed_scene = compute_cache_key(
         [suite], project_root=tmp_path, godot_version="4.5.2"
     )
