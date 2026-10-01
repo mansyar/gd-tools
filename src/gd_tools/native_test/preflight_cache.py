@@ -193,10 +193,19 @@ def run_preflight_cached(
         NativePreflightError: When the real preflight fails. Errors are
             never cached.
     """
+    if not use_cache:
+        output.print_verbose("Preflight cache disabled (--no-cache)")
+        return run_native_preflight(
+            project_root,
+            manifest,
+            godot_binary=godot_binary,
+            run_dir=run_dir,
+            timeout_seconds=timeout_seconds,
+        )
     cache_key = compute_cache_key(
         manifest.suites, project_root=project_root, godot_version=godot_version
     )
-    cached = load_cached_preflight(cache_dir, cache_key) if use_cache else None
+    cached = load_cached_preflight(cache_dir, cache_key)
     if cached is not None:
         try:
             write_json_atomic(run_dir / "preflight.manifest.json", manifest)
@@ -214,6 +223,6 @@ def run_preflight_cached(
         run_dir=run_dir,
         timeout_seconds=timeout_seconds,
     )
-    if use_cache and result.status == "ok":
+    if result.status == "ok":
         store_cached_preflight(cache_dir, cache_key, result)
     return result

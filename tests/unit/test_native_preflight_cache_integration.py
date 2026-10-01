@@ -92,9 +92,14 @@ def test_use_cache_false_skips_load_and_store(tmp_path):
     manifest = _manifest(tmp_path)
     cache_dir = tmp_path / ".gd-tools" / "native" / "preflight-cache"
 
-    with patch(
-        "gd_tools.native_test.preflight_cache.run_native_preflight"
-    ) as run:
+    with (
+        patch(
+            "gd_tools.native_test.preflight_cache.run_native_preflight"
+        ) as run,
+        patch(
+            "gd_tools.native_test.preflight_cache.output.print_verbose"
+        ) as verbose,
+    ):
         run.return_value = _ok_result(manifest)
         first = run_preflight_cached(
             tmp_path,
@@ -120,6 +125,7 @@ def test_use_cache_false_skips_load_and_store(tmp_path):
     assert run.call_count == 2
     assert first == second == _ok_result(manifest)
     assert not cache_dir.exists() or not list(cache_dir.iterdir())
+    assert any("disabled" in str(call) for call in verbose.call_args_list)
 
 
 def test_hit_skips_real_preflight_and_copies_artifacts(tmp_path):
