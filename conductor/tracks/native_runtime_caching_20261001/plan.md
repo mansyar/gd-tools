@@ -7,7 +7,7 @@
 > (`pytest --cov=gd_tools --cov-branch`, >80% line / >70% branch for new source)
 > → commit → attach git note with task summary → mark `[x]` with commit SHA.
 
-## Phase 1 — Preflight Cache Core
+## Phase 1 — Preflight Cache Core [checkpoint: 8a64130]
 
 - [x] Task: Write failing unit tests for the preflight cache module — cache-key
   computation (suite set, test-file hashes, `project.godot`, Godot version,
