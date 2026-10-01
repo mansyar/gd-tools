@@ -13,7 +13,7 @@
 - [x] Task: Commit (`feat(config): accept and ignore $schema key in gd-tools.toml`) + attach git note [2504034]
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: ab2a834]
 
-## Phase 2: `gd-tools config schema` Command
+## Phase 2: `gd-tools config schema` Command [checkpoint: fb7b5b9]
 - [x] Task: Write failing tests for the schema command (Red)
   - [x] Test: `config schema` prints valid JSON Schema with `$schema` = draft 2020-12 and `$id`
   - [x] Test: schema output is derived from the live Pydantic model (mutating a model field changes output)
