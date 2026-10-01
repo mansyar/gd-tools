@@ -97,6 +97,7 @@ def test_file_outside_project_root_maps_to_none(tmp_path):
 
     assert result is None
 
+
 class TestSelectSuitesForChanges:
     """select_suites_for_changes partitions changed files into selected
     suites and unmapped paths (shared by watch mode and test --changed)."""

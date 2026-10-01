@@ -2,7 +2,7 @@
 
 import subprocess
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,7 +22,7 @@ def _fake_git(responses):
             args, returncode, stdout=stdout, stderr=stderr
         )
 
-    return _run
+    return MagicMock(side_effect=_run)
 
 
 def test_working_tree_parses_status_porcelain(tmp_path):
@@ -75,6 +75,7 @@ def test_empty_working_tree_returns_empty_list(tmp_path):
 def test_base_mode_diffs_from_merge_base(tmp_path):
     """``--base`` diffs from merge-base(ref, HEAD) instead of the
     working tree."""
+
     def _run(args, **kwargs):
         if args[1] == "merge-base":
             return subprocess.CompletedProcess(
@@ -94,6 +95,7 @@ def test_base_mode_diffs_from_merge_base(tmp_path):
 
 def test_base_mode_no_changes_returns_empty_list(tmp_path):
     """A base ref with no drift from HEAD yields no changed files."""
+
     def _run(args, **kwargs):
         if args[1] == "merge-base":
             return subprocess.CompletedProcess(
