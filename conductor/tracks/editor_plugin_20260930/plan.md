@@ -16,7 +16,7 @@ verification, conventional commits with git notes.
 - [x] Task: Commit `feat(init): deploy gd-tools editor plugin addon` + git note (59ebd27)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md — manual verify: `pip install -e .` → `gd-tools init` in fixture project → confirm addon files deployed; `gd-tools doctor` reports status)
 
-## Phase 2 — Dock Panel (GDScript, manual-checklist verified)
+## Phase 2 — Dock Panel (GDScript, manual-checklist verified) [checkpoint: 857255d]
 
 - [x] Task: `plugin.cfg` + `plugin.gd` — EditorPlugin registration, dock instantiation, enable/disable cleanliness
 - [x] Task: `dock.gd` — UI layout (Run Tests / Run Coverage buttons, progress state, results area)
@@ -24,7 +24,7 @@ verification, conventional commits with git notes.
 - [x] Task: Results parsing — read `.gd-tools/artifacts/<run_id>/` machine-readable index (JSON via Godot's native parser) → pass/fail/skip counts, duration, failed-test assertion messages, artifact path; coverage summary after coverage runs
 - [ ] Task: Manual testing checklist for dock behavior (in track docs; executed at checkpoint)
 - [x] Task: Manual checklist — document editor UI verification steps (`manual_checklist.md`, Phase 2 section)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md - manual verify on Godot 4.5: enable plugin, run tests + coverage from dock, confirm async UX, missing-CLI fallback)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md - manual verify on Godot 4.5: enable plugin, run tests + coverage from dock, confirm async UX, missing-CLI fallback)
 
 ## Phase 3 — Coverage Heatmap Overlay (GDScript, manual-checklist verified)
 
