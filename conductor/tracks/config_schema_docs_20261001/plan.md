@@ -45,3 +45,6 @@
 - [x] Task: Full quality gate: `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch` [ruff/black clean; unit+integration 1359 passed / 3 skipped; coverage 94.16%; e2e_smoke 5 passed; one flaky perf-timing failure (test_performance_100_files, plan generator untouched by this track) passed on isolated re-run]
 - [x] Task: Verify all acceptance criteria from spec.md [all 6 checked in spec.md]
 - [x] Task: Commit (`conductor(plan): mark track complete`) + final checkpoint (Refer to workflow.md) [b8d379b; final checkpoint: 70ec241]
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions [29483e7 — real save_config round-trip test (dead tomli_w import removed), relative import in schema.py, README code-span fix]
