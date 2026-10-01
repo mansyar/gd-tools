@@ -138,6 +138,10 @@ through the built-in compatibility bridge (no GUT addon required).
 - The default per-test timeout is configurable independently from the Godot
   process/import timeout.
 - Suites run in isolated Godot processes by default.
+- Affected-suite selection (`--changed` / `--base <ref>`) runs only the suites
+  mapped from git-changed files, reusing the watch-mode file→suite mapping:
+  unmapped changes fall back to the full suite with a notice, an empty change
+  set exits 0, and repository/ref errors exit 2.
 - Tests run sequentially by default; opt-in parallel execution (`--parallel N`
   / `[test].parallel`, 1–32 workers) runs suites concurrently while preserving
   discovery-order output, coverage parity, and interrupt safety.
