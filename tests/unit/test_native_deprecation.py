@@ -70,7 +70,7 @@ def _run_command(suites, print_info, tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=NativePreflightResult(
                 status="ok", suites=list(suites)
             ),

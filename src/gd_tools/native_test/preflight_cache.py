@@ -19,7 +19,12 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 
 from gd_tools import output
+from gd_tools.native_test.preflight import (
+    NativePreflightError,
+    run_native_preflight,
+)
 from gd_tools.native_test.protocol import (
+    NativeManifest,
     NativePreflightResult,
     NativeSuite,
     write_json_atomic,
@@ -154,3 +159,61 @@ def store_cached_preflight(
         return False
     output.print_verbose("Preflight result stored in cache")
     return True
+
+def run_preflight_cached(
+    project_root: Path,
+    manifest: NativeManifest,
+    *,
+    godot_binary: str,
+    godot_version: str,
+    run_dir: Path,
+    cache_dir: Path,
+    timeout_seconds: float,
+) -> NativePreflightResult:
+    """Resolve the integration preflight through the content-hash cache.
+
+    On a cache hit the cached result is served and the preflight manifest
+    and result artifacts are materialized in ``run_dir`` so the artifact
+    index contract is unchanged. On a miss the real preflight runs and a
+    successful result is stored.
+
+    Args:
+        project_root: Resolved Godot project root.
+        manifest: Preflight manifest built from suite discovery.
+        godot_binary: Resolved Godot binary path.
+        godot_version: Version string of the resolved Godot binary.
+        run_dir: Preflight artifact directory for this run.
+        cache_dir: Directory holding the preflight cache entries.
+        timeout_seconds: Godot process timeout for a real preflight.
+
+    Returns:
+        The effective preflight result for this run.
+
+    Raises:
+        NativePreflightError: When the real preflight fails. Errors are
+            never cached.
+    """
+    cache_key = compute_cache_key(
+        manifest.suites, project_root=project_root, godot_version=godot_version
+    )
+    cached = load_cached_preflight(cache_dir, cache_key)
+    if cached is not None:
+        try:
+            write_json_atomic(run_dir / "preflight.manifest.json", manifest)
+            write_json_atomic(run_dir / "preflight.result.json", cached)
+        except OSError as error:
+            output.print_verbose(
+                f"Preflight cache artifact copy failed: {error}"
+            )
+        else:
+            return cached
+    result = run_native_preflight(
+        project_root,
+        manifest,
+        godot_binary=godot_binary,
+        run_dir=run_dir,
+        timeout_seconds=timeout_seconds,
+    )
+    if result.status == "ok":
+        store_cached_preflight(cache_dir, cache_key, result)
+    return result

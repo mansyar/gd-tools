@@ -160,7 +160,7 @@ def test_run_native_command_propagates_filters_and_timeout(tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -250,7 +250,7 @@ def test_run_native_command_preflights_once_before_suite_processes(
             return_value=[plain, windowed],
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             side_effect=fake_preflight,
         ) as preflight,
         patch(
@@ -305,7 +305,7 @@ def _run_with_preflight_capture(tmp_path, suites):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             side_effect=fake_preflight,
         ),
         patch(
@@ -406,7 +406,7 @@ def test_run_native_command_propagates_preflight_failure(tmp_path):
             return_value=[suite],
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             side_effect=NativePreflightError("invalid integration declaration"),
         ),
         patch("gd_tools.native_test.command.run_native_tests") as run,
@@ -450,7 +450,7 @@ def test_run_native_command_marks_the_run_before_preflight_runs(tmp_path):
             return_value=[suite],
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             side_effect=RuntimeError("preflight process died"),
         ),
     ):
@@ -554,7 +554,7 @@ def test_run_native_command_raises_failure_unless_no_exit_code(tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -604,7 +604,7 @@ def test_run_native_command_prioritizes_test_failure_over_coverage_threshold(
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -651,7 +651,7 @@ def test_run_native_command_raises_infrastructure_error(tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -737,7 +737,7 @@ def test_run_native_command_reports_infrastructure_error_before_raising(
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -811,7 +811,7 @@ def test_run_native_command_infrastructure_error_dominates_test_failure(
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -928,7 +928,7 @@ def test_run_native_command_forwards_parallel_to_orchestrator(tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -967,7 +967,7 @@ def test_run_native_command_parallel_omitted_runs_sequential(tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -1021,7 +1021,7 @@ def test_run_native_command_parallel_failed_tests_raise_exit_1(tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
@@ -1070,7 +1070,7 @@ def test_run_native_command_parallel_infrastructure_error_exits_2(tmp_path):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=_preflight([suite]),
         ),
         patch(
