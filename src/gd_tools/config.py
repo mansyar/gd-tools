@@ -19,6 +19,7 @@ from pydantic import (
     Field,
     ValidationError,
     field_validator,
+    model_validator,
 )
 from rich.table import Table
 
@@ -145,6 +146,20 @@ class GdToolsConfig(BaseModel):
     lint: LintConfig = Field(default_factory=LintConfig)
     format: FormatConfig = Field(default_factory=FormatConfig)
     coverage: CoverageConfig = Field(default_factory=CoverageConfig)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _ignore_schema_key(cls, data: object) -> object:
+        """Accept and ignore a top-level ``$schema`` key.
+
+        The standard JSON-Schema editor annotation is allowed in
+        ``gd-tools.toml`` so users can point editors at the published
+        schema; it carries no runtime meaning. All other unknown keys
+        are still rejected by ``extra='forbid'``.
+        """
+        if isinstance(data, dict):
+            data.pop("$schema", None)
+        return data
 
     @field_validator("coverage")
     @classmethod

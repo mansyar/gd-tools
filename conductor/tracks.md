@@ -168,3 +168,13 @@ _Archived tracks live in `./archive/`._
   helper; per-test lifecycle isolation, unwatched-target guidance, rich diagnostics,
   no protocol change)
   *Link: [native_signal_assertions_20261001](./archive/native_signal_assertions_20261001/index.md)*
+
+---
+
+- [x] **Track: Config JSON Schema + Docs Pass** (feature+chore: a JSON Schema for
+  `gd-tools.toml` generated from the Pydantic model — new `gd-tools config schema`
+  command, checked-in `docs/gd-tools.schema.json` snapshot with a sync test, and
+  `$schema` key support in the config model — plus a targeted docs truth pass fixing
+  the stale CHANGELOG "Known Limitations" editor-plugin claim, ROADMAP Phase 5
+  checkboxes, and other demonstrably false docs claims)
+  *Link: [config_schema_docs_20261001](./archive/config_schema_docs_20261001/index.md)*

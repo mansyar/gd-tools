@@ -1,0 +1,50 @@
+# Plan: Config JSON Schema + Docs Pass
+
+**Track:** `config_schema_docs_20261001`
+
+## Phase 1: `$schema` Key Support in Config Model
+- [x] Task: Write failing tests for `$schema` key acceptance (Red)
+  - [x] Test: `gd-tools.toml` with `$schema = "..."` loads and validates successfully
+  - [x] Test: `$schema` key does not appear in the parsed config model dump
+  - [x] Test: unknown typo'd keys still fail validation (`extra='forbid'` unchanged)
+  - [x] Test: `config validate` on a `$schema`-bearing config exits 0
+- [x] Task: Implement `$schema` handling in the Pydantic root model (Green) [2504034]
+- [x] Task: Verify coverage for the changed module (≥80% line / ≥70% branch) [2504034 — config.py 99% line / 96% branch]
+- [x] Task: Commit (`feat(config): accept and ignore $schema key in gd-tools.toml`) + attach git note [2504034]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: ab2a834]
+
+## Phase 2: `gd-tools config schema` Command [checkpoint: fb7b5b9]
+- [x] Task: Write failing tests for the schema command (Red)
+  - [x] Test: `config schema` prints valid JSON Schema with `$schema` = draft 2020-12 and `$id`
+  - [x] Test: schema output is derived from the live Pydantic model (mutating a model field changes output)
+  - [x] Test: `--output <path>` writes the schema to file, creating parent dirs
+  - [x] Test: exit code 0 on success; error path for unwritable target exits 2
+  - [x] Test: schema output includes top-level sections (`godot`, `test`, `lint`, `format`, `coverage`) matching model structure
+- [x] Task: Implement `schema` subcommand in the config command group (Green) [a08b39e]
+- [x] Task: Refactor & verify coverage for the new module (≥80% line / ≥70% branch) [a08b39e — schema.py 100% line]
+- [x] Task: Commit (`feat(config): add config schema command exposing JSON Schema`) + attach git note [a08b39e]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: fb7b5b9]
+
+## Phase 3: Checked-in Snapshot + Sync Test + README [checkpoint: 0c3860a]
+- [x] Task: Write failing sync test (Red)
+  - [x] Test: `docs/gd-tools.schema.json` is byte-identical to current model schema output; failure message includes the regeneration command
+- [x] Task: Generate and commit `docs/gd-tools.schema.json` (Green) [2f5b1f7]
+- [x] Task: Document schema usage in README (`$schema` key example + editor-side association for taplo/VS Code Even Better TOML) [2f5b1f7]
+- [x] Task: Commit (`feat(config): check in generated JSON Schema snapshot with sync test`) + attach git note [2f5b1f7]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: 0c3860a]
+
+## Phase 4: Docs Truth Pass [checkpoint: a3160cc]
+- [x] Task: Fix CHANGELOG v0.5.0 "Known Limitations" stale editor-plugin claim [74c2345]
+- [x] Task: Refresh stale ROADMAP Phase 5 checkboxes/status entries to match delivered reality [74c2345]
+- [x] Task: Targeted sweep of README + `docs/` for demonstrably false claims; correct only verified drift [74c2345 — Tracks 31/32 "Planned" verified accurate; GUT_VERSION_MAP reference verified]
+- [x] Task: Update CHANGELOG Unreleased section with schema feature + docs fixes [74c2345]
+- [x] Task: Commit (`docs: truth pass — correct stale claims and record schema feature`) + attach git note [74c2345]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: a3160cc]
+
+## Phase 5: Track Finalization
+- [x] Task: Full quality gate: `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch` [ruff/black clean; unit+integration 1359 passed / 3 skipped; coverage 94.16%; e2e_smoke 5 passed; one flaky perf-timing failure (test_performance_100_files, plan generator untouched by this track) passed on isolated re-run]
+- [x] Task: Verify all acceptance criteria from spec.md [all 6 checked in spec.md]
+- [x] Task: Commit (`conductor(plan): mark track complete`) + final checkpoint (Refer to workflow.md) [b8d379b; final checkpoint: 70ec241]
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions [29483e7 — real save_config round-trip test (dead tomli_w import removed), relative import in schema.py, README code-span fix]
