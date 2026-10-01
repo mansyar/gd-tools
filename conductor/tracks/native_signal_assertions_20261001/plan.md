@@ -51,11 +51,12 @@
 
 ## Phase 4 — Documentation & Integration
 
-- [ ] Task: Documentation updates
-  - [ ] `docs/USER_GUIDE.md` — test section: signal assertion API with examples
-  - [ ] `docs/gut-migration.md` — capability table: signal assertions move from "manual wiring" to "native"
-  - [ ] `docs/ARCHITECTURE.md` — assertion surface + Known Limitations refresh
-  - [ ] `skills/gd-tools/SKILL.md` — new API entries
-  - [ ] `CHANGELOG.md` — Unreleased feature entry
-- [ ] Task: Full regression run (unit + integration + e2e) and CI-parity checks (`ruff`, `black`, `CI=true pytest`)
+- [x] Task: Documentation updates
+  - [x] `docs/USER_GUIDE.md` — test section: signal assertion API with examples
+  - [x] `docs/gut-migration.md` — "Where the bridge is heading": native signal assertion surface + GUT name mapping (`with_parameters` → `with_args`; `assert_has_signal`/`assert_connected`/`assert_not_connected` have no native equivalent yet)
+  - [x] `docs/ARCHITECTURE.md` — GdToolsTest API table gains a Signals row (Known Limitations needed no change: the only remaining limitation, no editor integration, is unaffected)
+  - [x] `skills/gd-tools/SKILL.md` — native test API highlights + corrected stale "runs using GUT" description
+  - [x] `CHANGELOG.md` — Unreleased feature entry
+  *Commit: 1a304eb*
+- [x] Task: Full regression run (unit + integration + e2e) and CI-parity checks (`ruff`, `black`, `CI=true pytest`) — *ruff/black clean; 1522 passed, 7 skipped; coverage 90.34%*
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
