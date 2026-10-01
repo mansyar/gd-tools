@@ -9,20 +9,20 @@
 
 **Purpose:** Establish the content-hash import-freshness cache as a standalone, fully tested module before touching the test pipeline.
 
-- [ ] Task: Add failing unit tests for the import cache module
+- [x] Task: Add failing unit tests for the import cache module [5188e38]
   - [ ] Test the composite cache key: `project.godot` content, project source/resource file hashes, Godot binary identity, and bundled addon hashes (mirroring `preflight_cache.py` keying).
   - [ ] Test cache miss reasons: first run, changed file, changed `project.godot`, changed Godot binary, changed addon file, missing/corrupt cache file.
   - [ ] Test that unchanged projects produce a cache hit after a successful import is recorded.
   - [ ] Test fail-open behavior: hashing errors, unreadable/corrupt cache files, and write failures are reported as a miss and never raise.
   - [ ] Test that cache writes are atomic (no partial/truncated cache state on interruption).
   - [ ] Run the targeted tests and confirm the expected Red phase.
-- [ ] Task: Implement `src/gd_tools/native_test/import_cache.py`
+- [x] Task: Implement `src/gd_tools/native_test/import_cache.py` [5188e38]
   - [ ] Reuse hashing/cache helpers from `preflight_cache.py` (extract a shared helper if that avoids duplication).
   - [ ] Implement the cache-status result with hit/miss and a human-readable reason, consistent with the existing cache-status conventions.
   - [ ] Implement reading, validating, and atomically writing the cache state under `.gd-tools/native/import-cache/`.
   - [ ] Implement the file-discovery scope for import-relevant project files with the agreed exclusions (`.godot/`, `.git/`, `.gd-tools/`, VCS/IDE noise).
   - [ ] Run the new unit tests to Green.
-- [ ] Task: Add import-cache coverage and style gates
+- [x] Task: Add import-cache coverage and style gates [5188e38]
   - [ ] Verify `import_cache.py` meets the >80% line / >70% branch coverage gates.
   - [ ] Run `ruff check` and `black --check`.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
