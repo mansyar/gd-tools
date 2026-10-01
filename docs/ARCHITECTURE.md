@@ -1135,6 +1135,7 @@ process management.
 | Comparison | `assert_gt`, `assert_gte`, `assert_lt`, `assert_lte`, `assert_between`, `assert_almost_eq` |
 | Membership | `assert_has`, `assert_in`, `assert_has_method`, `assert_is` |
 | Mocking | `double`, `partial_double`, `stub` (chainable `.to_return`/`.to_call_super`), `assert_called`, `assert_not_called`, `assert_call_count`, `assert_call_arguments` |
+| Signals | `watch_signals(obj)` (records every emission of every declared signal for the current test), `assert_signal_emitted`, `assert_signal_not_emitted`, `assert_signal_emit_count`, `assert_signal_emitted_with_args` (any-match, element-wise `"any"` wildcard), `assert_signal_emitted_after(signal, timeout)` (awaitable emit-wait) |
 | Skipping | `skip_test`, `pending_test` (an alias of it), `is_skipped`, `get_skip_reason` |
 | Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal(signal, timeout)` (bounded, returns whether the signal was emitted) |
 | Context | `get_test_context()` |
