@@ -171,7 +171,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Roadmap & Docs Truth Pass** (chore/docs: fold the temporary
+- [~] **Track: Roadmap & Docs Truth Pass** (chore/docs: fold the temporary
   native-runtime migration roadmap (`docs/ROADMAP.md` §8) into the main
   roadmap with anchor links rewritten, refresh `ARCHITECTURE.md` known
   limitations against shipped tracks, and reconcile README / USER_GUIDE /
