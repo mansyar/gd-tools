@@ -129,7 +129,7 @@ _Archived tracks live in `./archive/`._
   and in-track documentation updates.
 
 - [x] **Track: Native Runtime Caching (Preflight Cache)** (Migration Phase 5)
-  *Link: [native_runtime_caching_20261001](./tracks/native_runtime_caching_20261001/index.md)* -
+  *Link: [native_runtime_caching_20261001](./archive/native_runtime_caching_20261001/index.md)* -
   content-hash cache for the native integration preflight under
   `.gd-tools/native/preflight-cache/`: repeat `gd-tools test` runs on unchanged
   projects skip the headless preflight Godot process; keyed on test-file
