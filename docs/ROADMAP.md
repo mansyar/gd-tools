@@ -51,11 +51,11 @@ tag/file/timeout selectors.
 The migration path is complete: scene/resource integration, parameterized
 tests, parallel suite execution, and the preflight cache all shipped with the
 native runtime tracks and v0.5.0. The temporary GUT compatibility bridge
-remains available during the migration period:
+remains available during the migration period; legacy `GutTest` suites are
+routed through it automatically:
 
 ```bash
 gd-tools init --with-gut       # deprecated: opt into legacy bootstrap files
-gd-tools test --runtime gut    # deprecated: use the existing GUT runner
 ```
 
 It covers only the core GUT subset required for the transition and is not a
