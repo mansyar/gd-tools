@@ -61,3 +61,11 @@
 - [x] Task: Full regression run (unit + integration + e2e) and CI-parity checks (`ruff`, `black`, `CI=true pytest`) — *ruff/black clean; 1522 passed, 7 skipped; coverage 90.34%*
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
   *[checkpoint: 69baa58]*
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions
+  - Corrected the arg-slots comment (signals with more than 10 arguments are not captured, not partially recorded)
+  - Documented the reference retention of watched RefCounted targets in the watch_signals docstring
+  - Collapsed the over-formatted emission append into a single line
+  *Commit: 6c737d0* (sanity: signal capture e2e green)
