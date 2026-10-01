@@ -80,6 +80,9 @@
   - [x] Verify no new runtime dependencies were added.
 - [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 3e848f2]
 
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions [e33e7e3]
+
 ## Plan Boundaries
 
 No new `gd-tools.toml` configuration section or CLI flags beyond the existing
