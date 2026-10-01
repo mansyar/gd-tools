@@ -1,6 +1,5 @@
 """Unit tests for cache-integrated preflight resolution in the test command."""
 
-import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -25,9 +24,9 @@ pytestmark = pytest.mark.unit
 def _project(root: Path) -> None:
     (root / "addons" / "gd-tools-test").mkdir(parents=True, exist_ok=True)
     (root / "project.godot").write_text("[application]\n", encoding="utf-8")
-    (root / "addons" / "gd-tools-test" / "gd_tools_test_preflight.gd").write_text(
-        "# addon\n", encoding="utf-8"
-    )
+    (
+        root / "addons" / "gd-tools-test" / "gd_tools_test_preflight.gd"
+    ).write_text("# addon\n", encoding="utf-8")
     (root / "test").mkdir(exist_ok=True)
     (root / "test" / "suite.gd").write_text(
         "extends GdToolsTest\n", encoding="utf-8"
@@ -158,3 +157,52 @@ def test_preflight_error_is_never_cached(tmp_path):
                 timeout_seconds=30.0,
             )
     assert not cache_dir.exists() or not list(cache_dir.iterdir())
+
+
+def test_hit_with_failed_artifact_copy_falls_back_to_real_preflight(tmp_path):
+    """A copy failure on a hit fails open by running the real preflight."""
+    _project(tmp_path)
+    manifest = _manifest(tmp_path)
+    cache_dir = tmp_path / ".gd-tools" / "native" / "preflight-cache"
+
+    def fake_run(project_root, manifest, **kwargs):
+        write_json_atomic(
+            Path(kwargs["run_dir"]) / "preflight.result.json",
+            _ok_result(manifest),
+        )
+        return _ok_result(manifest)
+
+    with patch(
+        "gd_tools.native_test.preflight_cache.run_native_preflight",
+        side_effect=fake_run,
+    ):
+        run_preflight_cached(
+            tmp_path,
+            manifest,
+            godot_binary="godot",
+            godot_version="4.5.2",
+            run_dir=tmp_path / "artifacts" / "cold" / "preflight",
+            cache_dir=cache_dir,
+            timeout_seconds=30.0,
+        )
+
+    run_dir = tmp_path / "artifacts" / "run-2" / "preflight"
+    with patch(
+        "gd_tools.native_test.preflight_cache.write_json_atomic",
+        side_effect=OSError("read-only volume"),
+    ):
+        with patch(
+            "gd_tools.native_test.preflight_cache.run_native_preflight",
+            side_effect=fake_run,
+        ) as run:
+            result = run_preflight_cached(
+                tmp_path,
+                manifest,
+                godot_binary="godot",
+                godot_version="4.5.2",
+                run_dir=run_dir,
+                cache_dir=cache_dir,
+                timeout_seconds=30.0,
+            )
+    assert run.call_count == 1
+    assert result == _ok_result(manifest)

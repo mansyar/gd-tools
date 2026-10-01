@@ -19,10 +19,7 @@ from pathlib import Path
 from pydantic import BaseModel, ConfigDict
 
 from gd_tools import output
-from gd_tools.native_test.preflight import (
-    NativePreflightError,
-    run_native_preflight,
-)
+from gd_tools.native_test.preflight import run_native_preflight
 from gd_tools.native_test.protocol import (
     NativeManifest,
     NativePreflightResult,
@@ -159,6 +156,7 @@ def store_cached_preflight(
         return False
     output.print_verbose("Preflight result stored in cache")
     return True
+
 
 def run_preflight_cached(
     project_root: Path,
