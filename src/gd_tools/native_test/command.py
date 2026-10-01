@@ -29,7 +29,6 @@ from gd_tools.native_test.artifacts import (
     mark_run_started,
     publish_artifact_index,
 )
-from gd_tools.native_test.bridge_scan import scan_bridge_suites
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.preflight import NativePreflightError
@@ -205,28 +204,17 @@ def _run_native_test_command(
     )
     if not suites:
         raise ConfigError(
-            "No test suites were found. Add a suite extending GdToolsTest "
-            "(native) or GutTest (compatibility bridge)."
+            "No test suites were found. Add a suite extending GdToolsTest."
         )
     if changed:
         suites = _narrow_changed_suites(
             project_root, suites, changed_files, base
         )
-    scan_bridge_suites(project_root, suites)
 
     _import_project(godot_info.path, project_root, timeout)
     process_timeout = float(timeout) if timeout is not None else 300.0
     run_id = uuid.uuid4().hex
     artifact_layout = NativeArtifactLayout.create(project_root, run_id)
-    if any(suite.runtime == RuntimeMode.GUT for suite in suites):
-        # FR-9: bridge runs announce the migration path; since v0.5.0 the
-        # bridge is deprecated with removal planned for v0.6.0 (one release
-        # of migration window, per the product definition).
-        output.print_info(
-            "The GUT compatibility bridge is deprecated and will be "
-            "removed in v0.6.0. Migrate suites to GdToolsTest; see "
-            "docs/gut-migration.md."
-        )
     try:
         mark_run_started(artifact_layout)
     except OSError as exc:
@@ -239,14 +227,7 @@ def _run_native_test_command(
             project_root,
             NativeManifest(
                 project_root=project_root,
-                # The manifest runtime marker is informational: a run is a
-                # bridge run when any suite is routed through the GutTest
-                # compatibility bridge, even in a mixed native+bridge run.
-                runtime=(
-                    RuntimeMode.GUT
-                    if any(suite.runtime == RuntimeMode.GUT for suite in suites)
-                    else RuntimeMode.NATIVE
-                ),
+                runtime=RuntimeMode.NATIVE,
                 suites=suites,
             ),
             godot_binary=godot_info.path,

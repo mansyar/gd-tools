@@ -94,16 +94,17 @@ def discover_native_suites(
 
     Returns:
         Deterministically ordered suites with selected test methods. Suites
-        extending ``GdToolsTest`` carry ``RuntimeMode.NATIVE``; suites
-        extending ``GutTest`` carry ``RuntimeMode.GUT`` and run through the
-        compatibility bridge. Parameterized test methods (declared through
-        ``parameterize``) are discovered by method name; preflight resolves
-        their cases. A ``name[case]`` test selector prefix-matches the
-        owning method.
+        extending ``GdToolsTest`` carry ``RuntimeMode.NATIVE``. Suites
+        extending ``GutTest`` are rejected: the GUT compatibility bridge was
+        removed in v0.6.0 and ``gd-tools migrate`` is the migration path.
+        Parameterized test methods (declared through ``parameterize``) are
+        discovered by method name; preflight resolves their cases. A
+        ``name[case]`` test selector prefix-matches the owning method.
 
     Raises:
-        NativeDiscoveryError: If a file declares test methods but extends
-            neither ``GdToolsTest`` nor ``GutTest``.
+        NativeDiscoveryError: If a file extends ``GutTest`` (the bridge was
+            removed in v0.6.0) or declares test methods but extends neither
+            ``GdToolsTest`` nor ``GutTest``.
     """
     project_root = project_root.resolve()
     files = _iter_test_files(project_root, test_dirs)
@@ -113,9 +114,14 @@ def discover_native_suites(
     for path in files:
         source = path.read_text(encoding="utf-8")
         is_native = _EXTENDS_RE.search(source) is not None
-        is_gut = _GUT_EXTENDS_RE.search(source) is not None
 
-        if not is_native and not is_gut:
+        if not is_native:
+            if _GUT_EXTENDS_RE.search(source) is not None:
+                raise NativeDiscoveryError(
+                    f"{_resource_path(path, project_root)} extends "
+                    "GutTest. GUT runtime support was removed in v0.6.0. "
+                    "Run `gd-tools migrate` or see docs/gut-migration.md."
+                )
             if _TEST_FUNC_RE.search(source) is not None:
                 base_match = _EXTENDS_BASE_RE.search(source)
                 base_name = (
@@ -124,11 +130,11 @@ def discover_native_suites(
                 raise NativeDiscoveryError(
                     f"{_resource_path(path, project_root)} declares test "
                     f"methods but extends {base_name}. Suites must extend "
-                    "GdToolsTest (native) or GutTest (compatibility bridge)."
+                    "GdToolsTest (native)."
                 )
             continue
 
-        runtime = RuntimeMode.NATIVE if is_native else RuntimeMode.GUT
+        runtime = RuntimeMode.NATIVE
 
         suite_name = _class_name(source, path.stem)
         suite_tags = _parse_tags(source)
