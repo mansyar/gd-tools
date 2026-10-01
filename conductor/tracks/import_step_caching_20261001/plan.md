@@ -68,16 +68,16 @@
 
 **Purpose:** Close the track with accurate docs and all quality gates green.
 
-- [ ] Task: Update user-facing documentation
-  - [ ] README: document the import cache behavior and the `--no-cache` bypass alongside the existing cache documentation.
-  - [ ] CHANGELOG: add an entry for the import-step cache.
-  - [ ] `docs/ARCHITECTURE.md`: add a "Caching architecture" section describing the import cache, preflight cache, and coverage-plan cache together; correct the known Part I flow-diagram drift as part of that section.
-- [ ] Task: Final quality gates
-  - [ ] Run the full unit suite.
-  - [ ] Run the full integration suite.
-  - [ ] Run `ruff check` and `black --check`.
-  - [ ] Verify the full project coverage threshold behavior.
-  - [ ] Verify no new runtime dependencies were added.
+- [x] Task: Update user-facing documentation [c59d053]
+  - [x] README: document the import cache behavior and the `--no-cache` bypass alongside the existing cache documentation.
+  - [x] CHANGELOG: add an entry for the import-step cache.
+  - [x] `docs/ARCHITECTURE.md`: add a "Caching architecture" section describing the import cache, preflight cache, and coverage-plan cache together; correct the known Part I flow-diagram drift as part of that section.
+- [x] Task: Final quality gates [c59d053]
+  - [x] Run the full unit suite.
+  - [x] Run the full integration suite.
+  - [x] Run `ruff check` and `black --check`.
+  - [x] Verify the full project coverage threshold behavior.
+  - [x] Verify no new runtime dependencies were added.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
 
 ## Plan Boundaries
