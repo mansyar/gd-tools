@@ -11,7 +11,7 @@ Green (implementation) → commit → git note → plan update.
   - [ ] Test: `--runtime gut` exits 2 with the v0.6.0 removal message
   - [ ] Test: test preflight rejects `runtime = "gut"` config with migration guidance
   - [ ] Confirm all new tests fail (Red) before proceeding
-- [ ] Task: Remove the `GutTest` shim and bridge routing (Green)
+- [x] Task: Remove the `GutTest` shim and bridge routing (Green) `708c481`
   - [ ] Delete the shim GDScript from `src/gd_tools/addons/gd-tools-test/`
   - [ ] Remove bridge routing/normalization from `native_test/` (discovery, orchestrator, command)
   - [ ] Implement the explicit discovery/preflight error with migration guidance
