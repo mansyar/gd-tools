@@ -13,7 +13,7 @@
   computation (suite set, test-file hashes, `project.godot`, Godot version,
   addon file hashes, schema version), hit/miss read, atomic store, corrupt-file
   and OSError fail-open behavior → verify Red (1631d55)
-- [ ] Task: Implement `src/gd_tools/native_test/preflight_cache.py` —
+- [x] Task: Implement `src/gd_tools/native_test/preflight_cache.py` —
   `load_cached_preflight()` / `store_cached_preflight()` using
   `write_json_atomic`, schema-versioned payload → verify Green
 - [ ] Task: Refactor and verify coverage gates for the new module
