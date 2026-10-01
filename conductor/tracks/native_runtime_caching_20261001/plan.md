@@ -52,4 +52,4 @@
 - [x] Task: Update documentation — README (test command + cache note),
   ROADMAP.md (close the Phase 5 "native runtime caching" item), CHANGELOG.md
   (Unreleased) (7bcb740)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (77fe0fa)
