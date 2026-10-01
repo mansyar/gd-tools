@@ -1,0 +1,8 @@
+{
+  "track_id": "import_step_caching_20261001",
+  "type": "feature",
+  "status": "completed",
+  "created_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-01T21:14:18Z",
+  "description": "Import-Step Caching - skip the unconditional 'godot --headless --import' on unchanged projects via a content-hash import-freshness cache, mirroring the preflight-cache conventions (fail-open, --no-cache bypass, verbose hit/miss), with benchmark evidence that warm runs are strictly faster."
+}
