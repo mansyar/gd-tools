@@ -1572,7 +1572,7 @@ Each Conductor track should produce:
 
 ## 8. Temporary: Native Test Runtime Migration Roadmap
 
-**Status:** In progress — Phases 0-4 delivered; Phase 5 under way: crash recovery, diagnostics hardening, the bridge deprecation, parameterized tests, and parallel suite execution are delivered, release preparation (v0.5.0) is in progress, and native runtime caching remains deferred
+**Status:** In progress — Phases 0-4 delivered; Phase 5 under way: crash recovery, diagnostics hardening, the bridge deprecation, parameterized tests, and parallel suite execution are delivered, release preparation (v0.5.0) is in progress, and native runtime caching (the preflight cache) is delivered
 **Purpose:** Replace the permanent GUT dependency with the native
 `GdToolsTest` runtime while preserving a bounded migration path.
 **Retirement condition:** Remove this temporary section after native tests
@@ -1671,7 +1671,9 @@ settings while preserving the rest (Track `migration_tooling_20260929`).
   expected/found/remedy diagnostics — Track `native_release_readiness_20260930`)
 - [x] Add optional parallel execution (`--parallel N` / `[test].parallel`,
   1-32, default 4 — Track `native_parallel_suites_20260930`)
-- [ ] Integrate native runtime caching (deferred)
+- [x] Integrate native runtime caching (preflight cache under
+  `.gd-tools/native/preflight-cache/`, SHA-256 keyed, `--no-cache` bypass,
+  fail-open — Track `native_runtime_caching_20261001`)
 - [ ] Update `init`, `doctor`, CI, packaging, and documentation (in progress;
   bridge wording updated by `native_release_readiness_20260930`, release
   documentation lands with v0.5.0)

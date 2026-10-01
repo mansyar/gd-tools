@@ -125,6 +125,13 @@ worker pool (1-32 workers; bare `--parallel` means 4) while keeping results,
 JUnit XML, and merged coverage identical to a sequential run. Persist the
 choice with `parallel = 4` under `[test]` in `gd-tools.toml`.
 
+Repeat runs are faster: the integration preflight is cached under
+`.gd-tools/native/preflight-cache/` and skipped when the suites, test files,
+`project.godot`, Godot version, and bundled addons are unchanged. Cache
+hit/miss reasons are reported under `--verbose`; `--no-cache` bypasses the
+preflight and coverage plan caches, and `gd-tools clean --cache` removes the
+cache directory.
+
 Each run writes a machine-readable artifact index under
 `.gd-tools/artifacts/<run_id>/`, listing the manifest, result, event stream,
 engine log, coverage data, and any failure screenshots the run actually
