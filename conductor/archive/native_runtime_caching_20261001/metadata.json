@@ -1,0 +1,11 @@
+{
+  "track_id": "native_runtime_caching_20261001",
+  "title": "Native Runtime Caching (Preflight Cache)",
+  "type": "chore",
+  "category": "performance",
+  "status": "new",
+  "created": "2026-10-01",
+  "branch": "feature/native-runtime-caching-20261001",
+  "summary": "Content-hash cache for the native integration preflight so repeat gd-tools test runs on unchanged projects skip the headless preflight Godot process.",
+  "origin": "ROADMAP.md Migration Phase 5 open item: 'Integrate native runtime caching (deferred)'."
+}

@@ -31,10 +31,8 @@ from gd_tools.native_test.artifacts import (
 from gd_tools.native_test.bridge_scan import scan_bridge_suites
 from gd_tools.native_test.discovery import discover_native_suites
 from gd_tools.native_test.orchestrator import run_native_tests
-from gd_tools.native_test.preflight import (
-    NativePreflightError,
-    run_native_preflight,
-)
+from gd_tools.native_test.preflight import NativePreflightError
+from gd_tools.native_test.preflight_cache import run_preflight_cached
 from gd_tools.native_test.protocol import (
     NativeCoverage,
     NativeManifest,
@@ -129,7 +127,7 @@ def _run_native_test_command(
         test_timeout: Optional per-test timeout override in seconds.
         paths: Optional test file or directory selectors.
         show_uncovered: Include uncovered lines in the coverage summary.
-        no_cache: Bypass the coverage plan cache.
+        no_cache: Bypass the coverage plan cache and the preflight cache.
         parallel: Optional worker count (1-32) for concurrent suite
             execution; None or 1 runs suites sequentially.
 
@@ -197,7 +195,7 @@ def _run_native_test_command(
             f"{artifact_layout.run_dir}: {exc}"
         ) from exc
     try:
-        preflight_result = run_native_preflight(
+        preflight_result = run_preflight_cached(
             project_root,
             NativeManifest(
                 project_root=project_root,
@@ -212,8 +210,11 @@ def _run_native_test_command(
                 suites=suites,
             ),
             godot_binary=godot_info.path,
+            godot_version=godot_info.version,
             run_dir=artifact_layout.preflight_dir,
+            cache_dir=project_root / ".gd-tools" / "native" / "preflight-cache",
             timeout_seconds=process_timeout,
+            use_cache=not no_cache,
         )
     except NativePreflightError:
         try:

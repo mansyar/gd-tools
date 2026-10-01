@@ -238,7 +238,7 @@ def _command_patches(suite: NativeSuite):
             return_value=(None, None),
         ),
         patch(
-            "gd_tools.native_test.command.run_native_preflight",
+            "gd_tools.native_test.command.run_preflight_cached",
             return_value=NativePreflightResult(
                 status="ok", suites=[suite.suite]
             ),
@@ -288,7 +288,7 @@ def test_interrupt_before_orchestrator_publishes_incomplete_index(tmp_path):
         _enter_command_patches(stack, holder)
         stack.enter_context(
             patch(
-                "gd_tools.native_test.command.run_native_preflight",
+                "gd_tools.native_test.command.run_preflight_cached",
                 side_effect=KeyboardInterrupt,
             )
         )
