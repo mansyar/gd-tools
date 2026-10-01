@@ -43,7 +43,7 @@
 
 ## Phase 4 — Benchmark, Clean Regression & Docs
 
-- [ ] Task: Write a repeat-run benchmark in `tests/performance/` against the
+- [x] Task: Write a repeat-run benchmark in `tests/performance/` against the
   dogfood `spike/` project measuring cold vs. cached wall clock; run it and
   confirm the **≥30%** gate
 - [ ] Task: Add a regression test that `gd-tools clean --cache` removes
