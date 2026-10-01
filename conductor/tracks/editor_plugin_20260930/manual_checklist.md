@@ -4,6 +4,24 @@ Executed at each phase checkpoint per the track's Testing Approach Note
 (GDScript plugin UI cannot run in headless CI). Target: Godot 4.5+;
 verify on at least one of 4.5 / 4.6 / 4.7 and document the version used.
 
+## Godot Version Compatibility Notes (editor API)
+
+The plugin targets the Godot editor API for 4.5+ (matching the CI
+compatibility matrix: 4.5.2 / 4.6.1 / 4.7.1 on Linux/Windows/macOS).
+Caveats to check when verifying on a different editor version:
+
+- `CodeEdit.set_line_background_color` — stable across 4.5-4.7; verify
+  colors actually paint (the API existed since 4.0 but behavior around
+  transparency changed between minor versions).
+- `ScriptEditor.editor_script_changed` — signal signature is stable;
+  verify the handler fires on tab switches.
+- `EditorInterface` singleton — available in editor builds since 4.2;
+  verify `get_script_editor()` / `get_current_script()` return values.
+- `OS.create_process` / `OS.is_process_running` / process exit codes —
+  stable; verify the async run still terminates correctly.
+- Dock registration (`add_control_to_dock` with `DOCK_SLOT_RIGHT_UL`) —
+  stable; verify the dock lands in the right panel on every version.
+
 ## Phase 2 — Dock Panel
 
 | # | Check | Steps | Expected |
