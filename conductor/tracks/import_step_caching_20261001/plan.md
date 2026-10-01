@@ -49,7 +49,7 @@
 - [x] Task: Add integration-level regression coverage [599d657]
   - [ ] Verify JUnit XML / JSON report outputs and exit-code conventions are unchanged by the gating.
   - [ ] Verify watch-mode sessions observe a cache miss after any file change and a hit on unchanged resume (no watch-specific code paths).
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: e55c70f]
 
 ## Phase 3 — Benchmark evidence
 
