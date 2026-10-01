@@ -128,15 +128,26 @@ _Archived tracks live in `./archive/`._
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
 
+---
+
 - [x] **Track: Native Runtime Caching (Preflight Cache)** (Migration Phase 5)
   *Link: [native_runtime_caching_20261001](./archive/native_runtime_caching_20261001/index.md)* -
   content-hash cache for the native integration preflight under
   `.gd-tools/native/preflight-cache/`: repeat `gd-tools test` runs on unchanged
   projects skip the headless preflight Godot process; keyed on test-file
-  hashes, `project.godot`, Godot binary version, and bundled addon hashes;
-  `--no-cache` escape hatch, verbose-only hit/miss reporting, fail-open on
-  cache errors, cached preflight artifacts copied into run artifacts
-  (unchanged artifact index contract). Benchmark evidence: warm repeat runs
-  are strictly faster (preflight process eliminated; ~7% end-to-end on the
-  benchmark fixture, gain scales with project size; spec NFR-3 revised from
-  the original >=30% gate on 2026-10-01).
+  hashes, `project.godot`, Godot binary version, bundled addon hashes, and
+  integration scenes/resources; `--no-cache` escape hatch, verbose-only
+  hit/miss reporting, fail-open on cache errors, cached preflight artifacts
+  copied into run artifacts (unchanged artifact index contract). Benchmark
+  evidence: warm repeat runs are strictly faster (preflight process
+  eliminated; ~7% end-to-end on the benchmark fixture, gain scales with
+  project size; spec NFR-3 revised from the original >=30% gate on
+  2026-10-01).
+
+---
+
+- [x] **Track: Godot Editor Plugin** (archived → ./archive/editor_plugin_20260930) (Roadmap Track 35 — editor plugin deployed
+  by `gd-tools init` with a test/coverage dock panel (async runs, summary +
+  failures, friendly missing-CLI fallback) and a `CodeEdit` coverage heatmap
+  overlay reading `.gd-tools/` artifacts; lint margin descoped)
+  *Link: [editor_plugin_20260930](./archive/editor_plugin_20260930/index.md)*

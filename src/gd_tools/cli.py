@@ -37,6 +37,7 @@ from .config import (
     format_config_table,
     format_config_toml,
     load_config,
+    set_explicit_project_root,
     validate_paths,
     GdToolsConfig,
 )
@@ -223,8 +224,18 @@ class GdToolsGroup(click.Group):
     default=False,
     help="Suppress non-essential output (update checks, progress info).",
 )
-def cli(verbose: bool, quiet: bool):
+@click.option(
+    "--project",
+    "-p",
+    "project_path",
+    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    default=None,
+    help="Path to the Godot project root. Defaults to discovery from "
+    "the current working directory.",
+)
+def cli(verbose: bool, quiet: bool, project_path: Path | None):
     """gd-tools: A modern development workflow CLI for GDScript."""
+    set_explicit_project_root(project_path)
     if verbose and quiet:
         click.echo(
             "Error: --verbose and --quiet are mutually exclusive.", err=True

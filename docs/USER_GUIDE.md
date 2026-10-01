@@ -14,6 +14,7 @@ For deep technical command surface details, see the [PRD](./PRD.md) section 5.
 4. [Examples](#4-examples)
 5. [Troubleshooting](#5-troubleshooting)
 6. [Shell Completion](#6-shell-completion)
+7. [Editor Plugin](#7-editor-plugin)
 
 
 ## 1. Getting Started
@@ -470,7 +471,8 @@ gd-tools test tests/unit/test_player.gd
   crashed suite never cancels its neighbors. Ctrl+C (or SIGTERM) kills every
   in-flight process tree and marks the artifact index `incomplete`
   (exit `130`) — in both sequential and parallel runs.
-- The runtime does not provide an editor UI.
+- The runtime provides an editor UI through the gd-tools editor plugin
+  (see [Editor Plugin](#7-editor-plugin)).
 
 **Parameterized tests:**
 
@@ -2018,3 +2020,81 @@ gd-tools | Out-String | Invoke-Expression
 > **Note:** The env-var approach is intended for advanced users. The
 > `gd-tools completion <shell>` command is the recommended method for
 > most users as it is simpler and more portable.
+
+
+## 7. Editor Plugin
+
+The gd-tools editor plugin brings test running and coverage inspection
+directly into the Godot editor — no terminal or context switch needed.
+
+### 7.1 Deployment and Enabling
+
+Run `gd-tools init` in your project root. The plugin addon is deployed
+to `addons/gd-tools-editor/` alongside the test and coverage addons.
+
+Then enable it once in Godot:
+
+1. Open your project in Godot (4.5 or newer).
+2. Project → Project Settings → Plugins.
+3. Enable the **gd-tools** plugin.
+
+The **gd-tools** dock appears in the editor's right-hand panel.
+
+### 7.2 The Dock Panel
+
+The dock has two buttons and a results area:
+
+- **Run Tests** — launches `gd-tools test` as a background process.
+  Buttons are disabled while a run is in flight; clicking again has no
+  effect until the run finishes. When it completes, the results area
+  shows pass/fail/skip counts, total duration, every failed test with
+  its assertion message, and the artifact directory
+  (`.gd-tools/artifacts/<run_id>/`) for full details.
+- **Run Coverage** — launches `gd-tools test --coverage`. Results
+  include the same test summary plus a coverage line
+  (`lines X%, branches Y%`), and the script-editor heatmap refreshes
+  automatically when the run finishes.
+
+If the `gd-tools` command is not found (not installed or not on
+`PATH`), the dock shows the exact install hint
+(`pip install gd-tools-cli`) and re-enables the buttons.
+
+### 7.3 Coverage Heatmap
+
+After a coverage run, gd-tools colors the lines of the script you are
+editing in the script editor:
+
+| Color | Meaning |
+|-------|---------|
+| Green | Line executed during the test run |
+| Red | Line never executed |
+| Yellow | Branch point that executed but only partially |
+
+The overlay loads automatically when the editor opens (if coverage data
+exists) and refreshes after each dock coverage run. If you edit a file
+after the coverage run, its colors turn muted (dimmed) — the overlay
+never shows stale data as fresh, and never clears it silently. Run
+coverage again to refresh.
+
+Files with more than 5000 planned coverage lines are skipped by the
+overlay to keep the editor responsive.
+
+### 7.4 Troubleshooting
+
+- **Dock does not appear** — make sure the addon was deployed
+  (re-run `gd-tools init`) and the plugin is enabled in Project
+  Settings → Plugins.
+- **"gd-tools not found"** — install the CLI
+  (`pip install gd-tools-cli`), make sure the `gd-tools` script is on
+  your `PATH`, and restart the Godot editor.
+- **Overlay does not appear** — run coverage once from the dock (or
+  `gd-tools test --coverage` in a terminal); data lives in
+  `.gd-tools/coverage/`.
+- **Colors look dimmed** — the source file changed after the coverage
+  run; re-run coverage to refresh.
+- **Godot version caveats** — the plugin targets the Godot editor API
+  for 4.5+ and is verified against 4.5, 4.6, and 4.7 per the CI
+  compatibility matrix. Editor UI behaviors that depend on the
+  `CodeEdit`/`ScriptEditor` API may differ slightly between editor
+  versions; see the track's manual testing checklist for the
+  per-version caveats.

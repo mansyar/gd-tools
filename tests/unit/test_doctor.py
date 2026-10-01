@@ -15,6 +15,7 @@ from gd_tools.config import GdToolsConfig
 from gd_tools.doctor import (
     CheckResult,
     DoctorResult,
+    check_editor_plugin,
     check_godot_binary,
     check_godot_version,
     check_gdtoolkit,
@@ -713,6 +714,7 @@ def _mock_doctor_deps():
         patch("gd_tools.doctor.check_gut_version") as mock_gut_ver,
         patch("gd_tools.doctor.check_gut_suites") as mock_gut_suites,
         patch("gd_tools.doctor.check_coverage_addon") as mock_cov,
+        patch("gd_tools.doctor.check_editor_plugin") as mock_editor_addon,
         patch("gd_tools.doctor.check_gutconfig") as mock_gutconfig,
         patch("gd_tools.doctor.check_gd_tools_toml") as mock_toml,
         patch("gd_tools.doctor.check_gdtoolkit") as mock_gdtoolkit,
@@ -732,6 +734,7 @@ def _mock_doctor_deps():
         mock_gut_ver.return_value = pass_result
         mock_gut_suites.return_value = pass_result
         mock_cov.return_value = pass_result
+        mock_editor_addon.return_value = pass_result
         mock_gutconfig.return_value = pass_result
         mock_toml.return_value = pass_result
         mock_gdtoolkit.return_value = pass_result
@@ -748,6 +751,7 @@ def _mock_doctor_deps():
             "gut_ver": mock_gut_ver,
             "gut_suites": mock_gut_suites,
             "cov": mock_cov,
+            "editor_addon": mock_editor_addon,
             "gutconfig": mock_gutconfig,
             "toml": mock_toml,
             "gdtoolkit": mock_gdtoolkit,
@@ -763,10 +767,10 @@ def test_run_doctor_returns_doctor_result(_mock_doctor_deps):
 
 
 @pytest.mark.unit
-def test_run_doctor_runs_all_11_checks(_mock_doctor_deps):
-    """Test run_doctor runs exactly 11 checks."""
+def test_run_doctor_runs_all_12_checks(_mock_doctor_deps):
+    """Test run_doctor runs exactly 12 checks."""
     result = run_doctor()
-    assert len(result.checks) == 11
+    assert len(result.checks) == 12
 
 
 @pytest.mark.unit
@@ -850,7 +854,7 @@ def test_run_doctor_never_raises_on_check_exception(_mock_doctor_deps):
     _mock_doctor_deps["binary"].side_effect = RuntimeError("boom")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 11
+    assert len(result.checks) == 12
     failed = [c for c in result.checks if not c.passed]
     assert len(failed) == 1
     assert "boom" in failed[0].message
@@ -865,7 +869,7 @@ def test_run_doctor_handles_project_root_not_found(_mock_doctor_deps):
     _mock_doctor_deps["root"].side_effect = ConfigError("not found")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 11
+    assert len(result.checks) == 12
 
 
 @pytest.mark.unit
@@ -876,7 +880,7 @@ def test_run_doctor_handles_config_load_failure(_mock_doctor_deps):
     _mock_doctor_deps["config"].side_effect = ConfigError("bad config")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 11
+    assert len(result.checks) == 12
 
 
 @pytest.mark.unit
@@ -885,7 +889,7 @@ def test_run_doctor_handles_godot_not_found_for_version(_mock_doctor_deps):
     _mock_doctor_deps["godot"].side_effect = GodotNotFoundError("no godot")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 11
+    assert len(result.checks) == 12
 
 
 def test_optional_missing_autoload_is_non_blocking(tmp_path):
@@ -999,3 +1003,84 @@ def test_format_doctor_table_shows_summary_line():
     output = _render_table(table)
     assert "9/9" in output
     assert "passed" in output.lower()
+
+
+# --- check_editor_plugin ---
+
+
+@pytest.mark.unit
+def test_check_editor_plugin_missing_files(tmp_path: Path):
+    """Doctor warns when the editor plugin addon is not deployed."""
+    result = check_editor_plugin(tmp_path)
+
+    assert result.name == "Editor Plugin"
+    assert result.passed is False
+    assert result.severity == "warning"
+    assert "missing" in result.message.lower()
+    assert "gd-tools init" in result.fix_hint
+
+
+@pytest.mark.unit
+def test_check_editor_plugin_current(tmp_path: Path):
+    """Doctor reports the editor plugin as installed when current."""
+    from gd_tools import __version__
+
+    addon_dir = tmp_path / "addons" / "gd-tools-editor"
+    addon_dir.mkdir(parents=True)
+    for name in ("plugin.cfg", "plugin.gd", "dock.gd", "coverage_overlay.gd"):
+        (addon_dir / name).write_text("# stub\n", encoding="utf-8")
+    (addon_dir / "_version.txt").write_text(
+        f"{__version__}\n", encoding="utf-8"
+    )
+
+    result = check_editor_plugin(tmp_path)
+
+    assert result.passed is True
+    assert "installed" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_editor_plugin_stale(tmp_path: Path):
+    """Doctor warns when the deployed editor plugin is outdated."""
+    addon_dir = tmp_path / "addons" / "gd-tools-editor"
+    addon_dir.mkdir(parents=True)
+    for name in ("plugin.cfg", "plugin.gd", "dock.gd", "coverage_overlay.gd"):
+        (addon_dir / name).write_text("# stub\n", encoding="utf-8")
+    (addon_dir / "_version.txt").write_text("0.0.1\n", encoding="utf-8")
+
+    result = check_editor_plugin(tmp_path)
+
+    assert result.passed is True
+    assert result.severity == "warning"
+    assert "outdated" in result.message.lower()
+
+
+@pytest.mark.unit
+def test_check_editor_plugin_missing_version_file(tmp_path: Path):
+    """Doctor warns (non-blocking) when the version file is absent."""
+    addon_dir = tmp_path / "addons" / "gd-tools-editor"
+    addon_dir.mkdir(parents=True)
+    for name in ("plugin.cfg", "plugin.gd", "dock.gd", "coverage_overlay.gd"):
+        (addon_dir / name).write_text("# stub\n", encoding="utf-8")
+
+    result = check_editor_plugin(tmp_path)
+
+    assert result.passed is True
+    assert result.severity == "warning"
+    assert "version file missing" in result.message
+
+
+@pytest.mark.unit
+def test_run_doctor_includes_editor_plugin_check(_mock_doctor_deps):
+    """Doctor lists the editor plugin check among its diagnostics."""
+    _mock_doctor_deps["editor_addon"].return_value = CheckResult(
+        name="Editor Plugin", passed=True, message="OK"
+    )
+
+    result = run_doctor()
+
+    names = [c.name for c in result.checks]
+    assert "Editor Plugin" in names
+    _mock_doctor_deps["editor_addon"].assert_called_once_with(
+        Path("/fake/project")
+    )

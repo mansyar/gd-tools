@@ -31,6 +31,7 @@ from .godot import (
 )
 from .init import (
     COVERAGE_ADDON_FILES,
+    EDITOR_PLUGIN_FILES,
     NATIVE_TEST_ADDON_FILES,
     get_installed_gut_version,
 )
@@ -433,6 +434,62 @@ def check_native_test_addon(project_root: Path) -> CheckResult:
     )
 
 
+def check_editor_plugin(project_root: Path) -> CheckResult:
+    """Check that the optional editor plugin addon is present and current.
+
+    Args:
+        project_root: Path to the Godot project root.
+
+    Returns:
+        CheckResult indicating whether the editor plugin is usable.
+        Missing files are a non-blocking warning because the plugin
+        is an optional editor enhancement.
+    """
+    addon_dir = project_root / "addons" / "gd-tools-editor"
+    missing = [
+        name for name in EDITOR_PLUGIN_FILES if not (addon_dir / name).is_file()
+    ]
+    if missing:
+        return CheckResult(
+            name="Editor Plugin",
+            passed=False,
+            message=f"Missing editor plugin files: {', '.join(missing)}",
+            fix_hint="Run `gd-tools init` to deploy the editor plugin.",
+            severity="warning",
+        )
+    version_file = addon_dir / "_version.txt"
+    if not version_file.exists():
+        return CheckResult(
+            name="Editor Plugin",
+            passed=True,
+            message="Editor plugin installed (version file missing)",
+            fix_hint="Run `gd-tools init` to create the version file.",
+            severity="warning",
+        )
+    addon_version = version_file.read_text(encoding="utf-8").strip()
+    is_stale = True
+    try:
+        is_stale = parse_version(addon_version) < parse_version(__version__)
+    except (TypeError, ValueError):
+        pass
+    if is_stale:
+        return CheckResult(
+            name="Editor Plugin",
+            passed=True,
+            message=(
+                f"Editor plugin is outdated (v{addon_version} deployed, "
+                f"v{__version__} available)"
+            ),
+            fix_hint="Run `gd-tools init` to update.",
+            severity="warning",
+        )
+    return CheckResult(
+        name="Editor Plugin",
+        passed=True,
+        message=f"Editor plugin installed (v{addon_version})",
+    )
+
+
 def check_gutconfig(
     project_root: Path,
     required: bool = True,
@@ -603,7 +660,7 @@ def check_autoload(
 def run_doctor() -> DoctorResult:
     """Run all diagnostic checks and return aggregated result.
 
-    Resolves project root, loads config, and runs all 9 checks in
+    Resolves project root, loads config, and runs all 12 checks in
     order. Never raises — all exceptions are caught and converted
     to failed CheckResults.
 
@@ -646,6 +703,10 @@ def run_doctor() -> DoctorResult:
             lambda: check_gut_suites(project_root, config.test.test_dirs),
         ),
         ("Coverage Addon", lambda: check_coverage_addon(project_root)),
+        (
+            "Editor Plugin",
+            lambda: check_editor_plugin(project_root),
+        ),
         (
             "GUT Config",
             lambda: check_gutconfig(project_root, required=False),

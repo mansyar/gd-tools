@@ -186,7 +186,7 @@ runner; the bridge is deprecated as of v0.5.0 and will be removed in v0.6.0.
 | Parameterized tests | `parameterize()` in `before_all`, values injected via `use_parameters` | Same -- bridge suites use the same machinery |
 | Skipping a test at runtime | `skip_test()` and `pending_test()` | Yes |
 | Parallel execution | Opt-in -- `--parallel N` or `[test].parallel` (bounded worker pool, 1-32) | Bridge suites run in the same pool |
-| Editor plugin | Not yet | Not applicable |
+| Editor plugin | `gd-tools init` deploys the plugin; enable in Godot's Project Settings → Plugins to get a test/coverage dock and an inline coverage heatmap | Same |
 
 **Known limitations.** Parallel execution is opt-in and off by default
 (`--parallel N` / `[test].parallel`); suites run sequentially without it. The
