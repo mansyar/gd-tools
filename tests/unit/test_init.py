@@ -1155,36 +1155,6 @@ def test_run_init_defaults_to_native_and_keeps_gut_opt_in(tmp_path: Path):
     gutconfig.assert_not_called()
 
 
-def test_run_init_with_gut_enables_legacy_path(tmp_path: Path):
-    """The explicit legacy option preserves the existing GUT bootstrap."""
-    (tmp_path / "project.godot").write_text("config_version=5\n")
-    config = GdToolsConfig()
-    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
-
-    with (
-        patch("gd_tools.init.find_project_root", return_value=tmp_path),
-        patch("gd_tools.init.load_config", return_value=config),
-        patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.install_native_test_addon"),
-        patch("gd_tools.init.is_gut_installed", return_value=False),
-        patch("gd_tools.init.install_gut", return_value=True) as gut,
-        patch("gd_tools.init.enable_gut_plugin") as enable,
-        patch("gd_tools.init.register_coverage_autoload") as autoload,
-        patch("gd_tools.init.install_coverage_addon"),
-        patch("gd_tools.init.update_gutconfig") as gutconfig,
-        patch("gd_tools.init.create_config_file"),
-        patch("gd_tools.init.generate_lint_format_rcs"),
-        patch("gd_tools.init.create_data_dir"),
-        patch("gd_tools.init.print_summary"),
-    ):
-        run_init(with_gut=True)
-
-    gut.assert_called_once()
-    enable.assert_called_once_with(tmp_path)
-    autoload.assert_called_once_with(tmp_path)
-    gutconfig.assert_called_once_with(tmp_path, config)
-
-
 # --- run_init ---
 
 
@@ -1200,59 +1170,22 @@ def test_run_init_full_flow_with_mocks(tmp_path: Path):
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.is_gut_installed", return_value=True),
-        patch("gd_tools.init.get_installed_gut_version", return_value="9.5.0"),
-        patch("gd_tools.init.install_gut") as mock_install,
-        patch("gd_tools.init.enable_gut_plugin") as mock_enable,
+        patch("gd_tools.init.install_native_test_addon") as mock_native,
         patch("gd_tools.init.install_coverage_addon") as mock_cov,
-        patch("gd_tools.init.update_gutconfig") as mock_gutconfig,
         patch("gd_tools.init.create_config_file") as mock_create_config,
         patch("gd_tools.init.generate_lint_format_rcs") as mock_gen_rcs,
         patch("gd_tools.init.create_data_dir") as mock_data_dir,
         patch("gd_tools.init.print_summary") as mock_summary,
     ):
-        run_init(with_gut=True)
+        run_init()
 
     # All functions should be called
-    mock_install.assert_called_once()
-    mock_enable.assert_called_once()
+    mock_native.assert_called_once_with(tmp_path)
     mock_cov.assert_called_once()
-    mock_gutconfig.assert_called_once()
     mock_create_config.assert_called_once()
     mock_gen_rcs.assert_called_once()
     mock_data_dir.assert_called_once()
     mock_summary.assert_called_once()
-
-
-def test_run_init_non_interactive_skips_prompts(tmp_path: Path):
-    """Test run_init passes non_interactive to install_gut."""
-    (tmp_path / "project.godot").write_text("config_version=5\n")
-
-    config = GdToolsConfig()
-    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
-
-    with (
-        patch("gd_tools.init.find_project_root", return_value=tmp_path),
-        patch("gd_tools.init.load_config", return_value=config),
-        patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.is_gut_installed", return_value=False),
-        patch("gd_tools.init.install_gut") as mock_install,
-        patch("gd_tools.init.enable_gut_plugin"),
-        patch("gd_tools.init.install_coverage_addon"),
-        patch("gd_tools.init.update_gutconfig"),
-        patch("gd_tools.init.create_config_file"),
-        patch("gd_tools.init.generate_lint_format_rcs"),
-        patch("gd_tools.init.create_data_dir"),
-        patch("gd_tools.init.print_summary"),
-    ):
-        run_init(non_interactive=True, with_gut=True)
-
-    # install_gut should be called with non_interactive=True
-    _, kwargs = mock_install.call_args
-    assert (
-        kwargs.get("non_interactive") is True
-        or mock_install.call_args.args[-1] is True
-    )
 
 
 def test_run_init_collects_actions_list(tmp_path: Path):
@@ -1266,11 +1199,7 @@ def test_run_init_collects_actions_list(tmp_path: Path):
         patch("gd_tools.init.find_project_root", return_value=tmp_path),
         patch("gd_tools.init.load_config", return_value=config),
         patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.is_gut_installed", return_value=False),
-        patch("gd_tools.init.install_gut"),
-        patch("gd_tools.init.enable_gut_plugin"),
         patch("gd_tools.init.install_coverage_addon"),
-        patch("gd_tools.init.update_gutconfig"),
         patch("gd_tools.init.create_config_file"),
         patch("gd_tools.init.generate_lint_format_rcs"),
         patch("gd_tools.init.create_data_dir"),
@@ -1285,30 +1214,6 @@ def test_run_init_collects_actions_list(tmp_path: Path):
     )
     assert isinstance(actions, list)
     assert len(actions) > 0
-
-
-def test_run_init_exits_when_user_declines_gut(tmp_path: Path):
-    """Test run_init exits when user declines GUT installation."""
-    (tmp_path / "project.godot").write_text("config_version=5\n")
-
-    config = GdToolsConfig()
-    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
-
-    with (
-        patch("gd_tools.init.find_project_root", return_value=tmp_path),
-        patch("gd_tools.init.load_config", return_value=config),
-        patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.is_gut_installed", return_value=False),
-        patch("gd_tools.init.install_gut", return_value=False),
-        patch("gd_tools.init.enable_gut_plugin") as mock_enable,
-        patch("gd_tools.init.print_summary") as mock_summary,
-    ):
-        with pytest.raises(SystemExit) as exc_info:
-            run_init(with_gut=True)
-
-    assert exc_info.value.code == 1
-    mock_enable.assert_not_called()
-    mock_summary.assert_not_called()
 
 
 def test_extract_gut_no_addons_gut_dir_raises(tmp_path: Path):
@@ -1372,38 +1277,6 @@ def test_enable_gut_plugin_appends_at_end(tmp_path: Path):
     content = project_godot.read_text()
     assert '"res://addons/gut/plugin.gd"' in content
     assert "enabled=PackedStringArray" in content
-
-
-def test_run_init_gut_installed_version_unknown(tmp_path: Path):
-    """run_init reports 'version unknown' when GUT installed but version is None."""
-    (tmp_path / "project.godot").write_text("config_version=5\n")
-
-    config = GdToolsConfig()
-    mock_info = GodotInfo(path="/usr/bin/godot", version="4.5.1", is_valid=True)
-
-    with (
-        patch("gd_tools.init.find_project_root", return_value=tmp_path),
-        patch("gd_tools.init.load_config", return_value=config),
-        patch("gd_tools.init.find_godot", return_value=mock_info),
-        patch("gd_tools.init.is_gut_installed", return_value=True),
-        patch("gd_tools.init.get_installed_gut_version", return_value=None),
-        patch("gd_tools.init.install_gut"),
-        patch("gd_tools.init.enable_gut_plugin"),
-        patch("gd_tools.init.install_coverage_addon"),
-        patch("gd_tools.init.update_gutconfig"),
-        patch("gd_tools.init.create_config_file"),
-        patch("gd_tools.init.generate_lint_format_rcs"),
-        patch("gd_tools.init.create_data_dir"),
-        patch("gd_tools.init.print_summary") as mock_summary,
-    ):
-        run_init(with_gut=True)
-
-    call_args = mock_summary.call_args
-    actions = (
-        call_args.args[1] if call_args.args else call_args.kwargs.get("actions")
-    )
-    assert isinstance(actions, list)
-    assert any("version unknown" in a for a in actions)
 
 
 # --- install_coverage_addon version file ---

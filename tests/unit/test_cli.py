@@ -697,7 +697,7 @@ def test_cli_init_passes_non_interactive_flag():
     with patch("gd_tools.cli.run_init") as mock_run:
         result = runner.invoke(cli, ["init", "--non-interactive"])
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(non_interactive=True, with_gut=False)
+    mock_run.assert_called_once_with(non_interactive=True)
 
 
 def test_cli_init_exits_zero_on_success():

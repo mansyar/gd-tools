@@ -19,7 +19,7 @@ def test_watch_with_gut_runtime_exits_2():
     ):
         result = runner.invoke(cli, ["test", "--watch", "--runtime", "gut"])
     assert result.exit_code == 2
-    assert "legacy GUT test runtime was removed" in result.output
+    assert "GUT runtime support was removed in v0.6.0" in result.output
     mock_watch.assert_not_called()
 
 

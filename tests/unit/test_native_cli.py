@@ -26,23 +26,6 @@ def _result() -> TestResult:
     )
 
 
-def test_init_help_exposes_optional_gut_install():
-    """Init exposes the explicit legacy installation switch."""
-    result = CliRunner().invoke(cli, ["init", "--help"])
-
-    assert result.exit_code == 0
-    assert "--with-gut" in result.output
-
-
-def test_init_with_gut_passes_opt_in_flag():
-    """The init command forwards the explicit GUT option."""
-    with patch("gd_tools.cli.run_init") as run:
-        result = CliRunner().invoke(cli, ["init", "--with-gut"])
-
-    assert result.exit_code == 0
-    run.assert_called_once_with(non_interactive=False, with_gut=True)
-
-
 def test_test_help_exposes_native_runtime_selector():
     """The public test command exposes the native/GUT runtime choice."""
     result = CliRunner().invoke(cli, ["test", "--help"])
@@ -117,16 +100,17 @@ def test_test_forwards_native_tags_and_test_timeout():
     assert native_run.call_args.kwargs["test_timeout"] == 1.5
 
 
-def test_test_runtime_gut_is_rejected_with_migration_guidance():
-    """`--runtime gut` is rejected; the bridge replaces the legacy runner."""
+def test_test_runtime_gut_is_rejected_with_removal_message():
+    """`--runtime gut` is rejected: the bridge was removed in v0.6.0."""
     result = CliRunner().invoke(cli, ["test", "--runtime", "gut"])
 
     assert result.exit_code == 2
-    assert "GUT compatibility bridge" in result.output
+    assert "removed in v0.6.0" in result.output
+    assert "gd-tools migrate" in result.output
     assert "docs/gut-migration.md" in result.output
 
 
-def test_test_config_runtime_gut_is_rejected_with_migration_guidance():
+def test_test_config_runtime_gut_is_rejected_with_removal_message():
     """`test.runtime = "gut"` in the project config is rejected the same way."""
     config = MagicMock()
     config.test.runtime = "gut"
@@ -134,7 +118,8 @@ def test_test_config_runtime_gut_is_rejected_with_migration_guidance():
         result = CliRunner().invoke(cli, ["test"])
 
     assert result.exit_code == 2
-    assert "GUT compatibility bridge" in result.output
+    assert "removed in v0.6.0" in result.output
+    assert "gd-tools migrate" in result.output
     assert "docs/gut-migration.md" in result.output
 
 
