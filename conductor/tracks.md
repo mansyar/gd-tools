@@ -128,7 +128,7 @@ _Archived tracks live in `./archive/`._
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
 
-- [ ] **Track: Native Runtime Caching (Preflight Cache)** (Migration Phase 5)
+- [~] **Track: Native Runtime Caching (Preflight Cache)** (Migration Phase 5)
   *Link: [native_runtime_caching_20261001](./tracks/native_runtime_caching_20261001/index.md)* -
   content-hash cache for the native integration preflight under
   `.gd-tools/native/preflight-cache/`: repeat `gd-tools test` runs on unchanged
