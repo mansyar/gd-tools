@@ -19,15 +19,19 @@
 
 ## Phase 2 — Assertion Surface
 
-- [ ] Task: Write failing e2e tests for the four assertions (Red)
-  - [ ] `assert_signal_emitted` / `assert_signal_not_emitted` / `assert_signal_emit_count` pass + failure cases
-  - [ ] `assert_signal_emitted_with_args`: any-match, `"any"` wildcard, mismatch diagnostics
-- [ ] Task: Implement the four assertions (Green)
-  - [ ] Test-class methods integrating `_gd_tools_record_failure` with rich diagnostics (count, expected vs actual, captured-emission list)
-- [ ] Task: Awaitable emit-wait helper (Red → Green)
-  - [ ] Failing tests for `await assert_signal_emitted_after(signal, timeout)` — emitted path and timeout-failure path
-  - [ ] Implement without changing `wait_for_signal`'s `-> bool` contract
-- [ ] Task: Refactor pass — shared emission-matching helpers with the stub system's arg-matching logic
+- [x] Task: Write failing e2e tests for the four assertions (Red)
+  - [x] `assert_signal_emitted` / `assert_signal_not_emitted` / `assert_signal_emit_count` pass + failure cases
+  - [x] `assert_signal_emitted_with_args`: any-match, `"any"` wildcard, mismatch diagnostics
+  *Commit: 219eedb (emitted/not_emitted), a467663 (emit_count/with_args)*
+- [x] Task: Implement the four assertions (Green)
+  - [x] Test-class methods integrating `_gd_tools_record_failure` with rich diagnostics (count, expected vs actual, captured-emission list)
+  *Commit: a467663*
+- [x] Task: Awaitable emit-wait helper (Red → Green)
+  - [x] Failing tests for `await assert_signal_emitted_after(signal, timeout)` — emitted path and timeout-failure path
+  - [x] Implement without changing `wait_for_signal`'s `-> bool` contract
+  *Commit: a467663*
+- [x] Task: Refactor pass — shared emission-matching helpers with the stub system's arg-matching logic
+  *(Satisfied by design: `assert_signal_emitted_with_args` reuses `_gd_tools_stub_specificity` directly; `_gd_tools_format_emissions` centralizes captured-emission diagnostics.)*
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Edge Cases & Robustness
