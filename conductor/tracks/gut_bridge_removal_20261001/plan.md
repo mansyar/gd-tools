@@ -4,7 +4,7 @@
 **Methodology:** TDD per `workflow.md` — every task: Red (failing tests) →
 Green (implementation) → commit → git note → plan update.
 
-## Phase 1: Bridge Runtime Removal
+## Phase 1: Bridge Runtime Removal `[checkpoint: 5ca9456]`
 
 - [x] Task: Write failing removal-behavior tests (Red) `4be1f0d`
   - [ ] Test: discovery rejects `extends GutTest` suites (exit 2, file named, migration guidance)
