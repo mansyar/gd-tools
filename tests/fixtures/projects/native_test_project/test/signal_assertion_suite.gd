@@ -15,6 +15,9 @@ class Emitter:
 	signal ping(value)
 
 
+const SIGNAL_SUBJECT := preload("res://scripts/signal_subject.gd")
+
+
 func _emitter() -> Emitter:
 	return Emitter.new()
 
@@ -112,3 +115,42 @@ func _emit_probe_after(frames: int) -> void:
 	for index in frames:
 		await get_tree().process_frame
 	probe_signal.emit()
+
+
+func test_watch_double_target_and_assert_emitted() -> void:
+	# Doubles inherit the declared signals of the doubled script, so a double
+	# of signal_subject.gd is watchable like any other Object.
+	var d = double(SIGNAL_SUBJECT)
+	watch_signals(d)
+	d.ping.emit(9)
+	assert_signal_emitted(d, "ping")
+	assert_signal_emitted_with_args(d, "ping", [9])
+
+
+func test_freed_watch_target_is_safe_at_teardown() -> void:
+	# Freeing a watched Node mid-test must not produce dangling-reference
+	# errors at teardown: connections die with the object and the reset walks
+	# the registry defensively.
+	var node := EmitterNode.new()
+	watch_signals(node)
+	node.ping.emit(1)
+	node.free()
+	watch_signals(self)
+	assert_signal_not_emitted(self, "probe_signal")
+
+
+func test_multiple_watch_targets_in_one_test() -> void:
+	var emitter := _emitter()
+	watch_signals(self)
+	watch_signals(emitter)
+	probe_signal.emit()
+	emitter.ping.emit("x")
+	assert_signal_emitted(self, "probe_signal")
+	assert_signal_emitted(emitter, "ping")
+	assert_signal_not_emitted(emitter, "probe_signal")
+
+
+class EmitterNode:
+	extends Node
+
+	signal ping(value)

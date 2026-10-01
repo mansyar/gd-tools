@@ -2498,16 +2498,21 @@ SIGNAL_FAILING_METHODS = [
 ]
 
 
-def _signal_assertion_manifest(project, names):
-    """Build a native manifest over the signal assertion fixture suite."""
+def _signal_assertion_manifest(
+    project,
+    names,
+    suite_name="NativeSignalAssertionSuite",
+    suite_path="res://test/signal_assertion_suite.gd",
+):
+    """Build a native manifest over a signal assertion fixture suite."""
     return {
         "protocol_version": 3,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
             {
-                "name": "NativeSignalAssertionSuite",
-                "path": "res://test/signal_assertion_suite.gd",
+                "name": suite_name,
+                "path": suite_path,
                 "tests": [{"name": name} for name in names],
             }
         ],
@@ -2634,3 +2639,60 @@ def test_native_signal_assertion_detail_per_assertion(godot_bin, tmp_path):
         failure = _single_failure(payload, name)
         assert failure["assertion"] == assertion_name, failure
         assert detail in failure["message"], failure
+
+
+SIGNAL_EDGE_METHODS = [
+    "test_watch_double_target_and_assert_emitted",
+    "test_freed_watch_target_is_safe_at_teardown",
+    "test_multiple_watch_targets_in_one_test",
+]
+
+
+def test_native_signal_edge_cases_doubles_freed_and_multi_watch(
+    godot_bin, tmp_path
+):
+    """Doubles are watchable, freed targets tear down safely, multi-watch works."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-edge.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, SIGNAL_EDGE_METHODS),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(SIGNAL_EDGE_METHODS)
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+HOOK_SCOPE_METHODS = [
+    "test_hook_watched_signal_emission_is_captured",
+    "test_hook_watch_covers_whole_test_body",
+    "test_hook_watch_isolated_between_tests",
+]
+
+
+def test_native_signal_watch_in_before_each_is_captured(godot_bin, tmp_path):
+    """A watch opened in before_each captures hook emissions for the test."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-hook-scope.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(
+            project,
+            HOOK_SCOPE_METHODS,
+            suite_name="NativeSignalHookScopeSuite",
+            suite_path="res://test/signal_hook_scope_suite.gd",
+        ),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(HOOK_SCOPE_METHODS)
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
