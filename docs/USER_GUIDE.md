@@ -562,6 +562,46 @@ func test_removing_items_reports_remaining() -> void:
     assert_eq(inventory.count(), 3)
 ```
 
+**Signal assertions:**
+
+`watch_signals(obj)` starts recording every emission of every declared
+signal on any Object - Nodes, RefCounteds, and doubles alike. Assertions
+read the recording; the watch auto-resets between tests.
+
+- `watch_signals(obj)` must be called before the emissions you want to
+  assert on; asserting against an unwatched object fails the test with
+  guidance pointing at `watch_signals`.
+- `assert_signal_emitted(obj, "signal")` and
+  `assert_signal_not_emitted(obj, "signal")` assert on any emission count
+  other than the stated one.
+- `assert_signal_emit_count(obj, "signal", n)` asserts the exact count.
+- `assert_signal_emitted_with_args(obj, "signal", [args])` passes when any
+  recorded emission matches element-wise; `"any"` is a per-element
+  wildcard. Diagnostics list every captured emission.
+- `await assert_signal_emitted_after(sig, timeout_seconds := 5.0)` awaits
+  the emission and fails with a timeout diagnostic if it does not arrive.
+
+```gdscript
+extends GdToolsTest
+
+signal health_changed(new_value)
+
+func test_health_change_is_reported() -> void:
+    watch_signals(self)
+    health_changed.emit(2)
+    assert_signal_emitted(self, "health_changed")
+    assert_signal_emitted_with_args(self, "health_changed", [2])
+
+func test_health_change_arrives_within_budget() -> void:
+    _heal_after(2)
+    await assert_signal_emitted_after(health_changed, 5.0)
+
+func _heal_after(frames: int) -> void:
+    for index in frames:
+        await get_tree().process_frame
+    health_changed.emit(2)
+```
+
 **Scene and resource integration:**
 
 Suites may declare scenes and named resources with a class-level

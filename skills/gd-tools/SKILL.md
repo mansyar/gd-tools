@@ -83,7 +83,8 @@ Check the environment for required tools and configuration.
 
 ### `gd-tools test`
 
-Run GDScript tests using GUT.
+Run GDScript tests with the native runtime (or the deprecated GUT
+compatibility bridge for legacy `GutTest` suites).
 
 **Flags:**
 - `--coverage` — Generate coverage report during test run
@@ -96,9 +97,19 @@ Run GDScript tests using GUT.
 - `--show-uncovered` — Show uncovered lines and branches when coverage < 100% (requires `--coverage`)
 
 **Exit codes:**
-- `0` — All tests passed
-- `1` — Test failure (TestFailureError)
-- `2` — Configuration error (ConfigError)
+- `0` - All tests passed
+- `1` - Test failure (TestFailureError)
+- `2` - Configuration error (ConfigError)
+
+**Native test API highlights (`GdToolsTest`):**
+- Value, comparison, membership, and type assertions
+- Mocking: `double`, `partial_double`, `stub`, call assertions on doubles
+- Signal assertions: `watch_signals(obj)` then `assert_signal_emitted`,
+  `assert_signal_not_emitted`, `assert_signal_emit_count`,
+  `assert_signal_emitted_with_args`, and the awaitable
+  `assert_signal_emitted_after`
+- Async waits: `wait_process_frame`, `wait_physics_frames`,
+  `wait_seconds`, `wait_for_signal`
 
 ### `gd-tools lint`
 

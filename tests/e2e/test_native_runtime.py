@@ -2476,3 +2476,223 @@ def test_native_parallel_run_matches_sequential_outcomes(
     assert parallel_cases == sequential_cases
     assert parallel_cases, "expected JUnit test cases in both runs"
     assert parallel_coverage == sequential_coverage
+
+
+SIGNAL_PASSING_METHODS = [
+    "test_watch_node_target_and_assert_emitted",
+    "test_watch_refcounted_target_and_assert_emitted",
+    "test_not_emitted_passes_without_emission",
+    "test_emit_count_passes_on_exact_count",
+    "test_with_args_passes_on_any_matching_emission",
+    "test_with_args_any_wildcard_matches",
+    "test_emit_wait_passes_after_emission",
+]
+
+
+SIGNAL_FAILING_METHODS = [
+    "test_emitted_fails_without_emission",
+    "test_not_emitted_fails_when_emitted",
+    "test_emit_count_fails_on_wrong_count",
+    "test_with_args_fails_when_no_emission_matches",
+    "test_emit_wait_fails_on_timeout",
+]
+
+
+def _signal_assertion_manifest(
+    project,
+    names,
+    suite_name="NativeSignalAssertionSuite",
+    suite_path="res://test/signal_assertion_suite.gd",
+):
+    """Build a native manifest over a signal assertion fixture suite."""
+    return {
+        "protocol_version": 3,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": suite_name,
+                "path": suite_path,
+                "tests": [{"name": name} for name in names],
+            }
+        ],
+        "coverage": {"enabled": False},
+    }
+
+
+def test_native_signal_watch_captures_emissions(godot_bin, tmp_path):
+    """watch_signals captures emissions for node and refcounted targets."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-passing.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, SIGNAL_PASSING_METHODS),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(SIGNAL_PASSING_METHODS)
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_native_signal_assertions_fail_with_capture_detail(godot_bin, tmp_path):
+    """A violated signal assertion records one failure naming the signal."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-failing.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, SIGNAL_FAILING_METHODS),
+        result_path,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    signal_names = {
+        "test_emitted_fails_without_emission": "probe_signal",
+        "test_not_emitted_fails_when_emitted": "probe_signal",
+        "test_emit_count_fails_on_wrong_count": "probe_signal",
+        "test_with_args_fails_when_no_emission_matches": "ping",
+        "test_emit_wait_fails_on_timeout": "probe_signal",
+    }
+    for name, signal_name in signal_names.items():
+        failure = _single_failure(payload, name)
+        assert failure["assertion"].startswith("assert_signal_"), failure
+        assert signal_name in failure["message"], failure
+
+
+def test_native_signal_assertions_guide_unwatched_target(godot_bin, tmp_path):
+    """An assertion on an unwatched object fails with actionable guidance."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-unwatched.json"
+    unwatched = [
+        "test_unwatched_target_fails_with_guidance",
+        "test_unwatched_not_emitted_fails_with_guidance",
+    ]
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, unwatched),
+        result_path,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    for name in unwatched:
+        failure = _single_failure(payload, name)
+        assert "watch_signals" in failure["message"], failure
+
+
+def test_native_signal_watch_is_per_test(godot_bin, tmp_path):
+    """Recordings from an emitting test never leak into a later test."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-isolation.json"
+    isolation = [
+        "test_watch_node_target_and_assert_emitted",
+        "test_capture_resets_between_tests",
+    ]
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, isolation),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert all(
+        entry["status"] == "passed" for entry in payload["tests"]
+    ), payload["tests"]
+
+
+def test_native_signal_assertion_detail_per_assertion(godot_bin, tmp_path):
+    """Each signal assertion records its own assertion name and detail."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-detail.json"
+    expectations = {
+        "test_emit_count_fails_on_wrong_count": (
+            "assert_signal_emit_count",
+            "2 time(s)",
+        ),
+        "test_with_args_fails_when_no_emission_matches": (
+            "assert_signal_emitted_with_args",
+            "captured",
+        ),
+        "test_emit_wait_fails_on_timeout": (
+            "assert_signal_emitted_after",
+            "timed out",
+        ),
+    }
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, list(expectations)),
+        result_path,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    for name, (assertion_name, detail) in expectations.items():
+        failure = _single_failure(payload, name)
+        assert failure["assertion"] == assertion_name, failure
+        assert detail in failure["message"], failure
+
+
+SIGNAL_EDGE_METHODS = [
+    "test_watch_double_target_and_assert_emitted",
+    "test_freed_watch_target_is_safe_at_teardown",
+    "test_multiple_watch_targets_in_one_test",
+]
+
+
+def test_native_signal_edge_cases_doubles_freed_and_multi_watch(
+    godot_bin, tmp_path
+):
+    """Doubles are watchable, freed targets tear down safely, multi-watch works."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-edge.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, SIGNAL_EDGE_METHODS),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(SIGNAL_EDGE_METHODS)
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+HOOK_SCOPE_METHODS = [
+    "test_hook_watched_signal_emission_is_captured",
+    "test_hook_watch_covers_whole_test_body",
+    "test_hook_watch_isolated_between_tests",
+]
+
+
+def test_native_signal_watch_in_before_each_is_captured(godot_bin, tmp_path):
+    """A watch opened in before_each captures hook emissions for the test."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-hook-scope.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(
+            project,
+            HOOK_SCOPE_METHODS,
+            suite_name="NativeSignalHookScopeSuite",
+            suite_path="res://test/signal_hook_scope_suite.gd",
+        ),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    assert len(payload["tests"]) == len(HOOK_SCOPE_METHODS)
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])

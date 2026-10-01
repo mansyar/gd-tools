@@ -144,3 +144,12 @@ After the bounded migration period the bridge itself is removed and
 rather than big-bang. See
 [Roadmap §8](./ROADMAP.md#8-temporary-native-test-runtime-migration-roadmap)
 for the migration roadmap status.
+
+The native runtime now covers signal assertions directly on `GdToolsTest`:
+`watch_signals`, `assert_signal_emitted`, `assert_signal_not_emitted`,
+`assert_signal_emit_count`, `assert_signal_emitted_with_args`
+(element-wise matching with the `"any"` wildcard), and the awaitable
+`assert_signal_emitted_after`. When migrating a GUT suite off the bridge,
+map `assert_signal_emitted_with_parameters` to
+`assert_signal_emitted_with_args`; `assert_has_signal`, `assert_connected`,
+and `assert_not_connected` have no native equivalent yet.
