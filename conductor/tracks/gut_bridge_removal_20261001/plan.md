@@ -16,7 +16,7 @@ Green (implementation) → commit → git note → plan update.
   - [ ] Remove bridge routing/normalization from `native_test/` (discovery, orchestrator, command)
   - [ ] Implement the explicit discovery/preflight error with migration guidance
   - [ ] Keep `native_test/bridge_scan.py` (migrate dependency)
-- [ ] Task: Implement `--runtime gut` explicit error in `cli.py`; remove `init --with-gut`
+- [x] Task: Implement `--runtime gut` explicit error in `cli.py`; remove `init --with-gut` `75aa1a4`
   - [ ] `--runtime gut` → exit 2, v0.6.0 removal message + `gd-tools migrate` pointer
   - [ ] Delete `--with-gut` option and its scaffolding path; remove deprecation notices in `command.py` / `init.py`
 - [ ] Task: Remove bridge-only tests and fixtures
