@@ -166,4 +166,4 @@ _Archived tracks live in `./archive/`._
   `$schema` key support in the config model — plus a targeted docs truth pass fixing
   the stale CHANGELOG "Known Limitations" editor-plugin claim, ROADMAP Phase 5
   checkboxes, and other demonstrably false docs claims)
-  *Link: [config_schema_docs_20261001](./tracks/config_schema_docs_20261001/index.md)*
+  *Link: [config_schema_docs_20261001](./archive/config_schema_docs_20261001/index.md)*
