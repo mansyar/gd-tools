@@ -194,4 +194,4 @@ _Archived tracks live in `./archive/`._
   import-freshness cache under `.gd-tools/native/import-cache/`, mirroring the
   preflight-cache conventions — fail-open, `--no-cache` bypass, verbose
   hit/miss — with benchmark evidence that warm runs are strictly faster)
-  *Link: [import_step_caching_20261001](./tracks/import_step_caching_20261001/index.md)*
+  *Link: [import_step_caching_20261001](./archive/import_step_caching_20261001/index.md)*
