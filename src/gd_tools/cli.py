@@ -41,6 +41,7 @@ from .config import (
     validate_paths,
     GdToolsConfig,
 )
+from .schema import generate_schema_text
 from .coverage.orchestrator import (
     diff_coverage,
     generate_coverage_report,
@@ -1357,6 +1358,38 @@ def validate():
 
     ctx = click.get_current_context()
     ctx.exit(1 if has_errors else 0)
+
+
+@config.command(name="schema")
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Write the schema to this file (parent directories are "
+    "created) instead of printing to stdout.",
+)
+def config_schema(output: Path | None) -> None:
+    """Print the JSON Schema for gd-tools.toml.
+
+    Generates the schema from the installed gd-tools version's
+    configuration model (JSON Schema draft 2020-12). Point editors
+    at the output (or the checked-in ``docs/gd-tools.schema.json``)
+    via the ``$schema`` key in ``gd-tools.toml`` or editor-side
+    TOML association to get autocomplete and inline validation.
+    """
+    ctx = click.get_current_context()
+    if output is not None:
+        try:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(generate_schema_text(), encoding="utf-8")
+        except OSError as e:
+            click.echo(f"Error: cannot write schema file: {e}", err=True)
+            ctx.exit(2)
+        click.echo(f"Schema written to {output}")
+    else:
+        click.echo(generate_schema_text())
+    ctx.exit(0)
 
 
 @cli.command()

@@ -104,7 +104,7 @@ func test_health_starts_at_full() -> void:
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`, `save-baseline`, `diff` (baseline comparison for CI regression gates), and `run` (collect coverage during a manual playtest session). |
-| `gd-tools config` | Configuration management -- `show` (display resolved config), `validate` (check config validity). |
+| `gd-tools config` | Configuration management -- `show` (display resolved config), `validate` (check config validity), `schema` (print or write the JSON Schema for `gd-tools.toml`). |
 | `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, gdtoolkit, Python, and GUT when installed) in a table or JSON. |
 | `gd-tools completion` | Generate shell completion scripts for bash, zsh, fish, or PowerShell. |
 
@@ -329,6 +329,32 @@ output_dir = ".gd-tools/coverage"
 exclude = ["addons", ".godot", ".gd-tools", ".git"]
 test_dirs = ["test", "tests"]
 ```
+
+### Editor Autocomplete & Validation
+
+`gd-tools` publishes a JSON Schema for `gd-tools.toml` at
+[`docs/gd-tools.schema.json`](./docs/gd-tools.schema.json). Add a
+`"$schema"` key to your config to enable autocomplete and inline
+validation in editors that support TOML schemas:
+
+```toml
+"$schema" = "https://raw.githubusercontent.com/mansyar/gd-tools/main/docs/gd-tools.schema.json"
+```
+
+The key is accepted and ignored by the CLI — it carries no runtime
+meaning.
+
+- **VS Code** (with [Even Better TOML](https://marketplace.visualstudio.com/items?itemName=tamasfe.even-better-toml)):
+  the `"$schema"` key above is picked up automatically. Alternatively,
+  associate the schema by filename in your settings:
+  `"even-better-toml.schema.associations": {"gd-tools.toml": "https://raw.githubusercontent.com/mansyar/gd-tools/main/docs/gd-tools.schema.json"}`
+- **taplo** (CLI / LSP): the `"$schema"` key works out of the box, or
+  add a `schema` entry to your `taplo.toml` pointing at the URL above.
+
+The schema is regenerated with
+`gd-tools config schema --output docs/gd-tools.schema.json`;
+a unit test keeps the checked-in snapshot in sync with the installed
+version's config model.
 
 See the [User Guide](./docs/USER_GUIDE.md) for a full configuration reference
 with all keys, defaults, and examples.
