@@ -961,3 +961,51 @@ def test_set_explicit_project_root_resolves_relative_path(
     set_explicit_project_root(Path("proj"))
     result = find_project_root()
     assert result == nested
+
+
+# ---------------------------------------------------------------------------
+# $schema key support
+# ---------------------------------------------------------------------------
+
+
+def test_load_config_accepts_schema_key(tmp_path):
+    """A gd-tools.toml with a $schema key loads without validation errors."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text(
+        '"$schema" = "gd-tools.schema.json"\n'
+        "[coverage]\n"
+        "min_percent = 50\n"
+    )
+    config = load_config(project_root=tmp_path)
+    assert config.coverage.min_percent == 50
+
+
+def test_gdtools_config_schema_key_not_in_dump():
+    """The $schema key is accepted and ignored (never enters the model)."""
+    config = GdToolsConfig(**{"$schema": "./gd-tools.schema.json"})
+    dumped = config.model_dump()
+    assert "$schema" not in dumped
+    assert "schema_" not in dumped
+
+
+def test_gdtools_config_schema_key_round_trips_clean():
+    """save_config of a model that consumed $schema writes no $schema key."""
+    import tomli_w  # noqa: F401
+
+    config = GdToolsConfig(**{"$schema": "./gd-tools.schema.json"})
+    data = config.model_dump(exclude_none=True)
+    assert "$schema" not in data
+
+
+def test_gdtools_config_unknown_key_still_rejected():
+    """extra='forbid' still rejects typo'd keys other than $schema."""
+    with pytest.raises(ValidationError):
+        GdToolsConfig(
+            **{"$schema": "./gd-tools.schema.json", "typo_key": 1}
+        )
+
+
+def test_gdtools_config_unknown_section_still_rejected():
+    """Unknown top-level sections remain forbidden."""
+    with pytest.raises(ValidationError):
+        GdToolsConfig(**{"covrage": {"min_percent": 50}})

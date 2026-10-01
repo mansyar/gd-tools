@@ -257,3 +257,18 @@ def test_config_validate_no_config_file(tmp_path, monkeypatch):
     result = runner.invoke(cli, ["config", "validate"])
     assert result.exit_code == 0
     assert "default" in result.output.lower()
+
+
+def test_config_validate_accepts_schema_key(tmp_path, monkeypatch):
+    """config validate on a $schema-bearing config exits 0."""
+    (tmp_path / "project.godot").write_text("")
+    _create_default_dirs(tmp_path)
+    (tmp_path / "gd-tools.toml").write_text(
+        '"$schema" = "gd-tools.schema.json"\n'
+    )
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "validate"])
+    assert result.exit_code == 0
+    assert "valid" in result.output.lower()
