@@ -14,15 +14,15 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: ab2a834]
 
 ## Phase 2: `gd-tools config schema` Command
-- [ ] Task: Write failing tests for the schema command (Red)
-  - [ ] Test: `config schema` prints valid JSON Schema with `$schema` = draft 2020-12 and `$id`
-  - [ ] Test: schema output is derived from the live Pydantic model (mutating a model field changes output)
-  - [ ] Test: `--output <path>` writes the schema to file, creating parent dirs
-  - [ ] Test: exit code 0 on success; error path for unwritable target exits 2
-  - [ ] Test: schema output includes top-level sections (`godot`, `test`, `lint`, `format`, `coverage`) matching model structure
-- [ ] Task: Implement `schema` subcommand in the config command group (Green)
-- [ ] Task: Refactor & verify coverage for the new module (≥80% line / ≥70% branch)
-- [ ] Task: Commit (`feat(config): add config schema command exposing JSON Schema`) + attach git note
+- [x] Task: Write failing tests for the schema command (Red)
+  - [x] Test: `config schema` prints valid JSON Schema with `$schema` = draft 2020-12 and `$id`
+  - [x] Test: schema output is derived from the live Pydantic model (mutating a model field changes output)
+  - [x] Test: `--output <path>` writes the schema to file, creating parent dirs
+  - [x] Test: exit code 0 on success; error path for unwritable target exits 2
+  - [x] Test: schema output includes top-level sections (`godot`, `test`, `lint`, `format`, `coverage`) matching model structure
+- [x] Task: Implement `schema` subcommand in the config command group (Green) [a08b39e]
+- [x] Task: Refactor & verify coverage for the new module (≥80% line / ≥70% branch) [a08b39e — schema.py 100% line]
+- [x] Task: Commit (`feat(config): add config schema command exposing JSON Schema`) + attach git note [a08b39e]
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Checked-in Snapshot + Sync Test + README
