@@ -19,6 +19,7 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     NativeTestResult,
 )
+from gd_tools.test_runner import TestResult
 from gd_tools.verbosity import Verbosity, set_verbosity
 
 pytestmark = pytest.mark.unit
@@ -207,7 +208,7 @@ def test_warm_pipeline_rerun_skips_the_import_process(tmp_path):
         ],
     )
 
-    def _run_once() -> None:
+    def _run_once() -> TestResult:
         with (
             patch(
                 "gd_tools.native_test.command.find_project_root",
@@ -236,7 +237,7 @@ def test_warm_pipeline_rerun_skips_the_import_process(tmp_path):
             patch("gd_tools.native_test.command._generate_native_report"),
             patch("gd_tools.native_test.command.format_test_results"),
         ):
-            run_native_test_command(_pipeline_config())
+            return run_native_test_command(_pipeline_config())
 
     _write_project(tmp_path)
     (tmp_path / "test").mkdir(exist_ok=True)
@@ -244,9 +245,16 @@ def test_warm_pipeline_rerun_skips_the_import_process(tmp_path):
         "extends GdToolsTest\n", encoding="utf-8"
     )
     with patch("gd_tools.native_test.command._import_project") as import_mock:
-        _run_once()
-        _run_once()
+        cold = _run_once()
+        warm = _run_once()
     import_mock.assert_called_once()
+    assert (cold.total, cold.passed, cold.failed, cold.skipped) == (
+        warm.total,
+        warm.passed,
+        warm.failed,
+        warm.skipped,
+    )
+    assert cold.junit_xml_path == warm.junit_xml_path
 
 
 def _pipeline_config() -> SimpleNamespace:
