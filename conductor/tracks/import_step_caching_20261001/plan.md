@@ -31,7 +31,7 @@
 
 **Purpose:** Gate the unconditional `godot --headless --import` call with the cache while preserving all existing behavior on miss, failure, and `--no-cache`.
 
-- [ ] Task: Add failing tests for pipeline gating
+- [x] Task: Add failing tests for pipeline gating [267066b]
   - [ ] Test that a warm second run (no changes) skips the `godot --headless --import` process.
   - [ ] Test that a cold/changed project still runs the import and records the cache only on success.
   - [ ] Test that a failed or timed-out import does not update the cache.
@@ -40,7 +40,7 @@
   - [ ] Test concurrent-run tolerance: overlapping runs never produce a corrupt cache or a skipped-but-needed import.
   - [ ] Test verbose hit/miss reporting lines follow the existing `cache hit/miss: reason` phrasing.
   - [ ] Run the targeted tests and confirm the expected Red phase.
-- [ ] Task: Wire the cache into `native_test/command.py`
+- [x] Task: Wire the cache into `native_test/command.py` [267066b]
   - [ ] Gate the `_import_project()` call with the cache check (skip on hit).
   - [ ] Record cache freshness only after a successful import.
   - [ ] Honor the global `--no-cache` flag end-to-end.
