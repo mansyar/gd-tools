@@ -14,7 +14,9 @@ Workflow step 3). Verification is via search checks and diff inspection.
   - [x] Delete §8 entirely (no tombstone)
 - [x] Task: Rewrite all §8 anchor links to the new anchors
 - [x] Task: Verify no dangling `#8-...` anchors remain repo-wide (search check)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+[checkpoint: pending]
 
 ## Phase 2: Refresh ARCHITECTURE.md Known Limitations
 
