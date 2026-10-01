@@ -28,11 +28,11 @@ verification, conventional commits with git notes.
 
 ## Phase 3 — Coverage Heatmap Overlay (GDScript, manual-checklist verified)
 
-- [ ] Task: `coverage_overlay.gd` — hook script editor `CodeEdit`, read per-file line/branch status from `.gd-tools/coverage/` artifacts, apply line background colors (green/red/yellow)
-- [ ] Task: Sync logic — auto-refresh when dock coverage run completes; load on editor open if artifacts exist; stale flag when source files are newer than coverage data (never show stale as fresh)
-- [ ] Task: Responsiveness guard — bounded per-file work on script open (no editor lag)
-- [ ] Task: Extend manual testing checklist (overlay colors, stale flag, toggle off/on)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md — manual verify: coverage run → open scripts → confirm green/red/yellow; touch a source file → confirm stale flag)
+- [x] Task: `coverage_overlay.gd` — hook script editor `CodeEdit`, read per-file line/branch status from `.gd-tools/coverage/` artifacts, apply line background colors (green/red/yellow)
+- [x] Task: Sync logic — auto-refresh when dock coverage run completes; load on editor open if artifacts exist; stale flag when source files are newer than coverage data (never show stale as fresh)
+- [x] Task: Responsiveness guard — bounded per-file work on script open (no editor lag)
+- [x] Task: Extend manual testing checklist (overlay colors, stale flag, toggle off/on)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md — manual verify: coverage run → open scripts → confirm green/red/yellow; touch a source file → confirm stale flag)
 
 ## Phase 4 — Documentation & Integration
 
