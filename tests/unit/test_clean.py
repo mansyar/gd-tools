@@ -45,6 +45,7 @@ def _make_project(tmp_path: Path) -> Path:
         gd / "artifacts" / "run_20260930_0000" / "result.xml", ARTIFACT_BYTES
     )
     _write(gd / "native" / "worker0" / "scratch.txt", CACHE_BYTES)
+    _write(gd / "native" / "preflight-cache" / "abc123.json", 64)
     # Protected paths that must survive every destructive run.
     _write(
         root / "addons" / "gd-tools-test" / ".backups" / "plugin.cfg.bak", 50
@@ -88,7 +89,22 @@ def test_cache_flag_removes_native_scratch_directory(tmp_path):
     entry = _status(result, "cache")
     assert not (root / ".gd-tools" / "native").exists()
     assert entry.status == "removed"
-    assert entry.freed_bytes == CACHE_BYTES
+    # native dir holds worker scratch + the preflight cache entry
+    assert entry.freed_bytes == CACHE_BYTES + 64
+
+
+def test_cache_flag_removes_the_preflight_cache(tmp_path):
+    """The preflight cache lives under .gd-tools/native so --cache clears it."""
+    root = _make_project(tmp_path)
+    preflight_entry = (
+        root / ".gd-tools" / "native" / "preflight-cache" / "abc123.json"
+    )
+    assert preflight_entry.exists()
+
+    result = run_clean(cache=True, project_root=root)
+
+    assert _status(result, "cache").status == "removed"
+    assert not preflight_entry.exists()
 
 
 def test_baselines_flag_removes_only_baseline_json(tmp_path):
@@ -115,7 +131,12 @@ def test_all_removes_every_target_directory(tmp_path):
     assert not (gd / "artifacts").exists()
     assert not (gd / "native").exists()
     assert result.freed_bytes == (
-        COVERAGE_BYTES + 100 + BASELINE_BYTES + ARTIFACT_BYTES + CACHE_BYTES
+        COVERAGE_BYTES
+        + 100
+        + BASELINE_BYTES
+        + ARTIFACT_BYTES
+        + CACHE_BYTES
+        + 64
     )
 
 
@@ -176,7 +197,12 @@ def test_all_subsumes_every_explicit_flag(tmp_path):
     ]
     assert names == ["coverage", "artifacts", "cache"]
     assert result.freed_bytes == (
-        COVERAGE_BYTES + 100 + BASELINE_BYTES + ARTIFACT_BYTES + CACHE_BYTES
+        COVERAGE_BYTES
+        + 100
+        + BASELINE_BYTES
+        + ARTIFACT_BYTES
+        + CACHE_BYTES
+        + 64
     )
 
 
@@ -256,7 +282,7 @@ def test_removal_failure_is_reported_with_the_failing_path(tmp_path):
 def test_clean_result_freed_bytes_sum_across_targets(tmp_path):
     root = _make_project(tmp_path)
     result = run_clean(artifacts=True, cache=True, project_root=root)
-    assert result.freed_bytes == ARTIFACT_BYTES + CACHE_BYTES
+    assert result.freed_bytes == ARTIFACT_BYTES + CACHE_BYTES + 64
     assert not result.failed
 
 
