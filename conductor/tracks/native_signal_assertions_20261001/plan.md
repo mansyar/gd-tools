@@ -14,7 +14,8 @@
   - [x] Auto-reset recordings and disconnect watchers at test end (hooks, parameterized cases, retries)
   - [x] E2E tests proving no cross-test/cross-case leakage
   *Commit: 219eedb*
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  *[checkpoint: 9dc39d3]*
 
 ## Phase 2 — Assertion Surface
 
