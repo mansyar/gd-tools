@@ -78,7 +78,7 @@
   - [x] Run `ruff check` and `black --check`.
   - [x] Verify the full project coverage threshold behavior.
   - [x] Verify no new runtime dependencies were added.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: 3e848f2]
 
 ## Plan Boundaries
 
