@@ -36,11 +36,11 @@ verification, conventional commits with git notes.
 
 ## Phase 4 — Documentation & Integration
 
-- [ ] Task: USER_GUIDE — editor plugin section (deployment, enabling, dock usage, heatmap legend, troubleshooting)
-- [ ] Task: README capability table — Editor Plugin "Not yet" → shipped; update `docs/ROADMAP.md` Track 35 status
-- [ ] Task: Compat-matrix note — editor-API caveats for Godot 4.5/4.6/4.7 in the checklist
-- [ ] Task: Final verification — full `CI=true pytest`, coverage gates, `ruff`/`black`, manual checklist executed
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: USER_GUIDE — editor plugin section (deployment, enabling, dock usage, heatmap legend, troubleshooting)
+- [x] Task: README capability table — Editor Plugin "Not yet" → shipped; update `docs/ROADMAP.md` Track 35 status
+- [x] Task: Compat-matrix note — editor-API caveats for Godot 4.5/4.6/4.7 in the checklist
+- [~] Task: Final verification — full `CI=true pytest`, coverage gates, `ruff`/`black`, manual checklist executed
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
 
