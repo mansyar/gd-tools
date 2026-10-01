@@ -146,6 +146,17 @@ _Archived tracks live in `./archive/`._
 
 ---
 
+- [ ] **Track: `test --changed` — Affected-Suite Selection** (feature: add
+  `gd-tools test --changed [--base <ref>]` to run only suites affected by
+  changed files — working tree or git ref via merge-base — reusing the
+  watch-mode file→suite mapping as shared selection logic, with full-suite
+  fallback on unmapped files, exit-0 empty-set, exit-2 repo/ref errors,
+  composition with `--parallel`/`--coverage`/filters, summary + verbose
+  reporting, and E2E validation on a git-backed fixture project)
+  *Link: [test_changed_20261001](./tracks/test_changed_20261001/index.md)*
+
+---
+
 - [x] **Track: Godot Editor Plugin** (archived → ./archive/editor_plugin_20260930) (Roadmap Track 35 — editor plugin deployed
   by `gd-tools init` with a test/coverage dock panel (async runs, summary +
   failures, friendly missing-CLI fallback) and a `CodeEdit` coverage heatmap
