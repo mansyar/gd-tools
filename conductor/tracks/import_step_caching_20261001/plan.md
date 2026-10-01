@@ -1,0 +1,89 @@
+# Implementation Plan: Import-Step Caching
+
+- **Track ID:** import_step_caching_20261001
+- **Type:** Feature (performance enhancement)
+- **Status:** New
+- **Specification:** [`spec.md`](./spec.md)
+
+## Phase 1 — Import cache module
+
+**Purpose:** Establish the content-hash import-freshness cache as a standalone, fully tested module before touching the test pipeline.
+
+- [ ] Task: Add failing unit tests for the import cache module
+  - [ ] Test the composite cache key: `project.godot` content, project source/resource file hashes, Godot binary identity, and bundled addon hashes (mirroring `preflight_cache.py` keying).
+  - [ ] Test cache miss reasons: first run, changed file, changed `project.godot`, changed Godot binary, changed addon file, missing/corrupt cache file.
+  - [ ] Test that unchanged projects produce a cache hit after a successful import is recorded.
+  - [ ] Test fail-open behavior: hashing errors, unreadable/corrupt cache files, and write failures are reported as a miss and never raise.
+  - [ ] Test that cache writes are atomic (no partial/truncated cache state on interruption).
+  - [ ] Run the targeted tests and confirm the expected Red phase.
+- [ ] Task: Implement `src/gd_tools/native_test/import_cache.py`
+  - [ ] Reuse hashing/cache helpers from `preflight_cache.py` (extract a shared helper if that avoids duplication).
+  - [ ] Implement the cache-status result with hit/miss and a human-readable reason, consistent with the existing cache-status conventions.
+  - [ ] Implement reading, validating, and atomically writing the cache state under `.gd-tools/native/import-cache/`.
+  - [ ] Implement the file-discovery scope for import-relevant project files with the agreed exclusions (`.godot/`, `.git/`, `.gd-tools/`, VCS/IDE noise).
+  - [ ] Run the new unit tests to Green.
+- [ ] Task: Add import-cache coverage and style gates
+  - [ ] Verify `import_cache.py` meets the >80% line / >70% branch coverage gates.
+  - [ ] Run `ruff check` and `black --check`.
+- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+
+## Phase 2 — Pipeline integration
+
+**Purpose:** Gate the unconditional `godot --headless --import` call with the cache while preserving all existing behavior on miss, failure, and `--no-cache`.
+
+- [ ] Task: Add failing tests for pipeline gating
+  - [ ] Test that a warm second run (no changes) skips the `godot --headless --import` process.
+  - [ ] Test that a cold/changed project still runs the import and records the cache only on success.
+  - [ ] Test that a failed or timed-out import does not update the cache.
+  - [ ] Test that `--no-cache` always runs the import and bypasses cache reads/writes.
+  - [ ] Test fail-open integration: cache errors result in a normal import, unchanged exit codes and report output.
+  - [ ] Test concurrent-run tolerance: overlapping runs never produce a corrupt cache or a skipped-but-needed import.
+  - [ ] Test verbose hit/miss reporting lines follow the existing `cache hit/miss: reason` phrasing.
+  - [ ] Run the targeted tests and confirm the expected Red phase.
+- [ ] Task: Wire the cache into `native_test/command.py`
+  - [ ] Gate the `_import_project()` call with the cache check (skip on hit).
+  - [ ] Record cache freshness only after a successful import.
+  - [ ] Honor the global `--no-cache` flag end-to-end.
+  - [ ] Emit verbose hit/miss messages.
+  - [ ] Run the pipeline tests to Green, then the full unit suite for regressions.
+- [ ] Task: Add integration-level regression coverage
+  - [ ] Verify JUnit XML / JSON report outputs and exit-code conventions are unchanged by the gating.
+  - [ ] Verify watch-mode sessions observe a cache miss after any file change and a hit on unchanged resume (no watch-specific code paths).
+- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+
+## Phase 3 — Benchmark evidence
+
+**Purpose:** Prove the performance claim with the repo's opt-in benchmark harness, matching the preflight-cache track's evidence standard.
+
+- [ ] Task: Extend the benchmark harness for warm/cold import measurement
+  - [ ] Measure cold runs (cache miss → import executes) on the benchmark fixture.
+  - [ ] Measure warm runs (cache hit → import skipped) on the benchmark fixture.
+  - [ ] Record startup and total wall time; document benchmark conditions and known variance.
+- [ ] Task: Assert strict improvement and record the measured gain in the spec
+  - [ ] Add a benchmark assertion that warm runs are strictly faster and the import process is eliminated.
+  - [ ] Record the measured wall-time gain in `spec.md` NFR-1 (revising the figure, not the strict-improvement requirement, if evidence demands, with justification).
+- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+
+## Phase 4 — Documentation and quality gates
+
+**Purpose:** Close the track with accurate docs and all quality gates green.
+
+- [ ] Task: Update user-facing documentation
+  - [ ] README: document the import cache behavior and the `--no-cache` bypass alongside the existing cache documentation.
+  - [ ] CHANGELOG: add an entry for the import-step cache.
+  - [ ] `docs/ARCHITECTURE.md`: add a "Caching architecture" section describing the import cache, preflight cache, and coverage-plan cache together; correct the known Part I flow-diagram drift as part of that section.
+- [ ] Task: Final quality gates
+  - [ ] Run the full unit suite.
+  - [ ] Run the full integration suite.
+  - [ ] Run `ruff check` and `black --check`.
+  - [ ] Verify the full project coverage threshold behavior.
+  - [ ] Verify no new runtime dependencies were added.
+- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+
+## Plan Boundaries
+
+No new `gd-tools.toml` configuration section or CLI flags beyond the existing
+global `--no-cache`; no watch-mode-specific cache integration; no caching of
+other Godot process invocations; no GUT compatibility bridge changes (planned
+as the separate v0.6.0 bridge-removal track); no changes to Godot's own import
+behavior or `.godot/` management.
