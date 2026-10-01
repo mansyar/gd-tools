@@ -153,7 +153,7 @@ _Archived tracks live in `./archive/`._
   fallback on unmapped files, exit-0 empty-set, exit-2 repo/ref errors,
   composition with `--parallel`/`--coverage`/filters, summary + verbose
   reporting, and E2E validation on a git-backed fixture project)
-  *Link: [test_changed_20261001](./tracks/test_changed_20261001/index.md)*
+  *Link: [test_changed_20261001](./archive/test_changed_20261001/index.md)*
 
 ---
 
