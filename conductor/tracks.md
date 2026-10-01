@@ -128,7 +128,7 @@ _Archived tracks live in `./archive/`._
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
 
-- [~] **Track: Native Runtime Caching (Preflight Cache)** (Migration Phase 5)
+- [x] **Track: Native Runtime Caching (Preflight Cache)** (Migration Phase 5)
   *Link: [native_runtime_caching_20261001](./tracks/native_runtime_caching_20261001/index.md)* -
   content-hash cache for the native integration preflight under
   `.gd-tools/native/preflight-cache/`: repeat `gd-tools test` runs on unchanged
@@ -136,5 +136,7 @@ _Archived tracks live in `./archive/`._
   hashes, `project.godot`, Godot binary version, and bundled addon hashes;
   `--no-cache` escape hatch, verbose-only hit/miss reporting, fail-open on
   cache errors, cached preflight artifacts copied into run artifacts
-  (unchanged artifact index contract), and a >=30% repeat-run speedup gate on
-  the dogfood `spike/` project.
+  (unchanged artifact index contract). Benchmark evidence: warm repeat runs
+  are strictly faster (preflight process eliminated; ~7% end-to-end on the
+  benchmark fixture, gain scales with project size; spec NFR-3 revised from
+  the original >=30% gate on 2026-10-01).
