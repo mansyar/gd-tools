@@ -127,3 +127,14 @@ _Archived tracks live in `./archive/`._
   events, full `--coverage` support, watch-mode inheritance, continue-on-failure
   with process-tree kill on interrupt (exit 130), unchanged artifact contract,
   and in-track documentation updates.
+
+- [ ] **Track: Native Runtime Caching (Preflight Cache)** (Migration Phase 5)
+  *Link: [native_runtime_caching_20261001](./tracks/native_runtime_caching_20261001/index.md)* -
+  content-hash cache for the native integration preflight under
+  `.gd-tools/native/preflight-cache/`: repeat `gd-tools test` runs on unchanged
+  projects skip the headless preflight Godot process; keyed on test-file
+  hashes, `project.godot`, Godot binary version, and bundled addon hashes;
+  `--no-cache` escape hatch, verbose-only hit/miss reporting, fail-open on
+  cache errors, cached preflight artifacts copied into run artifacts
+  (unchanged artifact index contract), and a >=30% repeat-run speedup gate on
+  the dogfood `spike/` project.
