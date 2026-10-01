@@ -26,7 +26,7 @@ Green (implementation) → commit → git note → plan update.
 
 ## Phase 2: Doctor Advisor, Config Validation & Migrate Updates
 
-- [ ] Task: Write failing tests (Red) for doctor/config/migrate behavior
+- [~] Task: Write failing tests (Red) for doctor/config/migrate behavior
   - [ ] Test: `doctor` reports legacy GUT artifacts (`addons/gut`, `.gutconfig.json`, `GutTest` suites) as informational migration advice
   - [ ] Test: `config validate` hard-errors on `runtime = "gut"` and GUT-era keys (exit 2, guidance)
   - [ ] Test: `gd-tools migrate` retains report/translate/apply behavior; guidance text is v0.6.0-aware
