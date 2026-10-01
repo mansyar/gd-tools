@@ -21,7 +21,7 @@
 
 ## Phase 2 — Command Flow Integration
 
-- [ ] Task: Write failing unit/integration tests: cache hit skips
+- [~] Task: Write failing unit/integration tests: cache hit skips
   `run_native_preflight()` (no Godot preflight process spawned) and copies the
   cached manifest/result into the run's `preflight_dir`; miss runs the real
   preflight and populates the cache → verify Red
