@@ -397,6 +397,8 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--timeout` | integer | None | Godot import and per-suite process timeout in seconds. |
 | `--show-uncovered` | flag | `false` | Show uncovered lines and branches as Rich panels when coverage is below 100%. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
 | `--no-cache` | flag | `false` | Force plan regeneration, bypassing the coverage plan cache. Only effective with `--coverage`; has no effect without it. |
+| `--changed` | flag | `false` | Run only the suites mapped from git-changed files (working tree vs `HEAD`). A change that maps to no suite falls back to the full suite with a notice; an empty change set exits 0 without launching Godot. |
+| `--base` | string | None | With `--changed`: diff committed changes from `merge-base(<ref>, HEAD)` instead of the working tree (the form for pull-request CI). Requires `--changed`; incompatible with `--watch` (exit 2). |
 
 **Examples:**
 
@@ -436,6 +438,15 @@ gd-tools test tests/unit
 
 # Run tests from multiple directories
 gd-tools test tests/unit tests/integration
+
+# Run only suites mapped from git-changed files (working tree vs HEAD)
+gd-tools test --changed
+
+# PR/CI: run suites mapped from committed changes since branching from main
+gd-tools test --changed --base main
+
+# Changed-file selection composes with the other flags
+gd-tools test --changed --parallel 4 --coverage --min 80
 
 # Run exactly one native test file
 gd-tools test tests/unit/test_player.gd
