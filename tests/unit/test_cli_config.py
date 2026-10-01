@@ -272,3 +272,37 @@ def test_config_validate_accepts_schema_key(tmp_path, monkeypatch):
     result = runner.invoke(cli, ["config", "validate"])
     assert result.exit_code == 0
     assert "valid" in result.output.lower()
+
+
+# ---------------------------------------------------------------------------
+# config schema tests
+# ---------------------------------------------------------------------------
+
+
+def test_config_schema_prints_valid_json():
+    """config schema prints a JSON Schema declaring draft 2020-12."""
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "schema"])
+    assert result.exit_code == 0
+    parsed = json.loads(result.output)
+    assert parsed["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+
+
+def test_config_schema_output_flag_writes_file(tmp_path):
+    """config schema --output writes the schema file, creating parents."""
+    runner = CliRunner()
+    target = tmp_path / "nested" / "dir" / "schema.json"
+    result = runner.invoke(cli, ["config", "schema", "--output", str(target)])
+    assert result.exit_code == 0
+    assert target.is_file()
+    parsed = json.loads(target.read_text(encoding="utf-8"))
+    assert "properties" in parsed
+
+
+def test_config_schema_output_unwritable_exits_2(tmp_path):
+    """config schema --output pointing at a directory exits 2."""
+    blocked = tmp_path / "blocked.json"
+    blocked.mkdir()
+    runner = CliRunner()
+    result = runner.invoke(cli, ["config", "schema", "--output", str(blocked)])
+    assert result.exit_code == 2
