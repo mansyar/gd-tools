@@ -130,7 +130,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Godot Editor Plugin** (Roadmap Track 35 — editor plugin deployed
+- [x] **Track: Godot Editor Plugin** (Roadmap Track 35 — editor plugin deployed
   by `gd-tools init` with a test/coverage dock panel (async runs, summary +
   failures, friendly missing-CLI fallback) and a `CodeEdit` coverage heatmap
   overlay reading `.gd-tools/` artifacts; lint margin descoped)
