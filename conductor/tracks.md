@@ -189,7 +189,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: GUT Bridge Removal (v0.6.0)** (refactor: remove the deprecated
+- [~] **Track: GUT Bridge Removal (v0.6.0)** (refactor: remove the deprecated
   GUT Compatibility Bridge runtime — `GutTest` shim, `extends GutTest`
   auto-routing, bridge normalization — make the native runtime the sole test
   runtime with explicit v0.6.0 removal errors for `--runtime gut` and GUT
