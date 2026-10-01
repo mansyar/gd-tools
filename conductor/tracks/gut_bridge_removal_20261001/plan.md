@@ -6,7 +6,7 @@ Green (implementation) → commit → git note → plan update.
 
 ## Phase 1: Bridge Runtime Removal
 
-- [ ] Task: Write failing removal-behavior tests (Red)
+- [x] Task: Write failing removal-behavior tests (Red) `4be1f0d`
   - [ ] Test: discovery rejects `extends GutTest` suites (exit 2, file named, migration guidance)
   - [ ] Test: `--runtime gut` exits 2 with the v0.6.0 removal message
   - [ ] Test: test preflight rejects `runtime = "gut"` config with migration guidance
