@@ -801,6 +801,101 @@ func assert_signal_not_emitted(target: Object, signal_name: String, message: Str
 		)
 
 
+func assert_signal_emit_count(
+	target: Object, signal_name: String, count: int, message: String = ""
+) -> void:
+	## Assert that a watched object emitted `signal_name` exactly `count` times.
+	if _gd_tools_assert_target_is_watched(target, "assert_signal_emit_count"):
+		return
+	var actual := _gd_tools_signal_emissions(target, signal_name).size()
+	if actual != count:
+		_gd_tools_record_failure(
+			"assert_signal_emit_count",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been emitted %d time(s), but it was emitted %d time(s).'
+					% [signal_name, count, actual]
+				)
+			),
+			actual,
+			count
+		)
+
+
+func assert_signal_emitted_with_args(
+	target: Object, signal_name: String, expected_args: Array, message: String = ""
+) -> void:
+	## Assert that a watched object emitted `signal_name` with matching args.
+	##
+	## Any-match semantics: passes when at least ONE captured emission
+	## matches element-wise. The string `"any"` acts as a per-element
+	## wildcard, mirroring the stub system's argument convention.
+	if _gd_tools_assert_target_is_watched(
+		target, "assert_signal_emitted_with_args"
+	):
+		return
+	var emissions := _gd_tools_signal_emissions(target, signal_name)
+	for emission in emissions:
+		if _gd_tools_stub_specificity(expected_args, emission["args"]) >= 0:
+			return
+	if emissions.is_empty():
+		_gd_tools_record_failure(
+			"assert_signal_emitted_with_args",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been emitted with arguments %s, but no emission was captured.'
+					% [signal_name, expected_args]
+				)
+			),
+			_gd_tools_format_emissions(emissions),
+			expected_args
+		)
+	else:
+		_gd_tools_record_failure(
+			"assert_signal_emitted_with_args",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been emitted with arguments %s, but none of the %d captured emission(s) matched: %s'
+					% [
+						signal_name,
+						expected_args,
+						emissions.size(),
+						_gd_tools_format_emissions(emissions),
+					]
+				)
+			),
+			_gd_tools_format_emissions(emissions),
+			expected_args
+		)
+
+
+func assert_signal_emitted_after(
+	target_signal: Signal, timeout_seconds: float = 5.0, message: String = ""
+) -> void:
+	## Await one emission of `target_signal`, asserting it arrives in time.
+	##
+	## Unlike the watched-object assertions this takes the signal itself,
+	## so no watch_signals() setup is required. `wait_for_signal`'s
+	## `-> bool` contract is untouched.
+	var fired: bool = await wait_for_signal(target_signal, timeout_seconds)
+	if not fired:
+		_gd_tools_record_failure(
+			"assert_signal_emitted_after",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to be emitted within %s seconds, but the wait timed out.'
+					% [target_signal.get_name(), timeout_seconds]
+				)
+			),
+			"timed out",
+			"emitted within %s seconds" % timeout_seconds
+		)
+
+
 func _gd_tools_assert_target_is_watched(target: Object, assertion: String) -> bool:
 	## Record a guidance failure and return true when `target` is unwatched.
 	if (
@@ -832,6 +927,16 @@ func _gd_tools_signal_emissions(target: Object, signal_name: String) -> Array:
 		if str(emission.get("signal", "")) == signal_name:
 			matching.append(emission)
 	return matching
+
+
+func _gd_tools_format_emissions(emissions: Array) -> String:
+	## Render captured emissions compactly for failure diagnostics.
+	if emissions.is_empty():
+		return "none"
+	var parts: Array = []
+	for emission in emissions:
+		parts.append("%s(%s)" % [emission["signal"], str(emission["args"])])
+	return ", ".join(parts)
 
 
 func _gd_tools_reset_signal_watch() -> void:

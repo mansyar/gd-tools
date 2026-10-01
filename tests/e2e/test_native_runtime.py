@@ -2482,12 +2482,19 @@ SIGNAL_PASSING_METHODS = [
     "test_watch_node_target_and_assert_emitted",
     "test_watch_refcounted_target_and_assert_emitted",
     "test_not_emitted_passes_without_emission",
+    "test_emit_count_passes_on_exact_count",
+    "test_with_args_passes_on_any_matching_emission",
+    "test_with_args_any_wildcard_matches",
+    "test_emit_wait_passes_after_emission",
 ]
 
 
 SIGNAL_FAILING_METHODS = [
     "test_emitted_fails_without_emission",
     "test_not_emitted_fails_when_emitted",
+    "test_emit_count_fails_on_wrong_count",
+    "test_with_args_fails_when_no_emission_matches",
+    "test_emit_wait_fails_on_timeout",
 ]
 
 
@@ -2539,10 +2546,17 @@ def test_native_signal_assertions_fail_with_capture_detail(godot_bin, tmp_path):
 
     assert result.returncode == 1, result.stdout + result.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    for name in SIGNAL_FAILING_METHODS:
+    signal_names = {
+        "test_emitted_fails_without_emission": "probe_signal",
+        "test_not_emitted_fails_when_emitted": "probe_signal",
+        "test_emit_count_fails_on_wrong_count": "probe_signal",
+        "test_with_args_fails_when_no_emission_matches": "ping",
+        "test_emit_wait_fails_on_timeout": "probe_signal",
+    }
+    for name, signal_name in signal_names.items():
         failure = _single_failure(payload, name)
         assert failure["assertion"].startswith("assert_signal_"), failure
-        assert "probe_signal" in failure["message"], failure
+        assert signal_name in failure["message"], failure
 
 
 def test_native_signal_assertions_guide_unwatched_target(godot_bin, tmp_path):
@@ -2584,6 +2598,39 @@ def test_native_signal_watch_is_per_test(godot_bin, tmp_path):
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert all(entry["status"] == "passed" for entry in payload["tests"]), (
-        payload["tests"]
+    assert all(
+        entry["status"] == "passed" for entry in payload["tests"]
+    ), payload["tests"]
+
+
+def test_native_signal_assertion_detail_per_assertion(godot_bin, tmp_path):
+    """Each signal assertion records its own assertion name and detail."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "signal-detail.json"
+    expectations = {
+        "test_emit_count_fails_on_wrong_count": (
+            "assert_signal_emit_count",
+            "2 time(s)",
+        ),
+        "test_with_args_fails_when_no_emission_matches": (
+            "assert_signal_emitted_with_args",
+            "captured",
+        ),
+        "test_emit_wait_fails_on_timeout": (
+            "assert_signal_emitted_after",
+            "timed out",
+        ),
+    }
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _signal_assertion_manifest(project, list(expectations)),
+        result_path,
     )
+
+    assert result.returncode == 1, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    for name, (assertion_name, detail) in expectations.items():
+        failure = _single_failure(payload, name)
+        assert failure["assertion"] == assertion_name, failure
+        assert detail in failure["message"], failure

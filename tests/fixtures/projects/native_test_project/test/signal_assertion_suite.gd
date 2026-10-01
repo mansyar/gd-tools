@@ -61,3 +61,54 @@ func test_capture_resets_between_tests() -> void:
 	# from that test would make this assertion fail.
 	watch_signals(self)
 	assert_signal_not_emitted(self, "probe_signal")
+
+
+func test_emit_count_passes_on_exact_count() -> void:
+	watch_signals(self)
+	probe_signal.emit()
+	probe_signal.emit()
+	assert_signal_emit_count(self, "probe_signal", 2)
+
+
+func test_emit_count_fails_on_wrong_count() -> void:
+	watch_signals(self)
+	probe_signal.emit()
+	assert_signal_emit_count(self, "probe_signal", 2)
+
+
+func test_with_args_passes_on_any_matching_emission() -> void:
+	var emitter := _emitter()
+	watch_signals(emitter)
+	emitter.ping.emit(1)
+	emitter.ping.emit(2)
+	assert_signal_emitted_with_args(emitter, "ping", [2])
+
+
+func test_with_args_any_wildcard_matches() -> void:
+	var emitter := _emitter()
+	watch_signals(emitter)
+	emitter.ping.emit("alpha")
+	assert_signal_emitted_with_args(emitter, "ping", ["any"])
+
+
+func test_with_args_fails_when_no_emission_matches() -> void:
+	var emitter := _emitter()
+	watch_signals(emitter)
+	emitter.ping.emit(1)
+	emitter.ping.emit(3)
+	assert_signal_emitted_with_args(emitter, "ping", [2])
+
+
+func test_emit_wait_passes_after_emission() -> void:
+	_emit_probe_after(2)
+	await assert_signal_emitted_after(probe_signal, 5.0)
+
+
+func test_emit_wait_fails_on_timeout() -> void:
+	await assert_signal_emitted_after(probe_signal, 0.05)
+
+
+func _emit_probe_after(frames: int) -> void:
+	for index in frames:
+		await get_tree().process_frame
+	probe_signal.emit()
