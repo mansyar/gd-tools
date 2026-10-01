@@ -468,6 +468,7 @@ def _ensure_project_imported(
     Raises:
         GdToolsError: When the import fails; the cache is never updated.
     """
+    cache_dir = project_root / ".gd-tools" / "native" / "import-cache"
     cache_key: str | None = None
     if not no_cache:
         try:
@@ -477,15 +478,11 @@ def _ensure_project_imported(
         except OSError as error:
             output.print_verbose(f"Import cache key failed: {error}")
         else:
-            cache_dir = project_root / ".gd-tools" / "native" / "import-cache"
             if check_import_cache(cache_dir, cache_key).hit:
                 return
     _import_project(godot_info.path, project_root, timeout)
     if cache_key is not None:
-        store_import_freshness(
-            project_root / ".gd-tools" / "native" / "import-cache",
-            cache_key,
-        )
+        store_import_freshness(cache_dir, cache_key)
 
 
 def _prepare_coverage(
