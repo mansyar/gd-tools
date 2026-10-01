@@ -67,10 +67,9 @@ bridge retirement plan — is recorded in
 
 ### Remaining Native-Runtime Work (Phase 5)
 
-- [ ] Update `init`, `doctor`, CI, packaging, and documentation (in progress;
-  bridge wording updated by `native_release_readiness_20260930`; release
-  documentation lands with v0.5.0)
-- [ ] Publish the native runtime release (v0.5.0 preparation in progress)
+- [x] Update `init`, `doctor`, CI, packaging, and documentation (shipped with
+  v0.5.0 — Track `native_release_readiness_20260930`)
+- [x] Publish the native runtime release (v0.5.0, 2026-09-30)
 - [ ] Remove the temporary bridge after its migration period (deprecation
   notice ships in v0.5.0; removal targeted for v0.6.0)
 
