@@ -121,6 +121,14 @@ class FormatError(GdToolsError):
     exit_code: int = 1
 
 
+class GitChangeError(GdToolsError):
+    """Raised when the change set for ``test --changed`` cannot be collected.
+
+    Covers running outside a git repository and unknown ``--base`` refs.
+    Exit code 2 (environment/setup problem).
+    """
+
+
 class NativeInterruptError(GdToolsError):
     """Raised when the user interrupts a native test run.
 
