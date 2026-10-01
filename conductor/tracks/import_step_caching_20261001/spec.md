@@ -110,6 +110,14 @@ The cache key is a composite SHA-256 over:
   measured-gain figure was recorded in its spec; if evidence shows the gain
   differs from expectations, the figure (not the requirement of strict
   improvement) may be revised with justification.
+- **NFR-1.3 (measured evidence, 2026-10-01):** On the benchmark fixture
+  (6 passing native suites, Godot via `GODOT_BIN`, `GD_TOOLS_RUN_BENCHMARK=1`,
+  3 warm iterations), the cold run took **7.12s** and the warm median was
+  **3.14s** (warm/cold ratio **0.44**; per-iteration warm times 3.14s /
+  3.27s / 2.81s) — warm runs were **~56% faster** wall-clock with the import
+  process eliminated and all warm runs served the cache (`Import cache hit`
+  on every iteration). Benchmark: `tests/performance/`
+  `test_native_import_cache_benchmark.py`.
 
 ### NFR-2: Consistency with existing cache conventions
 
