@@ -18,6 +18,7 @@ var _gd_tools_wait_signal = null
 var _gd_tools_wait_timer: SceneTreeTimer = null
 var _gd_tools_mock_methods: Dictionary = {}
 var _gd_tools_stub_registry: Dictionary = {}
+var _gd_tools_signal_watchers: Dictionary = {}
 var _gd_tools_case_index := 0
 var _gd_tools_parameter_names: Array = []
 var _gd_tools_parameter_values: Array = []
@@ -72,6 +73,7 @@ func clear_failures() -> void:
 	_gd_tools_failures.clear()
 	_gd_tools_skipped = false
 	_gd_tools_skip_reason = ""
+	_gd_tools_reset_signal_watch()
 
 
 func _gd_tools_set_suite_state(state: Dictionary) -> void:
@@ -716,6 +718,324 @@ func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> boo
 		)
 	)
 	return true
+
+
+## Maximum number of signal arguments a watched emission can capture per
+## signal. Signals declaring more arguments than this are not captured;
+## assertions against them will report no emissions.
+const _GD_TOOLS_SIGNAL_ARG_SLOTS := 10
+
+
+func watch_signals(target: Object) -> void:
+	## Start recording every signal emission of `target` for this test.
+	##
+	## Recordings are scoped to the current test: watchers disconnect
+	## automatically at test end and never leak into other tests. Any Object
+	## can be watched, including doubles. Assertions on an unwatched object
+	## fail with guidance instead of silently passing. Note that watching
+	## keeps a reference to `target` until test end, extending the lifetime
+	## of RefCounted objects.
+	if target == null or not is_instance_valid(target):
+		_gd_tools_record_failure(
+			"watch_signals",
+			"watch_signals() requires an Object to watch; got: %s" % [target]
+		)
+		return
+	var target_id := target.get_instance_id()
+	if _gd_tools_signal_watchers.has(target_id):
+		return
+	var connections: Dictionary = {}
+	for signal_info in target.get_signal_list():
+		var signal_name := str(signal_info.get("name", ""))
+		var arg_count: int = signal_info.get("args").size()
+		if arg_count > _GD_TOOLS_SIGNAL_ARG_SLOTS:
+			continue
+		var callable := (
+			Callable(self, "_gd_tools_on_watched_emission_%d" % arg_count)
+			. bind(target_id, signal_name)
+		)
+		if target.connect(signal_name, callable) != OK:
+			continue
+		connections[signal_name] = callable
+	_gd_tools_signal_watchers[target_id] = {
+		"object": target,
+		"connections": connections,
+		"emissions": [],
+	}
+
+
+func assert_signal_emitted(target: Object, signal_name: String, message: String = "") -> void:
+	## Assert that a watched object emitted `signal_name` at least once.
+	if _gd_tools_assert_target_is_watched(target, "assert_signal_emitted"):
+		return
+	if _gd_tools_signal_emissions(target, signal_name).is_empty():
+		_gd_tools_record_failure(
+			"assert_signal_emitted",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been emitted at least once, but no emission was captured.'
+					% signal_name
+				)
+			),
+			0,
+			"at least 1"
+		)
+
+
+func assert_signal_not_emitted(target: Object, signal_name: String, message: String = "") -> void:
+	## Assert that a watched object emitted `signal_name` never.
+	if _gd_tools_assert_target_is_watched(target, "assert_signal_not_emitted"):
+		return
+	var count := _gd_tools_signal_emissions(target, signal_name).size()
+	if count > 0:
+		_gd_tools_record_failure(
+			"assert_signal_not_emitted",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have never been emitted, but it was emitted %d time(s).'
+					% [signal_name, count]
+				)
+			),
+			count,
+			0
+		)
+
+
+func assert_signal_emit_count(
+	target: Object, signal_name: String, count: int, message: String = ""
+) -> void:
+	## Assert that a watched object emitted `signal_name` exactly `count` times.
+	if _gd_tools_assert_target_is_watched(target, "assert_signal_emit_count"):
+		return
+	var actual := _gd_tools_signal_emissions(target, signal_name).size()
+	if actual != count:
+		_gd_tools_record_failure(
+			"assert_signal_emit_count",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been emitted %d time(s), but it was emitted %d time(s).'
+					% [signal_name, count, actual]
+				)
+			),
+			actual,
+			count
+		)
+
+
+func assert_signal_emitted_with_args(
+	target: Object, signal_name: String, expected_args: Array, message: String = ""
+) -> void:
+	## Assert that a watched object emitted `signal_name` with matching args.
+	##
+	## Any-match semantics: passes when at least ONE captured emission
+	## matches element-wise. The string `"any"` acts as a per-element
+	## wildcard, mirroring the stub system's argument convention.
+	if _gd_tools_assert_target_is_watched(
+		target, "assert_signal_emitted_with_args"
+	):
+		return
+	var emissions := _gd_tools_signal_emissions(target, signal_name)
+	for emission in emissions:
+		if _gd_tools_stub_specificity(expected_args, emission["args"]) >= 0:
+			return
+	if emissions.is_empty():
+		_gd_tools_record_failure(
+			"assert_signal_emitted_with_args",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been emitted with arguments %s, but no emission was captured.'
+					% [signal_name, expected_args]
+				)
+			),
+			_gd_tools_format_emissions(emissions),
+			expected_args
+		)
+	else:
+		_gd_tools_record_failure(
+			"assert_signal_emitted_with_args",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to have been emitted with arguments %s, but none of the %d captured emission(s) matched: %s'
+					% [
+						signal_name,
+						expected_args,
+						emissions.size(),
+						_gd_tools_format_emissions(emissions),
+					]
+				)
+			),
+			_gd_tools_format_emissions(emissions),
+			expected_args
+		)
+
+
+func assert_signal_emitted_after(
+	target_signal: Signal, timeout_seconds: float = 5.0, message: String = ""
+) -> void:
+	## Await one emission of `target_signal`, asserting it arrives in time.
+	##
+	## Unlike the watched-object assertions this takes the signal itself,
+	## so no watch_signals() setup is required. `wait_for_signal`'s
+	## `-> bool` contract is untouched.
+	var fired: bool = await wait_for_signal(target_signal, timeout_seconds)
+	if not fired:
+		_gd_tools_record_failure(
+			"assert_signal_emitted_after",
+			_gd_tools_detail(
+				message,
+				(
+					'Expected "%s" to be emitted within %s seconds, but the wait timed out.'
+					% [target_signal.get_name(), timeout_seconds]
+				)
+			),
+			"timed out",
+			"emitted within %s seconds" % timeout_seconds
+		)
+
+
+func _gd_tools_assert_target_is_watched(target: Object, assertion: String) -> bool:
+	## Record a guidance failure and return true when `target` is unwatched.
+	if (
+		target != null
+		and is_instance_valid(target)
+		and _gd_tools_signal_watchers.has(target.get_instance_id())
+	):
+		return false
+	_gd_tools_record_failure(
+		assertion,
+		(
+			"%s() requires an object registered with watch_signals();"
+			+ " object not watched - call watch_signals(%s) first"
+			% [assertion, target]
+		)
+	)
+	return true
+
+
+func _gd_tools_signal_emissions(target: Object, signal_name: String) -> Array:
+	## Return the emissions recorded for one signal on a watched object.
+	var entry: Dictionary = _gd_tools_signal_watchers.get(
+		target.get_instance_id(), {}
+	)
+	var matching: Array = []
+	if entry.is_empty():
+		return matching
+	for emission in entry["emissions"]:
+		if str(emission.get("signal", "")) == signal_name:
+			matching.append(emission)
+	return matching
+
+
+func _gd_tools_format_emissions(emissions: Array) -> String:
+	## Render captured emissions compactly for failure diagnostics.
+	if emissions.is_empty():
+		return "none"
+	var parts: Array = []
+	for emission in emissions:
+		parts.append("%s(%s)" % [emission["signal"], str(emission["args"])])
+	return ", ".join(parts)
+
+
+func _gd_tools_reset_signal_watch() -> void:
+	## Disconnect every watcher and drop recordings for a fresh test state.
+	for watcher_id in _gd_tools_signal_watchers:
+		var entry: Dictionary = _gd_tools_signal_watchers[watcher_id]
+		var watched = entry.get("object")
+		if not is_instance_valid(watched):
+			continue
+		var connections: Dictionary = entry.get("connections", {})
+		for signal_name in connections:
+			watched.disconnect(signal_name, connections[signal_name])
+	_gd_tools_signal_watchers.clear()
+
+
+func _gd_tools_on_watched_emission_0(instance_id, signal_name) -> void:
+	_gd_tools_record_watched_emission(instance_id, signal_name, [])
+
+
+func _gd_tools_on_watched_emission_1(p1, instance_id, signal_name) -> void:
+	_gd_tools_record_watched_emission(instance_id, signal_name, [p1])
+
+
+func _gd_tools_on_watched_emission_2(p1, p2, instance_id, signal_name) -> void:
+	_gd_tools_record_watched_emission(instance_id, signal_name, [p1, p2])
+
+
+func _gd_tools_on_watched_emission_3(
+	p1, p2, p3, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(instance_id, signal_name, [p1, p2, p3])
+
+
+func _gd_tools_on_watched_emission_4(
+	p1, p2, p3, p4, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(
+		instance_id, signal_name, [p1, p2, p3, p4]
+	)
+
+
+func _gd_tools_on_watched_emission_5(
+	p1, p2, p3, p4, p5, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(
+		instance_id, signal_name, [p1, p2, p3, p4, p5]
+	)
+
+
+func _gd_tools_on_watched_emission_6(
+	p1, p2, p3, p4, p5, p6, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(
+		instance_id, signal_name, [p1, p2, p3, p4, p5, p6]
+	)
+
+
+func _gd_tools_on_watched_emission_7(
+	p1, p2, p3, p4, p5, p6, p7, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(
+		instance_id, signal_name, [p1, p2, p3, p4, p5, p6, p7]
+	)
+
+
+func _gd_tools_on_watched_emission_8(
+	p1, p2, p3, p4, p5, p6, p7, p8, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(
+		instance_id, signal_name, [p1, p2, p3, p4, p5, p6, p7, p8]
+	)
+
+
+func _gd_tools_on_watched_emission_9(
+	p1, p2, p3, p4, p5, p6, p7, p8, p9, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(
+		instance_id, signal_name, [p1, p2, p3, p4, p5, p6, p7, p8, p9]
+	)
+
+
+func _gd_tools_on_watched_emission_10(
+	p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, instance_id, signal_name
+) -> void:
+	_gd_tools_record_watched_emission(
+		instance_id, signal_name, [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]
+	)
+
+
+func _gd_tools_record_watched_emission(
+	instance_id: int, signal_name: String, args: Array
+) -> void:
+	## Store one captured emission on the watcher entry for `instance_id`.
+	var entry: Dictionary = _gd_tools_signal_watchers.get(instance_id, {})
+	if entry.is_empty():
+		return
+	entry["emissions"].append({"signal": signal_name, "args": args})
 
 
 func _gd_tools_double_calls(target: Object, method: String) -> Array:

@@ -135,6 +135,13 @@ through the built-in compatibility bridge (no GUT addon required).
   `Node`.
 - Tests are discovered by configured directories or exact file selectors, with
   class-level tag filters and `test_*` method discovery.
+- Signal assertions are first-class: `watch_signals(obj)` records every
+  emission of every declared signal on any Object (Node, RefCounted, or
+  double) for the current test; `assert_signal_emitted`,
+  `assert_signal_not_emitted`, `assert_signal_emit_count`,
+  `assert_signal_emitted_with_args` (element-wise matching with the `"any"`
+  wildcard), and the awaitable `assert_signal_emitted_after` read the
+  capture with rich failure diagnostics and per-test auto-reset.
 - The default per-test timeout is configurable independently from the Godot
   process/import timeout.
 - Suites run in isolated Godot processes by default.
