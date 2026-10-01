@@ -158,8 +158,7 @@ def _run_native_test_command(
         changed_files = collect_changed_files(project_root, base)
         if not changed_files:
             output.print_info(
-                f"--changed: no changes detected ({source}); "
-                "nothing to run."
+                f"--changed: no changes detected ({source}); " "nothing to run."
             )
             return TestResult(
                 total=0,
@@ -386,7 +385,9 @@ def _narrow_changed_suites(
     # Normalize to project-relative POSIX strings so selection, notices,
     # and verbose detail display identically on every platform.
     changed = [path.as_posix() for path in changed_files]
-    selected, unmapped = select_suites_for_changes(changed, project_root, suites)
+    selected, unmapped = select_suites_for_changes(
+        changed, project_root, suites
+    )
     output.print_info(
         f"--changed: {len(selected)} of {len(suites)} suites selected "
         f"({source})"

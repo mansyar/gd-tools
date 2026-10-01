@@ -1122,11 +1122,9 @@ def test_changed_empty_change_set_exits_early_without_godot(tmp_path):
         patch(
             "gd_tools.native_test.command.collect_changed_files",
             return_value=[],
-        ) as collect,
+        ),
         patch("gd_tools.native_test.command.find_godot") as find_godot,
-        patch(
-            "gd_tools.native_test.command.output.print_info"
-        ) as notice,
+        patch("gd_tools.native_test.command.output.print_info") as notice,
     ):
         result = run_native_test_command(_config(), changed=True)
 
@@ -1176,9 +1174,7 @@ def test_changed_narrows_discovery_to_mapped_suites(tmp_path):
         ) as run,
         patch("gd_tools.native_test.command._generate_native_report"),
         patch("gd_tools.native_test.command.format_test_results"),
-        patch(
-            "gd_tools.native_test.command.output.print_info"
-        ) as notice,
+        patch("gd_tools.native_test.command.output.print_info") as notice,
     ):
         run_native_test_command(_config(), changed=True)
 
@@ -1229,9 +1225,7 @@ def test_changed_unmapped_file_falls_back_to_full_suite(tmp_path):
         ) as run,
         patch("gd_tools.native_test.command._generate_native_report"),
         patch("gd_tools.native_test.command.format_test_results"),
-        patch(
-            "gd_tools.native_test.command.output.print_info"
-        ) as notice,
+        patch("gd_tools.native_test.command.output.print_info") as notice,
     ):
         run_native_test_command(_config(), changed=True)
 
@@ -1350,9 +1344,7 @@ def test_changed_verbose_prints_per_file_mapping(tmp_path):
         ),
         patch("gd_tools.native_test.command._generate_native_report"),
         patch("gd_tools.native_test.command.format_test_results"),
-        patch(
-            "gd_tools.native_test.command.output.print_verbose"
-        ) as verbose,
+        patch("gd_tools.native_test.command.output.print_verbose") as verbose,
     ):
         run_native_test_command(_config(), changed=True)
 
@@ -1519,7 +1511,6 @@ def test_changed_with_suite_filter_falls_back_to_filtered_selection(tmp_path):
     """A change mapping outside the --suite selection falls back to the
     filtered selection, not the full discovery set."""
     player = NativeSuite(name="TestPlayer", path="res://tests/test_player.gd")
-    enemy = NativeSuite(name="TestEnemy", path="res://tests/test_enemy.gd")
     native = _native_result()
     with (
         patch(
@@ -1557,9 +1548,7 @@ def test_changed_with_suite_filter_falls_back_to_filtered_selection(tmp_path):
         ) as run,
         patch("gd_tools.native_test.command._generate_native_report"),
         patch("gd_tools.native_test.command.format_test_results"),
-        patch(
-            "gd_tools.native_test.command.output.print_info"
-        ) as notice,
+        patch("gd_tools.native_test.command.output.print_info") as notice,
     ):
         run_native_test_command(_config(), changed=True)
 

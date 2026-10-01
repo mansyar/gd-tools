@@ -59,16 +59,16 @@ exit semantics.
   - [x] Implement summary line and `--verbose` reporting consistent with preflight-cache hit/miss style.
   - [x] Map collection errors to exit code 2 with actionable diagnostics.
   - [x] Run targeted tests to Green.
-- [ ] Task: Add composition tests (Red → Green)
-  - [ ] `--changed` + `--parallel N` runs narrowed suites concurrently.
-  - [ ] `--changed` + `--coverage` produces valid coverage scoped to executed suites.
-  - [ ] `--changed` + `--suite/--test/--tag` respects the active selection in both mapped and fallback paths.
-  - [ ] Confirm Red, implement the minimal wiring gaps, confirm Green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Run CLI integration, composition, and full unit suite.
-  - [ ] Verify exit-code semantics (0/1/2) are preserved.
-  - [ ] Perform the workflow's manual verification.
-  - [ ] Create the phase checkpoint commit, git note, and recorded SHA.
+- [x] Task: Add composition tests (Red → Green) [commit: `d5fcf70`]
+  - [x] `--changed` + `--parallel N` runs narrowed suites concurrently.
+  - [x] `--changed` + `--coverage` produces valid coverage scoped to executed suites.
+  - [x] `--changed` + `--suite/--test/--tag` respects the active selection in both mapped and fallback paths.
+  - [x] Confirm Red, implement the minimal wiring gaps, confirm Green.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Run CLI integration, composition, and full unit suite.
+  - [x] Verify exit-code semantics (0/1/2) are preserved.
+  - [x] Perform the workflow's manual verification.
+  - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
 ## Phase 3 — E2E validation, documentation, and track close-out
 
