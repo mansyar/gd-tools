@@ -75,7 +75,7 @@ def test_init_idempotent(tmp_path):
 
     # project.godot: no duplicate plugin entries
     project_godot = (tmp_path / "project.godot").read_text()
-    assert project_godot.count("[editor_plugins]") == 1
+    assert project_godot.count("config_version=5") == 1
 
     # .gitignore: no duplicate .gd-tools/ entries
     gitignore_lines = (tmp_path / ".gitignore").read_text().splitlines()

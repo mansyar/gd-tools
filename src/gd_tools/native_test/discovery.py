@@ -80,6 +80,7 @@ def discover_native_suites(
     tags: Iterable[str] | None = None,
     timeout_seconds: float = 5.0,
     retries: int = 0,
+    allow_legacy: bool = False,
 ) -> list[NativeSuite]:
     """Discover native suites and apply path-independent selection filters.
 
@@ -91,6 +92,9 @@ def discover_native_suites(
         tags: Optional tags; a suite is selected when it has at least one.
         timeout_seconds: Default per-test timeout placed in the manifest.
         retries: Default retry count placed in the manifest.
+        allow_legacy: Report ``GutTest`` suites as ``RuntimeMode.GUT``
+            instead of rejecting them. Only ``gd-tools migrate`` sets this:
+            the migration report must find legacy suites it cannot run.
 
     Returns:
         Deterministically ordered suites with selected test methods. Suites
@@ -114,15 +118,19 @@ def discover_native_suites(
     for path in files:
         source = path.read_text(encoding="utf-8")
         is_native = _EXTENDS_RE.search(source) is not None
+        runtime = RuntimeMode.NATIVE
 
         if not is_native:
             if _GUT_EXTENDS_RE.search(source) is not None:
-                raise NativeDiscoveryError(
-                    f"{_resource_path(path, project_root)} extends "
-                    "GutTest. GUT runtime support was removed in v0.6.0. "
-                    "Run `gd-tools migrate` or see docs/gut-migration.md."
-                )
-            if _TEST_FUNC_RE.search(source) is not None:
+                if not allow_legacy:
+                    raise NativeDiscoveryError(
+                        f"{_resource_path(path, project_root)} extends "
+                        "GutTest. GUT runtime support was removed in "
+                        "v0.6.0. Run `gd-tools migrate` or see "
+                        "docs/gut-migration.md."
+                    )
+                runtime = RuntimeMode.GUT
+            elif _TEST_FUNC_RE.search(source) is not None:
                 base_match = _EXTENDS_BASE_RE.search(source)
                 base_name = (
                     base_match.group(1) if base_match else "no base class"
@@ -132,9 +140,8 @@ def discover_native_suites(
                     f"methods but extends {base_name}. Suites must extend "
                     "GdToolsTest (native)."
                 )
-            continue
-
-        runtime = RuntimeMode.NATIVE
+            else:
+                continue
 
         suite_name = _class_name(source, path.stem)
         suite_tags = _parse_tags(source)

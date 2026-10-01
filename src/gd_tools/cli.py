@@ -739,6 +739,7 @@ def migrate(path, apply, config_only):
             list(config.test.test_dirs),
             timeout_seconds=config.test.timeout_seconds,
             retries=config.test.retries,
+            allow_legacy=True,
         )
         report = build_migration_report(project_root, suites)
     except (ConfigError, MigrationScanError) as e:
