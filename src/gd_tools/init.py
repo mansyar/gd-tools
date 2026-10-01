@@ -700,59 +700,16 @@ def print_summary(project_root: Path, actions: list[str]) -> None:
     )
 
 
-def run_init(
-    non_interactive: bool = False,
-    with_gut: bool = False,
-) -> None:
-    """Bootstrap a project for the native runtime and optional GUT bridge."""
+def run_init(non_interactive: bool = False) -> None:
+    """Bootstrap a project for the native test runtime."""
     project_root = find_project_root()
     config = load_config(project_root)
-    with_gut = with_gut or config.test.runtime == "gut"
 
     actions: list[str] = []
-    godot_version = detect_godot_version(config)
+    detect_godot_version(config)
 
     install_native_test_addon(project_root)
     actions.append("Deployed native test addon")
-
-    if with_gut:
-        console.print(
-            "[yellow]Installing the GUT addon (deprecated: the addon "
-            "conflicts with the built-in compatibility bridge, duplicate "
-            "class_name GutTest). Consider removing addons/gut after "
-            "init. See docs/gut-migration.md.[/yellow]"
-        )
-        gut_version = get_gut_version_for_godot(godot_version)
-        is_installed = is_gut_installed(project_root)
-        if is_installed:
-            installed = get_installed_gut_version(project_root)
-            if installed:
-                actions.append(f"GUT already installed (v{installed})")
-            else:
-                actions.append("GUT already installed (version unknown)")
-        else:
-            actions.append(f"Installing GUT v{gut_version}")
-
-        if not install_gut(
-            project_root, godot_version, non_interactive=non_interactive
-        ):
-            console.print(
-                "\n[yellow]Init aborted: GUT was not installed.[/yellow]\n"
-                "Install GUT manually, then re-run 'gd-tools init --with-gut'."
-            )
-            sys.exit(1)
-
-        enable_gut_plugin(project_root)
-        actions.append("Enabled GUT plugin in project.godot")
-        register_coverage_autoload(project_root)
-        actions.append("Registered _GDTCoverage autoload")
-        update_gutconfig(project_root, config)
-        actions.append("Created/updated .gutconfig.json")
-    else:
-        actions.append(
-            "GUT addon left uninstalled (not required; the built-in "
-            "compatibility bridge covers GutTest suites)"
-        )
 
     install_coverage_addon(project_root)
     actions.append("Deployed coverage addon")

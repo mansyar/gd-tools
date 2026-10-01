@@ -257,18 +257,10 @@ def cli(verbose: bool, quiet: bool, project_path: Path | None):
     is_flag=True,
     help="Run without interactive prompts.",
 )
-@click.option(
-    "--with-gut",
-    is_flag=True,
-    help=(
-        "Also install the GUT addon (deprecated: the addon conflicts "
-        "with the built-in compatibility bridge)."
-    ),
-)
-def init(non_interactive, with_gut):
+def init(non_interactive):
     """Initialize a new gd-tools configuration."""
     try:
-        run_init(non_interactive=non_interactive, with_gut=with_gut)
+        run_init(non_interactive=non_interactive)
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
@@ -466,12 +458,11 @@ def clean(coverage, artifacts, baselines, cache, clean_all, dry_run):
 
 
 def _reject_legacy_runtime(source: str) -> None:
-    """Reject the removed legacy GUT runtime with migration guidance."""
+    """Reject the removed GUT runtime option with migration guidance."""
     click.echo(
-        "Error: The legacy GUT test runtime was removed. Suites extending "
-        "GutTest now run through the GUT compatibility bridge automatically "
-        f"with `gd-tools test`. Remove {source} and rerun. See "
-        "docs/gut-migration.md for the supported subset and migration steps.",
+        f"Error: GUT runtime support was removed in v0.6.0 ({source}). "
+        "The native runtime is the default. Run `gd-tools migrate` or see "
+        "docs/gut-migration.md.",
         err=True,
     )
     ctx = click.get_current_context()
@@ -501,8 +492,8 @@ def _validate_parallel(
     "--runtime",
     type=click.Choice(["native", "gut"]),
     default=None,
-    help="Select the test runtime (default: native). 'gut' is no longer a "
-    "runnable runtime; GutTest suites run through the compatibility bridge.",
+    help="Select the test runtime (default: native). 'gut' was removed in "
+    "v0.6.0; see docs/gut-migration.md.",
 )
 @click.option(
     "--parallel",
@@ -589,8 +580,8 @@ def test(
 ):
     """Run GDScript tests with the native runtime.
 
-    Suites extending ``GutTest`` are detected automatically and run through
-    the GUT compatibility bridge (see docs/gut-migration.md).
+    The GUT compatibility bridge was removed in v0.6.0; ``--runtime gut``
+    and ``test.runtime = "gut"`` are rejected (see docs/gut-migration.md).
     """
     if runtime == "gut":
         _reject_legacy_runtime("--runtime gut")
