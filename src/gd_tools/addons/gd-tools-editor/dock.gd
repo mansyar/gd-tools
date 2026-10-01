@@ -19,6 +19,10 @@ const MISSING_CLI_MESSAGE := (
 const COVERAGE_DIR := "res://.gd-tools/coverage"
 const ARTIFACTS_DIR := "res://.gd-tools/artifacts"
 
+## Emitted after a coverage run finishes and the artifacts were read —
+## the plugin connects this to the heatmap overlay's refresh.
+signal coverage_updated
+
 var _run_button: Button = null
 var _coverage_button: Button = null
 var _status_label: Label = null
@@ -69,7 +73,8 @@ func _on_run_finished(exit_code: int) -> void:
 	var coverage_results: Dictionary = {}
 	if _pending_coverage:
 		coverage_results = _read_coverage_summary()
-	_pending_coverage = false
+		_pending_coverage = false
+		coverage_updated.emit()
 	var summary := _read_test_summary()
 	_render_results(summary, coverage_results, exit_code)
 
