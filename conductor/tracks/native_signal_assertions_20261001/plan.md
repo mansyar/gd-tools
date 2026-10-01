@@ -2,17 +2,18 @@
 
 ## Phase 1 — Signal Capture Foundation (`watch_signals`)
 
-- [ ] Task: Add e2e tests for signal capture (Red)
-  - [ ] Add native suites to `tests/fixtures/projects/native_test_project` exercising `watch_signals()` on a Node, a RefCounted, and a double
-  - [ ] Add e2e cases in `tests/e2e/test_native_runtime.py` asserting captures work and unwatched targets fail with guidance
-  - [ ] Run and confirm tests fail (command: `CI=true pytest tests/e2e/test_native_runtime.py -k signal`)
-- [ ] Task: Implement capture mechanism in `gd_tools_test.gd` (Green)
-  - [ ] `watch_signals(target: Object) -> void`: connect all declared signals, record `(signal, args)` per emission
-  - [ ] Fail-with-guidance state for assertions on unwatched objects
-  - [ ] Watcher registry with safe disconnect for freed objects
-- [ ] Task: Per-test lifecycle isolation
-  - [ ] Auto-reset recordings and disconnect watchers at test end (hooks, parameterized cases, retries)
-  - [ ] E2E tests proving no cross-test/cross-case leakage
+- [x] Task: Add e2e tests for signal capture (Red)
+  - [x] Add native suites to `tests/fixtures/projects/native_test_project` exercising `watch_signals()` on a Node, a RefCounted, and a double
+  - [x] Add e2e cases in `tests/e2e/test_native_runtime.py` asserting captures work and unwatched targets fail with guidance
+  - [x] Run and confirm tests fail (command: `CI=true pytest tests/e2e/test_native_runtime.py -k signal`)
+- [x] Task: Implement capture mechanism in `gd_tools_test.gd` (Green)
+  - [x] `watch_signals(target: Object) -> void`: connect all declared signals, record `(signal, args)` per emission
+  - [x] Fail-with-guidance state for assertions on unwatched objects
+  - [x] Watcher registry with safe disconnect for freed objects
+- [x] Task: Per-test lifecycle isolation
+  - [x] Auto-reset recordings and disconnect watchers at test end (hooks, parameterized cases, retries)
+  - [x] E2E tests proving no cross-test/cross-case leakage
+  *Commit: 219eedb*
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Assertion Surface
