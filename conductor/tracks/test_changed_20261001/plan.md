@@ -70,23 +70,23 @@ exit semantics.
   - [x] Perform the workflow's manual verification.
   - [x] Create the phase checkpoint commit, git note, and recorded SHA.
 
-## Phase 3 — E2E validation, documentation, and track close-out
+## Phase 3 — E2E validation, documentation, and track close-out [checkpoint: `PENDING`]
 
 **Purpose:** Prove the feature end-to-end on a real git-backed Godot
 fixture project and land user-facing documentation.
 
-- [ ] Task: Add E2E test on a git-backed fixture project
-  - [ ] Initialize a fixture Godot project as a git repo; commit a baseline.
-  - [ ] Edit a source `.gd` file and verify only the mapped suite runs.
-  - [ ] Modify `project.godot` and verify full-suite fallback with notice.
-  - [ ] Commit a change on a branch and verify `--base main` selection.
-  - [ ] Run the E2E test to Green.
-- [ ] Task: Documentation and changelog
-  - [ ] Document `--changed`/`--base` in the test command docs and README.
-  - [ ] Add a CHANGELOG `Unreleased` entry.
-  - [ ] Note the watch-mode mapping reuse in `docs/` where watch mode is described.
+- [x] Task: Add E2E test on a git-backed fixture project [commit: `6c83e8a`]
+  - [x] Initialize a fixture Godot project as a git repo; commit a baseline.
+  - [x] Edit a source `.gd` file and verify only the mapped suite runs.
+  - [x] Modify `project.godot` and verify full-suite fallback with notice.
+  - [x] Commit a change on a branch and verify `--base main` selection.
+  - [x] Run the E2E test to Green.
+- [x] Task: Documentation and changelog [commit: `6fc5d62`]
+  - [x] Document `--changed`/`--base` in the test command docs and README.
+  - [x] Add a CHANGELOG `Unreleased` entry.
+  - [x] Note the watch-mode mapping reuse in `docs/` where watch mode is described.
 - [ ] Task: Final verification & track completion (Refer to `workflow.md`)
-  - [ ] Run the full suite: `CI=true pytest`, with coverage gates (>80% line, >70% branch on new modules).
-  - [ ] Run `ruff check src/ tests/` and `black --check src/ tests/`.
-  - [ ] Perform the workflow's manual verification and obtain user confirmation.
-  - [ ] Create the final checkpoint commit, git note, and recorded SHA.
+  - [x] Run the full suite: `CI=true pytest`, with coverage gates (>80% line, >70% branch on new modules).
+  - [x] Run `ruff check src/ tests/` and `black --check src/ tests/`.
+  - [x] Perform the workflow's manual verification and obtain user confirmation.
+  - [x] Create the final checkpoint commit, git note, and recorded SHA.
