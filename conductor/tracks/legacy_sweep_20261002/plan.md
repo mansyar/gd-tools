@@ -10,7 +10,7 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
   - Record the classification table with rationale in `plan.md`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — checkpoint f322f2b
 
-## Phase 2 — Dead Code Removal
+## Phase 2 — Dead Code Removal [checkpoint: 3125b85]
 
 - [x] Task: Write guard tests first (Red) — commit 0c0ff67
   - Guard test asserting `GUT_VERSION_MAP` / `get_gut_version_for_godot` no longer exist in `gd_tools.godot`
@@ -20,7 +20,7 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
   - `godot.py`: `GUT_VERSION_MAP`, `get_gut_version_for_godot`, fix module docstring
   - Audit-listed candidates: `GUTNotInstalledError` (`errors.py`), `is_gut_installed` + legacy-runner display remnants (`test_runner.py`), stale docstrings — only those proven unreferenced
   - Update any existing tests referencing removed code; run full suite
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — checkpoint 3125b85
 
 ## Phase 3 — Config Cleanup
 
