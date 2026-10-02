@@ -87,6 +87,18 @@ def test_hooks_flag_accepts_comma_separated_values(tmp_path: Path):
     assert _hook_ids(config) == ["gd-tools-format", "gd-tools-lint"]
 
 
+def test_hooks_flag_deduplicates_selection(tmp_path: Path):
+    """A repeated hook name installs exactly one entry."""
+    result = _invoke_in(tmp_path, ["install-hooks", "--hooks", "format,format"])
+    assert result.exit_code == 0
+    config = tmp_path / ".pre-commit-config.yaml"
+    assert _hook_ids(config) == ["gd-tools-format"]
+    hooks_data = yaml.safe_load(
+        (tmp_path / ".pre-commit-hooks.yaml").read_text(encoding="utf-8")
+    )
+    assert [h["id"] for h in hooks_data] == ["gd-tools-format"]
+
+
 def test_hooks_flag_with_unknown_name_exits_2(tmp_path: Path):
     result = _invoke_in(tmp_path, ["install-hooks", "--hooks", "bogus"])
     assert result.exit_code == 2

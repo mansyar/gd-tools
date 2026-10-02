@@ -22,6 +22,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from gd_tools.errors import GdToolsError
 from gd_tools.pre_commit import (
     STATUS_ADDED,
     STATUS_UPDATED,
@@ -103,7 +104,7 @@ def test_hooks_file_write_is_idempotent(tmp_path: Path):
 
 
 def test_invalid_hook_name_raises(tmp_path: Path):
-    with pytest.raises(Exception):
+    with pytest.raises(GdToolsError):
         install_hooks(selection=("bogus",), project_root=tmp_path)
 
 
@@ -222,7 +223,6 @@ def test_deselected_but_present_hooks_are_reported_and_kept(
 def test_malformed_config_yaml_raises_config_error(tmp_path: Path):
     config = tmp_path / ".pre-commit-config.yaml"
     config.write_text("repos: [unclosed", encoding="utf-8")
-    from gd_tools.errors import GdToolsError
 
     with pytest.raises(GdToolsError) as excinfo:
         install_hooks(selection=("format",), project_root=tmp_path)

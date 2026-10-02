@@ -33,6 +33,7 @@ from .clean import (
 from .pre_commit import (
     STATUS_ADDED,
     STATUS_NOTHING_TO_DO,
+    InstallResult,
     install_hooks as run_install_hooks,
 )
 from .config import (
@@ -473,7 +474,7 @@ def _stdin_is_tty() -> bool:
         return False
 
 
-def _render_install_hooks(result) -> None:
+def _render_install_hooks(result: InstallResult) -> None:
     """Render the install-hooks result via the shared output helpers.
 
     Args:
@@ -529,7 +530,9 @@ def install_hooks(install_all, hooks, non_interactive):
     if install_all:
         selection: tuple[str, ...] = _HOOK_NAMES
     elif hooks is not None:
-        names = tuple(h.strip() for h in hooks.split(",") if h.strip())
+        names = tuple(
+            dict.fromkeys(h.strip() for h in hooks.split(",") if h.strip())
+        )
         for name in names:
             if name not in _HOOK_NAMES:
                 raise click.BadParameter(
