@@ -44,5 +44,5 @@ Green (implementation) → commit → git note → plan update.
 - [x] Task: Release preparation `37eea33`
   - [x] Bump version to 0.6.0 in `pyproject.toml`
   - [x] Write CHANGELOG v0.6.0 release section (breaking removal headline)
-- [~] Task: Final verification — `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch`
+- [x] Task: Final verification — `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch` `cd0d219`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
