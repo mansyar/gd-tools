@@ -83,3 +83,9 @@
         CI=true pytest` all pass; coverage ≥80% line / ≥70% branch
         (95.49%, 1575 passed / 7 skipped).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions 0661058
+  - Removed unused `_JSON_TOTAL_KEYS` from `reporter.py`; hoisted the
+    duplicated choice list into `_COVERAGE_REPORT_FORMATS` in `cli.py`.
+    ruff/black clean; 191 tests passed in the two touched suites.
