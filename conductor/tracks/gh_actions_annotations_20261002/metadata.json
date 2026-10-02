@@ -1,0 +1,9 @@
+{
+  "track_id": "gh_actions_annotations_20261002",
+  "title": "GitHub Actions Annotations",
+  "type": "feature",
+  "status": "new",
+  "branch": "feature/gh-actions-annotations-20261002",
+  "created": "2026-10-02",
+  "description": "Add a `github-actions` report format to lint, coverage report, and coverage run, emitting official GitHub Actions workflow log commands (::error/::warning) so lint violations and coverage threshold failures surface as native PR annotations. Covers lint annotations (format_lint_github_actions), a coverage annotation reporter, CLI choice wiring, [coverage].format config alignment, USER_GUIDE CI docs, and CHANGELOG."
+}

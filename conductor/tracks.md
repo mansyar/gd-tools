@@ -234,3 +234,12 @@ _Archived tracks live in `./archive/`._
   validation, keep --format as a hidden alias, and align the
   [coverage].format config validator)
   *Link: [coverage_format_unification_20261002](./archive/coverage_format_unification_20261002/index.md)*
+
+
+- [ ] **Track: GitHub Actions Annotations** (feature: add a
+  `github-actions` report format to lint, coverage report, and coverage
+  run, emitting official GitHub Actions workflow log commands
+  (`::error`/`::warning`) so lint violations and coverage threshold
+  failures surface as native PR annotations; includes config alignment
+  and CI docs — Roadmap Track 31)
+  *Link: [gh_actions_annotations_20261002](./gh_actions_annotations_20261002/index.md)*
