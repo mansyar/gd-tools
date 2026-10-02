@@ -196,4 +196,4 @@ _Archived tracks live in `./archive/`._
   config values, keep `gd-tools migrate` and its scanner as the permanent
   migration path, reframe `doctor` as a migration advisor, and prepare the
   v0.6.0 release: version bump, CHANGELOG, full docs truth pass)
-  *Link: [gut_bridge_removal_20261001](./tracks/gut_bridge_removal_20261001/index.md)*
+  *Link: [gut_bridge_removal_20261001](./archive/gut_bridge_removal_20261001/index.md)*
