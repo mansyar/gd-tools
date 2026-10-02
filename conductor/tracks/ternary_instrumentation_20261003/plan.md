@@ -72,7 +72,7 @@
         must keep their intent.
   - [x] Run the tests and confirm they pass.
 
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Real-Godot Parse Regression Test
 
@@ -99,7 +99,7 @@
         the existing `conftest.py` conventions. It must not fail the suite on a
         machine without Godot.
 
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Documentation and Final Validation
 
@@ -116,4 +116,4 @@
         branch coverage.
   - [ ] Run `ruff check` and `black --check`.
 
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
