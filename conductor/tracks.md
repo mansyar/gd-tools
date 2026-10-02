@@ -225,4 +225,4 @@ _Archived tracks live in `./archive/`._
   that never clobber foreign hooks, offer format/lint/test hooks via an
   interactive prompt plus `--all`/`--hooks`/`--non-interactive` flags, and
   document the integration in README and USER_GUIDE)
-  *Link: [pre_commit_hooks_20261002](./tracks/pre_commit_hooks_20261002/index.md)*
+  *Link: [pre_commit_hooks_20261002](./archive/pre_commit_hooks_20261002/index.md)*
