@@ -218,7 +218,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Pre-commit Hook Integration** (feature: add a
+- [x] **Track: Pre-commit Hook Integration** (feature: add a
   `gd-tools install-hooks` command that wires gd-tools into the pre-commit
   framework - generate `.pre-commit-hooks.yaml`, write/merge a `repos: local:`
   entry into `.pre-commit-config.yaml` with idempotent merge-by-id re-runs
