@@ -12,11 +12,11 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
 
 ## Phase 2 — Dead Code Removal
 
-- [ ] Task: Write guard tests first (Red)
+- [x] Task: Write guard tests first (Red) — commit 0c0ff67
   - Guard test asserting `GUT_VERSION_MAP` / `get_gut_version_for_godot` no longer exist in `gd_tools.godot`
   - Guard test asserting no `src/gd_tools/` module references removed symbols
   - Confirm tests fail before removal
-- [ ] Task: Remove verified-dead code (Green)
+- [x] Task: Remove verified-dead code (Green) — commit 7a43e3e
   - `godot.py`: `GUT_VERSION_MAP`, `get_gut_version_for_godot`, fix module docstring
   - Audit-listed candidates: `GUTNotInstalledError` (`errors.py`), `is_gut_installed` + legacy-runner display remnants (`test_runner.py`), stale docstrings — only those proven unreferenced
   - Update any existing tests referencing removed code; run full suite
