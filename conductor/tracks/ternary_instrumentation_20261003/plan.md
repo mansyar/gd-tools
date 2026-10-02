@@ -4,7 +4,7 @@
 - **Spec:** [./spec.md](./spec.md)
 - **Branch:** `fix/ternary-multiline-instrumentation-20261003`
 
-## Phase 1: Anchor Resolution in the Plan Generator [checkpoint: 9e9c978]
+## Phase 1: Anchor Resolution in the Plan Generator [complete: 39131e6]
 
 - [x] Task: Write failing unit tests for anchor resolution (Red) [9e9c978]
   - [x] Add tests to `tests/unit/test_plan_generator.py` (or a new
@@ -53,7 +53,7 @@
   - [x] Keep the helper private and document why a recursive walk is required
         instead of the flat bottom-up visitor.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
 
 ## Phase 2: Plan Version Bump and Cache Invalidation
 
@@ -72,7 +72,7 @@
         must keep their intent.
   - [ ] Run the tests and confirm they pass.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
 
 ## Phase 3: Real-Godot Parse Regression Test
 
@@ -99,7 +99,7 @@
         the existing `conftest.py` conventions. It must not fail the suite on a
         machine without Godot.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
 
 ## Phase 4: Documentation and Final Validation
 
@@ -116,4 +116,4 @@
         branch coverage.
   - [ ] Run `ruff check` and `black --check`.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
