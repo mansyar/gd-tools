@@ -519,9 +519,7 @@ def check_autoload(
         name="Autoload",
         passed=False,
         message="_GDTCoverage autoload is not registered",
-        fix_hint=(
-            "Run `gd-tools init --with-gut` to deploy the legacy coverage autoload."
-        ),
+        fix_hint="Run `gd-tools init` to deploy the coverage autoload and register it.",
         severity="critical",
     )
 
