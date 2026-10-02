@@ -36,22 +36,24 @@
 
 ## Phase 2: CLI Flag Unification + Validation
 
-- [ ] Task 2.1: Write failing CLI tests (Red)
-  - [ ] Tests in the CLI test suite: `coverage report
+- [x] Task 2.1: Write failing CLI tests (Red)  <!-- fc690eb -->
+  - [x] Tests in the CLI test suite: `coverage report
         --report-format <invalid>` fails fast with a usage error
         (exit 2); `coverage report --report-format html` works;
         `coverage report --format html` (hidden alias) still works;
         supplying both `--format` and `--report-format` raises a
         usage error; `coverage run --report-format json` accepted
-        at parse time.
-  - [ ] Run tests, confirm Red.
-- [ ] Task 2.2: Implement CLI changes (Green)
-  - [ ] In `cli.py`: canonical `--report-format` with
+        at parse time (already covered by existing suite).
+  - [x] Run tests, confirm Red (5 new failures; one test tightened
+        to reject click's "Did you mean" suggestion as a pass).
+- [x] Task 2.2: Implement CLI changes (Green)  <!-- fc690eb -->
+  - [x] In `cli.py`: canonical `--report-format` with
         `click.Choice` on `coverage report` (case-insensitive,
         matching `run`/`diff`); keep `--format` as a hidden alias;
         mutual-exclusion error when both are supplied.
-  - [ ] Run tests, confirm Green; full suite still green.
-  - [ ] Commit (`refactor(coverage): unify report format flags with
+  - [x] Run tests, confirm Green; full suite still green
+        (1574 passed / 7 skipped, 95.49% coverage).
+  - [x] Commit (`refactor(coverage): unify report format flags with
         validation`) and attach git note; update plan task statuses.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
