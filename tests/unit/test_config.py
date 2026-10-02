@@ -146,7 +146,7 @@ def test_gd_tools_config_defaults():
     assert config.lint.exclude == DEFAULT_EXCLUDES
 
 
-@pytest.mark.parametrize("fmt", ["html", "lcov", "cobertura", "text"])
+@pytest.mark.parametrize("fmt", ["html", "lcov", "cobertura", "text", "json"])
 def test_gd_tools_config_valid_coverage_formats(fmt):
     """Test GdToolsConfig accepts all valid coverage format values."""
     config = GdToolsConfig(coverage=CoverageConfig(format=fmt))
@@ -161,9 +161,12 @@ def test_gd_tools_config_valid_min_percent(min_pct):
 
 
 def test_gd_tools_config_invalid_coverage_format():
-    """Test GdToolsConfig rejects invalid coverage format."""
-    with pytest.raises(ValidationError):
+    """Test GdToolsConfig rejects invalid coverage format and lists valid values."""
+    with pytest.raises(ValidationError) as exc_info:
         GdToolsConfig(coverage=CoverageConfig(format="xml"))
+    message = str(exc_info.value)
+    for valid_format in ("html", "lcov", "cobertura", "text", "json"):
+        assert valid_format in message
 
 
 @pytest.mark.parametrize("min_pct", [-1, 101, -100, 200])
