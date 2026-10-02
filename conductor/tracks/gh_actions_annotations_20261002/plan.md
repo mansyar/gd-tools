@@ -1,6 +1,6 @@
 # Implementation Plan: GitHub Actions Annotations
 
-## Phase 1: Lint Annotations
+## Phase 1: Lint Annotations [checkpoint: 1b8b142]
 
 - [x] **Task 1.1 — Write failing tests (Red):** unit tests for
   `format_lint_github_actions()` in `tests/test_lint_runner.py` — exact
