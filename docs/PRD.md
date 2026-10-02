@@ -106,8 +106,8 @@ respecting the realities of the Godot/GDScript ecosystem.
 │             └──────────┬──────────┘                    │
 │                        │                                 │
 │             ┌──────────▼──────────┐                      │
-│             │  Native runner and  │                      │
-│             │  coverage addons    │                      │
+│             │  Native runner and   │                      │
+│             │  coverage addons     │                      │
 │             │  addons (GDScript)   │                      │
 │             └─────────────────────┘                      │
 │                                                        │

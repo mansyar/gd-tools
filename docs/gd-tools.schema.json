@@ -163,7 +163,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "Configuration schema for gd-tools.toml (gd-tools 0.5.0).",
+  "description": "Configuration schema for gd-tools.toml (gd-tools 0.6.0).",
   "properties": {
     "godot": {
       "$ref": "#/$defs/GodotConfig"
