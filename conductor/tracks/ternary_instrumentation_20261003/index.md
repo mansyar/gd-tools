@@ -1,7 +1,7 @@
 # Track: Ternary Branch Instrumentation Correctness (`ternary_instrumentation_20261003`)
 
 - **Type:** Bug fix
-- **Status:** new
+- **Status:** completed
 - **Branch:** `fix/ternary-multiline-instrumentation-20261003`
 - **Created:** 2026-10-03
 

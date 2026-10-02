@@ -236,7 +236,7 @@ _Archived tracks live in `./archive/`._
   *Link: [coverage_format_unification_20261002](./archive/coverage_format_unification_20261002/index.md)*
 
 
-- [~] **Track: Ternary Branch Instrumentation Correctness** (bugfix: anchor
+- [x] **Track: Ternary Branch Instrumentation Correctness** (bugfix: anchor
   ternary coverage branch points to the enclosing statement instead of the
   first operand's line, drop ternaries with no enclosing statement (class-level
   const, @export, default parameter), fix GDScript that fails to parse for
