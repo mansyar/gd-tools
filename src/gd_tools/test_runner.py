@@ -39,7 +39,7 @@ class TestDetail:
 
 @dataclass
 class TestResult:
-    """Aggregated test results from a GUT run.
+    """Aggregated test results from a test run.
 
     Attributes:
         total: Total number of tests executed.
@@ -52,8 +52,8 @@ class TestResult:
             ``--coverage`` not used.
         artifact_index_path: Path to the published native run artifact index,
             or None for runtimes without run artifacts.
-        stdout: GUT stdout (for debugging/surfacing on failure).
-        stderr: GUT stderr (for debugging/surfacing on failure).
+        stdout: Test-runner stdout (for debugging/surfacing on failure).
+        stderr: Test-runner stderr (for debugging/surfacing on failure).
         test_details: Per-test breakdown.
     """
 
@@ -72,30 +72,15 @@ class TestResult:
     artifact_index_path: Path | None = None
 
 
-def is_gut_installed(project_root: Path) -> bool:
-    """Check if GUT is installed in the project.
-
-    Checks for the existence of ``addons/gut/gut.gd`` relative to
-    the project root.
-
-    Args:
-        project_root: Path to the Godot project root directory.
-
-    Returns:
-        True if GUT is installed, False otherwise.
-    """
-    return (project_root / "addons" / "gut" / "gut.gd").exists()
-
-
 def format_test_results(result: TestResult) -> None:
     """Print a Rich table summarizing test results.
 
     Always prints a table with total, passed, failed, skipped, and
     duration. When no test fails, prints a success message that counts
     skipped tests separately rather than folding them into the passed
-    total. When tests fail, prints per-test failure details and GUT's
-    stdout and stderr for debugging context (truncated to 5000
-    characters if longer), followed by a summary footer.
+    total. When tests fail, prints per-test failure details and the
+    test runner's stdout and stderr for debugging context (truncated to
+    5000 characters if longer), followed by a summary footer.
 
     Args:
         result: The :class:`TestResult` to format and print.
@@ -153,15 +138,15 @@ def format_test_results(result: TestResult) -> None:
                 )
             output.console.print(Text.assemble(*parts))
 
-    # Surface GUT stdout/stderr for debugging.
+    # Surface the Godot process output for debugging.
     if result.stdout:
-        output.console.print("\n--- GUT stdout ---")
+        output.console.print("\n--- Godot stdout ---")
         stdout_text = result.stdout
         if len(stdout_text) > 5000:
             stdout_text = stdout_text[:5000] + "\n... (truncated)"
         output.console.print(stdout_text, markup=False)
     if result.stderr:
-        output.console.print("\n--- GUT stderr ---")
+        output.console.print("\n--- Godot stderr ---")
         stderr_text = result.stderr
         if len(stderr_text) > 5000:
             stderr_text = stderr_text[:5000] + "\n... (truncated)"

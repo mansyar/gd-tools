@@ -2,17 +2,16 @@
 
 This module provides the ``collect_versions()`` function, which gathers
 version information for all gd-tools components: gd-tools itself, Godot
-Engine, GUT (Godot Unit Test), gdtoolkit, and Python.
+Engine, gdtoolkit, and Python.
 """
 
 import importlib.metadata
 import sys
 
 from . import __version__
-from .config import GodotConfig, find_project_root
-from .errors import ConfigError, GodotNotFoundError
+from .config import GodotConfig
+from .errors import GodotNotFoundError
 from .godot import find_godot
-from .init import get_installed_gut_version
 
 
 def collect_versions() -> dict[str, str | None]:
@@ -21,7 +20,7 @@ def collect_versions() -> dict[str, str | None]:
     Returns:
         A dictionary mapping component names to version strings.
         Missing components have a value of ``None``. The keys are:
-        ``gd-tools``, ``godot``, ``gut``, ``gdtoolkit``, ``python``.
+        ``gd-tools``, ``godot``, ``gdtoolkit``, ``python``.
     """
     versions: dict[str, str | None] = {}
 
@@ -34,13 +33,6 @@ def collect_versions() -> dict[str, str | None]:
         versions["godot"] = godot_info.version
     except GodotNotFoundError:
         versions["godot"] = None
-
-    # GUT version
-    try:
-        project_root = find_project_root()
-        versions["gut"] = get_installed_gut_version(project_root)
-    except ConfigError:
-        versions["gut"] = None
 
     # gdtoolkit version
     try:

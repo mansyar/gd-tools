@@ -17,7 +17,6 @@ from gd_tools.init import (
     create_data_dir,
     detect_godot_version,
     generate_lint_format_rcs,
-    get_installed_gut_version,
     install_coverage_addon,
     install_editor_plugin,
     install_native_test_addon,
@@ -66,36 +65,6 @@ def test_detect_godot_version_warns_if_invalid_version():
     mock_print.assert_called_once()
     call_args = mock_print.call_args[0][0]
     assert "Warning" in call_args or "warning" in call_args
-
-
-# --- get_installed_gut_version ---
-
-
-def test_get_installed_gut_version_reads_plugin_cfg(tmp_path: Path):
-    """Test get_installed_gut_version reads version from plugin.cfg."""
-    gut_dir = tmp_path / "addons" / "gut"
-    gut_dir.mkdir(parents=True)
-    plugin_cfg = gut_dir / "plugin.cfg"
-    plugin_cfg.write_text(
-        '[plugin]\nname="GUT"\ndescription="Unit Testing"\nauthor="Butch Wesley"\nversion="9.5.0"\nscript="plugin.gd"\n'
-    )
-    assert get_installed_gut_version(tmp_path) == "9.5.0"
-
-
-def test_get_installed_gut_version_returns_none_if_no_cfg(tmp_path: Path):
-    """Test get_installed_gut_version returns None when plugin.cfg is missing."""
-    assert get_installed_gut_version(tmp_path) is None
-
-
-def test_get_installed_gut_version_returns_none_if_no_version_key(
-    tmp_path: Path,
-):
-    """Test get_installed_gut_version returns None when version key is absent."""
-    gut_dir = tmp_path / "addons" / "gut"
-    gut_dir.mkdir(parents=True)
-    plugin_cfg = gut_dir / "plugin.cfg"
-    plugin_cfg.write_text('[plugin]\nname="GUT"\n')
-    assert get_installed_gut_version(tmp_path) is None
 
 
 # --- register_coverage_autoload ---

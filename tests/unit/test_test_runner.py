@@ -205,8 +205,8 @@ def test_format_test_results_all_pass(capsys):
     assert "3" in captured.out
     assert "[OK]" in captured.out
     assert "All 3 test(s) passed." in captured.out
-    # Should NOT print GUT stdout/stderr when no failures.
-    assert "GUT stdout" not in captured.out
+    # Should NOT print Godot stdout/stderr when no failures.
+    assert "Godot stdout" not in captured.out
     assert "Running tests" not in captured.out
 
 
@@ -233,7 +233,7 @@ def test_format_test_results_counts_skipped_separately(capsys):
 
 @pytest.mark.unit
 def test_format_test_results_with_failures(capsys):
-    """format_test_results with failures shows table + details + GUT output."""
+    """format_test_results with failures shows table + details + Godot output."""
     result = TestResult(
         total=3,
         passed=2,
@@ -242,8 +242,8 @@ def test_format_test_results_with_failures(capsys):
         duration=0.5,
         junit_xml_path=Path("/fake/results.xml"),
         coverage_data_path=None,
-        stdout="Some output from GUT",
-        stderr="Some error from GUT",
+        stdout="Some output from Godot",
+        stderr="Some error from Godot",
         test_details=[
             TestDetail(
                 name="test_fail",
@@ -256,8 +256,8 @@ def test_format_test_results_with_failures(capsys):
     )
     format_test_results(result)
     captured = capsys.readouterr()
-    assert "Some output from GUT" in captured.out
-    assert "Some error from GUT" in captured.out
+    assert "Some output from Godot" in captured.out
+    assert "Some error from Godot" in captured.out
     # Per-test failure details.
     assert "✗" in captured.out
     assert "TestSuite.test_fail" in captured.out
