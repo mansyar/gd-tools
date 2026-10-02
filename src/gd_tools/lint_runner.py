@@ -238,3 +238,60 @@ def format_lint_json(result: LintResult) -> str:
         ],
     }
     return json.dumps(data, indent=2)
+
+
+def _escape_gh_message_data(value: str) -> str:
+    """Escape GitHub Actions workflow-command message data.
+
+    Escapes ``%``, CR, and LF per the workflow log-command spec.
+    """
+    return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def _escape_gh_property(value: str) -> str:
+    """Escape a GitHub Actions workflow-command property value.
+
+    Escapes everything message data escapes, plus ``,` and ``:``.
+    """
+    escaped = _escape_gh_message_data(value)
+    return escaped.replace(",", "%2C").replace(":", "%3A")
+
+
+def format_lint_github_actions(result: LintResult) -> str:
+    """Format lint results as GitHub Actions workflow log commands.
+
+    Each issue renders as an annotation command per the official
+    "Workflow commands for GitHub Actions" spec::
+
+        ::error file=<path>,line=<line>,col=<col>,title=<rule>::<message>
+
+    Errors use ``::error`` and warnings use ``::warning``.  Property
+    values (``file``, ``title``) escape ``%``, CR, LF, ``,` and ``:``;
+    message data escapes ``%``, CR, LF.  File paths use POSIX
+    separators so annotations work across platforms.  Issues are
+    sorted by file path, then line, then column.  No issues produce
+    an empty string (no annotations, no noise).
+
+    Args:
+        result: Lint results to format.
+
+    Returns:
+        Workflow log commands, one per line, or an empty string.
+    """
+    issues = result.errors + result.warnings
+    if not issues:
+        return ""
+    issues.sort(key=lambda i: (i.file, i.line, i.column))
+    lines = []
+    for issue in issues:
+        command = "error" if issue.severity == "error" else "warning"
+        path = issue.file.replace("\\", "/")
+        lines.append(
+            f"::{command} "
+            f"file={_escape_gh_property(path)},"
+            f"line={issue.line},"
+            f"col={issue.column},"
+            f"title={_escape_gh_property(issue.rule)}"
+            f"::{_escape_gh_message_data(issue.message)}"
+        )
+    return "\n".join(lines) + "\n"

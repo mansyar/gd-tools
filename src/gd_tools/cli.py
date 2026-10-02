@@ -66,7 +66,12 @@ from .errors import (
 )
 from .format_runner import run_format
 from .init import run_init
-from .lint_runner import format_lint_json, format_lint_text, run_lint
+from .lint_runner import (
+    format_lint_github_actions,
+    format_lint_json,
+    format_lint_text,
+    run_lint,
+)
 from .migration.apply import apply_migration, plan_rewrites
 from .migration.rewrite import generate_diff
 from .migration.reporter import render_migration_report
@@ -940,7 +945,7 @@ def migrate(path, apply, config_only):
 @click.argument("paths", nargs=-1)
 @click.option(
     "--report-format",
-    type=click.Choice(["text", "json"]),
+    type=click.Choice(["text", "json", "github-actions"]),
     default="text",
     help="Output format for the lint report.",
 )
@@ -967,6 +972,8 @@ def lint(paths, report_format, fix):
 
     if report_format == "json":
         click.echo(format_lint_json(result))
+    elif report_format == "github-actions":
+        click.echo(format_lint_github_actions(result), nl=False)
     else:
         format_lint_text(result)
 

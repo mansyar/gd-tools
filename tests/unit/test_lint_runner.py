@@ -591,9 +591,7 @@ def test_format_lint_github_actions_escapes_message():
 def test_format_lint_github_actions_escapes_properties():
     """Test property-value escaping: % plus , and : in title and file."""
     errors = [
-        LintIssue(
-            "src/a,b.gd", 2, 3, "rule, with: colon", "Message", "error"
-        )
+        LintIssue("src/a,b.gd", 2, 3, "rule, with: colon", "Message", "error")
     ]
     result = LintResult(files_checked=1, errors=errors, warnings=[])
     out = format_lint_github_actions(result)
