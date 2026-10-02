@@ -1047,10 +1047,36 @@ def coverage():
 
 
 @coverage.command()
-@click.option("--format", help="Output format for the report.")
+@click.option(
+    "--report-format",
+    type=click.Choice(
+        ["text", "html", "lcov", "cobertura", "json"],
+        case_sensitive=False,
+    ),
+    default=None,
+    help="Output format for the report (default: the configured "
+    "coverage format).",
+)
+@click.option(
+    "--format",
+    "format_alias",
+    type=click.Choice(
+        ["text", "html", "lcov", "cobertura", "json"],
+        case_sensitive=False,
+    ),
+    default=None,
+    hidden=True,
+    help="Deprecated alias for --report-format.",
+)
 @click.option("--output-dir", help="Directory to write the report to.")
-def report(format, output_dir):
+def report(report_format, format_alias, output_dir):
     """Generate a coverage report."""
+    if report_format is not None and format_alias is not None:
+        raise click.UsageError(
+            "Cannot use both --report-format and --format. "
+            "--format is a deprecated alias; use --report-format."
+        )
+    format = report_format if report_format is not None else format_alias
     try:
         config = load_config()
     except ConfigError as e:
