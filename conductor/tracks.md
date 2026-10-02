@@ -214,4 +214,4 @@ _Archived tracks live in `./archive/`._
   audited GUT remnants, legacy `[test].gutconfig` config key — keep the
   single-valued `runtime` field for GdUnit4 forward-compat, truth-pass the
   living docs, and retire Roadmap Track 32 as obsolete)
-  *Link: [legacy_sweep_20261002](./tracks/legacy_sweep_20261002/index.md)*
+  *Link: [legacy_sweep_20261002](./archive/legacy_sweep_20261002/index.md)*
