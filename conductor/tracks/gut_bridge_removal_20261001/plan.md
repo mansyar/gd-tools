@@ -38,11 +38,11 @@ Green (implementation) → commit → git note → plan update.
 
 ## Phase 3: Docs Truth Pass & v0.6.0 Release Prep
 
-- [~] Task: Documentation truth pass
+- [x] Task: Documentation truth pass `6cfc17b`
   - [ ] Update `docs/gut-migration.md` (removal reality, migrate as the path)
   - [ ] Update README, USER_GUIDE, ARCHITECTURE, PRD, `gd-tools.schema.json` (runtime enum), ROADMAP Phase 5 checkbox
-- [ ] Task: Release preparation
-  - [ ] Bump version to 0.6.0 in `pyproject.toml`
-  - [ ] Write CHANGELOG v0.6.0 release section (breaking removal headline)
-- [ ] Task: Final verification — `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch`
+- [x] Task: Release preparation `37eea33`
+  - [x] Bump version to 0.6.0 in `pyproject.toml`
+  - [x] Write CHANGELOG v0.6.0 release section (breaking removal headline)
+- [~] Task: Final verification — `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
