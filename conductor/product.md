@@ -71,6 +71,7 @@ This positioning avoids leading with the riskiest, most complex feature while ma
 | **Standalone compatibility** | gdlint and gdformat continue to work if invoked directly. GUT is not supported since v0.6.0; `gd-tools migrate` is the supported path off it. `gd-tools` is a layer on top, not a lock-in. |
 | **Convention over configuration** | Sensible defaults out of the box; config for when conventions don't fit. |
 | **Workspace hygiene** | `gd-tools clean` removes generated artifacts under `.gd-tools/` (coverage output, native artifacts, baselines, worker cache) with a safe no-flag inventory, `--dry-run`, and hard protection for project files and addons. |
+| **Pre-commit integration** | `gd-tools install-hooks` wires the format check, lint, and test suite into the pre-commit framework, with merge-by-id updates that never clobber foreign hooks. |
 
 ## 6. Design Philosophy
 
@@ -106,7 +107,7 @@ Native test runtime migration gates (all completed; the GUT bridge was removed i
 - The bounded GUT bridge supported migration without silent configuration loss (now superseded by `gd-tools migrate`, retained permanently).
 
 Supporting success metrics (measured but not gating):
-- All CLI commands (test, lint, format, coverage, init, doctor, config) functional end-to-end.
+- All CLI commands (test, lint, format, coverage, init, doctor, config, install-hooks) functional end-to-end.
 - gd-tools itself achieves ≥80% line coverage, ≥70% branch coverage.
 - GitHub Actions CI pipeline completes in under 10 minutes.
 - Install-to-first-run time under 2 minutes.

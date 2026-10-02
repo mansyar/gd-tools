@@ -215,3 +215,14 @@ _Archived tracks live in `./archive/`._
   single-valued `runtime` field for GdUnit4 forward-compat, truth-pass the
   living docs, and retire Roadmap Track 32 as obsolete)
   *Link: [legacy_sweep_20261002](./archive/legacy_sweep_20261002/index.md)*
+
+---
+
+- [x] **Track: Pre-commit Hook Integration** (feature: add a
+  `gd-tools install-hooks` command that wires gd-tools into the pre-commit
+  framework - generate `.pre-commit-hooks.yaml`, write/merge a `repos: local:`
+  entry into `.pre-commit-config.yaml` with idempotent merge-by-id re-runs
+  that never clobber foreign hooks, offer format/lint/test hooks via an
+  interactive prompt plus `--all`/`--hooks`/`--non-interactive` flags, and
+  document the integration in README and USER_GUIDE)
+  *Link: [pre_commit_hooks_20261002](./archive/pre_commit_hooks_20261002/index.md)*

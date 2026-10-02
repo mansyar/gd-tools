@@ -15,6 +15,7 @@ For deep technical command surface details, see the [PRD](./PRD.md) section 5.
 5. [Troubleshooting](#5-troubleshooting)
 6. [Shell Completion](#6-shell-completion)
 7. [Editor Plugin](#7-editor-plugin)
+8. [Pre-commit Hooks](#8-pre-commit-hooks)
 
 
 ## 1. Getting Started
@@ -2131,3 +2132,88 @@ overlay to keep the editor responsive.
   `CodeEdit`/`ScriptEditor` API may differ slightly between editor
   versions; see the track's manual testing checklist for the
   per-version caveats.
+
+---
+
+## 8. Pre-commit Hooks
+
+The `gd-tools install-hooks` command wires gd-tools into the
+[pre-commit](https://pre-commit.com) framework so your format check, lint,
+and test suite run automatically on every commit.
+
+### 8.1 Running the Installer
+
+```bash
+gd-tools install-hooks
+```
+
+Interactive by default: the installer asks you to confirm each hook.
+
+| Prompt | Default | Hook entry |
+|---|---|---|
+| Install the format hook? | yes | `gd-tools format --check` |
+| Install the lint hook? | yes | `gd-tools lint` |
+| Install the test hook? | no | `gd-tools test` |
+
+### 8.2 Generated Files
+
+Two files are produced in the project root:
+
+1. **`.pre-commit-hooks.yaml`** - hook metadata for the gd-tools local
+   repository (ids, names, entries, `language: system`, and
+   `files: \.gd$` filters so only GDScript files trigger the fast hooks).
+2. **`.pre-commit-config.yaml`** - a `repos: local:` block referencing the
+   three hooks:
+
+```yaml
+repos:
+- repo: local
+  hooks:
+  - id: gd-tools-format
+    name: gd-tools format --check
+    entry: gd-tools format --check
+    language: system
+    files: \.gd$
+  - id: gd-tools-lint
+    name: gd-tools lint
+    entry: gd-tools lint
+    language: system
+    files: \.gd$
+  - id: gd-tools-test
+    name: gd-tools test
+    entry: gd-tools test
+    language: system
+    pass_filenames: false
+```
+
+The test hook runs the whole suite via plain `gd-tools test` - any
+`[test]` configuration (including `min_coverage`) in `gd-tools.toml`
+applies as usual.
+
+### 8.3 Merge Behavior on Re-runs
+
+Re-running `install-hooks` is safe and idempotent:
+
+- gd-tools entries are matched **by id** (`gd-tools-format`,
+  `gd-tools-lint`, `gd-tools-test`); drifted entries are corrected in
+  place and missing ones are added.
+- Foreign hooks (your own or from other repositories) are never touched.
+- Previously installed hooks that you deselect are **kept** and reported
+  as `Present but not selected`; remove them manually if unwanted.
+
+### 8.4 Non-Interactive and CI Usage
+
+| Invocation | Result |
+|---|---|
+| `gd-tools install-hooks --non-interactive` | Installs the default pair (format + lint) without prompting. |
+| `gd-tools install-hooks --all` | Installs all three hooks. |
+| `gd-tools install-hooks --hooks format,lint` | Installs exactly the listed hooks. |
+| `gd-tools install-hooks --hooks` (empty) | Nothing to do; exits 1. |
+
+Without a TTY (e.g. in a CI step or piped shell), the installer never
+prompts and falls back to the default pair unless `--all` or `--hooks`
+is given.
+
+Exit codes: `0` hooks installed or updated; `1` nothing to do (e.g. an
+empty selection); `2` config or environment error (bad project root,
+malformed `.pre-commit-config.yaml`).
