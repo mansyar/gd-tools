@@ -37,7 +37,8 @@
 - [x] Task: Implement command in `cli.py` (registration, flags, rich prompt,
       output helpers)
 - [x] Task: Full suite green (`CI=true pytest`) + quality gates (ruff, black)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: 81e5f6e]
 
 ## Phase 3: Documentation
 
