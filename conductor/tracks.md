@@ -206,3 +206,12 @@ _Archived tracks live in `./archive/`._
   migration path, reframe `doctor` as a migration advisor, and prepare the
   v0.6.0 release: version bump, CHANGELOG, full docs truth pass)
   *Link: [gut_bridge_removal_20261001](./archive/gut_bridge_removal_20261001/index.md)*
+
+---
+
+- [ ] **Track: v0.6.0 Legacy Sweep** (chore: remove code and configuration
+  orphaned by the GUT bridge removal — dead `GUT_VERSION_MAP` version mapping,
+  audited GUT remnants, legacy `[test].gutconfig` config key — keep the
+  single-valued `runtime` field for GdUnit4 forward-compat, truth-pass the
+  living docs, and retire Roadmap Track 32 as obsolete)
+  *Link: [legacy_sweep_20261002](./tracks/legacy_sweep_20261002/index.md)*
