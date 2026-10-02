@@ -72,7 +72,7 @@
         must keep their intent.
   - [x] Run the tests and confirm they pass.
 
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6] [a220cac]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
 
 ## Phase 3: Real-Godot Parse Regression Test
 
