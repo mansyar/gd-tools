@@ -25,7 +25,7 @@ For deep technical command surface details, see the [PRD](./PRD.md) section 5.
 |---|---|---|
 | Python | 3.10 | Required for modern type hints and tomllib support. |
 | Godot Engine | 4.5 | Must be accessible via PATH or a GODOT_BIN environment variable. |
-| GUT (Godot Unit Test) | 9.5.0 | Optional legacy addon; never required, conflicts with the compatibility bridge, and not installed by default. |
+| GUT (Godot Unit Test) | 9.5.0 | Optional legacy addon; never required by gd-tools. Since v0.6.0 the compatibility bridge is removed; migrate with `gd-tools migrate`. |
 
 The `gdtoolkit` package (providing `gdlint` and `gdformat`) is installed as
 a dependency of `gd-tools` -- no separate installation is needed.
@@ -65,11 +65,9 @@ The `init` command performs the following steps:
 7. Creates the `.gd-tools/` working directory.
 8. Leaves GUT, `.gutconfig.json`, and the legacy coverage autoload uninstalled.
 
-`--with-gut` still installs the legacy GUT addon, but the addon now conflicts
-with the built-in compatibility bridge (both provide `class_name GutTest`) and
-`gd-tools doctor` warns about it. New projects should not use it. Existing GUT
-suites can be migrated with `gd-tools migrate`; see the
-[migration guide](./gut-migration.md).
+Existing GUT suites cannot run: the compatibility bridge was removed in
+v0.6.0 and `gd-tools init` never installs GUT. Migrate legacy suites with
+`gd-tools migrate`; see the [migration guide](./gut-migration.md).
 
 The `init` command is idempotent -- running it again updates components
 to the expected state without duplicating files.
@@ -183,7 +181,7 @@ binary = "/usr/local/bin/godot"
 
 | Key | Type | Default | Description |
 |---|---|---|---|
-| `runtime` | string | `"native"` | Test runtime: `native` or legacy `gut`. |
+| `runtime` | string | `"native"` | Test runtime. Only `native` is supported since v0.6.0. |
 | `test_dirs` | list of strings | `["test", "tests"]` | Directories scanned for test files. |
 | `timeout_seconds` | number | `5.0` | Default native per-test async timeout in seconds. |
 | `retries` | integer | `0` | Default native retry count. |
@@ -191,7 +189,7 @@ binary = "/usr/local/bin/godot"
 | `tags` | list of strings | `[]` | Native class-level tag filters; an empty list matches all tags. |
 | `prefix` | string | `"test_"` | Filename prefix for test scripts (GUT convention). |
 | `suffix` | string | `".gd"` | Filename suffix for test scripts. |
-| `gutconfig` | string | `".gutconfig.json"` | Path to the GUT configuration file. |
+| `gutconfig` | string | `".gutconfig.json"` | Legacy path to the GUT configuration file; not read by any runtime. |
 
 Example -- custom test layout:
 
@@ -275,7 +273,7 @@ Initialize or update the `gd-tools` configuration in a Godot project.
 **Usage:**
 
 ```bash
-gd-tools init [--non-interactive] [--with-gut]
+gd-tools init [--non-interactive]
 ```
 
 **Flags:**
@@ -283,7 +281,6 @@ gd-tools init [--non-interactive] [--with-gut]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--non-interactive` | flag | `false` | Run without interactive prompts. |
-| `--with-gut` | flag | `false` | Also install/enable the legacy GUT runtime and compatibility files. The installed addon conflicts with the compatibility bridge and `doctor` warns about it. |
 
 **Examples:**
 
@@ -300,7 +297,6 @@ gd-tools init --non-interactive
 | Code | Condition |
 |---|---|
 | 0 | Initialization completed successfully. |
-| 1 | User declined an optional legacy GUT installation when prompted. |
 | 2 | Configuration or environment error (e.g., Godot not found). |
 
 **Smart Backup of Modified Addon Files:**
@@ -332,18 +328,12 @@ gd-tools doctor
 | 1 | Godot Binary | critical | Godot binary is found via the detection chain. |
 | 2 | Godot Version | critical | Godot version is >= 4.5.0. |
 | 3 | Native Test Addon | critical/warning | Bundled `gd-tools-test` files are present and the deployed version is current. |
-| 4 | GUT Installed | warning | GUT is never required; an installed GUT addon conflicts with the compatibility bridge (duplicate `class_name GutTest`). |
-| 5 | GUT Version | informational | Reports the installed GUT version; it no longer affects any runtime. |
-| 6 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present and not stale. |
-| 7 | GUT Config | warning | `.gutconfig.json` is not read by any runtime; malformed JSON is reported as a warning. |
-| 8 | gd-tools.toml | critical | `gd-tools.toml` exists and is valid TOML. |
-| 9 | GD Toolkit | critical | `gdlint` and `gdformat` CLI tools are installed. |
-| 10 | GUT Suites | informational | Lists `GutTest` suites in the project; they run through the compatibility bridge automatically. |
-| 11 | Autoload | warning | `_GDTCoverage` is legacy; native coverage does not use an autoload. |
-
-`doctor` additionally warns when `test.runtime = "gut"` is set in
-`gd-tools.toml` -- that value is no longer runnable; `GutTest` suites run
-through the bridge automatically.
+| 4 | Legacy GUT | warning | Informational advisory: detects `addons/gut`, `.gutconfig.json`, and `extends GutTest` suites. Always passes; when artifacts are found they are reported as migration advice pointing at `gd-tools migrate`. |
+| 5 | Coverage Addon | warning | All `gd-tools-coverage` addon files are present and not stale. |
+| 6 | Editor Plugin | warning | The editor plugin is deployed (enable it in Godot's Project Settings → Plugins). |
+| 7 | gd-tools.toml | critical | `gd-tools.toml` exists and is valid TOML. |
+| 8 | GD Toolkit | critical | `gdlint` and `gdformat` CLI tools are installed. |
+| 9 | Autoload | warning | `_GDTCoverage` is legacy; native coverage does not use an autoload. |
 
 **Output:**
 
@@ -361,12 +351,10 @@ symbol.
 
 ### 3.4 gd-tools test
 
-Run GDScript tests using the bundled native runtime. Suites extending
-`GdToolsTest` and `GutTest` are detected automatically; `GutTest` suites run
-through the GUT compatibility bridge (see the
-[migration guide](./gut-migration.md)). The bridge is deprecated as of
-v0.5.0 and will be removed in v0.6.0. The legacy `--runtime gut` flag has
-been removed and is rejected with migration guidance.
+Run GDScript tests using the bundled native runtime. Suites must extend
+`GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration
+guidance -- the GUT compatibility bridge was removed in v0.6.0 (run
+`gd-tools migrate` or see the [migration guide](./gut-migration.md)).
 
 **Usage:**
 
@@ -379,7 +367,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | Argument | Required | Default | Description |
 |---|---|---|---|
 | `paths` | no | Config `[test].test_dirs` | One or more test files or directories to scan. File paths are selected exactly; directories are scanned recursively. |
-| `--runtime` | choice | Config `[test].runtime` (`native`) | Select `native` or legacy `gut`. |
+| `--runtime` | choice | Config `[test].runtime` (`native`) | Select the test runtime (default: native). `gut` was removed in v0.6.0 and is rejected with exit 2. |
 
 **Flags:**
 
@@ -403,7 +391,7 @@ gd-tools test [PATHS]... [OPTIONS]
 **Examples:**
 
 ```bash
-# Run all tests (GdToolsTest and GutTest suites are routed automatically)
+# Run all tests
 gd-tools test
 
 # Run a native suite and write JUnit XML
@@ -474,8 +462,9 @@ gd-tools test tests/unit/test_player.gd
 - Class-level tags can be configured with `[test].tags` or selected with
   repeatable `--tag` options. Explicit file paths are never broadened to
   sibling suites.
-- If discovery finds no suites, the error explains that suites must extend
-  `GdToolsTest` (native) or `GutTest` (compatibility bridge).
+- If discovery finds a suite extending `GutTest`, it fails with exit 2 and
+  migration guidance (the compatibility bridge was removed in v0.6.0); if no
+  suites are found, the error explains that suites must extend `GdToolsTest`.
 - Opt-in parallel execution: `--parallel N` or `[test].parallel` dispatches
   suites to at most N concurrent Godot processes. Results, JUnit XML, and
   merged coverage are identical to a sequential run; a failed, timed-out, or
@@ -554,9 +543,6 @@ coverage plans, or in coverage reports.
   naming the method and the target.
 - Doubles and stubs are per-test: every test gets fresh instances, so no
   state leaks between tests.
-- Bridge suites (`extends GutTest`) inherit the same facility with
-  identical semantics; the preflight scan no longer rejects mocking
-  constructs.
 
 ```gdscript
 extends GdToolsTest
@@ -1603,7 +1589,7 @@ gd-tools [--verbose | --quiet] <command> [command-options]
 
 | Flag | Short | Description |
 |---|---|---|
-| `--verbose` | `-v` | Show underlying commands (Godot/GUT, gdlint, gdformat) and timing information for each operation. |
+| `--verbose` | `-v` | Show underlying commands (Godot, gdlint, gdformat) and timing information for each operation. |
 | `--quiet` | `-q` | Suppress non-essential output: update checks, info/progress messages, and detailed tables. Only essential results are shown. |
 
 The `--verbose` and `--quiet` flags are mutually exclusive. Using both
@@ -1618,8 +1604,8 @@ Verbose mode is designed for debugging and understanding what
 `gd-tools` is doing under the hood. When active, the CLI displays:
 
 - **Underlying commands:** The full external command being executed
-  (e.g., the complete `godot --headless -s addons/gut/gut_cmdln.gd ...`
-  invocation, the file being linted, the file being formatted).
+  (e.g., the complete Godot process invocation for a test run, the
+  file being linted, the file being formatted).
 - **Timing information:** Elapsed time for each major operation (test
   run, lint scan, format pass).
 
@@ -1853,22 +1839,21 @@ chain.
    ```
 4. Re-run `gd-tools doctor` to confirm detection.
 
-### 5.2 GUT Addon Installed (Conflict)
+### 5.2 Legacy GUT Artifacts Detected
 
-**Symptom:** Doctor check "GUT Installed" reports a warning.
+**Symptom:** Doctor check "Legacy GUT" reports a warning.
 
-**Cause:** The GUT addon is present in `addons/gut/`. The built-in
-compatibility bridge provides `class_name GutTest` itself, so an installed
-GUT addon creates a duplicate class and preflight refuses to run the
-project. GUT is never required by gd-tools.
+**Cause:** The project contains legacy GUT artifacts (`addons/gut/`,
+`.gutconfig.json`, or suites that `extend GutTest`). Since the v0.6.0
+bridge removal these artifacts are unused by gd-tools and harmless, but
+`GutTest` suites will not run. GUT is never required by gd-tools.
 
 **Resolution:**
 
-1. Remove `addons/gut/` from the project.
-2. Re-run `gd-tools doctor` to confirm the warning is gone.
-3. `GutTest` suites keep working through the compatibility bridge (no
-   addon needed); see the [migration guide](./gut-migration.md) to move
-   them onto `GdToolsTest`.
+1. Migrate `GutTest` suites with `gd-tools migrate`; see the
+   [migration guide](./gut-migration.md) to move them onto `GdToolsTest`.
+2. Optionally remove `addons/gut/` and `.gutconfig.json` once migrated.
+3. Re-run `gd-tools doctor` to confirm the warning is gone.
 
 ### 5.3 Godot Version Mismatch
 

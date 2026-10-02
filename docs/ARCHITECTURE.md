@@ -857,7 +857,7 @@ Written by Python, read by Godot. One file per suite.
 |-------|------|---------|
 | `protocol_version` | `3` | Wire contract version |
 | `project_root` | path | Absolute project root, for `res://` resolution |
-| `runtime` | `native` \| `gut` | Runtime selector, echoed for clarity |
+| `runtime` | `native` | Runtime selector, echoed for clarity |
 | `suite.name` | string | Class name, used for reporting and selection |
 | `suite.path` | `res://` string | Suite script path |
 | `suite.tests[]` | objects | `name`, `timeout_seconds`, `retries`, optional `parameters` (`names`, `values`) |
@@ -983,20 +983,13 @@ directories, discover suites, import the project, run the preflight, prepare
 coverage, execute, then translate the run result into an exit code.
 
 `run_native_test_command()` raises `ConfigError` when discovery finds nothing,
-naming the remedy: add a suite extending `GdToolsTest` or `GutTest`. The most
+naming the remedy: add a suite extending `GdToolsTest`. The most
 useful error is the one that tells you what to do next.
 
-Before the preflight runs, `scan_bridge_suites()` statically inspects every
-bridge (`GutTest`) suite and fails the run when a suite uses a construct the
-bridge does not support (property/orphan assertions,
-engine-error assertions), listing each finding per file and line and pointing
-at [docs/gut-migration.md](./gut-migration.md). Parameterization
-(`parameterize`/`use_parameters`) is native now and no longer scanned: bridge
-suites use the same declaration validation, case expansion, and naming as
-native suites. The scan is pure Python, so
-unsupported constructs are caught before any Godot process spawns. It also
-fails the run when `addons/gut` is present: the bridge provides
-`class_name GutTest` itself, and the addon's copy would collide.
+There is no pre-run scan of legacy `GutTest` suites: the GUT compatibility
+bridge was removed in v0.6.0, so the unsupported-construct catalog
+(property/orphan assertions, engine-error assertions) survives only inside
+the `gd-tools migrate` scanner ([docs/gut-migration.md](./gut-migration.md)).
 
 `_raise_for_native_error()` maps a terminal `error` status onto exit `2` before
 any coverage threshold is evaluated --- an infrastructure failure must not be
@@ -1034,9 +1027,9 @@ Finds candidate suites. This is the one place where Python reads GDScript as
 **text**, and it is deliberately limited to identifying *candidates*:
 
 - `_EXTENDS_RE` matches a suite that extends `GdToolsTest`
-- `_GUT_EXTENDS_RE` detects `GutTest` suites, which are classified as
-  bridge suites (`RuntimeMode.GUT`) and routed through the compatibility
-  bridge in the same run
+- `_GUT_EXTENDS_RE` detects `GutTest` suites, which are rejected with exit
+  2 and the v0.6.0 removal error -- no `RuntimeMode.GUT` routing exists;
+  every discovered suite is native
 - `_TEST_FUNC_RE` matches `test_*` methods regardless of their parameter
   list; a method that takes parameters becomes runnable once the preflight
   resolves its parameterization declaration
@@ -1292,7 +1285,7 @@ Isolation over throughput. See [8.2](#82-isolation-model).
 | Native runtime configuration keys | [User Guide](./USER_GUIDE.md) | Section 2.3 |
 | Instrumentation plan and coverage data formats | This document | Sections 4.1, 4.2 |
 | Runtime protocol and exit codes | This document | Sections 9, 11 |
-| GUT compatibility bridge and migration guide | [gut-migration](./gut-migration.md) | Whole document |
+| GUT migration guide (the bridge was removed in v0.6.0) | [gut-migration](./gut-migration.md) | Whole document |
 
 ### Known Limitations
 
@@ -1300,11 +1293,8 @@ Stated so they are not discovered by surprise:
 
 - **No editor integration.** The runtime is headless and script-driven only.
 
-The GUT compatibility bridge inherits every limitation above and adds its
-own: it supports only the documented core subset of the GUT API
-([docs/gut-migration.md](./gut-migration.md)). Suites using constructs
-outside that subset fail at preflight with per-file guidance instead of
-running incompletely. The bridge is deprecated as of v0.5.0; it is
-removed in v0.6.0, after which `extends GutTest` stops resolving (see
-the [Native Runtime Transition
+The GUT compatibility bridge shipped in v0.5.0 and was removed in v0.6.0:
+`extends GutTest` no longer resolves, and `gd-tools test` rejects such
+suites with exit 2 and migration guidance (run `gd-tools migrate`; see the
+[migration guide](./gut-migration.md) and the [Native Runtime Transition
 section](./ROADMAP.md#native-runtime-transition-completed-foundation)).
