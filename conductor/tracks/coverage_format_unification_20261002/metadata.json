@@ -1,0 +1,9 @@
+{
+  "track_id": "coverage_format_unification_20261002",
+  "title": "Coverage Format Bugfix + CLI Unification",
+  "type": "bugfix",
+  "status": "new",
+  "branch": "fix/coverage-format-unification-20261002",
+  "created": "2026-10-02",
+  "description": "Fix `coverage run --report-format json` always failing with CoveragePlanError after the playtest session completes by making json a first-class report format mirroring the coverage-diff JSON shape; unify the --format vs --report-format flag naming across coverage subcommands with click.Choice validation, keep --format as a hidden backwards-compatible alias on `coverage report`, and align the [coverage].format config validator with the same format set."
+}

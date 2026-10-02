@@ -226,3 +226,13 @@ _Archived tracks live in `./archive/`._
   interactive prompt plus `--all`/`--hooks`/`--non-interactive` flags, and
   document the integration in README and USER_GUIDE)
   *Link: [pre_commit_hooks_20261002](./archive/pre_commit_hooks_20261002/index.md)*
+
+- [ ] **Track: Coverage Format Bugfix + CLI Unification** (bugfix + chore:
+  fix `coverage run --report-format json` always failing with
+  `CoveragePlanError` after the playtest session completes by making json a
+  first-class report format mirroring the coverage-diff JSON shape, and
+  unify the `--format` vs `--report-format` flag naming across coverage
+  subcommands with `click.Choice` validation — `--format` kept as a hidden
+  backwards-compatible alias on `coverage report` — plus align the
+  `[coverage].format` config validator with the same format set)
+  *Link: [coverage_format_unification_20261002](./tracks/coverage_format_unification_20261002/index.md)*
