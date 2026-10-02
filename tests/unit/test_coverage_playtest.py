@@ -306,6 +306,21 @@ def test_playtest_supports_lcov_report_format(playtest_env):
     assert result.output_path.suffix == ".info"
 
 
+def test_playtest_supports_json_report_format(playtest_env):
+    """Regression: coverage run --report-format json completes end-to-end.
+
+    The json format was advertised by the CLI but rejected by the
+    reporter after the session completed, wasting the playtest.
+    """
+    config = GdToolsConfig()
+    result = run_playtest_coverage(config, report_format="json")
+
+    assert result.output_path.suffix == ".json"
+    payload = json.loads(result.output_path.read_text(encoding="utf-8"))
+    assert "totals" in payload
+    assert "files" in payload
+
+
 # --- periodic flush interval ---
 
 
