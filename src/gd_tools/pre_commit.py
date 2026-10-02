@@ -81,8 +81,7 @@ def _hook_definition(name: str) -> dict:
             "pass_filenames": False,
         }
     raise GdToolsError(
-        f"Unknown hook {name!r}; expected one of: "
-        f"{', '.join(HOOK_IDS)}",
+        f"Unknown hook {name!r}; expected one of: " f"{', '.join(HOOK_IDS)}",
     )
 
 
