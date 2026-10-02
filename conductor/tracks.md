@@ -209,7 +209,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: v0.6.0 Legacy Sweep** (chore: remove code and configuration
+- [~] **Track: v0.6.0 Legacy Sweep** (chore: remove code and configuration
   orphaned by the GUT bridge removal — dead `GUT_VERSION_MAP` version mapping,
   audited GUT remnants, legacy `[test].gutconfig` config key — keep the
   single-valued `runtime` field for GdUnit4 forward-compat, truth-pass the
