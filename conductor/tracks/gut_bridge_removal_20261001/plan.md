@@ -38,7 +38,7 @@ Green (implementation) → commit → git note → plan update.
 
 ## Phase 3: Docs Truth Pass & v0.6.0 Release Prep
 
-- [ ] Task: Documentation truth pass
+- [~] Task: Documentation truth pass
   - [ ] Update `docs/gut-migration.md` (removal reality, migrate as the path)
   - [ ] Update README, USER_GUIDE, ARCHITECTURE, PRD, `gd-tools.schema.json` (runtime enum), ROADMAP Phase 5 checkbox
 - [ ] Task: Release preparation
