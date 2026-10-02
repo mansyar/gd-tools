@@ -24,9 +24,9 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
 
 ## Phase 3 — Config Cleanup
 
-- [ ] Task: Write failing config tests (Red)
+- [x] Task: Write failing config tests (Red) — commit 472b2e3
   - Test that a TOML with `[test] gutconfig = "..."` fails validation as an unknown key (per existing config error conventions)
-- [ ] Task: Remove the `gutconfig` field and regenerate schema (Green)
+- [x] Task: Remove the `gutconfig` field and regenerate schema (Green) — commit 5f5595c
   - Remove field from `config.py` Pydantic model (keep `runtime`, single-valued `"native"`)
   - Regenerate `docs/gd-tools.schema.json`; keep the schema sync test green
   - Full test suite green
@@ -62,3 +62,7 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
 ## Implementation Notes
 
 _Appended per task per workflow.md (commit SHAs, deviations)._
+
+- **Phase 1** (audit): classifications recorded above; user confirmed remove `versions["gut"]` and rename output labels to `--- Godot stdout/stderr ---`. Baseline suite (not e2e): 1418 passed / 7 skipped, one **pre-existing** failure (`test_checked_in_schema_snapshot_is_current`, schema snapshot drifted from config model in v0.6.0) — assigned to Phase 3. Checkpoint f322f2b.
+- **Phase 2** (removal): guards in `tests/unit/test_gut_removal_guards.py` (Red 0c0ff67; initial label guard false-passed due to `\n` prefix in source literals, tightened to unanchored substrings). Green 7a43e3e removed the five dead symbols + stale docstrings/labels across `godot.py`, `errors.py`, `test_runner.py`, `version.py`, `init.py` (incl. orphaned `configparser` import); updated `test_godot.py`, `test_errors.py`, `test_version.py`, `test_init.py`, `test_test_runner.py`. ruff (3 orphaned imports fixed), black, 1412 passed, coverage gate held. Checkpoint 3125b85.
+- **Phase 3** (config): Red 472b2e3 — two guard tests (`TestConfig(gutconfig=...)` → ValidationError; TOML via `load_config` → ConfigError, the tool's exit-code-2 wrapper). Green 5f5595c — field + docstring removed, `runtime: Literal["native"]` retained; `docs/gd-tools.schema.json` regenerated via `gd-tools config schema --output`, which also resolved the pre-existing snapshot-drift failure. Full suite 1415 passed / 7 skipped, coverage 94.84%, ruff/black clean.
