@@ -441,6 +441,42 @@ def test_lint_report_format_text_default():
     assert "[OK]" in result.output
 
 
+def test_lint_report_format_github_actions():
+    """Test lint --report-format github-actions emits annotations."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    errors = [
+        LintIssue(
+            "src/player.gd", 42, 1, "GD3000", "unused variable 'x'", "error"
+        )
+    ]
+    mock_result = LintResult(files_checked=1, errors=errors, warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result),
+    ):
+        result = runner.invoke(
+            cli, ["lint", "--report-format", "github-actions"]
+        )
+    assert result.exit_code == 1
+    assert (
+        "::error file=src/player.gd,line=42,col=1,"
+        "title=GD3000::unused variable 'x'\n"
+    ) in result.output
+
+
+def test_lint_rejects_unknown_report_format():
+    """Test lint rejects unknown --report-format values with exit 2."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint"),
+    ):
+        result = runner.invoke(cli, ["lint", "--report-format", "sarif"])
+    assert result.exit_code == 2
+
+
 def test_lint_fix_flag_warning():
     """Test --fix flag prints warning that gdlint is read-only."""
     runner = CliRunner()
