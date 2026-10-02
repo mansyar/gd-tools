@@ -53,7 +53,7 @@ Follow the conventions established in the PRD throughout the codebase:
 | CLI commands & flags | `kebab-case` | `gd-tools test`, `--junit-xml`, `--report-format` |
 | Python modules & functions | `snake_case` | `test_runner.py`, `run_tests()`, `find_godot()` |
 | Python classes | `PascalCase` | `Config`, `GodotInfo`, `TestResult`, `LintResult` |
-| Python constants | `UPPER_SNAKE_CASE` | `DEFAULT_EXCLUDES`, `GUT_VERSION_MAP` |
+| Python constants | `UPPER_SNAKE_CASE` | `DEFAULT_EXCLUDES`, `PYPI_URL` |
 | GDScript classes | `PascalCase` | `_GDTCoverage`, `GDTTracker` |
 | GDScript functions | `snake_case` | `hit()`, `get_data()`, `set_active()` |
 | GDScript variables | `snake_case` | `file_id`, `line_id`, `hit_count` |

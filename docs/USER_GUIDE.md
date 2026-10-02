@@ -25,7 +25,6 @@ For deep technical command surface details, see the [PRD](./PRD.md) section 5.
 |---|---|---|
 | Python | 3.10 | Required for modern type hints and tomllib support. |
 | Godot Engine | 4.5 | Must be accessible via PATH or a GODOT_BIN environment variable. |
-| GUT (Godot Unit Test) | 9.5.0 | Optional legacy addon; never required by gd-tools. Since v0.6.0 the compatibility bridge is removed; migrate with `gd-tools migrate`. |
 
 The `gdtoolkit` package (providing `gdlint` and `gdformat`) is installed as
 a dependency of `gd-tools` -- no separate installation is needed.
@@ -136,7 +135,6 @@ retries = 0
 tags = []
 prefix = "test_"
 suffix = ".gd"
-gutconfig = ".gutconfig.json"
 
 [lint]
 exclude = ["addons", ".godot", ".gd-tools", ".git"]
@@ -189,7 +187,6 @@ binary = "/usr/local/bin/godot"
 | `tags` | list of strings | `[]` | Native class-level tag filters; an empty list matches all tags. |
 | `prefix` | string | `"test_"` | Filename prefix for test scripts (GUT convention). |
 | `suffix` | string | `".gd"` | Filename suffix for test scripts. |
-| `gutconfig` | string | `".gutconfig.json"` | Legacy path to the GUT configuration file; not read by any runtime. |
 
 Example -- custom test layout:
 
@@ -1337,12 +1334,11 @@ gd-tools version [OPTIONS]
 |---|---|
 | gd-tools | The installed `gd-tools-cli` package version. |
 | Godot | The detected Godot engine binary version. |
-| GUT | The installed GUT (Godot Unit Test) addon version. |
 | gdtoolkit | The installed `gdtoolkit` package version (provides `gdlint` and `gdformat`). |
 | Python | The running Python interpreter version. |
 
 When a component is not found, the table displays "not detected" for
-Godot and "not installed" for GUT and gdtoolkit. In JSON output, missing
+Godot and "not installed" for gdtoolkit. In JSON output, missing
 components are `null`.
 
 **Examples:**
@@ -1869,8 +1865,9 @@ requires.
    [godotengine.org](https://godotengine.org).
 3. Re-run `gd-tools doctor` to confirm detection.
 
-The installed GUT addon version, if any, is informational only: no
-gd-tools runtime uses the GUT addon.
+Leftover GUT artifacts (`addons/gut/`, `.gutconfig.json`, `extends GutTest`
+suites) are reported by the doctor's informational Legacy GUT advisory
+(see section 5.2); no gd-tools runtime uses the GUT addon.
 
 ### 5.4 Coverage Not Generating
 

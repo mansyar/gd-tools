@@ -27,9 +27,9 @@ instrumentation).
 
 | Command | Purpose |
 |---------|---------|
-| `gd-tools init` | Initialize project: install GUT, deploy coverage addon, generate config |
-| `gd-tools doctor` | Diagnose environment (Godot, GUT, gdtoolkit, config) |
-| `gd-tools test` | Run GDScript tests via GUT |
+| `gd-tools init` | Initialize project: deploy native test + coverage addons, generate config |
+| `gd-tools doctor` | Diagnose environment (Godot, native test addon, coverage addon, gdtoolkit, config) |
+| `gd-tools test` | Run GDScript tests via the native Godot runtime (suites extend `GdToolsTest`) |
 | `gd-tools lint` | Lint GDScript files (wraps gdlint) |
 | `gd-tools format` | Format GDScript files (wraps gdformat) |
 | `gd-tools coverage report` | Generate coverage report from test data |
@@ -200,7 +200,6 @@ lives). If missing, defaults are used. The file is validated by Pydantic v2 with
 | `test_dirs` | list[string] | `["test", "tests"]` | Directories containing test files |
 | `prefix` | string | `"test_"` | Test file prefix (GUT convention) |
 | `suffix` | string | `".gd"` | Test file suffix |
-| `gutconfig` | string | `".gutconfig.json"` | Path to GUT config file |
 
 ### `[lint]`
 
@@ -358,7 +357,6 @@ All gd-tools errors inherit from `GdToolsError` and carry an `exit_code`:
 |-------|-----------|---------|
 | `ConfigError` | 2 | Invalid or missing configuration |
 | `GodotNotFoundError` | 2 | Godot binary not found |
-| `GUTNotInstalledError` | 2 | GUT not installed in project |
 | `TestFailureError` | 1 | Tests failed |
 | `LintError` | 1 | Lint issues found |
 | `FormatError` | 1 | Formatting issues found |

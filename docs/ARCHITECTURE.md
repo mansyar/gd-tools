@@ -21,9 +21,9 @@ section](./ROADMAP.md#native-runtime-transition-completed-foundation).
 
 ## 1. Overview
 
-Godot 4 provides no built-in code coverage mechanism. GUT --- the
-de facto GDScript test runner --- runs tests but does not track which
-lines or branches were executed. `gd-tools` fills this gap with a
+Godot 4 provides no built-in code coverage mechanism, and GDScript test
+runners do not track which lines or branches were executed. `gd-tools`
+fills this gap with a
 hybrid coverage system that combines Python-side static analysis with
 GDScript-side runtime instrumentation.
 
@@ -58,6 +58,12 @@ reporting) and GDScript (runtime instrumentation).
 | 1. Plan generation | Python | `coverage/plan_generator.py` | Parse GDScript via Lark AST, identify trackable lines and branches, emit `plan.json` |
 | 2. Runtime instrumentation | GDScript | `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` | Inject tracker calls into source at runtime (via `coverage.gd._ready()`), activate tracker (via `pre_run_hook.gd`), execute tests, collect hit data, write `coverage.json` |
 | 3. Report generation | Python | `coverage/reporter.py` | Cross-reference plan with hit data, compute metrics, emit reports (HTML, LCOV, Cobertura, text) |
+
+> **Native runtime note:** in the current flow, Phase 2 runs inside each
+> suite's Godot process via `gd_tools_native_coverage.gd` (see §11.11),
+> which reuses the same plan format and tracker mechanics. The bundled
+> `coverage.gd`, `pre_run_hook.gd`, and `post_run_hook.gd` files implement
+> the legacy GUT-hook mechanism described in this part.
 
 ### Comparison with Alternatives
 
@@ -400,6 +406,12 @@ it treat it as empty when absent --- the schema version stays `1`.
 
 ## 5. Component Details
 
+> The GDScript components in this part (`coverage.gd`, `pre_run_hook.gd`,
+> `post_run_hook.gd`) originate from the legacy GUT-hook era. The native
+> test runtime activates coverage through `gd_tools_native_coverage.gd`
+> (§11.11), which reuses the same instrumentation plan and tracker
+> mechanics without GUT hooks.
+
 ### 5.1 plan_generator.py
 
 **Location:** `src/gd_tools/coverage/plan_generator.py`
@@ -636,8 +648,10 @@ Two environment variables control the coverage system:
 | `GD_TOOLS_COVERAGE_PLAN` | Path to `plan.json` for `coverage.gd._ready()` instrumentation |
 | `GD_TOOLS_COVERAGE_OUTPUT` | Path for `coverage.json` output |
 
-These are set by `test_runner.run_tests()` when `coverage=True` is
-passed. The same Godot/GUT project can run with or without coverage ---
+These are set by the coverage-aware launch paths: `coverage run playtest`
+sets them for manual playtest sessions, and the legacy standalone path set
+them via `test_runner.run_tests()`. The same Godot project can run with or
+without coverage ---
 no project configuration change is needed. When the plan env var is
 absent, `_GDTCoverage._ready()` skips instrumentation and the tracker
 remains inactive, so deploying the addon does not affect normal test
@@ -654,7 +668,7 @@ entirely in memory:
 
 No backup or restore mechanism is needed because the instrumented
 source exists only in the Godot process's memory. When the process
-exits (after GUT finishes), the instrumented source is discarded.
+exits (after the test run finishes), the instrumented source is discarded.
 
 The spike (see [SPIKE Section 13, Known Limitation
 1](./SPIKE_coverage_instrumentation.md#13-spike-results-2026-07-09))
@@ -679,7 +693,7 @@ printed to stdout before any error propagates. The table is rendered
 by `_print_coverage_table()`, a shared helper extracted from
 `show_coverage_summary()`.
 
-### 6.5 Hook Base Class: GutHookScript
+### 6.5 Hook Base Class: GutHookScript (legacy)
 
 The pre-run and post-run hooks `extends GutHookScript` (not
 `RefCounted`) and use the `run()` method (not `_init()`). This was
@@ -687,6 +701,9 @@ discovered during the spike --- GUT 9.x requires hook scripts to
 inherit from `GutHookScript` and calls `run()` to execute them. See
 [Spike Results, Key Deviation
 1](./SPIKE_coverage_instrumentation.md#13-spike-results-2026-07-09).
+
+This decision belongs to the legacy GUT-hook era; the native runtime's
+coverage collector (§11.11) does not use GUT hooks.
 
 ### 6.6 Tracker Activation: Deferred to Pre-Run Hook (Track 24.5)
 

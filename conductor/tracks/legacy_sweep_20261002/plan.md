@@ -32,10 +32,10 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
   - Full test suite green
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — checkpoint 9285f1e
 
-- [ ] Task: Living-docs sweep
+- [x] Task: Living-docs sweep
   - `README.md`, `docs/USER_GUIDE.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`: remove/fix GUT-era claims contradicting v0.6.0 (config tables, examples, runtime references)
   - Historical docs (`TDD.md`, `ROADMAP_v1.md`, `SPIKE_*.md`) untouched
-- [ ] Task: Retire Roadmap Track 32
+- [x] Task: Retire Roadmap Track 32
   - Mark "Configurable Version Mapping" obsolete in `docs/ROADMAP.md` with rationale
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
@@ -60,6 +60,8 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
 ## Implementation Notes
 
 _Appended per task per workflow.md (commit SHAs, deviations)._
+
+- **Phase 4** (docs truth pass): swept `README.md`, `docs/USER_GUIDE.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md` — removed the `gutconfig` config-example lines and table rows, GUT version-command component rows, PRD's Legacy GUT Version Mapping + GUT Editor Plugin sections, and the stale `.gutconfig.json` data-storage section; fixed PRD's coverage flow diagram and doctor check table to the native flow / current 9 checks; reworded the PRD/ARCHITECTURE runtime framing (native runner, in-memory instrumentation per §11.11, legacy GUT-hook components framed as legacy); retired ROADMAP Track 32 (banner + status "Obsolete (retired 2026-10-02)" + overview-diagram markers) and dropped the `GUT_VERSION_MAP` cross-reference from the CI compatibility-matrix note. **Scope extensions (justified by acceptance criteria):** `docs/CONTRIBUTING.md` (GUT dependency row, `GUT_VERSION_MAP` naming example, module table claims), `conductor/product-guidelines.md` (same naming example), `skills/gd-tools/SKILL.md` (removed-`GUTNotInstalledError` exit-code row, stale init/doctor/test descriptions, `gutconfig` config row). **Kept intentionally:** accurate v0.6.0 removal/migration statements everywhere; doctor's Legacy GUT advisory row; `RuntimeMode.GUT`/migration taxonomy; the bundled `gd-tools-coverage` hook files' GUT-hook mechanics (files still ship); historical docs (`TDD.md`, `ROADMAP_v1.md`, `SPIKE_*.md`, `AUDIT_REPORT.md`, `TESTING_STRATEGY.md`), PRD track-history blockquotes, glossary GUT entry, CHANGELOG (out of scope per user decision). **Observed follow-up gap (out of scope):** `docs/TESTING_STRATEGY.md` still describes the pre-bridge GUT-download init flow at length — candidate for a future docs-polish track.
 
 - **Phase 1** (audit): classifications recorded above; user confirmed remove `versions["gut"]` and rename output labels to `--- Godot stdout/stderr ---`. Baseline suite (not e2e): 1418 passed / 7 skipped, one **pre-existing** failure (`test_checked_in_schema_snapshot_is_current`, schema snapshot drifted from config model in v0.6.0) — assigned to Phase 3. Checkpoint f322f2b.
 - **Phase 2** (removal): guards in `tests/unit/test_gut_removal_guards.py` (Red 0c0ff67; initial label guard false-passed due to `\n` prefix in source literals, tightened to unanchored substrings). Green 7a43e3e removed the five dead symbols + stale docstrings/labels across `godot.py`, `errors.py`, `test_runner.py`, `version.py`, `init.py` (incl. orphaned `configparser` import); updated `test_godot.py`, `test_errors.py`, `test_version.py`, `test_init.py`, `test_test_runner.py`. ruff (3 orphaned imports fixed), black, 1412 passed, coverage gate held. Checkpoint 3125b85.

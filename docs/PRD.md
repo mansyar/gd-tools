@@ -97,8 +97,8 @@ respecting the realities of the Godot/GDScript ecosystem.
 │                                                         │
 │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌────────────┐  │
 │  │  test   │  │  lint   │  │ format  │  │  coverage  │  │
-│  │ (native │  │(gdlint  │  │(gdformat│  │ (custom    │  │
-│  │ / GUT)  │  │ wrapper)│  │ wrapper)│  │ Arch. C)   │  │
+│  │ (native)│  │(gdlint  │  │(gdformat│  │ (custom    │  │
+│  │         │  │ wrapper)│  │ wrapper)│  │ Arch. C)   │  │
 │  └────┬────┘  └─────────┘  └─────────┘  └─────┬──────┘  │
 │       │                                      │         │
 │       │     ┌──────────────────────┐          │         │
@@ -106,8 +106,8 @@ respecting the realities of the Godot/GDScript ecosystem.
 │             └──────────┬──────────┘                    │
 │                        │                                 │
 │             ┌──────────▼──────────┐                      │
-│             │  Native runner or    │                      │
-│             │  GUT + coverage      │                      │
+│             │  Native runner and  │                      │
+│             │  coverage addons    │                      │
 │             │  addons (GDScript)   │                      │
 │             └─────────────────────┘                      │
 │                                                        │
@@ -142,7 +142,7 @@ gd-tools coverage merge           Merge multiple coverage data files
 gd-tools coverage show            Print coverage summary to terminal
 gd-tools config show             Display resolved configuration (Rich table, TOML, or JSON)
 gd-tools config validate         Validate gd-tools.toml — schema, deprecated settings, paths
-gd-tools version                 Print all component versions (gd-tools, Godot, GUT, gdtoolkit, Python)
+gd-tools version                 Print all component versions (gd-tools, Godot, gdtoolkit, Python)
 gd-tools completion [shell]      Generate shell completion script (bash, zsh, fish, powershell)
 ```
 
@@ -269,10 +269,9 @@ gd-tools version [--json]
 Prints version information for all gd-tools components in a Rich table.
 Useful for environment diagnostics and bug reports.
 
-- **Components**: gd-tools (`__version__`), Godot (`find_godot()`), GUT
-  (`addons/gut/plugin.cfg`), gdtoolkit (`importlib.metadata`), Python
-  (`sys.version`).
-- **Missing components**: Godot shows "not detected"; GUT and gdtoolkit show
+- **Components**: gd-tools (`__version__`), Godot (`find_godot()`),
+  gdtoolkit (`importlib.metadata`), Python (`sys.version`).
+- **Missing components**: Godot shows "not detected"; gdtoolkit shows
   "not installed". In `--json` output, missing components are `null`.
 - **`--json`**: Flat JSON object keyed by component name (machine-readable).
 - **Exit code**: Always 0 — version detection never fails.
@@ -398,9 +397,6 @@ retries = 0
 # Test file prefix/suffix (GUT convention retained).
 prefix = "test_"
 suffix = ".gd"
-# Legacy GUT config file path (legacy; not read; migration tooling translates
-# supported settings into gd-tools.toml).
-gutconfig = ".gutconfig.json"
 
 [lint]
 exclude = ["addons", ".godot", ".gd-tools", ".git"]
@@ -458,18 +454,6 @@ test_dirs = ["test", "tests"]
    present.
 8. **Print summary** — what was installed/configured, next steps.
 
-### Legacy GUT Version Mapping
-
-Hardcoded table in `gd-tools` (updated per release):
-
-| Godot Version | GUT Version | GitHub Tag |
-|---------------|-------------|------------|
-| 4.5           | 9.5.0       | v9.5.0     |
-| 4.6           | 9.6.0       | v9.6.0     |
-| 4.7           | 9.7.0       | v9.7.0     |
-
-Download URL: `https://github.com/bitwes/Gut/archive/refs/tags/v{VERSION}.zip`
-
 ### Legacy GUT compatibility
 
 The GUT compatibility bridge shipped in v0.5.0 and was removed in v0.6.0:
@@ -478,17 +462,6 @@ exit 2 and migration guidance (run `gd-tools migrate`; see
 [docs/gut-migration.md](./gut-migration.md)). The native runtime does not
 register a GUT editor plugin, `.gutconfig.json`, or the `_GDTCoverage`
 autoload.
-
-### GUT Editor Plugin Enabling in `project.godot` (legacy installs only)
-
-```ini
-[editor_plugins]
-enabled=PackedStringArray("res://addons/gut/plugin.gd")
-```
-
-- Applies only to projects that installed GUT themselves; `gd-tools` no
-  longer downloads or deploys GUT.
-- The native runtime is headless and does not require an editor plugin.
 
 ### Coverage Addon Bundling
 
@@ -533,12 +506,13 @@ Runs a series of checks and reports status:
 |--------------------------------|---------------------------------------------------|
 | Godot binary accessible        | Binary found via detection chain, runs without error |
 | Godot version                   | 4.5 or higher                                     |
-| Native test addon present       | `addons/gd-tools-test/*.gd` exists                |
-| Coverage addon files present   | `addons/gd-tools-coverage/*.gd` all exist; version not stale  |
-| `.gutconfig.json` valid (legacy)| Optional; legacy artifact, not read by gd-tools    |
+| Native Test Addon present       | `addons/gd-tools-test/*.gd` exists; version not stale |
+| Coverage Addon files present   | `addons/gd-tools-coverage/*.gd` all exist; version not stale |
+| Editor Plugin present          | `addons/gd-tools-editor/` deployed                 |
 | `gd-tools.toml` exists & valid | File present, parseable TOML                      |
-| gdtoolkit installed            | `gdlint --version` and `gdformat --version` succeed |
-| `_GDTCoverage` autoload (legacy)| Legacy; native coverage is transient and needs no autoload |
+| GD Toolkit installed           | `gdlint --version` and `gdformat --version` succeed |
+| Autoload (legacy)              | `_GDTCoverage` autoload; optional for the native runtime |
+| Legacy GUT (advisory)          | Informational; detects `addons/gut`, `.gutconfig.json`, `extends GutTest` suites; never fails |
 
 Output: table with ✓/✗ per check, plus actionable fix suggestions for failures.
 
@@ -620,19 +594,17 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 │     GD_TOOLS_COVERAGE_PLAN=res://path/to/plan.json           │
 │     GD_TOOLS_COVERAGE_OUTPUT=res://path/to/output.json       │
 │                                                              │
-│  5. Invoke Godot with GUT CLI:                              │
-│     godot --headless -s addons/gut/gut_cmdln.gd --path . \  │
-│       -gpre_run_script=res://addons/gd-tools-coverage/...   │
-│       -gpost_run_script=res://addons/gd-tools-coverage/...   │
-│       -gexit                                                │
+│  5. Invoke Godot headless with the native runner:            │
+│     godot --headless -s --path . \                           │
+│       addons/gd-tools-test/gd_tools_test_runner.gd           │
 │                                                              │
 └────────────────────────────┬─────────────────────────────────┘
                              │
                              ▼
 ┌──────────────────────────────────────────────────────────────┐
-│ GODOT + GUT (GDScript)                                       │
+│ GODOT (GDScript)                                             │
 │                                                              │
-│  6. Pre-run hook (pre_run_hook.gd):                         │
+│  6. Pre-run hook (coverage addon):                          │
 │     - Read instrumentation plan from env var path           │
 │     - For each file in plan:                                │
 │       - Load script via ResourceLoader                       │
@@ -641,15 +613,15 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 │       - Reload instrumented scripts                          │
 │     - Initialize coverage tracker (visited IDs set)          │
 │                                                              │
-│  7. GUT runs tests                                           │
+│  7. The native runner executes the tests                     │
 │     - Instrumented code fires trackers on execution          │
 │     - Tracker records: {file, line_id, hit_count}            │
 │                                                              │
-│  8. Post-run hook (post_run_hook.gd):                       │
+│  8. Post-run hook (coverage addon):                         │
 │     - Serialize coverage data to JSON                        │
 │     - Write to path from GD_TOOLS_COVERAGE_OUTPUT env var    │
 │                                                              │
-│  9. GUT exports JUnit XML (test results)                    │
+│  9. The native runner writes JUnit XML (test results)        │
 │                                                              │
 └────────────────────────────┬─────────────────────────────────┘
                              │
@@ -867,7 +839,7 @@ DEFAULT_EXCLUDES = ["addons", ".godot", ".gd-tools", ".git"]
 ```
 
 **Rationale:**
-- `addons/` — third-party code (GUT, other plugins). Not user code; shouldn't
+- `addons/` — third-party code (other plugins). Not user code; shouldn't
   be linted, formatted, or measured for coverage.
 - `.godot/` — Godot's generated cache directory.
 - `.gd-tools/` — our own output directory (coverage data, reports, results).
@@ -931,11 +903,11 @@ Test files are still linted and formatted (they are user code).
 | Package        | Purpose                                      |
 |----------------|----------------------------------------------|
 | `gdtoolkit`    | Lark-based GDScript parser (lint, format, coverage plan gen) |
-| `junitparser`  | Parse GUT's JUnit XML output                 |
+| `junitparser`  | Parse the test run's JUnit XML output        |
 | `jinja2`       | HTML coverage report generation              |
 | `rich`         | Terminal output (tables, colors, progress)   |
 | `tomli`        | TOML config parsing (Python < 3.11 backport) |
-| `requests`     | Download GUT releases from GitHub            |
+| `requests`     | Query PyPI for update notifications          |
 | `click`        | CLI framework (or `typer` — TBD)             |
 | `packaging`    | Version comparison for PyPI update notification |
 
@@ -952,14 +924,13 @@ Test files are still linted and formatted (they are user code).
 
 | Component              | Purpose                          |
 |------------------------|----------------------------------|
-| GUT (installed by init)| Test framework                   |
 | Coverage addon (bundled)| Runtime instrumentation + tracking |
 
 ### External (not pip-installable)
 
 | Component     | Purpose                          |
 |---------------|----------------------------------|
-| Godot 4.5+    | Runs GUT + instrumented tests    |
+| Godot 4.5+    | Runs the native test runner + instrumented tests |
 
 ---
 
@@ -987,7 +958,7 @@ gd-tools/
 │       ├── godot.py              # Godot binary detection + invocation
 │       ├── init.py               # `gd-tools init` logic
 │       ├── doctor.py             # `gd-tools doctor` logic
-│       ├── test_runner.py        # `gd-tools test` — GUT orchestration
+│       ├── test_runner.py        # Test result models shared by runtimes
 │       ├── lint_runner.py       # `gd-tools lint` — gdlint wrapper
 │       ├── output.py           # Shared terminal output module (Rich-based)
 │       ├── verbosity.py        # Global verbosity context (Verbosity enum + accessors)
@@ -1033,22 +1004,11 @@ gd-tools/
 └── results.xml                # JUnit XML (if --junit-xml not specified)
 ```
 
-### `.gutconfig.json` (project root, committed)
+### `.gutconfig.json` (legacy; not created or read by gd-tools)
 
-Generated/managed by `gd-tools init`. Contains GUT config + coverage hook paths:
-
-```json
-{
-  "dirs": ["res://test/", "res://tests/"],
-  "include_subdirs": true,
-  "prefix": "test_",
-  "suffix": ".gd",
-  "should_exit": true,
-  "junit_xml_file": ".gd-tools/results.xml",
-  "pre_run_script": "res://addons/gd-tools-coverage/pre_run_hook.gd",
-  "post_run_script": "res://addons/gd-tools-coverage/post_run_hook.gd"
-}
-```
+Not generated by `gd-tools init` and not read by any runtime. The migration
+tooling (`gd-tools migrate --config-only` / `--apply`) translates supported
+settings into `gd-tools.toml`; the file itself is preserved on disk.
 
 ---
 

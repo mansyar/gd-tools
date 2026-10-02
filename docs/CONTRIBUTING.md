@@ -20,7 +20,6 @@ the full workflow definition.
 |------------|----------------|---------|
 | Python | 3.10 | Runtime |
 | Godot | 4.5 | Test execution, coverage instrumentation |
-| GUT | 9.5.0 | Godot test framework (installed by `gd-tools init`) |
 | Git | Any recent | Version control |
 
 ### 1.2 Clone and Install
@@ -101,7 +100,7 @@ Follow the naming conventions from Product Guidelines section 3:
 | CLI commands and flags | `kebab-case` | `gd-tools test`, `--junit-xml`, `--report-format` |
 | Python modules and functions | `snake_case` | `test_runner.py`, `run_tests()`, `find_godot()` |
 | Python classes | `PascalCase` | `Config`, `GodotInfo`, `TestResult`, `LintResult` |
-| Python constants | `UPPER_SNAKE_CASE` | `DEFAULT_EXCLUDES`, `GUT_VERSION_MAP` |
+| Python constants | `UPPER_SNAKE_CASE` | `DEFAULT_EXCLUDES`, `PYPI_URL` |
 | GDScript classes | `PascalCase` | `_GDTCoverage`, `GDTTracker` |
 | GDScript functions | `snake_case` | `hit()`, `get_data()`, `set_active()` |
 | GDScript variables | `snake_case` | `file_id`, `line_id`, `hit_count` |
@@ -218,7 +217,7 @@ Mock external dependencies --- never invoke real Godot binaries or network
 requests in unit tests.
 
 - **Godot subprocess:** Mock `subprocess.run` or use `unittest.mock.patch`.
-- **Network requests:** Mock `requests.get` for GUT download tests.
+- **Network requests:** Mock `requests.get` (e.g., update-check tests).
 - **File system:** Use `tmp_path` or `tmp_path_factory` fixtures for file I/O.
 - **Environment variables:** Use `monkeypatch.setenv` / `monkeypatch.delenv`.
 
@@ -347,10 +346,10 @@ gd-tools/
 |   |-- file_discovery.py      # GDScript file discovery utility
 |   |-- format_runner.py       # gdformat wrapper
 |   |-- godot.py               # Godot binary detection (5-level chain)
-|   |-- init.py                # Project initialization (GUT, addon, config)
+|   |-- init.py                # Project initialization (addons, config)
 |   |-- lint_runner.py         # gdlint wrapper
 |   |-- output.py              # Shared terminal output module (Rich-based)
-|   |-- test_runner.py         # GUT test execution and JUnit parsing
+|   |-- test_runner.py         # Test result models shared by runtimes
 |   |-- verbosity.py           # Global verbosity context (Verbosity enum + accessors)
 |   |-- coverage/              # Coverage subsystem
 |   |   |-- orchestrator.py    # Coverage flow orchestration
@@ -405,11 +404,11 @@ Each Python module in `src/gd_tools/` maps to a specific responsibility:
 | `errors.py` | `GdToolsError` base, exit code convention (0/1/2) |
 | `file_discovery.py` | Recursive GDScript file discovery with exclude support |
 | `format_runner.py` | `gdtoolkit.formatter` wrapper, `FormatResult` dataclass |
-| `godot.py` | `GodotInfo`, 5-level binary detection, `GUT_VERSION_MAP` |
-| `init.py` | Full project bootstrap: GUT install, addon deploy, config creation |
+| `godot.py` | `GodotInfo`, 5-level binary detection, version compatibility check |
+| `init.py` | Project bootstrap: addon deploy, config creation |
 | `lint_runner.py` | `gdtoolkit.linter` wrapper, `LintResult` dataclass |
 | `output.py` | Shared terminal output module — Rich-based rendering helpers (`print_success`, `print_error`, `print_warning`, `print_info`, `print_verbose`, `print_summary`, `print_table`) and shared `Console` instance; `print_info`/`print_warning` respect quiet mode, `print_verbose` only renders in verbose mode |
-| `test_runner.py` | GUT argument construction, subprocess execution, JUnit parsing |
+| `test_runner.py` | Test result models (`TestResult`/`TestDetail`) and result formatting shared by runtimes |
 | `verbosity.py` | `Verbosity` enum (`QUIET`, `DEFAULT`, `VERBOSE`) and module-level `get_verbosity()`/`set_verbosity()` accessors for global output level control |
 | `coverage/` | Coverage plan generation, runtime instrumentation, reporting |
 

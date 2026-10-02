@@ -72,8 +72,7 @@ bridge retirement plan — is recorded in
 
 `gd-tools test` and `gd-tools test --coverage` are verified in CI on every
 combination below. The axes live in `.github/workflows/ci.yml` and are the one
-place to edit them; `GUT_VERSION_MAP` in `src/gd_tools/godot.py` lists the same
-versions and must be updated alongside (see Track 32).
+place to edit them.
 
 | Godot | Linux | Windows | macOS |
 | --- | --- | --- | --- |
@@ -119,7 +118,7 @@ Phase 7: Strategic Features                ──┐
   Track 29: Pre-commit Hooks                  │  Risk: LOW-MEDIUM
   Track 30: Coverage Exclusion Annotations    │
   Track 31: GitHub Actions Annotations        │
-  Track 32: Configurable Version Mapping      │
+  Track 32: Version Mapping (obsolete)         │
   ──────────────────────────────────────────────┘
 
 Phase 8: Differentiators                   ──┐
@@ -177,7 +176,7 @@ Phase 7: Strategic Features
                                   ┌──────────┐
                                   │Track 32: │
                                   │Version   │
-                                  │Mapping   │
+                                  │(obsolete)│
                                   └──────────┘
 
 Phase 8: Differentiators
@@ -1054,6 +1053,13 @@ isn't used, making it harder for developers to spot issues.
 
 ### Track 32: Configurable Version Mapping
 
+> **Status: OBSOLETE (retired 2026-10-02).** The Godot-to-GUT version
+> mapping existed only to support the legacy GUT compatibility bridge,
+> which was removed in v0.6.0 (`GUT_VERSION_MAP` and
+> `get_gut_version_for_godot` were deleted in the legacy sweep). There is
+> no longer any version mapping to make configurable. This section is
+> retained as a historical record only.
+
 | Field | Value |
 |-------|-------|
 | **Phase** | 7 -- Strategic Features |
@@ -1062,7 +1068,7 @@ isn't used, making it harder for developers to spot issues.
 | **Modules** | `src/gd_tools/godot.py`, `src/gd_tools/init.py`, `src/gd_tools/data/gut_versions.json` (new) |
 | **Effort** | 0.5-1 day |
 | **Risk** | LOW |
-| **Status** | Planned |
+| **Status** | Obsolete (retired 2026-10-02 — superseded by the v0.6.0 GUT bridge removal) |
 
 **Problem:**
 
