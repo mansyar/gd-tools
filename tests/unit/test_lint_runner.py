@@ -13,6 +13,7 @@ from gd_tools.config import GdToolsConfig
 from gd_tools.lint_runner import (
     LintIssue,
     LintResult,
+    format_lint_github_actions,
     format_lint_json,
     format_lint_text,
     run_lint,
@@ -543,3 +544,90 @@ def test_format_lint_text_violations_render_when_quiet(capsys):
     captured = capsys.readouterr()
     assert "foo.gd" in captured.out
     assert "Some message" in captured.out
+
+
+# --- format_lint_github_actions ---
+
+
+def test_format_lint_github_actions_error_annotation():
+    """Test error violations render as ::error workflow log commands."""
+    errors = [
+        LintIssue("src/foo.gd", 10, 1, "function-name", "Bad name", "error")
+    ]
+    result = LintResult(files_checked=1, errors=errors, warnings=[])
+    out = format_lint_github_actions(result)
+    assert out == (
+        "::error file=src/foo.gd,line=10,col=1,"
+        "title=function-name::Bad name\n"
+    )
+
+
+def test_format_lint_github_actions_warning_severity():
+    """Test warning violations render as ::warning workflow log commands."""
+    warnings = [
+        LintIssue("src/foo.gd", 3, 7, "max-line-length", "Too long", "warning")
+    ]
+    result = LintResult(files_checked=1, errors=[], warnings=warnings)
+    out = format_lint_github_actions(result)
+    assert out == (
+        "::warning file=src/foo.gd,line=3,col=7,"
+        "title=max-line-length::Too long\n"
+    )
+
+
+def test_format_lint_github_actions_escapes_message():
+    """Test message data escaping: %, CR, LF per the workflow log spec."""
+    errors = [
+        LintIssue("a.gd", 1, 1, "RULE", "50% done\r\nsecond line", "error")
+    ]
+    result = LintResult(files_checked=1, errors=errors, warnings=[])
+    out = format_lint_github_actions(result)
+    assert out == (
+        "::error file=a.gd,line=1,col=1,title=RULE"
+        "::50%25 done%0D%0Asecond line\n"
+    )
+
+
+def test_format_lint_github_actions_escapes_properties():
+    """Test property-value escaping: % plus , and : in title and file."""
+    errors = [
+        LintIssue(
+            "src/a,b.gd", 2, 3, "rule, with: colon", "Message", "error"
+        )
+    ]
+    result = LintResult(files_checked=1, errors=errors, warnings=[])
+    out = format_lint_github_actions(result)
+    assert "file=src/a%2Cb.gd" in out
+    assert "title=rule%2C with%3A colon" in out
+
+
+def test_format_lint_github_actions_posix_paths():
+    """Test file paths use POSIX separators in annotations."""
+    errors = [LintIssue("src\\player.gd", 4, 1, "RULE", "Msg", "error")]
+    result = LintResult(files_checked=1, errors=errors, warnings=[])
+    out = format_lint_github_actions(result)
+    assert "file=src/player.gd" in out
+    assert "src\\player.gd" not in out
+
+
+def test_format_lint_github_actions_sorted():
+    """Test annotations are sorted by file, then line, then column."""
+    errors = [
+        LintIssue("b.gd", 1, 1, "R2", "msg2", "error"),
+        LintIssue("a.gd", 5, 1, "R1", "msg1b", "error"),
+        LintIssue("a.gd", 2, 1, "R0", "msg1a", "error"),
+    ]
+    result = LintResult(files_checked=3, errors=errors, warnings=[])
+    out = format_lint_github_actions(result)
+    lines = out.splitlines()
+    assert len(lines) == 3
+    assert "file=a.gd,line=2" in lines[0]
+    assert "msg1a" in lines[0]
+    assert "file=a.gd,line=5" in lines[1]
+    assert "file=b.gd,line=1" in lines[2]
+
+
+def test_format_lint_github_actions_no_issues():
+    """Test no issues produces empty output (no annotations, no noise)."""
+    result = LintResult(files_checked=3, errors=[], warnings=[])
+    assert format_lint_github_actions(result) == ""
