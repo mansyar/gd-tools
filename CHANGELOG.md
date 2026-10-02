@@ -1,5 +1,37 @@
 ## Unreleased
 
+### Fix
+
+- **coverage**: Fix `coverage run --report-format json` always failing
+  after the playtest session completed. The `json` format was advertised
+  by the CLI but rejected by the reporter, so a finished session (minutes
+  of play) died at report generation with exit 2. `json` is now a
+  first-class report format: `coverage report` and `coverage run` emit a
+  deterministic machine-readable report (`coverage.json`) whose shape
+  mirrors the `coverage diff --report-format json` payload — a `totals`
+  block with the six shared metrics (covered/total lines, line rate,
+  covered/total branches, branch rate) and a `files` list sorted by path
+  with the same metrics per file plus uncovered line/branch lists. The
+  threshold error (if `--min` is not met) is still raised after the
+  report is written so CI can still read the report.
+
+- **config**: `[coverage].format` now accepts `"json"` (matching the
+  reporter) and the validation error message lists all valid values
+  (`html, lcov, cobertura, text, json`) instead of only echoing the
+  invalid one. The JSON Schema snapshot (`docs/gd-tools.schema.json`)
+  was regenerated to match.
+
+### Changed
+
+- **coverage**: `gd-tools coverage report` now takes the canonical
+  `--report-format` flag (with `click.Choice` validation over
+  `text|html|lcov|cobertura|json`, case-insensitive), matching
+  `coverage run` and `coverage diff`. The previous `--format` flag
+  remains as a hidden backwards-compatible alias with the same
+  validation; supplying both flags is a usage error (exit 2). Invalid
+  formats now fail fast at parse time instead of failing after
+  config/project loading.
+
 ## v0.6.0 (2026-10-02)
 
 ### Breaking

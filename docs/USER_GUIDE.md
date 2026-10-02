@@ -236,7 +236,7 @@ exclude = ["addons", ".godot", ".gd-tools", ".git", "third_party"]
 |---|---|---|---|---|
 | `enabled` | boolean | `false` | `true`, `false` | Whether coverage is active by default. |
 | `min_percent` | integer | `0` | 0--100 | Minimum coverage percentage threshold. |
-| `format` | string | `"html"` | `html`, `lcov`, `cobertura`, `text` | Report output format. |
+| `format` | string | `"html"` | `html`, `lcov`, `cobertura`, `text`, `json` | Report output format. |
 | `output_dir` | string | `".gd-tools/coverage"` | Any path | Directory for coverage data and reports. |
 | `exclude` | list of strings | `["addons", ".godot", ".gd-tools", ".git"]` | Any list | Directories excluded from coverage measurement. |
 | `test_dirs` | list of strings | `["test", "tests"]` | Any list | Directories containing test files (for plan generation). |
@@ -931,8 +931,13 @@ gd-tools coverage report [OPTIONS]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--format` | string | Config `[coverage].format` | Output format for the report (e.g., `html`, `lcov`, `cobertura`, `text`). |
+| `--report-format` | choice | Config `[coverage].format` | Output format for the report: `text`, `html`, `lcov`, `cobertura`, or `json`. Invalid values fail fast with a usage error. |
 | `--output-dir` | string | Config `[coverage].output_dir` | Directory to write the report to. |
+
+> **Note:** `--format` remains as a hidden backwards-compatible alias
+> for `--report-format` on this command. Supplying both is an error.
+> Prefer `--report-format`, which is the canonical flag across all
+> `coverage` subcommands (`report`, `run`, `diff`).
 
 **Examples:**
 
@@ -941,10 +946,13 @@ gd-tools coverage report [OPTIONS]
 gd-tools coverage report
 
 # Generate an LCOV report
-gd-tools coverage report --format lcov
+gd-tools coverage report --report-format lcov
+
+# Emit a machine-readable JSON report
+gd-tools coverage report --report-format json
 
 # Write report to a custom directory
-gd-tools coverage report --format html --output-dir reports/coverage
+gd-tools coverage report --report-format html --output-dir reports/coverage
 ```
 
 **Exit Codes:**
