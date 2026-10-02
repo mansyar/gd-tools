@@ -36,7 +36,7 @@ Green (implementation) → commit → git note → plan update.
 - [x] Task: Verify coverage gate (≥80% line / ≥70% branch) and full suite green `d3ae49b`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3: Docs Truth Pass & v0.6.0 Release Prep
+## Phase 3: Docs Truth Pass & v0.6.0 Release Prep `[checkpoint: 241ec40]`
 
 - [x] Task: Documentation truth pass `6cfc17b`
   - [ ] Update `docs/gut-migration.md` (removal reality, migrate as the path)
