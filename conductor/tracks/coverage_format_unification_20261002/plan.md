@@ -5,7 +5,7 @@
 > (TDD: Red → Green → Refactor, coverage ≥80% line / ≥70% branch,
 > commit + git note per task, checkpoint commit per phase).
 
-## Phase 1: JSON Report Format (F1 Fix)
+## Phase 1: JSON Report Format (F1 Fix)  [checkpoint: 7f43d42]
 
 - [x] Task 1.1: Write failing tests for JSON report format (Red)  <!-- 6777540 -->
   - [x] Add tests in the coverage reporter test suite (match existing
