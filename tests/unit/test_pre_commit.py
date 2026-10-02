@@ -40,7 +40,7 @@ def _read_yaml(path: Path):
 
 
 def test_format_hook_entry_fields(tmp_path: Path):
-    result = install_hooks(selection=("format",), project_root=tmp_path)
+    install_hooks(selection=("format",), project_root=tmp_path)
     data = _read_yaml(tmp_path / ".pre-commit-hooks.yaml")
     entries = {hook["id"]: hook for hook in data}
     hook = entries["gd-tools-format"]
@@ -83,9 +83,7 @@ def test_selection_filtering_only_test(tmp_path: Path):
 
 
 def test_selection_all_three_hooks(tmp_path: Path):
-    install_hooks(
-        selection=("format", "lint", "test"), project_root=tmp_path
-    )
+    install_hooks(selection=("format", "lint", "test"), project_root=tmp_path)
     data = _read_yaml(tmp_path / ".pre-commit-hooks.yaml")
     ids = [hook["id"] for hook in data]
     assert ids == [
@@ -117,16 +115,14 @@ FRESH_CONFIG = "repos:\n- repo: local\n  hooks:\n"
 
 
 def _foreign_config() -> str:
-    return textwrap.dedent(
-        """\
+    return textwrap.dedent("""\
         repos:
         - repo: https://github.com/example/some-hook
           rev: v1.0.0
           hooks:
           - id: some-hook
             name: Some Hook
-        """
-    )
+        """)
 
 
 def test_fresh_config_creates_local_repo_block(tmp_path: Path):
@@ -156,8 +152,7 @@ def test_existing_config_keeps_foreign_hooks(tmp_path: Path):
 def test_existing_local_block_updates_drifted_entries(tmp_path: Path):
     """A drifted gd-tools entry is corrected in place, not duplicated."""
     config = tmp_path / ".pre-commit-config.yaml"
-    drifted = textwrap.dedent(
-        """\
+    drifted = textwrap.dedent("""\
         repos:
         - repo: local
           hooks:
@@ -166,8 +161,7 @@ def test_existing_local_block_updates_drifted_entries(tmp_path: Path):
             entry: gd-tools format
             language: system
             files: \\.gd$
-        """
-    )
+        """)
     config.write_text(drifted, encoding="utf-8")
     result = install_hooks(selection=("format",), project_root=tmp_path)
     data = _read_yaml(config)
@@ -181,8 +175,7 @@ def test_new_entries_added_alongside_existing_gd_tools_entries(
     tmp_path: Path,
 ):
     config = tmp_path / ".pre-commit-config.yaml"
-    existing = textwrap.dedent(
-        """\
+    existing = textwrap.dedent("""\
         repos:
         - repo: local
           hooks:
@@ -191,8 +184,7 @@ def test_new_entries_added_alongside_existing_gd_tools_entries(
             entry: gd-tools format --check
             language: system
             files: \\.gd$
-        """
-    )
+        """)
     config.write_text(existing, encoding="utf-8")
     result = install_hooks(selection=("format", "test"), project_root=tmp_path)
     data = _read_yaml(config)
@@ -209,8 +201,7 @@ def test_deselected_but_present_hooks_are_reported_and_kept(
 ):
     """A previously-added hook left out of the new selection is kept."""
     config = tmp_path / ".pre-commit-config.yaml"
-    existing = textwrap.dedent(
-        """\
+    existing = textwrap.dedent("""\
         repos:
         - repo: local
           hooks:
@@ -219,8 +210,7 @@ def test_deselected_but_present_hooks_are_reported_and_kept(
             entry: gd-tools lint
             language: system
             files: \\.gd$
-        """
-    )
+        """)
     config.write_text(existing, encoding="utf-8")
     result = install_hooks(selection=("format",), project_root=tmp_path)
     data = _read_yaml(config)
