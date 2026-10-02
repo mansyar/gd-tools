@@ -6,20 +6,20 @@
 
 ## Phase 1: Core Hook Generation Module (`pre_commit.py`)
 
-- [ ] Task: Write failing tests — hook file content generation
+- [x] Task: Write failing tests — hook file content generation
       (`.pre-commit-hooks.yaml` + per-hook entries, `files: \.gd$` filters,
       `language: system`)
-  - [ ] Test: format/lint/test entries render with correct id, name, entry, args
-  - [ ] Test: selection filtering (`--hooks test` alone → test entry only)
-- [ ] Task: Write failing tests — merge-by-id logic in `.pre-commit-config.yaml`
-  - [ ] Test: fresh file → creates `repos: local:` block
-  - [ ] Test: existing file with foreign hooks → foreign hooks untouched,
+  - [x] Test: format/lint/test entries render with correct id, name, entry, args
+  - [x] Test: selection filtering (`--hooks test` alone → test entry only)
+- [x] Task: Write failing tests — merge-by-id logic in `.pre-commit-config.yaml`
+  - [x] Test: fresh file → creates `repos: local:` block
+  - [x] Test: existing file with foreign hooks → foreign hooks untouched,
         gd-tools entries added
-  - [ ] Test: drifted existing gd-tools entries → updated in place by id
-  - [ ] Test: deselected-but-present gd-tools hook → reported, left intact
-  - [ ] Test: malformed YAML → raises config error (maps to exit 2)
-- [ ] Task: Implement `pre_commit.py` to pass tests
-- [ ] Task: Verify coverage (≥80% line / ≥70% branch) on new module
+  - [x] Test: drifted existing gd-tools entries → updated in place by id
+  - [x] Test: deselected-but-present gd-tools hook → reported, left intact
+  - [x] Test: malformed YAML → raises config error (maps to exit 2)
+- [x] Task: Implement `pre_commit.py` to pass tests
+- [x] Task: Verify coverage (≥80% line / ≥70% branch) on new module
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: CLI Command Wiring
