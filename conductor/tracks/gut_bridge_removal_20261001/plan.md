@@ -26,14 +26,14 @@ Green (implementation) → commit → git note → plan update.
 
 ## Phase 2: Doctor Advisor, Config Validation & Migrate Updates
 
-- [~] Task: Write failing tests (Red) for doctor/config/migrate behavior
+- [x] Task: Write failing tests (Red) for doctor/config/migrate behavior `e6c2c23`
   - [ ] Test: `doctor` reports legacy GUT artifacts (`addons/gut`, `.gutconfig.json`, `GutTest` suites) as informational migration advice
   - [ ] Test: `config validate` hard-errors on `runtime = "gut"` and GUT-era keys (exit 2, guidance)
   - [ ] Test: `gd-tools migrate` retains report/translate/apply behavior; guidance text is v0.6.0-aware
-- [ ] Task: Implement doctor migration advisor (Green) — remove bridge-health/deprecation checks from `doctor.py`, add advisory detection
-- [ ] Task: Implement hard config validation (Green) — validator + preflight produce exit-2 errors with migration guidance
-- [ ] Task: Update `gd-tools migrate` guidance text for v0.6.0 (bridge no longer exists; migration required)
-- [ ] Task: Verify coverage gate (≥80% line / ≥70% branch) and full suite green
+- [x] Task: Implement doctor migration advisor (Green) — remove bridge-health/deprecation checks from `doctor.py`, add advisory detection `d3ae49b`
+- [x] Task: Implement hard config validation (Green) — validator + preflight produce exit-2 errors with migration guidance `d3ae49b`
+- [x] Task: Update `gd-tools migrate` guidance text for v0.6.0 (bridge no longer exists; migration required) `d3ae49b`
+- [x] Task: Verify coverage gate (≥80% line / ≥70% branch) and full suite green `d3ae49b`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Docs Truth Pass & v0.6.0 Release Prep
