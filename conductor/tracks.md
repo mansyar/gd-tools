@@ -11,12 +11,12 @@ _Archived tracks live in `./archive/`._
 ---
 
 - [x] **Track: Native Test Runtime Foundation**
-  *Link: [native_test_foundation_20260925](./tracks/native_test_foundation_20260925/index.md)*
+  *Link: [native_test_foundation_20260925](./archive/native_test_foundation_20260925/index.md)*
 
 ---
 
 - [x] **Track: Native Scene and Resource Integration**
-  *Link: [native_scene_integration_20260925](./tracks/native_scene_integration_20260925/index.md)*
+  *Link: [native_scene_integration_20260925](./archive/native_scene_integration_20260925/index.md)*
 
 ---
 
