@@ -57,7 +57,7 @@
         validation`) and attach git note; update plan task statuses.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3: Config Alignment + Docs + Final Verification
+## Phase 3: Config Alignment + Docs + Final Verification  [checkpoint: 917010f]
 
 - [x] Task 3.1: Write failing config tests (Red)  <!-- 4aa14ac -->
   - [x] Tests in `tests/unit/test_config.py`: `[coverage].format
