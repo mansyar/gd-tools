@@ -2,13 +2,13 @@
 
 Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Green), full-suite verification, commit + git note per task, phase checkpoints with manual user verification.
 
-## Phase 1 — GUT Remnant Audit (read-only)
+## Phase 1 — GUT Remnant Audit (read-only) [checkpoint: f322f2b]
 
 - [x] Task: Build the GUT remnant inventory for `src/gd_tools/`
   - Grep every `gut`/`Gut`/`GUT` reference across `src/`
   - Classify each hit: **remove** (dead) vs **keep** (intentional: doctor advisory, `migrate`, v0.6.0 rejection errors, version report if still justified)
   - Record the classification table with rationale in `plan.md`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — checkpoint f322f2b
 
 ## Phase 2 — Dead Code Removal
 
