@@ -1046,11 +1046,14 @@ def coverage():
     """Coverage reporting commands."""
 
 
+_COVERAGE_REPORT_FORMATS = ["text", "html", "lcov", "cobertura", "json"]
+
+
 @coverage.command()
 @click.option(
     "--report-format",
     type=click.Choice(
-        ["text", "html", "lcov", "cobertura", "json"],
+        _COVERAGE_REPORT_FORMATS,
         case_sensitive=False,
     ),
     default=None,
@@ -1061,7 +1064,7 @@ def coverage():
     "--format",
     "format_alias",
     type=click.Choice(
-        ["text", "html", "lcov", "cobertura", "json"],
+        _COVERAGE_REPORT_FORMATS,
         case_sensitive=False,
     ),
     default=None,

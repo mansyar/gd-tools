@@ -657,15 +657,6 @@ def render_uncovered_panels(
 
 _SUPPORTED_FORMATS = {"html", "lcov", "cobertura", "text", "json"}
 
-_JSON_TOTAL_KEYS = (
-    "covered_lines",
-    "total_lines",
-    "line_rate",
-    "covered_branches",
-    "total_branches",
-    "branch_rate",
-)
-
 
 def _coverage_metrics_to_json(
     summary: CoverageSummary | FileSummary,
