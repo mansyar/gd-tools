@@ -15,16 +15,10 @@ user modifications in per-addon ``.backups/`` directories before replacement.
 """
 
 import configparser
-import json
-import re
 import shutil
 import sys
-import tempfile
-import zipfile
 from pathlib import Path
 
-import click
-import requests
 from rich.console import Console
 
 from .config import (
@@ -37,29 +31,10 @@ from .config import (
 )
 from . import __version__
 from . import output
-from .errors import GdToolsError
-from .godot import find_godot, get_gut_version_for_godot
-from .test_runner import is_gut_installed
+from .godot import find_godot
 from .verbosity import Verbosity, get_verbosity
 
 # --- Constants ---
-
-GUTCONFIG_TEMPLATE: dict = {
-    "dirs": ["res://test/", "res://tests/"],
-    "include_subdirs": True,
-    "prefix": "test_",
-    "suffix": ".gd",
-    "should_exit": True,
-    "junit_xml_file": ".gd-tools/results.xml",
-    "pre_run_script": "res://addons/gd-tools-coverage/pre_run_hook.gd",
-    "post_run_script": "res://addons/gd-tools-coverage/post_run_hook.gd",
-}
-
-GUT_DOWNLOAD_URL = (
-    "https://github.com/bitwes/Gut/archive/refs/tags/v{version}.zip"
-)
-
-GUT_PLUGIN_PATH = "res://addons/gut/plugin.gd"
 
 COVERAGE_ADDON_FILES = [
     "coverage.gd",
@@ -119,7 +94,7 @@ def detect_godot_version(config: GdToolsConfig) -> str:
     return info.version
 
 
-# --- Phase 2: GUT Installation ---
+# --- Legacy GUT detection ---
 
 
 def get_installed_gut_version(project_root: Path) -> str | None:
@@ -141,200 +116,6 @@ def get_installed_gut_version(project_root: Path) -> str | None:
     if version is None:
         return None
     return version.strip('"')
-
-
-def download_gut(version: str, dest: Path) -> Path:
-    """Download the GUT zip archive for the given version.
-
-    Args:
-        version: The GUT version string (e.g., ``"9.5.0"``).
-        dest: Destination path for the downloaded zip file.
-
-    Returns:
-        The path to the downloaded zip file.
-
-    Raises:
-        GdToolsError: If the download fails (network error, HTTP error,
-            etc.). The error message includes manual install instructions.
-    """
-    url = GUT_DOWNLOAD_URL.format(version=version)
-    try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        raise GdToolsError(
-            f"[Error] Failed to download GUT v{version}\n"
-            f"  Cause: {exc}\n"
-            f"  Fix: Download GUT manually from:\n"
-            f"    - Godot Asset Library: "
-            f"https://godotengine.org/asset-library/asset/116\n"
-            f"    - GitHub: {url}\n"
-            f"    Extract the 'addons/gut/' folder to your project's "
-            f"'addons/' directory."
-        ) from exc
-    dest.write_bytes(response.content)
-    return dest
-
-
-def extract_gut(zip_path: Path, project_root: Path) -> None:
-    """Extract the GUT zip archive and copy addons/gut/ to the project.
-
-    The GitHub archive contains a top-level directory (e.g.,
-    ``Gut-9.5.0/``) with ``addons/gut/`` inside it. This function
-    extracts to a temporary directory, locates ``addons/gut/``, copies
-    it to ``project_root/addons/gut/``, and cleans up the temp dir.
-
-    Args:
-        zip_path: Path to the downloaded GUT zip file.
-        project_root: Path to the Godot project root.
-
-    Raises:
-        GdToolsError: If the archive does not contain an
-            ``addons/gut/`` directory.
-    """
-    tmpdir = tempfile.mkdtemp()
-    try:
-        tmp_path = Path(tmpdir)
-        with zipfile.ZipFile(zip_path) as zf:
-            zf.extractall(tmp_path)
-        gut_source: Path | None = None
-        for addons_dir in tmp_path.rglob("addons"):
-            gut_dir = addons_dir / "gut"
-            if gut_dir.is_dir():
-                gut_source = gut_dir
-                break
-        if gut_source is None:
-            raise GdToolsError(
-                "[Error] Failed to extract GUT\n"
-                "  Cause: addons/gut/ directory not found in archive\n"
-                "  Fix: Download GUT manually from:\n"
-                "    - Godot Asset Library: "
-                "https://godotengine.org/asset-library/asset/116\n"
-                "    - GitHub: https://github.com/bitwes/Gut\n"
-                "    Extract the 'addons/gut/' folder to your project's "
-                "'addons/' directory."
-            )
-        dest = project_root / "addons" / "gut"
-        if dest.exists():
-            shutil.rmtree(dest)
-        shutil.copytree(gut_source, dest)
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
-
-
-def install_gut(
-    project_root: Path, godot_version: str, non_interactive: bool
-) -> bool:
-    """Install GUT if not already installed.
-
-    If GUT is already installed, checks the installed version against
-    the expected version for the detected Godot version and warns if
-    they differ. If GUT is not installed, prompts the user (interactive
-    mode) or auto-installs (non-interactive mode).
-
-    Args:
-        project_root: Path to the Godot project root.
-        godot_version: The detected Godot version (e.g., ``"4.5.1"``).
-        non_interactive: If True, skip prompts and assume yes.
-
-    Returns:
-        True if GUT is installed (or was already present),
-        False if the user declined installation.
-    """
-    if is_gut_installed(project_root):
-        installed_version = get_installed_gut_version(project_root)
-        expected_version = get_gut_version_for_godot(godot_version)
-        if installed_version != expected_version:
-            console.print(
-                "[yellow]Warning: GUT version "
-                f"{installed_version} does not match expected "
-                f"version {expected_version} for Godot "
-                f"{godot_version}.[/yellow]"
-            )
-        return True
-
-    if not non_interactive:
-        if not click.confirm("Install GUT?", default=True):
-            console.print(
-                "GUT not installed. To install manually:\n"
-                "  1. Download from: "
-                "https://godotengine.org/asset-library/asset/116\n"
-                "  2. Extract the 'addons/gut/' folder to your "
-                "project's 'addons/' directory."
-            )
-            return False
-
-    gut_version = get_gut_version_for_godot(godot_version)
-    tmpdir = tempfile.mkdtemp()
-    zip_dest = Path(tmpdir) / "gut.zip"
-    try:
-        download_gut(gut_version, zip_dest)
-        extract_gut(zip_dest, project_root)
-    finally:
-        shutil.rmtree(tmpdir, ignore_errors=True)
-    return True
-
-
-def enable_gut_plugin(project_root: Path) -> None:
-    """Enable the GUT plugin in ``project.godot``.
-
-    Adds the ``[editor_plugins]`` section with the GUT plugin in the
-    ``enabled`` list if not already present. Idempotent: running
-    multiple times produces the same result.
-
-    Args:
-        project_root: Path to the Godot project root.
-    """
-    project_godot = project_root / "project.godot"
-    content = project_godot.read_text(encoding="utf-8")
-
-    gut_entry = f'"{GUT_PLUGIN_PATH}"'
-
-    # Idempotent: if GUT is already enabled, do nothing.
-    # Use regex to match only within enabled=PackedStringArray(...),
-    # not in comments or other contexts.
-    if re.search(
-        rf"enabled=PackedStringArray\([^\)]*{re.escape(gut_entry)}",
-        content,
-    ):
-        return
-
-    if "[editor_plugins]" in content:
-        # Section exists, add GUT to enabled list
-        lines = content.split("\n")
-        for i, line in enumerate(lines):
-            if line.strip() == "[editor_plugins]":
-                # Look for enabled= in subsequent lines
-                for j in range(i + 1, len(lines)):
-                    next_stripped = lines[j].strip()
-                    if next_stripped.startswith("["):
-                        # Reached next section, insert enabled= before it
-                        lines.insert(
-                            j,
-                            f"enabled=PackedStringArray({gut_entry})",
-                        )
-                        break
-                    if next_stripped.startswith("enabled="):
-                        # Add GUT to existing PackedStringArray
-                        lines[j] = lines[j].replace(
-                            "PackedStringArray(",
-                            f"PackedStringArray({gut_entry}, ",
-                        )
-                        break
-                else:
-                    # No enabled= and no next section, append at end
-                    lines.append(f"enabled=PackedStringArray({gut_entry})")
-                break
-        project_godot.write_text("\n".join(lines), encoding="utf-8")
-    else:
-        # No [editor_plugins] section, append it
-        if not content.endswith("\n"):
-            content += "\n"
-        content += (
-            f"\n[editor_plugins]\n\n"
-            f"enabled=PackedStringArray({gut_entry})\n"
-        )
-        project_godot.write_text(content, encoding="utf-8")
 
 
 # --- Phase 3: Coverage Addon Deployment ---
@@ -557,36 +338,6 @@ _GUTCONFIG_PRESERVE_KEYS = (
     "suffix",
     "include_subdirs",
 )
-
-
-def update_gutconfig(project_root: Path, config: GdToolsConfig) -> None:
-    """Create or merge ``.gutconfig.json`` in the project root.
-
-    If the file does not exist, writes ``GUTCONFIG_TEMPLATE`` as JSON.
-    If it exists, merges: preserves the user's ``dirs``, ``prefix``,
-    ``suffix``, and ``include_subdirs``; always overwrites
-    ``should_exit``, ``junit_xml_file``, ``pre_run_script``, and
-    ``post_run_script`` from the template.
-
-    Args:
-        project_root: Path to the Godot project root.
-        config: The gd-tools configuration (unused but kept for
-            signature consistency with other init functions).
-    """
-    gutconfig_path = project_root / ".gutconfig.json"
-
-    if not gutconfig_path.exists():
-        gutconfig_path.write_text(
-            json.dumps(GUTCONFIG_TEMPLATE, indent=2) + "\n"
-        )
-        return
-
-    existing = json.loads(gutconfig_path.read_text())
-    merged = GUTCONFIG_TEMPLATE.copy()
-    for key in _GUTCONFIG_PRESERVE_KEYS:
-        if key in existing:
-            merged[key] = existing[key]
-    gutconfig_path.write_text(json.dumps(merged, indent=2) + "\n")
 
 
 def create_config_file(project_root: Path, config: GdToolsConfig) -> None:

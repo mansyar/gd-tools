@@ -1280,6 +1280,18 @@ def validate():
         ctx = click.get_current_context()
         ctx.exit(1)
 
+    # --- Removed GUT runtime (hard error, checked before Pydantic) ---
+    test_section = raw_toml.get("test")
+    if isinstance(test_section, dict) and test_section.get("runtime") == "gut":
+        click.echo(
+            'Schema Error: test.runtime = "gut": GUT runtime support was '
+            "removed in v0.6.0. The native runtime is the default. Run "
+            "`gd-tools migrate` or see docs/gut-migration.md.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
     # --- Deprecated settings (checked before Pydantic) ---
     deprecated = check_deprecated_settings(raw_toml)
     deprecated_paths = {dep.field_path for dep in deprecated}
