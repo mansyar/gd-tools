@@ -24,7 +24,7 @@ Green (implementation) → commit → git note → plan update.
   - [x] Verify full suite green: `CI=true pytest`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2: Doctor Advisor, Config Validation & Migrate Updates
+## Phase 2: Doctor Advisor, Config Validation & Migrate Updates `[checkpoint: c70748d]`
 
 - [x] Task: Write failing tests (Red) for doctor/config/migrate behavior `e6c2c23`
   - [ ] Test: `doctor` reports legacy GUT artifacts (`addons/gut`, `.gutconfig.json`, `GutTest` suites) as informational migration advice
