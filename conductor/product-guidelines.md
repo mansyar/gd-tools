@@ -34,7 +34,7 @@ The CLI uses the `rich` library for terminal output. Output should be:
   - Yellow = warning / partial coverage
   - Cyan = info / headers
   - Dim/gray = secondary info, file paths
-- **Progress-aware.** Use `rich.progress` or spinners for long-running operations (GUT test runs, coverage instrumentation, GUT download).
+- **Progress-aware.** Use `rich.progress` or spinners for long-running operations (native test runs, coverage instrumentation).
 - **Readable.** Human-friendly output by default; machine-readable via flags (`--report-format json`, `--junit-xml`).
 
 ### 2.2 Output Conventions
@@ -79,12 +79,13 @@ Every error message must be **actionable** — it tells the user not just what w
 - Godot not found → "Godot binary not found. Tried: config, $GODOT_BIN, PATH, common locations. Install Godot 4.5+ from https://godotengine.org and set GODOT_BIN or add to PATH."
 - Godot version too old → "Godot 4.4.1 detected, but gd-tools requires 4.5+. Upgrade at https://godotengine.org."
 - Unsupported bridge construct → "The GUT compatibility bridge does not support 1 construct used in 1 bridge suite:\n\nres://test/legacy_test.gd:\n  - parameterize (line 4)\n\nMigrate these constructs to GdToolsTest or remove them. See docs/gut-migration.md for the supported subset and migration steps."
+  (historical example from the v0.5.0 bridge; removed in v0.6.0 — `GutTest` suites are now rejected outright with migration guidance)
 
 ### 4.2 Principles
 - **Name the thing that's missing.** "Godot binary not found" — not "Error occurred."
 - **Include the attempted resolution.** For detection chains, list what was tried.
 - **Provide a concrete fix.** A command to run, a URL to visit, or a config key to set.
-- **Distinguish errors from warnings.** Errors block execution (exit 1 or 2); warnings continue with a note (e.g., GUT version mismatch).
+- **Distinguish errors from warnings.** Errors block execution (exit 1 or 2); warnings continue with a note (e.g., a coverage omission warning).
 
 ---
 

@@ -135,7 +135,7 @@ All tasks follow a strict lifecycle:
         The automated tests have passed. For manual verification, please follow these steps:
 
         **Manual Verification Steps:**
-        1.  **Ensure a Godot test project is available** with GUT installed (`gd-tools init`).
+        1.  **Ensure a Godot test project is available** with the native test addon deployed (`gd-tools init`).
         2.  **Run coverage:** `gd-tools test --coverage --min 80`
         3.  **Confirm that you see:** Coverage reports generated in `.gd-tools/coverage/html/`, with correct line and branch percentages.
         ```
@@ -222,7 +222,7 @@ ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest
 - Every source code module (`.py` files in `src/gd_tools/`) must have corresponding tests.
 - **Tests are only required for source code.** Configuration files (`.toml`, `.json`, `.yaml`), documentation (`.md`), and other non-code assets do NOT require tests.
 - Use `pytest` fixtures for setup/teardown.
-- Mock external dependencies (Godot binary, GUT subprocess, network requests, file system).
+- Mock external dependencies (Godot binary, subprocess calls, network requests, file system).
 - Test both success and failure cases.
 - Test exit codes (0 = success, 1 = failure, 2 = config error).
 
@@ -233,7 +233,7 @@ ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest
 - Test config loading with real `gd-tools.toml` fixtures.
 
 ### End-to-End Testing
-- Full `gd-tools test --coverage` run on a sample Godot project with GUT.
+- Full `gd-tools test --coverage` run on a sample Godot project using the native runtime.
 - Verify JUnit XML and coverage JSON are produced correctly.
 - Test cross-platform path handling (Windows, macOS, Linux).
 
