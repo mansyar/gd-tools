@@ -27,11 +27,17 @@ from rich.console import Console
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 2
+PLAN_VERSION = 3
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
 stale cached plans regenerate instead of silently dropping exclusions.
+
+Bumped 2 -> 3 when ternary branch points became anchored to their
+enclosing statement. Version 2 plans record ``LinePlan.line`` at a
+ternary's first-operand line, so reusing one would re-inject trackers on
+the stale lines and reproduce the parse failures this bump exists to
+prevent.
 """
 
 # --- Data structures (FR-1) ---
