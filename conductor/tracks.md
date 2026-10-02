@@ -227,7 +227,7 @@ _Archived tracks live in `./archive/`._
   document the integration in README and USER_GUIDE)
   *Link: [pre_commit_hooks_20261002](./archive/pre_commit_hooks_20261002/index.md)*
 
-- [~] **Track: Coverage Format Bugfix + CLI Unification** (bugfix + chore:
+- [x] **Track: Coverage Format Bugfix + CLI Unification** (bugfix + chore:
   fix `coverage run --report-format json` always failing with
   `CoveragePlanError` after the playtest session completes by making json a
   first-class report format mirroring the coverage-diff JSON shape, and
