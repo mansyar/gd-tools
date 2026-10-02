@@ -93,7 +93,7 @@ def test_load_config_rejects_removed_gutconfig_key(tmp_path):
     (tmp_path / "gd-tools.toml").write_text(
         '[test]\ngutconfig = ".gutconfig.json"\n'
     )
-    with pytest.raises(ValidationError):
+    with pytest.raises(ConfigError):
         load_config(project_root=tmp_path)
 
 

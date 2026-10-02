@@ -53,8 +53,6 @@ class TestConfig(BaseModel):
         test_dirs: Directories containing test files.
         prefix: Test file prefix.
         suffix: Test file suffix.
-        gutconfig: Path to the GUT config file (legacy; unused by the
-            native runtime).
         runtime: Test execution runtime. Only ``"native"`` is valid;
             the GUT runtime was removed in v0.6.0.
         timeout_seconds: Default per-test timeout for native async tests.
@@ -71,7 +69,6 @@ class TestConfig(BaseModel):
     test_dirs: list[str] = Field(default_factory=lambda: ["test", "tests"])
     prefix: str = "test_"
     suffix: str = ".gd"
-    gutconfig: str = ".gutconfig.json"
     runtime: Literal["native"] = "native"
     timeout_seconds: float = Field(default=5.0, gt=0)
     retries: int = Field(default=0, ge=0)
