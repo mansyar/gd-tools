@@ -11,11 +11,12 @@
   to `src/gd_tools/lint_runner.py`; extend `lint --report-format`
   `click.Choice` with `github-actions` in `cli.py` and route output to
   stdout; exit codes unchanged.
-- [~] **Task 1.3 — Verify quality gates + commit:** `CI=true pytest
+- [x] **Task 1.3 — Verify quality gates + commit:** `CI=true pytest
   tests/test_lint_runner.py` green; ruff + black clean; coverage ≥80%
   line / ≥70% branch for new code; commit
   `feat(lint): add github-actions annotation format` + git note; update
-  plan.md.
+  plan.md. *(feat commit `08c60a5`, wiring tests `cfb579f`; full suite
+  1582 passed / 95.48% coverage)*
 - [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
 
 ## Phase 2: Coverage Annotations
