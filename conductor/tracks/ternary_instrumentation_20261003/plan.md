@@ -57,22 +57,22 @@
 
 ## Phase 2: Plan Version Bump and Cache Invalidation
 
-- [ ] Task: Write failing test for cache invalidation (Red)
-  - [ ] Add a test asserting `PLAN_VERSION == 3`.
-  - [ ] Add a test asserting a cached plan at version 2 produces a cache miss
+- [x] Task: Write failing test for cache invalidation (Red) [a220cac]
+  - [x] Add a test asserting `PLAN_VERSION == 3`.
+  - [x] Add a test asserting a cached plan at version 2 produces a cache miss
         whose reason names the expected version (FR-6), following the existing
         "cache plan version outdated" convention.
 
-- [ ] Task: Bump the plan version (Green)
-  - [ ] Change `PLAN_VERSION` from 2 to 3 in
+- [x] Task: Bump the plan version (Green) [a220cac]
+  - [x] Change `PLAN_VERSION` from 2 to 3 in
         `src/gd_tools/coverage/plan_generator.py` and update its surrounding
         comment if it documents prior versions.
-  - [ ] Update any test or fixture that hard-codes version 2 as the current
+  - [x] Update any test or fixture that hard-codes version 2 as the current
         value. Fixtures that intentionally assert rejection of *older* versions
         must keep their intent.
-  - [ ] Run the tests and confirm they pass.
+  - [x] Run the tests and confirm they pass.
 
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6] [a220cac]
 
 ## Phase 3: Real-Godot Parse Regression Test
 
