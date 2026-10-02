@@ -7,8 +7,8 @@
 
 ## Phase 1: JSON Report Format (F1 Fix)
 
-- [ ] Task 1.1: Write failing tests for JSON report format (Red)
-  - [ ] Add tests in the coverage reporter test suite (match existing
+- [x] Task 1.1: Write failing tests for JSON report format (Red)  <!-- 6777540 -->
+  - [x] Add tests in the coverage reporter test suite (match existing
         naming/style, e.g. `tests/test_coverage_reporter.py`):
         `generate_report(..., format="json")` does not raise
         `CoveragePlanError`; JSON structure mirrors the
@@ -17,19 +17,20 @@
         `coverage.json`) and path returned in
         `ReportResult.output_path`; threshold error still raised
         after the report is written; output is deterministic.
-  - [ ] Add regression test at the `coverage run` orchestration
+  - [x] Add regression test at the `coverage run` orchestration
         level asserting `report_format="json"` completes the
         run → report path (Godot mocked per testing strategy).
-  - [ ] Run tests, confirm Red.
-- [ ] Task 1.2: Implement JSON reporter (Green)
-  - [ ] Add `"json"` to `_SUPPORTED_FORMATS` in
+  - [x] Run tests, confirm Red.
+- [x] Task 1.2: Implement JSON reporter (Green)  <!-- 6777540 -->
+  - [x] Add `"json"` to `_SUPPORTED_FORMATS` in
         `coverage/reporter.py`; implement JSON serialization
         reusing the coverage-diff JSON structure from
         `diff_reporter.build_diff_json`.
-  - [ ] Run tests, confirm Green; refactor if needed.
-  - [ ] Verify coverage:
+  - [x] Run tests, confirm Green; refactor if needed.
+  - [x] Verify coverage:
         `CI=true pytest --cov=gd_tools --cov-branch`
-  - [ ] Commit (`fix(coverage): support json report format`) and
+        (95.48%, 1569 passed / 7 skipped)
+  - [x] Commit (`fix(coverage): support json report format`) and
         attach task summary git note; update plan task statuses.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
