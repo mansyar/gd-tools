@@ -27,6 +27,7 @@ from gd_tools.coverage.reporter import (
     generate_report,
     merge_coverage_data,
     read_coverage_json,
+    render_github_actions_annotations,
 )
 from gd_tools.errors import CoveragePlanError, CoverageThresholdError
 
@@ -1158,3 +1159,131 @@ def test_render_uncovered_panels_only_lines_no_branches():
     assert "3" in output
     assert "7" in output
     assert "Uncovered branches" not in output
+
+
+# --- render_github_actions_annotations ---
+
+
+def _gh_fs(path, line_rate, file_id=0):
+    """Build a FileSummary with a given path and line rate."""
+    return FileSummary(
+        file_id=file_id,
+        path=path,
+        line_rate=line_rate,
+        branch_rate=1.0,
+        covered_lines=int(line_rate * 10),
+        total_lines=10,
+        covered_branches=0,
+        total_branches=0,
+        uncovered_lines=[],
+    )
+
+
+def test_render_gh_annotations_gate_failed_summary():
+    """Test the summary ::error when the coverage gate fails."""
+    summary = CoverageSummary(
+        line_rate=0.78,
+        branch_rate=0.5,
+        covered_lines=78,
+        total_lines=100,
+        covered_branches=2,
+        total_branches=4,
+    )
+    out = render_github_actions_annotations(
+        summary, [], min_percent=80, gate_failed=True
+    )
+    assert out == (
+        "::error title=Coverage gate::Total coverage 78.0%25 is below"
+        " minimum 80%25\n"
+    )
+
+
+def test_render_gh_annotations_per_file_warnings():
+    """Test one ::warning per file below the threshold."""
+    summary = CoverageSummary(
+        line_rate=0.9,
+        branch_rate=1.0,
+        covered_lines=90,
+        total_lines=100,
+        covered_branches=0,
+        total_branches=0,
+    )
+    files = [
+        _gh_fs("res://src/player.gd", 0.62, file_id=0),
+        _gh_fs("res://src/enemy.gd", 0.95, file_id=1),
+    ]
+    out = render_github_actions_annotations(summary, files, min_percent=80)
+    assert out == (
+        "::warning file=src/player.gd::Coverage 62.0%25 below minimum"
+        " 80%25\n"
+    )
+
+
+def test_render_gh_annotations_gate_plus_files():
+    """Test summary ::error first, then per-file ::warnings."""
+    summary = CoverageSummary(
+        line_rate=0.4,
+        branch_rate=0.5,
+        covered_lines=40,
+        total_lines=100,
+        covered_branches=1,
+        total_branches=2,
+    )
+    files = [
+        _gh_fs("res://src/b.gd", 0.30, file_id=1),
+        _gh_fs("res://src/a.gd", 0.50, file_id=0),
+    ]
+    out = render_github_actions_annotations(
+        summary, files, min_percent=80, gate_failed=True
+    )
+    lines = out.splitlines()
+    assert len(lines) == 3
+    assert lines[0].startswith("::error title=Coverage gate::")
+    assert "file=src/a.gd" in lines[1]
+    assert "file=src/b.gd" in lines[2]
+
+
+def test_render_gh_annotations_no_threshold():
+    """Test no threshold configured produces no annotations."""
+    summary = CoverageSummary(
+        line_rate=0.1,
+        branch_rate=0.0,
+        covered_lines=1,
+        total_lines=10,
+        covered_branches=0,
+        total_branches=0,
+    )
+    files = [_gh_fs("res://src/player.gd", 0.1)]
+    assert render_github_actions_annotations(summary, files) == ""
+
+
+def test_render_gh_annotations_all_pass():
+    """Test all files at/above threshold with a passing gate is silent."""
+    summary = CoverageSummary(
+        line_rate=1.0,
+        branch_rate=1.0,
+        covered_lines=10,
+        total_lines=10,
+        covered_branches=0,
+        total_branches=0,
+    )
+    files = [_gh_fs("res://src/player.gd", 1.0)]
+    out = render_github_actions_annotations(
+        summary, files, min_percent=80, gate_failed=False
+    )
+    assert out == ""
+
+
+def test_render_gh_annotations_escapes_paths():
+    """Test file property values are escaped per the workflow spec."""
+    summary = CoverageSummary(
+        line_rate=0.9,
+        branch_rate=1.0,
+        covered_lines=90,
+        total_lines=100,
+        covered_branches=0,
+        total_branches=0,
+    )
+    files = [_gh_fs("res://src/a,b.gd", 0.10)]
+    out = render_github_actions_annotations(summary, files, min_percent=80)
+    assert "file=src/a%2Cb.gd" in out
