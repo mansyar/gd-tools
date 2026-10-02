@@ -2,6 +2,29 @@
 
 ### Fix
 
+- **coverage**: Fix unparseable GDScript when a ternary expression sits
+  inside a multi-line parenthesised expression, or in a position with no
+  enclosing statement. A recorded line is where a tracker call is
+  *inserted*, so it must be a line where a statement may begin. Every
+  tracked node except `test_expr` begins with a keyword and satisfies
+  this; `test_expr` begins with an arbitrary operand, so its line was the
+  ternary's first operand — a continuation line when the ternary is
+  nested. The injected tracker broke the parse
+  (`Expected closing ")" after grouping expression`,
+  `Unexpected identifier in class body`), the reload failed, and the file
+  was recorded as an omission: it vanished from the report and `--min`
+  escalated to exit 2. Ternary branch points are now anchored to the
+  nearest enclosing statement; a ternary with no enclosing statement (a
+  `const` or `@export` initialiser, a default parameter value) is not
+  tracked, because there is no legal insertion point. `PLAN_VERSION` is
+  bumped 2 → 3 so cached plans from earlier versions are regenerated
+  rather than reused. Existing coverage totals may shift for projects
+  whose ternaries previously produced untrackable files.
+
+  Known limitation, unchanged by this fix: `ternary_true` and
+  `ternary_false` share a recorded line, so both arms are always reported
+  together and ternary branch coverage cannot fail.
+
 - **coverage**: Fix `coverage run --report-format json` always failing
   after the playtest session completed. The `json` format was advertised
   by the CLI but rejected by the reporter, so a finished session (minutes

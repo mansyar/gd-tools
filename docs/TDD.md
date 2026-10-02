@@ -1291,6 +1291,43 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 - `@onready`/`@export` annotations produce zero trackable points (no
   false positives).
 
+**Ternary line anchoring (Track `ternary_instrumentation_20261003`):**
+
+- The `test_expr()` visitor above recorded both ternary branches on
+  `tree.meta.line`, i.e. the line of the ternary's **first operand**. That
+  is correct only when the ternary begins its statement. `test_expr` is
+  the one tracked node that does not begin with a keyword, so it was the
+  one node where `meta.line` could name a continuation line.
+- Reproduction: a ternary inside a multi-line parenthesised expression
+  (`var x = (\n 1\n if a > 0\n else 2\n)`), inside multi-line call
+  arguments, or in a `const`/`@export` initialiser or default parameter
+  value. Injecting the tracker before that line produced an
+  unparseable script, the reload failed, and `_instrument_file` recorded
+  an omission — the file silently left the report and `--min` escalated
+  to exit 2.
+- Fix: `CoverageVisitor.visit` runs one recursive pre-pass
+  (`_map_ternary_anchors`) that walks down carrying the most recent
+  statement line, so each `test_expr` is anchored to its nearest
+  enclosing statement. A pre-pass rather than a pending-point buffer was
+  chosen because lark's flat bottom-up traversal has no ancestry, and a
+  buffer attributes a class-level `const` ternary to whichever unrelated
+  statement happens to follow it.
+- A ternary with no enclosing statement is dropped rather than
+  mis-anchored; those positions are not statement lines.
+- `# gd-tools: no cover` still evaluates against the **finally recorded**
+  line, so an exclusion on the anchored statement suppresses the ternary
+  branches as well.
+- `PLAN_VERSION` 2 → 3, because the meaning of a recorded line changed.
+- `tests/integration/test_coverage_instrumentation_parses.py` compiles
+  the instrumented output against a real Godot. Verified to discriminate:
+  against the pre-fix generator exactly the six previously-broken cases
+  fail while the six already-fine cases pass. A canary asserts the
+  harness still detects a deliberately broken script, because a stale
+  `.godot` cache had produced false passes during this investigation.
+- Not fixed here: `ternary_true` and `ternary_false` still share a line,
+  so the arms cannot be covered independently. That needs the plan to
+  record a span rather than a line.
+
 **Autoload inclusion (Track 24.5, 2026-07-15):**
 
 - `resolve_autoload_paths()` was removed. Autoload scripts are no longer

@@ -350,6 +350,58 @@ nodes in the GDScript AST:
 | `match_branch` | `match_case` | `match` case body |
 | `test_expr` | `ternary_true`, `ternary_false` | Ternary expression (`a if cond else b`) — both value-branches |
 
+#### Line placement: a tracker must land on a statement
+
+A recorded line is not merely where a construct was found — it is where a
+coverage tracker call can be **inserted**.
+`gd_tools_native_coverage.gd` inserts
+`GdToolsNativeCoverage.hit(file_id, point_id)` *before* the recorded line,
+so that line must be one where a GDScript statement may begin.
+
+Every tracked node except `test_expr` begins with a keyword (`if`, `else`,
+`while`, `for`, `match`, `return`, `var`, `break`, `continue`), and a
+keyword can only appear at the start of a statement. `test_expr` is the
+exception: it begins with an arbitrary operand, so its `meta.line` is the
+line of the ternary's **first operand**. Whenever the ternary is nested
+inside a multi-line parenthesised expression, that is a continuation line:
+
+```gdscript
+var x = (          # statement line
+    1              # ← test_expr.meta.line lands here
+    if a > 0
+    else 2
+)
+```
+
+Inserting a tracker before line 3 produced
+`Expected closing ")" after grouping expression`, the instrumented script
+failed `reload()`, and `_instrument_file` recorded the file as an
+**omission** — so it silently left the report and `--min` escalated to
+exit 2. A ternary in a `const` or `@export` initialiser failed the same
+way with `Unexpected identifier in class body`.
+
+`CoverageVisitor` therefore resolves each `test_expr` to its nearest
+enclosing statement node and records the branch points at that
+statement's line. Lark's default `Visitor` traverses flat and bottom-up
+with no ancestry exposed, so the mapping is built by one recursive
+pre-pass over the tree (`_map_ternary_anchors`) that walks downward
+carrying the most recent statement line as context. Two consequences
+follow:
+
+* A ternary in a position with **no** enclosing statement — a `const` or
+  `@export` initialiser, or a default parameter value — has nowhere legal
+  to go and is **not tracked**. Those positions are not statement lines,
+  so injecting there would break the class body or the signature.
+* `ternary_true` and `ternary_false` are recorded on the same line, so the
+  two arms are always covered together and ternary branch coverage cannot
+  currently fail. Tracking the arms independently requires the plan to
+  record a span rather than a line.
+
+Because the meaning of a recorded line changed, `PLAN_VERSION` was bumped
+2 → 3 so stale cached plans are regenerated rather than reused.
+`tests/integration/test_coverage_instrumentation_parses.py` compiles the
+instrumented output against a real Godot to hold this invariant.
+
 ### 4.2 Coverage Data (`coverage.json`)
 
 The coverage data is produced by the GDScript post-run hook and
