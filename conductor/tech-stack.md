@@ -128,7 +128,7 @@
 - **Integration protocol:** Native protocol v3. One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
 - **Execution modes:** Headless by default; `windowed` suites run without `--headless`, require a real display, and fail with exit `2` when the renderer is headless.
 - **Artifacts:** `.gd-tools/artifacts/<run_id>/` holds a machine-readable index plus preflight and per-suite artifacts; only the latest run is retained.
-- **Coverage:** Native runtime owns activation; the versioned coverage plan schema (currently v2, which adds `excluded_lines` for no-cover annotations) is reused where possible for line and branch metrics.
+- **Coverage:** Native runtime owns activation; the versioned coverage plan schema (currently v3 — v2 added `excluded_lines` for no-cover annotations, v3 anchors ternary branch points to their enclosing statement) is reused where possible for line and branch metrics.
 - **Dependencies:** No third-party GDScript runtime dependency. GUT is not required.
 - **Compatibility:** `.gutconfig.json` is not read by any runtime; `gd-tools migrate` translates its mapped options into `gd-tools.toml` (merge, never clobber) and preserves the file. `gd-tools.toml` is canonical.
 - **Exit condition:** Met — the temporary bridge was removed in v0.6.0 and the durable decisions were folded into the main roadmap.
