@@ -101,16 +101,16 @@
 
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [6627b73]
 
-## Phase 4: Documentation and Final Validation
+## Phase 4: Documentation and Final Validation [complete]
 
-- [ ] Task: Update documentation
+- [x] Task: Update documentation [dbcc071]
   - [ ] Correct the `CoverageVisitor` node-to-type mapping in
         `docs/ARCHITECTURE.md` to state that `test_expr` points are anchored to
         the enclosing statement and that unanchored ternaries are not tracked.
   - [ ] Add a `CHANGELOG.md` entry under `## Unreleased` describing the fix and
         the plan version bump.
 
-- [ ] Task: Full-suite validation
+- [x] Task: Full-suite validation [dbcc071]
   - [ ] Run the full test suite and confirm no regressions.
   - [ ] Run coverage for the new source code and confirm >80% line and >70%
         branch coverage.
