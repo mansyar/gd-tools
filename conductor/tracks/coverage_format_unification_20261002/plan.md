@@ -34,7 +34,7 @@
         attach task summary git note; update plan task statuses.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2: CLI Flag Unification + Validation
+## Phase 2: CLI Flag Unification + Validation  [checkpoint: 0a4d8b0]
 
 - [x] Task 2.1: Write failing CLI tests (Red)  <!-- fc690eb -->
   - [x] Tests in the CLI test suite: `coverage report
