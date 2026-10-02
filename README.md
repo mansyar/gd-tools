@@ -278,7 +278,41 @@ eval "$(gd-tools)"
 See the [User Guide](./docs/USER_GUIDE.md) for detailed per-shell
 instructions.
 
-## 7. Configuration
+## 7. Pre-commit Hooks
+
+Wire gd-tools into the [pre-commit](https://pre-commit.com) framework so
+every commit runs your format check, lint, and (optionally) your test suite:
+
+```bash
+gd-tools install-hooks
+```
+
+The command generates `.pre-commit-hooks.yaml` and merges a `repos: local:`
+entry into `.pre-commit-config.yaml`. Existing hooks — including your own —
+are preserved; re-runs update only the gd-tools entries in place.
+
+Interactive by default: confirm each hook (`format`, `lint`, `test`). For
+scripted or CI use, pass flags instead:
+
+```bash
+gd-tools install-hooks --non-interactive      # format + lint (defaults)
+gd-tools install-hooks --all                  # format + lint + test
+gd-tools install-hooks --hooks format,lint    # explicit selection
+```
+
+| Flag | Behavior |
+|---|---|
+| `--all` | Enable every hook (format, lint, test). |
+| `--hooks HOOKS` | Comma-separated selection, e.g. `--hooks format,lint`. |
+| `--non-interactive` | Never prompt; use defaults or explicit flags. |
+
+Exit codes follow the gd-tools convention: `0` installed, `1` nothing to do,
+`2` config/environment error.
+
+See the [User Guide](./docs/USER_GUIDE.md#8-pre-commit-hooks) for the
+generated file contents and per-hook details.
+
+## 8. Configuration
 
 `gd-tools` uses a single `gd-tools.toml` file as the source of truth for
 all tool configuration. `gd-tools init` generates this file with sensible
@@ -342,7 +376,7 @@ version's config model.
 See the [User Guide](./docs/USER_GUIDE.md) for a full configuration reference
 with all keys, defaults, and examples.
 
-## 8. Documentation
+## 9. Documentation
 
 | Document | Description |
 |----------|-------------|
@@ -353,7 +387,7 @@ with all keys, defaults, and examples.
 | [Roadmap](./docs/ROADMAP.md) | Release phases and milestones. |
 | [Testing Strategy](./docs/TESTING_STRATEGY.md) | Test pyramid, coverage targets, and CI integration. |
 
-## 9. Development
+## 10. Development
 
 ```bash
 # Clone and install in editable mode with dev dependencies
@@ -383,11 +417,11 @@ See [Testing Strategy](./docs/TESTING_STRATEGY.md) for the full testing
 guide and [Contributing Guide](./docs/CONTRIBUTING.md) for development
 setup details.
 
-## 10. License
+## 11. License
 
 MIT
 
-## 11. Acknowledgements
+## 12. Acknowledgements
 
 `gd-tools` stands on the shoulders of excellent community tools, past and
 present. Full credit to their authors for the hard parts.
