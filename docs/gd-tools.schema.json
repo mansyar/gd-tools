@@ -2,7 +2,7 @@
   "$defs": {
     "CoverageConfig": {
       "additionalProperties": false,
-      "description": "Configuration for code coverage.\n\nAttributes:\n    enabled: Whether coverage is enabled.\n    min_percent: Minimum coverage percentage threshold.\n    format: Report format (html, lcov, cobertura, text).\n    output_dir: Directory for coverage data and reports.\n    exclude: Directories excluded from coverage measurement.\n    test_dirs: Directories containing test files.",
+      "description": "Configuration for code coverage.\n\nAttributes:\n    enabled: Whether coverage is enabled.\n    min_percent: Minimum coverage percentage threshold.\n    format: Report format (html, lcov, cobertura, text, json).\n    output_dir: Directory for coverage data and reports.\n    exclude: Directories excluded from coverage measurement.\n    test_dirs: Directories containing test files.",
       "properties": {
         "enabled": {
           "default": false,

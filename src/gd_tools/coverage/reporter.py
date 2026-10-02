@@ -655,7 +655,49 @@ def render_uncovered_panels(
 
 # --- Report dispatch and threshold (FR-3) ---
 
-_SUPPORTED_FORMATS = {"html", "lcov", "cobertura", "text"}
+_SUPPORTED_FORMATS = {"html", "lcov", "cobertura", "text", "json"}
+
+
+def _coverage_metrics_to_json(
+    summary: CoverageSummary | FileSummary,
+) -> dict[str, Any]:
+    """Serialize the shared six coverage metrics for JSON reports."""
+    return {
+        "covered_lines": summary.covered_lines,
+        "total_lines": summary.total_lines,
+        "line_rate": summary.line_rate,
+        "covered_branches": summary.covered_branches,
+        "total_branches": summary.total_branches,
+        "branch_rate": summary.branch_rate,
+    }
+
+
+def _write_json_report(
+    output_path: Path,
+    summary: CoverageSummary,
+    file_summaries: list[FileSummary],
+) -> None:
+    """Write a deterministic machine-readable JSON coverage report.
+
+    The payload mirrors the coverage-diff JSON shape: a ``totals``
+    block with the overall metrics and a ``files`` list (sorted by
+    path) with per-file metrics plus uncovered line/branch lists.
+    """
+    payload = {
+        "totals": _coverage_metrics_to_json(summary),
+        "files": [
+            {
+                "path": fs.path,
+                **_coverage_metrics_to_json(fs),
+                "uncovered_lines": fs.uncovered_lines,
+                "uncovered_branches": fs.uncovered_branches,
+            }
+            for fs in sorted(file_summaries, key=lambda fs: fs.path)
+        ],
+    }
+    output_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+    )
 
 
 def generate_report(
@@ -677,7 +719,7 @@ def generate_report(
         data: The runtime coverage data.
         output_dir: Directory where the report file is written.
         format: Report format — one of ``"html"``, ``"lcov"``,
-            ``"cobertura"``, ``"text"``.
+            ``"cobertura"``, ``"text"``, ``"json"``.
         min_threshold: Minimum line coverage rate (0.0-1.0).  If
             ``None``, no threshold check is performed.
 
@@ -736,6 +778,9 @@ def generate_report(
 
         output_path = output_dir / "cobertura.xml"
         generate_cobertura_report(plan, data, output_path)
+    elif format == "json":
+        output_path = output_dir / "coverage.json"
+        _write_json_report(output_path, summary, file_summaries)
     else:  # html (format already validated above)
         from gd_tools.coverage.html_reporter import generate_html_report
 

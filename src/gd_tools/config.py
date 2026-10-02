@@ -137,7 +137,7 @@ class CoverageConfig(BaseModel):
     Attributes:
         enabled: Whether coverage is enabled.
         min_percent: Minimum coverage percentage threshold.
-        format: Report format (html, lcov, cobertura, text).
+        format: Report format (html, lcov, cobertura, text, json).
         output_dir: Directory for coverage data and reports.
         exclude: Directories excluded from coverage measurement.
         test_dirs: Directories containing test files.
@@ -202,16 +202,15 @@ class GdToolsConfig(BaseModel):
 
         Raises:
             ValueError: If format is not in {html, lcov,
-                cobertura, text} or min_percent is outside
+                cobertura, text, json} or min_percent is outside
                 [0, 100].
         """
-        if v.format not in (
-            "html",
-            "lcov",
-            "cobertura",
-            "text",
-        ):
-            raise ValueError(f"Invalid coverage format: {v.format}")
+        valid_formats = ("html", "lcov", "cobertura", "text", "json")
+        if v.format not in valid_formats:
+            raise ValueError(
+                f"Invalid coverage format: {v.format}. "
+                f"Valid values: {', '.join(valid_formats)}"
+            )
         if not 0 <= v.min_percent <= 100:
             raise ValueError(f"min_percent must be 0-100, got {v.min_percent}")
         return v

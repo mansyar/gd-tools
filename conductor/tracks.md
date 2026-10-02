@@ -226,3 +226,11 @@ _Archived tracks live in `./archive/`._
   interactive prompt plus `--all`/`--hooks`/`--non-interactive` flags, and
   document the integration in README and USER_GUIDE)
   *Link: [pre_commit_hooks_20261002](./archive/pre_commit_hooks_20261002/index.md)*
+
+
+- [x] **Track: Coverage Format Bugfix + CLI Unification** (bugfix + chore:
+  make json a first-class coverage report format mirroring the diff JSON
+  shape, unify the --report-format flag across coverage subcommands with
+  validation, keep --format as a hidden alias, and align the
+  [coverage].format config validator)
+  *Link: [coverage_format_unification_20261002](./archive/coverage_format_unification_20261002/index.md)*

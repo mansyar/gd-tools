@@ -105,11 +105,11 @@ def test_coverage_help_shows_subcommands():
 
 
 def test_coverage_report_help_shows_format_and_output_dir():
-    """Test coverage report --help shows --format and --output-dir."""
+    """Test coverage report --help shows --report-format and --output-dir."""
     runner = CliRunner()
     result = runner.invoke(cli, ["coverage", "report", "--help"])
     assert result.exit_code == 0
-    assert "--format" in result.output
+    assert "--report-format" in result.output
     assert "--output-dir" in result.output
 
 
@@ -798,6 +798,91 @@ def test_coverage_report_format_override():
     assert result.exit_code == 0
     _, kwargs = mock_report.call_args
     assert kwargs["report_format"] == "lcov"
+
+
+def test_coverage_report_report_format_canonical():
+    """Test --report-format is the canonical flag on coverage report."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ) as mock_report,
+    ):
+        result = runner.invoke(
+            cli, ["coverage", "report", "--report-format", "html"]
+        )
+    assert result.exit_code == 0
+    _, kwargs = mock_report.call_args
+    assert kwargs["report_format"] == "html"
+
+
+def test_coverage_report_report_format_case_insensitive():
+    """Test --report-format JSON is accepted and normalized to json."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ) as mock_report,
+    ):
+        result = runner.invoke(
+            cli, ["coverage", "report", "--report-format", "JSON"]
+        )
+    assert result.exit_code == 0
+    _, kwargs = mock_report.call_args
+    assert kwargs["report_format"] == "json"
+
+
+def test_coverage_report_rejects_invalid_report_format():
+    """Test an invalid --report-format fails fast with a usage error."""
+    runner = CliRunner()
+    with patch("gd_tools.cli.load_config", return_value=MagicMock()):
+        result = runner.invoke(
+            cli, ["coverage", "report", "--report-format", "xml"]
+        )
+    assert result.exit_code == 2
+    assert "Invalid value" in result.output
+
+
+def test_coverage_report_rejects_both_format_flags():
+    """Test supplying both --format and --report-format is a usage error."""
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "coverage",
+            "report",
+            "--format",
+            "html",
+            "--report-format",
+            "json",
+        ],
+    )
+    assert result.exit_code == 2
+    assert "both" in result.output
+    assert "--report-format" in result.output
+    assert "--format" in result.output
+
+
+def test_coverage_report_help_shows_report_format_and_choices():
+    """Test coverage report --help shows --report-format with json choice.
+
+    The legacy --format alias is hidden: it must not appear in help
+    output so users discover the canonical flag.
+    """
+    runner = CliRunner()
+    result = runner.invoke(cli, ["coverage", "report", "--help"])
+    assert result.exit_code == 0
+    assert "--report-format" in result.output
+    assert "json" in result.output
+    assert "--format" not in result.output
 
 
 def test_coverage_report_output_dir_override():

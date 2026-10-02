@@ -765,6 +765,73 @@ def test_generate_report_html_format(tmp_path):
     assert result.output_path.exists()
 
 
+def test_generate_report_json_format(tmp_path):
+    """generate_report with format=json writes a machine-readable JSON report."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    result = generate_report(plan, data, tmp_path, format="json")
+    assert result.format == "json"
+    assert result.output_path.name == "coverage.json"
+    assert result.output_path.exists()
+
+
+def test_generate_report_json_structure(tmp_path):
+    """The JSON payload mirrors the coverage-diff JSON shape.
+
+    Top-level ``totals`` carries the same six metrics as the diff
+    JSON's per-side totals; ``files`` is sorted by path and each
+    entry carries the same metrics plus uncovered line/branch lists.
+    """
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    result = generate_report(plan, data, tmp_path, format="json")
+    payload = json.loads(result.output_path.read_text(encoding="utf-8"))
+
+    s = result.summary
+    assert payload["totals"] == {
+        "covered_lines": s.covered_lines,
+        "total_lines": s.total_lines,
+        "line_rate": s.line_rate,
+        "covered_branches": s.covered_branches,
+        "total_branches": s.total_branches,
+        "branch_rate": s.branch_rate,
+    }
+
+    files = payload["files"]
+    summaries = sorted(result.file_summaries, key=lambda fs: fs.path)
+    assert [entry["path"] for entry in files] == [fs.path for fs in summaries]
+    for entry, fs in zip(files, summaries):
+        assert entry["covered_lines"] == fs.covered_lines
+        assert entry["total_lines"] == fs.total_lines
+        assert entry["line_rate"] == fs.line_rate
+        assert entry["covered_branches"] == fs.covered_branches
+        assert entry["total_branches"] == fs.total_branches
+        assert entry["branch_rate"] == fs.branch_rate
+        assert entry["uncovered_lines"] == fs.uncovered_lines
+        assert entry["uncovered_branches"] == fs.uncovered_branches
+
+
+def test_generate_report_json_deterministic(tmp_path):
+    """Two json reports over identical inputs serialize identically."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    first = generate_report(plan, data, tmp_path, format="json")
+    second = generate_report(plan, data, tmp_path, format="json")
+    assert first.output_path.read_text(encoding="utf-8") == (
+        second.output_path.read_text(encoding="utf-8")
+    )
+
+
+def test_generate_report_json_threshold_below_raises(tmp_path):
+    """generate_report(json) raises CoverageThresholdError after writing the report."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    with pytest.raises(CoverageThresholdError) as exc_info:
+        generate_report(plan, data, tmp_path, format="json", min_threshold=0.80)
+    assert exc_info.value.report_result is not None
+    assert exc_info.value.report_result.output_path.exists()
+
+
 def test_generate_report_unsupported_format(tmp_path):
     """generate_report with unsupported format raises CoveragePlanError."""
     plan = read_plan_json(_PLAN_FIXTURE)
