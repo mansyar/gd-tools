@@ -4,8 +4,7 @@ This module implements the ``gd-tools init`` command, which bootstraps
 a Godot project by:
 - Detecting the project root and Godot version
 - Deploying the bundled native test and coverage addons
-- Optionally installing and enabling the legacy GUT runtime
-- Creating native/default configuration files and optional legacy files
+- Creating native/default configuration files
 - Creating the ``.gd-tools/`` data directory
 - Printing a summary of actions taken
 
@@ -14,7 +13,6 @@ same end state without duplicating entries. Managed addon files preserve
 user modifications in per-addon ``.backups/`` directories before replacement.
 """
 
-import configparser
 import shutil
 import sys
 from pathlib import Path
@@ -92,30 +90,6 @@ def detect_godot_version(config: GdToolsConfig) -> str:
             "work.[/yellow]"
         )
     return info.version
-
-
-# --- Legacy GUT detection ---
-
-
-def get_installed_gut_version(project_root: Path) -> str | None:
-    """Get the installed GUT version from ``addons/gut/plugin.cfg``.
-
-    Args:
-        project_root: Path to the Godot project root.
-
-    Returns:
-        The GUT version string (e.g., ``"9.5.0"``), or ``None`` if
-        ``plugin.cfg`` does not exist or has no ``version`` key.
-    """
-    plugin_cfg = project_root / "addons" / "gut" / "plugin.cfg"
-    if not plugin_cfg.exists():
-        return None
-    parser = configparser.ConfigParser()
-    parser.read(plugin_cfg)
-    version = parser.get("plugin", "version", fallback=None)
-    if version is None:
-        return None
-    return version.strip('"')
 
 
 # --- Phase 3: Coverage Addon Deployment ---

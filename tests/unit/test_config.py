@@ -75,7 +75,26 @@ def test_test_config_defaults():
     assert config.test_dirs == ["test", "tests"]
     assert config.prefix == "test_"
     assert config.suffix == ".gd"
-    assert config.gutconfig == ".gutconfig.json"
+
+
+def test_test_config_rejects_removed_gutconfig_key():
+    """The removed [test].gutconfig key is rejected as an unknown key.
+
+    The legacy GUT config path was dropped in the v0.6.0 legacy sweep;
+    configs still carrying the key must fail validation.
+    """
+    with pytest.raises(ValidationError):
+        TestConfig(gutconfig=".gutconfig.json")
+
+
+def test_load_config_rejects_removed_gutconfig_key(tmp_path):
+    """A TOML containing [test].gutconfig fails validation after removal."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text(
+        '[test]\ngutconfig = ".gutconfig.json"\n'
+    )
+    with pytest.raises(ConfigError):
+        load_config(project_root=tmp_path)
 
 
 # --- LintConfig ---
@@ -228,8 +247,7 @@ def test_load_config_full_toml(tmp_path):
     (tmp_path / "gd-tools.toml").write_text(
         '[godot]\nbinary = "/usr/bin/godot"\n\n'
         '[test]\ntest_dirs = ["my_tests"]\n'
-        'prefix = "check_"\nsuffix = ".gd"\n'
-        'gutconfig = ".gutconfig.json"\n\n'
+        'prefix = "check_"\nsuffix = ".gd"\n\n'
         '[lint]\nexclude = ["addons", "custom"]\n\n'
         '[format]\nexclude = ["build"]\n\n'
         "[coverage]\nenabled = true\nmin_percent = 80\n"

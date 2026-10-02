@@ -21,7 +21,7 @@
 | `tomli_w` | TOML config writing | Write companion to `tomli`/`tomllib`; used by `save_config()` |
 | `pydantic` | Config model validation (Pydantic v2) | Validates `gd-tools.toml` structure; `extra='forbid'` catches typo'd keys |
 | `pyyaml` | YAML config file generation | Used by `gd-tools init` and config to generate `gdlintrc` (YAML set format) |
-| `requests` | Download the optional legacy GUT addon release from GitHub | Used by `gd-tools init --with-gut` only; native tests and the bridge do not require it |
+| `requests` | Query PyPI for update notifications | Used by the `gd-tools` update-check feature (`update_check.py`) |
 | `packaging` | Version comparison for PyPI update check | Used by `gd-tools` update notification feature |
 | `watchdog` | Cross-platform file-system event watching | Used by `gd-tools test --watch` (Watch Mode track, 2026-09-28); observes `.gd` files and feeds the debounce/run loop |
 
@@ -47,7 +47,7 @@
 |-----------|---------|
 | **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
 | **Native Test Addon** (`addons/gd-tools-test/`) | `GdToolsTest` base class, transient native runner, assertions, lifecycle management, and native coverage integration. Ships as package data; no new runtime dependency. Files: `gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`, `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd` — all five are managed by `gd-tools init` and verified by `gd-tools doctor`. |
-| **GUT** (legacy, discouraged) | GDScript test framework downloadable via `gd-tools init --with-gut`. Conflicts with the compatibility bridge's own `class_name GutTest`; `doctor` warns when it is installed. Not a native runtime dependency. Version-mapped to Godot version during the migration period (4.5→9.5.0, 4.6→9.6.0, 4.7→9.7.0). |
+| **GUT** (legacy, not supported) | GDScript test framework. Since v0.6.0, gd-tools does not install, download, or run GUT, and no Godot-to-GUT version mapping exists. Projects that still carry `addons/gut/`, `.gutconfig.json`, or `extends GutTest` suites get an informational `doctor` advisory pointing at `gd-tools migrate`. Not a runtime dependency. |
 | **Editor Plugin** (`addons/gd-tools-editor/`) | Godot editor plugin: test/coverage dock panel (async CLI runs, results summary, missing-CLI fallback) and a `CodeEdit` coverage heatmap overlay (green/red/yellow line backgrounds from `.gd-tools/` artifacts). Ships as package data. Files: `plugin.gd`, `dock.gd`, `coverage_overlay.gd` — deployed by `gd-tools init` and verified by `gd-tools doctor`. |
 
 ---
@@ -56,7 +56,7 @@
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| **Godot Engine** | 4.5+ | Runs the native test runtime, optional GUT bridge, and instrumented tests. Required by `gd-tools test` and `gd-tools init` (version detection). Not required by lint/format/coverage-plan-gen (those are pure Python via gdtoolkit) |
+| **Godot Engine** | 4.5+ | Runs the native test runtime and instrumented tests. Required by `gd-tools test` and `gd-tools init` (version detection). Not required by lint/format/coverage-plan-gen (those are pure Python via gdtoolkit) |
 
 ---
 
@@ -92,7 +92,6 @@
 **Hybrid Coverage Architecture (Architecture C):**
 - **Python side** (gdtoolkit/Lark): Parses GDScript, identifies executable lines and branch points, generates an instrumentation plan (JSON).
 - **Native GDScript side** (native test runtime + coverage addon): Activates coverage for native tests, instruments scripts via Godot's Script API, tracks execution, and writes coverage data (JSON).
-- **GUT bridge side** (temporary): `GutTest` suites run on the native runner and coverage machinery through the bundled `GutTest` shim; no GUT hooks or autoload participate.
 - **Python side** (reporter): Reads coverage data, generates reports (HTML, LCOV, Cobertura, terminal).
 
 ---
@@ -123,13 +122,13 @@
 ## 9. Native Test Runtime Migration
 
 - **Public API:** `GdToolsTest` / `GdToolsTestRunner`, plus `GdToolsTestContext` returned by `get_test_context()`
-- **Runtime mode:** Native execution is the default; `GutTest` suites are auto-routed through the compatibility bridge and the legacy GUT subprocess path is removed.
+- **Runtime mode:** Native execution is the only supported runtime; `GutTest` suites are rejected with exit `2` and migration guidance (`gd-tools migrate`).
 - **Packaging:** One bundled native test addon with the Python distribution.
 - **Execution:** Suite-scoped Godot processes, fresh test instances, async-first test methods, and sequential execution by default (opt-in bounded parallel worker pool via `--parallel N` / `[test].parallel`).
 - **Integration protocol:** Native protocol v3. One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
 - **Execution modes:** Headless by default; `windowed` suites run without `--headless`, require a real display, and fail with exit `2` when the renderer is headless.
 - **Artifacts:** `.gd-tools/artifacts/<run_id>/` holds a machine-readable index plus preflight and per-suite artifacts; only the latest run is retained.
 - **Coverage:** Native runtime owns activation; the versioned coverage plan schema (currently v2, which adds `excluded_lines` for no-cover annotations) is reused where possible for line and branch metrics.
-- **Dependencies:** No new third-party GDScript runtime dependency. GUT is optional during the bounded migration period.
-- **Compatibility:** `.gutconfig.json` is not read by the bridge; `gd-tools migrate` translates its mapped options into `gd-tools.toml` (merge, never clobber) and preserves the file. `gd-tools.toml` is canonical.
-- **Exit condition:** Remove the temporary bridge and fold the durable decisions into the main roadmap after native migration is complete (deprecation notice ships in v0.5.0; removal targeted for v0.6.0).
+- **Dependencies:** No third-party GDScript runtime dependency. GUT is not required.
+- **Compatibility:** `.gutconfig.json` is not read by any runtime; `gd-tools migrate` translates its mapped options into `gd-tools.toml` (merge, never clobber) and preserves the file. `gd-tools.toml` is canonical.
+- **Exit condition:** Met — the temporary bridge was removed in v0.6.0 and the durable decisions were folded into the main roadmap.

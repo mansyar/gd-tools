@@ -105,7 +105,7 @@ func test_health_starts_at_full() -> void:
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
 | `gd-tools coverage` | Coverage subcommands -- `report`, `merge`, `show`, `save-baseline`, `diff` (baseline comparison for CI regression gates), and `run` (collect coverage during a manual playtest session). |
 | `gd-tools config` | Configuration management -- `show` (display resolved config), `validate` (check config validity), `schema` (print or write the JSON Schema for `gd-tools.toml`). |
-| `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, gdtoolkit, Python, and GUT when installed) in a table or JSON. |
+| `gd-tools version` | Display versions of all gd-tools components (gd-tools, Godot, gdtoolkit, Python) in a table or JSON. |
 | `gd-tools completion` | Generate shell completion scripts for bash, zsh, fish, or PowerShell. |
 
 ### Selecting and Filtering Tests
@@ -292,7 +292,6 @@ binary = ""  # Optional -- auto-detected if unset
 test_dirs = ["test", "tests"]
 prefix = "test_"
 suffix = ".gd"
-gutconfig = ".gutconfig.json"  # legacy; not read by any runtime
 runtime = "native"        # native (default); "gut" is no longer a runnable runtime
 timeout_seconds = 5.0     # default per-test timeout for async native tests
 retries = 0               # opt-in retries per native test
@@ -390,9 +389,8 @@ MIT
 
 ## 11. Acknowledgements
 
-`gd-tools` stands on the shoulders of two excellent community tools. It
-wraps them; it does not replace them. Full credit to their authors for the
-hard parts.
+`gd-tools` stands on the shoulders of excellent community tools, past and
+present. Full credit to their authors for the hard parts.
 
 - **[GUT (Godot Unit Test)](https://github.com/bitwes/Gut)** by
   [bitwes](https://github.com/bitwes): the GDScript test framework whose

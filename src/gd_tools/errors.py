@@ -6,8 +6,8 @@ propagates to the top level, so every failure mode maps to a deterministic
 process exit code.
 
 Exit-code convention:
-    - ``2`` — configuration / environment problems (missing Godot, missing
-      GUT, bad config).  These are "fix your setup" errors.
+    - ``2`` — configuration / environment problems (missing Godot, bad
+      config).  These are "fix your setup" errors.
     - ``1`` — tool failures (tests failed, lint found issues, coverage below
       threshold).  These are "your code has a problem" errors.
 """
@@ -51,10 +51,6 @@ class ConfigError(GdToolsError):
 
 class GodotNotFoundError(GdToolsError):
     """Raised when the Godot binary cannot be found."""
-
-
-class GUTNotInstalledError(GdToolsError):
-    """Raised when GUT is not installed in the project."""
 
 
 class CoveragePlanError(GdToolsError):

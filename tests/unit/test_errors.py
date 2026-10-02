@@ -8,7 +8,6 @@ from gd_tools.errors import (
     CoverageThresholdError,
     FormatError,
     GdToolsError,
-    GUTNotInstalledError,
     GodotNotFoundError,
     LintError,
     TestFailureError,
@@ -45,7 +44,6 @@ def test_gd_tools_error_message():
     [
         ConfigError,
         GodotNotFoundError,
-        GUTNotInstalledError,
         CoveragePlanError,
     ],
 )

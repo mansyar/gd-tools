@@ -11,12 +11,12 @@ _Archived tracks live in `./archive/`._
 ---
 
 - [x] **Track: Native Test Runtime Foundation**
-  *Link: [native_test_foundation_20260925](./tracks/native_test_foundation_20260925/index.md)*
+  *Link: [native_test_foundation_20260925](./archive/native_test_foundation_20260925/index.md)*
 
 ---
 
 - [x] **Track: Native Scene and Resource Integration**
-  *Link: [native_scene_integration_20260925](./tracks/native_scene_integration_20260925/index.md)*
+  *Link: [native_scene_integration_20260925](./archive/native_scene_integration_20260925/index.md)*
 
 ---
 
@@ -206,3 +206,12 @@ _Archived tracks live in `./archive/`._
   migration path, reframe `doctor` as a migration advisor, and prepare the
   v0.6.0 release: version bump, CHANGELOG, full docs truth pass)
   *Link: [gut_bridge_removal_20261001](./archive/gut_bridge_removal_20261001/index.md)*
+
+---
+
+- [x] **Track: v0.6.0 Legacy Sweep** (chore: remove code and configuration
+  orphaned by the GUT bridge removal — dead `GUT_VERSION_MAP` version mapping,
+  audited GUT remnants, legacy `[test].gutconfig` config key — keep the
+  single-valued `runtime` field for GdUnit4 forward-compat, truth-pass the
+  living docs, and retire Roadmap Track 32 as obsolete)
+  *Link: [legacy_sweep_20261002](./archive/legacy_sweep_20261002/index.md)*

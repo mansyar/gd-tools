@@ -1,0 +1,9 @@
+{
+  "track_id": "legacy_sweep_20261002",
+  "title": "v0.6.0 Legacy Sweep",
+  "type": "chore",
+  "status": "complete",
+  "branch": "chore/legacy-sweep-20261002",
+  "created": "2026-10-02",
+  "description": "Remove code and configuration orphaned by the v0.6.0 GUT bridge removal (GUT_VERSION_MAP, gutconfig config key, audited GUT remnants) and reconcile living documentation with shipped v0.6.0 behavior, including retiring Roadmap Track 32 as obsolete."
+}
