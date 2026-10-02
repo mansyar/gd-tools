@@ -1,10 +1,10 @@
+## Unreleased
+
 ## v0.6.0 (2026-10-02)
 
 ### Breaking
 
 - **native-test**: Remove the GUT compatibility bridge. The bundled `class_name GutTest` shim is deleted and `extends GutTest` no longer resolves: test discovery rejects legacy suites with exit 2 — "GUT runtime support was removed in v0.6.0. The native runtime is the default. Run `gd-tools migrate` or see docs/gut-migration.md." `--runtime gut` and `test.runtime = "gut"` in `gd-tools.toml` are rejected with exit 2 and the same guidance (`[test].runtime` now only accepts `"native"`), and `gd-tools init --with-gut` is removed — `gd-tools init` bootstraps the native runtime only. `gd-tools doctor` runs 9 checks (down from 12): the GUT Installed / GUT Version / GUT Suites / GUT Config checks are replaced by a single informational **Legacy GUT** advisory that detects leftover `addons/gut`, `.gutconfig.json`, and `extends GutTest` suites and points at the migration path. `gd-tools migrate` is unchanged and fully supported (report / `--config-only` / `--apply`; its construct catalog is retained in the migrate scanner) — it is the supported path from GUT to the native runtime. See docs/gut-migration.md for the full migration guide.
-
-## Unreleased
 
 ### Feat
 
