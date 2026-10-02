@@ -20,19 +20,23 @@
   - [x] Test: malformed YAML → raises config error (maps to exit 2)
 - [x] Task: Implement `pre_commit.py` to pass tests
 - [x] Task: Verify coverage (≥80% line / ≥70% branch) on new module
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: 936a9ff]
 
 ## Phase 2: CLI Command Wiring
 
-- [ ] Task: Write failing tests — `gd-tools install-hooks` command
+- [x] Task: Write failing tests — `gd-tools install-hooks` command
+      (12 CLI tests written red-first; one design correction: `--hooks` uses
+      comma-separated values with `flag_value=""` so a bare `--hooks`
+      resolves to nothing-to-do/exit 1 instead of a click usage error)
   - [ ] Test: interactive prompt toggles (format ✅ / lint ✅ / test ❌ defaults)
   - [ ] Test: `--all`, `--hooks`, `--non-interactive` flags
   - [ ] Test: non-TTY + no flags → default pair (format + lint), exit 0
   - [ ] Test: exit codes — 0 installed, 1 nothing-to-do, 2 config/environment
         error
-- [ ] Task: Implement command in `cli.py` (registration, flags, rich prompt,
+- [x] Task: Implement command in `cli.py` (registration, flags, rich prompt,
       output helpers)
-- [ ] Task: Full suite green (`CI=true pytest`) + quality gates (ruff, black)
+- [x] Task: Full suite green (`CI=true pytest`) + quality gates (ruff, black)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Documentation
