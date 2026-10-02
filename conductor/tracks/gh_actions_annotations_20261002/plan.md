@@ -2,16 +2,16 @@
 
 ## Phase 1: Lint Annotations
 
-- [ ] **Task 1.1 — Write failing tests (Red):** unit tests for
+- [x] **Task 1.1 — Write failing tests (Red):** unit tests for
   `format_lint_github_actions()` in `tests/test_lint_runner.py` — exact
   `::error file=,line=,col=,title=::message` shape, canonical field
   order, percent-escaping of `%`/`\r`/`\n` in message and fields,
   POSIX relative paths, multiple violations ordering.
-- [ ] **Task 1.2 — Implement (Green):** add `format_lint_github_actions()`
+- [x] **Task 1.2 — Implement (Green):** add `format_lint_github_actions()`
   to `src/gd_tools/lint_runner.py`; extend `lint --report-format`
   `click.Choice` with `github-actions` in `cli.py` and route output to
   stdout; exit codes unchanged.
-- [ ] **Task 1.3 — Verify quality gates + commit:** `CI=true pytest
+- [~] **Task 1.3 — Verify quality gates + commit:** `CI=true pytest
   tests/test_lint_runner.py` green; ruff + black clean; coverage ≥80%
   line / ≥70% branch for new code; commit
   `feat(lint): add github-actions annotation format` + git note; update
