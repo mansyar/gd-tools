@@ -59,26 +59,27 @@
 
 ## Phase 3: Config Alignment + Docs + Final Verification
 
-- [ ] Task 3.1: Write failing config tests (Red)
-  - [ ] Tests in `tests/test_config.py` (or the coverage config test
-        module if that is where the validator is tested):
-        `[coverage].format = "json"` validates; invalid value error
-        message lists all valid values.
-  - [ ] Run tests, confirm Red.
-- [ ] Task 3.2: Update config validator (Green)
-  - [ ] Align the `[coverage].format` validation in `config.py` with
+- [x] Task 3.1: Write failing config tests (Red)  <!-- 4aa14ac -->
+  - [x] Tests in `tests/unit/test_config.py`: `[coverage].format
+        = "json"` validates; invalid value error message lists
+        all valid values.
+  - [x] Run tests, confirm Red (2 failures).
+- [x] Task 3.2: Update config validator (Green)  <!-- 4aa14ac -->
+  - [x] Align the `[coverage].format` validation in `config.py` with
         the new format set; update docstring/error message.
-  - [ ] Run tests, confirm Green.
-  - [ ] Commit (`fix(config): accept json in coverage format
+  - [x] Run tests, confirm Green (235 config+CLI tests pass).
+  - [x] Commit (`fix(config): accept json in coverage format
         validator`) and attach git note; update plan task statuses.
-- [ ] Task 3.3: Update documentation
-  - [ ] Update `docs/USER_GUIDE.md` format tables/help text (json
+- [x] Task 3.3: Update documentation  <!-- 9133976 -->
+  - [x] Update `docs/USER_GUIDE.md` format tables/help text (json
         format, canonical `--report-format`); check
         `docs/gd-tools.schema.json` for a format enum; update
-        CHANGELOG under Unreleased.
-  - [ ] Commit (`docs(coverage): document json report format and
+        CHANGELOG under Unreleased. (Schema regenerated via
+        `gd-tools config schema`; byte-identical sync test passes.)
+  - [x] Commit (`docs(coverage): document json report format and
         flag unification`).
-- [ ] Task 3.4: Final quality gate
-  - [ ] `ruff check src/ tests/ && black --check src/ tests/ &&
-        CI=true pytest` all pass; coverage ≥80% line / ≥70% branch.
+- [x] Task 3.4: Final quality gate  <!-- 9133976 -->
+  - [x] `ruff check src/ tests/ && black --check src/ tests/ &&
+        CI=true pytest` all pass; coverage ≥80% line / ≥70% branch
+        (95.49%, 1575 passed / 7 skipped).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
