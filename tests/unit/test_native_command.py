@@ -360,49 +360,6 @@ def test_no_cache_flag_bypasses_the_preflight_cache(tmp_path):
     assert captured["kwargs"]["use_cache"] is False
 
 
-def test_preflight_manifest_declares_gut_runtime_for_bridge_runs(tmp_path):
-    """Any bridge suite flips the manifest runtime marker to the bridge."""
-    bridge = NativeSuite(
-        name="LegacySuite",
-        path="res://test/legacy_test.gd",
-        runtime=RuntimeMode.GUT,
-    )
-    manifest = _run_with_preflight_capture(tmp_path, [bridge])["manifest"]
-
-    assert manifest.runtime == RuntimeMode.GUT
-
-
-def test_preflight_manifest_declares_gut_runtime_for_mixed_runs(tmp_path):
-    """A mixed run reports the bridge marker so diagnostics stay honest."""
-    native = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
-    bridge = NativeSuite(
-        name="LegacySuite",
-        path="res://test/legacy_test.gd",
-        runtime=RuntimeMode.GUT,
-    )
-    manifest = _run_with_preflight_capture(tmp_path, [native, bridge])[
-        "manifest"
-    ]
-
-    assert manifest.runtime == RuntimeMode.GUT
-
-
-def test_bridge_run_prints_migration_notice(tmp_path):
-    """Bridge runs announce the temporary bridge path (FR-9)."""
-    bridge = NativeSuite(
-        name="LegacySuite",
-        path="res://test/legacy_test.gd",
-        runtime=RuntimeMode.GUT,
-    )
-    captured = _run_with_preflight_capture(tmp_path, [bridge])
-
-    notices = [str(call.args[0]) for call in captured["notice_calls"]]
-    assert any(
-        "compatibility bridge" in notice and "docs/gut-migration.md" in notice
-        for notice in notices
-    )
-
-
 def test_native_only_run_prints_no_bridge_notice(tmp_path):
     """Pure native runs do not mention the bridge."""
     native = NativeSuite(name="ExampleSuite", path="res://test/example.gd")

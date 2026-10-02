@@ -138,22 +138,13 @@ def test_discovery_ignores_non_suite_helper_scripts(tmp_path):
     assert discover_native_suites(tmp_path, test_dirs=["test"]) == []
 
 
-def test_discovery_classifies_gut_suite_as_bridge_runtime(tmp_path):
-    """A GutTest suite is discovered as a bridge suite, not an error."""
+def test_discovery_rejects_guttest_suite_with_removal_guidance(tmp_path):
+    """A GutTest suite fails discovery: the bridge was removed in v0.6.0."""
     (tmp_path / "project.godot").touch()
     _gut_suite(tmp_path / "test" / "legacy_test.gd")
 
-    suites = discover_native_suites(tmp_path, test_dirs=["test"])
-
-    assert len(suites) == 1
-    assert suites[0].runtime is RuntimeMode.GUT
-    assert suites[0].name == "LegacySuite"
-    assert suites[0].path == "res://test/legacy_test.gd"
-    assert suites[0].tags == ["legacy"]
-    assert [test.name for test in suites[0].tests] == [
-        "test_legacy_assertion",
-        "test_legacy_signal",
-    ]
+    with pytest.raises(NativeDiscoveryError, match=r"legacy_test\.gd"):
+        discover_native_suites(tmp_path, test_dirs=["test"])
 
 
 def test_discovery_marks_native_suites_with_native_runtime(tmp_path):
@@ -167,29 +158,19 @@ def test_discovery_marks_native_suites_with_native_runtime(tmp_path):
     assert suites[0].runtime is RuntimeMode.NATIVE
 
 
-def test_discovery_mixed_suites_keep_stable_path_order(tmp_path):
-    """Mixed native and bridge suites are ordered by path, not kind."""
+def test_discovery_keeps_stable_path_order(tmp_path):
+    """Discovered suites are ordered by path, not discovery timing."""
     (tmp_path / "project.godot").touch()
-    _gut_suite(tmp_path / "test" / "zeta_legacy_test.gd")
+    _native_suite(tmp_path / "test" / "zeta_example_test.gd")
     _native_suite(tmp_path / "test" / "alpha_example_test.gd")
-    _gut_suite(tmp_path / "test" / "mid_legacy_test.gd")
-    # Give the middle bridge suite a distinct class name.
-    _write(
-        tmp_path / "test" / "mid_legacy_test.gd",
-        """extends GutTest
-class_name MidLegacySuite
-
-func test_mid() -> void:
-    pass
-""",
-    )
+    _native_suite(tmp_path / "test" / "mid_example_test.gd")
 
     suites = discover_native_suites(tmp_path, test_dirs=["test"])
 
-    assert [(suite.name, suite.runtime) for suite in suites] == [
-        ("ExampleSuite", RuntimeMode.NATIVE),
-        ("MidLegacySuite", RuntimeMode.GUT),
-        ("LegacySuite", RuntimeMode.GUT),
+    assert [suite.path for suite in suites] == [
+        "res://test/alpha_example_test.gd",
+        "res://test/mid_example_test.gd",
+        "res://test/zeta_example_test.gd",
     ]
 
 
@@ -257,29 +238,6 @@ func test_value(value: String) -> void:
 
     assert len(suites) == 1
     assert [test.name for test in suites[0].tests] == ["test_value"]
-
-
-def test_discovery_finds_parameterized_bridge_suite(tmp_path):
-    """A GutTest suite with parameterized methods is a bridge suite."""
-    (tmp_path / "project.godot").touch()
-    _write(
-        tmp_path / "test" / "legacy_parameterized_test.gd",
-        """extends GutTest
-class_name LegacyParameterizedSuite
-
-func before_all() -> void:
-    parameterize(["value"], [[1], [2]])
-
-func test_legacy_value(value: int) -> void:
-    pass
-""",
-    )
-
-    suites = discover_native_suites(tmp_path, test_dirs=["test"])
-
-    assert len(suites) == 1
-    assert suites[0].runtime is RuntimeMode.GUT
-    assert [test.name for test in suites[0].tests] == ["test_legacy_value"]
 
 
 def test_discovery_case_selector_matches_parameterized_method(tmp_path):

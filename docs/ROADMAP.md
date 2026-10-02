@@ -2,7 +2,7 @@
 
 **Version:** 0.5.0
 **Date:** 2026-10-01
-**Status:** Native test runtime is the supported default; Phase 5 hardening and release in progress (GUT bridge removal targeted for v0.6.0)
+**Status:** Native test runtime is the supported default; the GUT compatibility bridge was removed in v0.6.0
 **Related docs:** [PRD.md](./PRD.md), [ROADMAP_v1.md](./ROADMAP_v1.md) (archived v1 roadmap, Tracks 0-22), [AUDIT_REPORT.md](./AUDIT_REPORT.md), [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
@@ -38,8 +38,8 @@ new differentiating territory. The phasing is designed so that:
 
 **Track:** `native_test_foundation_20260925`
 **Status:** Completed. The native runtime is the supported default for
-`gd-tools test`; the GUT compatibility bridge is deprecated as of v0.5.0,
-with removal targeted for v0.6.0.
+`gd-tools test`; the GUT compatibility bridge was deprecated as of v0.5.0
+and removed in v0.6.0.
 
 The native Godot test runtime provides a bundled `GdToolsTest` base class,
 async helpers, per-suite process isolation, native JSON/NDJSON/JUnit results,
@@ -50,16 +50,11 @@ tag/file/timeout selectors.
 
 The migration path is complete: scene/resource integration, parameterized
 tests, parallel suite execution, and the preflight cache all shipped with the
-native runtime tracks and v0.5.0. The temporary GUT compatibility bridge
-remains available during the migration period; legacy `GutTest` suites are
-routed through it automatically:
+native runtime tracks and v0.5.0. The temporary GUT compatibility bridge —
+deprecated as of v0.5.0 — was removed in v0.6.0; legacy `GutTest` suites are
+no longer runnable and must be migrated.
 
-```bash
-gd-tools init --with-gut       # deprecated: opt into legacy bootstrap files
-```
-
-It covers only the core GUT subset required for the transition and is not a
-long-term public API. `gd-tools migrate` provides dry-run reports, opt-in
+`gd-tools migrate` provides dry-run reports, opt-in
 rewrites, and `.gutconfig.json` translation (Track `migration_tooling_20260929`).
 The durable product decision — including the migration boundary and the
 bridge retirement plan — is recorded in
@@ -70,8 +65,8 @@ bridge retirement plan — is recorded in
 - [x] Update `init`, `doctor`, CI, packaging, and documentation (shipped with
   v0.5.0 — Track `native_release_readiness_20260930`)
 - [x] Publish the native runtime release (v0.5.0, 2026-09-30)
-- [ ] Remove the temporary bridge after its migration period (deprecation
-  notice ships in v0.5.0; removal targeted for v0.6.0)
+- [x] Remove the temporary bridge after its migration period (deprecation
+  notice shipped in v0.5.0; removal shipped in v0.6.0)
 
 ### Native Runtime Compatibility Matrix
 
@@ -93,17 +88,12 @@ bundle and re-sign it ad hoc — see the `install-godot` action.
 
 Three limits of this matrix are known and deliberate:
 
-1. **The legacy GUT bridge is unverified on Godot 4.5.** The repository vendors
-   a single GUT release (9.6.0), and GUT itself refuses to run below Godot 4.6.
-   Production resolves the right version per engine through `GUT_VERSION_MAP`,
-   but the test fixture does not consult it. Only the native runtime — the
-   default — is covered on 4.5.
-2. **Windowed suites are unverified on every hosted runner.** GitHub runners are
+1. **Windowed suites are unverified on every hosted runner.** GitHub runners are
    Server containers: Linux has no display server, and Windows has neither a GPU
    nor an audio endpoint, so a windowed Godot start-up fails before any test
    runs. Those tests skip with an explicit reason rather than reporting a pass.
    Closing this needs `xvfb` plus a dummy audio driver.
-3. **Pipeline duration.** The full pipeline ran at about 13 minutes, above the
+2. **Pipeline duration.** The full pipeline ran at about 13 minutes, above the
    sub-10-minute target in `conductor/product.md`. After the macOS cells
    landed, a parity verification run completed in roughly six minutes of wall
    clock, so the 13-minute figure no longer holds on the current pipeline;

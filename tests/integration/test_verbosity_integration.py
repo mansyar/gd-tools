@@ -13,7 +13,7 @@ fixture .gd files in tmp_path.
 import io
 import zipfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -244,18 +244,10 @@ def test_quiet_doctor_shows_one_line_pass(tmp_path, monkeypatch):
     _setup_project(tmp_path)
     monkeypatch.chdir(tmp_path)
 
-    fake_zip = _create_fake_gut_zip()
-    mock_response = Mock()
-    mock_response.content = fake_zip
-    mock_response.raise_for_status = Mock()
-
     godot_info = GodotInfo(path="/fake/godot", version="4.5.1", is_valid=True)
 
     # Run init first to set up the project
-    with (
-        patch("gd_tools.init.find_godot", return_value=godot_info),
-        patch("gd_tools.init.requests.get", return_value=mock_response),
-    ):
+    with patch("gd_tools.init.find_godot", return_value=godot_info):
         from gd_tools.init import run_init
 
         run_init(non_interactive=True)

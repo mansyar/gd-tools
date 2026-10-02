@@ -9,8 +9,8 @@ from gd_tools.migration.gutconfig import (
 
 pytestmark = pytest.mark.unit
 
-# Every key gd-tools init writes into .gutconfig.json (see
-# gd_tools.init._GUTCONFIG_OVERWRITE_KEYS / _GUTCONFIG_PRESERVE_KEYS).
+# Every key gd-tools migrate maps out of .gutconfig.json (see
+# gd_tools.migration.gutconfig.GUTCONFIG_OPTIONS).
 _TEMPLATE_KEYS = frozenset(
     {
         "dirs",

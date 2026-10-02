@@ -22,9 +22,9 @@ coverage for GDScript that no existing tool provides.
 Tests are written against `GdToolsTest`, a native GDScript base class that runs
 inside your Godot project, so a test can touch the real scene tree, await real
 signals, and assert on real engine objects without leaving the engine. Existing
-suites that `extend GutTest` run through the built-in compatibility bridge --
-no GUT addon required -- while projects migrate. The bridge is deprecated as of
-v0.5.0 and will be removed in v0.6.0.
+suites that `extend GutTest` are no longer runnable -- the GUT compatibility
+bridge was removed in v0.6.0; run `gd-tools migrate` to move them onto
+`GdToolsTest`.
 
 One install, one config, one mental model.
 
@@ -34,7 +34,7 @@ One install, one config, one mental model.
 |---------|-------------|
 | **Unified workflow** | One install, one config (`gd-tools.toml`), one mental model for test, lint, format, and coverage. Consistent terminal output with colored markers and summary footers across all commands. |
 | **Native test runtime** | Tests extend `GdToolsTest` and run inside Godot itself. Scene and resource integration tests reach the real scene tree through an explicit context object rather than a proxy. |
-| **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute -- native test and coverage addons deployed, configs generated. Existing `GutTest` suites run through the built-in compatibility bridge with no addon install. |
+| **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute -- native test and coverage addons deployed, configs generated. |
 | **Coverage gap-filling** | Production-quality line and branch coverage for GDScript -- HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. `# gd-tools: no cover` annotations exclude debug-only code from the numbers. `coverage run` collects coverage during manual playtest sessions, not just automated tests. |
 | **CI/CD friendly** | Exit codes, `--check` flags, machine-readable output (JSON, JUnit XML, LCOV, Cobertura), no interactive prompts in CI mode. |
 | **Standalone compatibility** | gdlint and gdformat continue to work if invoked directly. `gd-tools` is a layer on top, not a lock-in. |
@@ -78,11 +78,11 @@ directory. The command is idempotent -- safe to re-run. If you've modified
 coverage addon files, they are automatically backed up to
 `addons/gd-tools-coverage/.backups/` before being overwritten.
 
-The legacy GUT runtime has been replaced by the built-in compatibility bridge:
-suites extending `GutTest` run on the native runtime with no GUT addon
-installed. The bridge is deprecated as of v0.5.0 and will be removed in
-v0.6.0. See the [migration guide](./docs/gut-migration.md) for the
-supported subset and the steps to move fully onto `GdToolsTest`.
+The GUT compatibility bridge was removed in v0.6.0: suites extending `GutTest`
+are no longer runnable -- `gd-tools test` rejects them with exit 2 and
+migration guidance. Run `gd-tools migrate` and see the
+[migration guide](./docs/gut-migration.md) for the steps to move fully onto
+`GdToolsTest`.
 
 A test suite is any class extending `GdToolsTest`:
 
@@ -98,8 +98,8 @@ func test_health_starts_at_full() -> void:
 | Command | Description |
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. |
-| `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, bridge-eligible GUT suites, coverage addon, tooling. |
-| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites extending `GdToolsTest` and `GutTest` are detected and routed automatically (`GutTest` suites run through the compatibility bridge). Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
+| `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, coverage addon, tooling; reports legacy GUT artifacts as migration advice. |
+| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites must extend `GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration guidance. Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
 | `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
@@ -175,7 +175,7 @@ The same file→suite mapping powers the non-interactive `gd-tools test
 Tests](#selecting-and-filtering-tests)).
 
 - Native runtime only: the removed legacy GUT runtime (`--runtime gut`) is
-  rejected with exit 2; `GutTest` suites run through the compatibility bridge.
+  rejected with exit 2; `GutTest` suites must be migrated (`gd-tools migrate`).
 - Interactive only: `--watch` combined with `CI=true` exits 2.
 - The terminal is cleared between runs; the banner shows how many files are
   watched. While idle, `Ctrl+C` exits 0; interrupting an in-flight run kills
@@ -184,37 +184,18 @@ Tests](#selecting-and-filtering-tests)).
   scope is the project root minus standard excludes (`.godot/`, `.gd-tools/`,
   `.git/`, and the gd-tools addons).
 
-### Native Runtime vs. GUT Compatibility Bridge
+### Migrating Legacy GUT Suites
 
-The native runtime is the default and the forward path. Suites extending
-`GutTest` run through the built-in compatibility bridge on the same native
-runner; the bridge is deprecated as of v0.5.0 and will be removed in v0.6.0.
-
-| Capability | Native runtime (`GdToolsTest`) | Bridge (`GutTest`) |
-|------------|----------------|--------------|
-| Base class | `GdToolsTest` extends `Node` | `GutTest`, provided by gd-tools (no GUT addon) |
-| Discovery | `test_*` methods, by directory or exact file selector | Same; routed automatically per file |
-| Lifecycle hooks | `before_all`, `after_all`, `before_each`, `after_each` | Same, plus `prerun_setup` and `postrun_teardown` |
-| Assertions | Full native assertion set plus `fail()`, `skip_test()`, `pending_test()` | Documented GUT core subset -- unsupported constructs fail at preflight |
-| Async waits | `wait_process_frame`, `wait_physics_frames`, `wait_seconds`, `wait_for_signal(signal, timeout)` | GUT helper family, incl. `wait_until`, `wait_while`, `yield_*` |
-| Tags | Class-level tags, filtered with `--tag` | Same |
-| Test selectors | `--suite`, `--test`, `--test-timeout` | Same |
-| Scene and resource integration | `const INTEGRATION` plus `GdToolsTestContext` for scene root, node lookup, named resources, and bounded signal waits | Not wired into the bridge shim |
-| Retries | Configurable per test (`[test].retries`) | Same |
-| Line and branch coverage | Yes | Yes |
-| JUnit XML output | Yes | Yes |
-| Mocking and stubbing | `double()`, `partial_double()`, `stub()` (`.to_return`/`.to_call_super`), `assert_called*` family | Same -- inherited from `GdToolsTest` with identical semantics |
-| Parameterized tests | `parameterize()` in `before_all`, values injected via `use_parameters` | Same -- bridge suites use the same machinery |
-| Skipping a test at runtime | `skip_test()` and `pending_test()` | Yes |
-| Parallel execution | Opt-in -- `--parallel N` or `[test].parallel` (bounded worker pool, 1-32) | Bridge suites run in the same pool |
-| Editor plugin | `gd-tools init` deploys the plugin; enable in Godot's Project Settings → Plugins to get a test/coverage dock and an inline coverage heatmap | Same |
+The GUT compatibility bridge was removed in v0.6.0; the native runtime
+(`GdToolsTest`) is the only supported runtime. Suites extending `GutTest` are
+rejected by `gd-tools test` with exit 2 and migration guidance, and
+`--runtime gut` is rejected the same way. Run `gd-tools migrate` and see the
+[migration guide](./docs/gut-migration.md) to move legacy suites onto the
+native runtime.
 
 **Known limitations.** Parallel execution is opt-in and off by default
-(`--parallel N` / `[test].parallel`); suites run sequentially without it. The
-bridge itself is
-deprecated as of v0.5.0 and will be removed in v0.6.0. See the
-[migration guide](./docs/gut-migration.md) for the bridge's supported subset,
-[User Guide](./docs/USER_GUIDE.md#34-test) for the full flag reference, and
+(`--parallel N` / `[test].parallel`); suites run sequentially without it. See
+the [User Guide](./docs/USER_GUIDE.md#34-test) for the full flag reference and
 [Roadmap](./docs/ROADMAP.md#native-runtime-transition-completed-foundation)
 for what is planned.
 
@@ -311,7 +292,7 @@ binary = ""  # Optional -- auto-detected if unset
 test_dirs = ["test", "tests"]
 prefix = "test_"
 suffix = ".gd"
-gutconfig = ".gutconfig.json"  # legacy; not read by the native runtime or the bridge
+gutconfig = ".gutconfig.json"  # legacy; not read by any runtime
 runtime = "native"        # native (default); "gut" is no longer a runnable runtime
 timeout_seconds = 5.0     # default per-test timeout for async native tests
 retries = 0               # opt-in retries per native test
@@ -415,8 +396,7 @@ hard parts.
 
 - **[GUT (Godot Unit Test)](https://github.com/bitwes/Gut)** by
   [bitwes](https://github.com/bitwes): the GDScript test framework whose
-  core API the built-in compatibility bridge reproduces while projects
-  migrate to the native runtime.
+  core API informed the native runtime's assertion surface.
 - **[gdtoolkit](https://github.com/Scony/godot-gdscript-toolkit)** by
   [Scony](https://github.com/Scony): provides `gdlint` and `gdformat`, which
   `gd-tools lint` and `gd-tools format` wrap.

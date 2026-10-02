@@ -38,8 +38,8 @@ Development teams requiring automated quality gates. They value:
 
 **Native runtime migration (post-v1).** The `GdToolsTest` initiative is a
 product evolution track. It does not retroactively change the historical v1
-release gates, but the native runtime must be the supported default before
-the temporary GUT bridge is removed.
+release gates; the native runtime is the supported default, and the
+temporary GUT bridge was removed in v0.6.0.
 
 The roadmap phases:
 1. **Phase 0 — Spike:** Validate the riskiest assumption (runtime GDScript instrumentation) before building coverage.
@@ -64,11 +64,11 @@ This positioning avoids leading with the riskiest, most complex feature while ma
 |-------|-------------|
 | **Unified workflow** | One install, one config (`gd-tools.toml`), one mental model for test, lint, format, and coverage. |
 | **Native test runtime** | `GdToolsTest` provides Godot-native unit and scene/resource integration tests with async execution, structured diagnostics, and line/branch coverage. |
-| **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute — native test runtime and coverage addon deployed, configs generated. GUT is opt-in during migration. |
+| **Zero-friction bootstrap** | `gd-tools init` gets a project fully set up in under a minute — native test runtime and coverage addon deployed, configs generated. Legacy GUT projects migrate via `gd-tools migrate`. |
 | **Coverage gap-filling** | Production-quality line and branch coverage for GDScript — HTML, LCOV, and Cobertura reports that integrate with CI and code review tools. |
 | **CI/CD friendly** | Exit codes, `--check` flags, `--quiet` for minimal CI output, machine-readable output, no interactive prompts when run non-interactively. |
-| **Migration-friendly testing** | A bounded GUT bridge supports gradual migration from existing suites without making GUT a permanent architectural dependency. |
-| **Standalone compatibility** | gdlint and gdformat continue to work if invoked directly. GUT remains available through the temporary bridge. `gd-tools` is a layer on top, not a lock-in. |
+| **Migration-friendly testing** | `gd-tools migrate` converts legacy GUT suites and configuration to the native runtime with reviewable changes, without making GUT a permanent architectural dependency. |
+| **Standalone compatibility** | gdlint and gdformat continue to work if invoked directly. GUT is not supported since v0.6.0; `gd-tools migrate` is the supported path off it. `gd-tools` is a layer on top, not a lock-in. |
 | **Convention over configuration** | Sensible defaults out of the box; config for when conventions don't fit. |
 | **Workspace hygiene** | `gd-tools clean` removes generated artifacts under `.gd-tools/` (coverage output, native artifacts, baselines, worker cache) with a safe no-flag inventory, `--dry-run`, and hard protection for project files and addons. |
 
@@ -82,7 +82,7 @@ This positioning avoids leading with the riskiest, most complex feature while ma
 
 1. The native test runtime is intentionally focused on GDScript unit and scene/resource integration tests; it is not a general-purpose testing ecosystem.
 2. Not a linter/formatter engine — we use gdtoolkit.
-3. Not a Godot plugin manager — we bootstrap the native test addon, coverage addon, and optional GUT bridge only.
+3. Not a Godot plugin manager — we bootstrap the native test addon, coverage addon, and migration tooling only.
 4. No C# support — GDScript only.
 5. No Godot < 4.5 support.
 6. No IDE/editor integration in v1 — CLI only. (Post-v1 evolution: the
@@ -96,14 +96,14 @@ A successful v1.0 release is defined by:
 
 - **PyPI publish.** The package is published to PyPI and installable via `pip install gd-tools-cli`. This is the primary release gate — the product is not "released" until it is on PyPI and a clean-environment install produces a working `gd-tools --version`.
 
-Native test runtime migration gates (completed before the temporary GUT bridge is removed):
+Native test runtime migration gates (all completed; the GUT bridge was removed in v0.6.0):
 
 - A clean Godot project runs native tests without GUT installed.
 - `gd-tools test` uses the native runtime by default.
 - Native unit and scene/resource integration tests run on Godot 4.5+.
 - Async execution, lifecycle hooks, selectors, tags, and structured diagnostics are reliable.
 - Line and branch coverage work without a permanent native test autoload.
-- The bounded GUT bridge supports migration without silent configuration loss.
+- The bounded GUT bridge supported migration without silent configuration loss (now superseded by `gd-tools migrate`, retained permanently).
 
 Supporting success metrics (measured but not gating):
 - All CLI commands (test, lint, format, coverage, init, doctor, config) functional end-to-end.
@@ -113,7 +113,7 @@ Supporting success metrics (measured but not gating):
 
 ## 9. Native Test Runtime Direction
 
-**Status:** Foundation completed; broader migration gates remain
+**Status:** Complete — the native runtime is the sole supported path (v0.6.0)
 **Scope:** Post-v0.4 native testing initiative
 
 ### Decision
@@ -122,8 +122,9 @@ Supporting success metrics (measured but not gating):
 public native API is `GdToolsTest` / `GdToolsTestRunner`.
 
 The native runtime is the default execution path for `gd-tools test`.
-GUT-style suites remain runnable during a one-release migration period
-through the built-in compatibility bridge (no GUT addon required).
+GUT-style suites are no longer runnable: the built-in compatibility bridge
+(shipped in v0.5.0) was removed in v0.6.0, and `gd-tools migrate` is the
+permanent migration path.
 
 ### Runtime model
 
@@ -194,17 +195,17 @@ through the built-in compatibility bridge (no GUT addon required).
 ### Migration boundary
 
 - `gd-tools test` defaults to native execution.
-- The legacy GUT subprocess path has been removed; suites extending
-  `GutTest` run through the compatibility bridge automatically.
-- The GUT bridge supports only a documented core subset:
-  base class, test discovery, lifecycle hooks, core assertions, and async
-  helpers.
-- Unsupported GUT features fail with actionable migration guidance.
-- `.gutconfig.json` is translated and preserved during migration.
-- `gd-tools.toml` is the canonical configuration source.
-- A guided migration command previews changes before rewriting user files.
-- New projects install the native runtime by default; GUT installation is
-  opt-in during the migration period.
+- The legacy GUT subprocess path and the v0.5.0 compatibility bridge have
+  both been removed; suites extending `GutTest` are rejected with exit `2`
+  and migration guidance.
+- `gd-tools migrate` is retained permanently: it detects legacy suites,
+  translates `.gutconfig.json` into `gd-tools.toml`, and previews rewrites
+  before applying them.
+- Unsupported legacy GUT features are surfaced by the migrate report with
+  actionable guidance rather than failing a test run.
+- `gd-tools.toml` is the canonical configuration source (`test.runtime`
+  accepts only `"native"`).
+- New projects install the native runtime by default; GUT is never installed.
 
 ### Product success criteria
 
@@ -216,9 +217,9 @@ The migration is complete when:
 4. Async tests, lifecycle hooks, selectors, tags, and structured diagnostics
    work reliably.
 5. Line and branch coverage work without a permanent native test autoload.
-6. GUT bridge users can migrate with reviewable changes.
-7. The bridge is removed after the bounded migration period (deprecated in
-   v0.5.0 with a one-time notice; removal targeted for v0.6.0).
+6. GUT bridge users could migrate with reviewable changes (`gd-tools migrate`).
+7. The bridge was removed in v0.6.0 (deprecated in v0.5.0 with a one-time
+   notice).
 8. Documentation, CI, packaging, and release checks reflect the native
    runtime as the supported path.
 

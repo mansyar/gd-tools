@@ -23,7 +23,8 @@ from gd_tools.migration.scan import MigrationReport, SuiteReport
 _WIDTH = 100
 
 _DOC_POINTER = (
-    "See docs/gut-migration.md for the supported subset and migration steps."
+    "GUT runtime support was removed in v0.6.0. The native runtime is the "
+    "default. Run `gd-tools migrate` or see docs/gut-migration.md."
 )
 
 _OPTIONS_BY_KEY = {option.key: option for option in GUTCONFIG_OPTIONS}
@@ -45,7 +46,7 @@ def _render_suite(console: Console, suite: SuiteReport) -> None:
             )
         )
         if suite.aliases:
-            console.print("    Bridge-only aliases (works now, rename later):")
+            console.print("    Legacy aliases (rename during migration):")
             for hit in suite.aliases:
                 console.print(f"      line {hit.line}: {hit.name}")
             console.print()
@@ -54,14 +55,16 @@ def _render_suite(console: Console, suite: SuiteReport) -> None:
     console.print(
         Text(f"[FAIL] {suite.path} ({suite.test_count} tests)", style="red")
     )
-    console.print("    Unsupported constructs (the bridge cannot run these):")
+    console.print(
+        "    Unsupported constructs (the native runtime cannot run these):"
+    )
     for hit in suite.unsupported:
         console.print(f"      line {hit.line}: {hit.name}")
-    if suite.aliases:
-        console.print("    Bridge-only aliases (works now, rename later):")
-        for hit in suite.aliases:
-            console.print(f"      line {hit.line}: {hit.name}")
-    console.print()
+        if suite.aliases:
+            console.print("    Legacy aliases (rename during migration):")
+            for hit in suite.aliases:
+                console.print(f"      line {hit.line}: {hit.name}")
+        console.print()
 
 
 def _render_config(

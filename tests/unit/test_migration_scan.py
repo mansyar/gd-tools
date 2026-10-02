@@ -8,6 +8,7 @@ from gd_tools.migration.scan import (
     build_migration_report,
     scan_source,
 )
+from gd_tools.native_test.bridge_scan import find_unsupported_constructs
 from gd_tools.native_test.protocol import NativeSuite, NativeTest, RuntimeMode
 
 pytestmark = pytest.mark.unit
@@ -206,3 +207,28 @@ class TestBuildMigrationReport:
 
         with pytest.raises(MigrationScanError, match="missing_test.gd"):
             build_migration_report(tmp_path, [suite])
+
+
+class TestFindUnsupportedConstructs:
+    def test_reports_all_occurrences(self):
+        """The public helper reports every construct call with its line."""
+        source = (
+            "extends GutTest\n"
+            "\n"
+            "func test_x() -> void:\n"
+            '    assert_setget(a, "x")\n'
+            '    assert_setget(b, "y")\n'
+        )
+
+        assert find_unsupported_constructs(source) == [
+            ("assert_setget", 4),
+            ("assert_setget", 5),
+        ]
+
+    def test_clean_source(self):
+        """A supported source produces no hits."""
+        source = (
+            "extends GutTest\n\nfunc test_x() -> void:\n    assert_eq(1, 1)\n"
+        )
+
+        assert find_unsupported_constructs(source) == []

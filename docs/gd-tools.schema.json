@@ -99,7 +99,7 @@
     },
     "TestConfig": {
       "additionalProperties": false,
-      "description": "Configuration for test discovery and GUT.\n\nAttributes:\n    test_dirs: Directories containing test files.\n    prefix: Test file prefix (GUT convention).\n    suffix: Test file suffix.\n    gutconfig: Path to the GUT config file.\n    runtime: Test execution runtime (native or legacy GUT).\n    timeout_seconds: Default per-test timeout for native async tests.\n    retries: Number of explicit opt-in retries per native test.\n    tags: Optional native suite tag filters.\n    parallel: Number of suites to run concurrently (1-32), or\n        None for sequential execution.",
+      "description": "Configuration for test discovery and native execution.\n\nAttributes:\n    test_dirs: Directories containing test files.\n    prefix: Test file prefix.\n    suffix: Test file suffix.\n    gutconfig: Path to the GUT config file (legacy; unused by the\n        native runtime).\n    runtime: Test execution runtime. Only ``\"native\"`` is valid;\n        the GUT runtime was removed in v0.6.0.\n    timeout_seconds: Default per-test timeout for native async tests.\n    retries: Number of explicit opt-in retries per native test.\n    tags: Optional native suite tag filters.\n    parallel: Number of suites to run concurrently (1-32), or\n        None for sequential execution.",
       "properties": {
         "test_dirs": {
           "items": {
@@ -124,11 +124,8 @@
           "type": "string"
         },
         "runtime": {
+          "const": "native",
           "default": "native",
-          "enum": [
-            "native",
-            "gut"
-          ],
           "title": "Runtime",
           "type": "string"
         },
@@ -171,7 +168,7 @@
     }
   },
   "additionalProperties": false,
-  "description": "Configuration schema for gd-tools.toml (gd-tools 0.5.0).",
+  "description": "Configuration schema for gd-tools.toml (gd-tools 0.6.0).",
   "properties": {
     "godot": {
       "$ref": "#/$defs/GodotConfig"

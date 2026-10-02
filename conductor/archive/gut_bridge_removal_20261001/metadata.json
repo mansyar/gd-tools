@@ -1,0 +1,8 @@
+{
+  "track_id": "gut_bridge_removal_20261001",
+  "type": "refactor",
+  "status": "completed",
+  "created_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-02T00:00:00Z",
+  "description": "Remove the deprecated GUT Compatibility Bridge runtime (GutTest shim, auto-routing, normalization) targeting v0.6.0, keep gd-tools migrate as the permanent migration path, and prepare the v0.6.0 release."
+}

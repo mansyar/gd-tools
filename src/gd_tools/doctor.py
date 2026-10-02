@@ -5,7 +5,6 @@ and configuration checks and reports pass/fail status with actionable
 fix hints. See TDD \u00a73.6 and PRD \u00a78.
 """
 
-import json
 import re
 import subprocess
 import sys
@@ -27,15 +26,12 @@ from .godot import (
     GodotNotFoundError,
     check_version_compatible,
     find_godot,
-    get_gut_version_for_godot,
 )
 from .init import (
     COVERAGE_ADDON_FILES,
     EDITOR_PLUGIN_FILES,
     NATIVE_TEST_ADDON_FILES,
-    get_installed_gut_version,
 )
-from .test_runner import is_gut_installed
 
 
 @dataclass
@@ -193,100 +189,40 @@ def check_gdtoolkit() -> CheckResult:
     )
 
 
-# --- GUT and Project Configuration Checks ---
+# --- Legacy GUT Advisory ---
 
 
-def check_gut_installed(project_root: Path) -> CheckResult:
-    """Check whether the GUT addon conflicts with the compatibility bridge.
-
-    The bridge provides ``class_name GutTest`` natively, so an installed
-    GUT addon would create a duplicate class and preflight would refuse
-    to run the project. GUT itself is never required.
-
-    Args:
-        project_root: Path to the Godot project root.
-
-    Returns:
-        CheckResult: passes when GUT is absent; warns when the addon
-        would conflict with the bridge.
-    """
-    if not is_gut_installed(project_root):
-        return CheckResult(
-            name="GUT Installed",
-            passed=True,
-            message=(
-                "GUT is not installed (not required; GutTest suites run "
-                "through the compatibility bridge)"
-            ),
-        )
-    return CheckResult(
-        name="GUT Installed",
-        passed=False,
-        message=(
-            "GUT addon is installed and conflicts with the compatibility "
-            "bridge (duplicate class_name GutTest)"
-        ),
-        fix_hint=(
-            "Remove addons/gut to run tests through the bridge. "
-            "See docs/gut-migration.md."
-        ),
-        severity="warning",
-    )
-
-
-def check_gut_version(project_root: Path, godot_version: str) -> CheckResult:
-    """Report the installed GUT version informationally.
-
-    The GUT version no longer affects any gd-tools runtime: the native
-    runtime and the compatibility bridge do not use the GUT addon, so a
-    mismatch can never block a project.
-
-    Args:
-        project_root: Path to the Godot project root.
-        godot_version: The detected Godot version string.
-
-    Returns:
-        CheckResult: always passes; message reports the installed version.
-    """
-    installed = get_installed_gut_version(project_root)
-    if installed is None:
-        return CheckResult(
-            name="GUT Version",
-            passed=True,
-            message="GUT is not installed; version check not applicable",
-        )
-    expected = get_gut_version_for_godot(godot_version)
-    return CheckResult(
-        name="GUT Version",
-        passed=True,
-        message=(
-            f"GUT {installed} installed (not used by gd-tools; the "
-            f"legacy runner mapping expected {expected})"
-        ),
-    )
-
-
-_GUT_SUITE_RE = re.compile(r"^\s*extends\s+GutTest(?:\s|$)", re.MULTILINE)
-
-
-def check_gut_suites(
+def check_legacy_gut(
     project_root: Path,
     test_dirs: list[str] | None = None,
 ) -> CheckResult:
-    """Report GutTest suites in the project as bridge-eligible.
+    """Detect legacy GUT artifacts and advise migration (informational).
+
+    The GUT compatibility bridge was removed in v0.6.0, so leftover
+    GUT artifacts no longer run anywhere. Their presence never fails
+    the doctor report; the check only surfaces what ``gd-tools
+    migrate`` would handle.
 
     Args:
         project_root: Path to the Godot project root.
-        test_dirs: Test directories to scan; defaults to the gd-tools
-            defaults (``test`` and ``tests``).
+        test_dirs: Test directories to scan for ``GutTest`` suites;
+            defaults to the gd-tools defaults (``test`` and ``tests``).
 
     Returns:
-        CheckResult listing bridge-eligible suites, or a neutral pass
-        when none are present.
+        CheckResult: always passes; the message lists any legacy
+        artifacts found and the fix hint points at ``gd-tools migrate``.
     """
     if test_dirs is None:
         test_dirs = ["test", "tests"]
-    found: list[str] = []
+    artifacts: list[str] = []
+
+    if (project_root / "addons" / "gut").is_dir():
+        artifacts.append("addons/gut (GUT addon)")
+    if (project_root / ".gutconfig.json").is_file():
+        artifacts.append(".gutconfig.json")
+
+    _gut_suite_re = re.compile(r"^\s*extends\s+GutTest(?:\s|$)", re.MULTILINE)
+    suites: list[str] = []
     for test_dir in test_dirs:
         base = project_root / test_dir
         if not base.is_dir():
@@ -296,25 +232,32 @@ def check_gut_suites(
                 source = path.read_text(encoding="utf-8")
             except OSError:  # pragma: no cover - unreadable file
                 continue
-            if _GUT_SUITE_RE.search(source):
-                found.append(path.relative_to(project_root).as_posix())
-    if not found:
+            if _gut_suite_re.search(source):
+                suites.append(path.relative_to(project_root).as_posix())
+    if suites:
+        listing = ", ".join(suites[:5])
+        if len(suites) > 5:
+            listing += f" (+{len(suites) - 5} more)"
+        artifacts.append(f"GutTest suites: {listing}")
+
+    if not artifacts:
         return CheckResult(
-            name="GUT Suites",
+            name="Legacy GUT",
             passed=True,
-            message="No GUT-style suites found",
+            message="No legacy GUT artifacts found",
         )
-    listing = ", ".join(found[:5])
-    if len(found) > 5:
-        listing += f" (+{len(found) - 5} more)"
     return CheckResult(
-        name="GUT Suites",
+        name="Legacy GUT",
         passed=True,
         message=(
-            f"{len(found)} GUT-style suite(s) will run through the "
-            f"compatibility bridge (deprecated in v0.5.0, removed in "
-            f"v0.6.0): {listing}. See docs/gut-migration.md."
+            "Legacy GUT artifacts found (unused since the v0.6.0 "
+            f"bridge removal): {'; '.join(artifacts)}"
         ),
+        fix_hint=(
+            "Run `gd-tools migrate` to move suites to the native "
+            "runtime, or remove the artifacts. See docs/gut-migration.md."
+        ),
+        severity="warning",
     )
 
 
@@ -490,77 +433,6 @@ def check_editor_plugin(project_root: Path) -> CheckResult:
     )
 
 
-def check_gutconfig(
-    project_root: Path,
-    required: bool = True,
-) -> CheckResult:
-    """Check that .gutconfig.json is valid JSON with hook script keys.
-
-    Args:
-        project_root: Path to the Godot project root.
-
-    Returns:
-        CheckResult indicating whether .gutconfig.json exists, is valid
-        JSON, and contains both ``pre_run_script`` and ``post_run_script``
-        keys.
-    """
-    gutconfig_path = project_root / ".gutconfig.json"
-    if not gutconfig_path.exists():
-        if not required:
-            return CheckResult(
-                name="GUT Config",
-                passed=True,
-                message=".gutconfig.json not found (optional for native runtime)",
-            )
-        return CheckResult(
-            name="GUT Config",
-            passed=False,
-            message=".gutconfig.json not found",
-            fix_hint="Run `gd-tools init --with-gut` to generate .gutconfig.json.",
-            severity="warning",
-        )
-    try:
-        content = json.loads(gutconfig_path.read_text())
-    except ValueError as exc:
-        return _legacy_optional_result(
-            CheckResult(
-                name="GUT Config",
-                passed=False,
-                message=f".gutconfig.json is invalid JSON: {exc}",
-                fix_hint=(
-                    "Fix the JSON syntax in .gutconfig.json or run "
-                    "`gd-tools init`."
-                ),
-                severity="warning",
-            ),
-            required,
-        )
-    missing_keys = [
-        key
-        for key in ("pre_run_script", "post_run_script")
-        if key not in content
-    ]
-    if missing_keys:
-        return _legacy_optional_result(
-            CheckResult(
-                name="GUT Config",
-                passed=False,
-                message=f"Missing keys: {', '.join(missing_keys)}",
-                fix_hint=(
-                    "Run `gd-tools init` to regenerate .gutconfig.json with "
-                    "hook scripts."
-                ),
-                severity="warning",
-            ),
-            required,
-        )
-    return CheckResult(
-        name="GUT Config",
-        passed=True,
-        message=".gutconfig.json is valid with hook scripts",
-    )
-
-
 def check_gd_tools_toml(project_root: Path) -> CheckResult:
     """Check that gd-tools.toml exists and is parseable TOML.
 
@@ -647,9 +519,7 @@ def check_autoload(
         name="Autoload",
         passed=False,
         message="_GDTCoverage autoload is not registered",
-        fix_hint=(
-            "Run `gd-tools init --with-gut` to deploy the legacy coverage autoload."
-        ),
+        fix_hint="Run `gd-tools init` to deploy the coverage autoload and register it.",
         severity="critical",
     )
 
@@ -679,13 +549,6 @@ def run_doctor() -> DoctorResult:
     except ConfigError:
         config = GdToolsConfig()
 
-    godot_version = "unknown"
-    try:
-        info = find_godot(config.godot)
-        godot_version = info.version
-    except GodotNotFoundError:
-        pass
-
     check_specs = [
         ("Godot Binary", lambda: check_godot_binary(config)),
         ("Godot Version", lambda: check_godot_version(config)),
@@ -693,23 +556,14 @@ def run_doctor() -> DoctorResult:
             "Native Test Addon",
             lambda: check_native_test_addon(project_root),
         ),
-        ("GUT Installed", lambda: check_gut_installed(project_root)),
         (
-            "GUT Version",
-            lambda: check_gut_version(project_root, godot_version),
-        ),
-        (
-            "GUT Suites",
-            lambda: check_gut_suites(project_root, config.test.test_dirs),
+            "Legacy GUT",
+            lambda: check_legacy_gut(project_root, config.test.test_dirs),
         ),
         ("Coverage Addon", lambda: check_coverage_addon(project_root)),
         (
             "Editor Plugin",
             lambda: check_editor_plugin(project_root),
-        ),
-        (
-            "GUT Config",
-            lambda: check_gutconfig(project_root, required=False),
         ),
         ("gd-tools.toml", lambda: check_gd_tools_toml(project_root)),
         ("GD Toolkit", lambda: check_gdtoolkit()),
@@ -731,26 +585,6 @@ def run_doctor() -> DoctorResult:
                     severity="critical",
                 )
             )
-
-    if getattr(config.test, "runtime", "native") == "gut":
-        # runtime = "gut" is no longer runnable; the CLI rejects it. Surface
-        # it here so stale configs are visible without blocking the report.
-        checks.append(
-            CheckResult(
-                name="Test Runtime",
-                passed=False,
-                message=(
-                    'test.runtime = "gut" is no longer runnable; GutTest '
-                    "suites run through the compatibility bridge "
-                    "automatically"
-                ),
-                fix_hint=(
-                    'Remove [test] runtime = "gut" from gd-tools.toml. '
-                    "See docs/gut-migration.md."
-                ),
-                severity="warning",
-            )
-        )
 
     all_passed = all(c.passed for c in checks)
     return DoctorResult(checks=checks, all_passed=all_passed)

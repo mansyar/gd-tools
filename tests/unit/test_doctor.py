@@ -19,12 +19,8 @@ from gd_tools.doctor import (
     check_godot_binary,
     check_godot_version,
     check_gdtoolkit,
-    check_gut_installed,
-    check_gut_suites,
     check_native_test_addon,
-    check_gut_version,
     check_coverage_addon,
-    check_gutconfig,
     check_gd_tools_toml,
     check_autoload,
     run_doctor,
@@ -258,32 +254,6 @@ def test_check_gdtoolkit_critical_severity(mock_run):
     assert "pip install gdtoolkit" in result.fix_hint
 
 
-# --- check_gut_installed ---
-
-
-@pytest.mark.unit
-def test_check_gut_installed_warns_when_gut_addon_blocks_bridge(tmp_path):
-    """An installed GUT addon conflicts with the bridge class_name GutTest."""
-    gut_dir = tmp_path / "addons" / "gut"
-    gut_dir.mkdir(parents=True)
-    (gut_dir / "gut.gd").touch()
-    result = check_gut_installed(tmp_path)
-    assert result.passed is False
-    assert result.name == "GUT Installed"
-    assert result.severity == "warning"
-    assert "compatibility bridge" in result.message
-    assert "docs/gut-migration.md" in result.fix_hint
-
-
-@pytest.mark.unit
-def test_check_gut_installed_passes_when_absent(tmp_path):
-    """Test check_gut_installed passes when GUT is not installed."""
-    result = check_gut_installed(tmp_path)
-    assert result.passed is True
-    assert result.name == "GUT Installed"
-    assert "bridge" in result.message.lower()
-
-
 def test_check_native_test_addon_passes_when_files_exist(tmp_path):
     """Doctor detects the bundled native test runtime."""
     addon = tmp_path / "addons" / "gd-tools-test"
@@ -381,77 +351,6 @@ def test_check_native_test_addon_rejects_one_missing_runtime_file(tmp_path):
     assert "gd_tools_test_context.gd" in result.message
 
 
-# --- check_gut_version ---
-
-
-@pytest.mark.unit
-@patch("gd_tools.doctor.get_gut_version_for_godot")
-@patch("gd_tools.doctor.get_installed_gut_version")
-def test_check_gut_version_reports_installed_version_neutrally(
-    mock_get_installed, mock_get_expected
-):
-    """GUT version mismatch no longer blocks doctor: the bridge ignores GUT."""
-    mock_get_installed.return_value = "9.4.0"
-    mock_get_expected.return_value = "9.5.0"
-    result = check_gut_version(Path("/fake"), "4.5.0")
-    assert result.passed is True
-    assert "9.4.0" in result.message
-
-
-@pytest.mark.unit
-@patch("gd_tools.doctor.get_gut_version_for_godot")
-@patch("gd_tools.doctor.get_installed_gut_version")
-def test_check_gut_version_passes_when_version_unknown(
-    mock_get_installed, mock_get_expected
-):
-    """Test check_gut_version passes when installed version is unknown."""
-    mock_get_installed.return_value = None
-    mock_get_expected.return_value = "9.5.0"
-    result = check_gut_version(Path("/fake"), "4.5.0")
-    assert result.passed is True
-
-
-@patch("gd_tools.doctor.get_gut_version_for_godot")
-@patch("gd_tools.doctor.get_installed_gut_version")
-def test_check_gut_suites_reports_bridge_eligible_suites(
-    mock_get_installed, mock_get_expected, tmp_path
-):
-    """Doctor reports GutTest suites as bridge-eligible."""
-    mock_get_installed.return_value = None
-    test_dir = tmp_path / "test"
-    test_dir.mkdir()
-    (test_dir / "legacy_test.gd").write_text(
-        "extends GutTest\n\nclass_name LegacySuite\n\n"
-        "func test_example() -> void:\n\tassert_true(true)\n",
-        encoding="utf-8",
-    )
-
-    result = check_gut_suites(tmp_path)
-
-    assert result.passed is True
-    assert result.name == "GUT Suites"
-    assert "1" in result.message
-    assert "compatibility bridge" in result.message
-    assert "deprecated" in result.message
-    assert "docs/gut-migration.md" in result.message
-
-
-@pytest.mark.unit
-def test_check_gut_suites_passes_when_no_gut_suites(tmp_path):
-    """Doctor reports no bridge-eligible suites when none exist."""
-    test_dir = tmp_path / "test"
-    test_dir.mkdir()
-    (test_dir / "native_test.gd").write_text(
-        "extends GdToolsTest\n\nfunc test_example() -> void:\n\tpass\n",
-        encoding="utf-8",
-    )
-
-    result = check_gut_suites(tmp_path)
-
-    assert result.passed is True
-    assert "No GUT-style suites" in result.message
-
-
 # --- check_coverage_addon ---
 
 
@@ -539,77 +438,6 @@ def test_check_coverage_addon_warns_when_unparseable_version(tmp_path):
     assert "not-a-version" in result.message
     assert "0.3.0" in result.message
     assert "gd-tools init" in result.fix_hint
-
-
-# --- check_gutconfig ---
-
-
-@pytest.mark.unit
-def test_check_gutconfig_passes_when_valid_with_hooks(tmp_path):
-    """Test check_gutconfig passes when .gutconfig.json is valid with hooks."""
-    gutconfig = tmp_path / ".gutconfig.json"
-    gutconfig.write_text(
-        '{"pre_run_script": "res://addons/gd-tools-coverage/'
-        'pre_run_hook.gd", '
-        '"post_run_script": "res://addons/gd-tools-coverage/'
-        'post_run_hook.gd"}'
-    )
-    result = check_gutconfig(tmp_path)
-    assert result.passed is True
-    assert result.name == "GUT Config"
-    assert "valid" in result.message.lower()
-
-
-@pytest.mark.unit
-def test_check_gutconfig_fails_when_missing(tmp_path):
-    """Test check_gutconfig fails when .gutconfig.json does not exist."""
-    result = check_gutconfig(tmp_path)
-    assert result.passed is False
-    assert result.name == "GUT Config"
-    assert "not found" in result.message.lower()
-
-
-@pytest.mark.unit
-def test_check_gutconfig_fails_when_invalid_json(tmp_path):
-    """Test check_gutconfig fails when .gutconfig.json is invalid JSON."""
-    gutconfig = tmp_path / ".gutconfig.json"
-    gutconfig.write_text("{invalid json content")
-    result = check_gutconfig(tmp_path)
-    assert result.passed is False
-    assert (
-        "invalid" in result.message.lower() or "parse" in result.message.lower()
-    )
-
-
-@pytest.mark.unit
-def test_check_gutconfig_fails_when_no_hook_paths(tmp_path):
-    """Test check_gutconfig fails when pre/post run script keys are missing."""
-    gutconfig = tmp_path / ".gutconfig.json"
-    gutconfig.write_text('{"some_other_key": "value"}')
-    result = check_gutconfig(tmp_path)
-    assert result.passed is False
-    assert (
-        "pre_run_script" in result.message
-        or "post_run_script" in result.message
-    )
-
-
-@pytest.mark.unit
-def test_check_gutconfig_warning_severity(tmp_path):
-    """Test check_gutconfig has warning severity on failure."""
-    result = check_gutconfig(tmp_path)
-    assert result.severity == "warning"
-    assert "gd-tools init" in result.fix_hint
-
-
-def test_optional_invalid_gutconfig_is_non_blocking(tmp_path):
-    """Native mode does not fail doctor for an invalid optional GUT config."""
-    (tmp_path / ".gutconfig.json").write_text("{invalid", encoding="utf-8")
-
-    result = check_gutconfig(tmp_path, required=False)
-
-    assert result.passed is True
-    assert result.severity == "warning"
 
 
 # --- check_gd_tools_toml ---
@@ -710,12 +538,9 @@ def _mock_doctor_deps():
         patch("gd_tools.doctor.check_godot_binary") as mock_bin,
         patch("gd_tools.doctor.check_godot_version") as mock_ver,
         patch("gd_tools.doctor.check_native_test_addon") as mock_native_addon,
-        patch("gd_tools.doctor.check_gut_installed") as mock_gut_inst,
-        patch("gd_tools.doctor.check_gut_version") as mock_gut_ver,
-        patch("gd_tools.doctor.check_gut_suites") as mock_gut_suites,
+        patch("gd_tools.doctor.check_legacy_gut") as mock_legacy_gut,
         patch("gd_tools.doctor.check_coverage_addon") as mock_cov,
         patch("gd_tools.doctor.check_editor_plugin") as mock_editor_addon,
-        patch("gd_tools.doctor.check_gutconfig") as mock_gutconfig,
         patch("gd_tools.doctor.check_gd_tools_toml") as mock_toml,
         patch("gd_tools.doctor.check_gdtoolkit") as mock_gdtoolkit,
         patch("gd_tools.doctor.check_autoload") as mock_autoload,
@@ -730,12 +555,9 @@ def _mock_doctor_deps():
         mock_bin.return_value = pass_result
         mock_ver.return_value = pass_result
         mock_native_addon.return_value = pass_result
-        mock_gut_inst.return_value = pass_result
-        mock_gut_ver.return_value = pass_result
-        mock_gut_suites.return_value = pass_result
+        mock_legacy_gut.return_value = pass_result
         mock_cov.return_value = pass_result
         mock_editor_addon.return_value = pass_result
-        mock_gutconfig.return_value = pass_result
         mock_toml.return_value = pass_result
         mock_gdtoolkit.return_value = pass_result
         mock_autoload.return_value = pass_result
@@ -747,12 +569,9 @@ def _mock_doctor_deps():
             "binary": mock_bin,
             "version": mock_ver,
             "native_addon": mock_native_addon,
-            "gut_inst": mock_gut_inst,
-            "gut_ver": mock_gut_ver,
-            "gut_suites": mock_gut_suites,
+            "legacy_gut": mock_legacy_gut,
             "cov": mock_cov,
             "editor_addon": mock_editor_addon,
-            "gutconfig": mock_gutconfig,
             "toml": mock_toml,
             "gdtoolkit": mock_gdtoolkit,
             "autoload": mock_autoload,
@@ -767,10 +586,10 @@ def test_run_doctor_returns_doctor_result(_mock_doctor_deps):
 
 
 @pytest.mark.unit
-def test_run_doctor_runs_all_12_checks(_mock_doctor_deps):
-    """Test run_doctor runs exactly 12 checks."""
+def test_run_doctor_runs_all_9_checks(_mock_doctor_deps):
+    """Test run_doctor runs exactly 9 checks."""
     result = run_doctor()
-    assert len(result.checks) == 12
+    assert len(result.checks) == 9
 
 
 @pytest.mark.unit
@@ -796,55 +615,18 @@ def test_run_doctor_all_passed_false_when_any_fails(_mock_doctor_deps):
 
 
 @pytest.mark.unit
-def test_run_doctor_includes_gut_suites_check(_mock_doctor_deps):
-    """Doctor lists the bridge-eligibility check among its diagnostics."""
-    _mock_doctor_deps["gut_suites"].return_value = CheckResult(
-        name="GUT Suites", passed=True, message="OK"
+def test_run_doctor_includes_legacy_gut_advisory(_mock_doctor_deps):
+    """Doctor lists the legacy GUT advisory among its diagnostics."""
+    _mock_doctor_deps["legacy_gut"].return_value = CheckResult(
+        name="Legacy GUT", passed=True, message="No legacy GUT artifacts"
     )
 
     result = run_doctor()
 
     names = [c.name for c in result.checks]
-    assert "GUT Suites" in names
-    _mock_doctor_deps["gut_suites"].assert_called_once_with(
+    assert "Legacy GUT" in names
+    _mock_doctor_deps["legacy_gut"].assert_called_once_with(
         Path("/fake/project"), GdToolsConfig().test.test_dirs
-    )
-
-
-@pytest.mark.unit
-def test_run_doctor_ignores_optional_legacy_warning(_mock_doctor_deps):
-    """Native doctor succeeds when optional GUT diagnostics are warnings."""
-    _mock_doctor_deps["gut_ver"].return_value = CheckResult(
-        name="GUT Version",
-        passed=True,
-        message="GUT version mismatch (optional)",
-        severity="warning",
-    )
-
-    result = run_doctor()
-
-    assert result.all_passed is True
-    _mock_doctor_deps["gut_ver"].assert_called_once_with(
-        Path("/fake/project"), "4.6.2"
-    )
-
-
-@pytest.mark.unit
-def test_run_doctor_warns_when_config_runtime_is_gut(_mock_doctor_deps):
-    """A stale runtime = "gut" config yields a non-blocking warning check."""
-    _mock_doctor_deps["config"].return_value.test.runtime = "gut"
-
-    result = run_doctor()
-
-    runtime_checks = [c for c in result.checks if c.name == "Test Runtime"]
-    assert len(runtime_checks) == 1
-    check = runtime_checks[0]
-    assert check.passed is False
-    assert check.severity == "warning"
-    assert "docs/gut-migration.md" in check.fix_hint
-    assert result.all_passed is False
-    _mock_doctor_deps["gut_ver"].assert_called_once_with(
-        Path("/fake/project"), "4.6.2"
     )
 
 
@@ -854,7 +636,7 @@ def test_run_doctor_never_raises_on_check_exception(_mock_doctor_deps):
     _mock_doctor_deps["binary"].side_effect = RuntimeError("boom")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 12
+    assert len(result.checks) == 9
     failed = [c for c in result.checks if not c.passed]
     assert len(failed) == 1
     assert "boom" in failed[0].message
@@ -869,7 +651,7 @@ def test_run_doctor_handles_project_root_not_found(_mock_doctor_deps):
     _mock_doctor_deps["root"].side_effect = ConfigError("not found")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 12
+    assert len(result.checks) == 9
 
 
 @pytest.mark.unit
@@ -880,16 +662,7 @@ def test_run_doctor_handles_config_load_failure(_mock_doctor_deps):
     _mock_doctor_deps["config"].side_effect = ConfigError("bad config")
     result = run_doctor()
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 12
-
-
-@pytest.mark.unit
-def test_run_doctor_handles_godot_not_found_for_version(_mock_doctor_deps):
-    """Test run_doctor passes 'unknown' version when Godot not found."""
-    _mock_doctor_deps["godot"].side_effect = GodotNotFoundError("no godot")
-    result = run_doctor()
-    assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 12
+    assert len(result.checks) == 9
 
 
 def test_optional_missing_autoload_is_non_blocking(tmp_path):

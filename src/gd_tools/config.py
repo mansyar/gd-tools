@@ -47,14 +47,16 @@ class GodotConfig(BaseModel):
 
 
 class TestConfig(BaseModel):
-    """Configuration for test discovery and GUT.
+    """Configuration for test discovery and native execution.
 
     Attributes:
         test_dirs: Directories containing test files.
-        prefix: Test file prefix (GUT convention).
+        prefix: Test file prefix.
         suffix: Test file suffix.
-        gutconfig: Path to the GUT config file.
-        runtime: Test execution runtime (native or legacy GUT).
+        gutconfig: Path to the GUT config file (legacy; unused by the
+            native runtime).
+        runtime: Test execution runtime. Only ``"native"`` is valid;
+            the GUT runtime was removed in v0.6.0.
         timeout_seconds: Default per-test timeout for native async tests.
         retries: Number of explicit opt-in retries per native test.
         tags: Optional native suite tag filters.
@@ -70,11 +72,40 @@ class TestConfig(BaseModel):
     prefix: str = "test_"
     suffix: str = ".gd"
     gutconfig: str = ".gutconfig.json"
-    runtime: Literal["native", "gut"] = "native"
+    runtime: Literal["native"] = "native"
     timeout_seconds: float = Field(default=5.0, gt=0)
     retries: int = Field(default=0, ge=0)
     tags: list[str] = Field(default_factory=list)
     parallel: int | None = Field(default=None, ge=1, le=32)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_gut_runtime(cls, data: object) -> object:
+        """Reject the removed GUT runtime with migration guidance.
+
+        Args:
+            data: The raw configuration mapping being validated.
+
+        Returns:
+            The unchanged data when valid.
+
+        Raises:
+            ValueError: If ``runtime = "gut"`` is set; the GUT runtime
+                was removed in v0.6.0.
+        """
+        if isinstance(data, dict):
+            test_section = data.get("test", data)
+            if (
+                isinstance(test_section, dict)
+                and test_section.get("runtime") == "gut"
+            ):
+                raise ValueError(
+                    'test.runtime = "gut": GUT runtime support was '
+                    "removed in v0.6.0. The native runtime is the "
+                    "default. Run `gd-tools migrate` or see "
+                    "docs/gut-migration.md."
+                )
+        return data
 
 
 class LintConfig(BaseModel):

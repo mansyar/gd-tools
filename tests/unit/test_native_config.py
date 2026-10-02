@@ -20,15 +20,14 @@ def test_native_test_config_defaults_to_native_runtime():
     assert config.tags == []
 
 
-def test_native_test_config_accepts_migration_and_execution_overrides():
-    """Runtime, timeout, and retry overrides remain available in TOML."""
+def test_native_test_config_accepts_execution_overrides():
+    """Timeout and retry overrides remain available in TOML."""
     config = TestConfig(
-        runtime="gut",
         timeout_seconds=1.25,
         retries=2,
     )
 
-    assert config.runtime == "gut"
+    assert config.runtime == "native"
     assert config.timeout_seconds == 1.25
     assert config.retries == 2
 
@@ -53,7 +52,6 @@ def test_native_test_config_round_trips_through_toml(tmp_path):
     (tmp_path / "project.godot").touch()
     config = GdToolsConfig(
         test=TestConfig(
-            runtime="gut",
             timeout_seconds=2.5,
             retries=1,
             tags=["smoke", "native"],
@@ -63,7 +61,7 @@ def test_native_test_config_round_trips_through_toml(tmp_path):
     save_config(config, tmp_path)
     loaded = load_config(tmp_path)
 
-    assert loaded.test.runtime == "gut"
+    assert loaded.test.runtime == "native"
     assert loaded.test.timeout_seconds == 2.5
     assert loaded.test.retries == 1
     assert loaded.test.tags == ["smoke", "native"]
