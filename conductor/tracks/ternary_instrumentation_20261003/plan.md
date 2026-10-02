@@ -76,30 +76,30 @@
 
 ## Phase 3: Real-Godot Parse Regression Test
 
-- [ ] Task: Build the Godot parse harness
-  - [ ] Create a temporary Godot project containing a `GdToolsNativeCoverage`
+- [x] Task: Build the Godot parse harness [eb7d73f]
+  - [x] Create a temporary Godot project containing a `GdToolsNativeCoverage`
         stub declared with `class_name` so instrumented fixtures compile for the
         correct reason. Do **not** register it as an autoload at the same time —
         `class_name` and an autoload of the same name collide with
         `Class "GdToolsNativeCoverage" hides an autoload singleton`.
-  - [ ] Clear the `.godot` directory before each check and run `--import` to
+  - [x] Clear the `.godot` directory before each check and run `--import` to
         rebuild the global script class cache. Reusing a stale `.godot` produced
         false negatives during the investigation.
-  - [ ] Invoke `godot --headless --path <project> --check-only --script
+  - [x] Invoke `godot --headless --path <project> --check-only --script
         res://<fixture>.gd` and treat any `Parse Error` / `Compile Error` in the
         output as a failure.
 
-- [ ] Task: Write the regression test
-  - [ ] Add an integration test that plans each fixture, applies the same
+- [x] Task: Write the regression test [eb7d73f]
+  - [x] Add an integration test that plans each fixture, applies the same
         bottom-up insertion the collector performs, writes the instrumented
         source, and asserts Godot parses it.
-  - [ ] Cover all twelve fixtures listed in the spec's verification table so the
+  - [x] Cover all twelve fixtures listed in the spec's verification table so the
         previously broken cases can never regress silently.
-  - [ ] Mark the test to skip when no Godot binary is available, consistent with
+  - [x] Mark the test to skip when no Godot binary is available, consistent with
         the existing `conftest.py` conventions. It must not fail the suite on a
         machine without Godot.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [6627b73]
 
 ## Phase 4: Documentation and Final Validation
 
