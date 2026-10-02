@@ -121,8 +121,17 @@ was confirmed for production implementation.
 
 ## 3. Full Flow
 
+> **Historical note:** this section and its diagram describe the legacy
+> standalone coverage flow (a GUT-hook-driven path through
+> `run_coverage_test()`), which the native test runtime replaced. The
+> entry point no longer exists in `src/`; the current flow runs coverage
+> through the native test pipeline (see Part II and the
+> [Caching Architecture section](#caching-architecture)). The diagram is
+> retained for the coverage-system design rationale that Part I documents.
+
 The following diagram shows the end-to-end flow of
-`gd-tools test --coverage`:
+`gd-tools test --coverage --min 80` as implemented by the legacy
+standalone coverage path:
 
 ```
 User runs: gd-tools test --coverage --min 80
@@ -1298,3 +1307,32 @@ The GUT compatibility bridge shipped in v0.5.0 and was removed in v0.6.0:
 suites with exit 2 and migration guidance (run `gd-tools migrate`; see the
 [migration guide](./gut-migration.md) and the [Native Runtime Transition
 section](./ROADMAP.md#native-runtime-transition-completed-foundation)).
+
+---
+
+## Caching Architecture
+
+The test pipeline uses three independent, content-hash caches. All three
+follow the same conventions: they are pure optimizations that fail open
+(any read or write error degrades to the uncached behavior with unchanged
+exit codes and report output), they are keyed by SHA-256 digests, they
+report hit/miss reasons under `--verbose` only, they live under
+`.gd-tools/`, `gd-tools clean --cache` removes them, and the global
+`--no-cache` flag bypasses each one for both reads and writes.
+
+| Cache | Module | Storage | Keyed by | Eliminates |
+| --- | --- | --- | --- | --- |
+| Coverage plan | `coverage/plan_generator.py` (`generate_plan_cached`) | `.gd-tools/coverage/plan.json` | Source file paths + hashes in the plan | AST plan generation |
+| Import freshness | `native_test/import_cache.py` (`check_import_cache` / `store_import_freshness`) | `.gd-tools/native/import-cache/state.json` | `project.godot`, all import-relevant project files (scripts, shaders, scenes, resources, `.import` sidecars, metadata, assets, addons), Godot version | The `godot --headless --import` process |
+| Integration preflight | `native_test/preflight_cache.py` (`run_preflight_cached`) | `.gd-tools/native/preflight-cache/<key>.json` | Discovered suites, test-file contents, `project.godot`, Godot version, bundled addon scripts | The preflight Godot process |
+
+The import cache is consulted first: `run_native_test_command` gates its
+import step through `_ensure_project_imported()`, which computes the
+composite key, checks the freshness entry, and skips the import process
+entirely on a hit. Freshness is recorded only after a successful import,
+so a failed or timed-out import always re-runs on the next invocation.
+The preflight cache is consulted after the import step, and the coverage
+plan cache is consulted when `--coverage` is active. A cache write race
+between concurrent runs is benign: writes are atomic
+(`write_json_atomic`), and a lost race only means one redundant import,
+preflight, or plan generation.

@@ -140,12 +140,15 @@ pull-request CI. `--changed` composes with `--parallel`, `--coverage`, and
 the `--suite`/`--test`/`--tag` filters (the active filters bound the
 mapping domain); an empty change set exits 0 without launching Godot.
 
-Repeat runs are faster: the integration preflight is cached under
-`.gd-tools/native/preflight-cache/` and skipped when the suites, test files,
-`project.godot`, Godot version, and bundled addons are unchanged. Cache
+Repeat runs are faster: the `godot --headless --import` step is cached under
+`.gd-tools/native/import-cache/` and skipped when `project.godot`, any
+project source/resource file (scripts, scenes, import sidecars, addons), or
+the Godot version is unchanged. The integration preflight is likewise cached
+under `.gd-tools/native/preflight-cache/` and skipped when the suites, test
+files, `project.godot`, Godot version, and bundled addons are unchanged. Cache
 hit/miss reasons are reported under `--verbose`; `--no-cache` bypasses the
-preflight and coverage plan caches, and `gd-tools clean --cache` removes the
-cache directory.
+import, preflight, and coverage plan caches, and `gd-tools clean --cache`
+removes the cache directory.
 
 Each run writes a machine-readable artifact index under
 `.gd-tools/artifacts/<run_id>/`, listing the manifest, result, event stream,

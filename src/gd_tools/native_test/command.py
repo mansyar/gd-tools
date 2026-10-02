@@ -22,7 +22,12 @@ from gd_tools.errors import (
     NativeInterruptError,
     TestFailureError,
 )
-from gd_tools.godot import find_godot, run_godot
+from gd_tools.godot import GodotInfo, find_godot, run_godot
+from gd_tools.native_test.import_cache import (
+    check_import_cache,
+    compute_import_cache_key,
+    store_import_freshness,
+)
 from gd_tools.native_test.artifacts import (
     ArtifactPublishError,
     NativeArtifactLayout,
@@ -211,7 +216,9 @@ def _run_native_test_command(
             project_root, suites, changed_files, base
         )
 
-    _import_project(godot_info.path, project_root, timeout)
+    _ensure_project_imported(
+        godot_info, project_root, timeout, no_cache=no_cache
+    )
     process_timeout = float(timeout) if timeout is not None else 300.0
     run_id = uuid.uuid4().hex
     artifact_layout = NativeArtifactLayout.create(project_root, run_id)
@@ -418,6 +425,45 @@ def _import_project(
             f"Godot import timed out after {timeout}s; re-run with a "
             "larger --timeout (a first import may take longer)"
         ) from None
+
+
+def _ensure_project_imported(
+    godot_info: GodotInfo,
+    project_root: Path,
+    timeout: int | None,
+    *,
+    no_cache: bool = False,
+) -> None:
+    """Run the import step unless a fresh import is already recorded.
+
+    A pure optimization: a cache miss, a disabled cache, or any cache
+    failure degrades to the unconditional import with unchanged exit
+    codes and report output.
+
+    Args:
+        godot_info: The resolved Godot binary and version.
+        project_root: The Godot project root.
+        timeout: Optional import process timeout in seconds.
+        no_cache: When True, always import and skip the cache entirely.
+
+    Raises:
+        GdToolsError: When the import fails; the cache is never updated.
+    """
+    cache_dir = project_root / ".gd-tools" / "native" / "import-cache"
+    cache_key: str | None = None
+    if not no_cache:
+        try:
+            cache_key = compute_import_cache_key(
+                project_root, godot_version=godot_info.version
+            )
+        except OSError as error:
+            output.print_verbose(f"Import cache key failed: {error}")
+        else:
+            if check_import_cache(cache_dir, cache_key).hit:
+                return
+    _import_project(godot_info.path, project_root, timeout)
+    if cache_key is not None:
+        store_import_freshness(cache_dir, cache_key)
 
 
 def _prepare_coverage(

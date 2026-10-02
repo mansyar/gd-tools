@@ -189,6 +189,15 @@ _Archived tracks live in `./archive/`._
 
 ---
 
+- [x] **Track: Import-Step Caching** (feature: skip the unconditional
+  `godot --headless --import` on unchanged projects via a content-hash
+  import-freshness cache under `.gd-tools/native/import-cache/`, mirroring the
+  preflight-cache conventions — fail-open, `--no-cache` bypass, verbose
+  hit/miss — with benchmark evidence that warm runs are strictly faster)
+  *Link: [import_step_caching_20261001](./archive/import_step_caching_20261001/index.md)*
+
+---
+
 - [x] **Track: GUT Bridge Removal (v0.6.0)** (refactor: remove the deprecated
   GUT Compatibility Bridge runtime — `GutTest` shim, `extends GutTest`
   auto-routing, bridge normalization — make the native runtime the sole test
