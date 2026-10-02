@@ -22,7 +22,7 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
   - Update any existing tests referencing removed code; run full suite
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — checkpoint 3125b85
 
-## Phase 3 — Config Cleanup
+## Phase 3 — Config Cleanup [checkpoint: 9285f1e]
 
 - [x] Task: Write failing config tests (Red) — commit 472b2e3
   - Test that a TOML with `[test] gutconfig = "..."` fails validation as an unknown key (per existing config error conventions)
@@ -30,9 +30,7 @@ Methodology per `conductor/workflow.md`: TDD for source-code tasks (Red → Gree
   - Remove field from `config.py` Pydantic model (keep `runtime`, single-valued `"native"`)
   - Regenerate `docs/gd-tools.schema.json`; keep the schema sync test green
   - Full test suite green
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
-
-## Phase 4 — Docs Truth Pass & Track 32 Retirement
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — checkpoint 9285f1e
 
 - [ ] Task: Living-docs sweep
   - `README.md`, `docs/USER_GUIDE.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`: remove/fix GUT-era claims contradicting v0.6.0 (config tables, examples, runtime references)
