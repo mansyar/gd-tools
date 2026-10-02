@@ -54,7 +54,7 @@ class TestRenderMigrationReport:
         rendered = render_migration_report(report)
 
         assert "line 7: assert_in" in rendered
-        assert "rename later" in rendered.lower()
+        assert "rename during migration" in rendered.lower()
         # Aliases must not be rendered as failures.
         assert "[FAIL] res://test/legacy_test.gd (3 tests)" in rendered
         assert "[FAIL] res://test/legacy_test.gd (3 tests, " not in rendered
@@ -71,7 +71,7 @@ class TestRenderMigrationReport:
 
         assert "[OK] res://test/alias_only_test.gd" in rendered
         assert "line 3: assert_in" in rendered
-        assert "rename later" in rendered.lower()
+        assert "rename during migration" in rendered.lower()
 
     def test_includes_migration_doc_pointer(self):
         """The report points at the migration documentation."""

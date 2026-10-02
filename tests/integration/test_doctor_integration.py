@@ -66,7 +66,7 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
         result = run_doctor()
 
     assert isinstance(result, DoctorResult)
-    assert len(result.checks) == 12
+    assert len(result.checks) == 9
     assert not result.all_passed
 
     check_map = {c.name: c for c in result.checks}
@@ -79,24 +79,12 @@ def test_doctor_on_fresh_project(tmp_path, monkeypatch):
     assert not check_map["Native Test Addon"].passed
     assert check_map["Native Test Addon"].severity == "critical"
 
-    # GUT is never required; the bridge provides GutTest natively.
-    assert check_map["GUT Installed"].passed
-    assert check_map["GUT Installed"].severity == "critical"
-    assert "compatibility bridge" in check_map["GUT Installed"].message.lower()
-
-    # GUT Version passes (informational; not used by any runtime)
-    assert check_map["GUT Version"].passed
-
-    # GUT Suites reports no bridge-eligible suites on a fresh project.
-    assert check_map["GUT Suites"].passed
+    # The legacy GUT advisory passes on a fresh project (nothing to report).
+    assert check_map["Legacy GUT"].passed
 
     # Coverage addon missing
     assert not check_map["Coverage Addon"].passed
     assert check_map["Coverage Addon"].severity == "warning"
-
-    # .gutconfig.json is optional in the native runtime.
-    assert check_map["GUT Config"].passed
-    assert check_map["GUT Config"].severity == "critical"
 
     # gd-tools.toml missing
     assert not check_map["gd-tools.toml"].passed
@@ -130,6 +118,5 @@ def test_doctor_after_native_init_does_not_require_gut(tmp_path, monkeypatch):
     assert not (tmp_path / ".gutconfig.json").exists()
     check_map = {check.name: check for check in result.checks}
     assert check_map["Native Test Addon"].passed
-    assert check_map["GUT Installed"].passed
-    assert check_map["GUT Config"].passed
+    assert check_map["Legacy GUT"].passed
     assert check_map["Autoload"].passed
