@@ -323,22 +323,6 @@ def register_coverage_autoload(project_root: Path) -> None:
 
 # --- Phase 4: Configuration File Generation ---
 
-# Keys in .gutconfig.json that are always overwritten from the template.
-_GUTCONFIG_OVERWRITE_KEYS = (
-    "should_exit",
-    "junit_xml_file",
-    "pre_run_script",
-    "post_run_script",
-)
-
-# Keys in .gutconfig.json that are preserved from the user's existing file.
-_GUTCONFIG_PRESERVE_KEYS = (
-    "dirs",
-    "prefix",
-    "suffix",
-    "include_subdirs",
-)
-
 
 def create_config_file(project_root: Path, config: GdToolsConfig) -> None:
     """Create ``gd-tools.toml`` if it does not exist.
@@ -457,7 +441,7 @@ def run_init(non_interactive: bool = False) -> None:
     config = load_config(project_root)
 
     actions: list[str] = []
-    detect_godot_version(config)
+    detect_godot_version(config)  # validates Godot is present before deploying
 
     install_native_test_addon(project_root)
     actions.append("Deployed native test addon")
