@@ -42,8 +42,9 @@
 
 ## Phase 3: Documentation
 
-- [ ] Task: README — install-hooks section with `.pre-commit-config.yaml`
+- [x] Task: README — install-hooks section with `.pre-commit-config.yaml`
       example
-- [ ] Task: USER_GUIDE — per-hook setup, merge-by-id behavior,
+- [x] Task: USER_GUIDE — per-hook setup, merge-by-id behavior,
       non-interactive/CI usage
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      `[checkpoint: 6893c14]`
