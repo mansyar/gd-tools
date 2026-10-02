@@ -55,7 +55,7 @@
 
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [39131e6]
 
-## Phase 2: Plan Version Bump and Cache Invalidation
+## Phase 2: Plan Version Bump and Cache Invalidation [complete: e6873f2]
 
 - [x] Task: Write failing test for cache invalidation (Red) [a220cac]
   - [x] Add a test asserting `PLAN_VERSION == 3`.
@@ -72,7 +72,7 @@
         must keep their intent.
   - [x] Run the tests and confirm they pass.
 
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [e6873f2]
 
 ## Phase 3: Real-Godot Parse Regression Test
 
