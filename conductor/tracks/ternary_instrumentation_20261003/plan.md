@@ -117,3 +117,41 @@
   - [ ] Run `ruff check` and `black --check`.
 
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+## Phase: Review Fixes (conductor-review, 2026-10-03)
+
+- [x] Task: Fix High finding — anchor ternaries in control-flow headers [31a6aa5]
+- [x] Task: Assert planned points per case in the Godot parse suite [5236e79]
+- [x] Task: Correct ARCHITECTURE.md, CHANGELOG.md and TDD.md claims [e17bdf4]
+- [x] Task: Add golden fixture covering nested, header and orphan ternaries [e17bdf4]
+- [x] Task: Full-suite validation — 1625 passed, 7 skipped; ruff and black clean
+- [x] Task: Phase Verification & Checkpoint
+
+### Findings accepted and fixed
+
+- **High** — `STATEMENT_NODES` held only tracked statements, so a ternary in an
+  `if`/`while`/`for`/`match` header had no anchor and was silently dropped.
+  Single-line headers were a regression (they worked before the anchoring fix);
+  multi-line headers were broken and are now anchored rather than dropped.
+  `ANCHOR_NODES` now includes the statement-header nodes. 7 new unit tests.
+- **Medium** — the Godot parse suite asserted only that output compiles, which
+  a zero-point plan satisfies trivially; that is how the drop shipped. Each case
+  now declares its expected ternary lines, six header cases were added, and a
+  drift guard pins the injection port to the collector's real rules.
+- **Medium** — documentation asserted "nearest enclosing statement" and a
+  keyword-first invariant that `match_case` violates. Corrected in three files.
+- **Medium** — the golden fixtures contained no nested, header or orphan
+  ternary, so the fix had no regression protection. New `ternary_anchors.gd`
+  fixture added; `edge_cases_advanced` was generated but never drift-checked
+  because the test's fixture list omitted it.
+- **Medium** — the one-directional `# gd-tools: no cover` semantics are now
+  documented explicitly.
+
+### Findings recorded but not fixed (out of scope)
+
+- A lambda body assigned to a class-level `var` records a statement on the
+  class-body line and still produces uncompilable output. No ternary is
+  involved; this track neither introduced nor fixed it. Verified by hand.
+- `ternary_true` and `ternary_false` remain co-anchored, so ternary branch
+  coverage cannot fail. Fixing it requires the plan to record a span.
+- Multi-line `match` patterns are unparseable by gdtoolkit, so coverage cannot
+  plan them at all. A parser limitation, not an instrumentation bug.
