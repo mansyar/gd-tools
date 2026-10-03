@@ -50,18 +50,18 @@ func-level single-line lambdas stay exactly as they are today (FR-6).
 Goal: cached v3 plans that still carry class-body points are rejected,
 forcing one regeneration (`PLAN_VERSION` 3 → 4, spec FR-4).
 
-- [ ] Task: Write failing test for cache invalidation (Red)
+- [x] Task: Write failing test for cache invalidation (Red) [8aefb93]
   - Add a v3-cache-accepted test asserting the cache regenerates with an
     outdated reason, mirroring `test_cache_v2_plan_is_regenerated_with_outdated_reason`.
   - Assert `read_plan_json`'s unsupported-version message mentions the
     current version.
-- [ ] Task: Bump the plan version (Green)
+- [x] Task: Bump the plan version (Green) [8aefb93]
   - `PLAN_VERSION = 3` → `4` in `src/gd_tools/coverage/plan_generator.py`
     with a docstring recording both prior bumps and this one's rationale.
   - Update golden fixtures in `tests/fixtures/plans/*.expected.json` via
     `tools/generate_expected_plans.py` and any hard-coded `3`s in tests
     (grep first; the ternary track missed several).
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Real-Godot Class-Body Regression Cases
 
@@ -81,7 +81,7 @@ silent drop cannot pass vacuously.
   - Run the suite against the pre-Phase-1 generator
     (`git checkout` the file, run, restore) and confirm exactly the
     class-body cases fail.
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Coverage Data Fidelity and Durable Writes
 
