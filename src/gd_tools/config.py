@@ -137,7 +137,8 @@ class CoverageConfig(BaseModel):
     Attributes:
         enabled: Whether coverage is enabled.
         min_percent: Minimum coverage percentage threshold.
-        format: Report format (html, lcov, cobertura, text, json).
+        format: Report format (html, lcov, cobertura, text, json,
+            github-actions).
         output_dir: Directory for coverage data and reports.
         exclude: Directories excluded from coverage measurement.
         test_dirs: Directories containing test files.
@@ -201,11 +202,18 @@ class GdToolsConfig(BaseModel):
             The validated coverage configuration.
 
         Raises:
-            ValueError: If format is not in {html, lcov,
-                cobertura, text, json} or min_percent is outside
-                [0, 100].
+            ValueError: If format is not in {html, lcov, cobertura,
+                text, json, github-actions} or min_percent is
+                outside [0, 100].
         """
-        valid_formats = ("html", "lcov", "cobertura", "text", "json")
+        valid_formats = (
+            "html",
+            "lcov",
+            "cobertura",
+            "text",
+            "json",
+            "github-actions",
+        )
         if v.format not in valid_formats:
             raise ValueError(
                 f"Invalid coverage format: {v.format}. "
