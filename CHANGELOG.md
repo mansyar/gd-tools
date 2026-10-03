@@ -4,22 +4,28 @@
 
 - **coverage**: Fix unparseable GDScript when a ternary expression sits
   inside a multi-line parenthesised expression, or in a position with no
-  enclosing statement. A recorded line is where a tracker call is
+  legal insertion point. A recorded line is where a tracker call is
   *inserted*, so it must be a line where a statement may begin. Every
-  tracked node except `test_expr` begins with a keyword and satisfies
-  this; `test_expr` begins with an arbitrary operand, so its line was the
-  ternary's first operand — a continuation line when the ternary is
-  nested. The injected tracker broke the parse
-  (`Expected closing ")" after grouping expression`,
+  tracked node either begins with a keyword, or (for `match_case`) is a case
+  label whose tracker is injected *after* the line; `test_expr` begins with an
+  arbitrary operand, so its line was the ternary's first operand — a
+  continuation line when the ternary is nested. The injected tracker broke the
+  parse (`Expected closing ")" after grouping expression`,
   `Unexpected identifier in class body`), the reload failed, and the file
   was recorded as an omission: it vanished from the report and `--min`
-  escalated to exit 2. Ternary branch points are now anchored to the
-  nearest enclosing statement; a ternary with no enclosing statement (a
-  `const` or `@export` initialiser, a default parameter value) is not
+  escalated to exit 2. Ternary branch points are now anchored to the nearest
+  enclosing **anchor node** — a tracked statement, or a control-flow statement
+  header, both of which begin with a keyword. A ternary in a control-flow
+  header (`if`, `while`, `for`, `match`) is therefore anchored to that
+  header's own line, including when the header spans several lines. A ternary
+  with no enclosing anchor node — a class-level `const`/`var`/`static var`
+  initialiser, an `@export` initialiser, or a default parameter value — is not
   tracked, because there is no legal insertion point. `PLAN_VERSION` is
   bumped 2 → 3 so cached plans from earlier versions are regenerated
   rather than reused. Existing coverage totals may shift for projects
-  whose ternaries previously produced untrackable files.
+  whose ternaries previously produced untrackable files, and branch totals
+  shift for projects with ternaries in control-flow headers, which were
+  tracked before and are now anchored explicitly rather than incidentally.
 
   Known limitation, unchanged by this fix: `ternary_true` and
   `ternary_false` share a recorded line, so both arms are always reported

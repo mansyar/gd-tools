@@ -356,18 +356,23 @@ A recorded line is not merely where a construct was found — it is where a
 coverage tracker call can be **inserted**.
 `gd_tools_native_coverage.gd` inserts
 `GdToolsNativeCoverage.hit(file_id, point_id)` *before* the recorded line,
-so that line must be one where a GDScript statement may begin.
+so that line must be one where a GDScript statement may begin. Three tracked
+branch types — `match_case`, `if_false`, `elif_true` — are the exception:
+their recorded line is a keyword or case label rather than a body, so their
+tracker is injected *after* the line, into the body.
 
-Every tracked node except `test_expr` begins with a keyword (`if`, `else`,
-`while`, `for`, `match`, `return`, `var`, `break`, `continue`), and a
-keyword can only appear at the start of a statement. `test_expr` is the
-exception: it begins with an arbitrary operand, so its `meta.line` is the
-line of the ternary's **first operand**. Whenever the ternary is nested
-inside a multi-line parenthesised expression, that is a continuation line:
+Every tracked node either begins with a keyword (`if`, `elif`, `else`,
+`while`, `for`, `match`, `return`, `var`, `break`, `continue`) or is a `match`
+case label whose tracker is injected after it. A keyword can only appear at
+the start of a statement, and a case label likewise sits on the body's first
+line. `test_expr` is the exception: it begins with an arbitrary operand, so
+its `meta.line` is the line of the ternary's **first operand**. Whenever the
+ternary is nested inside a multi-line parenthesised expression, that is a
+continuation line:
 
 ```gdscript
-var x = (          # statement line
-    1              # ← test_expr.meta.line lands here
+var x = (          # statement line (line 2)
+    1              # ← test_expr.meta.line lands here (line 3)
     if a > 0
     else 2
 )
@@ -380,18 +385,28 @@ failed `reload()`, and `_instrument_file` recorded the file as an
 exit 2. A ternary in a `const` or `@export` initialiser failed the same
 way with `Unexpected identifier in class body`.
 
-`CoverageVisitor` therefore resolves each `test_expr` to its nearest
-enclosing statement node and records the branch points at that
-statement's line. Lark's default `Visitor` traverses flat and bottom-up
-with no ancestry exposed, so the mapping is built by one recursive
-pre-pass over the tree (`_map_ternary_anchors`) that walks downward
-carrying the most recent statement line as context. Two consequences
-follow:
+`CoverageVisitor` therefore resolves each `test_expr` to the nearest
+enclosing **anchor node** — one whose line is a legal insertion point — and
+records the branch points at that line. The anchor set
+(`ANCHOR_NODES`) is the tracked statement nodes plus the control-flow
+statement headers (`if_stmt`, `while_stmt`, `for_stmt`, `for_stmt_typed`,
+`match_stmt`), so a ternary in a header is recorded on the header's own line.
+Lark's default `Visitor` traverses flat and bottom-up with no ancestry
+exposed, so the mapping is built by one recursive pre-pass over the tree
+(`_map_ternary_anchors`) that walks downward carrying the most recent anchor
+line as context. Three consequences follow:
 
-* A ternary in a position with **no** enclosing statement — a `const` or
-  `@export` initialiser, or a default parameter value — has nowhere legal
-  to go and is **not tracked**. Those positions are not statement lines,
-  so injecting there would break the class body or the signature.
+* A ternary in a position with **no** enclosing anchor node — a class-level
+  `const`/`var`/`static var` initialiser, an `@export` initialiser, or a
+  default parameter value — has nowhere legal to go and is **not tracked**.
+  Those positions are not statement lines, so injecting there would break the
+  class body or the signature.
+* Because the anchor set is what decides this, widening it is a behaviour
+  change: a ternary in a control-flow header is anchored to that header, and
+  a class-level initialiser remains dropped because no anchor node encloses
+  it. Note that class-body lines are **not** valid insertion points even when
+  a statement is recorded on them — a lambda body assigned to a class-level
+  `var` still produces uncompilable output, which is a separate known defect.
 * `ternary_true` and `ternary_false` are recorded on the same line, so the
   two arms are always covered together and ternary branch coverage cannot
   currently fail. Tracking the arms independently requires the plan to
