@@ -805,6 +805,7 @@ def test_coverage_report_calls_orchestrator():
     """Test coverage report calls generate_coverage_report."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -822,6 +823,7 @@ def test_coverage_report_format_override():
     """Test --format lcov passes format to orchestrator."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -840,6 +842,7 @@ def test_coverage_report_report_format_canonical():
     """Test --report-format is the canonical flag on coverage report."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -860,6 +863,7 @@ def test_coverage_report_report_format_case_insensitive():
     """Test --report-format JSON is accepted and normalized to json."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -925,6 +929,7 @@ def test_coverage_report_output_dir_override():
     """Test --output-dir passes output_dir to orchestrator."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -945,6 +950,7 @@ def test_coverage_report_plan_error_exit_2():
     """Test coverage report exits 2 when CoveragePlanError is raised."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
@@ -960,6 +966,7 @@ def test_coverage_report_success_exit_0():
     """Test coverage report exits 0 on success and prints output path."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     mock_result.output_path = Path("/tmp/reports/report.html")
     with (

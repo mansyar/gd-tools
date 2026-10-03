@@ -52,6 +52,7 @@ def generate_coverage_report(
     config: GdToolsConfig,
     report_format: str | None = None,
     output_dir: str | None = None,
+    annotate_min_percent: int | None = None,
 ) -> ReportResult:
     """Regenerate reports from existing coverage data without re-running tests.
 
@@ -65,6 +66,10 @@ def generate_coverage_report(
             ``config.coverage.format``.
         output_dir: Output directory override.  If ``None``, uses
             ``config.coverage.output_dir``.
+        annotate_min_percent: Line-coverage percentage (0-100) used by the
+            ``github-actions`` format to emit per-file ``::warning``
+            annotations for files below the threshold.  Only used by that
+            format; ``None`` disables annotations.
 
     Returns:
         The :class:`ReportResult` from report generation.
@@ -91,7 +96,13 @@ def generate_coverage_report(
     data = reporter.read_coverage_json(output_path / "coverage.json")
 
     # Generate report.
-    return reporter.generate_report(plan, data, output_path, effective_format)
+    return reporter.generate_report(
+        plan,
+        data,
+        output_path,
+        effective_format,
+        annotate_min_percent=annotate_min_percent,
+    )
 
 
 def merge_coverage_files(

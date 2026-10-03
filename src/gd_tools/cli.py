@@ -1103,7 +1103,14 @@ def report(report_format, format_alias, output_dir):
 
     try:
         result = generate_coverage_report(
-            config, report_format=format, output_dir=output_dir
+            config,
+            report_format=format,
+            output_dir=output_dir,
+            annotate_min_percent=(
+                config.coverage.min_percent
+                if config.coverage.min_percent > 0
+                else None
+            ),
         )
         effective = format if format is not None else config.coverage.format
         if effective == "github-actions":
