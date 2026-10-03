@@ -37,23 +37,29 @@
   rejection message lists all valid values; implement in `config.py`.
   *(red `b802122`, green `478e287`; schema snapshot regenerated and
   sync test green)*
-- [~] **Task 2.4 — Verify quality gates + commit:** full coverage test
+- [x] **Task 2.4 — Verify quality gates + commit:** full coverage test
   suite green; gates pass; commit
   `feat(coverage): add github-actions annotation format` + git note;
-  update plan.md.
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
+  update plan.md. *(feat `c5cadd0`; full suite 1592 passed / 95.24%;
+  manual-verification remediation `7507f23`)*
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
+  *(checkpoint `439bd3a`)*
 
 ## Phase 3: Docs + Final Verification
 
-- [ ] **Task 3.1 — USER_GUIDE:** add GitHub Actions workflow snippet
+- [x] **Task 3.1 — USER_GUIDE:** add GitHub Actions workflow snippet
   (lint + coverage steps using the new format) and update the format
-  tables in `docs/USER_GUIDE.md`.
-- [ ] **Task 3.2 — CHANGELOG:** add Unreleased entry describing the new
-  format for lint, coverage, and config.
-- [ ] **Task 3.3 — Regression:** verify `text`/`json` outputs unchanged
+  tables in `docs/USER_GUIDE.md`. *(new section 4.5 + 4 format tables
+  updated)*
+- [x] **Task 3.2 — CHANGELOG:** add Unreleased entry describing the new
+  format for lint, coverage, and config. *(new `### Added` section with
+  lint/coverage/config bullets)*
+- [x] **Task 3.3 — Regression:** verify `text`/`json` outputs unchanged
   (existing tests pass untouched); full quality gates:
-  `CI=true pytest`, `ruff check`, `black --check`.
-- [ ] **Task 3.4 — Commit docs:**
+  `CI=true pytest`, `ruff check`, `black --check`. *(full suite 1592
+  passed / 95.24% after final source change `7507f23`; docs-only edits
+  since; ruff + black clean)*
+- [x] **Task 3.4 — Commit docs:**
   `docs(user-guide): document github-actions report format` + git note;
-  update plan.md.
+  update plan.md. *(commit `d192400`)*
 - [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
