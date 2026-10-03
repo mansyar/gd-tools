@@ -147,4 +147,4 @@ removed; the known-stale docs are corrected (spec FR-12 through FR-17).
   - `python -m pytest tests -q` green (unit + integration + e2e).
   - `ruff check src tests` and `black --check src tests` clean.
   - Coverage gates hold (>=80% line / >=70% branch).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [2bd5fd3]
