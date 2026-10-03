@@ -447,6 +447,50 @@ STATEMENT_HEADER_NODES = frozenset(
 ANCHOR_NODES = STATEMENT_NODES | STATEMENT_HEADER_NODES
 
 
+#: AST node names for class-level member variable declarations. A point
+#: recorded on a member declaration's own line would have its tracker
+#: injected into the class body, where GDScript permits no statement, so
+#: those lines are never legal insertion points.
+CLASS_MEMBER_NODES = frozenset({"class_var_stmt", "static_class_var_stmt"})
+
+
+def _collect_illegal_lines(root: Tree) -> set[int]:
+    """Collect the lines on which no tracker call may be injected.
+
+    The collector inserts each tracker as its own line immediately *before*
+    the recorded line, so a recorded line must be one where a statement may
+    begin. Two AST contexts violate that:
+
+    - A class-member declaration line (``class_var_stmt`` and its
+      ``static`` wrapper). Statements squash onto such lines when a lambda
+      body is written inline, and injecting before the line would place a
+      statement into the class body.
+    - Any line within a function signature span (``func_header``), including
+      multi-line signatures. A lambda in a default parameter squashes its
+      body statement onto a signature line.
+
+    Args:
+        root: Root of the parsed GDScript AST.
+
+    Returns:
+        Set of 1-indexed line numbers where a tracker may not be injected.
+    """
+    illegal: set[int] = set()
+
+    def walk(node: Tree) -> None:
+        if node.data in CLASS_MEMBER_NODES:
+            illegal.add(node.meta.line)
+        elif node.data == "func_header":
+            end_line = getattr(node.meta, "end_line", None) or node.meta.line
+            illegal.update(range(node.meta.line, end_line + 1))
+        for child in node.children:
+            if isinstance(child, Tree):
+                walk(child)
+
+    walk(root)
+    return illegal
+
+
 def _map_ternary_anchors(root: Tree) -> dict[int, int]:
     """Map ``id()`` of each ``test_expr`` node to its anchor line.
 
@@ -503,15 +547,17 @@ class CoverageVisitor(Visitor):
         self._next_id: int = 0
         self._excluded_lines = excluded_lines or set()
         self._ternary_anchors: dict[int, int] = {}
+        self._illegal_lines: set[int] = set()
 
     def visit(self, tree: Tree) -> Tree:
-        """Resolve ternary anchors, then walk the tree bottom-up.
+        """Resolve ternary anchors and illegal lines, then walk bottom-up.
 
         :meth:`visit` is overridden so that anchor resolution cannot be
         bypassed by a caller that only invokes ``visit()``, which is how
         :func:`generate_plan` drives this visitor.
         """
         self._ternary_anchors = _map_ternary_anchors(tree)
+        self._illegal_lines = _collect_illegal_lines(tree)
         return super().visit(tree)
 
     def _add_point(
@@ -532,9 +578,15 @@ class CoverageVisitor(Visitor):
                 the node's own line. Used by ternary branches, which are
                 anchored to their enclosing statement. The exclusion
                 check applies to whichever line is recorded.
+                Points on lines where no tracker may be injected (class
+                member declaration lines, function signature spans) are
+                dropped silently rather than recorded.
         """
         resolved_line = line if line is not None else tree.meta.line
-        if resolved_line in self._excluded_lines:
+        if (
+            resolved_line in self._excluded_lines
+            or resolved_line in self._illegal_lines
+        ):
             return
         self.points.append(
             LinePlan(
