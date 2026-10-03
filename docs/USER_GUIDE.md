@@ -1847,15 +1847,19 @@ format = "github-actions"
 ```
 
 ```text
-::warning file=src/enemy.gd::Coverage 66.7% below minimum 80%
+::warning file=src/enemy.gd::Coverage 66.7%25 below minimum 80%25
 ```
 
 When the overall coverage gate fails (via `gd-tools coverage run`),
 a summary `::error` is emitted before the per-file warnings:
 
 ```text
-::error title=Coverage gate::Total coverage 78.0% is below minimum 80%
+::error title=Coverage gate::Total coverage 78.0%25 is below minimum 80%25
 ```
+
+> Note: `%` characters in annotation text are escaped as `%25` per
+> the workflow log-command spec; GitHub renders them as `%` in the
+> annotation UI.
 
 **Example workflow steps:**
 
