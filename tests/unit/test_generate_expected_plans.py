@@ -24,11 +24,13 @@ _FIXTURE_NAMES = [
     "match_stmt",
     "nested",
     "edge_cases",
+    "edge_cases_advanced",
+    "ternary_anchors",
 ]
 
 
 def test_script_regenerates_all_fixtures(tmp_path):
-    """Script runs and regenerates all 6 expected plan JSON fixtures."""
+    """Script runs and regenerates all expected plan JSON fixtures."""
     result = subprocess.run(
         [
             sys.executable,

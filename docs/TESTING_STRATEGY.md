@@ -712,6 +712,37 @@ def test_version_json(runner):
 Integration tests require a real Godot binary and GUT installation. They are
 slower (~2-5s each due to Godot startup) and marked with `@pytest.mark.integration`.
 
+### Instrumentation Parse Suite
+
+`tests/integration/test_coverage_instrumentation_parses.py` is the one integration
+suite that needs no test runtime. It answers a question the unit tests structurally
+cannot: *does the GDScript we actually inject still parse?* Each fixture is planned,
+instrumented with the collector's own insertion logic, and handed to a real Godot
+via `--check-only`.
+
+This matters because an unparseable script does not fail loudly.
+`_instrument_file` catches the failed `reload()` and records the file as an
+**omission**, so the file silently leaves the report and `--min` escalates to exit 2.
+
+Two harness constraints are load-bearing:
+
+- The `GdToolsNativeCoverage` stub is declared with `class_name`, **not** as an
+  autoload. Godot rejects a script that both declares a `class_name` and is
+  registered as an autoload of the same name (`Class ... hides an autoload
+  singleton`), and `--check-only --script` does not initialise autoloads at all.
+- `--import` must run once per project directory to populate the global script class
+  cache before any check, or every fixture fails with `Identifier not found`.
+
+A canary, `test_harness_detects_a_deliberately_broken_script`, asserts that the
+harness still flags unparseable input. It is not decorative: a stale `.godot`
+directory made broken scripts report as valid while this suite was being written,
+and without the canary every other assertion in the module would be vacuous.
+
+Each test builds a fresh project directory, so the suite costs roughly one `--import`
+per case (~45-50s total). Isolation is chosen over speed deliberately — sharing a
+project would reuse one fixture filename across cases, which is exactly the reuse
+pattern that produced the false passes described above.
+
 ### 5.1 Test Environment
 
 ```python

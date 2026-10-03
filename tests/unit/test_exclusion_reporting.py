@@ -124,7 +124,7 @@ class TestTerminalExcludedCount:
     def test_no_count_when_no_exclusions(self):
         """A plan without exclusions mentions nothing about exclusions."""
         plan = CoveragePlan(
-            version=2,
+            version=3,
             generated_by="gd-tools",
             files=[
                 FilePlan(

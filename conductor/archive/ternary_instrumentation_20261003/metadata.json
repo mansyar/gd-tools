@@ -1,0 +1,9 @@
+{
+  "track_id": "ternary_instrumentation_20261003",
+  "title": "Ternary Branch Instrumentation Correctness",
+  "type": "bugfix",
+  "status": "completed",
+  "branch": "fix/ternary-multiline-instrumentation-20261003",
+  "created": "2026-10-03",
+  "description": "Fix the coverage plan generator placing ternary (test_expr) branch points at the ternary's first-operand line instead of its enclosing statement, which made the tracker call be injected inside open brackets or into the class body and produced GDScript that fails to parse. Affected files silently dropped out of coverage via the omission path and --min escalated to exit 2. Anchor ternary branches to the nearest enclosing tracked statement by walking the parse tree for true ancestry, drop ternaries that have no enclosing statement (class-level const, @export, default parameter), and bump PLAN_VERSION from 2 to 3 so cached plans holding stale line numbers are invalidated."
+}
