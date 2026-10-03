@@ -19,13 +19,13 @@ phase checkpoints per `conductor/workflow.md`.
 
 ## Phase 2 — Per-Arm Instrumentation (coverage.gd)
 
-- [ ] Task: Write failing tests for operand wrapping injection (Red)
-  - [ ] Tests asserting ternary arms inject `_gdtools_coverage_hit_ret(<id>, <operand>)` wrapping the operand text (not a line-inserted `hit()` before the anchor)
-  - [ ] Tests for both arms on the same statement; nested/multi-line operand replacement at exact spans
-  - [ ] Tests that const/default-parameter ternaries produce no instrumentation
-- [ ] Task: Implement `hit_ret` tracker API and span-based operand replacement (Green)
-  - [ ] Add `hit_ret(id, value)` to the coverage tracker: record hit, return value unchanged
-  - [ ] Span-based text replacement in `_inject_trackers` (or sibling) for ternary branch points; remove the dual anchor-line `hit()` insertion
+- [x] Task: Write failing tests for operand wrapping injection (Red) [ce41436]
+  - [x] Tests asserting ternary arms inject `_gdtools_coverage_hit_ret(<id>, <operand>)` wrapping the operand text (not a line-inserted `hit()` before the anchor)
+  - [x] Tests for both arms on the same statement; nested/multi-line operand replacement at exact spans
+  - [x] Tests that const/default-parameter ternaries produce no instrumentation
+- [x] Task: Implement `hit_ret` tracker API and span-based operand replacement (Green) [ce41436]
+  - [x] Add `hit_ret(id, value)` to the coverage tracker: record hit, return value unchanged
+  - [x] Span-based text replacement in `_inject_trackers` (or sibling) for ternary branch points; remove the dual anchor-line `hit()` insertion
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Independent Measurement & Gating
