@@ -28,7 +28,7 @@ phase checkpoints per `conductor/workflow.md`.
   - [x] Span-based text replacement in `_inject_trackers` (or sibling) for ternary branch points; remove the dual anchor-line `hit()` insertion
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Independent Measurement & Gating
+## Phase 3 — Independent Measurement & Gating [checkpoint: 6f49632]
 
 - [x] Task: Write failing end-to-end tests for per-arm measurement (Red) [11409d0]
   - [x] E2E: suite exercising only the true arm → `ternary_true` covered, `ternary_false` uncovered (and reverse; and both-covered)
@@ -39,7 +39,7 @@ phase checkpoints per `conductor/workflow.md`.
   - [x] Branch hit-join and gate evaluation by arm point id; line-coverage aggregation for anchor lines verified correct; new `--min-branch` CLI gate on `test` and `coverage show`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4 — Edge Cases & Behavioral Equivalence
+## Phase 4 — Edge Cases & Behavioral Equivalence [checkpoint: 6f49632]
 
 - [x] Task: Write failing tests for semantic transparency (Red) [5ec7b48]
   - [x] Side-effect fixture: each operand evaluated exactly once, condition not re-evaluated; returned values identical to uninstrumented run (ran as verification gate — wrapping landed in Phase 2, so Red could not be demonstrated; test adds permanent regression protection)
