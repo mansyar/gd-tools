@@ -48,7 +48,7 @@ guard against regressions.
 | Layer         | Count (est.) | Speed      | Dependencies        |
 |---------------|-------------|------------|----------------------|
 | Unit          | ~150-200    | <5s total  | None (all mocked)    |
-| Integration   | ~20-30      | ~60s total | Godot binary, GUT    |
+| Integration   | ~20-30      | ~60s total | Godot binary         |
 | E2E           | ~5-8        | ~120s total| Godot + sample project|
 
 ---
@@ -709,8 +709,11 @@ def test_version_json(runner):
 
 ## 5. Integration Tests
 
-Integration tests require a real Godot binary and GUT installation. They are
-slower (~2-5s each due to Godot startup) and marked with `@pytest.mark.integration`.
+Integration tests require a real Godot binary (resolved via the root
+`conftest.py` `godot_bin` fixture: skipped when absent locally, a hard
+failure in CI). They are slower (~2-5s each due to Godot startup) and
+marked with `@pytest.mark.integration`. No test runtime is installed by
+the harness; the suites exercise the shipped addons directly.
 
 ### Instrumentation Parse Suite
 

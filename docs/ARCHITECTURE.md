@@ -705,13 +705,14 @@ source remains in memory from the initial `load()`.
 
 ### 6.4 Error Precedence: TestFailureError Before CoverageThresholdError
 
-When tests fail **and** coverage is below threshold,
-`run_coverage_test()` re-raises `TestFailureError` first. This
-ensures that CI pipelines report test failures as the primary issue
---- a coverage threshold violation is secondary when tests are already
-failing. The coverage report is still generated (written to disk)
-before either error is raised, so the report is available for
-inspection regardless of the error.
+When tests fail **and** coverage is below threshold, the native test
+command reports test failure first: its exit mapping orders
+infrastructure errors above test failures above coverage-threshold
+violations. This ensures that CI pipelines report test failures as
+the primary issue --- a coverage threshold violation is secondary when
+tests are already failing. The coverage report is still generated
+(written to disk) before either condition is reported, so the report
+is available for inspection regardless of the outcome.
 
 In all cases (success, threshold failure, or test failure), the
 coverage summary table (Rich, Lines/Branches: Found/Hit/Rate) is
