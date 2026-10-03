@@ -407,13 +407,21 @@ line as context. Three consequences follow:
   it. Note that class-body lines are **not** valid insertion points even when
   a statement is recorded on them — a lambda body assigned to a class-level
   `var` still produces uncompilable output, which is a separate known defect.
-* `ternary_true` and `ternary_false` are recorded on the same line, so the
-  two arms are always covered together and ternary branch coverage cannot
-  currently fail. Tracking the arms independently requires the plan to
-  record a span rather than a line.
+* `ternary_true` and `ternary_false` each carry an `operand_span` — the
+  exact source range of the arm's operand expression. Instead of inserting
+  a tracker before the anchor line (where both arms would fire in
+  lockstep), the collector replaces each operand with
+  `hit_ret(file_id, point_id, operand)`: a value-preserving tracker call
+  that records the hit and returns the operand unchanged. Each arm is
+  measured exactly when it evaluates; the human report still displays
+  ternary branches combined under the anchor line, and `--min-branch`
+  gates branch coverage independently of `--min`. Ternaries in class-level
+  initialisers and default parameter values remain untracked (no anchor).
 
 Because the meaning of a recorded line changed, `PLAN_VERSION` was bumped
-2 → 3 so stale cached plans are regenerated rather than reused.
+2 → 3 so stale cached plans are regenerated rather than reused. It was
+bumped again 3 → 4 when the arms gained `operand_span`s: a plan without
+span data falls back to the old anchor-line insertion.
 `tests/integration/test_coverage_instrumentation_parses.py` compiles the
 instrumented output against a real Godot to hold this invariant.
 
