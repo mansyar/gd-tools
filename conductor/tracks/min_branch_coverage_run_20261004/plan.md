@@ -22,13 +22,15 @@
 - [x] Task: Gate tests (Red→Green)
   - [x] Fixture with uncovered ternary arm: `coverage run --min-branch 100` raises branch gate error
   - [x] Zero-branch project: `coverage run --min-branch 100` passes with note
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Documentation & Final Verification
 - [x] Task: Docs truth pass
   - [x] USER_GUIDE: `--min-branch` row on `coverage run` + zero-branch exemption note
   - [x] ARCHITECTURE: zero-branch exemption bullet in threshold section
   - [x] CHANGELOG: coverage bullet under Unreleased
-- [ ] Task: Final quality gates
+- [x] Task: Final quality gates
   - [x] `ruff check src/ tests/` + `black --check` clean
-  - [ ] Full `CI=true pytest` passes (unit + integration + e2e)
+  - [x] Full `CI=true pytest` passes (unit + integration + e2e) — 1720 passed / 7 skipped, 95.66%
+
+- [x] Final commit artifacts: docs commit 5865031, checkpoint 964e787
