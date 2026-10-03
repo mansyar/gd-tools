@@ -577,6 +577,17 @@ static func _gd_tools_stub_specificity(pattern: Array, call_args: Array) -> int:
 	return 1 if wildcard else 2
 
 
+static func _gd_tools_args_match(pattern: Array, call_args: Array) -> bool:
+	## Return whether an argument pattern matches a recorded call.
+	##
+	## Elements equal to the string "any" act as per-element wildcards,
+	## matching any value; every other element must compare equal. The
+	## pattern must have the same size as the recorded call. This helper
+	## is the single source of truth for argument matching, shared by
+	## stub dispatch and spy assertions.
+	return _gd_tools_stub_specificity(pattern, call_args) >= 0
+
+
 func _gd_tools_stub_find(double_id: int, method: String, call_args: Array) -> Dictionary:
 	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
 	var entries: Array = per_double.get(method, [])
@@ -669,7 +680,9 @@ func assert_call_arguments(
 	## Assert the arguments of one recorded call on a double.
 	##
 	## `call_index` selects the recorded call (0 is the first); -1, the
-	## default, selects the most recent call.
+	## default, selects the most recent call. Elements of `expected_args`
+	## equal to the string "any" act as per-element wildcards, matching
+	## any recorded value, mirroring `stub()` argument patterns.
 	if _gd_tools_assert_target_is_double(target, "assert_call_arguments"):
 		return
 	var calls: Array = _gd_tools_double_calls(target, method)
@@ -690,7 +703,7 @@ func assert_call_arguments(
 		)
 		return
 	var actual_args: Array = calls[call_index]
-	if actual_args != expected_args:
+	if not _gd_tools_args_match(expected_args, actual_args):
 		_gd_tools_record_failure(
 			"assert_call_arguments",
 			_gd_tools_detail(
