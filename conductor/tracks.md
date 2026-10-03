@@ -245,4 +245,4 @@ _Archived tracks live in `./archive/`._
   review found them silently dropped, and bump PLAN_VERSION to 3 so stale
   cached plans are invalidated)
   *Link: [ternary_instrumentation_20261003](./archive/ternary_instrumentation_20261003/index.md)*
-- [ ] **Track: Instrumentation Hygiene Sweep** *Link: [./tracks/instrumentation_hygiene_20261003/index.md](./tracks/instrumentation_hygiene_20261003/index.md)*
+- [~] **Track: Instrumentation Hygiene Sweep** *Link: [./tracks/instrumentation_hygiene_20261003/index.md](./tracks/instrumentation_hygiene_20261003/index.md)*
