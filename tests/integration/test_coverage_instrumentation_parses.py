@@ -127,6 +127,7 @@ CASES = {
         "\tvar value = await truthy() if cond else 0\n\treturn value\n\n\n"
         "func truthy() -> int:\n\treturn 1\n",
         [5, 5],
+        [5, 6, 10],
     ),
     # Evidence for the @export open question: a hand-instrumented @export
     # initializer (tracker call in the ternary operand) still compiles, so
@@ -137,6 +138,7 @@ CASES = {
         "extends Node\n\n@export var enabled := true\n\n\n"
         "@export var size: int = GdToolsNativeCoverage.hit_ret(0, 5, 2) "
         "if enabled else 4\n",
+        [],
         [],
     ),
     "param_orphan": (
