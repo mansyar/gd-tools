@@ -1,35 +1,26 @@
-"""Instrumented GDScript must still parse.
+"""Compile every instrumented fixture against a real Godot.
 
-The coverage plan generator records a line per trackable point, and
-``gd_tools_native_coverage.gd`` inserts a tracker call *before* each of
-those lines. If a planned line is not a line where a statement may
-begin, the inserted call lands inside open brackets or in a class body
-and the instrumented script stops parsing.
+The unit tests for the plan generator assert *which line* a point is
+recorded on. They cannot assert that the GDScript which results from
+injecting a tracker before each recorded line actually compiles, because
+nothing in a plan is aware of GDScript's grammar. This module closes
+that gap: each fixture is planned, instrumented with a port of the
+collector's insertion logic, and handed to a real Godot.
 
-An unparseable script fails ``script.reload()`` in
-``_instrument_file``, which records the file as an omission. That is the
-silent-failure mode this suite exists to prevent: the file simply drops
-out of coverage, and ``--min`` then escalates to exit 2.
+Two harness constraints were learned the hard way and are load-bearing:
 
-These tests compile the *instrumented output* against a real Godot
-rather than asserting on the plan alone, which cannot detect a bad
-insertion point.
+* ``GdToolsNativeCoverage`` must be declared with ``class_name``, not as an
+  autoload. Godot rejects a script that both declares a ``class_name`` and is
+  registered as an autoload of the same name (``Class ... hides an autoload
+  singleton``), and ``--check-only --script`` does not initialise autoloads.
+* ``--import`` must run once per project before any check, or the global
+  script class cache is empty and every fixture fails with ``Identifier not
+  found``. A stale ``.godot`` directory silently reports broken fixtures as
+  valid, which is what the canary below exists to catch.
 
-Harness notes, learned the hard way:
-
-* The ``GdToolsNativeCoverage`` stub is declared with ``class_name``, not
-  as an autoload. Godot rejects a script that both declares a
-  ``class_name`` and is registered as an autoload of the same name
-  ("Class ... hides an autoload singleton"), and ``--check-only
-  --script`` does not initialise autoloads anyway.
-* ``--check-only`` resolves ``class_name`` through the global script
-  class cache, so ``--import`` must run once per project directory
-  before any check.
-* A stale ``.godot`` directory makes checks report a false pass. Every
-  project here is created fresh per test, and
-  :func:`test_harness_detects_a_deliberately_broken_script` asserts the
-  harness still flags broken input, so the harness cannot quietly rot
-  into always passing.
+The port in :func:`_inject` is guarded by
+:func:`test_injection_port_tracks_the_collector`, so it cannot silently
+diverge from the real collector.
 """
 
 import re
@@ -61,59 +52,119 @@ PROJECT_FILE = (
 
 _PARSE_ERROR = re.compile(r"(Parse Error|Compile Error|SCRIPT ERROR)")
 
-#: Cases that previously produced uncompilable instrumented output, plus
-#: cases that were already fine and must stay fine.
+#: Branch types whose tracker is injected *after* the recorded line, into the
+#: branch body, because the recorded line is a keyword or case label rather
+#: than the body itself. Mirrors the collector; guarded against drift by
+#: :func:`test_injection_port_tracks_the_collector`.
+_AFTER_LINE_BRANCH_TYPES = frozenset({"match_case", "if_false", "elif_true"})
+
+_COLLECTOR = (
+    Path(__file__).resolve().parents[2]
+    / "src"
+    / "gd_tools"
+    / "addons"
+    / "gd-tools-test"
+    / "gd_tools_native_coverage.gd"
+)
+
+#: ``name: (source, expected ternary lines)``. The expected lines are asserted
+#: because "it compiles" is satisfied by a plan recording zero points -- which
+#: is exactly how ternaries in control-flow headers were once dropped in
+#: silence.
 CASES = {
-    # --- previously broken ---
+    # --- previously produced uncompilable output ---
     "ml_stmt": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
-        "\tvar x = (\n\t\t1\n\t\tif a > 0\n\t\telse 2\n\t)\n\tprint(x)\n"
+        "\tvar x = (\n\t\t1\n\t\tif a > 0\n\t\telse 2\n\t)\n\tprint(x)\n",
+        [5, 5],
     ),
     "ml_call": (
         "extends Node\n\n\nfunc g(c: int) -> int:\n\treturn c\n\n\n"
         "func f(a: int) -> void:\n"
-        "\tg(\n\t\t1 if a > 0\n\t\telse 2\n\t)\n"
+        "\tg(\n\t\t1 if a > 0\n\t\telse 2\n\t)\n",
+        [9, 9],
     ),
     "const_orphan": (
         "extends Node\n\nconst C = 1 if true else 2\n\n\n"
-        "func f() -> void:\n\tprint(C)\n"
+        "func f() -> void:\n\tprint(C)\n",
+        [],
     ),
     "const_ml_orphan": (
         "extends Node\n\nconst C = (\n\t1\n\tif true\n\telse 2\n)\n\n\n"
-        "func f() -> void:\n\tprint(C)\n"
+        "func f() -> void:\n\tprint(C)\n",
+        [],
     ),
     "export_orphan": (
         "extends Node\n\n@export var v: int = 1 if true else 2\n\n\n"
-        "func f() -> void:\n\tprint(v)\n"
+        "func f() -> void:\n\tprint(v)\n",
+        [],
     ),
     "param_orphan": (
         "extends Node\n\n\nfunc f(a: int, x = 1 if a > 0 else 2) -> void:\n"
-        "\tprint(x)\n"
+        "\tprint(x)\n",
+        [],
+    ),
+    # --- header ternaries, dropped until the anchor set was widened ---
+    "if_header": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tif (1 if a > 0 else 2) > 0:\n\t\tprint(a)\n",
+        [5, 5],
+    ),
+    "if_header_ml": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tif (\n\t\t1 if a > 0 else 2\n\t) > 0:\n\t\tprint(a)\n",
+        [5, 5],
+    ),
+    "for_header": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tfor i in range(1 if a > 0 else 2):\n\t\tprint(i)\n",
+        [5, 5],
+    ),
+    "for_header_ml": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tfor i in range(\n\t\t1 if a > 0 else 2\n\t):\n\t\tprint(i)\n",
+        [5, 5],
+    ),
+    "while_header": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\twhile (a if a > 0 else 0) > 1:\n\t\tprint(a)\n",
+        [5, 5],
+    ),
+    "match_header": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tmatch (1 if a > 0 else 2):\n\t\t1:\n\t\t\tprint(a)\n",
+        [5, 5],
     ),
     # --- already fine; must stay fine ---
     "control_stmt": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
-        "\tvar x = 1 if a > 0 else 2\n\tprint(x)\n"
+        "\tvar x = 1 if a > 0 else 2\n\tprint(x)\n",
+        [5, 5],
     ),
     "nested_ternary": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
-        "\tvar x = 1 if a > 0 else 2 if a < 0 else 3\n\tprint(x)\n"
+        "\tvar x = 1 if a > 0 else 2 if a < 0 else 3\n\tprint(x)\n",
+        [5, 5],
     ),
     "lambda_ternary": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tvar c = func(p: int): return 1 if p > 0 else 2\n"
-        "\tprint(c.call(1))\n"
+        "\tprint(c.call(1))\n",
+        [5, 5],
     ),
     "ml_if": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
-        "\tif (\n\t\ta > 0\n\t\tand a < 10\n\t):\n\t\tprint(a)\n"
+        "\tif (\n\t\ta > 0\n\t\tand a < 10\n\t):\n\t\tprint(a)\n",
+        [],
     ),
     "ternary_in_arr": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
-        "\tprint([1 if a > 0 else 2, 3])\n"
+        "\tprint([1 if a > 0 else 2, 3])\n",
+        [5, 5],
     ),
     "no_ternary": (
-        "extends Node\n\n\nfunc f() -> void:\n\tvar x = 1\n\tprint(x)\n"
+        "extends Node\n\n\nfunc f() -> void:\n\tvar x = 1\n\tprint(x)\n",
+        [],
     ),
 }
 
@@ -124,6 +175,7 @@ BROKEN_CONTROL = (
 
 
 def _indent_of(line: str) -> str:
+    """Return the leading whitespace of ``line``."""
     out = ""
     for ch in line:
         if ch not in (" ", "\t"):
@@ -135,15 +187,15 @@ def _indent_of(line: str) -> str:
 def _inject(source: str, lines) -> str:
     """Port of ``_inject_trackers`` from the native coverage collector.
 
-    Mirrors the collector's ordering: entries are sorted by line
-    descending so that each insertion leaves earlier indices valid.
+    Mirrors the collector's ordering: entries are sorted by line descending
+    so that each insertion leaves earlier indices valid.
     """
     src_lines = source.split("\n")
     for entry in sorted(lines, key=lambda e: e.line, reverse=True):
         target = entry.line - 1
         if target < 0 or target >= len(src_lines):
             continue
-        if entry.branch_type in ("match_case", "if_false", "elif_true"):
+        if entry.branch_type in _AFTER_LINE_BRANCH_TYPES:
             target += 1
         indent = _indent_of(src_lines[target])
         if not indent:
@@ -155,6 +207,7 @@ def _inject(source: str, lines) -> str:
 
 
 def _run(godot_bin: str, project: Path, *args: str) -> str:
+    """Invoke Godot and return its combined output."""
     result = subprocess.run(
         [godot_bin, "--headless", "--path", str(project), *args],
         capture_output=True,
@@ -181,11 +234,44 @@ def _build_project(godot_bin: str, root: Path, source: str, name: str) -> Path:
 
 
 def _check(godot_bin: str, project: Path, name: str) -> tuple[bool, str]:
+    """Return whether ``name`` parses, plus the raw Godot output."""
     output = _run(
         godot_bin, project, "--check-only", "--script", f"res://{name}"
     )
     is_broken = bool(_PARSE_ERROR.search(output))
     return not is_broken, output
+
+
+def test_injection_port_tracks_the_collector():
+    """The port must keep matching the collector it reimplements.
+
+    If the collector's insertion rules change and this port does not, the
+    suite keeps passing while no longer testing the real thing -- the exact
+    failure mode its own canary exists to prevent.
+    """
+    source = _COLLECTOR.read_text(encoding="utf-8")
+
+    shift_list = re.search(r"branch_type in \[(.*?)\]", source, re.DOTALL)
+    assert shift_list, (
+        "Collector no longer has a `branch_type in [...]` shift list; "
+        "_inject must be updated to match."
+    )
+    collector_types = set(re.findall(r'"([a-z_]+)"', shift_list.group(1)))
+    assert collector_types == set(_AFTER_LINE_BRANCH_TYPES), (
+        "Collector's after-the-line branch types changed. "
+        f"Collector: {sorted(collector_types)}; "
+        f"port: {sorted(_AFTER_LINE_BRANCH_TYPES)}."
+    )
+
+    descending_sort = re.search(
+        r'sort_custom\(func\(a, b\):\s*return\s+int\(a\["line"\]\)\s*>\s*'
+        r'int\(b\["line"\]\)\)',
+        source,
+    )
+    assert descending_sort, (
+        "Collector no longer sorts insertions by line descending; "
+        "_inject's ordering assumption is now wrong."
+    )
 
 
 def test_harness_detects_a_deliberately_broken_script(tmp_path, godot_bin):
@@ -206,13 +292,25 @@ def test_harness_detects_a_deliberately_broken_script(tmp_path, godot_bin):
 
 @pytest.mark.parametrize("case", sorted(CASES))
 def test_instrumented_source_parses(case, tmp_path, godot_bin):
-    """Each instrumented fixture compiles under a real Godot."""
-    project = _build_project(godot_bin, tmp_path, CASES[case], "fixture.gd")
+    """Each instrumented fixture compiles and records the expected points."""
+    source, expected_ternaries = CASES[case]
+    project = _build_project(godot_bin, tmp_path, source, "fixture.gd")
 
     plan = generate_plan(str(project))
     entry = next(f for f in plan.files if f.path.endswith("fixture.gd"))
 
-    instrumented = _inject(CASES[case], entry.lines)
+    planned = [
+        p.line
+        for p in entry.lines
+        if p.branch_type and p.branch_type.startswith("ternary")
+    ]
+    assert planned == expected_ternaries, (
+        f"Case '{case}' recorded ternary lines {planned}, expected "
+        f"{expected_ternaries}. A plan recording zero points compiles "
+        f"trivially, so this is asserted separately from the parse."
+    )
+
+    instrumented = _inject(source, entry.lines)
     (project / "fixture.gd").write_text(instrumented, encoding="utf-8")
 
     valid, output = _check(godot_bin, project, "fixture.gd")
