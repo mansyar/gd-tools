@@ -1,0 +1,8 @@
+{
+  "track_id": "ternary_branch_separation_20261003",
+  "type": "bug",
+  "status": "new",
+  "branch": "feature/ternary-branch-separation-20261003",
+  "created": "2026-10-03",
+  "description": "Make ternary branch coverage measurable by instrumenting each arm at its operand expression via value-preserving wrapper calls, replacing the shared anchor-line insertion that can never fail the gate."
+}

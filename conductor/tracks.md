@@ -253,3 +253,11 @@ _Archived tracks live in `./archive/`._
   failures surface as native PR annotations; includes config alignment
   and CI docs — Roadmap Track 31)
   *Link: [gh_actions_annotations_20261002](./archive/gh_actions_annotations_20261002/index.md)*
+
+- [ ] **Track: Ternary Branch Separation** (bugfix: make ternary branch
+  coverage measurable by instrumenting each ternary arm at its operand
+  expression with a value-preserving wrapper call
+  (`_gdtools_coverage_hit_ret`) instead of the shared anchor-line insertion,
+  so `ternary_true`/`ternary_false` are measured and gated independently and
+  an uncovered arm can fail `--min-branch`; bumps PLAN_VERSION to 4)
+  *Link: [ternary_branch_separation_20261003](./tracks/ternary_branch_separation_20261003/index.md)*
