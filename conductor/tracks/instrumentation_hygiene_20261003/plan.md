@@ -11,7 +11,7 @@ plan-generator changes that alter which lines carry points require a
 every hard-coded version assertion. Phases 1 and 2 are therefore sequenced
 exactly like the proven ternary track (anchor first, bump second).
 
-## Phase 1: Class-Body Anchor Resolution
+## Phase 1: Class-Body Anchor Resolution [complete: b9e3e31]
 
 Goal: no planned point records on a class-body line or a function
 signature line. Multi-line lambda body statements stay tracked (FR-2);
@@ -45,7 +45,7 @@ func-level single-line lambdas stay exactly as they are today (FR-6).
   - Run ruff and black; fix findings.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
 
-## Phase 2: Plan Version Bump and Cache Invalidation
+## Phase 2: Plan Version Bump and Cache Invalidation [complete: 1e421fb]
 
 Goal: cached v3 plans that still carry class-body points are rejected,
 forcing one regeneration (`PLAN_VERSION` 3 → 4, spec FR-4).
@@ -61,7 +61,7 @@ forcing one regeneration (`PLAN_VERSION` 3 → 4, spec FR-4).
   - Update golden fixtures in `tests/fixtures/plans/*.expected.json` via
     `tools/generate_expected_plans.py` and any hard-coded `3`s in tests
     (grep first; the ternary track missed several).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md) [1e421fb]
 
 ## Phase 3: Real-Godot Class-Body Regression Cases
 
