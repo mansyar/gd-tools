@@ -405,9 +405,15 @@ line as context. Three consequences follow:
 * Because the anchor set is what decides this, widening it is a behaviour
   change: a ternary in a control-flow header is anchored to that header, and
   a class-level initialiser remains dropped because no anchor node encloses
-  it. Note that class-body lines are **not** valid insertion points even when
-  a statement is recorded on them — a lambda body assigned to a class-level
-  `var` still produces uncompilable output, which is a separate known defect.
+  it. Class-body lines are **not** valid insertion points even when a
+  statement is recorded on them: a lambda body assigned to a class-level
+  `var` used to record its body statement on the declaration line, and the
+  injected tracker broke the parse. The generator now guards this directly -
+  `_collect_illegal_lines` pre-pass collects class-member declaration lines
+  and function-signature spans, and any point recorded on such a line is
+  dropped before it can reach the collector (`PLAN_VERSION` bumped to 4).
+  A lambda body on its **own** line (a multi-line class-level lambda) is
+  still tracked normally, since that line is a legal statement position.
 * `ternary_true` and `ternary_false` are recorded on the same line, so the
   two arms are always covered together and ternary branch coverage cannot
   currently fail. Tracking the arms independently requires the plan to

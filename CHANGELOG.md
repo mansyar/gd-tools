@@ -31,6 +31,27 @@
   `ternary_false` share a recorded line, so both arms are always reported
   together and ternary branch coverage cannot fail.
 
+- **coverage**: Fix unparseable GDScript when a lambda body is assigned to a
+  class-level `var`, `static var`, or `@export`, or when a lambda appears in
+  a default parameter value. The body statement was recorded on the class
+  member's declaration line or the function's signature line - positions
+  where no statement may begin - so the injected tracker broke the parse and
+  the whole file silently vanished from coverage. Such points are now
+  dropped in the plan generator (a statement can only be recorded where one
+  may begin); multi-line lambda bodies, whose statements land on their own
+  legal lines, are still tracked. `PLAN_VERSION` is bumped 3 → 4 so cached
+  plans holding the dropped points are regenerated.
+
+- **coverage**: Fix `coverage merge` silently losing omission reasons. The
+  merge path writes through `write_coverage_json`, which did not serialize
+  the `omitted` key, so a merged `coverage.json` degraded real omission
+  reasons to a generic unknown reason. The key is now carried (additive;
+  readers already tolerate its absence). The same writer, the native
+  runtime's JUnit XML writer, and the run marker now write through a shared
+  crash-safe helper (temp file beside the destination, flush, fsync,
+  atomic rename), so an interrupted run can no longer leave a truncated
+  artifact behind.
+
 - **coverage**: Fix `coverage run --report-format json` always failing
   after the playtest session completed. The `json` format was advertised
   by the CLI but rejected by the reporter, so a finished session (minutes
@@ -51,6 +72,17 @@
   was regenerated to match.
 
 ### Changed
+
+- **init**: `gd-tools init` now cleans up files it no longer deploys. The
+  legacy GUT hook scripts `pre_run_hook.gd` and `post_run_hook.gd` (which
+  extended the removed `GutHookScript` base class and could never load)
+  no longer ship; on upgraded projects `init` moves stale copies into
+  `.gd-tools/.backups/`, deletes them, and prints a notice.
+
+- **internals**: `gd_tools.test_runner` is renamed to
+  `gd_tools.test_results`. The module has not run anything since the GUT
+  bridge removal - it holds the `TestDetail`/`TestResult` result models and
+  their formatter, shared by the native runtime and watch mode.
 
 - **coverage**: `gd-tools coverage report` now takes the canonical
   `--report-format` flag (with `click.Choice` validation over
