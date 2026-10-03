@@ -27,11 +27,17 @@ from rich.console import Console
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 2
+PLAN_VERSION = 3
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
 stale cached plans regenerate instead of silently dropping exclusions.
+
+Bumped 2 -> 3 when ternary branch points became anchored to their
+enclosing statement. Version 2 plans record ``LinePlan.line`` at a
+ternary's first-operand line, so reusing one would re-inject trackers on
+the stale lines and reproduce the parse failures this bump exists to
+prevent.
 """
 
 # --- Data structures (FR-1) ---
@@ -408,6 +414,79 @@ def find_excluded_lines(source: str) -> tuple[list[int], list[str]]:
 
 # --- Coverage Visitor (FR-2, FR-3) ---
 
+#: AST node names tracked as statements.
+STATEMENT_NODES = frozenset(
+    {
+        "expr_stmt",
+        "return_stmt",
+        "func_var_assigned",
+        "func_var_typed_assgnd",
+        "func_var_inf",
+        "break_stmt",
+        "continue_stmt",
+    }
+)
+
+#: AST node names for control-flow statements. These are not tracked as
+#: statements themselves, but each begins with a keyword, so its line is a legal
+#: tracker insertion point and may anchor a ternary found in its header.
+STATEMENT_HEADER_NODES = frozenset(
+    {
+        "if_stmt",
+        "while_stmt",
+        "for_stmt",
+        "for_stmt_typed",
+        "match_stmt",
+    }
+)
+
+#: Every node whose line may serve as a tracker insertion point: a ternary is
+#: anchored to the nearest enclosing node in this set. Class-body initializers
+#: (``var x = ...`` inside a ``class``) are deliberately absent -- no statement
+#: node encloses them and their line is not a legal insertion point.
+ANCHOR_NODES = STATEMENT_NODES | STATEMENT_HEADER_NODES
+
+
+def _map_ternary_anchors(root: Tree) -> dict[int, int]:
+    """Map ``id()`` of each ``test_expr`` node to its anchor line.
+
+    A ternary branch point is only instrumentable when recorded at a line
+    where a statement may begin, so it is anchored to the nearest enclosing
+    node in :data:`ANCHOR_NODES`. A ternary with no such node -- one inside a
+    class-level initializer or a default parameter value -- has no legal
+    insertion point and is not tracked.
+
+    A recursive walk is required rather than the flat bottom-up visitor:
+    :meth:`lark.visitors.Visitor.visit` exposes no ancestry, so a ternary
+    encountered in a class-level ``const`` initializer would otherwise be
+    attributed to whichever statement happened to be visited next -- for
+    example a ``print()`` several lines later in the file.
+
+    Keys are object identities valid only for the duration of a single
+    traversal, so the map must be built and consumed within one
+    :meth:`CoverageVisitor.visit` call.
+
+    Args:
+        root: Root of the parsed GDScript AST.
+
+    Returns:
+        Mapping from ``id()`` of each ``test_expr`` node to its anchor
+        line, containing only anchorable ternaries.
+    """
+    anchors: dict[int, int] = {}
+
+    def walk(node: Tree, enclosing: int | None) -> None:
+        if node.data in ANCHOR_NODES:
+            enclosing = node.meta.line
+        if node.data == "test_expr" and enclosing is not None:
+            anchors[id(node)] = enclosing
+        for child in node.children:
+            if isinstance(child, Tree):
+                walk(child, enclosing)
+
+    walk(root, None)
+    return anchors
+
 
 class CoverageVisitor(Visitor):
     """Lark AST visitor that identifies trackable statements and branches.
@@ -423,12 +502,24 @@ class CoverageVisitor(Visitor):
         self.points: list[LinePlan] = []
         self._next_id: int = 0
         self._excluded_lines = excluded_lines or set()
+        self._ternary_anchors: dict[int, int] = {}
+
+    def visit(self, tree: Tree) -> Tree:
+        """Resolve ternary anchors, then walk the tree bottom-up.
+
+        :meth:`visit` is overridden so that anchor resolution cannot be
+        bypassed by a caller that only invokes ``visit()``, which is how
+        :func:`generate_plan` drives this visitor.
+        """
+        self._ternary_anchors = _map_ternary_anchors(tree)
+        return super().visit(tree)
 
     def _add_point(
         self,
         tree: Tree,
         point_type: str,
         branch_type: str | None = None,
+        line: int | None = None,
     ) -> None:
         """Extract line number and append a new :class:`LinePlan`.
 
@@ -437,12 +528,17 @@ class CoverageVisitor(Visitor):
             point_type: Either "statement" or "branch".
             branch_type: Branch type string if ``point_type`` is
                 "branch", otherwise ``None``.
+            line: Explicit 1-indexed line to record, or ``None`` to use
+                the node's own line. Used by ternary branches, which are
+                anchored to their enclosing statement. The exclusion
+                check applies to whichever line is recorded.
         """
-        if tree.meta.line in self._excluded_lines:
+        resolved_line = line if line is not None else tree.meta.line
+        if resolved_line in self._excluded_lines:
             return
         self.points.append(
             LinePlan(
-                line=tree.meta.line,
+                line=resolved_line,
                 id=self._next_id,
                 type=point_type,
                 branch_type=branch_type,
@@ -516,9 +612,27 @@ class CoverageVisitor(Visitor):
         The ``test_expr`` AST node materializes exclusively for ternary
         expressions (``value_if_true if cond else value_if_false``). Both
         value-branches are tracked as separate branch points.
+
+        Both points are anchored to the nearest enclosing node whose line is a
+        legal tracker insertion point (see :data:`ANCHOR_NODES`), rather than
+        the ternary's own line. A tracker call is injected *before* the planned
+        line, so a ternary may only be planned on a line where a statement can
+        begin. ``test_expr`` is the one tracked node whose first token is an
+        arbitrary operand rather than a keyword, so its own line is only a
+        statement boundary by coincidence. A ternary nested in a multi-line
+        parenthesized expression would otherwise be planned on a continuation
+        line and injected inside the open bracket.
+
+        A ternary with no enclosing anchor node -- one inside a class-level
+        ``const``/``var`` initializer, a ``@export`` initializer, or a default
+        parameter value -- has no legal insertion point at all and is not
+        tracked.
         """
-        self._add_point(tree, "branch", "ternary_true")
-        self._add_point(tree, "branch", "ternary_false")
+        anchor = self._ternary_anchors.get(id(tree))
+        if anchor is None:
+            return
+        self._add_point(tree, "branch", "ternary_true", line=anchor)
+        self._add_point(tree, "branch", "ternary_false", line=anchor)
 
 
 # --- Plan Generation (FR-4, FR-6) ---

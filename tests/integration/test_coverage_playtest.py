@@ -95,7 +95,7 @@ DRIVER_SOURCE = (
 def _playtest_plan() -> dict:
     """Return a minimal coverage plan tracking the playtest subject."""
     return {
-        "version": 2,
+        "version": 3,
         "generated_by": "playtest-integration-test",
         "files": [
             {

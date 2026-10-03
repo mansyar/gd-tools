@@ -189,7 +189,7 @@ permanent migration path.
   - `1`: test or coverage failure
   - `2`: environment, configuration, protocol, engine, or process failure
 - Native coverage preserves line and branch metrics.
-- Existing coverage plan schema v1 is reused where possible.
+- Existing coverage plan schema (v3) is reused where possible.
 - The native test addon and generated harness files are excluded from
   application coverage automatically.
 

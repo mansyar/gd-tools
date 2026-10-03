@@ -1291,6 +1291,57 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 - `@onready`/`@export` annotations produce zero trackable points (no
   false positives).
 
+**Ternary line anchoring (Track `ternary_instrumentation_20261003`):**
+
+- The `test_expr()` visitor above recorded both ternary branches on
+  `tree.meta.line`, i.e. the line of the ternary's **first operand**. That
+  is correct only when the ternary begins its statement. `test_expr` is
+  the one tracked node that does not begin with a keyword, so it was the
+  one node where `meta.line` could name a continuation line.
+- Reproduction: a ternary inside a multi-line parenthesised expression
+  (`var x = (\n 1\n if a > 0\n else 2\n)`), inside multi-line call
+  arguments, or in a `const`/`@export` initialiser or default parameter
+  value. Injecting the tracker before that line produced an
+  unparseable script, the reload failed, and `_instrument_file` recorded
+  an omission — the file silently left the report and `--min` escalated
+  to exit 2.
+- Fix: `CoverageVisitor.visit` runs one recursive pre-pass
+  (`_map_ternary_anchors`) that walks down carrying the most recent
+  anchor line, so each `test_expr` is anchored to its nearest enclosing
+  node in `ANCHOR_NODES`. A pre-pass rather than a pending-point buffer was
+  chosen because lark's flat bottom-up traversal has no ancestry, and a
+  buffer attributes a class-level `const` ternary to whichever unrelated
+  statement happens to follow it.
+- A ternary with no enclosing anchor node is dropped rather than
+  mis-anchored; those positions are not statement lines.
+- `# gd-tools: no cover` evaluates against the **finally recorded** line, and
+  only that line. This is deliberately one-directional: an exclusion on the
+  anchored statement suppresses the ternary branches, but an exclusion on the
+  ternary's *own* line (which is no longer recorded) does not. Re-annotating a
+  multi-line ternary therefore means annotating the statement it belongs to.
+- **Follow-up (`conductor-review`, 2026-10-03):** the original anchor set
+  contained only tracked *statements*, so a ternary in an `if`/`while`/`for`/
+  `match` header — which has no enclosing statement — was silently dropped.
+  Single-line headers had been tracked correctly before, so this was a
+  regression; multi-line headers had been broken and are now anchored rather
+  than dropped. `ANCHOR_NODES` was widened with the statement-header nodes
+  (`if_stmt`, `while_stmt`, `for_stmt`, `for_stmt_typed`, `match_stmt`), all
+  of which begin with a keyword. New golden fixture `ternary_anchors.gd`
+  covers the multi-line, header, class-body and default-param positions, and
+  the Godot parse suite now asserts each case's planned points rather than only
+  that the output compiles — a zero-point plan compiles trivially, which is how
+  the drop shipped unnoticed.
+- `PLAN_VERSION` 2 → 3, because the meaning of a recorded line changed.
+- `tests/integration/test_coverage_instrumentation_parses.py` compiles
+  the instrumented output against a real Godot. Verified to discriminate:
+  against the pre-fix generator exactly the six previously-broken cases
+  fail while the six already-fine cases pass. A canary asserts the
+  harness still detects a deliberately broken script, because a stale
+  `.godot` cache had produced false passes during this investigation.
+- Not fixed here: `ternary_true` and `ternary_false` still share a line,
+  so the arms cannot be covered independently. That needs the plan to
+  record a span rather than a line.
+
 **Autoload inclusion (Track 24.5, 2026-07-15):**
 
 - `resolve_autoload_paths()` was removed. Autoload scripts are no longer

@@ -234,3 +234,14 @@ _Archived tracks live in `./archive/`._
   validation, keep --format as a hidden alias, and align the
   [coverage].format config validator)
   *Link: [coverage_format_unification_20261002](./archive/coverage_format_unification_20261002/index.md)*
+
+
+- [x] **Track: Ternary Branch Instrumentation Correctness** (bugfix: anchor
+  ternary coverage branch points to the nearest node whose line is a legal
+  tracker insertion point instead of the first operand's line, drop ternaries
+  with no anchor at all (class-level const/var/static var, @export, default
+  parameter), fix GDScript that fails to parse for multi-line parenthesized
+  expressions, widen the anchor set to cover if/while/for/match headers after
+  review found them silently dropped, and bump PLAN_VERSION to 3 so stale
+  cached plans are invalidated)
+  *Link: [ternary_instrumentation_20261003](./archive/ternary_instrumentation_20261003/index.md)*
