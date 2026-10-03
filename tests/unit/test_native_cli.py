@@ -6,7 +6,7 @@ import pytest
 from click.testing import CliRunner
 
 from gd_tools.cli import cli
-from gd_tools.test_runner import TestResult
+from gd_tools.test_results import TestResult
 
 pytestmark = pytest.mark.unit
 

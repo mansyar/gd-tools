@@ -274,13 +274,11 @@ def test_register_coverage_autoload_handles_no_trailing_newline(
 
 
 def test_install_coverage_addon_copies_all_files(tmp_path: Path):
-    """Test install_coverage_addon copies all 3 .gd files to project."""
+    """Test install_coverage_addon copies the coverage .gd file to project."""
     install_coverage_addon(tmp_path)
 
     target_dir = tmp_path / "addons" / "gd-tools-coverage"
     assert (target_dir / "coverage.gd").exists()
-    assert (target_dir / "pre_run_hook.gd").exists()
-    assert (target_dir / "post_run_hook.gd").exists()
 
 
 def test_install_coverage_addon_overwrites_stale_files(tmp_path: Path):
@@ -291,13 +289,13 @@ def test_install_coverage_addon_overwrites_stale_files(tmp_path: Path):
     """
     target_dir = tmp_path / "addons" / "gd-tools-coverage"
     target_dir.mkdir(parents=True)
-    for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]:
+    for gd_file in ["coverage.gd"]:
         (target_dir / gd_file).write_text("old stale content")
 
     install_coverage_addon(tmp_path)
 
     backups_dir = target_dir / ".backups"
-    for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]:
+    for gd_file in ["coverage.gd"]:
         content = (target_dir / gd_file).read_text()
         assert content != "old stale content"
         # Backup must exist with the user's modified content
@@ -324,7 +322,7 @@ def test_smart_backup_unchanged_files_no_backups(tmp_path: Path):
     # Capture the bundled content
     bundled_content = {
         gd_file: (target_dir / gd_file).read_bytes()
-        for gd_file in ["coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"]
+        for gd_file in ["coverage.gd"]
     }
 
     # Remove any .backups dir from first install (shouldn't exist, but be safe)
@@ -342,21 +340,21 @@ def test_smart_backup_unchanged_files_no_backups(tmp_path: Path):
         assert (target_dir / gd_file).read_bytes() == content
 
 
-def test_smart_backup_modified_pre_run_hook(tmp_path: Path):
-    """Re-init with modified pre_run_hook.gd creates backup and warns."""
+def test_smart_backup_modified_coverage_file(tmp_path: Path):
+    """Re-init with modified coverage.gd creates backup and warns."""
     # First install
     install_coverage_addon(tmp_path)
     target_dir = tmp_path / "addons" / "gd-tools-coverage"
 
-    # Modify pre_run_hook.gd
+    # Modify coverage.gd
     modified_content = "# user customization\n"
-    (target_dir / "pre_run_hook.gd").write_text(modified_content)
+    (target_dir / "coverage.gd").write_text(modified_content)
 
     with patch("gd_tools.init.console.print") as mock_print:
         install_coverage_addon(tmp_path)
 
     # Backup should exist with the user's modified content
-    bak = target_dir / ".backups" / "pre_run_hook.gd.bak"
+    bak = target_dir / ".backups" / "coverage.gd.bak"
     assert bak.exists()
     assert bak.read_text() == modified_content
 
@@ -368,45 +366,13 @@ def test_smart_backup_modified_pre_run_hook(tmp_path: Path):
         / "addons"
         / "gd-tools-coverage"
     )
-    bundled = (source_dir / "pre_run_hook.gd").read_bytes()
-    assert (target_dir / "pre_run_hook.gd").read_bytes() == bundled
+    bundled = (source_dir / "coverage.gd").read_bytes()
+    assert (target_dir / "coverage.gd").read_bytes() == bundled
 
     # A yellow warning should have been printed
     assert mock_print.called
     printed = " ".join(str(c) for c in mock_print.call_args[0])
-    assert "pre_run_hook.gd" in printed
-    assert ".bak" in printed
-    assert "yellow" in printed.lower()
-
-
-def test_smart_backup_modified_post_run_hook(tmp_path: Path):
-    """Re-init with modified post_run_hook.gd creates backup and warns."""
-    install_coverage_addon(tmp_path)
-    target_dir = tmp_path / "addons" / "gd-tools-coverage"
-
-    modified_content = "# user customization\n"
-    (target_dir / "post_run_hook.gd").write_text(modified_content)
-
-    with patch("gd_tools.init.console.print") as mock_print:
-        install_coverage_addon(tmp_path)
-
-    bak = target_dir / ".backups" / "post_run_hook.gd.bak"
-    assert bak.exists()
-    assert bak.read_text() == modified_content
-
-    source_dir = (
-        Path(__file__).parent.parent.parent
-        / "src"
-        / "gd_tools"
-        / "addons"
-        / "gd-tools-coverage"
-    )
-    bundled = (source_dir / "post_run_hook.gd").read_bytes()
-    assert (target_dir / "post_run_hook.gd").read_bytes() == bundled
-
-    assert mock_print.called
-    printed = " ".join(str(c) for c in mock_print.call_args[0])
-    assert "post_run_hook.gd" in printed
+    assert "coverage.gd" in printed
     assert ".bak" in printed
     assert "yellow" in printed.lower()
 
@@ -1021,3 +987,48 @@ def test_pyproject_package_data_includes_editor_addon():
         pattern for values in package_data.values() for pattern in values
     ]
     assert any("gd-tools-editor" in pattern for pattern in patterns)
+
+
+def test_install_coverage_addon_removes_stale_hook_files(tmp_path: Path):
+    """Re-init removes GUT hook files gd-tools no longer deploys.
+
+    The hooks extended the removed ``GutHookScript`` base class, so a
+    stale copy is dead weight. init moves them into ``.backups/``
+    before deleting and reports the cleanup.
+    """
+    target_dir = tmp_path / "addons" / "gd-tools-coverage"
+    target_dir.mkdir(parents=True)
+    (target_dir / "pre_run_hook.gd").write_text("# stale pre-run hook\n")
+    (target_dir / "post_run_hook.gd").write_text("# stale post-run hook\n")
+
+    with patch("gd_tools.init.console.print") as mock_print:
+        install_coverage_addon(tmp_path)
+
+    assert not (target_dir / "pre_run_hook.gd").exists()
+    assert not (target_dir / "post_run_hook.gd").exists()
+    assert (target_dir / "coverage.gd").exists()
+
+    backups_dir = target_dir / ".backups"
+    assert (
+        backups_dir / "pre_run_hook.gd.bak"
+    ).read_text() == "# stale pre-run hook\n"
+    assert (
+        backups_dir / "post_run_hook.gd.bak"
+    ).read_text() == "# stale post-run hook\n"
+
+    printed = " ".join(
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    )
+    assert "pre_run_hook.gd" in printed
+    assert "post_run_hook.gd" in printed
+
+
+def test_stale_hook_cleanup_is_a_noop_when_files_are_absent(tmp_path: Path):
+    """First-time install prints nothing about removed hook files."""
+    with patch("gd_tools.init.console.print") as mock_print:
+        install_coverage_addon(tmp_path)
+
+    printed = " ".join(
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    )
+    assert "Removed" not in printed

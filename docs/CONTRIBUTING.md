@@ -98,7 +98,7 @@ Follow the naming conventions from Product Guidelines section 3:
 | Context | Convention | Examples |
 |---------|-----------|----------|
 | CLI commands and flags | `kebab-case` | `gd-tools test`, `--junit-xml`, `--report-format` |
-| Python modules and functions | `snake_case` | `test_runner.py`, `run_tests()`, `find_godot()` |
+| Python modules and functions | `snake_case` | `test_results.py`, `run_tests()`, `find_godot()` |
 | Python classes | `PascalCase` | `Config`, `GodotInfo`, `TestResult`, `LintResult` |
 | Python constants | `UPPER_SNAKE_CASE` | `DEFAULT_EXCLUDES`, `PYPI_URL` |
 | GDScript classes | `PascalCase` | `_GDTCoverage`, `GDTTracker` |
@@ -349,7 +349,7 @@ gd-tools/
 |   |-- init.py                # Project initialization (addons, config)
 |   |-- lint_runner.py         # gdlint wrapper
 |   |-- output.py              # Shared terminal output module (Rich-based)
-|   |-- test_runner.py         # Test result models shared by runtimes
+|   |-- test_results.py        # Test result models shared by runtimes
 |   |-- verbosity.py           # Global verbosity context (Verbosity enum + accessors)
 |   |-- coverage/              # Coverage subsystem
 |   |   |-- orchestrator.py    # Coverage flow orchestration
@@ -361,9 +361,7 @@ gd-tools/
 |   |   |-- terminal_reporter.py   # Rich terminal table output
 |   |   `-- templates/         # HTML report templates
 |   `-- addons/gd-tools-coverage/  # GDScript coverage addon
-|       |-- coverage.gd        # Instrumentation + tracker autoload
-|       |-- pre_run_hook.gd    # Activates coverage tracker
-|       `-- post_run_hook.gd   # Coverage data serialization
+|       `-- coverage.gd        # Instrumentation + tracker autoload
 |-- tests/                     # Test suite
 |   |-- unit/                  # Unit tests (mocked dependencies)
 |   |-- integration/           # Integration tests (real fixtures)
@@ -408,7 +406,7 @@ Each Python module in `src/gd_tools/` maps to a specific responsibility:
 | `init.py` | Project bootstrap: addon deploy, config creation |
 | `lint_runner.py` | `gdtoolkit.linter` wrapper, `LintResult` dataclass |
 | `output.py` | Shared terminal output module — Rich-based rendering helpers (`print_success`, `print_error`, `print_warning`, `print_info`, `print_verbose`, `print_summary`, `print_table`) and shared `Console` instance; `print_info`/`print_warning` respect quiet mode, `print_verbose` only renders in verbose mode |
-| `test_runner.py` | Test result models (`TestResult`/`TestDetail`) and result formatting shared by runtimes |
+| `test_results.py` | Test result models (`TestResult`/`TestDetail`) and result formatting shared by runtimes |
 | `verbosity.py` | `Verbosity` enum (`QUIET`, `DEFAULT`, `VERBOSE`) and module-level `get_verbosity()`/`set_verbosity()` accessors for global output level control |
 | `coverage/` | Coverage plan generation, runtime instrumentation, reporting |
 

@@ -71,8 +71,6 @@ src/gd_tools/
     │   └── gd_tools_native_coverage.gd
     └── gd-tools-coverage/
         ├── coverage.gd       # legacy GUT autoload singleton
-        ├── pre_run_hook.gd   # legacy GUT pre-run hook
-        └── post_run_hook.gd  # legacy GUT post-run hook
 ```
 
 ### Dependency Graph
@@ -1341,6 +1339,43 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 - Not fixed here: `ternary_true` and `ternary_false` still share a line,
   so the arms cannot be covered independently. That needs the plan to
   record a span rather than a line.
+
+**Class-body point dropping (Track `instrumentation_hygiene_20261003`,
+2026-10-03):**
+
+- The ternary fix anchored *branch* points, but *statement* points had the
+  same class of defect from the opposite direction. A lambda body assigned to
+  a class-level `var`/`static var`/`@export` records its body statement on
+  the **declaration line** (gdtoolkit's `class_var_stmt` node), and a lambda
+  in a default parameter records on the **signature line**
+  (`func_header` span). Both are class bodies or signatures - never legal
+  insertion points - so the injected `GdToolsNativeCoverage.hit(...)` broke
+  the parse and the whole file silently dropped out of coverage as an
+  omission.
+- Func-level single-line lambdas were never affected: their body statement
+  lands on the `var` line *inside* a function body, which is legal.
+  Multi-line class-level lambda bodies record on their own (legal) lines.
+- Fix: a second pre-pass, `_collect_illegal_lines`, collects class-member
+  declaration lines (`class_var_stmt`, `static_class_var_stmt`) and every
+  line of each `func_header` span; `_add_point` drops any point whose
+  resolved line is illegal. Same silent-drop policy as the ternary orphan
+  rule, now applied to statement points as well as branch points.
+- `PLAN_VERSION` 3 → 4: a cached v3 plan can still hold the dropped points,
+  and reusing it would re-inject the illegal trackers.
+- The Godot parse suite grew eight class-body cases with per-case expected
+  statement lines; the teeth check against the pre-fix generator fails
+  exactly the six squashed cases.
+- Review follow-up (`conductor-review`, 2026-10-03): the declaration-line
+  rule missed statements that squash onto **continuation lines** of a
+  multi-line initializer expression - a lambda body inside a dict or a
+  parenthesized expression records on a line inside an open bracket, which
+  the AST span alone cannot distinguish from a legal block-lambda body
+  line. The guard now also drops points on lines that start inside an open
+  bracket or directly after a backslash, detected by a small
+  string/comment-aware depth lexer over the source (`PLAN_VERSION` 4 → 5).
+  The parse suite grew seven continuation cases with per-case expected
+  statement lines; the teeth check against the pre-fix generator fails
+  exactly the five dropped cases.
 
 **Autoload inclusion (Track 24.5, 2026-07-15):**
 

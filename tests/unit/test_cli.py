@@ -22,7 +22,7 @@ from gd_tools.errors import (
 )
 from gd_tools.format_runner import FormatResult
 from gd_tools.lint_runner import LintIssue, LintResult
-from gd_tools.test_runner import TestResult
+from gd_tools.test_results import TestResult
 
 pytestmark = pytest.mark.unit
 

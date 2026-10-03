@@ -10,7 +10,7 @@ import pytest
 
 from rich.console import Console
 
-from gd_tools.test_runner import (
+from gd_tools.test_results import (
     TestDetail,
     TestResult,
     format_test_results,

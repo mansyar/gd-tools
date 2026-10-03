@@ -45,7 +45,7 @@
 
 | Component | Purpose |
 |-----------|---------|
-| **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` |
+| **Coverage Addon** (`addons/gd-tools-coverage/`) | Runtime instrumentation + hit tracking. Ships as package data inside the Python distribution. Files: `coverage.gd` (the legacy GUT hook scripts were removed; `gd-tools init` self-heals stale copies) |
 | **Native Test Addon** (`addons/gd-tools-test/`) | `GdToolsTest` base class, transient native runner, assertions, lifecycle management, and native coverage integration. Ships as package data; no new runtime dependency. Files: `gd_tools_test.gd`, `gd_tools_test_runner.gd`, `gd_tools_test_context.gd`, `gd_tools_test_preflight.gd`, `gd_tools_native_coverage.gd` — all five are managed by `gd-tools init` and verified by `gd-tools doctor`. |
 | **GUT** (legacy, not supported) | GDScript test framework. Since v0.6.0, gd-tools does not install, download, or run GUT, and no Godot-to-GUT version mapping exists. Projects that still carry `addons/gut/`, `.gutconfig.json`, or `extends GutTest` suites get an informational `doctor` advisory pointing at `gd-tools migrate`. Not a runtime dependency. |
 | **Editor Plugin** (`addons/gd-tools-editor/`) | Godot editor plugin: test/coverage dock panel (async CLI runs, results summary, missing-CLI fallback) and a `CodeEdit` coverage heatmap overlay (green/red/yellow line backgrounds from `.gd-tools/` artifacts). Ships as package data. Files: `plugin.gd`, `dock.gd`, `coverage_overlay.gd` — deployed by `gd-tools init` and verified by `gd-tools doctor`. |
@@ -128,7 +128,7 @@
 - **Integration protocol:** Native protocol v3. One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
 - **Execution modes:** Headless by default; `windowed` suites run without `--headless`, require a real display, and fail with exit `2` when the renderer is headless.
 - **Artifacts:** `.gd-tools/artifacts/<run_id>/` holds a machine-readable index plus preflight and per-suite artifacts; only the latest run is retained.
-- **Coverage:** Native runtime owns activation; the versioned coverage plan schema (currently v3 — v2 added `excluded_lines` for no-cover annotations, v3 anchors ternary branch points to their enclosing statement) is reused where possible for line and branch metrics.
+- **Coverage:** Native runtime owns activation; the versioned coverage plan schema (currently v4 — v3 anchors ternary branch points to their enclosing statement, v4 drops points recorded on class-member declaration and signature lines) is reused where possible for line and branch metrics.
 - **Dependencies:** No third-party GDScript runtime dependency. GUT is not required.
 - **Compatibility:** `.gutconfig.json` is not read by any runtime; `gd-tools migrate` translates its mapped options into `gd-tools.toml` (merge, never clobber) and preserves the file. `gd-tools.toml` is canonical.
 - **Exit condition:** Met — the temporary bridge was removed in v0.6.0 and the durable decisions were folded into the main roadmap.

@@ -360,7 +360,7 @@ def test_check_coverage_addon_passes_when_all_files_present(tmp_path):
     """Test check_coverage_addon passes when all coverage files exist."""
     cov_dir = tmp_path / "addons" / "gd-tools-coverage"
     cov_dir.mkdir(parents=True)
-    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+    for fname in ("coverage.gd",):
         (cov_dir / fname).touch()
     (cov_dir / "_version.txt").write_text("0.3.0\n")
     result = check_coverage_addon(tmp_path)
@@ -372,15 +372,13 @@ def test_check_coverage_addon_passes_when_all_files_present(tmp_path):
 
 @pytest.mark.unit
 def test_check_coverage_addon_fails_when_files_missing(tmp_path):
-    """Test check_coverage_addon fails when some coverage files are missing."""
+    """Test check_coverage_addon fails when the manifest file is missing."""
     cov_dir = tmp_path / "addons" / "gd-tools-coverage"
     cov_dir.mkdir(parents=True)
-    (cov_dir / "coverage.gd").touch()
     result = check_coverage_addon(tmp_path)
     assert result.passed is False
     assert result.name == "Coverage Addon"
-    assert "pre_run_hook.gd" in result.message
-    assert "post_run_hook.gd" in result.message
+    assert "coverage.gd" in result.message
 
 
 @pytest.mark.unit
@@ -397,7 +395,7 @@ def test_check_coverage_addon_warns_when_version_file_missing(tmp_path):
     """Test check_coverage_addon warns when addon files present but version file missing."""
     cov_dir = tmp_path / "addons" / "gd-tools-coverage"
     cov_dir.mkdir(parents=True)
-    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+    for fname in ("coverage.gd",):
         (cov_dir / fname).touch()
     result = check_coverage_addon(tmp_path)
     assert result.passed is True
@@ -412,7 +410,7 @@ def test_check_coverage_addon_warns_when_stale(tmp_path):
     """Test check_coverage_addon warns with both versions when addon is stale."""
     cov_dir = tmp_path / "addons" / "gd-tools-coverage"
     cov_dir.mkdir(parents=True)
-    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+    for fname in ("coverage.gd",):
         (cov_dir / fname).touch()
     (cov_dir / "_version.txt").write_text("0.2.0\n")
     result = check_coverage_addon(tmp_path)
@@ -429,7 +427,7 @@ def test_check_coverage_addon_warns_when_unparseable_version(tmp_path):
     """Test check_coverage_addon warns when addon version is unparseable."""
     cov_dir = tmp_path / "addons" / "gd-tools-coverage"
     cov_dir.mkdir(parents=True)
-    for fname in ("coverage.gd", "pre_run_hook.gd", "post_run_hook.gd"):
+    for fname in ("coverage.gd",):
         (cov_dir / fname).touch()
     (cov_dir / "_version.txt").write_text("not-a-version\n")
     result = check_coverage_addon(tmp_path)

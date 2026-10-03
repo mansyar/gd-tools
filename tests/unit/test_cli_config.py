@@ -217,36 +217,6 @@ def test_config_validate_nonexistent_exclude_dir(tmp_path, monkeypatch):
     assert "nonexistent" in result.output
 
 
-def test_config_validate_deprecated_setting(tmp_path, monkeypatch):
-    """config validate with deprecated setting exits 1, warns."""
-    from gd_tools import config as config_module
-    from gd_tools.config import DeprecatedField
-
-    (tmp_path / "project.godot").write_text("")
-    _create_default_dirs(tmp_path)
-    (tmp_path / "gd-tools.toml").write_text(
-        '[test]\ntest_dirs = ["test", "tests"]\n'
-        "[coverage]\nold_field = true\n"
-    )
-    monkeypatch.chdir(tmp_path)
-
-    config_module._DEPRECATED_FIELDS["coverage.old_field"] = DeprecatedField(
-        field_path="coverage.old_field",
-        since_version="1.0.0",
-        replacement="coverage.min_percent",
-        migration_message="Replace old_field with min_percent.",
-    )
-
-    try:
-        runner = CliRunner()
-        result = runner.invoke(cli, ["config", "validate"])
-        assert result.exit_code == 1
-        assert "coverage.old_field" in result.output
-        assert "deprecated" in result.output.lower()
-    finally:
-        config_module._DEPRECATED_FIELDS.pop("coverage.old_field", None)
-
-
 def test_config_validate_no_config_file(tmp_path, monkeypatch):
     """config validate with no config file exits 0, prints defaults."""
     (tmp_path / "project.godot").write_text("")

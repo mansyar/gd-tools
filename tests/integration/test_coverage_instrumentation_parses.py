@@ -7,6 +7,11 @@ nothing in a plan is aware of GDScript's grammar. This module closes
 that gap: each fixture is planned, instrumented with a port of the
 collector's insertion logic, and handed to a real Godot.
 
+The suite covers two generations of the same defect: ternary branch
+points recorded on continuation lines (anchored since PLAN_VERSION 3)
+and statement points squashed onto class-member declaration or signature
+lines by an inline lambda body (dropped since PLAN_VERSION 4).
+
 Two harness constraints were learned the hard way and are load-bearing:
 
 * ``GdToolsNativeCoverage`` must be declared with ``class_name``, not as an
@@ -67,104 +72,241 @@ _COLLECTOR = (
     / "gd_tools_native_coverage.gd"
 )
 
-#: ``name: (source, expected ternary lines)``. The expected lines are asserted
-#: because "it compiles" is satisfied by a plan recording zero points -- which
-#: is exactly how ternaries in control-flow headers were once dropped in
-#: silence.
+#: ``name: (source, expected ternary lines, expected statement lines)``.
+#: The expected lines are asserted because "it compiles" is satisfied by a
+#: plan recording zero points -- which is exactly how ternaries in
+#: control-flow headers were once dropped in silence. The third element
+#: (``None`` when uninteresting) pins the *statement* lines the same way for
+#: class-body cases, where the defect was a statement recorded on a
+#: class-member declaration line.
 CASES = {
     # --- previously produced uncompilable output ---
     "ml_stmt": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tvar x = (\n\t\t1\n\t\tif a > 0\n\t\telse 2\n\t)\n\tprint(x)\n",
         [5, 5],
+        None,
     ),
     "ml_call": (
         "extends Node\n\n\nfunc g(c: int) -> int:\n\treturn c\n\n\n"
         "func f(a: int) -> void:\n"
         "\tg(\n\t\t1 if a > 0\n\t\telse 2\n\t)\n",
         [9, 9],
+        None,
     ),
     "const_orphan": (
         "extends Node\n\nconst C = 1 if true else 2\n\n\n"
         "func f() -> void:\n\tprint(C)\n",
         [],
+        None,
     ),
     "const_ml_orphan": (
         "extends Node\n\nconst C = (\n\t1\n\tif true\n\telse 2\n)\n\n\n"
         "func f() -> void:\n\tprint(C)\n",
         [],
+        None,
     ),
     "export_orphan": (
         "extends Node\n\n@export var v: int = 1 if true else 2\n\n\n"
         "func f() -> void:\n\tprint(v)\n",
         [],
+        None,
     ),
     "param_orphan": (
         "extends Node\n\n\nfunc f(a: int, x = 1 if a > 0 else 2) -> void:\n"
         "\tprint(x)\n",
         [],
+        None,
     ),
     # --- header ternaries, dropped until the anchor set was widened ---
     "if_header": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tif (1 if a > 0 else 2) > 0:\n\t\tprint(a)\n",
         [5, 5],
+        None,
     ),
     "if_header_ml": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tif (\n\t\t1 if a > 0 else 2\n\t) > 0:\n\t\tprint(a)\n",
         [5, 5],
+        None,
     ),
     "for_header": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tfor i in range(1 if a > 0 else 2):\n\t\tprint(i)\n",
         [5, 5],
+        None,
     ),
     "for_header_ml": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tfor i in range(\n\t\t1 if a > 0 else 2\n\t):\n\t\tprint(i)\n",
         [5, 5],
+        None,
     ),
     "while_header": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\twhile (a if a > 0 else 0) > 1:\n\t\tprint(a)\n",
         [5, 5],
+        None,
     ),
     "match_header": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tmatch (1 if a > 0 else 2):\n\t\t1:\n\t\t\tprint(a)\n",
         [5, 5],
+        None,
     ),
     # --- already fine; must stay fine ---
     "control_stmt": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tvar x = 1 if a > 0 else 2\n\tprint(x)\n",
         [5, 5],
+        None,
     ),
     "nested_ternary": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tvar x = 1 if a > 0 else 2 if a < 0 else 3\n\tprint(x)\n",
         [5, 5],
+        None,
     ),
     "lambda_ternary": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tvar c = func(p: int): return 1 if p > 0 else 2\n"
         "\tprint(c.call(1))\n",
         [5, 5],
+        None,
     ),
     "ml_if": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tif (\n\t\ta > 0\n\t\tand a < 10\n\t):\n\t\tprint(a)\n",
         [],
+        None,
     ),
     "ternary_in_arr": (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
         "\tprint([1 if a > 0 else 2, 3])\n",
         [5, 5],
+        None,
     ),
     "no_ternary": (
         "extends Node\n\n\nfunc f() -> void:\n\tvar x = 1\n\tprint(x)\n",
         [],
+        None,
+    ),
+    # --- class-body statements, dropped since PLAN_VERSION 4 --- (plus @onready annotations)
+    "class_lambda_var": (
+        "extends Node\n\n\n"
+        "class Inner:\n"
+        "\tvar F = func(): return 2\n"
+        "\tfunc m() -> void:\n"
+        '\t\tprint("m")\n',
+        [],
+        [7],
+    ),
+    "class_lambda_print": (
+        "extends Node\n\n\n"
+        "class Inner:\n"
+        "\tvar F = func(): print(1)\n"
+        "\tfunc m() -> void:\n"
+        '\t\tprint("m")\n',
+        [],
+        [7],
+    ),
+    "class_static_lambda": (
+        "extends Node\n\n\n"
+        "class Inner:\n"
+        "\tstatic var S = func(): return 2\n"
+        "\tfunc m() -> void:\n"
+        '\t\tprint("m")\n',
+        [],
+        [7],
+    ),
+    "class_export_lambda": (
+        "extends Node\n\n\n"
+        "class Inner:\n"
+        "\t@export var E = func(): return 2\n"
+        "\tfunc m() -> void:\n"
+        '\t\tprint("m")\n',
+        [],
+        [7],
+    ),
+    "class_lambda_multiline": (
+        "extends Node\n\n\n"
+        "class Inner:\n"
+        "\tvar F = func():\n"
+        "\t\treturn 2\n"
+        "\tfunc m() -> void:\n"
+        '\t\tprint("m")\n',
+        [],
+        [6, 8],
+    ),
+    "func_lambda": (
+        "extends Node\n\n\n"
+        "func f() -> void:\n"
+        "\tvar c = func(): return 2\n"
+        "\tprint(c.call())\n",
+        [],
+        [5, 5, 6],
+    ),
+    "signature_lambda": (
+        "extends Node\n\n\n"
+        "func f(a: int, x = func(): return 2) -> void:\n"
+        "\tprint(a)\n",
+        [],
+        [5],
+    ),
+    "top_lambda_var": (
+        "extends Node\n\n"
+        "var F = func(): return 2\n\n\n"
+        "func f() -> void:\n"
+        "\tprint(F.call())\n",
+        [],
+        [7],
+    ),
+    # --- bracket-continuation statements, dropped since PLAN_VERSION 5 ---
+    "cont_inline_dict": (
+        'extends Node\n\nvar handlers = {\n\t"k": func(): print(1),\n}\n\n'
+        "func m() -> void:\n\tprint(handlers)\n",
+        [],
+        [8],
+    ),
+    "cont_paren_lambda": (
+        "extends Node\n\nvar f = (\n\tfunc(): print(1)\n)\n\n"
+        "func m() -> void:\n\tprint(f)\n",
+        [],
+        [8],
+    ),
+    "cont_func_ml_expr": (
+        "extends Node\n\nfunc m() -> void:\n"
+        "\tvar F = [1].map(\n\t\tfunc(): return 2\n\t)\n\tprint(F)\n",
+        [],
+        [4, 7],
+    ),
+    "cont_backslash": (
+        "extends Node\n\nfunc m() -> void:\n"
+        "\tvar x = [1].map( \\\n\t\tfunc(): return 2\n\t)\n\tprint(x)\n",
+        [],
+        [4, 7],
+    ),
+    "cont_block_in_dict": (
+        'extends Node\n\nvar h = {\n\t"k": func():\n\t\tprint(1),\n}\n\n'
+        "func m() -> void:\n\tprint(h)\n",
+        [],
+        [9],
+    ),
+    "cont_block_lambda_kept": (
+        "extends Node\n\nvar F = func():\n\treturn 2\n\n"
+        "func m() -> void:\n\tprint(F)\n",
+        [],
+        [4, 7],
+    ),
+    "class_onready_lambda": (
+        "extends Node\n\n\n"
+        "class Inner extends Node:\n"
+        "\t@onready var F = func(): return 2\n"
+        "\tfunc m() -> void:\n"
+        '\t\tprint("m")\n',
+        [],
+        [7],
     ),
 }
 
@@ -293,7 +435,7 @@ def test_harness_detects_a_deliberately_broken_script(tmp_path, godot_bin):
 @pytest.mark.parametrize("case", sorted(CASES))
 def test_instrumented_source_parses(case, tmp_path, godot_bin):
     """Each instrumented fixture compiles and records the expected points."""
-    source, expected_ternaries = CASES[case]
+    source, expected_ternaries, expected_statements = CASES[case]
     project = _build_project(godot_bin, tmp_path, source, "fixture.gd")
 
     plan = generate_plan(str(project))
@@ -309,6 +451,16 @@ def test_instrumented_source_parses(case, tmp_path, godot_bin):
         f"{expected_ternaries}. A plan recording zero points compiles "
         f"trivially, so this is asserted separately from the parse."
     )
+
+    if expected_statements is not None:
+        stmt_lines = sorted(
+            p.line for p in entry.lines if p.type == "statement"
+        )
+        assert stmt_lines == expected_statements, (
+            f"Case '{case}' recorded statement lines {stmt_lines}, expected "
+            f"{expected_statements}. A point on a class-body or signature "
+            f"line makes the instrumented file unparseable."
+        )
 
     instrumented = _inject(source, entry.lines)
     (project / "fixture.gd").write_text(instrumented, encoding="utf-8")

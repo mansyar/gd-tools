@@ -6,6 +6,7 @@ merge_coverage_data), and version validation.
 """
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -21,12 +22,14 @@ from gd_tools.coverage.reporter import (
     CoverageSummary,
     FileCoverage,
     FileSummary,
+    OmittedTarget,
     ReportResult,
     compute_file_summary,
     compute_summary,
     generate_report,
     merge_coverage_data,
     read_coverage_json,
+    write_coverage_json,
     render_github_actions_annotations,
 )
 from gd_tools.errors import CoveragePlanError, CoverageThresholdError
@@ -1159,6 +1162,98 @@ def test_render_uncovered_panels_only_lines_no_branches():
     assert "3" in output
     assert "7" in output
     assert "Uncovered branches" not in output
+
+
+# --- Durable JSON writes (Phase 4) ---
+
+
+def _coverage_data_with_omission() -> CoverageData:
+    """Coverage data carrying one omission, for round-trip tests."""
+    return CoverageData(
+        version=1,
+        generated_at="2026-10-03T00:00:00",
+        files=[FileCoverage(file_id=0, hits={"1": 1})],
+        omitted=[
+            OmittedTarget(
+                file_id=1,
+                path="res://broken.gd",
+                reason="script would not reload",
+                fix="fix the parse error",
+            ),
+        ],
+    )
+
+
+def test_write_coverage_json_round_trips_omission_reasons(tmp_path):
+    """The omission reasons survive a write/read round trip.
+
+    The writer used to drop the additive ``omitted`` key, so
+    ``coverage merge`` output degraded every reason to unknown.
+    """
+    path = tmp_path / "coverage.json"
+
+    write_coverage_json(_coverage_data_with_omission(), path)
+
+    data = read_coverage_json(path)
+    assert [(o.file_id, o.reason, o.fix) for o in data.omitted] == [
+        (1, "script would not reload", "fix the parse error"),
+    ]
+
+
+def test_write_coverage_json_omits_empty_omitted_key(tmp_path):
+    """No omissions means no ``omitted`` key, matching runtime shards."""
+    path = tmp_path / "coverage.json"
+    data = CoverageData(version=1, generated_at=None, files=[])
+
+    write_coverage_json(data, path)
+
+    assert "omitted" not in json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_merge_round_trip_preserves_omission_reasons(tmp_path):
+    """End to end: merge shards, write the result, read it back."""
+    shard = tmp_path / "shard.json"
+    shard.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "files": [],
+                "omitted": [
+                    {
+                        "file_id": 2,
+                        "path": "res://b.gd",
+                        "reason": "broken",
+                        "fix": "repair",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    merged = merge_coverage_data([shard])
+    out = tmp_path / "merged.json"
+
+    write_coverage_json(merged, out)
+
+    data = read_coverage_json(out)
+    assert [(o.file_id, o.reason) for o in data.omitted] == [(2, "broken")]
+
+
+def test_write_coverage_json_failure_keeps_previous_file(tmp_path, monkeypatch):
+    """A failed write must not truncate the previous coverage data."""
+    path = tmp_path / "coverage.json"
+    path.write_text('{"previous": true}', encoding="utf-8")
+
+    def boom(src, dst):
+        raise OSError("disk on fire")
+
+    monkeypatch.setattr(os, "replace", boom)
+
+    with pytest.raises(OSError, match="disk on fire"):
+        write_coverage_json(_coverage_data_with_omission(), path)
+
+    assert json.loads(path.read_text(encoding="utf-8")) == {"previous": True}
+    assert sorted(i.name for i in tmp_path.iterdir()) == ["coverage.json"]
 
 
 # --- render_github_actions_annotations ---
