@@ -260,4 +260,4 @@ _Archived tracks live in `./archive/`._
   (`_gdtools_coverage_hit_ret`) instead of the shared anchor-line insertion,
   so `ternary_true`/`ternary_false` are measured and gated independently and
   an uncovered arm can fail `--min-branch`; bumps PLAN_VERSION to 4)
-  *Link: [ternary_branch_separation_20261003](./tracks/ternary_branch_separation_20261003/index.md)*
+  *Link: [ternary_branch_separation_20261003](./archive/ternary_branch_separation_20261003/index.md)*
