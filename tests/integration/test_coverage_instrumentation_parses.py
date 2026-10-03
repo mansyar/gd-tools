@@ -40,6 +40,12 @@ STUB = (
     "\n"
     "static func hit(_file_id: int, _point_id: int) -> void:\n"
     "\tpass\n"
+    "\n"
+    "\n"
+    "static func hit_ret(\n"
+    "\t\t_file_id: int, _point_id: int, value: Variant\n"
+    ") -> Variant:\n"
+    "\treturn value\n"
 )
 
 PROJECT_FILE = (
@@ -188,10 +194,15 @@ def _inject(source: str, lines) -> str:
     """Port of ``_inject_trackers`` from the native coverage collector.
 
     Mirrors the collector's ordering: entries are sorted by line descending
-    so that each insertion leaves earlier indices valid.
+    so that each insertion leaves earlier indices valid. Ternary arms are
+    instrumented by wrapping their operand text with ``hit_ret`` instead of
+    inserting a line-based ``hit()`` on the shared anchor line.
     """
-    src_lines = source.split("\n")
+    wrapped = _wrap_operands(source, lines)
+    src_lines = wrapped.split("\n")
     for entry in sorted(lines, key=lambda e: e.line, reverse=True):
+        if getattr(entry, "operand_span", None) is not None:
+            continue
         target = entry.line - 1
         if target < 0 or target >= len(src_lines):
             continue
@@ -204,6 +215,67 @@ def _inject(source: str, lines) -> str:
             target, f"{indent}GdToolsNativeCoverage.hit(0, {entry.id})"
         )
     return "\n".join(src_lines)
+
+
+def _offset_of(source: str, line: int, col: int) -> int:
+    """Absolute character offset of a 1-based line/column position, or -1."""
+    src_lines = source.split("\n")
+    if line < 1 or line > len(src_lines) or col < 1:
+        return -1
+    offset = sum(len(src_lines[i]) + 1 for i in range(line - 1))
+    target = offset + (col - 1)
+    return target if target <= len(source) else -1
+
+
+def _wrap_operands(source: str, lines) -> str:
+    """Port of the collector's ternary operand wrapping.
+
+    Replaces each operand span with a ``hit_ret`` wrapper. Wrappers never
+    add or remove newline characters, so line numbers stay valid for the
+    line-based insertion that follows.
+    """
+    spans = []
+    for entry in lines:
+        span = getattr(entry, "operand_span", None)
+        if span is None:
+            continue
+        start = _offset_of(source, span[0], span[1])
+        end = _offset_of(source, span[2], span[3])
+        if start < 0 or end < 0 or start >= end or end > len(source):
+            continue
+        spans.append({"start": start, "end": end, "id": entry.id})
+    if not spans:
+        return source
+    spans.sort(key=lambda s: (s["start"], -s["end"]))
+    return _wrap_spans(source, spans, 0, 0, len(source))
+
+
+def _wrap_spans(
+    source: str, spans, index: int, start_from: int, to: int
+) -> str:
+    """Emit source[start_from:to] with spans[index..] wrapped in place."""
+    result = ""
+    cursor = start_from
+    i = index
+    while i < len(spans):
+        span = spans[i]
+        start, end = span["start"], span["end"]
+        if start >= to or end > to:
+            break
+        if start < cursor:
+            i += 1
+            continue
+        children = []
+        j = i + 1
+        while j < len(spans) and spans[j]["end"] <= end:
+            children.append(spans[j])
+            j += 1
+        result += source[cursor:start]
+        operand = _wrap_spans(source, children, 0, start, end)
+        result += f"GdToolsNativeCoverage.hit_ret(0, {span['id']}, {operand})"
+        cursor = end
+        i = j
+    return result + source[cursor:to]
 
 
 def _run(godot_bin: str, project: Path, *args: str) -> str:
@@ -272,6 +344,127 @@ def test_injection_port_tracks_the_collector():
         "Collector no longer sorts insertions by line descending; "
         "_inject's ordering assumption is now wrong."
     )
+
+    hit_ret = re.search(r"static func hit_ret\(", source)
+    assert hit_ret, (
+        "Collector no longer defines hit_ret; _inject's ternary operand "
+        "wrapping has no runtime counterpart to record the hit."
+    )
+
+    operand_wrap = re.search(r"operand_span", source)
+    assert operand_wrap, (
+        "Collector no longer consults operand_span; ternary arms would be "
+        "instrumented by line insertion again, which fires both arms in "
+        "lockstep and cannot ever report an uncovered arm."
+    )
+
+
+SIMPLE_TERNARY = (
+    "extends Node\n\n\nfunc f(a: int) -> void:\n"
+    "\tvar x = 10 if a > 0 else 20\n\tprint(x)\n"
+)
+
+
+def _plan_lines(tmp_path, source):
+    """Generate the plan entries for a single-file project."""
+    project = tmp_path
+    (project / "fixture.gd").write_text(source, encoding="utf-8")
+    plan = generate_plan(str(project))
+    entry = next(f for f in plan.files if f.path.endswith("fixture.gd"))
+    return entry.lines
+
+
+def _ternary_ids(lines):
+    return [
+        p.id
+        for p in lines
+        if p.branch_type and p.branch_type.startswith("ternary")
+    ]
+
+
+def test_ternary_arms_are_wrapped_not_line_inserted(tmp_path):
+    """Each ternary arm becomes a hit_ret wrapper around its operand text."""
+    lines = _plan_lines(tmp_path, SIMPLE_TERNARY)
+    true_id, false_id = _ternary_ids(lines)
+
+    out = _inject(SIMPLE_TERNARY, lines)
+
+    assert f"GdToolsNativeCoverage.hit_ret(0, {true_id}, 10)" in out, out
+    assert f"GdToolsNativeCoverage.hit_ret(0, {false_id}, 20)" in out, out
+    # The lockstep bug: dual hit() insertion on the shared anchor line.
+    assert f"GdToolsNativeCoverage.hit(0, {true_id})" not in out
+    assert f"GdToolsNativeCoverage.hit(0, {false_id})" not in out
+    # Line insertion for other points must not disturb the wrapped line.
+    assert "\tvar x = " in out
+
+
+def test_multiline_operand_wrapper_preserves_line_count(tmp_path):
+    """A wrapper never adds or removes newline characters."""
+    source = (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tvar x = (\n\t\tfoo(\n\t\t\t1,\n\t\t\t2\n\t\t)\n"
+        "\t\tif a > 0\n\t\telse 3\n\t)\n\tprint(x)\n"
+    )
+    lines = _plan_lines(tmp_path, source)
+
+    # Wrapping alone must not change the line count.
+    wrapped = _wrap_operands(source, lines)
+    assert wrapped.count("\n") == source.count("\n"), wrapped
+
+    out = _inject(source, lines)
+    true_id, false_id = _ternary_ids(lines)
+    true_arm = f"GdToolsNativeCoverage.hit_ret(0, {true_id}, foo(\n\t\t\t1,\n\t\t\t2\n\t\t))"
+    assert true_arm in out, out
+    assert f"GdToolsNativeCoverage.hit_ret(0, {false_id}, 3)" in out, out
+
+
+def test_nested_ternary_outer_arms_wrap_inner_text_verbatim(tmp_path):
+    """Nested ternaries track the outer arms; inner text passes through."""
+    source = (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tvar x = 1 if a > 0 else 2 if a < 0 else 3\n"
+    )
+    lines = _plan_lines(tmp_path, source)
+    true_id, false_id = _ternary_ids(lines)
+    assert len(_ternary_ids(lines)) == 2
+
+    out = _inject(source, lines)
+
+    expected = (
+        "\tvar x = "
+        f"GdToolsNativeCoverage.hit_ret(0, {true_id}, 1) if a > 0 else "
+        f"GdToolsNativeCoverage.hit_ret(0, {false_id}, 2 if a < 0 else 3)"
+    )
+    assert expected in out, out
+
+
+def test_non_ternary_points_still_inject_line_trackers(tmp_path):
+    """Statement and if-branch instrumentation is unchanged."""
+    source = (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tvar x = 1\n\tif a > 0:\n\t\tprint(x)\n"
+    )
+    lines = _plan_lines(tmp_path, source)
+    stmt_ids = [p.id for p in lines if p.type == "statement"]
+
+    out = _inject(source, lines)
+
+    for pid in stmt_ids:
+        assert f"GdToolsNativeCoverage.hit(0, {pid})" in out, out
+
+
+def test_ternary_entry_without_span_falls_back_to_line_tracker(tmp_path):
+    """A ternary point missing its span (stale/hand-built plan) still
+    instruments by line insertion rather than being dropped silently."""
+    from gd_tools.coverage.plan_generator import LinePlan
+
+    lines = [
+        LinePlan(line=5, id=99, type="branch", branch_type="ternary_true"),
+    ]
+
+    out = _inject(SIMPLE_TERNARY, lines)
+
+    assert "GdToolsNativeCoverage.hit(0, 99)" in out, out
 
 
 def test_harness_detects_a_deliberately_broken_script(tmp_path, godot_bin):
