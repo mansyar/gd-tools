@@ -201,13 +201,17 @@ def print_coverage_table(
 
 
 def print_threshold_footer(
-    summary: CoverageSummary, min_percent: int | None = None
+    summary: CoverageSummary,
+    min_percent: int | None = None,
+    min_branch_percent: int | None = None,
 ) -> None:
     """Print a summary footer with threshold pass/fail status.
 
     Args:
         summary: The coverage summary to display.
-        min_percent: Optional minimum coverage percentage (0-100).
+        min_percent: Optional minimum line coverage percentage (0-100).
+        min_branch_percent: Optional minimum branch coverage percentage
+            (0-100).
     """
     line_pct = summary.line_rate * 100
     if min_percent is not None:
@@ -219,6 +223,15 @@ def print_threshold_footer(
     else:
         output.print_summary("pass", f"{line_pct:.1f}% line coverage")
 
+    if min_branch_percent is not None:
+        branch_pct = summary.branch_rate * 100
+        status = "pass" if branch_pct >= min_branch_percent else "fail"
+        output.print_summary(
+            status,
+            f"{branch_pct:.1f}% branch coverage "
+            f"(threshold: {min_branch_percent}%)",
+        )
+
 
 def _report_coverage(
     plan: CoveragePlan,
@@ -228,6 +241,7 @@ def _report_coverage(
     *,
     show_uncovered: bool,
     file_summaries: list[FileSummary] | None,
+    min_branch_percent: int | None = None,
 ) -> None:
     """Reconcile the run against its plan, print it, and gate on it.
 
@@ -263,6 +277,7 @@ def _report_coverage(
         min_percent,
         show_uncovered=show_uncovered,
         file_summaries=file_summaries,
+        min_branch_percent=min_branch_percent,
         plan=plan,
         omissions=omissions,
         instrumented_summary=instrumented_summary,
@@ -278,6 +293,7 @@ def _print_coverage_inline(
     min_percent: int | None = None,
     show_uncovered: bool = False,
     file_summaries: list[FileSummary] | None = None,
+    min_branch_percent: int | None = None,
     plan: CoveragePlan | None = None,
     *,
     omissions: OmissionReport | None = None,
@@ -330,7 +346,7 @@ def _print_coverage_inline(
             f"Coverage: {line_pct:.1f}% lines, {branch_pct:.1f}% branches"
         )
 
-    print_threshold_footer(summary, min_percent)
+    print_threshold_footer(summary, min_percent, min_branch_percent)
 
     if partial:
         assert omissions is not None
@@ -353,6 +369,7 @@ def _print_coverage_inline(
 def show_coverage_summary(
     config: GdToolsConfig,
     min_percent: int | None = None,
+    min_branch_percent: int | None = None,
 ) -> CoverageSummary:
     """Display a terminal summary table of coverage results.
 
@@ -364,7 +381,10 @@ def show_coverage_summary(
     Args:
         config: Project configuration.
         min_percent: Minimum coverage percentage (0-100). If set and
-            coverage is below this, raises
+            line coverage is below this, raises
+            :class:`CoverageThresholdError`.
+        min_branch_percent: Minimum branch coverage percentage (0-100).
+            If set and branch coverage is below this, raises
             :class:`CoverageThresholdError`.
 
     Returns:
@@ -372,7 +392,8 @@ def show_coverage_summary(
 
     Raises:
         CoverageThresholdError: If ``min_percent`` is set and line
-            coverage is below the threshold.
+            coverage is below the threshold, or ``min_branch_percent``
+            is set and branch coverage is below the threshold.
         CoveragePlanError: If ``plan.json`` or ``coverage.json`` is
             missing or invalid.
     """
@@ -402,7 +423,7 @@ def show_coverage_summary(
     print_coverage_table(summary, min_percent)
 
     # Print summary footer with threshold status.
-    print_threshold_footer(summary, min_percent)
+    print_threshold_footer(summary, min_percent, min_branch_percent)
 
     # Print uncovered detail panels (always shown for coverage show).
     panels = reporter.render_uncovered_panels(file_summaries, plan)
@@ -418,6 +439,18 @@ def show_coverage_summary(
             f"{summary.total_lines} lines were executed.\n"
             f"  Fix: Add tests to cover uncovered lines or lower the "
             "--min threshold."
+        )
+    if (
+        min_branch_percent is not None
+        and summary.branch_rate * 100 < min_branch_percent
+    ):
+        raise CoverageThresholdError(
+            f"[Error] Branch coverage {summary.branch_rate * 100:.1f}% is "
+            f"below minimum threshold {min_branch_percent}%\n"
+            f"  Cause: Only {summary.covered_branches} of "
+            f"{summary.total_branches} branches were executed.\n"
+            f"  Fix: Add tests to cover uncovered branches or lower the "
+            "--min-branch threshold."
         )
 
     return summary

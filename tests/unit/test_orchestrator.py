@@ -759,3 +759,29 @@ def test_save_coverage_baseline_missing_data_raises(tmp_path):
     ):
         with pytest.raises(CoveragePlanError):
             save_coverage_baseline(config)
+
+
+# --- show_coverage_summary() --min-branch gate ---
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_min_branch_passes(mock_deps):
+    """--min-branch does not raise when branch coverage meets the threshold."""
+    summary = show_coverage_summary(_make_config(), min_branch_percent=100)
+    assert summary.branch_rate == 1.0
+
+
+@pytest.mark.unit
+def test_show_coverage_summary_min_branch_fails(mock_deps):
+    """--min-branch raises CoverageThresholdError when branch coverage is low."""
+    mock_deps["compute_summary"].return_value = CoverageSummary(
+        line_rate=1.0,
+        branch_rate=0.5,
+        covered_lines=5,
+        total_lines=5,
+        covered_branches=1,
+        total_branches=2,
+    )
+    with pytest.raises(CoverageThresholdError) as exc_info:
+        show_coverage_summary(_make_config(), min_branch_percent=100)
+    assert "Branch coverage" in str(exc_info.value)

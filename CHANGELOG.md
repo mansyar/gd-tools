@@ -48,9 +48,19 @@
   shift for projects with ternaries in control-flow headers, which were
   tracked before and are now anchored explicitly rather than incidentally.
 
-  Known limitation, unchanged by this fix: `ternary_true` and
-  `ternary_false` share a recorded line, so both arms are always reported
-  together and ternary branch coverage cannot fail.
+- **coverage**: Ternary branch coverage is now measured per arm. The
+  previous fix left `ternary_true` and `ternary_false` sharing one recorded
+  line, so both arms were always reported together and ternary branch
+  coverage could never fail. The plan now records an `operand_span` for
+  each arm (`PLAN_VERSION` 3 → 4, stale cached plans are regenerated), and
+  the collector wraps each operand in a value-preserving tracker call —
+  `hit_ret(file_id, point_id, operand)` records the hit and returns the
+  operand unchanged — instead of inserting a tracker before the anchor
+  line. The taken arm records its point exactly when it evaluates; the
+  other arm stays uncovered. Reports still display ternary branches
+  combined under the anchor line and the coverage JSON schema is
+  unchanged. New `--min-branch` option on `gd-tools test` and
+  `gd-tools coverage show` gates branch coverage independently of `--min`.
 
 - **coverage**: Fix unparseable GDScript when a lambda body is assigned to a
   class-level `var`, `static var`, or `@export`, when a lambda appears in a

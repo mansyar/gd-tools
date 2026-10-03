@@ -80,6 +80,15 @@ func hit(file_id: int, line_id: int) -> void:
 	_hits[file_id][line_id] += 1
 
 
+func hit_ret(file_id: int, line_id: int, value: Variant) -> Variant:
+	## Record one instrumented hit and pass the tracked value through.
+	##
+	## Injected around ternary operands so each arm is measured exactly
+	## when it evaluates, without re-evaluating the condition.
+	hit(file_id, line_id)
+	return value
+
+
 func get_hits() -> Dictionary:
 	return _hits
 
@@ -336,10 +345,17 @@ static func _detect_body_indent(source_lines: PackedStringArray, pattern_index: 
 
 
 static func _inject_trackers(source: String, file_id: int, lines: Array) -> String:
-	var source_lines: PackedStringArray = source.split("\n")
+	var wrapped := _wrap_ternary_operands(source, file_id, lines)
+	var source_lines: PackedStringArray = wrapped.split("\n")
 	var sorted_lines: Array = lines.duplicate(true)
 	sorted_lines.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
 	for entry in sorted_lines:
+		# Ternary arms are instrumented by wrapping their operand text
+		# (see _wrap_ternary_operands); a line-inserted hit() on the
+		# shared anchor line fires both arms in lockstep and can never
+		# report an uncovered arm.
+		if entry.get("operand_span") != null:
+			continue
 		var target_line_num: int = int(entry["line"])
 		var line_id: int = int(entry["id"])
 		var target_index: int = target_line_num - 1
@@ -366,6 +382,94 @@ static func _inject_trackers(source: String, file_id: int, lines: Array) -> Stri
 		var tracker_call: String = "%s%s.hit(%d, %d)" % [indent, TRACKER_NAME, file_id, line_id]
 		source_lines.insert(insert_index, tracker_call)
 	return "\n".join(source_lines)
+
+
+static func _offset_of(source: String, line: int, col: int) -> int:
+	## Absolute character offset of a 1-based line/column position, or -1.
+	var source_lines := source.split("\n")
+	if line < 1 or line > source_lines.size() or col < 1:
+		return -1
+	var offset := 0
+	for i in range(line - 1):
+		offset += source_lines[i].length() + 1
+	var target := offset + (col - 1)
+	if target > source.length():
+		return -1
+	return target
+
+
+static func _wrap_ternary_operands(source: String, file_id: int, lines: Array) -> String:
+	## Replace each ternary operand with a value-preserving tracker call.
+	##
+	## The plan records the source span of every ternary arm operand.
+	## Wrapping the operand records the arm's hit exactly when that arm
+	## evaluates, keeping values, evaluation order, and single evaluation
+	## intact. Line numbers are unchanged: a wrapper never adds or removes
+	## a newline, so the line-based insertion that follows stays valid.
+	var spans: Array = []
+	for entry in lines:
+		var span: Variant = entry.get("operand_span")
+		if span == null:
+			continue
+		var start := _offset_of(source, int(span[0]), int(span[1]))
+		var end := _offset_of(source, int(span[2]), int(span[3]))
+		if start < 0 or end < 0 or start >= end or end > source.length():
+			# Fail open: an unusable span leaves the arm uninstrumented
+			# rather than corrupting the source.
+			continue
+		spans.append({"start": start, "end": end, "id": int(entry["id"])})
+	if spans.is_empty():
+		return source
+	spans.sort_custom(func(a, b):
+		if int(a["start"]) != int(b["start"]):
+			return int(a["start"]) < int(b["start"])
+		return int(a["end"]) > int(b["end"])
+	)
+	return _wrap_spans(source, file_id, spans, 0, 0, source.length())
+
+
+static func _wrap_spans(
+		source: String,
+		file_id: int,
+		spans: Array,
+		index: int,
+		from: int,
+		to: int
+) -> String:
+	## Emit source[from:to] with spans[index..] wrapped in place.
+	##
+	## Spans are sorted ascending by start (outer span before inner on a
+	## tie), so a span's children are the following entries fully contained
+	## in it; they are wrapped recursively inside the operand text.
+	var result := ""
+	var cursor := from
+	var i := index
+	while i < spans.size():
+		var span: Dictionary = spans[i]
+		var start := int(span["start"])
+		var end := int(span["end"])
+		if start >= to or end > to:
+			break
+		if start < cursor:
+			i += 1
+			continue
+		var children: Array = []
+		var j := i + 1
+		while j < spans.size() and int(spans[j]["end"]) <= end:
+			children.append(spans[j])
+			j += 1
+		result += source.substr(cursor, start - cursor)
+		var operand := _wrap_spans(source, file_id, children, 0, start, end)
+		result += "%s.hit_ret(%d, %d, %s)" % [
+			TRACKER_NAME,
+			file_id,
+			int(span["id"]),
+			operand,
+		]
+		cursor = end
+		i = j
+	result += source.substr(cursor, to - cursor)
+	return result
 
 
 func _load_plan(path: String) -> Dictionary:

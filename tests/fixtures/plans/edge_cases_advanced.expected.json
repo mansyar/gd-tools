@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "generated_by": "gd-tools",
   "files": [
     {
@@ -12,109 +12,137 @@
           "line": 26,
           "id": 0,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 19,
           "id": 1,
           "type": "branch",
-          "branch_type": "ternary_true"
+          "branch_type": "ternary_true",
+          "operand_span": [
+            19,
+            10,
+            19,
+            12
+          ]
         },
         {
           "line": 19,
           "id": 2,
           "type": "branch",
-          "branch_type": "ternary_false"
+          "branch_type": "ternary_false",
+          "operand_span": [
+            19,
+            27,
+            19,
+            28
+          ]
         },
         {
           "line": 33,
           "id": 3,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 35,
           "id": 4,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 37,
           "id": 5,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 10,
           "id": 6,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 12,
           "id": 7,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 18,
           "id": 8,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 19,
           "id": 9,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 21,
           "id": 10,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 25,
           "id": 11,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 27,
           "id": 12,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 32,
           "id": 13,
           "type": "branch",
-          "branch_type": "match_case"
+          "branch_type": "match_case",
+          "operand_span": null
         },
         {
           "line": 34,
           "id": 14,
           "type": "branch",
-          "branch_type": "match_case"
+          "branch_type": "match_case",
+          "operand_span": null
         },
         {
           "line": 36,
           "id": 15,
           "type": "branch",
-          "branch_type": "match_case"
+          "branch_type": "match_case",
+          "operand_span": null
         },
         {
           "line": 16,
           "id": 16,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 23,
           "id": 17,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         }
       ]
     }

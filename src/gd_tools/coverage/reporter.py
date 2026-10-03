@@ -793,6 +793,7 @@ def generate_report(
     output_dir: Path,
     format: str = "html",
     min_threshold: float | None = None,
+    min_branch_threshold: float | None = None,
     annotate_min_percent: int | None = None,
     gate_failed: bool = False,
 ) -> ReportResult:
@@ -800,8 +801,10 @@ def generate_report(
 
     Dispatches to a format-specific reporter after computing coverage
     metrics.  If ``min_threshold`` is set and the overall line coverage
-    rate falls below it, :class:`CoverageThresholdError` is raised
-    after the report file has been written.  For the
+    rate falls below it, or ``min_branch_threshold`` is set and the
+    overall branch rate falls below it,
+    :class:`CoverageThresholdError` is raised after the report file has
+    been written.  For the
     ``github-actions`` format, ``annotate_min_percent`` supplies the
     threshold for annotation rendering (without gating) when no
     ``min_threshold`` gate applies, and ``gate_failed`` marks the
@@ -816,7 +819,9 @@ def generate_report(
             ``"cobertura"``, ``"text"``, ``"json"``,
             ``"github-actions"``.
         min_threshold: Minimum line coverage rate (0.0-1.0).  If
-            ``None``, no threshold check is performed.
+            ``None``, no line threshold check is performed.
+        min_branch_threshold: Minimum branch coverage rate (0.0-1.0).
+            If ``None``, no branch threshold check is performed.
         annotate_min_percent: Minimum coverage percentage used only
             for ``github-actions`` annotation rendering.  Falls back
             to ``min_threshold`` when ``None``.
@@ -830,7 +835,8 @@ def generate_report(
     Raises:
         CoveragePlanError: If ``format`` is not a supported format.
         CoverageThresholdError: If ``min_threshold`` is set and
-            ``line_rate < min_threshold``.
+            ``line_rate < min_threshold``, or ``min_branch_threshold``
+            is set and ``branch_rate < min_branch_threshold``.
     """
     if format not in _SUPPORTED_FORMATS:
         raise CoveragePlanError(
@@ -854,6 +860,10 @@ def generate_report(
     threshold_met = True
     if min_threshold is not None:
         threshold_met = summary.line_rate >= min_threshold
+    if min_branch_threshold is not None:
+        threshold_met = (
+            threshold_met and summary.branch_rate >= min_branch_threshold
+        )
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -907,10 +917,19 @@ def generate_report(
     )
 
     if not threshold_met:
+        if min_threshold is not None and summary.line_rate < min_threshold:
+            cause = (
+                f"Line coverage {summary.line_rate:.2%} is "
+                f"below minimum {min_threshold:.2%}."
+            )
+        else:
+            cause = (
+                f"Branch coverage {summary.branch_rate:.2%} is "
+                f"below minimum {min_branch_threshold:.2%}."
+            )
         raise CoverageThresholdError(
             f"[Error] Coverage threshold not met\n"
-            f"  Cause: Line coverage {summary.line_rate:.2%} is "
-            f"below minimum {min_threshold:.2%}.\n"
+            f"  Cause: {cause}\n"
             f"  Fix: Increase test coverage or lower the minimum "
             "threshold.",
             report_result=result,

@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "generated_by": "gd-tools",
   "files": [
     {
@@ -12,19 +12,22 @@
           "line": 7,
           "id": 0,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 8,
           "id": 1,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 9,
           "id": 2,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         }
       ]
     }

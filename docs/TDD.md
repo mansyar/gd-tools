@@ -1099,6 +1099,7 @@ class LinePlan:
     id: int  # unique within file
     type: str  # "statement" | "branch"
     branch_type: str | None  # "if_true" | "if_false" | "elif_true" | "loop_body" | "match_case" | "ternary_true" | "ternary_false"
+    operand_span: tuple[int, int, int, int] | None  # (line, col, end_line, end_col) of a ternary arm's operand; None for other point kinds
 
 class CoverageVisitor:
     """Lark Visitor that walks the AST and collects trackable points.
@@ -1170,12 +1171,16 @@ class CoverageVisitor:
 
         The ``test_expr`` AST node materializes exclusively for ternary
         expressions (``value_if_true if cond else value_if_false``). Both
-        value-branches are tracked as separate branch points.
+        value-branches are tracked as separate branch points, each carrying
+        the ``operand_span`` of its operand expression.
         """
-        self._add_point(tree, "branch", "ternary_true")
-        self._add_point(tree, "branch", "ternary_false")
+        self._add_point(tree, "branch", "ternary_true",
+                        operand_span=_node_span(tree.children[0]))
+        self._add_point(tree, "branch", "ternary_false",
+                        operand_span=_node_span(tree.children[4]))
 
-    def _add_point(self, tree: Tree, type_: str, branch_type: str | None = None) -> None:
+    def _add_point(self, tree: Tree, type_: str, branch_type: str | None = None,
+                   operand_span: tuple[int, int, int, int] | None = None) -> None:
         """Extract line number from tree.meta and create LinePlan."""
         line = tree.meta.line  # 1-indexed
         self.points.append(LinePlan(
@@ -1336,9 +1341,14 @@ assignment) are NOT tracked — they're declarations, not executable statements.
   fail while the six already-fine cases pass. A canary asserts the
   harness still detects a deliberately broken script, because a stale
   `.godot` cache had produced false passes during this investigation.
-- Not fixed here: `ternary_true` and `ternary_false` still share a line,
-  so the arms cannot be covered independently. That needs the plan to
-  record a span rather than a line.
+- Follow-up (Track `ternary_branch_separation_20261003`): the shared-line
+  limitation above is now fixed. The plan records an `operand_span` per arm
+  (`PLAN_VERSION` 3 → 4; span-less entries fall back to anchor-line
+  insertion), and the collector wraps each operand in a value-preserving
+  `hit_ret(file_id, point_id, operand)` call instead of inserting a line
+  tracker, so each arm is measured exactly when it evaluates. The human
+  report still shows ternary branches combined under the anchor line;
+  `--min-branch` gates branch coverage independently.
 
 **Class-body point dropping (Track `instrumentation_hygiene_20261003`,
 2026-10-03):**

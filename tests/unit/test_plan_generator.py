@@ -264,48 +264,20 @@ def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
     assert plan.files  # a fresh plan was generated
 
 
-def test_plan_version_is_5_after_continuation_line_dropping():
-    """PLAN_VERSION is 5 so pre-continuation-drop cached plans are stale.
+def test_plan_version_is_6_after_operand_spans_and_continuation_drops():
+    """PLAN_VERSION is 6 so both pre-fix plan flavours are stale.
 
-    Version 4 plans can hold statement points recorded on lines inside
-    open brackets or after backslash continuations. Reusing one would
-    inject trackers on those illegal lines and break the instrumented
-    file, so the version must have moved on.
+    Version 4/5 plans either carry no ``operand_span`` on ternary branch
+    points (restoring the shared-arm limitation) or hold statement points
+    recorded on illegal continuation lines (breaking the instrumented
+    file). Reusing either would regress, so the version must have moved
+    on to 6.
     """
-    assert PLAN_VERSION == 5
-
-
-def test_cache_v2_plan_is_regenerated_with_outdated_reason(tmp_path):
-    """A v2 cache file -- carrying pre-fix ternary lines -- is a miss."""
-    cache_path = tmp_path / "plan.json"
-    _write_cached_plan(
-        tmp_path,
-        cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
-    )
-    data = json.loads(cache_path.read_text(encoding="utf-8"))
-    data["version"] = 2
-    cache_path.write_text(json.dumps(data), encoding="utf-8")
-
-    plan, status = generate_plan_cached(
-        str(tmp_path), cache_path=str(cache_path)
-    )
-
-    assert status.hit is False
-    assert "2" in status.reason
-    assert f"expected {PLAN_VERSION}" in status.reason
-    assert plan.version == PLAN_VERSION
-    assert plan.files  # a fresh plan was generated
+    assert PLAN_VERSION == 6
 
 
 def test_cache_v3_plan_is_regenerated_with_outdated_reason(tmp_path):
-    """A v3 cache file -- carrying class-body statement points -- is a miss.
-
-    Version 3 plans can hold points recorded on class-member declaration
-    lines and signature lines. Reusing one would inject trackers where no
-    statement may begin and break the instrumented file, so a v3 cache must
-    regenerate.
-    """
+    """A v3 cache file -- carrying span-less ternary points -- is a miss."""
     cache_path = tmp_path / "plan.json"
     _write_cached_plan(
         tmp_path,
