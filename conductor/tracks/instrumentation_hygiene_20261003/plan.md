@@ -148,3 +148,17 @@ removed; the known-stale docs are corrected (spec FR-12 through FR-17).
   - `ruff check src tests` and `black --check src tests` clean.
   - Coverage gates hold (>=80% line / >=70% branch).
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [2bd5fd3]
+
+## Phase: Review Fixes (conductor-review, 2026-10-03)
+
+Goal: resolve the review findings - the High bracket-continuation gap
+(statements recorded on lines inside open brackets still produce
+uncompilable instrumented output), the Medium write-fidelity and
+documentation issues, and the Low hygiene items.
+
+- [~] Task: Write failing tests for bracket-continuation dropping, the multi-line signature pin, and baseline/plan-cache atomicity (Red)
+- [ ] Task: Implement the depth-lexer illegal lines, migrate save_baseline and write_plan_json, bump PLAN_VERSION to 5 (Green)
+- [ ] Task: Refactor and sweep hardcoded version literals to PLAN_VERSION imports
+- [ ] Task: Extend the Godot parse suite with continuation-line cases and run the teeth check
+- [ ] Task: Correct the doc overclaims (ARCHITECTURE, CHANGELOG, TDD) and the backup path
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
