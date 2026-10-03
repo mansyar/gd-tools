@@ -22,7 +22,7 @@ commit + git note, plan update).
   - [ ] Suite cases: exact-match assertions unchanged (backward compatibility)
   - [ ] Suite cases: wildcard never matches wrong arity (pattern size must equal call size)
   - [ ] Verify RED: run the suite via the native runtime and confirm failures
-- [ ] Task: Extract shared matcher helper and wire spy assertions
+- [x] Task: Extract shared matcher helper and wire spy assertions (2167065)
   - [ ] Extract one matching helper used by both `_gd_tools_stub_specificity` matching and spy assertions (single source of truth)
   - [ ] Update `assert_call_arguments` to match per-element with `"any"`
   - [ ] Verify GREEN: new suites pass; `CI=true pytest` (unit + e2e) passes
