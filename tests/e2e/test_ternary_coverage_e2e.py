@@ -180,3 +180,15 @@ def test_uncovered_arm_display_stays_combined(tmp_path, godot_bin):
     matches = re.findall(r"6 \((ternary_true|ternary_false)\)", output)
 
     assert len(matches) == 1, output
+
+
+@pytest.mark.slow
+def test_behavioral_equivalence_under_instrumentation(tmp_path, godot_bin):
+    """Wrapping is semantically transparent (FR-3).
+
+    Each operand is evaluated exactly when its arm is selected (exactly once),
+    the condition is not re-evaluated, and returned values are unchanged.
+    """
+    _, result = _run_coverage_suite(tmp_path, godot_bin, "TernaryBehaviorSuite")
+
+    assert result.returncode == 0, result.stdout + result.stderr

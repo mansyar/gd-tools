@@ -105,6 +105,27 @@ CASES = {
         "func f() -> void:\n\tprint(v)\n",
         [],
     ),
+    # Await inside a ternary operand: the operand span covers the await
+    # expression, so wrapping produces ``hit_ret(id, await f())``. Verifies the
+    # instrumented form still compiles (semantics: the wrapper is synchronous
+    # and returns its argument, so await resolution order is unchanged).
+    "ternary_await": (
+        "extends Node\n\n\nfunc f(cond: bool) -> int:\n"
+        "\tvar value = await truthy() if cond else 0\n\treturn value\n\n\n"
+        "func truthy() -> int:\n\treturn 1\n",
+        [5, 5],
+    ),
+    # Evidence for the @export open question: a hand-instrumented @export
+    # initializer (tracker call in the ternary operand) still compiles, so
+    # excluding @export ternaries is a conservative choice, not a hard
+    # technical blocker. They stay untracked (no anchor), like const and
+    # default-parameter ternaries.
+    "ternary_export_wrapped": (
+        "extends Node\n\n@export var enabled := true\n\n\n"
+        "@export var size: int = GdToolsNativeCoverage.hit_ret(0, 5, 2) "
+        "if enabled else 4\n",
+        [],
+    ),
     "param_orphan": (
         "extends Node\n\n\nfunc f(a: int, x = 1 if a > 0 else 2) -> void:\n"
         "\tprint(x)\n",
