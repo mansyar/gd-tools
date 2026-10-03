@@ -7,14 +7,14 @@ phase checkpoints per `conductor/workflow.md`.
 
 ## Phase 1 — Plan Model & Generator (operand spans)
 
-- [ ] Task: Write failing tests for ternary operand span extraction (Red)
-  - [ ] Tests asserting each ternary branch point carries an operand source span (line/col offsets) sufficient for textual location
-  - [ ] Tests for nested and multi-line ternaries (correct spans on both arms)
-  - [ ] Tests that untracked contexts (const initializer, default parameter) emit no ternary points, unchanged
-  - [ ] Test that `PLAN_VERSION` is bumped 3 → 4
-- [ ] Task: Implement operand span capture in `CoverageVisitor` (Green)
-  - [ ] Extend `LinePlan`/plan JSON with arm operand span fields; capture from lark `meta` in `test_expr`
-  - [ ] Bump `PLAN_VERSION` to 4
+- [x] Task: Write failing tests for ternary operand span extraction (Red) [cba5d24]
+  - [x] Tests asserting each ternary branch point carries an operand source span (line/col offsets) sufficient for textual location
+  - [x] Tests for nested and multi-line ternaries (correct spans on both arms)
+  - [x] Tests that untracked contexts (const initializer, default parameter) emit no ternary points, unchanged
+  - [x] Test that `PLAN_VERSION` is bumped 3 → 4
+- [x] Task: Implement operand span capture in `CoverageVisitor` (Green) [cba5d24]
+  - [x] Extend `LinePlan`/plan JSON with arm operand span fields; capture from lark `meta` in `test_expr`
+  - [x] Bump `PLAN_VERSION` to 4
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Per-Arm Instrumentation (coverage.gd)
