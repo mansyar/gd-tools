@@ -161,4 +161,4 @@ documentation issues, and the Low hygiene items.
 - [x] Task: Refactor and sweep hardcoded version literals to PLAN_VERSION imports [0c7b41f]
 - [x] Task: Extend the Godot parse suite with continuation-line cases and run the teeth check [49b6536]
 - [x] Task: Correct the doc overclaims (ARCHITECTURE, CHANGELOG, TDD) and the backup path [4b10045]
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [52b6e79]
