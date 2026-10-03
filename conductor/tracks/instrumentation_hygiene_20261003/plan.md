@@ -88,7 +88,7 @@ silent drop cannot pass vacuously.
 Goal: `coverage merge` stops losing omission reasons, and all remaining
 non-atomic writes move onto one shared helper (spec FR-7 through FR-11).
 
-- [ ] Task: Write failing tests for omission fidelity and atomic writes (Red)
+- [x] [c9029a5] Task: Write failing tests for omission fidelity and atomic writes (Red)
   - Round-trip test: `CoverageData` with `omitted` entries written via
     `write_coverage_json` and read back preserves reasons (currently
     degrades to `_UNKNOWN_REASON`).
