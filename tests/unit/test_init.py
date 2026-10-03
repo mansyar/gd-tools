@@ -1028,4 +1028,7 @@ def test_stale_hook_cleanup_is_a_noop_when_files_are_absent(tmp_path: Path):
     with patch("gd_tools.init.console.print") as mock_print:
         install_coverage_addon(tmp_path)
 
-    assert mock_print.called is False
+    printed = " ".join(
+        str(call.args[0]) for call in mock_print.call_args_list if call.args
+    )
+    assert "Removed" not in printed

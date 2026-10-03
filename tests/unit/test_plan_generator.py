@@ -6,6 +6,7 @@ classification, branch classification, and plan generation.
 """
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -263,15 +264,15 @@ def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
     assert plan.files  # a fresh plan was generated
 
 
-def test_plan_version_is_4_after_class_body_anchoring():
-    """PLAN_VERSION is 4 so pre-class-body cached plans are not reused.
+def test_plan_version_is_5_after_continuation_line_dropping():
+    """PLAN_VERSION is 5 so pre-continuation-drop cached plans are stale.
 
-    Version 3 plans hold statement points recorded on class-member
-    declaration lines and function signature lines. Reusing one after the
-    class-body anchoring fix would inject trackers on those stale lines and
-    reproduce the parse failures, so the version must have moved on.
+    Version 4 plans can hold statement points recorded on lines inside
+    open brackets or after backslash continuations. Reusing one would
+    inject trackers on those illegal lines and break the instrumented
+    file, so the version must have moved on.
     """
-    assert PLAN_VERSION == 4
+    assert PLAN_VERSION == 5
 
 
 def test_cache_v2_plan_is_regenerated_with_outdated_reason(tmp_path):
@@ -321,6 +322,35 @@ def test_cache_v3_plan_is_regenerated_with_outdated_reason(tmp_path):
 
     assert status.hit is False
     assert "3" in status.reason
+    assert f"expected {PLAN_VERSION}" in status.reason
+    assert plan.version == PLAN_VERSION
+    assert plan.files  # a fresh plan was generated
+
+
+def test_cache_v4_plan_is_regenerated_with_outdated_reason(tmp_path):
+    """A v4 cache file -- carrying continuation-line points -- is a miss.
+
+    Version 4 plans can hold points recorded on lines inside open
+    brackets or after backslash continuations. Reusing one would inject
+    trackers there and break the instrumented file, so a v4 cache must
+    regenerate.
+    """
+    cache_path = tmp_path / "plan.json"
+    _write_cached_plan(
+        tmp_path,
+        cache_path,
+        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+    )
+    data = json.loads(cache_path.read_text(encoding="utf-8"))
+    data["version"] = 4
+    cache_path.write_text(json.dumps(data), encoding="utf-8")
+
+    plan, status = generate_plan_cached(
+        str(tmp_path), cache_path=str(cache_path)
+    )
+
+    assert status.hit is False
+    assert "4" in status.reason
     assert f"expected {PLAN_VERSION}" in status.reason
     assert plan.version == PLAN_VERSION
     assert plan.files  # a fresh plan was generated
@@ -1168,3 +1198,21 @@ def test_generate_plan_cached_no_cache_path(tmp_path):
 
     assert status.hit is False
     assert len(plan.files) == 1
+
+
+def test_write_plan_json_failure_keeps_previous_file(tmp_path, monkeypatch):
+    """A failed cache write must not truncate the previous plan."""
+    path = tmp_path / "plan.json"
+    path.write_text('{"previous": true}', encoding="utf-8")
+    plan = CoveragePlan(version=PLAN_VERSION, generated_by="gd-tools", files=[])
+
+    def boom(src, dst):
+        raise OSError("disk on fire")
+
+    monkeypatch.setattr(os, "replace", boom)
+
+    with pytest.raises(OSError, match="disk on fire"):
+        write_plan_json(plan, path)
+
+    assert json.loads(path.read_text(encoding="utf-8")) == {"previous": True}
+    assert sorted(i.name for i in tmp_path.iterdir()) == ["plan.json"]

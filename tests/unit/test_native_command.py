@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+from gd_tools.coverage.plan_generator import PLAN_VERSION
 from gd_tools.errors import (
     ConfigError,
     CoverageThresholdError,
@@ -831,7 +832,7 @@ def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
     (coverage_dir / "plan.json").write_text(
         json.dumps(
             {
-                "version": 4,
+                "version": PLAN_VERSION,
                 "generated_by": "gd-tools-test",
                 "files": [
                     {

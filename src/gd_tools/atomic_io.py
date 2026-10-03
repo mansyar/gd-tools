@@ -3,8 +3,8 @@
 Several components persist files that outlive the process writing them:
 coverage data, JUnit XML, run markers. A process killed mid-write used
 to leave a truncated file behind that downstream tooling then choked on.
-Every durable write in the codebase goes through this module: the
-content is staged in a temporary file beside the destination, flushed
+The components that persist such files route their writes through
+this module: the content is staged in a temporary file beside the destination, flushed
 and fsynced, and moved into place with a single ``os.replace``.
 """
 

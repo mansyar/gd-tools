@@ -12,6 +12,7 @@ import pytest
 from gd_tools.coverage.html_reporter import generate_html_report
 from gd_tools.coverage.lcov_reporter import generate_lcov_report
 from gd_tools.coverage.plan_generator import (
+    PLAN_VERSION,
     CoveragePlan,
     FilePlan,
     generate_plan,
@@ -124,7 +125,7 @@ class TestTerminalExcludedCount:
     def test_no_count_when_no_exclusions(self):
         """A plan without exclusions mentions nothing about exclusions."""
         plan = CoveragePlan(
-            version=4,
+            version=PLAN_VERSION,
             generated_by="gd-tools",
             files=[
                 FilePlan(

@@ -198,3 +198,128 @@ def test_method_statements_are_unaffected(tmp_path):
     )
     lines = _lines_for(tmp_path, source)
     assert _statements(lines) == [(0, 4), (1, 5)]
+
+
+# --- Bracket-continuation lines (review finding: High) ---
+
+
+CONTINUATION_CASES = {
+    "inline_dict": (
+        "extends Node\n"
+        "\n"
+        "var handlers = {\n"
+        '\t"k": func(): print(1),\n'
+        "}\n"
+        "\n"
+        "func m() -> void:\n"
+        "\tprint(handlers)\n"
+    ),
+    "paren_lambda": (
+        "extends Node\n"
+        "\n"
+        "var f = (\n"
+        "\tfunc(): print(1)\n"
+        ")\n"
+        "\n"
+        "func m() -> void:\n"
+        "\tprint(f)\n"
+    ),
+    "func_ml_expr": (
+        "extends Node\n"
+        "\n"
+        "func m() -> void:\n"
+        "\tvar F = foo(\n"
+        "\t\tfunc(): print(1)\n"
+        "\t)\n"
+        "\tprint(F)\n"
+    ),
+    "backslash": (
+        "extends Node\n"
+        "\n"
+        "func m() -> void:\n"
+        "\tvar x = 1 + \\\n"
+        "\t\tfunc(): print(1)\n"
+        "\tprint(x)\n"
+    ),
+    "block_in_dict": (
+        "extends Node\n"
+        "\n"
+        "var h = {\n"
+        '\t"k": func():\n'
+        "\t\tprint(1),\n"
+        "}\n"
+        "\n"
+        "func m() -> void:\n"
+        "\tprint(h)\n"
+    ),
+    "nested_lambda_inline": (
+        "extends Node\n"
+        "\n"
+        'var h = {"k": func(): print(func(): return 1)}\n'
+        "\n"
+        "func m() -> void:\n"
+        "\tprint(h)\n"
+    ),
+}
+
+CONTINUATION_EXPECTED = {
+    "inline_dict": [(0, 8)],
+    "paren_lambda": [(0, 8)],
+    "func_ml_expr": [(0, 4), (1, 7)],
+    "backslash": [(0, 4), (1, 6)],
+    "block_in_dict": [(0, 9)],
+    "nested_lambda_inline": [(0, 6)],
+}
+
+
+@pytest.mark.parametrize("case", sorted(CONTINUATION_CASES))
+def test_statement_on_a_bracket_continuation_line_is_dropped(tmp_path, case):
+    """A point on a line inside an open bracket must not be recorded.
+
+    The lambda body statement squashes onto a continuation line of a
+    multi-line initializer expression. Injecting a tracker before such a
+    line places a statement inside the open bracket, the instrumented
+    file fails to parse, and the file silently drops out of coverage.
+    The point must be dropped instead; only statements on legal lines
+    remain.
+    """
+    lines = _lines_for(tmp_path, CONTINUATION_CASES[case])
+    assert _statements(lines) == CONTINUATION_EXPECTED[case]
+
+
+def test_onready_lambda_body_is_dropped(tmp_path):
+    """An ``@onready`` initializer lambda body is dropped like ``@export``.
+
+    Annotations do not change the AST node name, so the declaration line
+    rule must cover ``@onready`` the same way.
+    """
+    source = (
+        "class_name C\n"
+        "\n"
+        "class Inner:\n"
+        "\t@onready var F = func(): return 2\n"
+        "\tfunc m() -> void:\n"
+        "\t\tprint(1)\n"
+    )
+    lines = _lines_for(tmp_path, source)
+    assert _statements(lines) == [(0, 6)]
+
+
+def test_multiline_signature_lambda_body_is_not_tracked(tmp_path):
+    """A lambda body inside a wrapped signature span is dropped.
+
+    The signature-span rule must hold across the whole ``func_header``
+    span, not only on single-line signatures where the span is
+    degenerate.
+    """
+    source = (
+        "extends Node\n"
+        "\n"
+        "func f(\n"
+        "\tx = func():\n"
+        "\t\tprint(9),\n"
+        ") -> void:\n"
+        "\tprint(x)\n"
+    )
+    lines = _lines_for(tmp_path, source)
+    assert _statements(lines) == [(0, 7)]

@@ -24,10 +24,11 @@ from lark.exceptions import LarkError
 from lark.visitors import Visitor
 from rich.console import Console
 
+from gd_tools.atomic_io import atomic_write_text
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 4
+PLAN_VERSION = 5
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
@@ -40,10 +41,12 @@ the stale lines and reproduce the parse failures this bump exists to
 prevent.
 
 Bumped 3 -> 4 when statement points on class-member declaration lines
-and function signature lines were dropped. Version 3 plans can carry
-such points (a lambda body written inline squashes its statements onto
-the declaration line), so reusing one would inject trackers where
-GDScript permits no statement and break the instrumented file.
+and function signature lines were dropped, and 4 -> 5 when points on
+bracket-continuation lines (inside open brackets, or after backslash
+continuations) were dropped as well. Version 4 plans can carry such
+points (a lambda body written inline squashes its statements onto the
+continuation line), so reusing one would inject trackers where GDScript
+permits no statement and break the instrumented file.
 """
 
 # --- Data structures (FR-1) ---
@@ -121,6 +124,10 @@ class CacheStatus:
 def write_plan_json(plan: CoveragePlan, output_path: str) -> None:
     """Serialize a :class:`CoveragePlan` to a JSON file.
 
+    The write is crash-safe: the plan cache is read back on later runs,
+    so a truncated file must never replace a good one. See
+    :mod:`gd_tools.atomic_io`.
+
     Args:
         plan: The coverage plan to serialize.
         output_path: Path to the output JSON file.
@@ -147,7 +154,7 @@ def write_plan_json(plan: CoveragePlan, output_path: str) -> None:
             for fp in plan.files
         ],
     }
-    Path(output_path).write_text(json.dumps(data, indent=2), encoding="utf-8")
+    atomic_write_text(output_path, json.dumps(data, indent=2))
 
 
 def read_plan_json(path: str) -> CoveragePlan:
@@ -497,6 +504,76 @@ def _collect_illegal_lines(root: Tree) -> set[int]:
     return illegal
 
 
+def _collect_continuation_lines(source: str) -> set[int]:
+    """Collect the lines that continue an expression from a previous line.
+
+    A tracker is injected as its own line immediately before the recorded
+    line, so the recorded line must be one where a statement may begin.
+    Two textual contexts violate that regardless of AST shape:
+
+    - A line whose start sits inside a bracket opened on an earlier line
+      (the line continues a multi-line expression).
+    - A line whose previous line ends with a backslash continuation.
+
+    Both are detected by a small lexer that tracks bracket depth across
+    lines while skipping string literals (including triple-quoted ones)
+    and comments. A comment line ending in a backslash is over-marked:
+    the point is dropped rather than mis-injected, which errs on the safe
+    side.
+
+    Args:
+        source: Full GDScript source text.
+
+    Returns:
+        Set of 1-indexed line numbers where a tracker may not be injected.
+    """
+    illegal: set[int] = set()
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    line = 1
+    i = 0
+    n = len(source)
+    while i < n:
+        ch = source[i]
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == quote:
+                quote = None
+            i += 1
+            continue
+        if ch in "\"'":
+            triple = ch * 3
+            if source[i : i + 3] == triple:
+                end = source.find(triple, i + 3)
+                if end == -1:
+                    break
+                line += source.count("\n", i, end + 3)
+                i = end + 3
+                continue
+            quote = ch
+            i += 1
+            continue
+        if ch == "#":
+            while i < n and source[i] != "\n":
+                i += 1
+            continue
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth = max(depth - 1, 0)
+        elif ch == "\n":
+            ends_backslash = i > 0 and source[i - 1] == "\\"
+            if depth > 0 or ends_backslash:
+                illegal.add(line + 1)
+            line += 1
+        i += 1
+    return illegal
+
+
 def _map_ternary_anchors(root: Tree) -> dict[int, int]:
     """Map ``id()`` of each ``test_expr`` node to its anchor line.
 
@@ -548,10 +625,15 @@ class CoverageVisitor(Visitor):
         points: List of collected trackable points.
     """
 
-    def __init__(self, excluded_lines: set[int] | None = None) -> None:
+    def __init__(
+        self,
+        excluded_lines: set[int] | None = None,
+        source: str | None = None,
+    ) -> None:
         self.points: list[LinePlan] = []
         self._next_id: int = 0
         self._excluded_lines = excluded_lines or set()
+        self._source = source
         self._ternary_anchors: dict[int, int] = {}
         self._illegal_lines: set[int] = set()
 
@@ -564,6 +646,8 @@ class CoverageVisitor(Visitor):
         """
         self._ternary_anchors = _map_ternary_anchors(tree)
         self._illegal_lines = _collect_illegal_lines(tree)
+        if self._source is not None:
+            self._illegal_lines |= _collect_continuation_lines(self._source)
         return super().visit(tree)
 
     def _add_point(
@@ -747,7 +831,9 @@ def generate_plan(
         try:
             tree = parse_gdscript(source)
             excluded, warnings = find_excluded_lines(source)
-            visitor = CoverageVisitor(excluded_lines=set(excluded))
+            visitor = CoverageVisitor(
+                excluded_lines=set(excluded), source=source
+            )
             visitor.visit(tree)
         except LarkError:
             console.print(

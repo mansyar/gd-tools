@@ -21,6 +21,7 @@ from gd_tools.coverage.orchestrator import (
     show_coverage_summary,
 )
 from gd_tools.coverage.plan_generator import (
+    PLAN_VERSION,
     CacheStatus,
     CoveragePlan,
     FilePlan,
@@ -53,7 +54,7 @@ def _make_config(output_dir: str = ".gd-tools/coverage") -> GdToolsConfig:
 def _make_plan() -> CoveragePlan:
     """Create a minimal CoveragePlan for testing."""
     return CoveragePlan(
-        version=4,
+        version=PLAN_VERSION,
         generated_by="gd-tools",
         files=[
             FilePlan(
@@ -579,7 +580,7 @@ def _make_uncovered_file_summaries() -> list[FileSummary]:
 def _make_uncovered_plan() -> CoveragePlan:
     """Create a CoveragePlan matching the uncovered file summaries."""
     return CoveragePlan(
-        version=4,
+        version=PLAN_VERSION,
         generated_by="gd-tools",
         files=[
             FilePlan(
@@ -708,7 +709,7 @@ def test_save_coverage_baseline_writes_baseline(tmp_path):
     output_dir = tmp_path / ".gd-tools" / "coverage"
     output_dir.mkdir(parents=True)
     plan = CoveragePlan(
-        version=4,
+        version=PLAN_VERSION,
         generated_by="gd-tools",
         files=[
             FilePlan(

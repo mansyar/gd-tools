@@ -394,7 +394,7 @@ def merge_coverage_data(files: list[Path]) -> CoverageData:
     )
 
 
-def write_coverage_json(data: CoverageData, path: Path) -> None:
+def write_coverage_json(data: CoverageData, path: Path | str) -> None:
     """Write coverage data to a JSON file.
 
     Serializes a :class:`CoverageData` object to the same JSON format
@@ -405,7 +405,7 @@ def write_coverage_json(data: CoverageData, path: Path) -> None:
 
     Args:
         data: The coverage data to serialize.
-        path: Path to the output JSON file.
+        path: Path to the output JSON file (a Path or a string).
     """
     data_dict: dict[str, Any] = {
         "version": data.version,

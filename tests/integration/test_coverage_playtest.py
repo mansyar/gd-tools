@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 from conftest import import_godot_project
 
+from gd_tools.coverage.plan_generator import PLAN_VERSION
 from gd_tools.init import register_coverage_autoload
 
 pytestmark = pytest.mark.integration
@@ -95,7 +96,7 @@ DRIVER_SOURCE = (
 def _playtest_plan() -> dict:
     """Return a minimal coverage plan tracking the playtest subject."""
     return {
-        "version": 3,
+        "version": PLAN_VERSION,
         "generated_by": "playtest-integration-test",
         "files": [
             {
