@@ -113,7 +113,7 @@ non-atomic writes move onto one shared helper (spec FR-7 through FR-11).
 Goal: GUT-removal residue stops shipping; the small dead-code items are
 removed; the known-stale docs are corrected (spec FR-12 through FR-17).
 
-- [~] Task: Remove the dead GUT hook files and their deployment
+- [x] Task: Remove the dead GUT hook files and their deployment [71ccb63]
   - Delete `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` and
     `post_run_hook.gd` (they extend the removed `GutHookScript` base).
   - Remove their entries from `init.py`'s deploy manifests; update the
@@ -121,14 +121,14 @@ removed; the known-stale docs are corrected (spec FR-12 through FR-17).
   - Implement init self-healing (FR-13): an `init` run detects hook files
     it no longer deploys in the target project, deletes them, and reports
     the cleanup. Write the test first.
-- [ ] Task: Remove dead code
+- [x] Task: Remove dead code [71ccb63]
   - `_DEPRECATED_FIELDS` machinery in `config.py` (empty but wired).
   - The unused `non_interactive` parameter in `init.py` (verify CLI wiring
     first; if it is wired, record that and leave it).
   - Rename `test_runner.py` to reflect what it does (it renders test
     results; it does not run tests) and update importers
     (`native_test/command.py`, `watch/session.py`).
-- [ ] Task: Correct the stale documentation
+- [x] Task: Correct the stale documentation [846f8b8]
   - `docs/ARCHITECTURE.md` §3: remove the `run_coverage_test()` flow that
     no longer exists.
   - `docs/TESTING_STRATEGY.md` §5: replace the "GUT installation" wording.
