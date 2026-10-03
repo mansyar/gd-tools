@@ -132,3 +132,40 @@ func test_assertion_on_a_null_target_fails_cleanly() -> void:
 	if failures.size() == 1:
 		var message := str(failures[0]["message"])
 		assert_true("double()" in message, "names the remedy: " + message)
+
+
+func test_assert_call_arguments_wildcard_matches_any_value() -> void:
+	# The string "any" acts as a per-element wildcard, mirroring stub()
+	# semantics: the wildcard position accepts any recorded argument.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_arguments(d, "add", ["any", 3])
+
+
+func test_assert_call_arguments_wildcard_matches_in_any_position() -> void:
+	# Wildcards work in every argument position, not just the first.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_arguments(d, "add", [2, "any"])
+
+
+func test_assert_call_arguments_wildcard_still_checks_other_arguments() -> void:
+	# A wildcard only lifts its own position: a concrete argument that
+	# mismatches the recorded call still fails the assertion.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_arguments(d, "add", ["any", 4])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1, "mismatched concrete argument must fail")
+
+
+func test_assert_call_arguments_wildcard_requires_same_arity() -> void:
+	# A pattern must have the same element count as the recorded call,
+	# even when every element is a wildcard.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_arguments(d, "add", ["any"])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1, "arity mismatch must fail even with wildcards")

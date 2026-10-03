@@ -2045,6 +2045,10 @@ CALL_ASSERTION_METHODS = [
     "test_assert_call_arguments_failure_diagnostic_shows_both_argument_sets",
     "test_assertions_read_the_call_recorder_not_script_state",
     "test_assertion_on_a_null_target_fails_cleanly",
+    "test_assert_call_arguments_wildcard_matches_any_value",
+    "test_assert_call_arguments_wildcard_matches_in_any_position",
+    "test_assert_call_arguments_wildcard_still_checks_other_arguments",
+    "test_assert_call_arguments_wildcard_requires_same_arity",
 ]
 
 
