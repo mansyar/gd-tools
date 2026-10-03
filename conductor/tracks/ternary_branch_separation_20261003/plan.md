@@ -48,13 +48,13 @@ phase checkpoints per `conductor/workflow.md`.
   - [x] `@export var` initializer: parse check proves a hand-instrumented export ternary compiles; stays untracked as a conservative design choice (no anchor mapping), like const/default-parameter ternaries
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 5 — Documentation & Final Verification
+## Phase 5 — Documentation & Final Verification [checkpoint: d26031d]
 
 - [x] Task: Update documentation
   - [x] CHANGELOG: replace the known-limitation note with the fix entry (Unreleased)
   - [x] ARCHITECTURE: ternary instrumentation sections (anchor → operand wrapping, PLAN_VERSION 4)
   - [x] ROADMAP: no ternary limitation references found (Track 38 section is historical narrative) — no changes needed
   - [x] TDD.md + USER_GUIDE.md truth pass: visitor snippet/LinePlan fields updated; `--min-branch` rows added to `test` and `coverage show` flag tables
-- [ ] Task: Final quality gates
-  - [ ] `ruff check`, `black --check`, full `CI=true pytest` with coverage gates (>80% line / >70% branch on new code)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Final quality gates
+  - [x] `ruff check`, `black --check`, full `CI=true pytest` with coverage gates (>80% line / >70% branch on new code)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: d26031d]
