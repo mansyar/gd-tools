@@ -213,7 +213,7 @@ class TestPlanJsonExcludedLines:
         )
         output = tmp_path / "plan.json"
         write_plan_json(
-            CoveragePlan(version=3, generated_by="gd-tools", files=[fp]),
+            CoveragePlan(version=4, generated_by="gd-tools", files=[fp]),
             str(output),
         )
 
@@ -235,7 +235,7 @@ class TestPlanJsonExcludedLines:
         )
         plan_file = tmp_path / "plan.json"
         write_plan_json(
-            CoveragePlan(version=3, generated_by="gd-tools", files=[fp]),
+            CoveragePlan(version=4, generated_by="gd-tools", files=[fp]),
             str(plan_file),
         )
 
@@ -247,7 +247,7 @@ class TestPlanJsonExcludedLines:
     ):
         """Older JSON without excluded_lines loads with an empty list."""
         json_data = {
-            "version": 3,
+            "version": 4,
             "generated_by": "gd-tools",
             "files": [
                 {

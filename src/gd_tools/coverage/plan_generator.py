@@ -27,7 +27,7 @@ from rich.console import Console
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 3
+PLAN_VERSION = 4
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
@@ -38,6 +38,12 @@ enclosing statement. Version 2 plans record ``LinePlan.line`` at a
 ternary's first-operand line, so reusing one would re-inject trackers on
 the stale lines and reproduce the parse failures this bump exists to
 prevent.
+
+Bumped 3 -> 4 when statement points on class-member declaration lines
+and function signature lines were dropped. Version 3 plans can carry
+such points (a lambda body written inline squashes its statements onto
+the declaration line), so reusing one would inject trackers where
+GDScript permits no statement and break the instrumented file.
 """
 
 # --- Data structures (FR-1) ---

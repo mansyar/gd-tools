@@ -829,7 +829,7 @@ def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
     (coverage_dir / "plan.json").write_text(
         json.dumps(
             {
-                "version": 3,
+                "version": 4,
                 "generated_by": "gd-tools-test",
                 "files": [
                     {
