@@ -21,19 +21,23 @@
 
 ## Phase 2: Coverage Annotations
 
-- [ ] **Task 2.1 — Write failing tests (Red):** unit tests for the
+- [x] **Task 2.1 — Write failing tests (Red):** unit tests for the
   GitHub Actions coverage reporter — summary `::error`
   (`title=Coverage gate`) when total below minimum, one
   `::warning file=…::Coverage N% below minimum M%` per file below
   threshold, deterministic ordering, escaping, threshold-passed → no
   annotations.
-- [ ] **Task 2.2 — Implement (Green):** add the reporter to
+- [x] **Task 2.2 — Implement (Green):** add the reporter to
   `src/gd_tools/coverage/reporter.py`; extend `--report-format` choices
   on `coverage report` and `coverage run` in `cli.py`.
-- [ ] **Task 2.3 — Config alignment (TDD):** failing test that
+  *(commit `c5cadd0`; shared escape helpers extracted to
+  `gh_annotations.py`)*
+- [x] **Task 2.3 — Config alignment (TDD):** failing test that
   `[coverage].format` validator accepts `github-actions` and that the
   rejection message lists all valid values; implement in `config.py`.
-- [ ] **Task 2.4 — Verify quality gates + commit:** full coverage test
+  *(red `b802122`, green `478e287`; schema snapshot regenerated and
+  sync test green)*
+- [~] **Task 2.4 — Verify quality gates + commit:** full coverage test
   suite green; gates pass; commit
   `feat(coverage): add github-actions annotation format` + git note;
   update plan.md.
