@@ -2,7 +2,7 @@
   "track_id": "instrumentation_hygiene_20261003",
   "title": "Instrumentation Hygiene Sweep",
   "type": "Bug fix + chore",
-  "status": "in progress",
+  "status": "completed",
   "branch": "fix/instrumentation-hygiene-20261003",
   "created": "2026-10-03",
   "description": "Fold four verified defects into one track: class-body instrumentation correctness (trackers injected into GDScript class bodies make files unparseable and silently drop them from coverage), coverage merge dropping omission reasons, non-atomic writes in three writers, and the dead GUT hook files still shipped and deployed. Includes the accumulated GUT-removal doc debt and small dead-code removals."

@@ -1,7 +1,7 @@
 # Track: Instrumentation Hygiene Sweep (`instrumentation_hygiene_20261003`)
 
 - **Type:** Bug fix + chore
-- **Status:** in progress
+- **Status:** completed
 - **Branch:** `fix/instrumentation-hygiene-20261003`
 - **Created:** 2026-10-03
 
