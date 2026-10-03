@@ -192,7 +192,7 @@ CASES = {
         [],
         None,
     ),
-    # --- class-body statements, dropped since PLAN_VERSION 4 ---
+    # --- class-body statements, dropped since PLAN_VERSION 4 --- (plus @onready annotations)
     "class_lambda_var": (
         "extends Node\n\n\n"
         "class Inner:\n"
@@ -259,6 +259,52 @@ CASES = {
         "var F = func(): return 2\n\n\n"
         "func f() -> void:\n"
         "\tprint(F.call())\n",
+        [],
+        [7],
+    ),
+    # --- bracket-continuation statements, dropped since PLAN_VERSION 5 ---
+    "cont_inline_dict": (
+        'extends Node\n\nvar handlers = {\n\t"k": func(): print(1),\n}\n\n'
+        "func m() -> void:\n\tprint(handlers)\n",
+        [],
+        [8],
+    ),
+    "cont_paren_lambda": (
+        "extends Node\n\nvar f = (\n\tfunc(): print(1)\n)\n\n"
+        "func m() -> void:\n\tprint(f)\n",
+        [],
+        [8],
+    ),
+    "cont_func_ml_expr": (
+        "extends Node\n\nfunc m() -> void:\n"
+        "\tvar F = [1].map(\n\t\tfunc(): return 2\n\t)\n\tprint(F)\n",
+        [],
+        [4, 7],
+    ),
+    "cont_backslash": (
+        "extends Node\n\nfunc m() -> void:\n"
+        "\tvar x = [1].map( \\\n\t\tfunc(): return 2\n\t)\n\tprint(x)\n",
+        [],
+        [4, 7],
+    ),
+    "cont_block_in_dict": (
+        'extends Node\n\nvar h = {\n\t"k": func():\n\t\tprint(1),\n}\n\n'
+        "func m() -> void:\n\tprint(h)\n",
+        [],
+        [9],
+    ),
+    "cont_block_lambda_kept": (
+        "extends Node\n\nvar F = func():\n\treturn 2\n\n"
+        "func m() -> void:\n\tprint(F)\n",
+        [],
+        [4, 7],
+    ),
+    "class_onready_lambda": (
+        "extends Node\n\n\n"
+        "class Inner extends Node:\n"
+        "\t@onready var F = func(): return 2\n"
+        "\tfunc m() -> void:\n"
+        '\t\tprint("m")\n',
         [],
         [7],
     ),
