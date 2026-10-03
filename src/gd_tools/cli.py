@@ -1266,13 +1266,19 @@ def diff_cmd(base, show_lines, report_format, fail_on_regression):
     help="Exit 1 when line coverage falls below this percentage.",
 )
 @click.option(
+    "--min-branch",
+    "min_branch_percent",
+    type=int,
+    help="Exit 1 when branch coverage falls below this percentage.",
+)
+@click.option(
     "--report-format",
     type=click.Choice(
         ["text", "html", "lcov", "cobertura", "json", "github-actions"]
     ),
     help="Report format (default: the configured coverage format).",
 )
-def run(scene, timeout, min_percent, report_format):
+def run(scene, timeout, min_percent, min_branch_percent, report_format):
     """Collect coverage during a manual playtest session."""
     try:
         config = load_config()
@@ -1288,6 +1294,7 @@ def run(scene, timeout, min_percent, report_format):
             scene=scene,
             timeout=timeout,
             min_percent=min_percent,
+            min_branch_percent=min_branch_percent,
             report_format=fmt,
         )
         if fmt == "github-actions":

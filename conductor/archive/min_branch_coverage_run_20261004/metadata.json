@@ -1,0 +1,8 @@
+{
+  "track_id": "min_branch_coverage_run_20261004",
+  "type": "bug",
+  "status": "implemented",
+  "branch": "feature/min-branch-coverage-run-parity-20261004",
+  "created": "2026-10-04",
+  "description": "Wire --min-branch into `gd-tools coverage run` and make the zero-branch-point gate rule consistent (exempt with a note) across test/coverage run/coverage show."
+}

@@ -372,8 +372,8 @@ gd-tools test [PATHS]... [OPTIONS]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--coverage` | flag | `false` | Generate a coverage report during the test run. |
-| `--min` | integer | None | Minimum coverage percentage threshold. Fails if coverage is below this value. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
-| `--min-branch` | integer | None | Minimum branch coverage threshold. Fails (exit 1) if branch coverage is below this value. Requires `--coverage`; ternary arms are measured independently, so an uncovered arm fails this gate. |
+| `--min` | integer | None | Minimum coverage percentage threshold. Fails if coverage is below this value. Requires `--coverage`; pass both together. |
+| `--min-branch` | integer | None | Minimum branch coverage threshold. Fails (exit 1) if branch coverage is below this value. Requires `--coverage`; ternary arms are measured independently, so an uncovered arm fails this gate. Projects with zero branch points are exempt (pass with a note). |
 | `--suite` | string | None | Run only the specified test suite. |
 | `--test` | string | None | Run only the specified test. |
 | `--tag` | string, repeatable | Config `[test].tags` | Run native suites matching a class-level tag. |
@@ -382,7 +382,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--junit-xml` | string | None | Path to write a JUnit XML report. |
 | `--no-exit-code` | flag | `false` | Do not exit with non-zero on test failure. |
 | `--timeout` | integer | None | Godot import and per-suite process timeout in seconds. |
-| `--show-uncovered` | flag | `false` | Show uncovered lines and branches as Rich panels when coverage is below 100%. Requires `--coverage`; if passed without it, a warning is printed and the flag is ignored. |
+| `--show-uncovered` | flag | `false` | Show uncovered lines and branches as Rich panels when coverage is below 100%. Requires `--coverage`; pass both together. |
 | `--no-cache` | flag | `false` | Force plan regeneration, bypassing the coverage plan cache. Only effective with `--coverage`; has no effect without it. |
 | `--changed` | flag | `false` | Run only the suites mapped from git-changed files (working tree vs `HEAD`). A change that maps to no suite falls back to the full suite with a notice; an empty change set exits 0 without launching Godot. |
 | `--base` | string | None | With `--changed`: diff committed changes from `merge-base(<ref>, HEAD)` instead of the working tree (the form for pull-request CI). Requires `--changed`; incompatible with `--watch` (exit 2). |
@@ -1017,7 +1017,7 @@ gd-tools coverage show [OPTIONS]
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `--min` | integer | Config `[coverage].min_percent` | Minimum coverage threshold. Exits with code 1 if coverage is below this value. |
-| `--min-branch` | integer | None | Minimum branch coverage threshold. Exits with code 1 if branch coverage is below this value. |
+| `--min-branch` | integer | None | Minimum branch coverage threshold. Exits with code 1 if branch coverage is below this value. Projects with zero branch points are exempt (pass with a note). |
 
 **Examples:**
 
@@ -1274,6 +1274,7 @@ gd-tools coverage run [OPTIONS]
 | `--scene` | string | Project's `run/main_scene` from `project.godot` | Scene to launch for the playtest session. |
 | `--timeout` | int | None (wait for manual close) | Automatically close the game after N seconds. Useful for scripted/automated playtest sessions. |
 | `--min` | int | None | Exit 1 when line coverage falls below this percentage. |
+| `--min-branch` | int | None | Exit 1 when branch coverage falls below this percentage. Projects with zero branch points are exempt (pass with a note). |
 | `--report-format` | string | Config `[coverage].format` | Report format (`text`, `html`, `lcov`, `cobertura`, `json`, `github-actions`). |
 
 **Examples:**
@@ -1290,6 +1291,9 @@ gd-tools coverage run --timeout 60
 
 # Gate the session result like any other coverage run
 gd-tools coverage run --min 50
+
+# Also require 80% branch coverage
+gd-tools coverage run --min 80 --min-branch 80
 
 # Produce an HTML report of the session
 gd-tools coverage run --report-format html

@@ -785,3 +785,17 @@ def test_show_coverage_summary_min_branch_fails(mock_deps):
     with pytest.raises(CoverageThresholdError) as exc_info:
         show_coverage_summary(_make_config(), min_branch_percent=100)
     assert "Branch coverage" in str(exc_info.value)
+
+
+def test_show_coverage_summary_zero_branch_exempt(mock_deps):
+    """coverage show --min-branch passes with a note on zero-branch projects."""
+    mock_deps["compute_summary"].return_value = CoverageSummary(
+        line_rate=1.0,
+        branch_rate=0.0,
+        covered_lines=5,
+        total_lines=5,
+        covered_branches=0,
+        total_branches=0,
+    )
+    result = show_coverage_summary(_make_config(), min_branch_percent=100)
+    assert result.total_branches == 0

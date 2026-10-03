@@ -821,6 +821,7 @@ def generate_report(
         min_threshold: Minimum line coverage rate (0.0-1.0).  If
             ``None``, no line threshold check is performed.
         min_branch_threshold: Minimum branch coverage rate (0.0-1.0).
+            Exempt (passes) when the plan records zero branch points.
             If ``None``, no branch threshold check is performed.
         annotate_min_percent: Minimum coverage percentage used only
             for ``github-actions`` annotation rendering.  Falls back
@@ -836,7 +837,8 @@ def generate_report(
         CoveragePlanError: If ``format`` is not a supported format.
         CoverageThresholdError: If ``min_threshold`` is set and
             ``line_rate < min_threshold``, or ``min_branch_threshold``
-            is set and ``branch_rate < min_branch_threshold``.
+            is set and ``branch_rate < min_branch_threshold`` (exempted
+            when the plan has zero branch points).
     """
     if format not in _SUPPORTED_FORMATS:
         raise CoveragePlanError(
@@ -860,7 +862,7 @@ def generate_report(
     threshold_met = True
     if min_threshold is not None:
         threshold_met = summary.line_rate >= min_threshold
-    if min_branch_threshold is not None:
+    if min_branch_threshold is not None and summary.total_branches > 0:
         threshold_met = (
             threshold_met and summary.branch_rate >= min_branch_threshold
         )

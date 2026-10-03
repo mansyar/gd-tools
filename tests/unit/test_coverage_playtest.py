@@ -146,6 +146,49 @@ def test_playtest_passes_timeout_to_godot_process(playtest_env):
     assert playtest_env["captured"]["timeout"] == 30
 
 
+# --- --min-branch gate (Phase 2) ---
+
+
+def test_playtest_min_branch_exempts_branchless_project(playtest_env):
+    """A project with zero branch points passes --min-branch."""
+    config = GdToolsConfig()
+
+    result = run_playtest_coverage(config, min_branch_percent=100)
+
+    assert result.output_path is not None
+
+
+def test_playtest_min_branch_fails_on_uncovered_branch(playtest_env):
+    project = playtest_env["project"]
+    (project / "scripts" / "subject.gd").write_text(
+        "extends Node\n\n"
+        "func score(a: int) -> int:\n"
+        "\treturn a if a > 0 else 0\n",
+        encoding="utf-8",
+    )
+    config = GdToolsConfig()
+
+    with pytest.raises(GdToolsError) as exc:
+        run_playtest_coverage(config, min_branch_percent=100)
+
+    assert "Branch coverage" in str(exc.value)
+
+
+def test_playtest_min_branch_unset_does_not_raise(playtest_env):
+    project = playtest_env["project"]
+    (project / "scripts" / "subject.gd").write_text(
+        "extends Node\n\n"
+        "func score(a: int) -> int:\n"
+        "\treturn a if a > 0 else 0\n",
+        encoding="utf-8",
+    )
+    config = GdToolsConfig()
+
+    result = run_playtest_coverage(config)
+
+    assert result.output_path is not None
+
+
 # --- Phase 3: result collection & exit semantics ---
 
 

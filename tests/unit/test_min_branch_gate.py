@@ -24,6 +24,29 @@ from gd_tools.coverage.reporter import (
 pytestmark = pytest.mark.unit
 
 
+def _no_branch_plan_and_data():
+    """A one-file plan with statements only — zero branch points."""
+    plan = CoveragePlan(
+        version=4,
+        generated_by="gd-tools",
+        files=[
+            FilePlan(
+                file_id=0,
+                path="res://t.gd",
+                source_hash="sha256:x",
+                lines=[
+                    LinePlan(line=4, id=0, type="statement"),
+                    LinePlan(line=5, id=1, type="statement"),
+                ],
+            )
+        ],
+    )
+    data = CoverageData(
+        version=1, files=[FileCoverage(file_id=0, hits={"0": 1, "1": 1})]
+    )
+    return plan, data
+
+
 def _ternary_plan_and_data(covered_arms: str):
     """A one-file plan with a statement and both ternary arms on line 4."""
     plan = CoveragePlan(
@@ -143,3 +166,46 @@ def test_no_branch_threshold_keeps_line_only_gate(tmp_path):
     )
 
     assert result.threshold_met is True
+
+
+def test_min_branch_exempt_when_zero_branch_points(tmp_path):
+    """A positive --min-branch must not fail a project with no branches."""
+    plan, data = _no_branch_plan_and_data()
+
+    result = generate_report(
+        plan,
+        data,
+        tmp_path,
+        "text",
+        min_branch_threshold=1.0,
+    )
+
+    assert result.threshold_met is True
+    assert result.summary.total_branches == 0
+
+
+def test_threshold_footer_notes_zero_branch_exemption(capsys):
+    """The footer note explains the exemption instead of a pass/fail line."""
+    from gd_tools.coverage.orchestrator import print_threshold_footer
+
+    plan, data = _no_branch_plan_and_data()
+    summary = compute_summary(plan, data)
+
+    print_threshold_footer(summary, None, 80)
+
+    out = capsys.readouterr().out
+    assert "no branch points" in out.lower()
+
+
+def test_footer_still_prints_populated_branch_line(capsys):
+    """Populated branch projects get the branch-rate footer line."""
+    from gd_tools.coverage.orchestrator import print_threshold_footer
+
+    plan, data = _ternary_plan_and_data("true")
+    summary = compute_summary(plan, data)
+
+    print_threshold_footer(summary, None, 80)
+
+    out = capsys.readouterr().out
+    assert "branch coverage (threshold: 80%)" in out
+    assert "no branch points" not in out.lower()
