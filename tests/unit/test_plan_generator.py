@@ -263,19 +263,19 @@ def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
     assert plan.files  # a fresh plan was generated
 
 
-def test_plan_version_is_3_after_ternary_anchoring():
-    """PLAN_VERSION is 3 so pre-anchor cached plans are not reused.
+def test_plan_version_is_4_after_ternary_operand_spans():
+    """PLAN_VERSION is 4 so pre-span cached plans are not reused.
 
-    Version 2 plans hold ``LinePlan.line`` values recorded at a ternary's
-    first-operand line. Reusing one after the anchoring fix would inject
-    trackers on those stale lines and reproduce the parse failures, so the
-    version must have moved on.
+    Version 3 plans carry no ``operand_span`` on ternary branch points.
+    Reusing one after the operand-wrapping fix would inject anchor-line
+    trackers instead of operand-wrapping calls and silently restore the
+    shared-arm limitation, so the version must have moved on.
     """
-    assert PLAN_VERSION == 3
+    assert PLAN_VERSION == 4
 
 
-def test_cache_v2_plan_is_regenerated_with_outdated_reason(tmp_path):
-    """A v2 cache file -- carrying pre-fix ternary lines -- is a miss."""
+def test_cache_v3_plan_is_regenerated_with_outdated_reason(tmp_path):
+    """A v3 cache file -- carrying span-less ternary points -- is a miss."""
     cache_path = tmp_path / "plan.json"
     _write_cached_plan(
         tmp_path,
@@ -283,7 +283,7 @@ def test_cache_v2_plan_is_regenerated_with_outdated_reason(tmp_path):
         {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
     )
     data = json.loads(cache_path.read_text(encoding="utf-8"))
-    data["version"] = 2
+    data["version"] = 3
     cache_path.write_text(json.dumps(data), encoding="utf-8")
 
     plan, status = generate_plan_cached(
@@ -291,8 +291,8 @@ def test_cache_v2_plan_is_regenerated_with_outdated_reason(tmp_path):
     )
 
     assert status.hit is False
-    assert "2" in status.reason
     assert "3" in status.reason
+    assert "4" in status.reason
     assert plan.version == PLAN_VERSION
     assert plan.files  # a fresh plan was generated
 

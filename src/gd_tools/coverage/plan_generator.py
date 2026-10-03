@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePath
 
 from gdtoolkit.parser import parser as gd_parser
-from lark import Tree
+from lark import Token, Tree
 from lark.exceptions import LarkError
 from lark.visitors import Visitor
 from rich.console import Console
@@ -27,7 +27,7 @@ from rich.console import Console
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 3
+PLAN_VERSION = 4
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
@@ -38,6 +38,11 @@ enclosing statement. Version 2 plans record ``LinePlan.line`` at a
 ternary's first-operand line, so reusing one would re-inject trackers on
 the stale lines and reproduce the parse failures this bump exists to
 prevent.
+
+Bumped 3 -> 4 when ternary branch points gained ``operand_span`` (Ternary
+Branch Separation). Version 3 plans carry no operand positions, so
+reusing one would inject anchor-line trackers instead of operand-wrapping
+calls and silently restore the shared-arm limitation.
 """
 
 # --- Data structures (FR-1) ---
@@ -52,12 +57,18 @@ class LinePlan:
         id: Unique identifier within the file (sequential 0-indexed).
         type: Either "statement" or "branch".
         branch_type: Branch type string if type is "branch", else None.
+        operand_span: For ternary branch points only, the source span of
+            the arm's operand expression as a ``(start_line, start_col,
+            end_line, end_col)`` tuple -- 1-based lines and columns with an
+            exclusive end -- so the injector can wrap the operand textually.
+            ``None`` for every other point type.
     """
 
     line: int
     id: int
     type: str
     branch_type: str | None = None
+    operand_span: tuple[int, int, int, int] | None = None
 
 
 @dataclass
@@ -134,6 +145,9 @@ def write_plan_json(plan: CoveragePlan, output_path: str) -> None:
                         "id": lp.id,
                         "type": lp.type,
                         "branch_type": lp.branch_type,
+                        "operand_span": (
+                            list(lp.operand_span) if lp.operand_span else None
+                        ),
                     }
                     for lp in fp.lines
                 ],
@@ -201,6 +215,9 @@ def read_plan_json(path: str) -> CoveragePlan:
                 id=lp["id"],
                 type=lp["type"],
                 branch_type=lp.get("branch_type"),
+                operand_span=(
+                    tuple(span) if (span := lp.get("operand_span")) else None
+                ),
             )
             for lp in fdata.get("lines", [])
         ]
@@ -488,6 +505,25 @@ def _map_ternary_anchors(root: Tree) -> dict[int, int]:
     return anchors
 
 
+def _node_span(node: Tree | Token) -> tuple[int, int, int, int]:
+    """Return the source span of an AST node or token.
+
+    Works uniformly for lark trees (``meta`` attributes) and tokens
+    (direct attributes), which ternary operands may be either of. Lines
+    and columns are 1-based; the end position is exclusive.
+
+    Args:
+        node: A lark ``Tree`` or ``Token``.
+
+    Returns:
+        A ``(start_line, start_col, end_line, end_col)`` tuple.
+    """
+    if isinstance(node, Tree):
+        meta = node.meta
+        return (meta.line, meta.column, meta.end_line, meta.end_column)
+    return (node.line, node.column, node.end_line, node.end_column)
+
+
 class CoverageVisitor(Visitor):
     """Lark AST visitor that identifies trackable statements and branches.
 
@@ -520,6 +556,7 @@ class CoverageVisitor(Visitor):
         point_type: str,
         branch_type: str | None = None,
         line: int | None = None,
+        operand_span: tuple[int, int, int, int] | None = None,
     ) -> None:
         """Extract line number and append a new :class:`LinePlan`.
 
@@ -532,6 +569,8 @@ class CoverageVisitor(Visitor):
                 the node's own line. Used by ternary branches, which are
                 anchored to their enclosing statement. The exclusion
                 check applies to whichever line is recorded.
+            operand_span: Source span of the tracked expression, for
+                ternary branch points (see :class:`LinePlan`).
         """
         resolved_line = line if line is not None else tree.meta.line
         if resolved_line in self._excluded_lines:
@@ -542,6 +581,7 @@ class CoverageVisitor(Visitor):
                 id=self._next_id,
                 type=point_type,
                 branch_type=branch_type,
+                operand_span=operand_span,
             )
         )
         self._next_id += 1
@@ -631,8 +671,20 @@ class CoverageVisitor(Visitor):
         anchor = self._ternary_anchors.get(id(tree))
         if anchor is None:
             return
-        self._add_point(tree, "branch", "ternary_true", line=anchor)
-        self._add_point(tree, "branch", "ternary_false", line=anchor)
+        self._add_point(
+            tree,
+            "branch",
+            "ternary_true",
+            line=anchor,
+            operand_span=_node_span(tree.children[0]),
+        )
+        self._add_point(
+            tree,
+            "branch",
+            "ternary_false",
+            line=anchor,
+            operand_span=_node_span(tree.children[4]),
+        )
 
 
 # --- Plan Generation (FR-4, FR-6) ---

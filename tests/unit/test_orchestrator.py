@@ -718,7 +718,7 @@ def test_save_coverage_baseline_writes_baseline(tmp_path):
     output_dir = tmp_path / ".gd-tools" / "coverage"
     output_dir.mkdir(parents=True)
     plan = CoveragePlan(
-        version=3,
+        version=4,
         generated_by="gd-tools",
         files=[
             FilePlan(

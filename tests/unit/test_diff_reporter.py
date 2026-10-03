@@ -42,7 +42,7 @@ pytestmark = pytest.mark.unit
 def _make_plan() -> CoveragePlan:
     """Build a small two-line plan fixture."""
     return CoveragePlan(
-        version=3,
+        version=4,
         generated_by="gd-tools",
         files=[
             FilePlan(
@@ -111,7 +111,7 @@ def test_save_baseline_writes_self_contained_document(
     assert "data" in document
 
     # Nested payloads are the existing formats, verbatim in structure.
-    assert document["plan"]["version"] == 3
+    assert document["plan"]["version"] == 4
     assert document["plan"]["files"][0]["path"] == "res://player.gd"
     assert document["data"]["version"] == 1
     assert document["data"]["files"][0]["hits"] == {"0": 3, "1": 1}

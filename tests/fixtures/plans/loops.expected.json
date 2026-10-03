@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "generated_by": "gd-tools",
   "files": [
     {
@@ -12,67 +12,78 @@
           "line": 4,
           "id": 0,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 6,
           "id": 1,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 7,
           "id": 2,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 12,
           "id": 3,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 17,
           "id": 4,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 5,
           "id": 5,
           "type": "branch",
-          "branch_type": "loop_body"
+          "branch_type": "loop_body",
+          "operand_span": null
         },
         {
           "line": 8,
           "id": 6,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 11,
           "id": 7,
           "type": "branch",
-          "branch_type": "loop_body"
+          "branch_type": "loop_body",
+          "operand_span": null
         },
         {
           "line": 13,
           "id": 8,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         },
         {
           "line": 16,
           "id": 9,
           "type": "branch",
-          "branch_type": "loop_body"
+          "branch_type": "loop_body",
+          "operand_span": null
         },
         {
           "line": 18,
           "id": 10,
           "type": "statement",
-          "branch_type": null
+          "branch_type": null,
+          "operand_span": null
         }
       ]
     }
