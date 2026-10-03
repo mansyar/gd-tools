@@ -236,7 +236,7 @@ exclude = ["addons", ".godot", ".gd-tools", ".git", "third_party"]
 |---|---|---|---|---|
 | `enabled` | boolean | `false` | `true`, `false` | Whether coverage is active by default. |
 | `min_percent` | integer | `0` | 0--100 | Minimum coverage percentage threshold. |
-| `format` | string | `"html"` | `html`, `lcov`, `cobertura`, `text`, `json` | Report output format. |
+| `format` | string | `"html"` | `html`, `lcov`, `cobertura`, `text`, `json`, `github-actions` | Report output format. |
 | `output_dir` | string | `".gd-tools/coverage"` | Any path | Directory for coverage data and reports. |
 | `exclude` | list of strings | `["addons", ".godot", ".gd-tools", ".git"]` | Any list | Directories excluded from coverage measurement. |
 | `test_dirs` | list of strings | `["test", "tests"]` | Any list | Directories containing test files (for plan generation). |
@@ -799,7 +799,7 @@ gd-tools lint [PATHS]... [OPTIONS]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--report-format` | choice | `text` | Output format: `text` or `json`. |
+| `--report-format` | choice | `text` | Output format: `text`, `json`, or `github-actions`. |
 | `--fix` | flag | `false` | Attempt to fix lint issues. Note: `gdlint` is read-only, so this flag prints a warning and has no effect. |
 
 **Examples:**
@@ -931,7 +931,7 @@ gd-tools coverage report [OPTIONS]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--report-format` | choice | Config `[coverage].format` | Output format for the report: `text`, `html`, `lcov`, `cobertura`, or `json`. Invalid values fail fast with a usage error. |
+| `--report-format` | choice | Config `[coverage].format` | Output format for the report: `text`, `html`, `lcov`, `cobertura`, `json`, or `github-actions`. Invalid values fail fast with a usage error. |
 | `--output-dir` | string | Config `[coverage].output_dir` | Directory to write the report to. |
 
 > **Note:** `--format` remains as a hidden backwards-compatible alias
@@ -1272,7 +1272,7 @@ gd-tools coverage run [OPTIONS]
 | `--scene` | string | Project's `run/main_scene` from `project.godot` | Scene to launch for the playtest session. |
 | `--timeout` | int | None (wait for manual close) | Automatically close the game after N seconds. Useful for scripted/automated playtest sessions. |
 | `--min` | int | None | Exit 1 when line coverage falls below this percentage. |
-| `--report-format` | string | Config `[coverage].format` | Report format (`text`, `html`, `lcov`, `cobertura`, `json`). |
+| `--report-format` | string | Config `[coverage].format` | Report format (`text`, `html`, `lcov`, `cobertura`, `json`, `github-actions`). |
 
 **Examples:**
 
@@ -1815,6 +1815,66 @@ gd-tools format
 # Verify everything passes
 gd-tools format --check
 ```
+
+### 4.5 GitHub Actions Annotations
+
+The `github-actions` report format emits
+[workflow log commands](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions)
+so lint violations and coverage shortfalls show up as inline
+annotations on pull requests instead of plain log text. No extra
+action is needed --- GitHub picks annotation lines up from the step
+log automatically.
+
+**Lint annotations.** Every violation becomes an `::error`
+annotation pointing at the offending file and position:
+
+```bash
+gd-tools lint --report-format github-actions
+```
+
+```text
+::error file=src/player.gd,line=42,col=1,title=GD3000::unused variable 'x'
+```
+
+**Coverage annotations.** Configure a threshold with
+`[coverage].min_percent` and use the `github-actions` format. One
+`::warning` is emitted per file below the threshold:
+
+```toml
+[coverage]
+min_percent = 80
+format = "github-actions"
+```
+
+```text
+::warning file=src/enemy.gd::Coverage 66.7% below minimum 80%
+```
+
+When the overall coverage gate fails (via `gd-tools coverage run`),
+a summary `::error` is emitted before the per-file warnings:
+
+```text
+::error title=Coverage gate::Total coverage 78.0% is below minimum 80%
+```
+
+**Example workflow steps:**
+
+```yaml
+- name: Lint
+  run: gd-tools lint --report-format github-actions
+
+- name: Test with coverage annotations
+  run: gd-tools coverage run --report-format github-actions
+```
+
+> Notes:
+>
+> - `lint --report-format github-actions` still exits 1 when
+>   violations are found, and all coverage exit codes are unchanged.
+> - `gd-tools coverage report --report-format github-actions` emits
+>   per-file warnings only (informational, exit 0); the failing
+>   `::error` summary comes from `coverage run`, which enforces the
+>   gate.
 
 
 ## 5. Troubleshooting
