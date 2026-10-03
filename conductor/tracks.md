@@ -254,7 +254,7 @@ _Archived tracks live in `./archive/`._
   and CI docs — Roadmap Track 31)
   *Link: [gh_actions_annotations_20261002](./archive/gh_actions_annotations_20261002/index.md)*
 
-- [ ] **Track: Ternary Branch Separation** (bugfix: make ternary branch
+- [~] **Track: Ternary Branch Separation** (bugfix: make ternary branch
   coverage measurable by instrumenting each ternary arm at its operand
   expression with a value-preserving wrapper call
   (`_gdtools_coverage_hit_ret`) instead of the shared anchor-line insertion,
