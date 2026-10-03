@@ -43,7 +43,7 @@ func-level single-line lambdas stay exactly as they are today (FR-6).
   - Re-read the anchor code for duplication between the ternary path and
     the general statement path; collapse shared logic if it reads cleanly.
   - Run ruff and black; fix findings.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
 
 ## Phase 2: Plan Version Bump and Cache Invalidation
 
@@ -61,7 +61,7 @@ forcing one regeneration (`PLAN_VERSION` 3 → 4, spec FR-4).
   - Update golden fixtures in `tests/fixtures/plans/*.expected.json` via
     `tools/generate_expected_plans.py` and any hard-coded `3`s in tests
     (grep first; the ternary track missed several).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
 
 ## Phase 3: Real-Godot Class-Body Regression Cases
 
@@ -81,7 +81,7 @@ silent drop cannot pass vacuously.
   - Run the suite against the pre-Phase-1 generator
     (`git checkout` the file, run, restore) and confirm exactly the
     class-body cases fail.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
 
 ## Phase 4: Coverage Data Fidelity and Durable Writes
 
@@ -106,7 +106,7 @@ non-atomic writes move onto one shared helper (spec FR-7 through FR-11).
     and `mark_run_started` (`native_test/artifacts.py`) onto it.
   - `mark_run_started` keeps its documented early-marker semantics; only
     the write mechanism changes.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
 
 ## Phase 5: Hygiene Sweep - Dead Code, Stale Deploys, Doc Debt
 
@@ -133,7 +133,7 @@ removed; the known-stale docs are corrected (spec FR-12 through FR-17).
     no longer exists.
   - `docs/TESTING_STRATEGY.md` §5: replace the "GUT installation" wording.
   - `src/gd_tools/native_test/preflight.py`: protocol-v2 strings → v3.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
 
 ## Phase 6: Documentation and Final Validation
 
@@ -147,4 +147,4 @@ removed; the known-stale docs are corrected (spec FR-12 through FR-17).
   - `python -m pytest tests -q` green (unit + integration + e2e).
   - `ruff check src tests` and `black --check src tests` clean.
   - Coverage gates hold (>=80% line / >=70% branch).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [b9e3e31]
