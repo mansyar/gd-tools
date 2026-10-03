@@ -41,11 +41,11 @@ phase checkpoints per `conductor/workflow.md`.
 
 ## Phase 4 — Edge Cases & Behavioral Equivalence
 
-- [ ] Task: Write failing tests for semantic transparency (Red)
-  - [ ] Side-effect fixture: each operand evaluated exactly once, condition not re-evaluated; returned values identical to uninstrumented run
-- [ ] Task: Implement/resolve edge cases (Green)
-  - [ ] `await` inside a ternary operand: verify behavior; explicitly exclude with a documented reason if unsound
-  - [ ] `@export var` initializer: legality test; stay untracked if a runtime call is illegal
+- [x] Task: Write failing tests for semantic transparency (Red) [5ec7b48]
+  - [x] Side-effect fixture: each operand evaluated exactly once, condition not re-evaluated; returned values identical to uninstrumented run (ran as verification gate — wrapping landed in Phase 2, so Red could not be demonstrated; test adds permanent regression protection)
+- [x] Task: Implement/resolve edge cases (Green) [5ec7b48]
+  - [x] `await` inside a ternary operand: verified sound — wrapped form `hit_ret(id, await f())` compiles (Godot 4.7.2 parse check) and preserves resolution order; no exclusion needed
+  - [x] `@export var` initializer: parse check proves a hand-instrumented export ternary compiles; stays untracked as a conservative design choice (no anchor mapping), like const/default-parameter ternaries
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — Documentation & Final Verification
