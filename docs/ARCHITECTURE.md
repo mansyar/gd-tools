@@ -431,6 +431,11 @@ line as context. Three consequences follow:
   ternary branches combined under the anchor line, and `--min-branch`
   gates branch coverage independently of `--min`. Ternaries in class-level
   initialisers and default parameter values remain untracked (no anchor).
+* The branch gate (`--min-branch`, on `gd-tools test --coverage`,
+  `gd-tools coverage run`, and `gd-tools coverage show`) is exempt when
+  the project plan records **zero** branch points: there is nothing to
+  measure a rate against, so the gate prints a "no branch points" note
+  and passes instead of failing on the 0/0 case.
 
 Because the meaning of a recorded line changed, `PLAN_VERSION` was bumped
 2 → 3 so stale cached plans are regenerated rather than reused. It was

@@ -16,6 +16,12 @@
   emits informational per-file warnings and exits 0; `coverage run`
   prints its annotations before the threshold error (exit 1).
 
+- **coverage**: `--min-branch` is now accepted on `gd-tools coverage
+  run` (playtest sessions), matching `gd-tools test --coverage` and
+  `gd-tools coverage show`. The branch gate is exempt (passes with a
+  "no branch points" note) when the project plan records zero branch
+  points; otherwise an uncovered arm fails the gate with exit 1.
+
 - **config**: `[coverage].format` now accepts `"github-actions"` and
   the validation error message lists it among the valid values. The
   JSON Schema snapshot (`docs/gd-tools.schema.json`) was regenerated
