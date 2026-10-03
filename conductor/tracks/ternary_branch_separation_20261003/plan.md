@@ -17,7 +17,7 @@ phase checkpoints per `conductor/workflow.md`.
   - [x] Bump `PLAN_VERSION` to 4
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — Per-Arm Instrumentation (coverage.gd)
+## Phase 2 — Per-Arm Instrumentation (coverage.gd) [checkpoint: 8cd0d30]
 
 - [x] Task: Write failing tests for operand wrapping injection (Red) [ce41436]
   - [x] Tests asserting ternary arms inject `_gdtools_coverage_hit_ret(<id>, <operand>)` wrapping the operand text (not a line-inserted `hit()` before the anchor)
