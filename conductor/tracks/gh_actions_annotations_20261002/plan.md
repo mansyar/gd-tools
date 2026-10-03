@@ -17,7 +17,8 @@
   `feat(lint): add github-actions annotation format` + git note; update
   plan.md. *(feat commit `08c60a5`, wiring tests `cfb579f`; full suite
   1582 passed / 95.48% coverage)*
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
+  *(checkpoint `1b8b142`)*
 
 ## Phase 2: Coverage Annotations [checkpoint: 439bd3a]
 
@@ -45,7 +46,7 @@
 - [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
   *(checkpoint `439bd3a`)*
 
-## Phase 3: Docs + Final Verification
+## Phase 3: Docs + Final Verification [checkpoint: 27d5069]
 
 - [x] **Task 3.1 — USER_GUIDE:** add GitHub Actions workflow snippet
   (lint + coverage steps using the new format) and update the format
@@ -62,4 +63,5 @@
 - [x] **Task 3.4 — Commit docs:**
   `docs(user-guide): document github-actions report format` + git note;
   update plan.md. *(commit `d192400`)*
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
+  *(checkpoint `27d5069`)*
