@@ -1365,6 +1365,17 @@ assignment) are NOT tracked — they're declarations, not executable statements.
 - The Godot parse suite grew eight class-body cases with per-case expected
   statement lines; the teeth check against the pre-fix generator fails
   exactly the six squashed cases.
+- Review follow-up (`conductor-review`, 2026-10-03): the declaration-line
+  rule missed statements that squash onto **continuation lines** of a
+  multi-line initializer expression - a lambda body inside a dict or a
+  parenthesized expression records on a line inside an open bracket, which
+  the AST span alone cannot distinguish from a legal block-lambda body
+  line. The guard now also drops points on lines that start inside an open
+  bracket or directly after a backslash, detected by a small
+  string/comment-aware depth lexer over the source (`PLAN_VERSION` 4 → 5).
+  The parse suite grew seven continuation cases with per-case expected
+  statement lines; the teeth check against the pre-fix generator fails
+  exactly the five dropped cases.
 
 **Autoload inclusion (Track 24.5, 2026-07-15):**
 

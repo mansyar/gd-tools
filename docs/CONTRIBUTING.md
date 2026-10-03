@@ -349,7 +349,7 @@ gd-tools/
 |   |-- init.py                # Project initialization (addons, config)
 |   |-- lint_runner.py         # gdlint wrapper
 |   |-- output.py              # Shared terminal output module (Rich-based)
-|   |-- test_results.py         # Test result models shared by runtimes
+|   |-- test_results.py        # Test result models shared by runtimes
 |   |-- verbosity.py           # Global verbosity context (Verbosity enum + accessors)
 |   |-- coverage/              # Coverage subsystem
 |   |   |-- orchestrator.py    # Coverage flow orchestration

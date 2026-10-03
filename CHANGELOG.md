@@ -32,25 +32,28 @@
   together and ternary branch coverage cannot fail.
 
 - **coverage**: Fix unparseable GDScript when a lambda body is assigned to a
-  class-level `var`, `static var`, or `@export`, or when a lambda appears in
-  a default parameter value. The body statement was recorded on the class
-  member's declaration line or the function's signature line - positions
-  where no statement may begin - so the injected tracker broke the parse and
-  the whole file silently vanished from coverage. Such points are now
-  dropped in the plan generator (a statement can only be recorded where one
-  may begin); multi-line lambda bodies, whose statements land on their own
-  legal lines, are still tracked. `PLAN_VERSION` is bumped 3 → 4 so cached
-  plans holding the dropped points are regenerated.
+  class-level `var`, `static var`, or `@export`, when a lambda appears in a
+  default parameter value, or when the body statement lands on a
+  continuation line of a multi-line initializer expression (for example a
+  signal-handler dict of lambdas). In each case the recorded point sits on
+  a line where no statement may begin - a class-member declaration line, a
+  function signature span, or a line inside an open bracket - so the
+  injected tracker broke the parse and the whole file silently vanished
+  from coverage. Such points are now dropped in the plan generator;
+  lambda bodies on their own lines remain tracked. `PLAN_VERSION` is
+  bumped to 5 (v4 dropped class-member and signature lines, v5 also drops
+  bracket-continuation and backslash-continuation lines) so cached plans
+  holding the dropped points are regenerated.
 
 - **coverage**: Fix `coverage merge` silently losing omission reasons. The
   merge path writes through `write_coverage_json`, which did not serialize
   the `omitted` key, so a merged `coverage.json` degraded real omission
   reasons to a generic unknown reason. The key is now carried (additive;
   readers already tolerate its absence). The same writer, the native
-  runtime's JUnit XML writer, and the run marker now write through a shared
-  crash-safe helper (temp file beside the destination, flush, fsync,
-  atomic rename), so an interrupted run can no longer leave a truncated
-  artifact behind.
+  runtime's JUnit XML writer, the run marker, the coverage plan cache, and
+  `coverage diff` baselines now write through a shared crash-safe helper
+  (temp file beside the destination, flush, fsync, atomic rename), so an
+  interrupted run can no longer leave a truncated artifact behind.
 
 - **coverage**: Fix `coverage run --report-format json` always failing
   after the playtest session completed. The `json` format was advertised
@@ -76,8 +79,9 @@
 - **init**: `gd-tools init` now cleans up files it no longer deploys. The
   legacy GUT hook scripts `pre_run_hook.gd` and `post_run_hook.gd` (which
   extended the removed `GutHookScript` base class and could never load)
-  no longer ship; on upgraded projects `init` moves stale copies into
-  `.gd-tools/.backups/`, deletes them, and prints a notice.
+  no longer ship; on upgraded projects `init` backs each stale copy up to
+  `addons/gd-tools-coverage/.backups/<name>.gd.bak`, deletes it, and
+  prints a notice.
 
 - **internals**: `gd_tools.test_runner` is renamed to
   `gd_tools.test_results`. The module has not run anything since the GUT

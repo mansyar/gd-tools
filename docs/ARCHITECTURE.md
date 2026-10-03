@@ -412,8 +412,15 @@ line as context. Three consequences follow:
   `_collect_illegal_lines` pre-pass collects class-member declaration lines
   and function-signature spans, and any point recorded on such a line is
   dropped before it can reach the collector (`PLAN_VERSION` bumped to 4).
-  A lambda body on its **own** line (a multi-line class-level lambda) is
-  still tracked normally, since that line is a legal statement position.
+  The guard was later widened (v5) to also drop points recorded on
+  *continuation* lines - lines that start inside an open bracket or right
+  after a backslash - because a lambda body can squash onto such a line
+  (for example a statement in a signal-handler dict of lambdas); the AST
+  span alone cannot distinguish that from a legal block-lambda body line,
+  so the decision needs a small string/comment-aware depth lexer over the
+  source. A lambda body on its **own** line (a multi-line class-level
+  lambda, or a top-level block lambda) is still tracked normally, since
+  that line is a legal statement position.
 * `ternary_true` and `ternary_false` are recorded on the same line, so the
   two arms are always covered together and ternary branch coverage cannot
   currently fail. Tracking the arms independently requires the plan to

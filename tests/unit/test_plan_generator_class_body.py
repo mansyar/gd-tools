@@ -228,8 +228,8 @@ CONTINUATION_CASES = {
         "extends Node\n"
         "\n"
         "func m() -> void:\n"
-        "\tvar F = foo(\n"
-        "\t\tfunc(): print(1)\n"
+        "\tvar F = [1].map(\n"
+        "\t\tfunc(): return 2\n"
         "\t)\n"
         "\tprint(F)\n"
     ),
@@ -237,8 +237,9 @@ CONTINUATION_CASES = {
         "extends Node\n"
         "\n"
         "func m() -> void:\n"
-        "\tvar x = 1 + \\\n"
-        "\t\tfunc(): print(1)\n"
+        "\tvar x = [1].map( \\\n"
+        "\t\tfunc(): return 2\n"
+        "\t)\n"
         "\tprint(x)\n"
     ),
     "block_in_dict": (
@@ -266,7 +267,7 @@ CONTINUATION_EXPECTED = {
     "inline_dict": [(0, 8)],
     "paren_lambda": [(0, 8)],
     "func_ml_expr": [(0, 4), (1, 7)],
-    "backslash": [(0, 4), (1, 6)],
+    "backslash": [(0, 4), (1, 7)],
     "block_in_dict": [(0, 9)],
     "nested_lambda_inline": [(0, 6)],
 }
@@ -296,7 +297,7 @@ def test_onready_lambda_body_is_dropped(tmp_path):
     source = (
         "class_name C\n"
         "\n"
-        "class Inner:\n"
+        "class Inner extends Node:\n"
         "\t@onready var F = func(): return 2\n"
         "\tfunc m() -> void:\n"
         "\t\tprint(1)\n"

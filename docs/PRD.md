@@ -954,7 +954,7 @@ gd-tools/
 │       ├── godot.py              # Godot binary detection + invocation
 │       ├── init.py               # `gd-tools init` logic
 │       ├── doctor.py             # `gd-tools doctor` logic
-│       ├── test_results.py        # Test result models shared by runtimes
+│       ├── test_results.py      # Test result models shared by runtimes
 │       ├── lint_runner.py       # `gd-tools lint` — gdlint wrapper
 │       ├── output.py           # Shared terminal output module (Rich-based)
 │       ├── verbosity.py        # Global verbosity context (Verbosity enum + accessors)
