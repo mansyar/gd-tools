@@ -43,6 +43,7 @@ def run_playtest_coverage(
     scene: str | None = None,
     timeout: int | None = None,
     min_percent: int | None = None,
+    min_branch_percent: int | None = None,
     report_format: str | None = None,
 ) -> ReportResult:
     """Run a playtest coverage session and generate reports.
@@ -60,6 +61,8 @@ def run_playtest_coverage(
         min_percent: Minimum coverage percentage (0-100). If set and
             session coverage is below this, raises
             :class:`~gd_tools.errors.CoverageThresholdError`.
+        min_branch_percent: Minimum branch coverage percentage (0-100),
+            or ``None``. Zero-branch projects pass with a note.
         report_format: Report format override (e.g., ``"html"``,
             ``"lcov"``, ``"cobertura"``, ``"text"``). If ``None``,
             uses ``config.coverage.format``.
@@ -144,6 +147,7 @@ def run_playtest_coverage(
         coverage_path,
         effective_format,
         min_percent=min_percent,
+        min_branch_percent=min_branch_percent,
         result=result,
     )
 
@@ -178,6 +182,7 @@ def _collect_and_report(
     effective_format: str,
     *,
     min_percent: int | None,
+    min_branch_percent: int | None = None,
     result: subprocess.CompletedProcess | None,
 ) -> ReportResult:
     """Collect the coverage output and generate the report.
@@ -188,6 +193,7 @@ def _collect_and_report(
         coverage_path: Path the tracker wrote the coverage data to.
         effective_format: Resolved report format (flag > config).
         min_percent: Minimum coverage threshold, or ``None``.
+        min_branch_percent: Minimum branch coverage percentage, or ``None``.
         result: The completed game process, or ``None`` when the
             session ended via the ``--timeout`` auto-close.
 
@@ -228,10 +234,15 @@ def _collect_and_report(
 
     summary = reporter.compute_summary(plan, data)
     print_coverage_table(summary, min_percent)
-    print_threshold_footer(summary, min_percent)
+    print_threshold_footer(summary, min_percent, min_branch_percent)
 
     gate_failed = (
         min_percent is not None and summary.line_rate * 100 < min_percent
+    )
+    branch_gate_failed = (
+        min_branch_percent is not None
+        and summary.total_branches > 0
+        and summary.branch_rate * 100 < min_branch_percent
     )
     report = reporter.generate_report(
         plan,
@@ -239,7 +250,7 @@ def _collect_and_report(
         output_dir,
         effective_format,
         annotate_min_percent=min_percent,
-        gate_failed=gate_failed,
+        gate_failed=gate_failed or branch_gate_failed,
     )
     if gate_failed:
         raise CoverageThresholdError(
@@ -249,6 +260,17 @@ def _collect_and_report(
             f"{summary.total_lines} lines were executed during the "
             "playtest session.\n"
             f"  Fix: Play more of the game or lower the --min threshold.",
+            report_result=report,
+        )
+    if branch_gate_failed:
+        raise CoverageThresholdError(
+            f"[Error] Branch coverage {summary.branch_rate * 100:.1f}% is "
+            f"below minimum threshold {min_branch_percent}%\n"
+            f"  Cause: {summary.covered_branches} of "
+            f"{summary.total_branches} branch points were executed during "
+            "the playtest session.\n"
+            f"  Fix: Cover more branches in the game or lower the "
+            "--min-branch threshold.",
             report_result=report,
         )
     return report

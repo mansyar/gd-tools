@@ -1712,6 +1712,7 @@ def test_coverage_run_help_shows_flags():
     assert "--timeout" in result.output
     assert "--min" in result.output
     assert "--report-format" in result.output
+    assert "--min-branch" in result.output
 
 
 def test_coverage_run_calls_orchestrator():
@@ -1748,7 +1749,27 @@ def test_coverage_run_calls_orchestrator():
         scene="res://scenes/level1.tscn",
         timeout=60,
         min_percent=50,
+        min_branch_percent=None,
         report_format="json",
+    )
+
+    # --min-branch is threaded through unchanged.
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_playtest_coverage",
+            return_value=mock_result,
+        ) as mock_run,
+    ):
+        result = runner.invoke(cli, ["coverage", "run", "--min-branch", "70"])
+    assert result.exit_code == 0
+    mock_run.assert_called_once_with(
+        mock_config,
+        scene=None,
+        timeout=None,
+        min_percent=None,
+        min_branch_percent=70,
+        report_format=mock_config.coverage.format,
     )
 
 
