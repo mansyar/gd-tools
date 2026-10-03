@@ -414,9 +414,7 @@ def find_excluded_lines(source: str) -> tuple[list[int], list[str]]:
 
 # --- Coverage Visitor (FR-2, FR-3) ---
 
-#: AST node names tracked as statements. A ternary is anchored to the nearest
-#: enclosing node from this set, because only a statement's line is a valid
-#: insertion point for a tracker call.
+#: AST node names tracked as statements.
 STATEMENT_NODES = frozenset(
     {
         "expr_stmt",
@@ -429,14 +427,34 @@ STATEMENT_NODES = frozenset(
     }
 )
 
+#: AST node names for control-flow statements. These are not tracked as
+#: statements themselves, but each begins with a keyword, so its line is a legal
+#: tracker insertion point and may anchor a ternary found in its header.
+STATEMENT_HEADER_NODES = frozenset(
+    {
+        "if_stmt",
+        "while_stmt",
+        "for_stmt",
+        "for_stmt_typed",
+        "match_stmt",
+    }
+)
+
+#: Every node whose line may serve as a tracker insertion point: a ternary is
+#: anchored to the nearest enclosing node in this set. Class-body initializers
+#: (``var x = ...`` inside a ``class``) are deliberately absent -- no statement
+#: node encloses them and their line is not a legal insertion point.
+ANCHOR_NODES = STATEMENT_NODES | STATEMENT_HEADER_NODES
+
 
 def _map_ternary_anchors(root: Tree) -> dict[int, int]:
-    """Map ``id()`` of each ``test_expr`` node to its statement's line.
+    """Map ``id()`` of each ``test_expr`` node to its anchor line.
 
     A ternary branch point is only instrumentable when recorded at a line
     where a statement may begin, so it is anchored to the nearest enclosing
-    tracked statement. ``None`` is recorded for a ternary with no such
-    statement, which marks it as not instrumentable.
+    node in :data:`ANCHOR_NODES`. A ternary with no such node -- one inside a
+    class-level initializer or a default parameter value -- has no legal
+    insertion point and is not tracked.
 
     A recursive walk is required rather than the flat bottom-up visitor:
     :meth:`lark.visitors.Visitor.visit` exposes no ancestry, so a ternary
@@ -458,7 +476,7 @@ def _map_ternary_anchors(root: Tree) -> dict[int, int]:
     anchors: dict[int, int] = {}
 
     def walk(node: Tree, enclosing: int | None) -> None:
-        if node.data in STATEMENT_NODES:
+        if node.data in ANCHOR_NODES:
             enclosing = node.meta.line
         if node.data == "test_expr" and enclosing is not None:
             anchors[id(node)] = enclosing
@@ -595,19 +613,20 @@ class CoverageVisitor(Visitor):
         expressions (``value_if_true if cond else value_if_false``). Both
         value-branches are tracked as separate branch points.
 
-        Both points are anchored to the nearest enclosing tracked
-        statement rather than the ternary's own line. A tracker call is
-        injected *before* the planned line, so a ternary may only be
-        planned on a line where a statement can begin. ``test_expr`` is
-        the one tracked node whose first token is an arbitrary operand
-        rather than a keyword, so its own line is only a statement
-        boundary by coincidence. A ternary nested in a multi-line
-        parenthesized expression would otherwise be planned on a
-        continuation line and injected inside the open bracket.
+        Both points are anchored to the nearest enclosing node whose line is a
+        legal tracker insertion point (see :data:`ANCHOR_NODES`), rather than
+        the ternary's own line. A tracker call is injected *before* the planned
+        line, so a ternary may only be planned on a line where a statement can
+        begin. ``test_expr`` is the one tracked node whose first token is an
+        arbitrary operand rather than a keyword, so its own line is only a
+        statement boundary by coincidence. A ternary nested in a multi-line
+        parenthesized expression would otherwise be planned on a continuation
+        line and injected inside the open bracket.
 
-        A ternary with no enclosing statement -- a class-level ``const``
-        or ``@export`` initializer, or a default parameter value -- has
-        no legal insertion point at all and is not tracked.
+        A ternary with no enclosing anchor node -- one inside a class-level
+        ``const``/``var`` initializer, a ``@export`` initializer, or a default
+        parameter value -- has no legal insertion point at all and is not
+        tracked.
         """
         anchor = self._ternary_anchors.get(id(tree))
         if anchor is None:

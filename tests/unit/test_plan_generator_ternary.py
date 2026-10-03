@@ -396,3 +396,113 @@ def test_no_id_collisions_across_ternary_anchor_states(tmp_path, name, source):
     lines = _lines_for(tmp_path, source, name=f"{name}.gd")
     ids = [p.id for p in lines]
     assert len(ids) == len(set(ids))
+
+
+# --- Control-flow headers (review finding: silent drop) ---------------------
+#
+# A ternary in a control-flow header has no enclosing *statement* node, but the
+# header's own line is a legal insertion point because it starts with a
+# keyword. These positions were silently dropped until the anchor set was
+# widened to include statement headers.
+
+
+@pytest.mark.parametrize(
+    "name, source",
+    [
+        (
+            "if_header",
+            "extends Node\n\nfunc f(a: int) -> void:\n"
+            "\tif (1 if a > 0 else 2) > 0:\n"
+            "\t\tprint(a)\n",
+        ),
+        (
+            "for_header",
+            "extends Node\n\nfunc f(a: int) -> void:\n"
+            "\tfor i in range(1 if a > 0 else 2):\n"
+            "\t\tprint(i)\n",
+        ),
+        (
+            "while_header",
+            "extends Node\n\nfunc f(a: int) -> void:\n"
+            "\twhile (a if a > 0 else 0) > 1:\n"
+            "\t\tprint(a)\n",
+        ),
+        (
+            "match_header",
+            "extends Node\n\nfunc f(a: int) -> void:\n"
+            "\tmatch (1 if a > 0 else 2):\n"
+            "\t\t1:\n"
+            "\t\t\tprint(a)\n",
+        ),
+    ],
+)
+def test_ternary_in_control_flow_header_is_tracked(tmp_path, name, source):
+    """A ternary in a single-line header is anchored to that header line."""
+    lines = _lines_for(tmp_path, source, name=f"{name}.gd")
+    assert _ternaries(lines) == [(0, 4), (1, 4)]
+
+
+def test_ternary_in_multiline_if_header_anchors_to_header(tmp_path):
+    """A header spanning lines anchors to the ``if`` line, not a continuation.
+
+    Pre-fix this recorded the ternary on the ``1 if a > 0 else 2`` line, which
+    is inside the open bracket and produced
+    ``Expected closing ")" after grouping expression``.
+    """
+    lines = _lines_for(
+        tmp_path,
+        "extends Node\n\nfunc f(a: int) -> void:\n"
+        "\tif (\n"
+        "\t\t1 if a > 0 else 2\n"
+        "\t) > 0:\n"
+        "\t\tprint(a)\n",
+    )
+    assert _ternaries(lines) == [(0, 4), (1, 4)]
+
+
+def test_ternary_in_multiline_for_header_anchors_to_header(tmp_path):
+    """A multi-line ``for`` header anchors to the ``for`` line."""
+    lines = _lines_for(
+        tmp_path,
+        "extends Node\n\nfunc f(a: int) -> void:\n"
+        "\tfor i in range(\n"
+        "\t\t1 if a > 0 else 2\n"
+        "\t):\n"
+        "\t\tprint(i)\n",
+    )
+    assert _ternaries(lines) == [(0, 4), (1, 4)]
+
+
+def test_header_ternary_does_not_disturb_the_branch_point(tmp_path):
+    """Widening the anchor set leaves loop and match branch points untouched."""
+    lines = _lines_for(
+        tmp_path,
+        "extends Node\n\nfunc f(a: int) -> void:\n"
+        "\tfor i in range(1 if a > 0 else 2):\n"
+        "\t\tprint(i)\n",
+    )
+    # Compared as a set: bottom-up visit order puts test_expr before for_stmt.
+    assert sorted(
+        (p.line, p.branch_type) for p in lines if p.type == "branch"
+    ) == [
+        (4, "loop_body"),
+        (4, "ternary_false"),
+        (4, "ternary_true"),
+    ]
+
+
+def test_class_initializer_still_records_no_ternary(tmp_path):
+    """Widening the anchor set must not resurrect class-body drops.
+
+    A class-level ``var``/``const``/``static var`` initializer has no enclosing
+    statement *and* its line is not a legal insertion point, so it stays
+    untracked.
+    """
+    lines = _lines_for(
+        tmp_path,
+        "extends Node\n\nclass Inner:\n"
+        "\tvar x = 1 if true else 2\n"
+        "\tconst Y = 1 if true else 2\n"
+        "\tstatic var z = 1 if true else 2\n",
+    )
+    assert _ternaries(lines) == []
