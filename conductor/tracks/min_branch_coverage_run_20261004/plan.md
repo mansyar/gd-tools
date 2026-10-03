@@ -34,3 +34,6 @@
   - [x] Full `CI=true pytest` passes (unit + integration + e2e) — 1720 passed / 7 skipped, 95.66%
 
 - [x] Final commit artifacts: docs commit 5865031, checkpoint 964e787
+
+## Phase: Review Fixes
+- [~] Task: Apply review suggestions

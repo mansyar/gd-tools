@@ -23,7 +23,6 @@ from gd_tools.coverage.orchestrator import (
 from gd_tools.coverage.reporter import ReportResult
 from gd_tools.errors import (
     CoveragePlaytestError,
-    CoverageThresholdError,
 )
 from gd_tools.godot import find_godot, run_godot
 
@@ -238,8 +237,7 @@ def _collect_and_report(
 
     gate_failed = (
         min_percent is not None and summary.line_rate * 100 < min_percent
-    )
-    branch_gate_failed = (
+    ) or (
         min_branch_percent is not None
         and summary.total_branches > 0
         and summary.branch_rate * 100 < min_branch_percent
@@ -250,27 +248,10 @@ def _collect_and_report(
         output_dir,
         effective_format,
         annotate_min_percent=min_percent,
-        gate_failed=gate_failed or branch_gate_failed,
+        gate_failed=gate_failed,
+        min_threshold=min_percent / 100 if min_percent is not None else None,
+        min_branch_threshold=(
+            min_branch_percent / 100 if min_branch_percent is not None else None
+        ),
     )
-    if gate_failed:
-        raise CoverageThresholdError(
-            f"[Error] Line coverage {summary.line_rate * 100:.1f}% is "
-            f"below minimum threshold {min_percent}%\n"
-            f"  Cause: Only {summary.covered_lines} of "
-            f"{summary.total_lines} lines were executed during the "
-            "playtest session.\n"
-            f"  Fix: Play more of the game or lower the --min threshold.",
-            report_result=report,
-        )
-    if branch_gate_failed:
-        raise CoverageThresholdError(
-            f"[Error] Branch coverage {summary.branch_rate * 100:.1f}% is "
-            f"below minimum threshold {min_branch_percent}%\n"
-            f"  Cause: {summary.covered_branches} of "
-            f"{summary.total_branches} branch points were executed during "
-            "the playtest session.\n"
-            f"  Fix: Cover more branches in the game or lower the "
-            "--min-branch threshold.",
-            report_result=report,
-        )
     return report
