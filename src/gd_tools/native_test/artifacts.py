@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from gd_tools.atomic_io import atomic_write_text
 from gd_tools.native_test.protocol import NATIVE_PROTOCOL_VERSION
 
 _SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -118,7 +119,7 @@ def mark_run_started(layout: NativeArtifactLayout) -> Path:
     """
     layout.run_dir.mkdir(parents=True, exist_ok=True)
     marker = layout.run_dir / RUN_MARKER_NAME
-    marker.write_text("", encoding="utf-8")
+    atomic_write_text(marker, "")
     return marker
 
 

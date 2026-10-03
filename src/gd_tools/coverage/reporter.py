@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from gd_tools.atomic_io import atomic_write_text
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.errors import CoveragePlanError, CoverageThresholdError
 
@@ -398,23 +399,32 @@ def write_coverage_json(data: CoverageData, path: Path) -> None:
 
     Serializes a :class:`CoverageData` object to the same JSON format
     produced by the runtime tracker, ensuring round-trip compatibility
-    with :func:`read_coverage_json`.
+    with :func:`read_coverage_json`. The additive ``omitted`` key is
+    carried when present so that merged output keeps the reason a
+    target could not be instrumented.
 
     Args:
         data: The coverage data to serialize.
         path: Path to the output JSON file.
     """
-    cov_path = Path(path)
-    cov_path.parent.mkdir(parents=True, exist_ok=True)
-
-    data_dict = {
+    data_dict: dict[str, Any] = {
         "version": data.version,
         "generated_at": data.generated_at,
         "files": [
             {"file_id": fc.file_id, "hits": fc.hits} for fc in data.files
         ],
     }
-    cov_path.write_text(json.dumps(data_dict, indent=2), encoding="utf-8")
+    if data.omitted:
+        data_dict["omitted"] = [
+            {
+                "file_id": target.file_id,
+                "path": target.path,
+                "reason": target.reason,
+                "fix": target.fix,
+            }
+            for target in data.omitted
+        ]
+    atomic_write_text(path, json.dumps(data_dict, indent=2))
 
 
 # --- Coverage computation (FR-2) ---

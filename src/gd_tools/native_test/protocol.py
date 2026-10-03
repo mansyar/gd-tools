@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from enum import Enum
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -17,6 +15,8 @@ from pydantic import (
     StringConstraints,
     model_validator,
 )
+
+from gd_tools.atomic_io import atomic_write_text
 
 NATIVE_PROTOCOL_VERSION = 3
 
@@ -240,32 +240,8 @@ def write_json_atomic(path: Path, value: BaseModel) -> Path:
     Raises:
         OSError: If the temporary file or final replacement cannot be written.
     """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path: Path | None = None
-
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as temporary_file:
-            temporary_path = Path(temporary_file.name)
-            json.dump(
-                value.model_dump(mode="json"),
-                temporary_file,
-                indent=2,
-                sort_keys=True,
-            )
-            temporary_file.write("\n")
-            temporary_file.flush()
-            os.fsync(temporary_file.fileno())
-
-        os.replace(temporary_path, path)
-        return path
-    except Exception:
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
-        raise
+    payload = (
+        json.dumps(value.model_dump(mode="json"), indent=2, sort_keys=True)
+        + "\n"
+    )
+    return atomic_write_text(path, payload)
