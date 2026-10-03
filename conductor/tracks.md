@@ -236,7 +236,7 @@ _Archived tracks live in `./archive/`._
   *Link: [coverage_format_unification_20261002](./archive/coverage_format_unification_20261002/index.md)*
 
 
-- [~] **Track: GitHub Actions Annotations** (feature: add a
+- [x] **Track: GitHub Actions Annotations** (feature: add a
   `github-actions` report format to lint, coverage report, and coverage
   run, emitting official GitHub Actions workflow log commands
   (`::error`/`::warning`) so lint violations and coverage threshold
