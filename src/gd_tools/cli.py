@@ -621,6 +621,11 @@ def _validate_parallel(
 )
 @click.option("--coverage", is_flag=True, help="Generate coverage report.")
 @click.option("--min", type=int, help="Minimum coverage threshold.")
+@click.option(
+    "--min-branch",
+    type=int,
+    help="Minimum branch coverage threshold.",
+)
 @click.option("--suite", help="Specify which test suite to run.")
 @click.option("--test", help="Specify which test to run.")
 @click.option(
@@ -679,6 +684,7 @@ def test(
     parallel,
     coverage,
     min,
+    min_branch,
     suite,
     test,
     tags,
@@ -787,6 +793,7 @@ def test(
                 config,
                 coverage=coverage,
                 min_percent=min,
+                min_branch_percent=min_branch,
                 suite=suite,
                 test_name=test,
                 junit_xml=junit_xml,
@@ -1149,7 +1156,12 @@ def merge(files, output):
 
 @coverage.command()
 @click.option("--min", type=int, help="Minimum coverage threshold.")
-def show(min):
+@click.option(
+    "--min-branch",
+    type=int,
+    help="Minimum branch coverage threshold.",
+)
+def show(min, min_branch):
     """Show coverage summary."""
     try:
         config = load_config()
@@ -1159,7 +1171,9 @@ def show(min):
         ctx.exit(2)
 
     try:
-        show_coverage_summary(config, min_percent=min)
+        show_coverage_summary(
+            config, min_percent=min, min_branch_percent=min_branch
+        )
     except CoverageThresholdError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()

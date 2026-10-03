@@ -53,6 +53,7 @@ def run_native_test_command(
     config: GdToolsConfig,
     coverage: bool = False,
     min_percent: int | None = None,
+    min_branch_percent: int | None = None,
     suite: str | None = None,
     test_name: str | None = None,
     junit_xml: str | None = None,
@@ -83,6 +84,7 @@ def run_native_test_command(
             config,
             coverage=coverage,
             min_percent=min_percent,
+            min_branch_percent=min_branch_percent,
             suite=suite,
             test_name=test_name,
             junit_xml=junit_xml,
@@ -111,6 +113,7 @@ def _run_native_test_command(
     config: GdToolsConfig,
     coverage: bool = False,
     min_percent: int | None = None,
+    min_branch_percent: int | None = None,
     suite: str | None = None,
     test_name: str | None = None,
     junit_xml: str | None = None,
@@ -305,6 +308,7 @@ def _run_native_test_command(
             native_result,
             coverage=coverage,
             min_percent=min_percent,
+            min_branch_percent=min_branch_percent,
             show_uncovered=show_uncovered,
             no_cache=no_cache,
         )
@@ -524,6 +528,7 @@ def _generate_native_report(
     *,
     coverage: bool,
     min_percent: int | None,
+    min_branch_percent: int | None = None,
     show_uncovered: bool,
     no_cache: bool,
 ) -> None:
@@ -540,6 +545,11 @@ def _generate_native_report(
             config.coverage.format,
             min_threshold=(
                 min_percent / 100 if min_percent is not None else None
+            ),
+            min_branch_threshold=(
+                min_branch_percent / 100
+                if min_branch_percent is not None
+                else None
             ),
         )
     except CoverageThresholdError as exc:
@@ -559,6 +569,7 @@ def _generate_native_report(
                 min_percent,
                 show_uncovered=show_uncovered,
                 file_summaries=exc.report_result.file_summaries,
+                min_branch_percent=min_branch_percent,
             )
         raise
     # The native runtime reaches the same reconciliation, report and gate as
@@ -571,6 +582,7 @@ def _generate_native_report(
         min_percent,
         show_uncovered=show_uncovered,
         file_summaries=report.file_summaries,
+        min_branch_percent=min_branch_percent,
     )
     output.print_verbose(f"Coverage report: {report.output_path}")
 
