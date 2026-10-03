@@ -19,7 +19,7 @@
   1582 passed / 95.48% coverage)*
 - [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
 
-## Phase 2: Coverage Annotations
+## Phase 2: Coverage Annotations [checkpoint: 439bd3a]
 
 - [x] **Task 2.1 — Write failing tests (Red):** unit tests for the
   GitHub Actions coverage reporter — summary `::error`
