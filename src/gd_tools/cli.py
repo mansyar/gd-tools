@@ -1276,7 +1276,7 @@ def run(scene, timeout, min_percent, report_format):
             scene=scene,
             timeout=timeout,
             min_percent=min_percent,
-            report_format=report_format,
+            report_format=fmt,
         )
         if fmt == "github-actions":
             annotations = Path(result.output_path).read_text(encoding="utf-8")

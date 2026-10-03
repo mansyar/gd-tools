@@ -241,7 +241,7 @@ def _collect_and_report(
         annotate_min_percent=min_percent,
         gate_failed=gate_failed,
     )
-    if min_percent is not None and summary.line_rate * 100 < min_percent:
+    if gate_failed:
         raise CoverageThresholdError(
             f"[Error] Line coverage {summary.line_rate * 100:.1f}% is "
             f"below minimum threshold {min_percent}%\n"
