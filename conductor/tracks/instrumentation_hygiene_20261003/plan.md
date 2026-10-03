@@ -106,7 +106,7 @@ non-atomic writes move onto one shared helper (spec FR-7 through FR-11).
     and `mark_run_started` (`native_test/artifacts.py`) onto it.
   - `mark_run_started` keeps its documented early-marker semantics; only
     the write mechanism changes.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [0c2f1f4]
 
 ## Phase 5: Hygiene Sweep - Dead Code, Stale Deploys, Doc Debt
 
