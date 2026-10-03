@@ -143,7 +143,10 @@ def test_gd_tools_config_defaults():
     assert config.lint.exclude == DEFAULT_EXCLUDES
 
 
-@pytest.mark.parametrize("fmt", ["html", "lcov", "cobertura", "text", "json"])
+@pytest.mark.parametrize(
+    "fmt",
+    ["html", "lcov", "cobertura", "text", "json", "github-actions"],
+)
 def test_gd_tools_config_valid_coverage_formats(fmt):
     """Test GdToolsConfig accepts all valid coverage format values."""
     config = GdToolsConfig(coverage=CoverageConfig(format=fmt))
@@ -162,7 +165,14 @@ def test_gd_tools_config_invalid_coverage_format():
     with pytest.raises(ValidationError) as exc_info:
         GdToolsConfig(coverage=CoverageConfig(format="xml"))
     message = str(exc_info.value)
-    for valid_format in ("html", "lcov", "cobertura", "text", "json"):
+    for valid_format in (
+        "html",
+        "lcov",
+        "cobertura",
+        "text",
+        "json",
+        "github-actions",
+    ):
         assert valid_format in message
 
 

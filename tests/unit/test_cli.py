@@ -441,6 +441,42 @@ def test_lint_report_format_text_default():
     assert "[OK]" in result.output
 
 
+def test_lint_report_format_github_actions():
+    """Test lint --report-format github-actions emits annotations."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    errors = [
+        LintIssue(
+            "src/player.gd", 42, 1, "GD3000", "unused variable 'x'", "error"
+        )
+    ]
+    mock_result = LintResult(files_checked=1, errors=errors, warnings=[])
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint", return_value=mock_result),
+    ):
+        result = runner.invoke(
+            cli, ["lint", "--report-format", "github-actions"]
+        )
+    assert result.exit_code == 1
+    assert (
+        "::error file=src/player.gd,line=42,col=1,"
+        "title=GD3000::unused variable 'x'\n"
+    ) in result.output
+
+
+def test_lint_rejects_unknown_report_format():
+    """Test lint rejects unknown --report-format values with exit 2."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.cli.run_lint"),
+    ):
+        result = runner.invoke(cli, ["lint", "--report-format", "sarif"])
+    assert result.exit_code == 2
+
+
 def test_lint_fix_flag_warning():
     """Test --fix flag prints warning that gdlint is read-only."""
     runner = CliRunner()
@@ -769,6 +805,7 @@ def test_coverage_report_calls_orchestrator():
     """Test coverage report calls generate_coverage_report."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -786,6 +823,7 @@ def test_coverage_report_format_override():
     """Test --format lcov passes format to orchestrator."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -804,6 +842,7 @@ def test_coverage_report_report_format_canonical():
     """Test --report-format is the canonical flag on coverage report."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -824,6 +863,7 @@ def test_coverage_report_report_format_case_insensitive():
     """Test --report-format JSON is accepted and normalized to json."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -889,6 +929,7 @@ def test_coverage_report_output_dir_override():
     """Test --output-dir passes output_dir to orchestrator."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
@@ -909,6 +950,7 @@ def test_coverage_report_plan_error_exit_2():
     """Test coverage report exits 2 when CoveragePlanError is raised."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     with (
         patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
@@ -924,6 +966,7 @@ def test_coverage_report_success_exit_0():
     """Test coverage report exits 0 on success and prints output path."""
     runner = CliRunner()
     mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     mock_result.output_path = Path("/tmp/reports/report.html")
     with (
@@ -1721,6 +1764,99 @@ def test_coverage_run_success_exit_0():
         result = runner.invoke(cli, ["coverage", "run"])
     assert result.exit_code == 0
     assert "Report written to: coverage_report.txt" in result.output
+
+
+def _write_gh_annotations(tmp_path: Path) -> str:
+    """Write a sample annotations file and return its path as a string."""
+    path = tmp_path / "coverage.github-actions.txt"
+    path.write_text(
+        "::warning file=src/enemy.gd::Coverage 66.7%25 below minimum 80%25\n",
+        encoding="utf-8",
+    )
+    return str(path)
+
+
+def test_coverage_report_github_actions_echoes_annotations(tmp_path):
+    """The github-actions format echoes annotations before the path line."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.coverage.min_percent = 80
+    mock_result = MagicMock()
+    mock_result.output_path = _write_gh_annotations(tmp_path)
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+    ):
+        result = runner.invoke(
+            cli, ["coverage", "report", "--report-format", "github-actions"]
+        )
+    assert result.exit_code == 0
+    assert "::warning file=src/enemy.gd" in result.output
+    assert result.output.index("::warning") < result.output.index(
+        "Report written to:"
+    )
+
+
+def test_coverage_run_github_actions_echoes_annotations(tmp_path):
+    """A successful github-actions playtest echoes annotations."""
+    runner = CliRunner()
+    mock_result = MagicMock()
+    mock_result.output_path = _write_gh_annotations(tmp_path)
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch("gd_tools.cli.run_playtest_coverage", return_value=mock_result),
+    ):
+        result = runner.invoke(
+            cli,
+            [
+                "coverage",
+                "run",
+                "--scene",
+                "res://scenes/level1.tscn",
+                "--report-format",
+                "github-actions",
+            ],
+        )
+    assert result.exit_code == 0
+    assert "::warning file=src/enemy.gd" in result.output
+    assert result.output.index("::warning") < result.output.index(
+        "Report written to:"
+    )
+
+
+def test_coverage_run_github_actions_echoes_on_threshold_failure(tmp_path):
+    """Annotations print before the threshold error and exit stays 1."""
+    runner = CliRunner()
+    report_result = MagicMock()
+    report_result.output_path = _write_gh_annotations(tmp_path)
+    error = CoverageThresholdError(
+        "Coverage below minimum", report_result=report_result
+    )
+    with (
+        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.cli.run_playtest_coverage",
+            side_effect=error,
+        ),
+    ):
+        result = runner.invoke(
+            cli,
+            [
+                "coverage",
+                "run",
+                "--scene",
+                "res://scenes/level1.tscn",
+                "--report-format",
+                "github-actions",
+                "--min",
+                "80",
+            ],
+        )
+    assert result.exit_code == 1
+    assert "::warning file=src/enemy.gd" in result.output
 
 
 def test_coverage_run_config_error_exit_2():

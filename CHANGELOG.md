@@ -1,5 +1,26 @@
 ## Unreleased
 
+### Added
+
+- **lint**: New `--report-format github-actions` option emits GitHub
+  Actions workflow annotations (`::error`/`::warning`) so violations
+  appear inline on pull requests. Annotations follow the official
+  workflow-command spec (`file,line,col,title` property order,
+  `%`/CR/LF escaping in messages, `,`/`:` escaping in properties).
+  Exit codes and the existing `text`/`json` formats are unchanged.
+
+- **coverage**: New `github-actions` report format. Files below
+  `[coverage].min_percent` each emit a `::warning` annotation; when
+  the coverage gate fails (`coverage run`), a summary
+  `::error title=Coverage gate` is emitted first. `coverage report`
+  emits informational per-file warnings and exits 0; `coverage run`
+  prints its annotations before the threshold error (exit 1).
+
+- **config**: `[coverage].format` now accepts `"github-actions"` and
+  the validation error message lists it among the valid values. The
+  JSON Schema snapshot (`docs/gd-tools.schema.json`) was regenerated
+  to match.
+
 ### Fix
 
 - **coverage**: Fix unparseable GDScript when a ternary expression sits

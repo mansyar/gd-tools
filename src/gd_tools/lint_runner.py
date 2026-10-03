@@ -20,6 +20,10 @@ from lark.exceptions import LarkError
 from gd_tools import output
 from gd_tools.config import GdToolsConfig
 from gd_tools.file_discovery import discover_gd_files
+from gd_tools.gh_annotations import (
+    escape_gh_message_data,
+    escape_gh_property,
+)
 
 
 @dataclass
@@ -238,3 +242,43 @@ def format_lint_json(result: LintResult) -> str:
         ],
     }
     return json.dumps(data, indent=2)
+
+
+def format_lint_github_actions(result: LintResult) -> str:
+    """Format lint results as GitHub Actions workflow log commands.
+
+    Each issue renders as an annotation command per the official
+    "Workflow commands for GitHub Actions" spec::
+
+        ::error file=<path>,line=<line>,col=<col>,title=<rule>::<message>
+
+    Errors use ``::error`` and warnings use ``::warning``.  Property
+    values (``file``, ``title``) escape ``%``, CR, LF, ``,` and ``:``;
+    message data escapes ``%``, CR, LF.  File paths use POSIX
+    separators so annotations work across platforms.  Issues are
+    sorted by file path, then line, then column.  No issues produce
+    an empty string (no annotations, no noise).
+
+    Args:
+        result: Lint results to format.
+
+    Returns:
+        Workflow log commands, one per line, or an empty string.
+    """
+    issues = result.errors + result.warnings
+    if not issues:
+        return ""
+    issues.sort(key=lambda i: (i.file, i.line, i.column))
+    lines = []
+    for issue in issues:
+        command = "error" if issue.severity == "error" else "warning"
+        path = issue.file.replace("\\", "/")
+        lines.append(
+            f"::{command} "
+            f"file={escape_gh_property(path)},"
+            f"line={issue.line},"
+            f"col={issue.column},"
+            f"title={escape_gh_property(issue.rule)}"
+            f"::{escape_gh_message_data(issue.message)}"
+        )
+    return "\n".join(lines) + "\n"
