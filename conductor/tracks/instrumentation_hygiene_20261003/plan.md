@@ -156,9 +156,9 @@ Goal: resolve the review findings - the High bracket-continuation gap
 uncompilable instrumented output), the Medium write-fidelity and
 documentation issues, and the Low hygiene items.
 
-- [~] Task: Write failing tests for bracket-continuation dropping, the multi-line signature pin, and baseline/plan-cache atomicity (Red)
-- [ ] Task: Implement the depth-lexer illegal lines, migrate save_baseline and write_plan_json, bump PLAN_VERSION to 5 (Green)
-- [ ] Task: Refactor and sweep hardcoded version literals to PLAN_VERSION imports
-- [ ] Task: Extend the Godot parse suite with continuation-line cases and run the teeth check
-- [ ] Task: Correct the doc overclaims (ARCHITECTURE, CHANGELOG, TDD) and the backup path
+- [x] Task: Write failing tests for bracket-continuation dropping, the multi-line signature pin, and baseline/plan-cache atomicity (Red) [0c7b41f]
+- [x] Task: Implement the depth-lexer illegal lines, migrate save_baseline and write_plan_json, bump PLAN_VERSION to 5 (Green) [0c7b41f]
+- [x] Task: Refactor and sweep hardcoded version literals to PLAN_VERSION imports [0c7b41f]
+- [x] Task: Extend the Godot parse suite with continuation-line cases and run the teeth check [49b6536]
+- [x] Task: Correct the doc overclaims (ARCHITECTURE, CHANGELOG, TDD) and the backup path [4b10045]
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
