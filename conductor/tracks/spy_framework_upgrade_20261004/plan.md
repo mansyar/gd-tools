@@ -17,7 +17,7 @@ commit + git note, plan update).
 
 ## Phase 1: Shared matcher + spy wildcard support
 
-- [ ] Task: Write failing GDScript tests for `"any"` wildcards in spy assertions
+- [x] Task: Write failing GDScript tests for `"any"` wildcards in spy assertions (95415f2)
   - [ ] Suite cases: `assert_call_arguments` with `"any"` in first, middle, and last argument positions
   - [ ] Suite cases: exact-match assertions unchanged (backward compatibility)
   - [ ] Suite cases: wildcard never matches wrong arity (pattern size must equal call size)
