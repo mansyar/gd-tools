@@ -61,15 +61,15 @@ forcing one regeneration (`PLAN_VERSION` 3 → 4, spec FR-4).
   - Update golden fixtures in `tests/fixtures/plans/*.expected.json` via
     `tools/generate_expected_plans.py` and any hard-coded `3`s in tests
     (grep first; the ternary track missed several).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md) [1e421fb]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [01ea0f7] [1e421fb]
 
-## Phase 3: Real-Godot Class-Body Regression Cases
+## Phase 3: Real-Godot Class-Body Regression Cases [complete: 01ea0f7]
 
 Goal: the Godot parse suite proves instrumented output compiles for every
 class-body scenario, with per-case expected-point assertions (FR-5) so a
 silent drop cannot pass vacuously.
 
-- [ ] Task: Add class-body cases to the Godot parse suite
+- [x] Task: Add class-body cases to the Godot parse suite [0f2b3c0]
   - Extend `tests/integration/test_coverage_instrumentation_parses.py`
     with the spec's defect table cases: class-level `var`/`static var`/
     `@export` single-line lambda bodies (now dropped - plan has no illegal
@@ -77,7 +77,7 @@ silent drop cannot pass vacuously.
     output parses), func-level lambda (unchanged).
   - Each case declares its expected planned points, per the gap the
     ternary review exposed (a zero-point plan compiles trivially).
-- [ ] Task: Verify the suite has teeth
+- [x] Task: Verify the suite has teeth [0f2b3c0]
   - Run the suite against the pre-Phase-1 generator
     (`git checkout` the file, run, restore) and confirm exactly the
     class-body cases fail.
