@@ -1053,7 +1053,14 @@ def coverage():
     """Coverage reporting commands."""
 
 
-_COVERAGE_REPORT_FORMATS = ["text", "html", "lcov", "cobertura", "json"]
+_COVERAGE_REPORT_FORMATS = [
+    "text",
+    "html",
+    "lcov",
+    "cobertura",
+    "json",
+    "github-actions",
+]
 
 
 @coverage.command()
@@ -1098,6 +1105,10 @@ def report(report_format, format_alias, output_dir):
         result = generate_coverage_report(
             config, report_format=format, output_dir=output_dir
         )
+        effective = format if format is not None else config.coverage.format
+        if effective == "github-actions":
+            annotations = Path(result.output_path).read_text(encoding="utf-8")
+            click.echo(annotations, nl=False)
         click.echo(f"Report written to: {result.output_path}")
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
@@ -1237,7 +1248,9 @@ def diff_cmd(base, show_lines, report_format, fail_on_regression):
 )
 @click.option(
     "--report-format",
-    type=click.Choice(["text", "html", "lcov", "cobertura", "json"]),
+    type=click.Choice(
+        ["text", "html", "lcov", "cobertura", "json", "github-actions"]
+    ),
     help="Report format (default: the configured coverage format).",
 )
 def run(scene, timeout, min_percent, report_format):
@@ -1249,6 +1262,7 @@ def run(scene, timeout, min_percent, report_format):
         ctx = click.get_current_context()
         ctx.exit(2)
 
+    fmt = report_format if report_format is not None else config.coverage.format
     try:
         result = run_playtest_coverage(
             config,
@@ -1257,8 +1271,16 @@ def run(scene, timeout, min_percent, report_format):
             min_percent=min_percent,
             report_format=report_format,
         )
+        if fmt == "github-actions":
+            annotations = Path(result.output_path).read_text(encoding="utf-8")
+            click.echo(annotations, nl=False)
         click.echo(f"Report written to: {result.output_path}")
     except CoverageThresholdError as e:
+        if fmt == "github-actions" and e.report_result is not None:
+            annotations = Path(e.report_result.output_path).read_text(
+                encoding="utf-8"
+            )
+            click.echo(annotations, nl=False)
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
         ctx.exit(1)

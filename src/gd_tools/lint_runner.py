@@ -20,6 +20,10 @@ from lark.exceptions import LarkError
 from gd_tools import output
 from gd_tools.config import GdToolsConfig
 from gd_tools.file_discovery import discover_gd_files
+from gd_tools.gh_annotations import (
+    escape_gh_message_data,
+    escape_gh_property,
+)
 
 
 @dataclass
@@ -240,23 +244,6 @@ def format_lint_json(result: LintResult) -> str:
     return json.dumps(data, indent=2)
 
 
-def _escape_gh_message_data(value: str) -> str:
-    """Escape GitHub Actions workflow-command message data.
-
-    Escapes ``%``, CR, and LF per the workflow log-command spec.
-    """
-    return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-
-
-def _escape_gh_property(value: str) -> str:
-    """Escape a GitHub Actions workflow-command property value.
-
-    Escapes everything message data escapes, plus ``,` and ``:``.
-    """
-    escaped = _escape_gh_message_data(value)
-    return escaped.replace(",", "%2C").replace(":", "%3A")
-
-
 def format_lint_github_actions(result: LintResult) -> str:
     """Format lint results as GitHub Actions workflow log commands.
 
@@ -288,10 +275,10 @@ def format_lint_github_actions(result: LintResult) -> str:
         path = issue.file.replace("\\", "/")
         lines.append(
             f"::{command} "
-            f"file={_escape_gh_property(path)},"
+            f"file={escape_gh_property(path)},"
             f"line={issue.line},"
             f"col={issue.column},"
-            f"title={_escape_gh_property(issue.rule)}"
-            f"::{_escape_gh_message_data(issue.message)}"
+            f"title={escape_gh_property(issue.rule)}"
+            f"::{escape_gh_message_data(issue.message)}"
         )
     return "\n".join(lines) + "\n"
