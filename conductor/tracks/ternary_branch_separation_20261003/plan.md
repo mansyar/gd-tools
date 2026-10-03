@@ -30,13 +30,13 @@ phase checkpoints per `conductor/workflow.md`.
 
 ## Phase 3 — Independent Measurement & Gating
 
-- [ ] Task: Write failing end-to-end tests for per-arm measurement (Red)
-  - [ ] E2E: suite exercising only the true arm → `ternary_true` covered, `ternary_false` uncovered (and reverse; and both-covered)
-  - [ ] E2E: uncovered ternary arm fails `--min-branch` gate
-  - [ ] Test: stale cached plan (version 3) is rejected and regenerated (version 4)
-  - [ ] Test: human/JSON report display remains combined under the anchor line (schema unchanged)
-- [ ] Task: Implement reporter/gate adjustments for per-arm evaluation (Green)
-  - [ ] Branch hit-join and gate evaluation by arm point id; line-coverage aggregation for anchor lines verified correct
+- [x] Task: Write failing end-to-end tests for per-arm measurement (Red) [11409d0]
+  - [x] E2E: suite exercising only the true arm → `ternary_true` covered, `ternary_false` uncovered (and reverse; and both-covered)
+  - [x] E2E: uncovered ternary arm fails `--min-branch` gate
+  - [x] Test: stale cached plan (version 3) is rejected and regenerated (version 4) — covered by `test_cache_v3_plan_is_regenerated_with_outdated_reason` (Phase 1)
+  - [x] Test: human/JSON report display remains combined under the anchor line (schema unchanged)
+- [x] Task: Implement reporter/gate adjustments for per-arm evaluation (Green) [11409d0]
+  - [x] Branch hit-join and gate evaluation by arm point id; line-coverage aggregation for anchor lines verified correct; new `--min-branch` CLI gate on `test` and `coverage show`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Edge Cases & Behavioral Equivalence
