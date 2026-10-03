@@ -17,7 +17,7 @@ Goal: no planned point records on a class-body line or a function
 signature line. Multi-line lambda body statements stay tracked (FR-2);
 func-level single-line lambdas stay exactly as they are today (FR-6).
 
-- [ ] Task: Write failing unit tests for class-body anchoring (Red)
+- [x] Task: Write failing unit tests for class-body anchoring (Red) [00e5537]
   - Extend `tests/unit/test_plan_generator_ternary.py` or add a sibling
     module covering, per spec FR-1: class-level `var F = func(): ...`
     records no point on the declaration line; `static var S = func(): ...`
@@ -31,7 +31,7 @@ func-level single-line lambdas stay exactly as they are today (FR-6).
     line itself, including a default-parameter value expression.
   - Run `python -m pytest tests/unit -q` and confirm the new tests fail
     for the expected reason (points recorded on illegal lines).
-- [ ] Task: Implement anchor resolution (Green)
+- [x] Task: Implement anchor resolution (Green) [00e5537]
   - Generalize the ternary anchor pre-pass in
     `src/gd_tools/coverage/plan_generator.py` so statement points resolve
     an anchor line the same way `test_expr` does.
@@ -39,7 +39,7 @@ func-level single-line lambdas stay exactly as they are today (FR-6).
     anchor (point dropped per FR-3), never a nearby unrelated statement.
   - Preserve bottom-up id ordering and the exclusion-check semantics
     (FR-5's `# gd-tools: no cover` evaluated against the final line).
-- [ ] Task: Refactor
+- [x] Task: Refactor [00e5537]
   - Re-read the anchor code for duplication between the ternary path and
     the general statement path; collapse shared logic if it reads cleanly.
   - Run ruff and black; fix findings.
