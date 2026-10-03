@@ -95,7 +95,7 @@ non-atomic writes move onto one shared helper (spec FR-7 through FR-11).
   - Atomicity tests: the shared helper writes via temp-file + `os.replace`
     in the destination directory; assert no partial file survives an
     interrupted write (simulate by patching the serializer to raise).
-- [ ] Task: Implement fidelity and the shared atomic helper (Green)
+- [x] [c9029a5] Task: Implement fidelity and the shared atomic helper (Green)
   - `write_coverage_json` (`src/gd_tools/coverage/reporter.py`) includes
     the `omitted` list. Verify additivity against the reader before
     deciding whether the coverage-data version needs a bump; document the
