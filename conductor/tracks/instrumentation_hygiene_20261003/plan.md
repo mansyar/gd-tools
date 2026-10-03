@@ -133,7 +133,7 @@ removed; the known-stale docs are corrected (spec FR-12 through FR-17).
     no longer exists.
   - `docs/TESTING_STRATEGY.md` §5: replace the "GUT installation" wording.
   - `src/gd_tools/native_test/preflight.py`: protocol-v2 strings → v3.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [0b77dba]
 
 ## Phase 6: Documentation and Final Validation
 
