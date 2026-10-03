@@ -224,13 +224,20 @@ def print_threshold_footer(
         output.print_summary("pass", f"{line_pct:.1f}% line coverage")
 
     if min_branch_percent is not None:
-        branch_pct = summary.branch_rate * 100
-        status = "pass" if branch_pct >= min_branch_percent else "fail"
-        output.print_summary(
-            status,
-            f"{branch_pct:.1f}% branch coverage "
-            f"(threshold: {min_branch_percent}%)",
-        )
+        if summary.total_branches == 0:
+            output.print_summary(
+                "pass",
+                "Branch coverage: no branch points; "
+                "--min-branch gate not applied.",
+            )
+        else:
+            branch_pct = summary.branch_rate * 100
+            status = "pass" if branch_pct >= min_branch_percent else "fail"
+            output.print_summary(
+                status,
+                f"{branch_pct:.1f}% branch coverage "
+                f"(threshold: {min_branch_percent}%)",
+            )
 
 
 def _report_coverage(
@@ -442,6 +449,7 @@ def show_coverage_summary(
         )
     if (
         min_branch_percent is not None
+        and summary.total_branches > 0
         and summary.branch_rate * 100 < min_branch_percent
     ):
         raise CoverageThresholdError(
