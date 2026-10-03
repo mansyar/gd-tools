@@ -230,8 +230,18 @@ def _collect_and_report(
     print_coverage_table(summary, min_percent)
     print_threshold_footer(summary, min_percent)
 
-    report = reporter.generate_report(plan, data, output_dir, effective_format)
-    if min_percent is not None and summary.line_rate * 100 < min_percent:
+    gate_failed = (
+        min_percent is not None and summary.line_rate * 100 < min_percent
+    )
+    report = reporter.generate_report(
+        plan,
+        data,
+        output_dir,
+        effective_format,
+        annotate_min_percent=min_percent,
+        gate_failed=gate_failed,
+    )
+    if gate_failed:
         raise CoverageThresholdError(
             f"[Error] Line coverage {summary.line_rate * 100:.1f}% is "
             f"below minimum threshold {min_percent}%\n"

@@ -19,6 +19,10 @@ from typing import TYPE_CHECKING, Any
 
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.errors import CoveragePlanError, CoverageThresholdError
+from gd_tools.gh_annotations import (
+    escape_gh_message_data,
+    escape_gh_property,
+)
 
 if TYPE_CHECKING:
     from rich.console import Group
@@ -653,9 +657,82 @@ def render_uncovered_panels(
     return Group(*panels)
 
 
+# --- GitHub Actions annotations (Roadmap Track 31) ---
+
+
+def _res_path_to_repo_path(path: str) -> str:
+    """Convert a Godot ``res://`` path to a repo-relative path.
+
+    GitHub's ``file=`` annotation attribute expects a path relative
+    to the repository root, not a Godot resource path.
+    """
+    if path.startswith("res://"):
+        return path[len("res://") :]
+    return path
+
+
+def render_github_actions_annotations(
+    summary: CoverageSummary,
+    file_summaries: list[FileSummary],
+    min_percent: int | None = None,
+    gate_failed: bool = False,
+) -> str:
+    """Render coverage results as GitHub Actions workflow annotations.
+
+    Emits a summary ``::error`` (``title=Coverage gate``) when
+    ``gate_failed`` is set and one ``::warning`` per file whose line
+    coverage is below ``min_percent``.  With no threshold configured
+    (``min_percent`` of ``None``) no annotations are emitted.  File
+    paths are converted from Godot ``res://`` resource paths to
+    repo-relative POSIX paths and escaped per the official workflow
+    log-command spec.  Output is deterministic: the gate summary
+    first, then files sorted by path.
+
+    Args:
+        summary: Overall coverage summary.
+        file_summaries: Per-file coverage breakdowns.
+        min_percent: Minimum line coverage percentage (0-100), or
+            ``None`` when no threshold is configured.
+        gate_failed: Whether the overall coverage gate failed.
+
+    Returns:
+        Workflow log commands, one per line, or an empty string.
+    """
+    if min_percent is None:
+        return ""
+    lines = []
+    if gate_failed:
+        message = escape_gh_message_data(
+            f"Total coverage {summary.line_rate * 100:.1f}%"
+            f" is below minimum {min_percent}%"
+        )
+        lines.append(f"::error title=Coverage gate::{message}")
+    for fs in sorted(file_summaries, key=lambda fs: fs.path):
+        file_pct = fs.line_rate * 100
+        if file_pct >= min_percent:
+            continue
+        message = escape_gh_message_data(
+            f"Coverage {file_pct:.1f}% below minimum {min_percent}%"
+        )
+        repo_path = _res_path_to_repo_path(fs.path).replace("\\", "/")
+        lines.append(
+            f"::warning file={escape_gh_property(repo_path)}::{message}"
+        )
+    if not lines:
+        return ""
+    return "\n".join(lines) + "\n"
+
+
 # --- Report dispatch and threshold (FR-3) ---
 
-_SUPPORTED_FORMATS = {"html", "lcov", "cobertura", "text", "json"}
+_SUPPORTED_FORMATS = {
+    "html",
+    "lcov",
+    "cobertura",
+    "text",
+    "json",
+    "github-actions",
+}
 
 
 def _coverage_metrics_to_json(
@@ -706,22 +783,35 @@ def generate_report(
     output_dir: Path,
     format: str = "html",
     min_threshold: float | None = None,
+    annotate_min_percent: int | None = None,
+    gate_failed: bool = False,
 ) -> ReportResult:
     """Generate a coverage report in the specified format.
 
     Dispatches to a format-specific reporter after computing coverage
     metrics.  If ``min_threshold`` is set and the overall line coverage
     rate falls below it, :class:`CoverageThresholdError` is raised
-    after the report file has been written.
+    after the report file has been written.  For the
+    ``github-actions`` format, ``annotate_min_percent`` supplies the
+    threshold for annotation rendering (without gating) when no
+    ``min_threshold`` gate applies, and ``gate_failed`` marks the
+    summary annotation when the caller has already evaluated the
+    gate itself.
 
     Args:
         plan: The instrumentation plan.
         data: The runtime coverage data.
         output_dir: Directory where the report file is written.
         format: Report format — one of ``"html"``, ``"lcov"``,
-            ``"cobertura"``, ``"text"``, ``"json"``.
+            ``"cobertura"``, ``"text"``, ``"json"``,
+            ``"github-actions"``.
         min_threshold: Minimum line coverage rate (0.0-1.0).  If
             ``None``, no threshold check is performed.
+        annotate_min_percent: Minimum coverage percentage used only
+            for ``github-actions`` annotation rendering.  Falls back
+            to ``min_threshold`` when ``None``.
+        gate_failed: Whether the caller already determined the
+            coverage gate failed (used for ``github-actions``).
 
     Returns:
         A :class:`ReportResult` with the report path, summary, and
@@ -781,6 +871,18 @@ def generate_report(
     elif format == "json":
         output_path = output_dir / "coverage.json"
         _write_json_report(output_path, summary, file_summaries)
+    elif format == "github-actions":
+        output_path = output_dir / "coverage.github-actions.txt"
+        annotate_min = annotate_min_percent
+        if annotate_min is None and min_threshold is not None:
+            annotate_min = round(min_threshold * 100)
+        report_text = render_github_actions_annotations(
+            summary,
+            file_summaries,
+            min_percent=annotate_min,
+            gate_failed=gate_failed or not threshold_met,
+        )
+        output_path.write_text(report_text, encoding="utf-8")
     else:  # html (format already validated above)
         from gd_tools.coverage.html_reporter import generate_html_report
 

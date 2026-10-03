@@ -193,6 +193,16 @@ def quiet_mode():
 
 
 @pytest.mark.unit
+def test_generate_coverage_report_forwards_annotate_min_percent(mock_deps):
+    """generate_coverage_report() forwards annotate_min_percent to the reporter."""
+    generate_coverage_report(_make_config(), annotate_min_percent=80)
+
+    mock_deps["generate_report"].assert_called_once()
+    _, kwargs = mock_deps["generate_report"].call_args
+    assert kwargs.get("annotate_min_percent") == 80
+
+
+@pytest.mark.unit
 def test_generate_coverage_report_reads_plan(mock_deps):
     """generate_coverage_report() reads plan from <output_dir>/plan.json."""
     generate_coverage_report(_make_config())

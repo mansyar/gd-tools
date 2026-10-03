@@ -245,3 +245,11 @@ _Archived tracks live in `./archive/`._
   review found them silently dropped, and bump PLAN_VERSION to 3 so stale
   cached plans are invalidated)
   *Link: [ternary_instrumentation_20261003](./archive/ternary_instrumentation_20261003/index.md)*
+
+- [x] **Track: GitHub Actions Annotations** (feature: add a
+  `github-actions` report format to lint, coverage report, and coverage
+  run, emitting official GitHub Actions workflow log commands
+  (`::error`/`::warning`) so lint violations and coverage threshold
+  failures surface as native PR annotations; includes config alignment
+  and CI docs — Roadmap Track 31)
+  *Link: [gh_actions_annotations_20261002](./archive/gh_actions_annotations_20261002/index.md)*

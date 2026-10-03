@@ -66,7 +66,12 @@ from .errors import (
 )
 from .format_runner import run_format
 from .init import run_init
-from .lint_runner import format_lint_json, format_lint_text, run_lint
+from .lint_runner import (
+    format_lint_github_actions,
+    format_lint_json,
+    format_lint_text,
+    run_lint,
+)
 from .migration.apply import apply_migration, plan_rewrites
 from .migration.rewrite import generate_diff
 from .migration.reporter import render_migration_report
@@ -940,7 +945,7 @@ def migrate(path, apply, config_only):
 @click.argument("paths", nargs=-1)
 @click.option(
     "--report-format",
-    type=click.Choice(["text", "json"]),
+    type=click.Choice(["text", "json", "github-actions"]),
     default="text",
     help="Output format for the lint report.",
 )
@@ -967,6 +972,8 @@ def lint(paths, report_format, fix):
 
     if report_format == "json":
         click.echo(format_lint_json(result))
+    elif report_format == "github-actions":
+        click.echo(format_lint_github_actions(result), nl=False)
     else:
         format_lint_text(result)
 
@@ -1046,7 +1053,14 @@ def coverage():
     """Coverage reporting commands."""
 
 
-_COVERAGE_REPORT_FORMATS = ["text", "html", "lcov", "cobertura", "json"]
+_COVERAGE_REPORT_FORMATS = [
+    "text",
+    "html",
+    "lcov",
+    "cobertura",
+    "json",
+    "github-actions",
+]
 
 
 @coverage.command()
@@ -1089,8 +1103,19 @@ def report(report_format, format_alias, output_dir):
 
     try:
         result = generate_coverage_report(
-            config, report_format=format, output_dir=output_dir
+            config,
+            report_format=format,
+            output_dir=output_dir,
+            annotate_min_percent=(
+                config.coverage.min_percent
+                if config.coverage.min_percent > 0
+                else None
+            ),
         )
+        effective = format if format is not None else config.coverage.format
+        if effective == "github-actions":
+            annotations = Path(result.output_path).read_text(encoding="utf-8")
+            click.echo(annotations, nl=False)
         click.echo(f"Report written to: {result.output_path}")
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
@@ -1230,7 +1255,9 @@ def diff_cmd(base, show_lines, report_format, fail_on_regression):
 )
 @click.option(
     "--report-format",
-    type=click.Choice(["text", "html", "lcov", "cobertura", "json"]),
+    type=click.Choice(
+        ["text", "html", "lcov", "cobertura", "json", "github-actions"]
+    ),
     help="Report format (default: the configured coverage format).",
 )
 def run(scene, timeout, min_percent, report_format):
@@ -1242,16 +1269,25 @@ def run(scene, timeout, min_percent, report_format):
         ctx = click.get_current_context()
         ctx.exit(2)
 
+    fmt = report_format if report_format is not None else config.coverage.format
     try:
         result = run_playtest_coverage(
             config,
             scene=scene,
             timeout=timeout,
             min_percent=min_percent,
-            report_format=report_format,
+            report_format=fmt,
         )
+        if fmt == "github-actions":
+            annotations = Path(result.output_path).read_text(encoding="utf-8")
+            click.echo(annotations, nl=False)
         click.echo(f"Report written to: {result.output_path}")
     except CoverageThresholdError as e:
+        if fmt == "github-actions" and e.report_result is not None:
+            annotations = Path(e.report_result.output_path).read_text(
+                encoding="utf-8"
+            )
+            click.echo(annotations, nl=False)
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()
         ctx.exit(1)
