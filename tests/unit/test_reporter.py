@@ -1287,3 +1287,21 @@ def test_render_gh_annotations_escapes_paths():
     files = [_gh_fs("res://src/a,b.gd", 0.10)]
     out = render_github_actions_annotations(summary, files, min_percent=80)
     assert "file=src/a%2Cb.gd" in out
+
+
+def test_generate_report_github_actions_writes_annotations(tmp_path):
+    """generate_report(github-actions) writes the annotation file."""
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    with pytest.raises(CoverageThresholdError) as exc_info:
+        generate_report(
+            plan, data, tmp_path, format="github-actions", min_threshold=0.80
+        )
+    text = (tmp_path / "coverage.github-actions.txt").read_text(
+        encoding="utf-8"
+    )
+    assert "::error title=Coverage gate::" in text
+    assert "::warning file=" in text
+    assert exc_info.value.report_result.output_path == (
+        tmp_path / "coverage.github-actions.txt"
+    )
