@@ -1,6 +1,7 @@
 """Unit tests for the native test CLI adapter."""
 
 import json
+import os
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from types import SimpleNamespace
@@ -8,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+from gd_tools.coverage.plan_generator import PLAN_VERSION
 from gd_tools.errors import (
     ConfigError,
     CoverageThresholdError,
@@ -18,6 +20,7 @@ from gd_tools.errors import (
 from gd_tools.native_test.command import (
     _generate_native_report,
     _test_directories,
+    _write_junit_xml,
     run_native_test_command,
 )
 from gd_tools.native_test.preflight import NativePreflightError
@@ -31,7 +34,7 @@ from gd_tools.native_test.protocol import (
     NativeTestResult,
     RuntimeMode,
 )
-from gd_tools.test_runner import TestResult
+from gd_tools.test_results import TestResult
 
 pytestmark = pytest.mark.unit
 
@@ -829,7 +832,7 @@ def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
     (coverage_dir / "plan.json").write_text(
         json.dumps(
             {
-                "version": 4,
+                "version": PLAN_VERSION,
                 "generated_by": "gd-tools-test",
                 "files": [
                     {
@@ -1516,3 +1519,23 @@ def test_changed_with_suite_filter_falls_back_to_filtered_selection(tmp_path):
         "No suite mapped for 'src/enemy.gd'" in call.args[0]
         for call in notice.call_args_list
     )
+
+
+def test_write_junit_xml_is_atomic(tmp_path, monkeypatch):
+    """JUnit results are written through a final rename, not in place."""
+    path = tmp_path / "results.xml"
+    path.write_text("<stale/>", encoding="utf-8")
+    calls = []
+    real_replace = os.replace
+
+    def spy(src, dst):
+        calls.append((src, dst))
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", spy)
+
+    _write_junit_xml(path, [], 0.0)
+
+    assert calls, "JUnit XML was written without a temp+replace"
+    assert ET.parse(path).getroot().tag == "testsuites"
+    assert sorted(i.name for i in tmp_path.iterdir()) == ["results.xml"]

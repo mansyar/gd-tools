@@ -7,6 +7,7 @@ Coverage Diff track specification (FR-1).
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -27,6 +28,7 @@ from gd_tools.coverage.diff_reporter import (
 )
 from gd_tools.coverage.plan_generator import (
     CoveragePlan,
+    PLAN_VERSION,
     FilePlan,
     LinePlan,
 )
@@ -42,7 +44,7 @@ pytestmark = pytest.mark.unit
 def _make_plan() -> CoveragePlan:
     """Build a small two-line plan fixture."""
     return CoveragePlan(
-        version=4,
+        version=PLAN_VERSION,
         generated_by="gd-tools",
         files=[
             FilePlan(
@@ -111,7 +113,7 @@ def test_save_baseline_writes_self_contained_document(
     assert "data" in document
 
     # Nested payloads are the existing formats, verbatim in structure.
-    assert document["plan"]["version"] == 4
+    assert document["plan"]["version"] == PLAN_VERSION
     assert document["plan"]["files"][0]["path"] == "res://player.gd"
     assert document["data"]["version"] == 1
     assert document["data"]["files"][0]["hits"] == {"0": 3, "1": 1}
@@ -343,7 +345,9 @@ def _make_snapshot(
 ) -> BaselineSnapshot:
     """Build a BaselineSnapshot from matching file plans and data."""
     return BaselineSnapshot(
-        plan=CoveragePlan(version=3, generated_by="gd-tools", files=file_plans),
+        plan=CoveragePlan(
+            version=PLAN_VERSION, generated_by="gd-tools", files=file_plans
+        ),
         data=CoverageData(version=1, files=file_datas),
         meta=BaselineMeta(),
     )
@@ -694,3 +698,38 @@ def test_build_diff_json_is_deterministic():
     first = json.dumps(build_diff_json(_mixed_diff(), meta), indent=2)
     second = json.dumps(build_diff_json(_mixed_diff(), meta), indent=2)
     assert first == second
+
+
+def test_save_baseline_failure_keeps_previous_file(tmp_path, monkeypatch):
+    """A failed baseline write must not truncate the previous baseline."""
+    plan_path = tmp_path / "plan.json"
+    data_path = tmp_path / "coverage.json"
+    baseline_path = tmp_path / "baseline.json"
+    baseline_path.write_text('{"previous": true}', encoding="utf-8")
+    plan_path.write_text(
+        json.dumps(
+            {"version": PLAN_VERSION, "generated_by": "gd-tools", "files": []}
+        ),
+        encoding="utf-8",
+    )
+    data_path.write_text(
+        json.dumps({"version": 1, "generated_at": "t", "files": []}),
+        encoding="utf-8",
+    )
+
+    def boom(src, dst):
+        raise OSError("disk on fire")
+
+    monkeypatch.setattr(os, "replace", boom)
+
+    with pytest.raises(OSError, match="disk on fire"):
+        save_baseline(plan_path, data_path, baseline_path)
+
+    assert json.loads(baseline_path.read_text(encoding="utf-8")) == {
+        "previous": True
+    }
+    assert sorted(i.name for i in tmp_path.iterdir()) == [
+        "baseline.json",
+        "coverage.json",
+        "plan.json",
+    ]

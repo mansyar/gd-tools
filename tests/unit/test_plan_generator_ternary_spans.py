@@ -151,9 +151,10 @@ def test_non_ternary_points_have_no_operand_span(tmp_path):
 # --- FR-1: plan version bump ---
 
 
-def test_plan_version_is_4_with_operand_spans():
-    """PLAN_VERSION bumps 3 -> 4 so cached plans regenerate."""
-    assert PLAN_VERSION == 4
+def test_plan_version_is_6_with_operand_spans():
+    """PLAN_VERSION bumps past the span-less plans (3-5) so they
+    regenerate."""
+    assert PLAN_VERSION == 6
 
 
 # --- FR-5: JSON round-trip ---

@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from gd_tools import output
+from gd_tools.atomic_io import atomic_write_bytes
 from gd_tools.changes import collect_changed_files
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
@@ -45,7 +46,7 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     RuntimeMode,
 )
-from gd_tools.test_runner import TestDetail, TestResult, format_test_results
+from gd_tools.test_results import TestDetail, TestResult, format_test_results
 from gd_tools.watch.mapping import map_changed_file, select_suites_for_changes
 
 
@@ -649,7 +650,6 @@ def _write_junit_xml(
     duration: float,
     artifact_index_path: Path | None = None,
 ) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     root = ET.Element("testsuites")
     suite = ET.SubElement(
         root,
@@ -691,4 +691,6 @@ def _write_junit_xml(
             failure.text = failure_text
         elif detail.status == "skip":
             ET.SubElement(case, "skipped", message=detail.message)
-    ET.ElementTree(root).write(path, encoding="utf-8", xml_declaration=True)
+    atomic_write_bytes(
+        path, ET.tostring(root, encoding="utf-8", xml_declaration=True)
+    )

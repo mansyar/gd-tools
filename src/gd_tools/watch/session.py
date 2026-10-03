@@ -20,7 +20,7 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     NativeTestResult,
 )
-from gd_tools.test_runner import TestResult
+from gd_tools.test_results import TestResult
 from gd_tools.watch.coalescer import DEFAULT_DEBOUNCE_SECONDS
 from gd_tools.watch.loop import watch_loop
 from gd_tools.watch.observer import WatchdogEventSource

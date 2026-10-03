@@ -1,6 +1,7 @@
 """Unit tests for native run-scoped artifact management."""
 
 import json
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -361,3 +362,21 @@ def test_failed_publication_keeps_older_runs(tmp_path):
 
     assert old_run.exists()
     assert not layout.index_path.exists()
+
+
+def test_mark_run_started_is_atomic(tmp_path, monkeypatch):
+    """The run marker is created through a final rename, not in place."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    calls = []
+    real_replace = os.replace
+
+    def spy(src, dst):
+        calls.append((src, dst))
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", spy)
+
+    marker = mark_run_started(layout)
+
+    assert calls, "run marker was written without a temp+replace"
+    assert marker.is_file()

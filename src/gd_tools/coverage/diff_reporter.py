@@ -28,6 +28,7 @@ from rich.table import Table
 from rich.text import Text
 
 from gd_tools.coverage import plan_generator, reporter
+from gd_tools.atomic_io import atomic_write_text
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.coverage.reporter import (
     CoverageData,
@@ -157,8 +158,7 @@ def save_baseline(
         "plan": plan_payload,
         "data": data_payload,
     }
-    baseline_path = Path(baseline_path)
-    baseline_path.write_text(json.dumps(document, indent=2), encoding="utf-8")
+    atomic_write_text(baseline_path, json.dumps(document, indent=2))
     return meta
 
 

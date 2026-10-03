@@ -59,13 +59,13 @@ def run_native_preflight(
 
     Args:
         project_root: Imported Godot project root.
-        manifest: Protocol-v2 discovery manifest to resolve.
+        manifest: Discovery manifest to resolve.
         godot_binary: Resolved Godot executable.
         run_dir: Directory receiving manifest, result, and engine log files.
         timeout_seconds: Maximum duration for the preflight process.
 
     Returns:
-        The validated protocol-v2 preflight result.
+        The validated preflight result.
 
     Raises:
         NativePreflightError: If the process times out or returns an invalid,
@@ -177,7 +177,7 @@ def _read_preflight_result(
     except ValidationError as exc:
         message = (
             "Godot integration preflight result at "
-            f"'{result_path}' is invalid for native protocol 2: {exc}"
+            f"'{result_path}' is invalid for the native protocol: {exc}"
         )
         message = _append_process_output(message, stdout, stderr)
         raise NativePreflightError(

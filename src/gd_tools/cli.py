@@ -1,6 +1,5 @@
 """CLI entry point for gd-tools."""
 
-import copy
 import json
 import os
 import sys
@@ -37,7 +36,6 @@ from .pre_commit import (
     install_hooks as run_install_hooks,
 )
 from .config import (
-    check_deprecated_settings,
     find_project_root,
     format_config_json,
     format_config_table,
@@ -1367,39 +1365,6 @@ def config_show(format, as_json):
     ctx.exit(0)
 
 
-def _remove_deprecated_keys(
-    data: dict,
-    deprecated_paths: set[str],
-) -> dict:
-    """Remove deprecated keys from a deep copy of the data dict.
-
-    Args:
-        data: The original dict (e.g. raw parsed TOML).
-        deprecated_paths: Set of dotted paths to remove
-            (e.g. ``{"coverage.old_field"}``).
-
-    Returns:
-        A new dict with deprecated keys removed.  If
-        ``deprecated_paths`` is empty, the original dict is
-        returned unchanged.
-    """
-    if not deprecated_paths:
-        return data
-    result = copy.deepcopy(data)
-    for path in deprecated_paths:
-        parts = path.split(".")
-        current: dict | None = result
-        for part in parts[:-1]:
-            if isinstance(current, dict) and part in current:
-                current = current[part]
-            else:
-                current = None
-                break
-        if isinstance(current, dict) and parts[-1] in current:
-            del current[parts[-1]]
-    return result
-
-
 def _get_valid_keys_for_section(section: str) -> list[str] | None:
     """Get valid field names for a config section.
 
@@ -1430,9 +1395,9 @@ def _get_valid_keys_for_section(section: str) -> list[str] | None:
 def validate():
     """Validate the configuration file.
 
-    Checks for schema errors (invalid keys, bad values), deprecated
-    settings, and path issues.  Schema errors and deprecated settings
-    cause a non-zero exit; path warnings are advisory only.
+    Checks for schema errors (invalid keys, bad values) and path
+    issues.  Schema errors cause a non-zero exit; path warnings are
+    advisory only.
     """
     try:
         project_root = find_project_root()
@@ -1480,12 +1445,7 @@ def validate():
         ctx = click.get_current_context()
         ctx.exit(2)
 
-    # --- Deprecated settings (checked before Pydantic) ---
-    deprecated = check_deprecated_settings(raw_toml)
-    deprecated_paths = {dep.field_path for dep in deprecated}
-
-    # Remove deprecated keys so they don't trigger extra-forbidden errors
-    clean_toml = _remove_deprecated_keys(raw_toml, deprecated_paths)
+    clean_toml = raw_toml
 
     # --- Schema validation via Pydantic ---
     config: GdToolsConfig | None = None
@@ -1517,17 +1477,6 @@ def validate():
         for err in schema_errors:
             click.echo(f"  ✗ {err}")
 
-    if deprecated:
-        click.echo("Deprecated Settings:")
-        for dep in deprecated:
-            click.echo(
-                f"  ✗ {dep.field_path}: deprecated since "
-                f"v{dep.since_version}"
-            )
-            if dep.replacement:
-                click.echo(f"    Use '{dep.replacement}' instead")
-            click.echo(f"    {dep.migration_message}")
-
     if path_warnings:
         click.echo("Path Warnings:")
         for w in path_warnings:
@@ -1536,11 +1485,10 @@ def validate():
     # --- Summary ---
     click.echo(f"Configuration file: {config_file}")
     click.echo("Sections validated: 5 (godot, test, lint, format, coverage)")
-    has_errors = bool(schema_errors or deprecated)
+    has_errors = bool(schema_errors)
     if has_errors or path_warnings:
         click.echo(
             f"Found: {len(schema_errors)} schema error(s), "
-            f"{len(deprecated)} deprecated setting(s), "
             f"{len(path_warnings)} path warning(s)"
         )
     if not has_errors:

@@ -56,14 +56,15 @@ reporting) and GDScript (runtime instrumentation).
 | Phase | Language | Component | Responsibility |
 |-------|----------|-----------|----------------|
 | 1. Plan generation | Python | `coverage/plan_generator.py` | Parse GDScript via Lark AST, identify trackable lines and branches, emit `plan.json` |
-| 2. Runtime instrumentation | GDScript | `coverage.gd`, `pre_run_hook.gd`, `post_run_hook.gd` | Inject tracker calls into source at runtime (via `coverage.gd._ready()`), activate tracker (via `pre_run_hook.gd`), execute tests, collect hit data, write `coverage.json` |
+| 2. Runtime instrumentation | GDScript | `gd_tools_native_coverage.gd` (native), `coverage.gd` (playtest) | Inject tracker calls into source at runtime, activate the tracker, collect hit data, write `coverage.json` |
 | 3. Report generation | Python | `coverage/reporter.py` | Cross-reference plan with hit data, compute metrics, emit reports (HTML, LCOV, Cobertura, text) |
 
 > **Native runtime note:** in the current flow, Phase 2 runs inside each
 > suite's Godot process via `gd_tools_native_coverage.gd` (see §11.11),
 > which reuses the same plan format and tracker mechanics. The bundled
-> `coverage.gd`, `pre_run_hook.gd`, and `post_run_hook.gd` files implement
-> the legacy GUT-hook mechanism described in this part.
+> `coverage.gd` now serves only playtest mode; the GUT hook scripts that
+> once drove Phase 2 were removed - they extended `GutHookScript`, the
+> base class the GUT-bridge removal deleted.
 
 ### Comparison with Alternatives
 
@@ -404,10 +405,23 @@ line as context. Three consequences follow:
 * Because the anchor set is what decides this, widening it is a behaviour
   change: a ternary in a control-flow header is anchored to that header, and
   a class-level initialiser remains dropped because no anchor node encloses
-  it. Note that class-body lines are **not** valid insertion points even when
-  a statement is recorded on them — a lambda body assigned to a class-level
-  `var` still produces uncompilable output, which is a separate known defect.
-* `ternary_true` and `ternary_false` each carry an `operand_span` — the
+  it. Class-body lines are **not** valid insertion points even when a
+  statement is recorded on them: a lambda body assigned to a class-level
+  `var` used to record its body statement on the declaration line, and the
+  injected tracker broke the parse. The generator now guards this directly -
+  `_collect_illegal_lines` pre-pass collects class-member declaration lines
+  and function-signature spans, and any point recorded on such a line is
+  dropped before it can reach the collector (`PLAN_VERSION` bumped to 4).
+  The guard was later widened (v5) to also drop points recorded on
+  *continuation* lines - lines that start inside an open bracket or right
+  after a backslash - because a lambda body can squash onto such a line
+  (for example a statement in a signal-handler dict of lambdas); the AST
+  span alone cannot distinguish that from a legal block-lambda body line,
+  so the decision needs a small string/comment-aware depth lexer over the
+  source. A lambda body on its **own** line (a multi-line class-level
+  lambda, or a top-level block lambda) is still tracked normally, since
+  that line is a legal statement position.
+* `ternary_true` and `ternary_false` each carry an `operand_span` - the
   exact source range of the arm's operand expression. Instead of inserting
   a tracker before the anchor line (where both arms would fire in
   lockstep), the collector replaces each operand with
@@ -420,7 +434,8 @@ line as context. Three consequences follow:
 
 Because the meaning of a recorded line changed, `PLAN_VERSION` was bumped
 2 → 3 so stale cached plans are regenerated rather than reused. It was
-bumped again 3 → 4 when the arms gained `operand_span`s: a plan without
+bumped again 4 → 5 to drop points on illegal insertion/continuation
+lines, and 5 → 6 when the arms gained `operand_span`s: a plan without
 span data falls back to the old anchor-line insertion.
 `tests/integration/test_coverage_instrumentation_parses.py` compiles the
 instrumented output against a real Godot to hold this invariant.
@@ -481,11 +496,13 @@ it treat it as empty when absent --- the schema version stays `1`.
 
 ## 5. Component Details
 
-> The GDScript components in this part (`coverage.gd`, `pre_run_hook.gd`,
-> `post_run_hook.gd`) originate from the legacy GUT-hook era. The native
-> test runtime activates coverage through `gd_tools_native_coverage.gd`
-> (§11.11), which reuses the same instrumentation plan and tracker
-> mechanics without GUT hooks.
+> The GDScript components in this part originate from the legacy
+> GUT-hook era. Only `coverage.gd` still ships (playtest mode); the
+> `pre_run_hook.gd`/`post_run_hook.gd` hooks were removed - they
+> extended `GutHookScript`, deleted by the GUT-bridge removal. The
+> native test runtime activates coverage through
+> `gd_tools_native_coverage.gd` (Section 11.11), which reuses the
+> same instrumentation plan and tracker mechanics without GUT hooks.
 
 ### 5.1 plan_generator.py
 
@@ -543,10 +560,12 @@ validates the plan JSON, then instruments each file by modifying
 any other autoload's `_ready()` creates instances --- eliminating
 `ERR_ALREADY_IN_USE` errors.
 
-**Activation:** After instrumentation, `_active` remains `false`. The
-tracker is activated later by `pre_run_hook.gd.run()` calling
-`set_active(true)`, ensuring hits are only recorded during test
-execution. When inactive, the `hit()` method returns immediately ---
+**Activation:** After instrumentation, `_active` remains `false`.
+The tracker is activated later by `set_active(true)`, ensuring hits
+are only recorded during test execution. In the legacy GUT flow the
+`pre_run_hook.gd` script made that call; today only playtest mode
+activates the tracker, directly after instrumentation. When inactive,
+the `hit()` method returns immediately ---
 a single boolean check for minimal overhead.
 
 **Data structure:** Hits are stored as a nested dictionary:
@@ -559,7 +578,7 @@ increments the count for the given pair.
 - `get_hits()` --- returns the full hits dictionary.
 - `reset()` --- clears all recorded hits.
 - `set_active(active)` --- programmatically activates/deactivates
-  the tracker (used by `pre_run_hook.gd`).
+  the tracker (used by playtest mode).
 - `is_active()` --- returns the current activation state.
 - `_instrument_files(plan)` --- instruments all files in the plan
   (moved from `pre_run_hook.gd` in Track 24.5).
@@ -576,65 +595,19 @@ increments the count for the given pair.
   problems (missing or malformed plan, wrong version) remain fatal
   `_log_error` paths.
 - `get_omitted()` --- returns the recorded omissions as structured
-  `{file_id, path, reason, fix}` entries for the post-run hook.
+  `{file_id, path, reason, fix}` entries for post-run reporting.
 
-### 5.3 pre_run_hook.gd
+### 5.3 / 5.4 pre_run_hook.gd / post_run_hook.gd (removed)
 
-**Location:** `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd`
-
-**Responsibility:** GUT pre-run hook. Activates the `_GDTCoverage`
-tracker before tests are executed. Instrumentation was moved to
-`coverage.gd._ready()` in Track 24.5.
-
-**Base class:** `extends GutHookScript` (required by GUT 9.x). GUT
-calls the `run()` method --- not `_init()` --- to execute the hook.
-
-**Flow:**
-
-1. Call `_GDTCoverage.set_active(true)` to activate the tracker.
-
-By the time `pre_run_hook.gd.run()` is called, all autoloads
-(including `_GDTCoverage`) have already initialized. The
-instrumentation was performed in `_GDTCoverage._ready()`, so the
-scripts are already instrumented. The pre-run hook only activates
-hit recording, ensuring hits are captured only during test execution
---- not during autoload initialization.
-
-**Note (Track 24.5):** All instrumentation logic (`_load_plan`,
-`_validate_plan`, `_instrument_files`, `_instrument_file`,
-`_inject_trackers`, `_extract_indent`, `_detect_body_indent`,
-`_log_error`) was moved from `pre_run_hook.gd` to `coverage.gd`.
-See Section 5.2 for details on the injection algorithm.
-
-### 5.4 post_run_hook.gd
-
-**Location:** `src/gd_tools/addons/gd-tools-coverage/post_run_hook.gd`
-
-**Responsibility:** GUT post-run hook. Collects coverage data from
-the `_GDTCoverage` tracker and writes it to a JSON file after tests
-have executed.
-
-**Base class:** `extends GutHookScript`. GUT calls the `run()`
-method.
-
-**Flow:**
-
-1. Retrieve the `_GDTCoverage` autoload node from the scene tree.
-2. Check that the tracker is active; if not, return silently.
-3. Collect hits from the tracker via `get_hits()`.
-4. Collect recorded omissions via `get_omitted()`.
-5. Build the coverage JSON object (version, generated_at, files, and
-   the optional `omitted` key when any target could not be
-   instrumented).
-6. Write the JSON to the path from `GD_TOOLS_COVERAGE_OUTPUT`.
-7. Print a summary line with file count and line count.
-
-**JSON construction (`_build_coverage_json`):**
-
-The hits dictionary uses integer keys internally
-(`_hits[file_id][line_id]`). The post-run hook converts `line_id`
-keys to strings for JSON serialization, since JSON object keys must
-be strings.
+> These GUT hook scripts were removed from the bundled addon. They
+> extended `GutHookScript`, the base class the GUT-bridge removal
+> deleted, so no shipped copy could load. Their responsibilities
+> moved into the native runtime long before removal: the native
+> collector (`gd_tools_native_coverage.gd`, Section 11.11)
+> instruments and activates the tracker per suite and writes
+> `coverage.json` directly. `gd-tools init` moves stale copies of
+> these files from upgraded projects into
+> `addons/gd-tools-coverage/.backups/` and reports the cleanup.
 
 ### 5.5 reporter.py
 
@@ -754,13 +727,14 @@ source remains in memory from the initial `load()`.
 
 ### 6.4 Error Precedence: TestFailureError Before CoverageThresholdError
 
-When tests fail **and** coverage is below threshold,
-`run_coverage_test()` re-raises `TestFailureError` first. This
-ensures that CI pipelines report test failures as the primary issue
---- a coverage threshold violation is secondary when tests are already
-failing. The coverage report is still generated (written to disk)
-before either error is raised, so the report is available for
-inspection regardless of the error.
+When tests fail **and** coverage is below threshold, the native test
+command reports test failure first: its exit mapping orders
+infrastructure errors above test failures above coverage-threshold
+violations. This ensures that CI pipelines report test failures as
+the primary issue --- a coverage threshold violation is secondary when
+tests are already failing. The coverage report is still generated
+(written to disk) before either condition is reported, so the report
+is available for inspection regardless of the outcome.
 
 In all cases (success, threshold failure, or test failure), the
 coverage summary table (Rich, Lines/Branches: Found/Hit/Rate) is
@@ -787,7 +761,9 @@ Instrumentation happens in `_GDTCoverage._ready()` (triggered by the
 separately by `pre_run_hook.gd.run()` calling `set_active(true)`. This
 separation ensures that hits are only recorded during test execution,
 not during autoload initialization. When no plan env var is set,
-instrumentation is skipped and the tracker stays inactive.
+instrumentation is skipped and the tracker stays inactive. The
+`pre_run_hook.gd` script described here was later removed with the
+GUT hook mechanism; playtest mode activates the tracker directly.
 
 ---
 

@@ -19,7 +19,7 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     NativeTestResult,
 )
-from gd_tools.test_runner import TestResult
+from gd_tools.test_results import TestResult
 from gd_tools.verbosity import Verbosity, set_verbosity
 
 pytestmark = pytest.mark.unit

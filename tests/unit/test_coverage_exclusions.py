@@ -10,6 +10,7 @@ import json
 import pytest
 
 from gd_tools.coverage.plan_generator import (
+    PLAN_VERSION,
     generate_plan,
     read_plan_json,
     write_plan_json,
@@ -213,7 +214,9 @@ class TestPlanJsonExcludedLines:
         )
         output = tmp_path / "plan.json"
         write_plan_json(
-            CoveragePlan(version=4, generated_by="gd-tools", files=[fp]),
+            CoveragePlan(
+                version=PLAN_VERSION, generated_by="gd-tools", files=[fp]
+            ),
             str(output),
         )
 
@@ -235,7 +238,9 @@ class TestPlanJsonExcludedLines:
         )
         plan_file = tmp_path / "plan.json"
         write_plan_json(
-            CoveragePlan(version=4, generated_by="gd-tools", files=[fp]),
+            CoveragePlan(
+                version=PLAN_VERSION, generated_by="gd-tools", files=[fp]
+            ),
             str(plan_file),
         )
 
@@ -247,7 +252,7 @@ class TestPlanJsonExcludedLines:
     ):
         """Older JSON without excluded_lines loads with an empty list."""
         json_data = {
-            "version": 4,
+            "version": PLAN_VERSION,
             "generated_by": "gd-tools",
             "files": [
                 {

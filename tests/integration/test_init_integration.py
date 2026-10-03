@@ -39,12 +39,6 @@ def test_init_fresh_project(tmp_path):
 
     # Coverage addon files
     assert (tmp_path / "addons" / "gd-tools-coverage" / "coverage.gd").exists()
-    assert (
-        tmp_path / "addons" / "gd-tools-coverage" / "pre_run_hook.gd"
-    ).exists()
-    assert (
-        tmp_path / "addons" / "gd-tools-coverage" / "post_run_hook.gd"
-    ).exists()
 
     # Config files
     assert (tmp_path / "gd-tools.toml").exists()

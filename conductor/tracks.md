@@ -245,6 +245,7 @@ _Archived tracks live in `./archive/`._
   review found them silently dropped, and bump PLAN_VERSION to 3 so stale
   cached plans are invalidated)
   *Link: [ternary_instrumentation_20261003](./archive/ternary_instrumentation_20261003/index.md)*
+- [x] **Track: Instrumentation Hygiene Sweep** *Link: [./archive/instrumentation_hygiene_20261003/index.md](./archive/instrumentation_hygiene_20261003/index.md)*
 
 - [x] **Track: GitHub Actions Annotations** (feature: add a
   `github-actions` report format to lint, coverage report, and coverage

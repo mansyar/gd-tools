@@ -10,7 +10,7 @@ from pathlib import Path
 import gd_tools.errors
 import gd_tools.godot
 import gd_tools.init
-import gd_tools.test_runner
+import gd_tools.test_results
 
 SRC_DIR = Path(gd_tools.__file__).resolve().parent
 
@@ -40,8 +40,8 @@ def test_gut_not_installed_error_removed():
 
 
 def test_is_gut_installed_removed():
-    """is_gut_installed must stay removed from test_runner."""
-    assert not hasattr(gd_tools.test_runner, "is_gut_installed")
+    """is_gut_installed must stay removed from test_results."""
+    assert not hasattr(gd_tools.test_results, "is_gut_installed")
 
 
 def test_get_installed_gut_version_removed():
