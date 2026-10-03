@@ -262,3 +262,5 @@ _Archived tracks live in `./archive/`._
   so `ternary_true`/`ternary_false` are measured and gated independently and
   an uncovered arm can fail `--min-branch`; bumps PLAN_VERSION to 4)
   *Link: [ternary_branch_separation_20261003](./archive/ternary_branch_separation_20261003/index.md)*
+
+- [ ] **Track: Min-Branch Gate on coverage run + Zero-Branch Exemption** (bugfix: wire --min-branch into gd-tools coverage run, and make the branch gate exempt-with-note when a project has zero branch points, consistently across 	est, coverage run, coverage show) *Link: [min_branch_coverage_run_20261004](./tracks/min_branch_coverage_run_20261004/index.md)*
