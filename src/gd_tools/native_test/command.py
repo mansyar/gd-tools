@@ -46,7 +46,7 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     RuntimeMode,
 )
-from gd_tools.test_runner import TestDetail, TestResult, format_test_results
+from gd_tools.test_results import TestDetail, TestResult, format_test_results
 from gd_tools.watch.mapping import map_changed_file, select_suites_for_changes
 
 

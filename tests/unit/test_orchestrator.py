@@ -37,7 +37,7 @@ from gd_tools.errors import (
     CoveragePlanError,
     CoverageThresholdError,
 )
-from gd_tools.test_runner import TestResult
+from gd_tools.test_results import TestResult
 from gd_tools.verbosity import Verbosity, set_verbosity
 
 # --- Helpers ---

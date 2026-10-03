@@ -113,7 +113,7 @@ non-atomic writes move onto one shared helper (spec FR-7 through FR-11).
 Goal: GUT-removal residue stops shipping; the small dead-code items are
 removed; the known-stale docs are corrected (spec FR-12 through FR-17).
 
-- [ ] Task: Remove the dead GUT hook files and their deployment
+- [~] Task: Remove the dead GUT hook files and their deployment
   - Delete `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` and
     `post_run_hook.gd` (they extend the removed `GutHookScript` base).
   - Remove their entries from `init.py`'s deploy manifests; update the

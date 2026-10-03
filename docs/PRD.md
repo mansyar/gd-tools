@@ -477,8 +477,6 @@ gd_tools/
       gd_tools_native_coverage.gd # transient native coverage
     gd-tools-coverage/
       coverage.gd           # legacy GUT instrumentation + tracking
-      pre_run_hook.gd       # legacy GUT pre-run hook
-      post_run_hook.gd      # legacy GUT post-run hook
 ```
 
 - On `gd-tools init`, these are copied to the project's `addons/gd-tools-coverage/`.
@@ -662,8 +660,6 @@ tool exists for Godot 4. `gd-tools` implements a **hybrid architecture**:
 > `init.py`. 6 GUT tests in `test_coverage_tracker.gd`.
 >
 > **Hooks implemented:** Track 11 (`coverage_hooks_20260711`, archived). See
-> `src/gd_tools/addons/gd-tools-coverage/pre_run_hook.gd` (228 lines) and
-> `post_run_hook.gd` (113 lines). All 12 acceptance criteria passed. Key
 > deviations from spec: added plan schema validation (`_validate_plan`,
 > `_validate_file_entry`), Cause/Fix error format (`_log_error`), tracker
 > activation guard (`is_active` check in post-run). 28+13 GUT tests + 11
@@ -958,7 +954,7 @@ gd-tools/
 │       ├── godot.py              # Godot binary detection + invocation
 │       ├── init.py               # `gd-tools init` logic
 │       ├── doctor.py             # `gd-tools doctor` logic
-│       ├── test_runner.py        # Test result models shared by runtimes
+│       ├── test_results.py        # Test result models shared by runtimes
 │       ├── lint_runner.py       # `gd-tools lint` — gdlint wrapper
 │       ├── output.py           # Shared terminal output module (Rich-based)
 │       ├── verbosity.py        # Global verbosity context (Verbosity enum + accessors)
@@ -979,8 +975,6 @@ gd-tools/
 │       └── addons/
 │           └── gd-tools-coverage/
 │               ├── coverage.gd          # Core instrumentation + tracker
-│               ├── pre_run_hook.gd      # GUT pre-run hook
-│               └── post_run_hook.gd     # GUT post-run hook
 ├── tests/                        # Python tests for gd-tools itself
 ├── pyproject.toml
 └── README.md

@@ -71,8 +71,6 @@ src/gd_tools/
     │   └── gd_tools_native_coverage.gd
     └── gd-tools-coverage/
         ├── coverage.gd       # legacy GUT autoload singleton
-        ├── pre_run_hook.gd   # legacy GUT pre-run hook
-        └── post_run_hook.gd  # legacy GUT post-run hook
 ```
 
 ### Dependency Graph

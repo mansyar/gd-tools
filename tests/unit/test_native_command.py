@@ -33,7 +33,7 @@ from gd_tools.native_test.protocol import (
     NativeTestResult,
     RuntimeMode,
 )
-from gd_tools.test_runner import TestResult
+from gd_tools.test_results import TestResult
 
 pytestmark = pytest.mark.unit
 

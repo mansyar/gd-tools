@@ -36,6 +36,13 @@ from .verbosity import Verbosity, get_verbosity
 
 COVERAGE_ADDON_FILES = [
     "coverage.gd",
+]
+
+#: Files earlier versions deployed that gd-tools no longer ships. They
+#: extended the GUT hook base class removed by the GUT-bridge removal, so
+#: a stale copy in a project cannot work; ``init`` moves them aside and
+#: reports the cleanup instead of leaving doctor to flag them forever.
+REMOVED_COVERAGE_FILES = [
     "pre_run_hook.gd",
     "post_run_hook.gd",
 ]
@@ -103,7 +110,9 @@ def install_coverage_addon(project_root: Path) -> None:
     existing files to ensure they are up-to-date. If an existing file
     differs from the bundled version (indicating user modification),
     a backup copy is saved to ``addons/gd-tools-coverage/.backups/``
-    before overwriting, and a yellow warning is printed. Also writes
+    before overwriting, and a yellow warning is printed. Files from
+    earlier versions that gd-tools no longer deploys (see
+    ``REMOVED_COVERAGE_FILES``) are backed up and removed. Also writes
     a ``_version.txt`` file stamping the deployed addon with the current
     package version.
 
@@ -130,8 +139,36 @@ def install_coverage_addon(project_root: Path) -> None:
                     f" before overwriting.[/yellow]"
                 )
         shutil.copy2(source_file, target_file)
+    _remove_stale_addon_files(target_dir, backups_dir)
     version_file = target_dir / "_version.txt"
     version_file.write_text(f"{__version__}\n", encoding="utf-8")
+
+
+def _remove_stale_addon_files(target_dir: Path, backups_dir: Path) -> None:
+    """Remove files gd-tools no longer deploys, backing each one up.
+
+    A stale file cannot be byte-compared against a bundled version
+    (none ships anymore), so any copy found is preserved in
+    ``.backups/`` before deletion. Removing instead of ignoring keeps
+    ``doctor``'s coverage-addon check meaningful for projects upgraded
+    from older gd-tools releases.
+
+    Args:
+        target_dir: Addon directory to clean.
+        backups_dir: Directory the removed files are backed up into.
+    """
+    for gd_file in REMOVED_COVERAGE_FILES:
+        target_file = target_dir / gd_file
+        if not target_file.exists():
+            continue
+        backups_dir.mkdir(parents=True, exist_ok=True)
+        backup_path = backups_dir / f"{gd_file}.bak"
+        shutil.copy2(target_file, backup_path)
+        target_file.unlink()
+        console.print(
+            f"[yellow]Removed {gd_file} (no longer part of gd-tools). "
+            f"Backed up to {backup_path}[/yellow]"
+        )
 
 
 def install_native_test_addon(project_root: Path) -> None:
