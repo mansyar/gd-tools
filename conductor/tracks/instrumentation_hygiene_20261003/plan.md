@@ -137,13 +137,13 @@ removed; the known-stale docs are corrected (spec FR-12 through FR-17).
 
 ## Phase 6: Documentation and Final Validation
 
-- [ ] Task: Update documentation for the shipped fixes
+- [x] Task: Update documentation for the shipped fixes [c76473e]
   - CHANGELOG Unreleased entries: class-body anchoring fix (user-visible:
     files with class-level lambdas stop silently vanishing from coverage),
     merge omission fidelity, `PLAN_VERSION` 4, init self-heal.
   - `docs/ARCHITECTURE.md` and `docs/TDD.md` entries for the anchoring
     generalization, mirroring the ternary track's documentation style.
-- [ ] Task: Full-suite validation
+- [x] Task: Full-suite validation [c76473e]
   - `python -m pytest tests -q` green (unit + integration + e2e).
   - `ruff check src tests` and `black --check src tests` clean.
   - Coverage gates hold (>=80% line / >=70% branch).
