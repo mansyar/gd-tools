@@ -5,7 +5,7 @@
 **Workflow:** TDD (red → green per task), per-task commits with git notes,
 phase checkpoints per `conductor/workflow.md`.
 
-## Phase 1 — Plan Model & Generator (operand spans)
+## Phase 1 — Plan Model & Generator (operand spans) [checkpoint: 30e5a17]
 
 - [x] Task: Write failing tests for ternary operand span extraction (Red) [cba5d24]
   - [x] Tests asserting each ternary branch point carries an operand source span (line/col offsets) sufficient for textual location
