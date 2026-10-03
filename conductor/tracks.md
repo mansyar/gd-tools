@@ -242,4 +242,4 @@ _Archived tracks live in `./archive/`._
   (`::error`/`::warning`) so lint violations and coverage threshold
   failures surface as native PR annotations; includes config alignment
   and CI docs — Roadmap Track 31)
-  *Link: [gh_actions_annotations_20261002](./gh_actions_annotations_20261002/index.md)*
+  *Link: [gh_actions_annotations_20261002](./archive/gh_actions_annotations_20261002/index.md)*
