@@ -144,6 +144,7 @@ ASSERT_METHODS = [
     "test_explicit_snapshot_name",
     "test_mismatch_fails_and_reports_diff",
     "test_io_error_fails_closed",
+    "test_parameterized_case_snapshots",
 ]
 
 
@@ -211,14 +212,28 @@ def test_native_snapshot_serializer_renders_cycles_as_refs(godot_bin, tmp_path):
         assert entry["status"] == "passed", (entry["name"], entry["message"])
 
 
+def _with_parameter_cases(manifest: dict) -> dict:
+    """Attach preflight-style parameter metadata to the parameterized test."""
+    for suite in manifest["suites"]:
+        for test in suite["tests"]:
+            if test["name"] == "test_parameterized_case_snapshots":
+                test["parameters"] = {
+                    "names": ["value"],
+                    "values": [["alpha"], ["beta"]],
+                }
+    return manifest
+
+
 def test_native_snapshot_assert_flow(godot_bin, tmp_path):
     """assert_snapshot writes on first run, matches later, and fails on drift."""
     project = _prepare_project(tmp_path, godot_bin)
-    manifest = _snapshot_manifest(
-        project,
-        ASSERT_METHODS,
-        suite_name="NativeSnapshotAssertSuite",
-        suite_path="res://test/snapshot_assert_suite.gd",
+    manifest = _with_parameter_cases(
+        _snapshot_manifest(
+            project,
+            ASSERT_METHODS,
+            suite_name="NativeSnapshotAssertSuite",
+            suite_path="res://test/snapshot_assert_suite.gd",
+        )
     )
 
     # Run 1: first-run snapshots are written and the tests still pass.
@@ -234,14 +249,14 @@ def test_native_snapshot_assert_flow(godot_bin, tmp_path):
         for entry in first_payload["tests"]
     }
     assert written["test_first_run_writes_and_passes"] == [
-        "snapshot_assert_suite/test_first_run_writes_and_passes/"
+        "NativeSnapshotAssertSuite/test_first_run_writes_and_passes/"
         "test_first_run_writes_and_passes_1"
     ]
     snapshot_file = (
         project
         / ".gd-tools"
         / "snapshots"
-        / "snapshot_assert_suite"
+        / "NativeSnapshotAssertSuite"
         / "test_first_run_writes_and_passes"
         / "test_first_run_writes_and_passes_1.snap"
     )
@@ -275,12 +290,107 @@ def test_native_snapshot_assert_flow(godot_bin, tmp_path):
         if t["name"] == "test_first_run_writes_and_passes"
     )
     assert entry["status"] == "failed", (entry["message"],)
-    failures = entry["failures"]
+    failures = entry["diagnostics"]["failures"]
     assert len(failures) == 1
     assert failures[0]["assertion"] == "assert_snapshot"
     assert "Snapshot mismatch" in failures[0]["message"]
     assert "- " in failures[0]["message"]
     assert "+ " in failures[0]["message"]
+
+
+def test_native_snapshot_parallel_and_selection_compat(godot_bin, tmp_path):
+    """Snapshots stay stable across subset runs and concurrent suite runs."""
+    project = _prepare_project(tmp_path, godot_bin)
+    assert_manifest = _with_parameter_cases(
+        _snapshot_manifest(
+            project,
+            ASSERT_METHODS,
+            suite_name="NativeSnapshotAssertSuite",
+            suite_path="res://test/snapshot_assert_suite.gd",
+        )
+    )
+
+    # Prime stored snapshots, then re-run only one selected test.
+    primed_path = tmp_path / "snapshot-assert-prime.json"
+    primed = _run_native_manifest(
+        project, godot_bin, assert_manifest, primed_path
+    )
+    assert primed.returncode == 0, primed.stdout + primed.stderr
+    subset_manifest = _snapshot_manifest(
+        project,
+        ["test_first_run_writes_and_passes"],
+        suite_name="NativeSnapshotAssertSuite",
+        suite_path="res://test/snapshot_assert_suite.gd",
+    )
+    subset_path = tmp_path / "snapshot-assert-subset.json"
+    subset = _run_native_manifest(
+        project, godot_bin, subset_manifest, subset_path
+    )
+    assert subset.returncode == 0, subset.stdout + subset.stderr
+    subset_payload = json.loads(subset_path.read_text(encoding="utf-8"))
+    assert len(subset_payload["tests"]) == 1
+    assert subset_payload["tests"][0]["status"] == "passed", (
+        subset_payload["tests"][0]["message"],
+    )
+    assert (
+        subset_payload["tests"][0]["diagnostics"].get("snapshots_written", [])
+        == []
+    )
+
+    # Concurrent suites in one project write disjoint snapshot directories.
+    store_manifest = _snapshot_manifest(
+        project,
+        STORE_METHODS,
+        suite_name="NativeSnapshotStoreSuite",
+        suite_path="res://test/snapshot_store_suite.gd",
+    )
+    env = os.environ.copy()
+    processes = []
+    for label, manifest, result_name in (
+        ("assert", assert_manifest, "snapshot-assert-parallel.json"),
+        ("store", store_manifest, "snapshot-store-parallel.json"),
+    ):
+        result_path = tmp_path / result_name
+        child_env = env.copy()
+        child_env["GD_TOOLS_NATIVE_MANIFEST"] = str(
+            result_path.with_suffix(".manifest.json")
+        )
+        child_env["GD_TOOLS_NATIVE_RESULT"] = str(result_path)
+        result_path.with_suffix(".manifest.json").write_text(
+            json.dumps(manifest), encoding="utf-8"
+        )
+        processes.append(
+            (
+                label,
+                result_path,
+                subprocess.Popen(
+                    [
+                        godot_bin,
+                        "--headless",
+                        "--path",
+                        str(project),
+                        "--script",
+                        "res://addons/gd-tools-test/gd_tools_test_runner.gd",
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    env=child_env,
+                ),
+            )
+        )
+    for label, result_path, process in processes:
+        stdout, stderr = process.communicate(timeout=60)
+        assert process.returncode == 0, (label, stdout, stderr)
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+        for entry in payload["tests"]:
+            assert entry["status"] == "passed", (
+                label,
+                entry["name"],
+                entry["message"],
+            )
 
 
 def test_native_snapshot_store_round_trip(godot_bin, tmp_path):

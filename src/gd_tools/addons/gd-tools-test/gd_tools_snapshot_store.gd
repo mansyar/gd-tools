@@ -84,7 +84,7 @@ static func _parse(
 		var got := lines[0] if not lines.is_empty() else ""
 		return _malformed(
 			path,
-			"expected first line %r, got %r" % [expected_marker, got],
+			"expected first line %s, got %s" % [expected_marker, got],
 		)
 	var fields := {}
 	var body_start := lines.size()

@@ -22,6 +22,18 @@ var _gd_tools_signal_watchers: Dictionary = {}
 var _gd_tools_case_index := 0
 var _gd_tools_parameter_names: Array = []
 var _gd_tools_parameter_values: Array = []
+var _gd_tools_snapshot_suite_name := ""
+var _gd_tools_snapshot_test_name := ""
+var _gd_tools_snapshot_call_count := 0
+var _gd_tools_snapshots_written: Array[String] = []
+
+const _GD_TOOLS_SNAPSHOT_SERIALIZER := preload(
+	"res://addons/gd-tools-test/gd_tools_snapshot_serializer.gd"
+)
+const _GD_TOOLS_SNAPSHOT_STORE := preload(
+	"res://addons/gd-tools-test/gd_tools_snapshot_store.gd"
+)
+const _GD_TOOLS_SNAPSHOT_DEFAULT_BASE := "res://.gd-tools/snapshots"
 
 
 func _gd_tools_record_failure(
@@ -1323,3 +1335,117 @@ func _gd_tools_disconnect_wait() -> void:
 		_gd_tools_wait_timer.timeout.disconnect(_gd_tools_wait_resolved.emit)
 	_gd_tools_wait_signal = null
 	_gd_tools_wait_timer = null
+
+
+## Assert that a value matches its stored snapshot, writing it on first run.
+##
+## The first run for a given snapshot name stores the canonical rendering of
+## [param value] and passes; later runs compare against the stored file and
+## fail with a line diff when the rendering drifts. I/O problems and
+## malformed snapshot files fail closed: they record a failure instead of
+## silently passing. Automatic names follow the ``<test>_<call_index>``
+## convention; pass [param name] to override it.
+func assert_snapshot(value, name: String = "") -> void:
+	var suite_name := _gd_tools_snapshot_suite_name
+	var test_name := _gd_tools_snapshot_test_name
+	if suite_name.is_empty() or test_name.is_empty():
+		_gd_tools_record_failure(
+			"assert_snapshot",
+			"Snapshot context is unavailable; assert_snapshot requires the native runner.",
+			str(value),
+			""
+		)
+		return
+	var snapshot_name := name
+	if snapshot_name.is_empty():
+		_gd_tools_snapshot_call_count += 1
+		snapshot_name = "%s_%d" % [test_name, _gd_tools_snapshot_call_count]
+	var rendered := _GD_TOOLS_SNAPSHOT_SERIALIZER.render(value)
+	var existing := _GD_TOOLS_SNAPSHOT_STORE.read(
+		_gd_tools_snapshot_base_dir(), suite_name, test_name, snapshot_name
+	)
+	if bool(existing.get("ok", false)):
+		var stored := str(existing.get("value", ""))
+		if stored == rendered:
+			return
+		_gd_tools_record_failure(
+			"assert_snapshot",
+			"Snapshot mismatch for %s:\n%s\nRun gd-tools test --snapshot-update to accept the new output."
+				% [snapshot_name, _gd_tools_snapshot_diff(stored, rendered)],
+			rendered,
+			stored,
+		)
+		return
+	if str(existing.get("error", "io")) != "not_found":
+		_gd_tools_record_failure(
+			"assert_snapshot",
+			str(existing.get("message", "Snapshot read failed.")),
+			rendered,
+			""
+		)
+		return
+	var write_result := _GD_TOOLS_SNAPSHOT_STORE.write(
+		_gd_tools_snapshot_base_dir(), suite_name, test_name, snapshot_name, rendered
+	)
+	if not bool(write_result.get("ok", false)):
+		_gd_tools_record_failure(
+			"assert_snapshot",
+			str(write_result.get("message", "Snapshot write failed.")),
+			rendered,
+			""
+		)
+		return
+	_gd_tools_snapshots_written.append("%s/%s/%s" % [suite_name, test_name, snapshot_name])
+
+
+## Snapshots written by this test attempt, as ``suite/test/name`` paths.
+func get_snapshots_written() -> Array[String]:
+	return _gd_tools_snapshots_written.duplicate()
+
+
+func _gd_tools_snapshot_base_dir() -> String:
+	var base_dir := OS.get_environment("GD_TOOLS_SNAPSHOT_BASE")
+	if base_dir.is_empty():
+		return _GD_TOOLS_SNAPSHOT_DEFAULT_BASE
+	return base_dir
+
+
+## Render a unified-style line diff between stored and rendered snapshots.
+func _gd_tools_snapshot_diff(stored: String, rendered: String) -> String:
+	var old_lines := stored.split("\n")
+	var new_lines := rendered.split("\n")
+	var rows := old_lines.size()
+	var cols := new_lines.size()
+	var table: Array = []
+	for _row in range(rows + 1):
+		var line := []
+		line.resize(cols + 1)
+		line.fill(0)
+		table.append(line)
+	for i in range(rows - 1, -1, -1):
+		for j in range(cols - 1, -1, -1):
+			if old_lines[i] == new_lines[j]:
+				table[i][j] = int(table[i + 1][j + 1]) + 1
+			else:
+				table[i][j] = max(int(table[i + 1][j]), int(table[i][j + 1]))
+	var out: Array[String] = []
+	var i := 0
+	var j := 0
+	while i < rows and j < cols:
+		if old_lines[i] == new_lines[j]:
+			out.append("  " + str(old_lines[i]))
+			i += 1
+			j += 1
+		elif int(table[i + 1][j]) >= int(table[i][j + 1]):
+			out.append("+ " + str(new_lines[j]))
+			j += 1
+		else:
+			out.append("- " + str(old_lines[i]))
+			i += 1
+	while i < rows:
+		out.append("- " + str(old_lines[i]))
+		i += 1
+	while j < cols:
+		out.append("+ " + str(new_lines[j]))
+		j += 1
+	return "\n".join(PackedStringArray(out))

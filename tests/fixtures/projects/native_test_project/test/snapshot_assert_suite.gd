@@ -5,7 +5,7 @@ class_name NativeSnapshotAssertSuite
 const STORE := preload("res://addons/gd-tools-test/gd_tools_snapshot_store.gd")
 
 const BASE_DIR := "res://.gd-tools/snapshots"
-const SUITE := "snapshot_assert_suite"
+const SUITE := "NativeSnapshotAssertSuite"
 
 
 func test_first_run_writes_and_passes() -> void:
@@ -83,3 +83,15 @@ func test_io_error_fails_closed() -> void:
 	assert_eq(failure.get("assertion"), "assert_snapshot")
 	assert_true(str(failure.get("message", "")).length() > 0)
 	clear_failures()
+
+
+func test_parameterized_case_snapshots() -> void:
+	var value = use_parameters(["alpha", "beta"])
+	assert_snapshot(value)
+	var case_name := _gd_tools_snapshot_test_name
+	assert_true(
+		FileAccess.file_exists(
+			STORE.snapshot_path(BASE_DIR, SUITE, case_name, case_name + "_1")
+		),
+		case_name
+	)
