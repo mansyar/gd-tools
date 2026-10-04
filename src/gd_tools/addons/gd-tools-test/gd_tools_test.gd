@@ -588,6 +588,42 @@ static func _gd_tools_args_match(pattern: Array, call_args: Array) -> bool:
 	return _gd_tools_stub_specificity(pattern, call_args) >= 0
 
 
+## Maximum number of recorded calls listed in spy assertion failure
+## diagnostics. Beyond this, a summary line reports the omitted calls so
+## failure output stays readable.
+const _GD_TOOLS_CALL_LISTING_LIMIT := 8
+
+
+func _gd_tools_calls_listing(method: String, calls: Array) -> String:
+	## Render a bounded, indexed listing of recorded calls for diagnostics.
+	var lines: Array[String] = ['Recorded calls for "%s":' % method]
+	var shown := mini(calls.size(), _GD_TOOLS_CALL_LISTING_LIMIT)
+	for index in range(shown):
+		lines.append("  call %d: %s" % [index, calls[index]])
+	if calls.size() > shown:
+		lines.append("  ... and %d more call(s)" % (calls.size() - shown))
+	return "\n".join(lines)
+
+
+func _gd_tools_args_diff(expected_args: Array, actual_args: Array) -> String:
+	## Render a per-argument expected-vs-actual diff for a failed match.
+	##
+	## Only concrete mismatched positions are listed; "any" wildcard
+	## positions never mismatch and are skipped.
+	var lines: Array[String] = []
+	var shared := mini(expected_args.size(), actual_args.size())
+	for index in range(shared):
+		var expected = expected_args[index]
+		if expected is String and str(expected) == "any":
+			continue
+		var actual = actual_args[index]
+		if expected != actual:
+			lines.append(
+				"  argument %d: expected %s, but was %s" % [index, expected, actual]
+			)
+	return "\n".join(lines)
+
+
 func _gd_tools_stub_find(double_id: int, method: String, call_args: Array) -> Dictionary:
 	var per_double: Dictionary = _gd_tools_stub_registry.get(double_id, {})
 	var entries: Array = per_double.get(method, [])
@@ -648,6 +684,7 @@ func assert_not_called(target: Object, method: String, message: String = "") -> 
 					'Expected "%s" to have never been called, but it was called %d time(s).'
 					% [method, calls.size()]
 				)
+				+ "\n" + _gd_tools_calls_listing(method, calls)
 			),
 			calls.size(),
 			0
@@ -658,7 +695,8 @@ func assert_call_count(target: Object, method: String, count: int, message: Stri
 	## Assert that a double recorded exactly `count` calls to `method`.
 	if _gd_tools_assert_target_is_double(target, "assert_call_count"):
 		return
-	var actual := _gd_tools_double_calls(target, method).size()
+	var calls: Array = _gd_tools_double_calls(target, method)
+	var actual := calls.size()
 	if actual != count:
 		_gd_tools_record_failure(
 			"assert_call_count",
@@ -668,6 +706,7 @@ func assert_call_count(target: Object, method: String, count: int, message: Stri
 					'Expected "%s" to have been called %d time(s), but it was called %d time(s).'
 					% [method, count, actual]
 				)
+				+ "\n" + _gd_tools_calls_listing(method, calls)
 			),
 			actual,
 			count
@@ -712,6 +751,7 @@ func assert_call_arguments(
 					'Expected "%s" call %d arguments %s, but was %s.'
 					% [method, call_index, expected_args, actual_args]
 				)
+				+ "\n" + _gd_tools_args_diff(expected_args, actual_args)
 			),
 			actual_args,
 			expected_args
