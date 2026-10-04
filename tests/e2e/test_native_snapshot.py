@@ -131,6 +131,13 @@ CYCLE_METHODS = [
     "test_cyclic_render_is_deterministic",
 ]
 
+STORE_METHODS = [
+    "test_write_creates_versioned_snapshot_file",
+    "test_read_round_trips_stored_value",
+    "test_read_missing_snapshot_reports_not_found",
+    "test_read_malformed_snapshot_reports_error",
+]
+
 
 def _single_failure(payload: dict, name: str) -> dict:
     """Return the one failure recorded for a test entry."""
@@ -187,6 +194,28 @@ def test_native_snapshot_serializer_renders_cycles_as_refs(godot_bin, tmp_path):
         project,
         godot_bin,
         _snapshot_manifest(project, CYCLE_METHODS),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_native_snapshot_store_round_trip(godot_bin, tmp_path):
+    """The snapshot store writes versioned files and reads them back."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "snapshot-store.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _snapshot_manifest(
+            project,
+            STORE_METHODS,
+            suite_name="NativeSnapshotStoreSuite",
+            suite_path="res://test/snapshot_store_suite.gd",
+        ),
         result_path,
     )
 
