@@ -107,7 +107,7 @@ reporting, so this phase lands first per user approval.
 
 ---
 
-## Phase 6: Property-value assertions
+## Phase 6: Property-value assertions [checkpoint: 72664a1]
 
 - [x] Task: Spike & decide the interception mechanism (documented in plan notes)
   - [x] Evaluate generated getter/setter overrides vs `_get`/`_set` interception on the generated double script against Godot 4.5+ semantics
