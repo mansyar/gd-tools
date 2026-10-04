@@ -117,10 +117,10 @@ reporting, so this phase lands first per user approval.
   - [x] `assert_property_is` fails with expected/actual diagnostics on mismatch
   - [x] `assert_property_is` fails cleanly when the property does not exist
   - [x] Works on partial doubles and real objects (not double-restricted)
-- [~] Task: Implement `assert_property_is` on GdToolsTest
-  - [ ] Presence check via `in` + value read via `get()`, any Object target
-  - [ ] Rich failure diagnostics consistent with Phase 2
-  - [ ] Verify GREEN: new suites pass; `CI=true pytest` passes
+- [x] Task: Implement `assert_property_is` on GdToolsTest (80c3287)
+  - [x] Presence check via `in` + value read via `get()`, any Object target
+  - [x] Rich failure diagnostics consistent with Phase 2
+  - [x] Verify GREEN: new suites pass; `CI=true pytest` passes
 - [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
