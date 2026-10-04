@@ -60,7 +60,7 @@ reporting, so this phase lands first per user approval.
 - [x] Task: Spike & decide the aborted-test detection mechanism (documented in plan notes)
   - [x] Probe Godot 4.5-4.7 for script-error interception usable in a headless runner (EngineDebugger, log capture, GDScript APIs)
   - [x] Record the chosen mechanism (or stderr-correlation fallback) and rationale in plan.md notes before implementing
-- [ ] Task: Write failing e2e test for aborted-test reporting
+- [x] Task: Write failing e2e test for aborted-test reporting (3568662)
   - [ ] Fixture suite whose test aborts with a deliberate script error mid-body
   - [ ] The e2e run must report the aborted test as failed or errored (not passed)
   - [ ] Verify RED: run and confirm the current runner reports it passed (bug reproduced)
