@@ -529,14 +529,31 @@ coverage plans, or in coverage reports.
 - `partial_double(script)` behaves like the real script; only stubbed
   methods are overridden.
 - `stub(double, "method", [args...])` returns a chainable spec:
-  `.to_return(value)` replaces the response, `.to_call_super()` invokes the
-  parent implementation. Argument matching supports exact values, the
+  `.to_return(value)` replaces the response, `.to_return_seq([values])`
+  answers with the values in registration order and repeats the final
+  value once exhausted, `.to_call_super()` invokes the parent
+  implementation, and `.to_fail(message)` records a test failure with the
+  given message at call time (the call still yields the return type's
+  zero value, so the code under test keeps executing). Argument matching
+  supports exact values, the
   `"any"` wildcard per argument, and a no-args default fallback; a more
   specific match wins, and the last registered stub wins within a tier.
 - Call assertions: `assert_called`, `assert_not_called`,
   `assert_call_count(double, "method", n)`, and
   `assert_call_arguments(double, "method", [args], call_index)` (index `0`
-  is the first recorded call, `-1` the most recent).
+  is the first recorded call, `-1` the most recent; `"any"` elements are
+  per-argument wildcards). `assert_call_order(double, ["a", "b"])`
+  verifies relative order as a subsequence: every listed method must
+  appear in the recorded order, and calls to unlisted methods are
+  ignored.
+- Property-value assertions: `assert_property_is(target, "prop", expected)`
+  reads the current value via `get()` and works on any Object -- real
+  instances and doubles alike. GDScript has no property-access
+  interception for declared members, so property checks assert values
+  rather than access events.
+- Rich failure diagnostics: spy failures name the method or property,
+  show expected versus actual values with per-argument diffs, and list
+  recorded calls (bounded) so the mismatch is visible without a debugger.
 - Fail-fast validation: stubbing a method the target does not have, or
   doubling a non-script value, fails the test immediately with a diagnostic
   naming the method and the target.
@@ -556,6 +573,31 @@ func test_removing_items_reports_remaining() -> void:
     assert_call_count(inventory, "remove", 1)
     assert_call_arguments(inventory, "remove", ["sword"])
     assert_eq(inventory.count(), 3)
+
+
+func test_first_two_reads_come_from_the_sequence() -> void:
+    var inventory = double(SUBJECT)
+    # The last value repeats once the sequence runs out.
+    stub(inventory, "count").to_return_seq([3, 2])
+    assert_eq(inventory.count(), 3)
+    assert_eq(inventory.count(), 2)
+    assert_eq(inventory.count(), 2)
+
+
+func test_calls_happened_in_the_expected_order() -> void:
+    var inventory = partial_double(SUBJECT)
+    inventory.remove("sword")
+    inventory.add("shield")
+
+    # Subsequence check: other calls in between are ignored.
+    assert_call_order(inventory, ["remove", "add"])
+
+
+func test_state_matches_after_the_call() -> void:
+    # Property-value assertions work on doubles and real objects alike.
+    var inventory = partial_double(SUBJECT)
+    inventory.add("gem")
+    assert_property_is(inventory, "items", ["gem"])
 ```
 
 **Signal assertions:**
