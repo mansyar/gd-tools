@@ -2040,9 +2040,11 @@ def test_native_aborted_test_is_reported_as_error(godot_bin, tmp_path):
     aborted = by_name["test_script_error_aborts_the_test_body"]
     assert aborted["status"] == "error", (aborted["status"], aborted["message"])
     assert "nonexistent_method_on_purpose" in aborted["message"], aborted["message"]
-    # A suite with an errored test is not a passing run.
+    # A suite with an errored test is not a passing run. Per-test "error"
+    # status maps to the protocol's infrastructure exit code (2), matching
+    # hook failures and missing-method errors.
     assert payload["status"] != "passed", payload["status"]
-    assert result.returncode == 1, result.stdout + result.stderr
+    assert result.returncode == 2, result.stdout + result.stderr
     # The rest of the suite is unaffected by the earlier abort.
     survivor = by_name["test_the_rest_of_the_suite_still_runs"]
     assert survivor["status"] == "passed", survivor["message"]

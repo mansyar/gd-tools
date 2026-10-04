@@ -35,6 +35,9 @@ var _coverage_omissions: Array = []
 var _log_path := ""
 var _current_windowed := false
 var _screenshot_path := ""
+# Logger trap armed around each test body so script runtime errors that
+# abort the body are attributed to the exact test that triggered them.
+var _script_error_trap: _GdToolsScriptErrorTrap = null
 
 
 func _init() -> void:
@@ -369,12 +372,19 @@ func _run_test_attempt(
 		await _await_test_call(test_context, "before_each")
 		timed_out = _test_timeout_reached
 
+	var script_errors: Array = []
 	if not timed_out:
 		if test_context.has_method(method_name):
 			test_context._gd_tools_case_index = int(test_data.get("parameters_index", 0))
+			if _script_error_trap == null:
+				_script_error_trap = _GdToolsScriptErrorTrap.new()
+			_script_error_trap.hits.clear()
+			OS.add_logger(_script_error_trap)
 			await _await_test_call(
 				test_context, method_name, test_data.get("parameters_values", [])
 			)
+			OS.remove_logger(_script_error_trap)
+			script_errors = _script_error_trap.hits.duplicate()
 			if _test_timeout_reached:
 				timed_out = true
 		else:
@@ -409,6 +419,17 @@ func _run_test_attempt(
 	var failures: Array[Dictionary] = test_context.get_failures()
 	var status := "failed" if not failures.is_empty() else "passed"
 	var message := _failure_message(failures)
+	if not script_errors.is_empty():
+		# A script runtime error aborts the test body mid-execution, so every
+		# later assertion silently never ran: neither "passed" nor "failed"
+		# can be trusted, and the verdict is reported as an infrastructure
+		# error like hook failures and timeouts.
+		status = "error"
+		message = _script_error_message(script_errors)
+		if not failures.is_empty():
+			message = "%s; assertion failures recorded before the abort: %s" % [
+				message, _failure_message(failures)
+			]
 	if status == "passed" and test_context.is_skipped():
 		# A skip is only reported when nothing actually failed, so a recorded
 		# failure always outranks it. Cleanup failures and timeouts still
@@ -745,6 +766,16 @@ func _record_test_result(
 	)
 
 
+func _script_error_message(script_errors: Array) -> String:
+	var first: Dictionary = script_errors[0]
+	var message := "Script error aborted the test: %s (at %s:%d)" % [
+		str(first.get("code", "")), str(first.get("file", "")), int(first.get("line", 0))
+	]
+	if script_errors.size() > 1:
+		message += " (+%d more script error(s))" % (script_errors.size() - 1)
+	return message
+
+
 func _failure_message(failures: Array[Dictionary]) -> String:
 	var message := ""
 	for failure in failures:
@@ -936,3 +967,24 @@ func _write_result() -> void:
 	var rename_error := DirAccess.rename_absolute(temporary_path, result_path)
 	if rename_error != OK:
 		push_error("Unable to finalize native result: %s" % result_path)
+
+
+## Captures engine-reported script runtime errors while a single test body
+## runs. Godot 4.5+ delivers script errors to registered Loggers with
+## ERROR_TYPE_SCRIPT, so the runner can attribute body aborts to the exact
+## test that triggered them instead of relying on post-run log scanning.
+class _GdToolsScriptErrorTrap extends Logger:
+	var hits: Array = []
+
+	func _log_error(
+		function: String,
+		file: String,
+		line: int,
+		code: String,
+		rationale: String,
+		editor_notify: bool,
+		error_type: int,
+		script_backtraces: Array
+	) -> void:
+		if error_type == Logger.ERROR_TYPE_SCRIPT:
+			hits.append({"code": str(code), "file": str(file), "line": line})
