@@ -6,7 +6,7 @@
   targets for new source: >80% line, >70% branch. Conventional commits with
   git-note summaries; phase checkpoints per `conductor/workflow.md`.
 
-## Phase 1 — Snapshot Serialization Core (GDScript runtime)
+## Phase 1 — Snapshot Serialization Core (GDScript runtime) [checkpoint: f3c3d7d]
 
 - [x] Task: Write failing tests for value serialization (Red) (bb19cfc)
   - Primitives, Arrays, Dictionaries with sorted keys, nested structures
