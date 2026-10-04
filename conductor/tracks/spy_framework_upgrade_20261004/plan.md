@@ -93,10 +93,10 @@ reporting, so this phase lands first per user approval.
 
 ## Phase 5: Call-order assertions
 
-- [ ] Task: Write failing GDScript tests for `assert_call_order`
-  - [ ] Subsequence semantics: unrelated interleaved calls do not break the order check
-  - [ ] Out-of-order calls fail with the actual recorded order in the message
-  - [ ] Repeated calls of the same method are handled sensibly (first matching consumption)
+- [x] Task: Write failing GDScript tests for `assert_call_order` (7b650d0)
+  - [x] Subsequence semantics: unrelated interleaved calls do not break the order check
+  - [x] Out-of-order calls fail with the actual recorded order in the message
+  - [x] Repeated calls of the same method are handled sensibly (first matching consumption)
   - [ ] Non-double target fails with guidance (existing `_gd_tools_assert_target_is_double` behavior)
 - [ ] Task: Implement `assert_call_order` with order diagnostics
   - [ ] Subsequence matching over the double's recorded call sequence
