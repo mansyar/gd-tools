@@ -69,7 +69,9 @@ func test_read_malformed_snapshot_reports_error() -> void:
 		"test_read_malformed_snapshot_reports_error",
 		"default"
 	)
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
 	var file := FileAccess.open(path, FileAccess.WRITE)
+	assert_true(file != null)
 	file.store_string("not a snapshot\n")
 	file.close()
 	var result := STORE.read(
