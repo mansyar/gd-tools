@@ -273,4 +273,4 @@ _Archived tracks live in `./archive/`._
   recorded call lists and per-argument diffs, `to_return_seq` sequenced
   returns and `to_fail` fail stubs, `assert_call_order` subsequence
   verification, and property get/set spying via the Doubler generator)
-  *Link: [spy_framework_upgrade_20261004](./tracks/spy_framework_upgrade_20261004/index.md)*
+  *Link: [spy_framework_upgrade_20261004](./archive/spy_framework_upgrade_20261004/index.md)*
