@@ -760,6 +760,41 @@ func assert_call_arguments(
 		)
 
 
+func assert_property_is(
+	target: Object, property: String, expected: Variant, message: String = ""
+) -> void:
+	## Assert that `target` currently holds `expected` in `property`.
+	##
+	## Works on any Object, including doubles and real instances: the value
+	## is read via `get()` after the code under test ran. There is no
+	## property-access interception in GDScript (declared members bypass
+	## `_get`/`_set`), so this asserts values rather than access events.
+	if not property in target:
+		_gd_tools_record_failure(
+			"assert_property_is",
+			_gd_tools_detail(
+				message,
+				'Expected property "%s" to exist, but the object has no such property.'
+				% property
+			),
+			null,
+			expected
+		)
+		return
+	var actual: Variant = target.get(property)
+	if actual != expected:
+		_gd_tools_record_failure(
+			"assert_property_is",
+			_gd_tools_detail(
+				message,
+				'Expected property "%s" to be %s, but was %s.'
+				% [property, str(expected), str(actual)]
+			),
+			actual,
+			expected
+		)
+
+
 func assert_call_order(target: Object, methods: Array, message: String = "") -> void:
 	## Assert that a double's calls happened in the expected relative order.
 	##
