@@ -1,0 +1,9 @@
+{
+  "track_id": "spy_framework_upgrade_20261004",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-10-04",
+  "branch": "feature/doubles-spy-framework-20261004",
+  "title": "Doubles & Spy Framework Upgrade",
+  "summary": "Complete the native runtime doubles & spy framework: wildcard arg matchers in spy assertions, rich failure diagnostics, sequenced returns and fail stubs, call-order assertions, and property get/set spying."
+}

@@ -264,3 +264,13 @@ _Archived tracks live in `./archive/`._
   *Link: [ternary_branch_separation_20261003](./archive/ternary_branch_separation_20261003/index.md)*
 
 - [x] **Track: Min-Branch Gate on coverage run + Zero-Branch Exemption** (bugfix: wire --min-branch into gd-tools coverage run, and make the branch gate exempt-with-note when a project has zero branch points, consistently across `test`, coverage run, coverage show) *Link: [min_branch_coverage_run_20261004](./archive/min_branch_coverage_run_20261004/index.md)*
+
+---
+
+- [x] **Track: Doubles & Spy Framework Upgrade** (feature: complete the native
+  runtime doubles & spy framework — `"any"` wildcard arg matchers in spy
+  assertions sharing stub matching semantics, rich failure diagnostics with
+  recorded call lists and per-argument diffs, `to_return_seq` sequenced
+  returns and `to_fail` fail stubs, `assert_call_order` subsequence
+  verification, and property get/set spying via the Doubler generator)
+  *Link: [spy_framework_upgrade_20261004](./archive/spy_framework_upgrade_20261004/index.md)*

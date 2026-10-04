@@ -144,6 +144,21 @@ permanent migration path.
   `assert_signal_emitted_with_args` (element-wise matching with the `"any"`
   wildcard), and the awaitable `assert_signal_emitted_after` read the
   capture with rich failure diagnostics and per-test auto-reset.
+- Test doubles and spies are built in: `double(script)` /
+  `partial_double(script)` generate runtime subclasses that record every
+  call; `stub(...)` chains `.to_return(value)`,
+  `.to_return_seq([values])` (final value repeats on exhaustion),
+  `.to_call_super()`, and `.to_fail(message)` (records a failure at call
+  time; the call still yields the return type's zero value), with exact /
+  `"any"`-wildcard / default argument tiers. Spy assertions read the
+  recorder with rich diagnostics: `assert_called`, `assert_not_called`,
+  `assert_call_count`, `assert_call_arguments` (with `"any"` wildcards),
+  `assert_call_order` (subsequence semantics), and `assert_property_is`
+  (value assertions on any Object; GDScript has no property-access
+  interception for declared members).
+- Script errors that abort a test body are reported as `error` (exit code
+  2) rather than a false `passed`: the runner arms a Godot 4.5+ `Logger`
+  around each test-body invocation and captures the first script error.
 - The default per-test timeout is configurable independently from the Godot
   process/import timeout.
 - Suites run in isolated Godot processes by default.

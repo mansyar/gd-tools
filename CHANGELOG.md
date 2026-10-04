@@ -27,7 +27,40 @@
   JSON Schema snapshot (`docs/gd-tools.schema.json`) was regenerated
   to match.
 
+- **test**: Spy assertions accept the `"any"` wildcard in
+  `assert_call_arguments`, matching any recorded value per argument
+  position — the same wildcard `stub()` already uses. Assertion
+  failures now carry rich diagnostics: recorded-call listings (bounded),
+  and per-argument expected/actual diffs for argument mismatches.
+
+- **test**: `stub()` gains `.to_return_seq([values])` — calls are
+  answered with the values in registration order and the final value
+  repeats once the sequence is exhausted — and `.to_fail(message)`,
+  which records a test failure with the given message at call time while
+  still returning the method's type zero value so the code under test
+  keeps executing.
+
+- **test**: New `assert_call_order(double, ["method_a", "method_b"])`
+  verifies that a double's recorded calls happened in the expected
+  relative order. The check is subsequence-based: every listed method
+  must appear in the recorded order, calls to unlisted methods are
+  ignored, and failures show the actual recorded order (bounded).
+
+- **test**: New `assert_property_is(target, "property", expected)`
+  asserts the current value of a property via `get()`. Works on any
+  Object — doubles and real instances alike — with diagnostics that
+  distinguish a missing property from a value mismatch. (GDScript has
+  no property-access interception for declared members, so property
+  checks assert values rather than access events.)
+
 ### Fix
+
+- **test**: Script errors that abort a test body mid-run (for example a
+  call to a nonexistent method) are now reported as `error` for that
+  test instead of a false `passed`. The runner arms a Godot 4.5+
+  `Logger` around each test invocation and records the first script
+  error with its message and source location; per-test `error` maps to
+  exit code 2 like other infrastructure failures.
 
 - **coverage**: Fix unparseable GDScript when a ternary expression sits
   inside a multi-line parenthesised expression, or in a position with no

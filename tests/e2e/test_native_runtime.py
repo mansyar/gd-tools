@@ -1989,6 +1989,10 @@ MOCKING_METHODS = [
     "test_double_returns_fresh_instance_per_call",
     "test_partial_double_runs_real_implementation",
     "test_partial_double_keeps_side_effects",
+    "test_assert_property_is_passes_on_matching_value",
+    "test_assert_property_is_fails_with_expected_and_actual",
+    "test_assert_property_is_fails_for_missing_property",
+    "test_assert_property_is_works_on_partial_double",
 ]
 
 
@@ -2005,7 +2009,51 @@ STUBBING_METHODS = [
     "test_stub_applies_only_to_its_own_double",
     "test_stubs_do_not_leak_into_the_next_test",
     "test_double_records_calls_with_arguments",
+    "test_to_return_seq_returns_values_in_order",
+    "test_to_return_seq_repeats_final_value_on_exhaustion",
+    "test_to_return_seq_composes_with_specificity_tiers",
+    "test_to_fail_records_a_failure_at_call_time",
+    "test_to_fail_zero_value_lets_execution_continue",
 ]
+
+
+SCRIPT_ERROR_METHODS = [
+    "test_script_error_aborts_the_test_body",
+    "test_the_rest_of_the_suite_still_runs",
+]
+
+
+def test_native_aborted_test_is_reported_as_error(godot_bin, tmp_path):
+    """A script runtime error mid-test-body must not be reported as passed."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "script-error.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/script_error_suite.gd",
+            SCRIPT_ERROR_METHODS,
+            "NativeScriptErrorSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    by_name = {entry["name"]: entry for entry in payload["tests"]}
+    aborted = by_name["test_script_error_aborts_the_test_body"]
+    assert aborted["status"] == "error", (aborted["status"], aborted["message"])
+    assert "nonexistent_method_on_purpose" in aborted["message"], aborted[
+        "message"
+    ]
+    # A suite with an errored test is not a passing run. Per-test "error"
+    # status maps to the protocol's infrastructure exit code (2), matching
+    # hook failures and missing-method errors.
+    assert payload["status"] != "passed", payload["status"]
+    assert result.returncode == 2, result.stdout + result.stderr
+    # The rest of the suite is unaffected by the earlier abort.
+    survivor = by_name["test_the_rest_of_the_suite_still_runs"]
+    assert survivor["status"] == "passed", survivor["message"]
 
 
 def test_native_stub_matching_and_recording(godot_bin, tmp_path):
@@ -2045,6 +2093,21 @@ CALL_ASSERTION_METHODS = [
     "test_assert_call_arguments_failure_diagnostic_shows_both_argument_sets",
     "test_assertions_read_the_call_recorder_not_script_state",
     "test_assertion_on_a_null_target_fails_cleanly",
+    "test_assert_call_arguments_wildcard_matches_any_value",
+    "test_assert_call_arguments_wildcard_matches_in_any_position",
+    "test_assert_call_arguments_wildcard_still_checks_other_arguments",
+    "test_assert_call_arguments_wildcard_requires_same_arity",
+    "test_assert_call_count_failure_lists_recorded_calls",
+    "test_assert_not_called_failure_lists_recorded_calls",
+    "test_assert_call_arguments_failure_shows_per_argument_diff",
+    "test_assert_call_arguments_failure_diff_skips_wildcard_positions",
+    "test_failure_call_list_is_bounded",
+    "test_assert_call_order_passes_in_order",
+    "test_assert_call_order_ignores_unlisted_methods",
+    "test_assert_call_order_handles_repeated_calls",
+    "test_assert_call_order_fails_when_order_is_reversed",
+    "test_assert_call_order_fails_when_method_never_called",
+    "test_assert_call_order_requires_a_double",
 ]
 
 

@@ -8,6 +8,7 @@ class_name NativeMockSubject
 ## any stubbing machinery.
 
 var events: Array[String] = []
+var count: int = 0
 
 
 func greet(name: String) -> String:
