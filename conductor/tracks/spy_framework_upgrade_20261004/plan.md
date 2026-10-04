@@ -109,9 +109,9 @@ reporting, so this phase lands first per user approval.
 
 ## Phase 6: Property get/set spying
 
-- [ ] Task: Spike & decide the interception mechanism (documented in plan notes)
-  - [ ] Evaluate generated getter/setter overrides vs `_get`/`_set` interception on the generated double script against Godot 4.5+ semantics
-  - [ ] Record the decision and rationale in plan.md notes before implementing
+- [x] Task: Spike & decide the interception mechanism (documented in plan notes)
+  - [x] Evaluate generated getter/setter overrides vs `_get`/`_set` interception on the generated double script against Godot 4.5+ semantics
+  - [x] Record the decision and rationale in plan.md notes before implementing
 - [ ] Task: Write failing GDScript tests for property recording and assertions
   - [ ] Generated doubles record property reads (name) and writes (name + value)
   - [ ] `assert_property_read` / `assert_property_written` pass and fail as specified (optional expected value and count)
@@ -169,3 +169,23 @@ reporting, so this phase lands first per user approval.
   (bodies aborted at the builder call). True RED for these cases becomes
   observable once Phase 3 lands; implementation of the builder methods
   follows immediately after (Phase 4 GREEN).
+
+- 2026-10-04 (Phase 6 spike decision — property interception): empirically
+  probed Godot 4.7.2 with three scenarios in a temp project. (1) Redeclaring
+  a base-class member var in the generated double is a PARSE ERROR ("The
+  member "hp" already exists in parent class") — accessor-shadowing is
+  impossible in a subclass. (2) `_get`/`_set` virtuals do NOT fire for
+  inherited declared vars (read/write of `hp` produced no virtual calls);
+  they only fire for UNDECLARED dynamic properties (a write fired `_set`).
+  (3) `_validate_property` usage-hiding has no effect on direct member
+  access. Conclusion: intercepting get/set of DECLARED properties on a
+  double that extends the target is not achievable in GDScript — the
+  property dispatch is a direct member access with no interception point.
+  The viable mechanisms are (a) property-value assertions that read the
+  current value post-call via `get()` (works on doubles AND real objects,
+  no generator changes), (b) dynamic-property spying via `_get`/`_set`
+  (only for properties the target does not declare — near-useless), or
+  (c) a source-transpiled "property double" (rewrite the target's vars
+  into accessor pairs in a generated copy extending the target's base —
+  heavy, loses `is Target` identity, high correctness risk). Decision
+  deferred to the user; FR5 of the spec needs amendment before Task 2.
