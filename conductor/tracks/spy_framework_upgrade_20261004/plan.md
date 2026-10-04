@@ -15,7 +15,7 @@ commit + git note, plan update).
 
 ---
 
-## Phase 1: Shared matcher + spy wildcard support
+## Phase 1: Shared matcher + spy wildcard support [checkpoint: 60055f4]
 
 - [x] Task: Write failing GDScript tests for `"any"` wildcards in spy assertions (95415f2)
   - [x] Suite cases: `assert_call_arguments` with `"any"` in first, middle, and last argument positions
