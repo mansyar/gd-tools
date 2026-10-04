@@ -8,10 +8,10 @@
 
 ## Phase 1 — Snapshot Serialization Core (GDScript runtime)
 
-- [ ] Task: Write failing tests for value serialization (Red)
+- [x] Task: Write failing tests for value serialization (Red) (bb19cfc)
   - Primitives, Arrays, Dictionaries with sorted keys, nested structures
   - Byte-identical output across repeated runs
-- [ ] Task: Implement deterministic value serializer (Green)
+- [x] Task: Implement deterministic value serializer (Green) (bb19cfc)
 - [ ] Task: Write failing tests for Object property dump & Node scene-tree dump (Red)
   - Recursive property serialization; indented tree rendering (path, class, properties)
 - [ ] Task: Implement object & node-tree serialization (Green)
