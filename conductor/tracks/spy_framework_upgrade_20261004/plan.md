@@ -68,7 +68,7 @@ reporting, so this phase lands first per user approval.
   - [x] Chosen mechanism wired into `_invoke_test` / result recording
   - [x] Result payload (NDJSON + JUnit) statuses reflect the aborted test
   - [x] Verify GREEN: new e2e passes; full `CI=true pytest` passes (full-suite gate deferred to Phase 4 GREEN — the only failure is the intentional Phase 4 RED)
-- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (385ada5)
+- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (385ada5 + 5d07767)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
@@ -86,7 +86,7 @@ reporting, so this phase lands first per user approval.
   - [x] `StubBuilder.to_fail(message)` registers a fail stub; call-time failure recording on the owning suite
   - [x] Sequence/fail state consumed per call, per-double, per-test
   - [x] Verify GREEN: new suites pass; `CI=true pytest` passes (full-suite gate covered at Phase 4 coverage task)
-- [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
+- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (5d07767, shared with Phase 3)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
