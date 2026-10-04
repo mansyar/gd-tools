@@ -15,7 +15,7 @@
 - [x] Task: Write failing tests for Object property dump & Node scene-tree dump (Red) (f2556cb)
   - Recursive property serialization; indented tree rendering (path, class, properties)
 - [x] Task: Implement object & node-tree serialization (Green) (f2556cb)
-- [ ] Task: Write failing tests for cycle-safety & reference rendering (Red)
+- [~] Task: Write failing tests for cycle-safety & reference rendering (Red)
 - [ ] Task: Implement cycle-safe reference rendering (Green)
 - [ ] Task: Refactor pass — extract shared serialization helpers, style-guide conformance
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

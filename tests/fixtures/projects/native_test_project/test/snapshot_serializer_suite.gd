@@ -14,6 +14,7 @@ const SERIALIZER := preload(
 
 const SUBJECT := preload("res://scripts/snapshot_subject.gd")
 const NODE_SUBJECT := preload("res://scripts/snapshot_node_subject.gd")
+const CYCLE_SUBJECT := preload("res://scripts/snapshot_cycle_subject.gd")
 
 
 func test_renders_primitives() -> void:
@@ -117,3 +118,38 @@ func test_renders_node_tree_structure() -> void:
 
 func test_renders_node_without_script() -> void:
 	assert_eq(SERIALIZER.render(Node.new()), "Node:/ (Node)")
+
+
+func test_renders_self_referencing_dictionary_as_ref() -> void:
+	var value := {}
+	value["self"] = value
+	assert_eq(SERIALIZER.render(value), "{\n  \"self\": <ref>\n}")
+
+
+func test_renders_self_referencing_array_as_ref() -> void:
+	var value := []
+	value.append(value)
+	assert_eq(SERIALIZER.render(value), "[\n  <ref>\n]")
+
+
+func test_renders_object_cycle_as_ref() -> void:
+	var first = CYCLE_SUBJECT.new()
+	var second = CYCLE_SUBJECT.new()
+	first.partner = second
+	second.partner = first
+	assert_eq(
+		SERIALIZER.render(first),
+		"""Object:res://scripts/snapshot_cycle_subject.gd
+  label: "cycle"
+  partner: Object:res://scripts/snapshot_cycle_subject.gd
+    label: "cycle"
+    partner: <ref>"""
+	)
+
+
+func test_cyclic_render_is_deterministic() -> void:
+	var value := {}
+	value["self"] = value
+	var first := SERIALIZER.render(value)
+	var second := SERIALIZER.render(value)
+	assert_eq(first, second)

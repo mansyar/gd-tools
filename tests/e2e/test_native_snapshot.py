@@ -124,6 +124,13 @@ OBJECT_NODE_METHODS = [
     "test_renders_node_without_script",
 ]
 
+CYCLE_METHODS = [
+    "test_renders_self_referencing_dictionary_as_ref",
+    "test_renders_self_referencing_array_as_ref",
+    "test_renders_object_cycle_as_ref",
+    "test_cyclic_render_is_deterministic",
+]
+
 
 def _single_failure(payload: dict, name: str) -> dict:
     """Return the one failure recorded for a test entry."""
@@ -163,6 +170,23 @@ def test_native_snapshot_serializer_renders_objects_and_nodes(
         project,
         godot_bin,
         _snapshot_manifest(project, OBJECT_NODE_METHODS),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_native_snapshot_serializer_renders_cycles_as_refs(godot_bin, tmp_path):
+    """Self-referencing containers and object cycles render as <ref>."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "snapshot-cycles.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _snapshot_manifest(project, CYCLE_METHODS),
         result_path,
     )
 
