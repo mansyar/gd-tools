@@ -18,7 +18,7 @@
 - [x] Task: Write failing tests for cycle-safety & reference rendering (Red) (7522e7c)
 - [x] Task: Implement cycle-safe reference rendering (Green) (7522e7c)
 - [x] Task: Refactor pass — extract shared serialization helpers, style-guide conformance (7522e7c)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Snapshot Store & assert_snapshot API (GDScript runtime)
 
