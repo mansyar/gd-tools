@@ -140,6 +140,10 @@ reporting, so this phase lands first per user approval.
 
 ---
 
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions (bd55804)
+
 ## Plan notes
 
 - 2026-10-04 (Phase 3 spike decision — aborted-test detection): Godot 4.5+
