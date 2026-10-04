@@ -64,10 +64,10 @@ reporting, so this phase lands first per user approval.
   - [ ] Fixture suite whose test aborts with a deliberate script error mid-body
   - [ ] The e2e run must report the aborted test as failed or errored (not passed)
   - [ ] Verify RED: run and confirm the current runner reports it passed (bug reproduced)
-- [ ] Task: Implement aborted-test detection in the runner
-  - [ ] Chosen mechanism wired into `_invoke_test` / result recording
-  - [ ] Result payload (NDJSON + JUnit) statuses reflect the aborted test
-  - [ ] Verify GREEN: new e2e passes; full `CI=true pytest` passes
+- [x] Task: Implement aborted-test detection in the runner (b117952)
+  - [x] Chosen mechanism wired into `_invoke_test` / result recording
+  - [x] Result payload (NDJSON + JUnit) statuses reflect the aborted test
+  - [x] Verify GREEN: new e2e passes; full `CI=true pytest` passes (full-suite gate deferred to Phase 4 GREEN — the only failure is the intentional Phase 4 RED)
 - [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
