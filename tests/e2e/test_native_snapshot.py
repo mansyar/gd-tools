@@ -86,16 +86,21 @@ def _run_native_manifest(
     )
 
 
-def _snapshot_manifest(project: Path, names: list[str]) -> dict:
-    """Build a native manifest over the snapshot serializer fixture suite."""
+def _snapshot_manifest(
+    project: Path,
+    names: list[str],
+    suite_name: str = "NativeSnapshotSerializerSuite",
+    suite_path: str = "res://test/snapshot_serializer_suite.gd",
+) -> dict:
+    """Build a native manifest over a snapshot fixture suite."""
     return {
         "protocol_version": 3,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
             {
-                "name": "NativeSnapshotSerializerSuite",
-                "path": "res://test/snapshot_serializer_suite.gd",
+                "name": suite_name,
+                "path": suite_path,
                 "tests": [{"name": name} for name in names],
             }
         ],
@@ -110,6 +115,13 @@ SERIALIZER_PASSING_METHODS = [
     "test_sorts_dictionary_keys",
     "test_renders_nested_containers_indented",
     "test_render_is_deterministic_across_calls",
+]
+
+OBJECT_NODE_METHODS = [
+    "test_renders_script_object_properties",
+    "test_renders_object_without_script",
+    "test_renders_node_tree_structure",
+    "test_renders_node_without_script",
 ]
 
 
@@ -137,5 +149,24 @@ def test_native_snapshot_serializer_renders_values(godot_bin, tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert len(payload["tests"]) == len(SERIALIZER_PASSING_METHODS)
+    for entry in payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_native_snapshot_serializer_renders_objects_and_nodes(
+    godot_bin, tmp_path
+):
+    """Tier 2/3: script objects dump declared properties; nodes dump trees."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "snapshot-objects.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _snapshot_manifest(project, OBJECT_NODE_METHODS),
+        result_path,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
     for entry in payload["tests"]:
         assert entry["status"] == "passed", (entry["name"], entry["message"])

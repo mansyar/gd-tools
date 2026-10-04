@@ -12,6 +12,9 @@ const SERIALIZER := preload(
 	"res://addons/gd-tools-test/gd_tools_snapshot_serializer.gd"
 )
 
+const SUBJECT := preload("res://scripts/snapshot_subject.gd")
+const NODE_SUBJECT := preload("res://scripts/snapshot_node_subject.gd")
+
 
 func test_renders_primitives() -> void:
 	assert_eq(SERIALIZER.render(null), "null")
@@ -72,3 +75,45 @@ func test_render_is_deterministic_across_calls() -> void:
   "name": "player"
 }"""
 	)
+
+
+func test_renders_script_object_properties() -> void:
+	assert_eq(
+		SERIALIZER.render(SUBJECT.new()),
+		"""Object:res://scripts/snapshot_subject.gd
+  hp: 100
+  stats: {
+    "mp": 5
+  }
+  tags: [
+    "a",
+    "b"
+  ]"""
+	)
+
+
+func test_renders_object_without_script() -> void:
+	assert_eq(SERIALIZER.render(RefCounted.new()), "Object:RefCounted")
+
+
+func test_renders_node_tree_structure() -> void:
+	var root := Node.new()
+	var child: Node2D = NODE_SUBJECT.new()
+	var grand := Node.new()
+	child.name = "Child"
+	grand.name = "Grand"
+	root.add_child(child)
+	child.add_child(grand)
+	assert_eq(
+		SERIALIZER.render(root),
+		"""Node:/ (Node)
+  Node:/Child (Node2D)
+    label: "hud"
+    speed: 5.0
+    Node:/Child/Grand (Node)"""
+	)
+	root.free()
+
+
+func test_renders_node_without_script() -> void:
+	assert_eq(SERIALIZER.render(Node.new()), "Node:/ (Node)")

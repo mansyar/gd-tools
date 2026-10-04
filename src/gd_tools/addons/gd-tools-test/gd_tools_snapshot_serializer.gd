@@ -32,6 +32,10 @@ static func _render_value(value, depth: int) -> String:
 			return _render_array(value, depth)
 		TYPE_DICTIONARY:
 			return _render_dictionary(value, depth)
+		TYPE_OBJECT:
+			if value is Node:
+				return _render_node_tree(value, depth, "")
+			return _render_object(value, depth)
 		_:
 			return "<unsupported %s>" % type_string(typeof(value))
 
@@ -60,6 +64,54 @@ static func _render_dictionary(value: Dictionary, depth: int) -> String:
 
 static func _key_order(a, b) -> bool:
 	return str(a) < str(b)
+
+
+## Render one object as a header line plus its stored script properties.
+static func _render_object(value: Object, depth: int) -> String:
+	var script: Script = value.get_script()
+	var lines := _render_stored_properties(value, script, depth)
+	var header := "Object:%s" % _object_type_name(value, script)
+	if lines.is_empty():
+		return header
+	return header + "\n" + "\n".join(lines)
+
+
+static func _render_node_tree(node: Node, depth: int, path: String) -> String:
+	var node_path := path if path != "" else "/"
+	var header := "Node:%s (%s)" % [node_path, node.get_class()]
+	var lines := _render_stored_properties(node, node.get_script(), depth)
+	var inner := _INDENT.repeat(depth + 1)
+	for child in node.get_children():
+		var child_path := path + "/" + str(child.name)
+		lines.append(inner + _render_node_tree(child, depth + 1, child_path))
+	if lines.is_empty():
+		return header
+	return header + "\n" + "\n".join(lines)
+
+
+static func _render_stored_properties(
+	value: Object, script: Script, depth: int
+) -> Array[String]:
+	var lines: Array[String] = []
+	if script == null:
+		return lines
+	var names: Array[String] = []
+	for prop in script.get_script_property_list():
+		if int(prop.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			names.append(str(prop.name))
+	names.sort()
+	var inner := _INDENT.repeat(depth + 1)
+	for prop_name in names:
+		lines.append(
+			inner + prop_name + ": " + _render_value(value.get(prop_name), depth + 1)
+		)
+	return lines
+
+
+static func _object_type_name(value: Object, script: Script) -> String:
+	if script != null and str(script.resource_path) != "":
+		return str(script.resource_path)
+	return value.get_class()
 
 
 static func _render_key(key) -> String:
