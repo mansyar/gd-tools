@@ -33,7 +33,7 @@ commit + git note, plan update).
 
 ---
 
-## Phase 2: Rich failure diagnostics
+## Phase 2: Rich failure diagnostics [checkpoint: ca19e70]
 
 - [x] Task: Write failing GDScript tests for call-list and per-argument diagnostics (50e6de1)
   - [x] Failure output of `assert_call_count` / `assert_not_called` includes the recorded call list (index + args)
