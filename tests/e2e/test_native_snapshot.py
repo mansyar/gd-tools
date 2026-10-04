@@ -293,7 +293,7 @@ def test_native_snapshot_assert_flow(godot_bin, tmp_path):
     failures = entry["diagnostics"]["failures"]
     assert len(failures) == 1
     assert failures[0]["assertion"] == "assert_snapshot"
-    assert "Snapshot mismatch" in failures[0]["message"]
+    assert "the rendered output differs" in failures[0]["message"]
     assert "- " in failures[0]["message"]
     assert "+ " in failures[0]["message"]
 

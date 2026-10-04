@@ -1351,7 +1351,7 @@ func assert_snapshot(value, name: String = "") -> void:
 	if suite_name.is_empty() or test_name.is_empty():
 		_gd_tools_record_failure(
 			"assert_snapshot",
-			"Snapshot context is unavailable; assert_snapshot requires the native runner.",
+			"Expected a snapshot context, but assert_snapshot requires the native runner.",
 			str(value),
 			""
 		)
@@ -1370,7 +1370,10 @@ func assert_snapshot(value, name: String = "") -> void:
 			return
 		_gd_tools_record_failure(
 			"assert_snapshot",
-			"Snapshot mismatch for %s:\n%s\nRun gd-tools test --snapshot-update to accept the new output."
+			(
+				"Expected snapshot %s to match the stored snapshot, but the rendered output differs.\n%s\n"
+				+ "Run gd-tools test --snapshot-update to accept the new output."
+			)
 				% [snapshot_name, _gd_tools_snapshot_diff(stored, rendered)],
 			rendered,
 			stored,
@@ -1379,7 +1382,7 @@ func assert_snapshot(value, name: String = "") -> void:
 	if str(existing.get("error", "io")) != "not_found":
 		_gd_tools_record_failure(
 			"assert_snapshot",
-			str(existing.get("message", "Snapshot read failed.")),
+			"Snapshot read failed: %s" % str(existing.get("message", "unknown error")),
 			rendered,
 			""
 		)
@@ -1390,7 +1393,7 @@ func assert_snapshot(value, name: String = "") -> void:
 	if not bool(write_result.get("ok", false)):
 		_gd_tools_record_failure(
 			"assert_snapshot",
-			str(write_result.get("message", "Snapshot write failed.")),
+			"Snapshot write failed: %s" % str(write_result.get("message", "unknown error")),
 			rendered,
 			""
 		)
