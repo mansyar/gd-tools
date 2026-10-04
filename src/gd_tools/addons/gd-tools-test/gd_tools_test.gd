@@ -841,10 +841,12 @@ func assert_call_order(target: Object, methods: Array, message: String = "") -> 
 func _gd_tools_order_listing(recorded: Array) -> String:
 	## Render the recorded method order for failure diagnostics, capped so
 	## long streams stay readable.
-	if recorded.size() <= 20:
+	if recorded.size() <= _GD_TOOLS_CALL_LISTING_LIMIT:
 		return str(recorded)
-	var shown: Array = recorded.slice(0, 20)
-	return "%s ... and %d more call(s)" % [str(shown), recorded.size() - 20]
+	var shown: Array = recorded.slice(0, _GD_TOOLS_CALL_LISTING_LIMIT)
+	return "%s ... and %d more call(s)" % [
+		str(shown), recorded.size() - _GD_TOOLS_CALL_LISTING_LIMIT
+	]
 
 
 func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> bool:
