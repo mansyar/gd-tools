@@ -132,7 +132,7 @@ reporting, so this phase lands first per user approval.
   - [x] README test-runtime section: new spy capabilities in the feature list
   - [x] USER_GUIDE: doubles & spy cookbook sections (wildcards, sequences, fail stubs, order, property spying)
   - [x] CHANGELOG "Unreleased" entries per capability
-- [~] Task: Full-repo verification
+- [x] Task: Full-repo verification
   - [ ] `CI=true pytest` (unit, integration, e2e) passes
   - [ ] Full native suite run via `gd-tools test` passes
   - [ ] `ruff check src/ tests/ && black --check src/ tests/`
