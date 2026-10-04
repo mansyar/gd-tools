@@ -107,19 +107,19 @@ reporting, so this phase lands first per user approval.
 
 ---
 
-## Phase 6: Property get/set spying
+## Phase 6: Property-value assertions
 
 - [x] Task: Spike & decide the interception mechanism (documented in plan notes)
   - [x] Evaluate generated getter/setter overrides vs `_get`/`_set` interception on the generated double script against Godot 4.5+ semantics
   - [x] Record the decision and rationale in plan.md notes before implementing
-- [ ] Task: Write failing GDScript tests for property recording and assertions
-  - [ ] Generated doubles record property reads (name) and writes (name + value)
-  - [ ] `assert_property_read` / `assert_property_written` pass and fail as specified (optional expected value and count)
-  - [ ] Property records are per-double, per-test like method records
-- [ ] Task: Implement property recording in the Doubler generator and property assertions on GdToolsTest
-  - [ ] Generator emits property interception for doublable properties
-  - [ ] Recorder stores property accesses alongside method calls without breaking existing `calls` consumers
-  - [ ] New assertions implemented with rich failure diagnostics consistent with Phase 2
+- [ ] Task: Write failing GDScript tests for property-value assertions
+  - [ ] `assert_property_is` passes when the property holds the expected value
+  - [ ] `assert_property_is` fails with expected/actual diagnostics on mismatch
+  - [ ] `assert_property_is` fails cleanly when the property does not exist
+  - [ ] Works on partial doubles and real objects (not double-restricted)
+- [ ] Task: Implement `assert_property_is` on GdToolsTest
+  - [ ] Presence check via `in` + value read via `get()`, any Object target
+  - [ ] Rich failure diagnostics consistent with Phase 2
   - [ ] Verify GREEN: new suites pass; `CI=true pytest` passes
 - [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

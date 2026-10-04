@@ -51,14 +51,16 @@ generated-double machinery (`gd_tools_test.gd`, `gd_tools_mock.gd`) in the
   semantics: unrelated calls between them are allowed).
 - Failure output shows the actual recorded order.
 
-### FR5 — Property get/set spying
-- Generated doubles record property reads and writes (property name,
-  access kind, and for sets, the value) alongside method calls.
-- New assertions (minimal set): `assert_property_read`,
-  `assert_property_written`, with optional expected value and count.
-- Implementation touches the `Doubler` generator (getter/setter overrides
-  or `_get`/`_set` interception); validated against Godot 4.5+ behavior.
-  This is the riskiest phase and lands last.
+### FR5 — Property-value assertions (amended 2026-10-04 after the Phase 6 spike)
+- Original intent (intercepting property get/set on generated doubles) is
+  impossible in GDScript: redeclaring a base var in a subclass is a parse
+  error, and `_get`/`_set` never fire for declared (inherited) properties —
+  verified empirically on Godot 4.7.2 (see plan notes).
+- Replaced with `assert_property_is(target, property, expected, message)`:
+  a property-value assertion that reads the current value via `get()` and
+  works on doubles AND real Objects.
+- Failure diagnostics consistent with FR2: missing property vs value
+  mismatch with expected/actual rendering.
 
 ## Non-Functional Requirements
 - TDD per workflow.md (failing GDScript suites first, then implement).
@@ -88,7 +90,7 @@ generated-double machinery (`gd_tools_test.gd`, `gd_tools_mock.gd`) in the
 - P2: Rich failure diagnostics
 - P3: Sequenced returns & fail stubs
 - P4: Call-order assertions
-- P5: Property get/set spying
+- P5: Property-value assertions (amended after the Phase 6 spike)
 - P6: Docs & changelog
 
 ## Design Decisions (confirmed with user)
@@ -99,4 +101,5 @@ generated-double machinery (`gd_tools_test.gd`, `gd_tools_mock.gd`) in the
 - Spy assertions reuse the string `"any"` wildcard already used by
   `stub()` — one mental model, zero new API surface.
 - All five capabilities in one track, phased so each lands independently;
-  property spying last as the riskiest.
+  property work last as the riskiest (spike ran first and redirected FR5
+  to property-value assertions).
