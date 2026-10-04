@@ -68,7 +68,7 @@ reporting, so this phase lands first per user approval.
   - [x] Chosen mechanism wired into `_invoke_test` / result recording
   - [x] Result payload (NDJSON + JUnit) statuses reflect the aborted test
   - [x] Verify GREEN: new e2e passes; full `CI=true pytest` passes (full-suite gate deferred to Phase 4 GREEN — the only failure is the intentional Phase 4 RED)
-- [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
+- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (385ada5)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
