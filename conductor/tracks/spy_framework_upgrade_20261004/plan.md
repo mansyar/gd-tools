@@ -57,9 +57,9 @@ continues). A suite with a runtime error can report all-green. New-API
 RED runs (this track's Phases 4-6) depend on trustworthy status
 reporting, so this phase lands first per user approval.
 
-- [ ] Task: Spike & decide the aborted-test detection mechanism (documented in plan notes)
-  - [ ] Probe Godot 4.5-4.7 for script-error interception usable in a headless runner (EngineDebugger, log capture, GDScript APIs)
-  - [ ] Record the chosen mechanism (or stderr-correlation fallback) and rationale in plan.md notes before implementing
+- [x] Task: Spike & decide the aborted-test detection mechanism (documented in plan notes)
+  - [x] Probe Godot 4.5-4.7 for script-error interception usable in a headless runner (EngineDebugger, log capture, GDScript APIs)
+  - [x] Record the chosen mechanism (or stderr-correlation fallback) and rationale in plan.md notes before implementing
 - [ ] Task: Write failing e2e test for aborted-test reporting
   - [ ] Fixture suite whose test aborts with a deliberate script error mid-body
   - [ ] The e2e run must report the aborted test as failed or errored (not passed)
@@ -141,6 +141,26 @@ reporting, so this phase lands first per user approval.
 ---
 
 ## Plan notes
+
+- 2026-10-04 (Phase 3 spike decision — aborted-test detection): Godot 4.5+
+  exposes the `Logger` class: a GDScript object registered via
+  `OS.add_logger()` whose `_log_error(function, file, line, code,
+  rationale, editor_notify, error_type, script_backtraces)` receives every
+  engine error, with `error_type == ERROR_TYPE_SCRIPT` (2) for script
+  runtime errors. Verified empirically on the project's Godot 4.7.2 mono
+  binary: a `Trap extends Logger` captured
+  `"2|Invalid call. Nonexistent function 'nonexistent_method_probe' in
+  base 'RefCounted'.|res://probe3.gd:33"` while the caller continued after
+  the aborted callee. Chosen mechanism: the runner arms a logger around
+  each test-body invocation (`_invoke_test` window) and records the test
+  as `error` with the captured message when a script error lands in that
+  window. Rejected alternatives: stderr/log-file correlation from the
+  Python orchestrator (cannot fix the direct-runner e2e path; duplicate
+  source of truth), and EngineDebugger (not for script errors). Scope
+  note: hooks (`before_each`/`after_each`/suite hooks) are OUT of scope —
+  only the test-body window is armed; hook errors keep their current
+  suite-level handling. GUT 9.6 uses the same Godot 4.5 capability for
+  its error tracking.
 
 - 2026-10-04 (Phase 4 RED evidence): the five `to_return_seq`/`to_fail`
   suite cases were executed against the unmodified runtime; because of the
