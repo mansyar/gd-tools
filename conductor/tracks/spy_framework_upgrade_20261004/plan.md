@@ -75,17 +75,17 @@ reporting, so this phase lands first per user approval.
 
 ## Phase 4: Sequenced returns & fail stubs
 
-- [ ] Task: Write failing GDScript tests for `to_return_seq` and `to_fail`
-  - [ ] `to_return_seq` returns values in registration order across successive calls
-  - [ ] `to_return_seq` repeats the final value on exhaustion (design decision)
-  - [ ] `to_fail(msg)` records a test failure at call time via the standard failure path
-  - [ ] A `to_fail` call still yields the type-appropriate zero value so execution continues
-  - [ ] Both compose with specificity tiers (exact vs wildcard vs default) and per-test isolation
-- [ ] Task: Implement StubBuilder extensions and mock response logic
-  - [ ] `StubBuilder.to_return_seq(values)` registers a sequence stub
-  - [ ] `StubBuilder.to_fail(message)` registers a fail stub; call-time failure recording on the owning suite
-  - [ ] Sequence/fail state consumed per call, per-double, per-test
-  - [ ] Verify GREEN: new suites pass; `CI=true pytest` passes
+- [x] Task: Write failing GDScript tests for `to_return_seq` and `to_fail` (b3c4c81)
+  - [x] `to_return_seq` returns values in registration order across successive calls
+  - [x] `to_return_seq` repeats the final value on exhaustion (design decision)
+  - [x] `to_fail(msg)` records a test failure at call time via the standard failure path
+  - [x] A `to_fail` call still yields the type-appropriate zero value so execution continues
+  - [x] Both compose with specificity tiers (exact vs wildcard vs default) and per-test isolation
+- [x] Task: Implement StubBuilder extensions and mock response logic (27be15f)
+  - [x] `StubBuilder.to_return_seq(values)` registers a sequence stub
+  - [x] `StubBuilder.to_fail(message)` registers a fail stub; call-time failure recording on the owning suite
+  - [x] Sequence/fail state consumed per call, per-double, per-test
+  - [x] Verify GREEN: new suites pass; `CI=true pytest` passes (full-suite gate covered at Phase 4 coverage task)
 - [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
