@@ -102,7 +102,7 @@ reporting, so this phase lands first per user approval.
   - [x] Subsequence matching over the double's recorded call sequence
   - [x] Failure message shows the actual method order (bounded)
   - [x] Verify GREEN: new suites pass; `CI=true pytest` passes
-- [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
+- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (59608a2)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
