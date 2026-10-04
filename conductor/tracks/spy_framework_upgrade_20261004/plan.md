@@ -48,7 +48,32 @@ commit + git note, plan update).
 
 ---
 
-## Phase 3: Sequenced returns & fail stubs
+## Phase 3: Runner aborted-test detection (runner correctness)
+
+Discovered during sequenced-returns RED (2026-10-04): a GDScript runtime
+error aborts a test body mid-execution, but `_invoke_test` still records
+the test as `passed` (script errors are recoverable, so the runner
+continues). A suite with a runtime error can report all-green. New-API
+RED runs (this track's Phases 4-6) depend on trustworthy status
+reporting, so this phase lands first per user approval.
+
+- [ ] Task: Spike & decide the aborted-test detection mechanism (documented in plan notes)
+  - [ ] Probe Godot 4.5-4.7 for script-error interception usable in a headless runner (EngineDebugger, log capture, GDScript APIs)
+  - [ ] Record the chosen mechanism (or stderr-correlation fallback) and rationale in plan.md notes before implementing
+- [ ] Task: Write failing e2e test for aborted-test reporting
+  - [ ] Fixture suite whose test aborts with a deliberate script error mid-body
+  - [ ] The e2e run must report the aborted test as failed or errored (not passed)
+  - [ ] Verify RED: run and confirm the current runner reports it passed (bug reproduced)
+- [ ] Task: Implement aborted-test detection in the runner
+  - [ ] Chosen mechanism wired into `_invoke_test` / result recording
+  - [ ] Result payload (NDJSON + JUnit) statuses reflect the aborted test
+  - [ ] Verify GREEN: new e2e passes; full `CI=true pytest` passes
+- [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+---
+
+## Phase 4: Sequenced returns & fail stubs
 
 - [ ] Task: Write failing GDScript tests for `to_return_seq` and `to_fail`
   - [ ] `to_return_seq` returns values in registration order across successive calls
@@ -66,7 +91,7 @@ commit + git note, plan update).
 
 ---
 
-## Phase 4: Call-order assertions
+## Phase 5: Call-order assertions
 
 - [ ] Task: Write failing GDScript tests for `assert_call_order`
   - [ ] Subsequence semantics: unrelated interleaved calls do not break the order check
@@ -82,7 +107,7 @@ commit + git note, plan update).
 
 ---
 
-## Phase 5: Property get/set spying
+## Phase 6: Property get/set spying
 
 - [ ] Task: Spike & decide the interception mechanism (documented in plan notes)
   - [ ] Evaluate generated getter/setter overrides vs `_get`/`_set` interception on the generated double script against Godot 4.5+ semantics
@@ -101,7 +126,7 @@ commit + git note, plan update).
 
 ---
 
-## Phase 6: Docs & changelog
+## Phase 7: Docs & changelog
 
 - [ ] Task: Document the new API
   - [ ] README test-runtime section: new spy capabilities in the feature list
@@ -112,3 +137,15 @@ commit + git note, plan update).
   - [ ] Full native suite run via `gd-tools test` passes
   - [ ] `ruff check src/ tests/ && black --check src/ tests/`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+---
+
+## Plan notes
+
+- 2026-10-04 (Phase 4 RED evidence): the five `to_return_seq`/`to_fail`
+  suite cases were executed against the unmodified runtime; because of the
+  runner bug fixed in Phase 3 they were reported `passed`, but stderr shows
+  `SCRIPT ERROR: Nonexistent function 'to_return_seq'/'to_fail'` per case
+  (bodies aborted at the builder call). True RED for these cases becomes
+  observable once Phase 3 lands; implementation of the builder methods
+  follows immediately after (Phase 4 GREEN).

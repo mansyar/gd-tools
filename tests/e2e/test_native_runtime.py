@@ -2005,6 +2005,11 @@ STUBBING_METHODS = [
     "test_stub_applies_only_to_its_own_double",
     "test_stubs_do_not_leak_into_the_next_test",
     "test_double_records_calls_with_arguments",
+    "test_to_return_seq_returns_values_in_order",
+    "test_to_return_seq_repeats_final_value_on_exhaustion",
+    "test_to_return_seq_composes_with_specificity_tiers",
+    "test_to_fail_records_a_failure_at_call_time",
+    "test_to_fail_zero_value_lets_execution_continue",
 ]
 
 

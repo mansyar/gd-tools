@@ -102,3 +102,69 @@ func test_double_records_calls_with_arguments() -> void:
 	assert_eq(d.__gd_tools.calls[0]["args"], [2, 3])
 	assert_eq(d.__gd_tools.calls[1]["method"], "greet")
 	assert_eq(d.__gd_tools.calls[2]["args"], [4, 5])
+
+
+func test_to_return_seq_returns_values_in_order() -> void:
+	# A sequenced stub answers successive matching calls with its values
+	# in registration order.
+	var d = double(SUBJECT)
+	stub(d, "add", [2, 3]).to_return_seq([10, 20, 30])
+	assert_eq(d.add(2, 3), 10)
+	assert_eq(d.add(2, 3), 20)
+	assert_eq(d.add(2, 3), 30)
+
+
+func test_to_return_seq_repeats_final_value_on_exhaustion() -> void:
+	# Once the sequence is exhausted, its final value repeats so late
+	# calls never fail the script under test.
+	var d = double(SUBJECT)
+	stub(d, "add", [2, 3]).to_return_seq([10, 20])
+	assert_eq(d.add(2, 3), 10)
+	assert_eq(d.add(2, 3), 20)
+	assert_eq(d.add(2, 3), 20)
+	assert_eq(d.add(2, 3), 20)
+
+
+func test_to_return_seq_composes_with_specificity_tiers() -> void:
+	# Sequenced stubs participate in normal matching: an exact-argument
+	# stub outranks the default fallback, and each double tracks its own
+	# sequence position.
+	var d = double(SUBJECT)
+	stub(d, "add").to_return_seq([7, 8])
+	stub(d, "add", [1, 1]).to_return(2)
+	assert_eq(d.add(1, 1), 2)
+	assert_eq(d.add(4, 4), 7)
+	assert_eq(d.add(4, 4), 8)
+	# The exact stub is unaffected by the fallback's sequence position.
+	assert_eq(d.add(1, 1), 2)
+
+
+func test_to_fail_records_a_failure_at_call_time() -> void:
+	# A fail stub records a test failure through the normal failure path
+	# when a matching call happens, naming the method and the given
+	# message.
+	var d = double(SUBJECT)
+	stub(d, "add", [2, 3]).to_fail("boom")
+	assert_eq(d.add(2, 3), 0)
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1, "the fail stub recorded exactly one failure")
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("boom" in message, "carries the stub message: " + message)
+		assert_true('"add"' in message, "names the stubbed method: " + message)
+
+
+func test_to_fail_zero_value_lets_execution_continue() -> void:
+	# GDScript has no exceptions: after a fail stub fires, the call still
+	# answers the return type's zero value and the script under test keeps
+	# executing (subsequent calls still land on the recorder).
+	var d = double(SUBJECT)
+	stub(d, "note").to_fail("nope")
+	d.note("x")
+	assert_call_count(d, "note", 1)
+	d.add(2, 3)
+	assert_call_count(d, "add", 1)
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1, "only the fail stub recorded a failure")
