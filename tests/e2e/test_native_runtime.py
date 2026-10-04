@@ -2039,7 +2039,9 @@ def test_native_aborted_test_is_reported_as_error(godot_bin, tmp_path):
     by_name = {entry["name"]: entry for entry in payload["tests"]}
     aborted = by_name["test_script_error_aborts_the_test_body"]
     assert aborted["status"] == "error", (aborted["status"], aborted["message"])
-    assert "nonexistent_method_on_purpose" in aborted["message"], aborted["message"]
+    assert "nonexistent_method_on_purpose" in aborted["message"], aborted[
+        "message"
+    ]
     # A suite with an errored test is not a passing run. Per-test "error"
     # status maps to the protocol's infrastructure exit code (2), matching
     # hook failures and missing-method errors.
