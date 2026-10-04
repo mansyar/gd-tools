@@ -267,7 +267,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Doubles & Spy Framework Upgrade** (feature: complete the native
+- [x] **Track: Doubles & Spy Framework Upgrade** (feature: complete the native
   runtime doubles & spy framework — `"any"` wildcard arg matchers in spy
   assertions sharing stub matching semantics, rich failure diagnostics with
   recorded call lists and per-argument diffs, `to_return_seq` sequenced
