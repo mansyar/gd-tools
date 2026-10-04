@@ -68,3 +68,55 @@ func test_partial_double_keeps_side_effects() -> void:
 	p.note("hello")
 	assert_eq(p.events.size(), 1)
 	assert_eq(p.events[0], "hello")
+
+
+func test_assert_property_is_passes_on_matching_value() -> void:
+	# Property-value assertions read the current value via get(); they work
+	# on plain objects, not just doubles.
+	var s = SUBJECT.new()
+	s.count = 7
+	assert_property_is(s, "count", 7)
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 0, "expected no failures: %s" % [failures])
+
+
+func test_assert_property_is_fails_with_expected_and_actual() -> void:
+	var s = SUBJECT.new()
+	s.count = 7
+	assert_property_is(s, "count", 8)
+	var failures := get_failures()
+	# Clear the recorder BEFORE verifying so a silent assertion fails the
+	# test for real.
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true('\"count\"' in message, "names the property: " + message)
+		assert_true("8" in message, "shows the expected value: " + message)
+		assert_true("7" in message, "shows the actual value: " + message)
+
+
+func test_assert_property_is_fails_for_missing_property() -> void:
+	var s = SUBJECT.new()
+	assert_property_is(s, "no_such_prop", 1)
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("no_such_prop" in message, "names the property: " + message)
+		assert_true(
+				"no such property" in message.to_lower(),
+				"explains the property is missing: " + message
+		)
+
+
+func test_assert_property_is_works_on_partial_double() -> void:
+	# Partial doubles keep real state, so value assertions work on them too.
+	var p = partial_double(SUBJECT)
+	p.count = 3
+	assert_property_is(p, "count", 3)
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 0, "expected no failures: %s" % [failures])

@@ -1989,6 +1989,10 @@ MOCKING_METHODS = [
     "test_double_returns_fresh_instance_per_call",
     "test_partial_double_runs_real_implementation",
     "test_partial_double_keeps_side_effects",
+    "test_assert_property_is_passes_on_matching_value",
+    "test_assert_property_is_fails_with_expected_and_actual",
+    "test_assert_property_is_fails_for_missing_property",
+    "test_assert_property_is_works_on_partial_double",
 ]
 
 

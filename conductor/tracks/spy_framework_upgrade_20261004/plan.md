@@ -112,7 +112,7 @@ reporting, so this phase lands first per user approval.
 - [x] Task: Spike & decide the interception mechanism (documented in plan notes)
   - [x] Evaluate generated getter/setter overrides vs `_get`/`_set` interception on the generated double script against Godot 4.5+ semantics
   - [x] Record the decision and rationale in plan.md notes before implementing
-- [ ] Task: Write failing GDScript tests for property-value assertions
+- [~] Task: Write failing GDScript tests for property-value assertions
   - [ ] `assert_property_is` passes when the property holds the expected value
   - [ ] `assert_property_is` fails with expected/actual diagnostics on mismatch
   - [ ] `assert_property_is` fails cleanly when the property does not exist
