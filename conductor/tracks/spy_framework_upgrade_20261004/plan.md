@@ -121,7 +121,7 @@ reporting, so this phase lands first per user approval.
   - [x] Presence check via `in` + value read via `get()`, any Object target
   - [x] Rich failure diagnostics consistent with Phase 2
   - [x] Verify GREEN: new suites pass; `CI=true pytest` passes
-- [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
+- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (4639452)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
