@@ -48,7 +48,7 @@ commit + git note, plan update).
 
 ---
 
-## Phase 3: Runner aborted-test detection (runner correctness)
+## Phase 3: Runner aborted-test detection (runner correctness) [checkpoint: f6452be]
 
 Discovered during sequenced-returns RED (2026-10-04): a GDScript runtime
 error aborts a test body mid-execution, but `_invoke_test` still records
@@ -73,7 +73,7 @@ reporting, so this phase lands first per user approval.
 
 ---
 
-## Phase 4: Sequenced returns & fail stubs
+## Phase 4: Sequenced returns & fail stubs [checkpoint: 64660df]
 
 - [x] Task: Write failing GDScript tests for `to_return_seq` and `to_fail` (b3c4c81)
   - [x] `to_return_seq` returns values in registration order across successive calls
