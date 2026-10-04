@@ -36,13 +36,13 @@ commit + git note, plan update).
 ## Phase 2: Rich failure diagnostics
 
 - [x] Task: Write failing GDScript tests for call-list and per-argument diagnostics (50e6de1)
-  - [ ] Failure output of `assert_call_count` / `assert_not_called` includes the recorded call list (index + args)
-  - [ ] Failure output of `assert_call_arguments` shows a per-argument expected-vs-actual diff
-  - [ ] Diagnostics are bounded: a suite with many recorded calls produces capped output
-- [ ] Task: Implement diagnostics in the spy assertion failure paths
-  - [ ] Format recorded calls compactly with a cap on listed entries
-  - [ ] Per-argument diff rendering in `assert_call_arguments` failures
-  - [ ] Verify GREEN: new suites pass; `CI=true pytest` passes
+  - [x] Failure output of `assert_call_count` / `assert_not_called` includes the recorded call list (index + args)
+  - [x] Failure output of `assert_call_arguments` shows a per-argument expected-vs-actual diff
+  - [x] Diagnostics are bounded: a suite with many recorded calls produces capped output
+- [x] Task: Implement diagnostics in the spy assertion failure paths (d86c478)
+  - [x] Format recorded calls compactly with a cap on listed entries
+  - [x] Per-argument diff rendering in `assert_call_arguments` failures
+  - [x] Verify GREEN: new suites pass; `CI=true pytest` passes
 - [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
