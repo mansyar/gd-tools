@@ -18,17 +18,17 @@ commit + git note, plan update).
 ## Phase 1: Shared matcher + spy wildcard support
 
 - [x] Task: Write failing GDScript tests for `"any"` wildcards in spy assertions (95415f2)
-  - [ ] Suite cases: `assert_call_arguments` with `"any"` in first, middle, and last argument positions
-  - [ ] Suite cases: exact-match assertions unchanged (backward compatibility)
-  - [ ] Suite cases: wildcard never matches wrong arity (pattern size must equal call size)
-  - [ ] Verify RED: run the suite via the native runtime and confirm failures
+  - [x] Suite cases: `assert_call_arguments` with `"any"` in first, middle, and last argument positions
+  - [x] Suite cases: exact-match assertions unchanged (backward compatibility)
+  - [x] Suite cases: wildcard never matches wrong arity (pattern size must equal call size)
+  - [x] Verify RED: run the suite via the native runtime and confirm failures
 - [x] Task: Extract shared matcher helper and wire spy assertions (2167065)
-  - [ ] Extract one matching helper used by both `_gd_tools_stub_specificity` matching and spy assertions (single source of truth)
-  - [ ] Update `assert_call_arguments` to match per-element with `"any"`
-  - [ ] Verify GREEN: new suites pass; `CI=true pytest` (unit + e2e) passes
-- [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
-  - [ ] `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` meets >80% line / >70% branch for touched Python code
-  - [ ] `ruff check src/ tests/ && black --check src/ tests/`
+  - [x] Extract one matching helper used by both `_gd_tools_stub_specificity` matching and spy assertions (single source of truth)
+  - [x] Update `assert_call_arguments` to match per-element with `"any"`
+  - [x] Verify GREEN: new suites pass; `CI=true pytest` (unit + e2e) passes
+- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (f7acf91)
+  - [x] `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing` meets >80% line / >70% branch for touched Python code
+  - [x] `ruff check src/ tests/ && black --check src/ tests/`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
