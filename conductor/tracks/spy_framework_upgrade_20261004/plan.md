@@ -128,11 +128,11 @@ reporting, so this phase lands first per user approval.
 
 ## Phase 7: Docs & changelog
 
-- [ ] Task: Document the new API
-  - [ ] README test-runtime section: new spy capabilities in the feature list
-  - [ ] USER_GUIDE: doubles & spy cookbook sections (wildcards, sequences, fail stubs, order, property spying)
-  - [ ] CHANGELOG "Unreleased" entries per capability
-- [ ] Task: Full-repo verification
+- [x] Task: Document the new API
+  - [x] README test-runtime section: new spy capabilities in the feature list
+  - [x] USER_GUIDE: doubles & spy cookbook sections (wildcards, sequences, fail stubs, order, property spying)
+  - [x] CHANGELOG "Unreleased" entries per capability
+- [~] Task: Full-repo verification
   - [ ] `CI=true pytest` (unit, integration, e2e) passes
   - [ ] Full native suite run via `gd-tools test` passes
   - [ ] `ruff check src/ tests/ && black --check src/ tests/`
