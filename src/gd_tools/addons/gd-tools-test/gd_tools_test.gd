@@ -760,6 +760,58 @@ func assert_call_arguments(
 		)
 
 
+func assert_call_order(target: Object, methods: Array, message: String = "") -> void:
+	## Assert that a double's calls happened in the expected relative order.
+	##
+	## The check is subsequence-based: every listed method must appear in the
+	## recorder in the given order, while calls to methods that are not
+	## listed are ignored. Repeated methods are consumed first-match. On
+	## failure the message shows the actual recorded order (bounded).
+	if _gd_tools_assert_target_is_double(target, "assert_call_order"):
+		return
+	var mock: Object = target.get("__gd_tools")
+	var recorded: Array = []
+	for call in mock.get("calls"):
+		recorded.append(str(call.get("method", "")))
+	var expected: Array = []
+	for method in methods:
+		expected.append(str(method))
+	var cursor := 0
+	for check in expected:
+		var found := false
+		while cursor < recorded.size():
+			if recorded[cursor] == check:
+				found = true
+				cursor += 1
+				break
+			cursor += 1
+		if not found:
+			var detail: String
+			if not recorded.has(check):
+				detail = (
+					'Expected calls in order %s, but "%s" was never called; the actual order was %s.'
+					% [expected, check, _gd_tools_order_listing(recorded)]
+				)
+			else:
+				detail = (
+					"Expected calls in order %s, but the actual order was %s."
+					% [expected, _gd_tools_order_listing(recorded)]
+				)
+			_gd_tools_record_failure(
+				"assert_call_order", _gd_tools_detail(message, detail), expected, recorded
+			)
+			return
+
+
+func _gd_tools_order_listing(recorded: Array) -> String:
+	## Render the recorded method order for failure diagnostics, capped so
+	## long streams stay readable.
+	if recorded.size() <= 20:
+		return str(recorded)
+	var shown: Array = recorded.slice(0, 20)
+	return "%s ... and %d more call(s)" % [str(shown), recorded.size() - 20]
+
+
 func _gd_tools_assert_target_is_double(target: Object, assertion: String) -> bool:
 	## Record a failure and return true when `target` is not a double.
 	if target != null and target.get("__gd_tools") != null:
