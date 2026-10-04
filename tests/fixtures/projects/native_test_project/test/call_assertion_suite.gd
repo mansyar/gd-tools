@@ -169,3 +169,88 @@ func test_assert_call_arguments_wildcard_requires_same_arity() -> void:
 	var failures := get_failures()
 	clear_failures()
 	assert_eq(failures.size(), 1, "arity mismatch must fail even with wildcards")
+
+
+func test_assert_call_count_failure_lists_recorded_calls() -> void:
+	# A count failure should show what actually happened: the recorded
+	# calls with their indexes and arguments.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_count(d, "add", 2)
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("call 0: [2, 3]" in message, "lists the recorded call: " + message)
+
+
+func test_assert_not_called_failure_lists_recorded_calls() -> void:
+	# The same call listing applies when assert_not_called fails.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_not_called(d, "add")
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("call 0: [2, 3]" in message, "lists the recorded call: " + message)
+
+
+func test_assert_call_arguments_failure_shows_per_argument_diff() -> void:
+	# An argument failure should pinpoint each mismatched position instead
+	# of only showing two flat arrays.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_arguments(d, "add", [9, 9])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true(
+			"argument 0: expected 9, but was 2" in message,
+			"diffs argument 0: " + message
+		)
+		assert_true(
+			"argument 1: expected 9, but was 3" in message,
+			"diffs argument 1: " + message
+		)
+
+
+func test_assert_call_arguments_failure_diff_skips_wildcard_positions() -> void:
+	# Wildcard positions never mismatch, so the diff only covers concrete
+	# arguments that failed to match.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_arguments(d, "add", ["any", 9])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true(
+			"argument 1: expected 9, but was 3" in message,
+			"diffs the concrete mismatch: " + message
+		)
+		assert_true(
+			not ("argument 0:" in message),
+			"does not diff the wildcard position: " + message
+		)
+
+
+func test_failure_call_list_is_bounded() -> void:
+	# Diagnostics must stay readable: the recorded call list is capped,
+	# with a summary line for the omitted calls.
+	var d = double(SUBJECT)
+	for i in range(12):
+		d.add(i, i)
+	assert_not_called(d, "add")
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("more call(s)" in message, "summarizes the tail: " + message)
+		assert_true(not ("call 8:" in message), "caps the listing: " + message)

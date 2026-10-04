@@ -2049,6 +2049,11 @@ CALL_ASSERTION_METHODS = [
     "test_assert_call_arguments_wildcard_matches_in_any_position",
     "test_assert_call_arguments_wildcard_still_checks_other_arguments",
     "test_assert_call_arguments_wildcard_requires_same_arity",
+    "test_assert_call_count_failure_lists_recorded_calls",
+    "test_assert_not_called_failure_lists_recorded_calls",
+    "test_assert_call_arguments_failure_shows_per_argument_diff",
+    "test_assert_call_arguments_failure_diff_skips_wildcard_positions",
+    "test_failure_call_list_is_bounded",
 ]
 
 
