@@ -43,7 +43,7 @@ commit + git note, plan update).
   - [x] Format recorded calls compactly with a cap on listed entries
   - [x] Per-argument diff rendering in `assert_call_arguments` failures
   - [x] Verify GREEN: new suites pass; `CI=true pytest` passes
-- [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
+- [x] Task: Coverage & style verification for phase changes (workflow Quality Gates) (59ac9d4)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
