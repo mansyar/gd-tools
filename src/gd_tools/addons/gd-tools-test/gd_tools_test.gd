@@ -550,6 +550,8 @@ func _gd_tools_stub_register(
 				"args": args.duplicate(),
 				"action": action,
 				"value": value,
+				# Sequence position for `return_seq` stubs; unused otherwise.
+				"position": 0,
 			}
 		)
 	)

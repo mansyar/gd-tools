@@ -71,14 +71,35 @@ func calls_super(method: String, args: Array) -> bool:
 ##
 ## Unstubbed doubles answer null (GUT semantics); the [method coerce] layer
 ## adapts that to typed returns. A matched stub registered with
-## `to_return()` supplies its value here.
+## `to_return()` supplies its value here; `to_return_seq()` answers with its
+## values in order and repeats the final one once exhausted; `to_fail()`
+## records a failure through the suite's normal failure path at call time
+## and answers null, which [method coerce] adapts to the return type's zero
+## value so the script under test keeps executing.
 func respond(method: String, args: Array) -> Variant:
 	if _suite != null:
 		var entry: Dictionary = _suite._gd_tools_stub_find(
 				_target_id, method, args
 		)
-		if not entry.is_empty() and entry["action"] == "return":
-			return entry["value"]
+		if not entry.is_empty():
+			if entry["action"] == "return":
+				return entry["value"]
+			if entry["action"] == "return_seq":
+				var values: Array = entry["value"]
+				if values.is_empty():
+					return null
+				var position := int(entry.get("position", 0))
+				var answer: Variant = (
+					values[position] if position < values.size() else values.back()
+				)
+				entry["position"] = position + 1
+				return answer
+			if entry["action"] == "fail":
+				_suite._gd_tools_record_failure(
+						"stub",
+						'Stub for "%s" recorded a failure: %s' % [method, entry["value"]]
+				)
+				return null
 	return null
 
 
@@ -211,6 +232,32 @@ class StubBuilder:
 			return self
 		_suite._gd_tools_stub_register(
 				_double_id, _method, _args, "return", value
+		)
+		return self
+
+	## Answer successive matching calls with the given values in order.
+	##
+	## Once the sequence is exhausted, its final value repeats so late calls
+	## never hand null to the script under test.
+	func to_return_seq(values: Array) -> StubBuilder:
+		if _disabled:
+			return self
+		_suite._gd_tools_stub_register(
+				_double_id, _method, _args, "return_seq", values.duplicate()
+		)
+		return self
+
+	## Record a test failure through the normal failure path every time a
+	## matching call happens.
+	##
+	## GDScript has no exceptions: the call still answers (the return type's
+	## zero value after [method coerce]) so the script under test keeps
+	## executing and later calls still reach the recorder.
+	func to_fail(message: String) -> StubBuilder:
+		if _disabled:
+			return self
+		_suite._gd_tools_stub_register(
+				_double_id, _method, _args, "fail", message
 		)
 		return self
 
