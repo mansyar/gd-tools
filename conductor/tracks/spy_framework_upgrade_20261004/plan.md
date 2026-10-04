@@ -91,7 +91,7 @@ reporting, so this phase lands first per user approval.
 
 ---
 
-## Phase 5: Call-order assertions
+## Phase 5: Call-order assertions [checkpoint: f5680d0]
 
 - [x] Task: Write failing GDScript tests for `assert_call_order` (7b650d0)
   - [x] Subsequence semantics: unrelated interleaved calls do not break the order check
