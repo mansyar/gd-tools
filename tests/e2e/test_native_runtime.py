@@ -2013,6 +2013,41 @@ STUBBING_METHODS = [
 ]
 
 
+SCRIPT_ERROR_METHODS = [
+    "test_script_error_aborts_the_test_body",
+    "test_the_rest_of_the_suite_still_runs",
+]
+
+
+def test_native_aborted_test_is_reported_as_error(godot_bin, tmp_path):
+    """A script runtime error mid-test-body must not be reported as passed."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "script-error.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _manifest(
+            project,
+            "res://test/script_error_suite.gd",
+            SCRIPT_ERROR_METHODS,
+            "NativeScriptErrorSuite",
+        ),
+        result_path,
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    by_name = {entry["name"]: entry for entry in payload["tests"]}
+    aborted = by_name["test_script_error_aborts_the_test_body"]
+    assert aborted["status"] == "error", (aborted["status"], aborted["message"])
+    assert "nonexistent_method_on_purpose" in aborted["message"], aborted["message"]
+    # A suite with an errored test is not a passing run.
+    assert payload["status"] != "passed", payload["status"]
+    assert result.returncode == 1, result.stdout + result.stderr
+    # The rest of the suite is unaffected by the earlier abort.
+    survivor = by_name["test_the_rest_of_the_suite_still_runs"]
+    assert survivor["status"] == "passed", survivor["message"]
+
+
 def test_native_stub_matching_and_recording(godot_bin, tmp_path):
     """stub() chains follow the spec's matching precedence and record calls."""
     project = _prepare_project(tmp_path, godot_bin)
