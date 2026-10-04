@@ -32,8 +32,8 @@
 - [x] Task: Implement `assert_snapshot` in `GdToolsTest` with failure diagnostics (Green) (26c72fa)
 - [x] Task: Write failing tests for parallel/watch/changed-mode compatibility (Red) (26c72fa)
 - [x] Task: Fix parallel/watch/changed-mode compatibility (Green) (26c72fa)
-- [~] Task: Refactor pass — failure message consistency with existing `assert_*` diagnostics
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Refactor pass — failure message consistency with existing `assert_*` diagnostics (e3a56e3)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Python CLI & Reporting
 
