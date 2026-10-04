@@ -274,3 +274,14 @@ _Archived tracks live in `./archive/`._
   returns and `to_fail` fail stubs, `assert_call_order` subsequence
   verification, and property get/set spying via the Doubler generator)
   *Link: [spy_framework_upgrade_20261004](./archive/spy_framework_upgrade_20261004/index.md)*
+
+---
+
+- [ ] **Track: Snapshot Testing in the Native Runtime** (feature: Jest-style
+  `assert_snapshot(value, name)` in the native GdToolsTest runtime —
+  deterministic 3-tier serialization (values / object property dumps /
+  node-tree dumps), versioned human-readable `.snap` files under
+  `.gd-tools/snapshots/`, first-run auto-write with summary counts,
+  fail-with-unified-diff mismatches, `gd-tools test --snapshot-update`,
+  obsolete-snapshot reporting, and snapshot-aware `gd-tools clean`)
+  *Link: [snapshot_testing_20261005](./tracks/snapshot_testing_20261005/index.md)*

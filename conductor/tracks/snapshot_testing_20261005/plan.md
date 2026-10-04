@@ -1,0 +1,59 @@
+# Track Plan: Snapshot Testing in the Native Runtime
+
+- **Track ID:** `snapshot_testing_20261005`
+- **Branch:** `feature/snapshot-testing-20261005`
+- **Workflow:** TDD mandatory (Red → Green → optional Refactor). Coverage
+  targets for new source: >80% line, >70% branch. Conventional commits with
+  git-note summaries; phase checkpoints per `conductor/workflow.md`.
+
+## Phase 1 — Snapshot Serialization Core (GDScript runtime)
+
+- [ ] Task: Write failing tests for value serialization (Red)
+  - Primitives, Arrays, Dictionaries with sorted keys, nested structures
+  - Byte-identical output across repeated runs
+- [ ] Task: Implement deterministic value serializer (Green)
+- [ ] Task: Write failing tests for Object property dump & Node scene-tree dump (Red)
+  - Recursive property serialization; indented tree rendering (path, class, properties)
+- [ ] Task: Implement object & node-tree serialization (Green)
+- [ ] Task: Write failing tests for cycle-safety & reference rendering (Red)
+- [ ] Task: Implement cycle-safe reference rendering (Green)
+- [ ] Task: Refactor pass — extract shared serialization helpers, style-guide conformance
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 2 — Snapshot Store & assert_snapshot API (GDScript runtime)
+
+- [ ] Task: Write failing tests for snapshot store (Red)
+  - Versioned header, `.gd-tools/snapshots/<suite>/<test>/<name>.snap` layout,
+    LF enforcement, malformed-file diagnostics
+- [ ] Task: Implement snapshot store read/write (Green)
+- [ ] Task: Write failing tests for `assert_snapshot` (Red)
+  - Auto-naming (`<test>_<call_index>`), explicit names, first-run auto-write
+    + pass, mismatch fail with unified diff, I/O error fail-closed
+- [ ] Task: Implement `assert_snapshot` in `GdToolsTest` with failure diagnostics (Green)
+- [ ] Task: Write failing tests for parallel/watch/changed-mode compatibility (Red)
+- [ ] Task: Fix parallel/watch/changed-mode compatibility (Green)
+- [ ] Task: Refactor pass — failure message consistency with existing `assert_*` diagnostics
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 3 — Python CLI & Reporting
+
+- [ ] Task: Write failing tests for `gd-tools test --snapshot-update` (Red)
+- [ ] Task: Implement flag pass-through to native runtime & update semantics (Green)
+- [ ] Task: Write failing tests for summary counts & obsolete detection (Red)
+  - written / passed / failed / obsolete counts; obsolete = stored snapshots
+    with no owning suite/test in the run
+- [ ] Task: Implement summary reporting & obsolete detection (Green)
+- [ ] Task: Write failing tests for `gd-tools clean --snapshots` (Red)
+- [ ] Task: Implement `gd-tools clean --snapshots` (Green)
+- [ ] Task: Refactor pass — reporting alignment with existing summary/artifact patterns
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 4 — Docs & Final Verification
+
+- [ ] Task: README — snapshot testing usage section + example suite
+- [ ] Task: ARCHITECTURE — snapshot subsystem description (storage,
+  serialization tiers, protocol touchpoints)
+- [ ] Task: Update JSON schema / config docs if any config surface was added
+- [ ] Task: Full verification — `CI=true pytest`, `ruff check`, `black --check`,
+  coverage targets, Definition-of-Done sweep
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
