@@ -138,6 +138,14 @@ STORE_METHODS = [
     "test_read_malformed_snapshot_reports_error",
 ]
 
+ASSERT_METHODS = [
+    "test_first_run_writes_and_passes",
+    "test_multiple_auto_named_snapshots",
+    "test_explicit_snapshot_name",
+    "test_mismatch_fails_and_reports_diff",
+    "test_io_error_fails_closed",
+]
+
 
 def _single_failure(payload: dict, name: str) -> dict:
     """Return the one failure recorded for a test entry."""
@@ -201,6 +209,78 @@ def test_native_snapshot_serializer_renders_cycles_as_refs(godot_bin, tmp_path):
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     for entry in payload["tests"]:
         assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+
+def test_native_snapshot_assert_flow(godot_bin, tmp_path):
+    """assert_snapshot writes on first run, matches later, and fails on drift."""
+    project = _prepare_project(tmp_path, godot_bin)
+    manifest = _snapshot_manifest(
+        project,
+        ASSERT_METHODS,
+        suite_name="NativeSnapshotAssertSuite",
+        suite_path="res://test/snapshot_assert_suite.gd",
+    )
+
+    # Run 1: first-run snapshots are written and the tests still pass.
+    first_path = tmp_path / "snapshot-assert-1.json"
+    first = _run_native_manifest(project, godot_bin, manifest, first_path)
+    assert first.returncode == 0, first.stdout + first.stderr
+    first_payload = json.loads(first_path.read_text(encoding="utf-8"))
+    for entry in first_payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+
+    written = {
+        entry["name"]: entry.get("diagnostics", {}).get("snapshots_written", [])
+        for entry in first_payload["tests"]
+    }
+    assert written["test_first_run_writes_and_passes"] == [
+        "snapshot_assert_suite/test_first_run_writes_and_passes/"
+        "test_first_run_writes_and_passes_1"
+    ]
+    snapshot_file = (
+        project
+        / ".gd-tools"
+        / "snapshots"
+        / "snapshot_assert_suite"
+        / "test_first_run_writes_and_passes"
+        / "test_first_run_writes_and_passes_1.snap"
+    )
+    assert snapshot_file.exists()
+    content = snapshot_file.read_text(encoding="utf-8")
+    assert content.startswith("# gd-tools snapshot v1\n")
+    assert "\r" not in content
+
+    # Run 2: stored snapshots match, nothing new is written.
+    second_path = tmp_path / "snapshot-assert-2.json"
+    second = _run_native_manifest(project, godot_bin, manifest, second_path)
+    assert second.returncode == 0, second.stdout + second.stderr
+    second_payload = json.loads(second_path.read_text(encoding="utf-8"))
+    for entry in second_payload["tests"]:
+        assert entry["status"] == "passed", (entry["name"], entry["message"])
+        assert entry.get("diagnostics", {}).get("snapshots_written", []) == []
+
+    # Run 3: a tampered stored snapshot fails its owning test.
+    snapshot_file.write_text(
+        content.replace('{\n  "a": 1\n}', '"tampered"'),
+        encoding="utf-8",
+        newline="\n",
+    )
+    third_path = tmp_path / "snapshot-assert-3.json"
+    third = _run_native_manifest(project, godot_bin, manifest, third_path)
+    assert third.returncode == 1, third.stdout + third.stderr
+    third_payload = json.loads(third_path.read_text(encoding="utf-8"))
+    entry = next(
+        t
+        for t in third_payload["tests"]
+        if t["name"] == "test_first_run_writes_and_passes"
+    )
+    assert entry["status"] == "failed", (entry["message"],)
+    failures = entry["failures"]
+    assert len(failures) == 1
+    assert failures[0]["assertion"] == "assert_snapshot"
+    assert "Snapshot mismatch" in failures[0]["message"]
+    assert "- " in failures[0]["message"]
+    assert "+ " in failures[0]["message"]
 
 
 def test_native_snapshot_store_round_trip(godot_bin, tmp_path):
