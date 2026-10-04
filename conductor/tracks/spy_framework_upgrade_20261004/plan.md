@@ -98,10 +98,10 @@ reporting, so this phase lands first per user approval.
   - [x] Out-of-order calls fail with the actual recorded order in the message
   - [x] Repeated calls of the same method are handled sensibly (first matching consumption)
   - [ ] Non-double target fails with guidance (existing `_gd_tools_assert_target_is_double` behavior)
-- [ ] Task: Implement `assert_call_order` with order diagnostics
-  - [ ] Subsequence matching over the double's recorded call sequence
-  - [ ] Failure message shows the actual method order (bounded)
-  - [ ] Verify GREEN: new suites pass; `CI=true pytest` passes
+- [x] Task: Implement `assert_call_order` with order diagnostics (bc699ca)
+  - [x] Subsequence matching over the double's recorded call sequence
+  - [x] Failure message shows the actual method order (bounded)
+  - [x] Verify GREEN: new suites pass; `CI=true pytest` passes
 - [ ] Task: Coverage & style verification for phase changes (workflow Quality Gates)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
