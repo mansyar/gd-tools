@@ -254,3 +254,82 @@ func test_failure_call_list_is_bounded() -> void:
 		var message := str(failures[0]["message"])
 		assert_true("more call(s)" in message, "summarizes the tail: " + message)
 		assert_true(not ("call 8:" in message), "caps the listing: " + message)
+
+
+func test_assert_call_order_passes_in_order() -> void:
+	# Calls recorded in the expected order satisfy the assertion.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	d.greet("world")
+	assert_call_order(d, ["add", "greet"])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 0, "the expected order passes: " + str(failures))
+
+
+func test_assert_call_order_ignores_unlisted_methods() -> void:
+	# Order checking is subsequence-based: calls to methods that are not
+	# listed do not break the expected ordering.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	d.note("mid")
+	d.greet("world")
+	assert_call_order(d, ["add", "greet"])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 0, "interleaved calls keep the order: " + str(failures))
+
+
+func test_assert_call_order_handles_repeated_calls() -> void:
+	# Repeated calls of the same method are consumed first-match: the first
+	# expected "add" consumes the first recorded add, the second the next.
+	var d = double(SUBJECT)
+	d.add(1, 1)
+	d.greet("mid")
+	d.add(2, 2)
+	assert_call_order(d, ["add", "greet", "add"])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 0, "repeated methods match across interleaving: " + str(failures))
+
+
+func test_assert_call_order_fails_when_order_is_reversed() -> void:
+	# Out-of-order calls fail and the message shows the actual recorded
+	# order so the user can see what happened.
+	var d = double(SUBJECT)
+	d.greet("world")
+	d.add(2, 3)
+	assert_call_order(d, ["add", "greet"])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1, "the reversed order failed exactly once")
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("actual order" in message, "shows the actual order: " + message)
+		assert_true("greet" in message and "add" in message, "names both methods: " + message)
+
+
+func test_assert_call_order_fails_when_method_never_called() -> void:
+	# An expected method that never ran is named in the failure alongside
+	# the actual recorded order.
+	var d = double(SUBJECT)
+	d.add(2, 3)
+	assert_call_order(d, ["add", "pick"])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1, "the missing method failed exactly once")
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true('"pick"' in message, "names the missing method: " + message)
+		assert_true("never called" in message, "says it never ran: " + message)
+
+
+func test_assert_call_order_requires_a_double() -> void:
+	# The assertion only accepts doubles, like the other spy assertions.
+	assert_call_order(SUBJECT.new(), ["greet"])
+	var failures := get_failures()
+	clear_failures()
+	assert_eq(failures.size(), 1)
+	if failures.size() == 1:
+		var message := str(failures[0]["message"])
+		assert_true("double()" in message, "explains the double requirement: " + message)

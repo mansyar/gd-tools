@@ -2098,6 +2098,12 @@ CALL_ASSERTION_METHODS = [
     "test_assert_call_arguments_failure_shows_per_argument_diff",
     "test_assert_call_arguments_failure_diff_skips_wildcard_positions",
     "test_failure_call_list_is_bounded",
+    "test_assert_call_order_passes_in_order",
+    "test_assert_call_order_ignores_unlisted_methods",
+    "test_assert_call_order_handles_repeated_calls",
+    "test_assert_call_order_fails_when_order_is_reversed",
+    "test_assert_call_order_fails_when_method_never_called",
+    "test_assert_call_order_requires_a_double",
 ]
 
 
