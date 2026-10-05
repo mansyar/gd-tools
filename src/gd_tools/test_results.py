@@ -210,7 +210,7 @@ def _print_snapshot_summary(summary: SnapshotSummary) -> None:
         )
 
 
-def format_test_results(result: TestResult) -> None:
+def format_test_results(result: TestResult, durations: int | None = None) -> None:
     """Print a Rich table summarizing test results.
 
     Always prints a table with total, passed, failed, skipped, and
@@ -222,6 +222,9 @@ def format_test_results(result: TestResult) -> None:
 
     Args:
         result: The :class:`TestResult` to format and print.
+        durations: Optional count of slowest tests to report after the
+            failure details; 0 lists every executed test, None disables
+            the durations report.
     """
     table = Table(title="Test Results")
     table.add_column("Total", justify="right")
