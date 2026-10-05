@@ -56,7 +56,9 @@ def _expression_plan() -> CoveragePlan:
     lines = [LinePlan(line=4, id=0, type="statement")]
     for arm_id, (branch_type, line) in enumerate(EXPRESSION_ARMS, start=1):
         lines.append(
-            LinePlan(line=line, id=arm_id, type="branch", branch_type=branch_type)
+            LinePlan(
+                line=line, id=arm_id, type="branch", branch_type=branch_type
+            )
         )
     return CoveragePlan(
         version=PLAN_VERSION,
@@ -87,9 +89,7 @@ def _expression_data(covered_types: set[str]) -> CoverageData:
 def test_expression_arms_count_in_branch_denominator():
     """Every expression arm counts in the --min-branch denominator."""
     plan = _expression_plan()
-    data = _expression_data(
-        {"and_site", "and_right", "or_site", "assert_true"}
-    )
+    data = _expression_data({"and_site", "and_right", "or_site", "assert_true"})
 
     summary = compute_summary(plan, data)
 
