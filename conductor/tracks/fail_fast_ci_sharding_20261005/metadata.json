@@ -1,0 +1,9 @@
+{
+  "id": "fail_fast_ci_sharding_20261005",
+  "title": "Fail-Fast and CI Sharding",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-10-06",
+  "branch": "feature/fail-fast-ci-sharding-20261005",
+  "description": "Pytest-parity --exitfirst (stop dispatch on first failing suite, drain in-flight) and --shard k/N (suite-level round-robin sharding over the deterministic plan order) for gd-tools test, with CI recipe docs."
+}
