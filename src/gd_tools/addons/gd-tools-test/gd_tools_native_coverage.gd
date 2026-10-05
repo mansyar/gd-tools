@@ -7,6 +7,28 @@ extends RefCounted
 ## class instruments scripts in memory, tracks hits through a static class
 ## callable, and writes the same JSON shape consumed by the Python reporter.
 
+## Every branch_type this collector knows how to measure. A plan that
+## carries anything else was produced by a newer plan generator than
+## this collector implements; instrumenting it would silently
+## mis-measure the unknown arms, so activation is refused instead.
+const KNOWN_BRANCH_TYPES: Array[String] = [
+	"if_true",
+	"elif_true",
+	"if_false",
+	"loop_body",
+	"match_case",
+	"ternary_true",
+	"ternary_false",
+	"and_site",
+	"and_right",
+	"and_short",
+	"or_site",
+	"or_right",
+	"or_short",
+	"assert_true",
+	"assert_false",
+]
+
 static var _hits: Dictionary = {}
 static var _active := false
 static var _output_path := ""
@@ -36,6 +58,29 @@ static func activate(plan_path: String, output_path: String) -> bool:
 	if typeof(parsed) != TYPE_DICTIONARY or int(parsed.get("version", -1)) < 1:
 		push_error("[gd-tools] Unsupported native coverage plan format")
 		return false
+
+	# Loud-failure handshake: refuse to activate on branch types this
+	# collector does not implement. Instrumenting them would silently
+	# mis-measure (unknown span entries wrap as ternary arms, unknown
+	# spanless entries fire as line trackers), so the whole run must
+	# fail instead of reporting numbers that look trustworthy but are
+	# not.
+	for file_data in parsed.get("files", []):
+		for line_entry in file_data.get("lines", []):
+			var branch_type: Variant = line_entry.get("branch_type")
+			if branch_type == null:
+				continue
+			var type_name := str(branch_type)
+			if type_name.is_empty() or type_name in KNOWN_BRANCH_TYPES:
+				continue
+			push_error(
+				"[gd-tools] Coverage plan uses unsupported branch type "
+				+ "'%s' (point id %s in %s). The installed collector is "
+				+ "older than the plan that produced it; update the "
+				+ "gd-tools addons so instrumentation matches the plan."
+				% [type_name, str(line_entry.get("id", "?")), str(file_data.get("path", "?"))]
+			)
+			return false
 
 	# R2: a target that cannot be instrumented is reported and skipped, not
 	# fatal. This loop used to return on the first failure, which discarded

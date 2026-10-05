@@ -17,6 +17,28 @@ extends Node
 
 const TRACKER_NAME = "_GDTCoverage"
 
+## Every branch_type this collector knows how to measure. A plan that
+## carries anything else was produced by a newer plan generator than
+## this collector implements; instrumenting it would silently
+## mis-measure the unknown arms, so the plan is rejected instead.
+const KNOWN_BRANCH_TYPES: Array[String] = [
+	"if_true",
+	"elif_true",
+	"if_false",
+	"loop_body",
+	"match_case",
+	"ternary_true",
+	"ternary_false",
+	"and_site",
+	"and_right",
+	"and_short",
+	"or_site",
+	"or_right",
+	"or_short",
+	"assert_true",
+	"assert_false",
+]
+
 const PLAYTEST_ENV = "GD_TOOLS_COVERAGE_PLAYTEST"
 
 const PLAYTEST_INTERVAL_ENV = "GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL"
@@ -673,7 +695,11 @@ func _validate_file_entry(file_entry: Variant) -> bool:
 		)
 		return false
 
-	for line_entry in file_entry["lines"]:
+	return _validate_line_entries(file_entry["lines"])
+
+
+func _validate_line_entries(lines: Array) -> bool:
+	for line_entry in lines:
 		if not (line_entry is Dictionary) or not line_entry.has("line") or not line_entry.has("id"):
 			_log_error(
 				"Invalid coverage plan structure.",
@@ -681,8 +707,32 @@ func _validate_file_entry(file_entry: Variant) -> bool:
 				"Ensure each line entry has 'line' and 'id' fields."
 			)
 			return false
+		if not _validate_branch_type(line_entry):
+			return false
 
 	return true
+
+
+func _validate_branch_type(line_entry: Dictionary) -> bool:
+	## Reject plans carrying branch types this collector cannot measure.
+	##
+	## Loud-failure handshake: instrumenting an unknown branch type would
+	## silently mis-measure the unknown arms, so the plan is rejected
+	## instead of reporting numbers that look trustworthy but are not.
+	var branch_type: Variant = line_entry.get("branch_type")
+	if branch_type == null:
+		return true
+	var type_name := str(branch_type)
+	if type_name.is_empty() or type_name in KNOWN_BRANCH_TYPES:
+		return true
+	_log_error(
+		"Unsupported coverage plan.",
+		"Branch type '%s' (point id %s) is not implemented by this "
+		+ "collector." % [type_name, str(line_entry.get("id", "?"))],
+		"Update the gd-tools addons so the collector matches the plan "
+		+ "version."
+	)
+	return false
 
 
 func _log_error(what: String, cause: String, fix: String) -> void:

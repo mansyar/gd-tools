@@ -270,6 +270,42 @@ def test_assert_true_measured_when_condition_holds(tmp_path, godot_bin):
 
 
 @pytest.mark.slow
+def test_unknown_branch_type_fails_loudly(tmp_path, godot_bin):
+    """A plan with an unimplemented branch type must fail the run loudly.
+
+    A v7 plan read by an older collector would silently mis-measure the
+    new expression arms; the collector must refuse to activate instead
+    (loud-failure handshake). The unknown type is injected into the
+    cached plan between two runs — the second run hits the plan cache,
+    so the collector sees the patched plan.
+    """
+    project, result = _run_coverage_suite(tmp_path, godot_bin, "AndBothSuite")
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    plan_path = project / ".gd-tools" / "coverage" / "plan.json"
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    subject = next(
+        f for f in plan["files"]
+        if f["path"].endswith("boolop_subject.gd")
+    )
+    subject["lines"].append(
+        {"line": 6, "id": 9999, "type": "branch", "branch_type": "future_arm"}
+    )
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+
+    second = _run_cli(
+        ["--quiet", "test", "--coverage", "--suite", "AndBothSuite"],
+        project,
+        godot_bin,
+    )
+    combined = second.stdout + second.stderr
+    assert second.returncode != 0, combined
+    assert (
+        "future_arm" in combined or "activate native coverage" in combined
+    ), combined
+
+
+@pytest.mark.slow
 def test_hit_bool_records_exactly_one_arm(tmp_path, godot_bin):
     """One hit_bool call records exactly one arm and passes the value.
 
