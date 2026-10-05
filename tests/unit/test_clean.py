@@ -312,7 +312,9 @@ def test_snapshots_flag_removes_snapshots_directory(tmp_path):
     snapshots_dir = root / ".gd-tools" / "snapshots" / "SuiteA" / "test_a"
     snapshots_dir.mkdir(parents=True)
     snapshot_file = snapshots_dir / "a_1.snap"
-    snapshot_file.write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    snapshot_file.write_text(
+        "# gd-tools snapshot v1\n", encoding="utf-8", newline="\n"
+    )
 
     result = run_clean(snapshots=True, project_root=root)
 
