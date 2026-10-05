@@ -296,4 +296,4 @@ _Archived tracks live in `./archive/`._
   conditions (`assert_true`/`assert_false` arms) become first-class, fully
   gated branch points measured by value-preserving span wrapping;
   PLAN_VERSION 6→7 with cache invalidation and a loud old-addon handshake)
-  *Link: [expression_branch_coverage_20261005](./tracks/expression_branch_coverage_20261005/index.md)*
+  *Link: [expression_branch_coverage_20261005](./archive/expression_branch_coverage_20261005/index.md)*
