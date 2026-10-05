@@ -46,6 +46,10 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
+        # Coverage uploads are advisory: a codecov.io outage or TLS failure
+        # must not fail the job or block PR merges. The coverage XML/HTML
+        # artifacts below preserve the data either way.
+        continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
