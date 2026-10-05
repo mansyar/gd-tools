@@ -45,13 +45,13 @@
 - [x] Task: Implement summary reporting & obsolete detection (Green) (c93d875)
 - [x] Task: Write failing tests for `gd-tools clean --snapshots` (Red) (1a52026)
 - [x] Task: Implement `gd-tools clean --snapshots` (Green) (1a52026)
-- [ ] Task: Refactor pass — reporting alignment with existing summary/artifact patterns
+- [x] Task: Refactor pass — reporting alignment with existing summary/artifact patterns (58fe272)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Docs & Final Verification
 
-- [ ] Task: README — snapshot testing usage section + example suite
-- [ ] Task: ARCHITECTURE — snapshot subsystem description (storage,
+- [x] Task: README — snapshot testing usage section + example suite (6fde9df)
+- [x] Task: ARCHITECTURE — snapshot subsystem description (storage, (6fde9df)
   serialization tiers, protocol touchpoints)
 - [x] Task: Update JSON schema / config docs if any config surface was added (6fde9df; none needed - config-only schema, no new keys)
 - [ ] Task: Full verification — `CI=true pytest`, `ruff check`, `black --check`,
