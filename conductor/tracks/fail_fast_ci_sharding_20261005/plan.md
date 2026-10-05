@@ -31,7 +31,7 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
   - [x] `--shard k/N` + `--coverage`: per-shard coverage data/report as today, with a shard-agnostic plan (NFR2)
 - [x] **Task 2.4: Implement integration behavior (Green)** `bc8045c` — no further code needed: selection (2.2) already applies before preflight/parallelism; coverage behaves per-shard as with `--suite` filtering today
 - [x] **Task 2.5: Verify coverage & commit** `bc8045c` — ruff + black clean; unit suite 1528 passed / 3 skipped; coverage 92.88% ≥ 80% gate
-- [ ] **Task 2.6: Phase Verification & Checkpoint (Refer to workflow.md)**
+- [x] **Task 2.6: Phase Verification & Checkpoint (Refer to workflow.md)** `354a539`
 
 ## Phase 3: Fail-fast dispatch gate (orchestrator)
 
