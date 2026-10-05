@@ -32,7 +32,7 @@
 
 ## Phase 2 — GDScript Collector Instrumentation (both addons)
 
-- [ ] Task: Write failing e2e tests for `and`/`or` arm measurement (Red)
+- [~] Task: Write failing e2e tests for `and`/`or` arm measurement (Red)
   - Right operand wrapped value-preservingly: `and_right` records exactly
     when the right operand evaluates; side effects only under original
     short-circuit semantics; result value unchanged

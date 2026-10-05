@@ -11,6 +11,7 @@ static var _hits: Dictionary = {}
 static var _active := false
 static var _output_path := ""
 static var _omitted: Array = []
+static var _derived: Dictionary = {}
 
 
 static func activate(plan_path: String, output_path: String) -> bool:
@@ -19,6 +20,7 @@ static func activate(plan_path: String, output_path: String) -> bool:
 	_active = false
 	_output_path = output_path
 	_omitted.clear()
+	_derived.clear()
 
 	if plan_path.is_empty() or not FileAccess.file_exists(plan_path):
 		push_error("[gd-tools] Native coverage plan not found: %s" % plan_path)
@@ -60,8 +62,9 @@ static func hit(file_id: int, line_id: int) -> void:
 static func hit_ret(file_id: int, line_id: int, value: Variant) -> Variant:
 	## Record one instrumented hit and pass the tracked value through.
 	##
-	## Injected around ternary operands so each arm is measured exactly
-	## when it evaluates, without re-evaluating the condition.
+	## Injected around ternary operands and boolean-operator sites/right
+	## operands so each arm is measured exactly when it evaluates, without
+	## re-evaluating the condition.
 	hit(file_id, line_id)
 	return value
 
@@ -72,6 +75,7 @@ static func write() -> bool:
 		return false
 
 	var files: Array = []
+	_derive_short_hits()
 	for file_id in _hits:
 		var file_hits: Dictionary = {}
 		for line_id in _hits[file_id]:
@@ -97,6 +101,23 @@ static func write() -> bool:
 	file.store_string(JSON.stringify(data, "  ") + "\n")
 	file.close()
 	return DirAccess.rename_absolute(temporary_path, _output_path) == OK
+
+
+static func _derive_short_hits() -> void:
+	## Fold derived short-circuit arm hits into the recorded hit counts.
+	##
+	## ``short = site - right`` clamped at zero: a negative result would
+	## mean the wrap double-fired, which is a defect, not a measurement.
+	for file_id in _derived:
+		if not _hits.has(file_id):
+			continue
+		var pairs: Dictionary = _derived[file_id]
+		for short_id in pairs:
+			var site_hits := int(_hits[file_id].get(pairs[short_id][0], 0))
+			var right_hits := int(_hits[file_id].get(pairs[short_id][1], 0))
+			var short_hits := maxi(0, site_hits - right_hits)
+			if short_hits > 0:
+				_hits[file_id][short_id] = short_hits
 
 
 static func _instrument_file(file_data: Dictionary) -> bool:
@@ -154,7 +175,38 @@ static func _instrument_file(file_data: Dictionary) -> bool:
 	# change to any percentage.
 	if not _hits.has(file_id):
 		_hits[file_id] = {}
+	_derive_short_arms(file_id, lines)
 	return true
+
+
+static func _derive_short_arms(file_id: int, lines: Array) -> void:
+	## Pair each ``<op>_short`` point with its operator's site and right
+	## point ids so :meth:`write` can derive short-circuit hits.
+	##
+	## Short-circuit arms have no span of their own: the collector records
+	## the site whenever the whole expression evaluates and the right arm
+	## whenever the right operand evaluates, so ``short = site - right``
+	## counts the evaluations the operator skipped. The plan emits each
+	## right operand immediately followed by its short arm, so pairing by
+	## most recent same-operator right is exact, including for chains.
+	var site_by_operator: Dictionary = {}
+	var last_right: Dictionary = {}
+	var pairs: Dictionary = {}
+	for entry in lines:
+		var branch_type := str(entry.get("branch_type", ""))
+		if branch_type.ends_with("_site"):
+			site_by_operator[branch_type.trim_suffix("_site")] = int(entry["id"])
+		elif branch_type.ends_with("_right"):
+			last_right[branch_type.trim_suffix("_right")] = int(entry["id"])
+		elif branch_type.ends_with("_short"):
+			var operator := branch_type.trim_suffix("_short")
+			if site_by_operator.has(operator) and last_right.has(operator):
+				pairs[int(entry["id"])] = [
+					site_by_operator[operator],
+					last_right[operator],
+				]
+	if not pairs.is_empty():
+		_derived[file_id] = pairs
 
 
 static func get_omitted() -> Array:
@@ -197,6 +249,11 @@ static func _inject_trackers(
 		# shared anchor line fires both arms in lockstep and can never
 		# report an uncovered arm.
 		if entry.get("operand_span") != null:
+			continue
+		# Short-circuit arms are derived at write() as site - right; a
+		# line-inserted hit() would fire whenever the statement runs
+		# rather than when the operator skipped its right operand.
+		if str(entry.get("branch_type", "")).ends_with("_short"):
 			continue
 		var target_index := int(entry["line"]) - 1
 		if target_index < 0 or target_index >= source_lines.size():
