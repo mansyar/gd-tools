@@ -197,6 +197,155 @@ def test_run_native_command_propagates_filters_and_timeout(tmp_path):
     assert run.call_args.kwargs["coverage"] is None
 
 
+def test_run_native_command_forwards_durations_to_reporting():
+    """The durations setting reaches format_test_results."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=Path("."),
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=_native_result(),
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results") as fmt,
+    ):
+        run_native_test_command(_config(), durations=7)
+
+    assert fmt.call_args.kwargs["durations"] == 7
+
+
+def test_run_native_command_durations_default_is_none():
+    """Without a durations argument, reporting sees durations=None."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=Path("."),
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=_native_result(),
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results") as fmt,
+    ):
+        run_native_test_command(_config())
+
+    assert fmt.call_args.kwargs["durations"] is None
+
+
+def test_run_native_command_durations_renders_slowest_table(capsys):
+    """A real run with durations=2 prints the two slowest tests.
+
+    Also proves composition: the table renders alongside the suite
+    filter and parallel count, which still reach discovery and the
+    native runner.
+    """
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    native = _native_result(
+        tests=[
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_a",
+                status="passed",
+                duration_seconds=2.0,
+            ),
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_b",
+                status="passed",
+                duration_seconds=0.7,
+            ),
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_c",
+                status="passed",
+                duration_seconds=0.3,
+            ),
+        ]
+    )
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=Path("."),
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=native,
+        ),
+        patch("gd_tools.native_test.command._generate_native_report"),
+    ):
+        run_native_test_command(
+            _config(), durations=2, suite="ExampleSuite", parallel=2
+        )
+
+    captured = capsys.readouterr()
+    assert "Slowest Tests" in captured.out
+    assert "test_a" in captured.out
+    assert "test_b" in captured.out
+    assert "test_c" not in captured.out
+
+
 def test_run_native_command_preflights_once_before_suite_processes(
     tmp_path,
 ):

@@ -9,7 +9,7 @@ import pytest
 from click.testing import CliRunner
 from rich.console import Console
 
-from gd_tools.cli import cli
+from gd_tools.cli import _validate_durations, cli
 from gd_tools.doctor import CheckResult, DoctorResult
 from gd_tools.verbosity import Verbosity, get_verbosity
 from gd_tools.errors import (
@@ -384,6 +384,101 @@ def test_test_parallel_one_from_config():
     result, mock_run = _invoke_test_with_parallel(["test"], config_parallel=1)
     assert result.exit_code == 0
     assert mock_run.call_args.kwargs["parallel"] == 1
+
+
+# --- test --durations flag ---
+
+
+def _invoke_test_with_durations(args, config_durations=None):
+    """Invoke `test` with a config whose test.durations is config_durations.
+
+    Returns (result, mock_run) with run_native_test_command patched.
+    """
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.test.durations = config_durations
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_native_test_command",
+            return_value=_native_result(),
+        ) as mock_run,
+    ):
+        result = runner.invoke(cli, args)
+    return result, mock_run
+
+
+def test_test_durations_bare_flag_defaults_to_10():
+    """Bare --durations resolves to the pytest-parity default of 10."""
+    result, mock_run = _invoke_test_with_durations(["test", "--durations"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["durations"] == 10
+
+
+def test_test_durations_explicit_value_forwarded():
+    """--durations N forwards N to the native test command."""
+    result, mock_run = _invoke_test_with_durations(["test", "--durations", "5"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["durations"] == 5
+
+
+def test_test_durations_zero_forwards_zero():
+    """--durations 0 is valid: report every executed test."""
+    result, mock_run = _invoke_test_with_durations(["test", "--durations", "0"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["durations"] == 0
+
+
+def test_test_durations_flag_overrides_config():
+    """--durations takes precedence over test.durations in config."""
+    result, mock_run = _invoke_test_with_durations(
+        ["test", "--durations", "5"], config_durations=2
+    )
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["durations"] == 5
+
+
+def test_test_durations_config_used_when_flag_absent():
+    """test.durations from config applies when --durations is not given."""
+    result, mock_run = _invoke_test_with_durations(["test"], config_durations=3)
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["durations"] == 3
+
+
+def test_test_durations_absent_is_none():
+    """Without flag or config key, durations is None (reporting disabled)."""
+    result, mock_run = _invoke_test_with_durations(["test"])
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["durations"] is None
+
+
+@pytest.mark.parametrize("args", [["--durations", "-1"], ["--durations=-1"]])
+def test_test_durations_negative_exits_2(args):
+    """Negative --durations exits 2 without running, in both token forms.
+
+    Click's parser rejects negative numbers for flag_value options before
+    any callback runs; the validator hint is covered separately.
+    """
+    result, mock_run = _invoke_test_with_durations(["test", *args])
+    assert result.exit_code == 2
+    mock_run.assert_not_called()
+
+
+def test_validate_durations_rejects_negative():
+    """The --durations callback rejects negatives with a fix hint."""
+    ctx = click.Context(click.Command("test"))
+    param = click.Option(["--durations"])
+    with pytest.raises(click.BadParameter, match="non-negative"):
+        _validate_durations(ctx, param, -1)
+
+
+def test_validate_durations_passes_through_valid():
+    """The --durations callback passes None and valid counts through."""
+    ctx = click.Context(click.Command("test"))
+    param = click.Option(["--durations"])
+    assert _validate_durations(ctx, param, None) is None
+    assert _validate_durations(ctx, param, 0) == 0
+    assert _validate_durations(ctx, param, 7) == 7
 
 
 def test_lint_exit_code_2_config_error():
@@ -1952,6 +2047,41 @@ def test_test_watch_uses_config_parallel_without_flag():
         result = runner.invoke(cli, ["test", "--watch"], env={"CI": "false"})
     assert result.exit_code == 0
     assert mock_watch.call_args.kwargs["parallel"] == 2
+
+
+def test_test_watch_forwards_resolved_durations():
+    """--watch inherits the resolved --durations count for every re-run."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_watch_mode",
+            return_value=0,
+        ) as mock_watch,
+    ):
+        result = runner.invoke(
+            cli, ["test", "--watch", "--durations", "3"], env={"CI": "false"}
+        )
+    assert result.exit_code == 0
+    assert mock_watch.call_args.kwargs["durations"] == 3
+
+
+def test_test_watch_uses_config_durations_without_flag():
+    """Configured [test] durations applies to watch mode when no flag given."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.test.durations = 2
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.run_watch_mode",
+            return_value=0,
+        ) as mock_watch,
+    ):
+        result = runner.invoke(cli, ["test", "--watch"], env={"CI": "false"})
+    assert result.exit_code == 0
+    assert mock_watch.call_args.kwargs["durations"] == 2
 
 
 # --- global --project option ---
