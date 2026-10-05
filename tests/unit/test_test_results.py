@@ -11,8 +11,10 @@ import pytest
 from rich.console import Console
 
 from gd_tools.test_results import (
+    SnapshotSummary,
     TestDetail,
     TestResult,
+    build_snapshot_summary,
     format_test_results,
 )
 
@@ -447,3 +449,153 @@ def test_format_test_results_success_color(capsys, monkeypatch):
 
 
 # --- Verbose mode: timing display ---
+
+
+# --- Snapshot summary ---
+
+
+@pytest.mark.unit
+def test_snapshot_summary_aggregates_diagnostics(tmp_path):
+    """Snapshot counts aggregate across every test's diagnostics."""
+    details = [
+        TestDetail(
+            name="test_first_run_writes_and_passes",
+            suite="SuiteA",
+            status="pass",
+            message="",
+            duration=0.1,
+            diagnostics={
+                "snapshots_written": ["SuiteA/test_first_run_writes_and_passes/s_1"],
+            },
+        ),
+        TestDetail(
+            name="test_second",
+            suite="SuiteA",
+            status="pass",
+            message="",
+            duration=0.1,
+            diagnostics={"snapshots_matched": 2},
+        ),
+        TestDetail(
+            name="test_mismatch",
+            suite="SuiteB",
+            status="fail",
+            message="Snapshot mismatch",
+            duration=0.1,
+            diagnostics={
+                "snapshots_updated": ["SuiteB/test_mismatch/m"],
+                "failures": [
+                    {"assertion": "assert_snapshot", "message": "Snapshot mismatch"}
+                ],
+            },
+        ),
+    ]
+    summary = build_snapshot_summary(details, tmp_path)
+    assert summary == SnapshotSummary(
+        written=1,
+        updated=1,
+        matched=2,
+        failed=1,
+        obsolete=[],
+    )
+
+
+@pytest.mark.unit
+def test_snapshot_summary_detects_obsolete_snapshots(tmp_path):
+    """Stored snapshots whose suite/test no longer ran are obsolete."""
+    snapshots_dir = tmp_path / ".gd-tools" / "snapshots"
+    kept = snapshots_dir / "SuiteA" / "test_kept"
+    kept.mkdir(parents=True)
+    (kept / "kept.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    orphan = snapshots_dir / "SuiteA" / "test_gone"
+    orphan.mkdir(parents=True)
+    (orphan / "orphan.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    other_suite = snapshots_dir / "SuiteNeverRan" / "test_x"
+    other_suite.mkdir(parents=True)
+    (other_suite / "x.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    details = [
+        TestDetail(
+            name="test_kept",
+            suite="SuiteA",
+            status="pass",
+            message="",
+            duration=0.1,
+        ),
+    ]
+    summary = build_snapshot_summary(details, tmp_path)
+    assert summary is not None
+    assert summary.obsolete == ["SuiteA/test_gone/orphan.snap"]
+
+
+@pytest.mark.unit
+def test_snapshot_summary_none_without_snapshot_activity(tmp_path):
+    """No snapshot diagnostics and no stored snapshots means no summary."""
+    details = [
+        TestDetail(
+            name="test_plain",
+            suite="SuiteA",
+            status="pass",
+            message="",
+            duration=0.1,
+        ),
+    ]
+    assert build_snapshot_summary(details, tmp_path) is None
+
+
+@pytest.mark.unit
+def test_format_test_results_prints_snapshot_summary(capsys, tmp_path):
+    """Snapshot activity renders as a summary line with obsolete paths."""
+    snapshots_dir = tmp_path / ".gd-tools" / "snapshots" / "SuiteA" / "test_gone"
+    snapshots_dir.mkdir(parents=True)
+    (snapshots_dir / "orphan.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    details = [
+        TestDetail(
+            name="test_a",
+            suite="SuiteA",
+            status="pass",
+            message="",
+            duration=0.1,
+            diagnostics={
+                "snapshots_written": ["SuiteA/test_a/a_1"],
+                "snapshots_matched": 1,
+            },
+        ),
+    ]
+    summary = build_snapshot_summary(details, tmp_path)
+    result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=details,
+        snapshot_summary=summary,
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "Snapshots: 1 written, 0 updated, 1 matched, 0 failed" in captured.out
+    assert "SuiteA/test_gone/orphan.snap" in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_omits_snapshot_summary_when_none(capsys):
+    """No snapshot activity means no snapshot summary line."""
+    result = TestResult(
+        total=1,
+        passed=1,
+        failed=0,
+        skipped=0,
+        duration=0.5,
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=[],
+    )
+    format_test_results(result)
+    captured = capsys.readouterr()
+    assert "Snapshots:" not in captured.out

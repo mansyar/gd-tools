@@ -275,6 +275,12 @@ def test_native_snapshot_assert_flow(godot_bin, tmp_path):
     for entry in second_payload["tests"]:
         assert entry["status"] == "passed", (entry["name"], entry["message"])
         assert entry.get("diagnostics", {}).get("snapshots_written", []) == []
+    # Every matching comparison is counted for the run summary.
+    matched_total = sum(
+        int(entry.get("diagnostics", {}).get("snapshots_matched", 0))
+        for entry in second_payload["tests"]
+    )
+    assert matched_total >= 1, second_payload["tests"]
 
     # Run 3: a tampered stored snapshot fails its owning test.
     snapshot_file.write_text(
