@@ -185,6 +185,31 @@ def _find_obsolete_snapshots(
     return obsolete
 
 
+def _print_snapshot_summary(summary: SnapshotSummary) -> None:
+    """Print the snapshot activity line and any obsolete snapshot paths.
+
+    Mirrors the ``Run artifacts:`` dim/cyan rendering so snapshot reporting
+    blends into the existing summary block.
+
+    Args:
+        summary: Aggregated snapshot counts for the finished run.
+    """
+    counts = (
+        f"{summary.written} written, {summary.updated} updated, "
+        f"{summary.matched} matched, {summary.failed} failed"
+    )
+    output.console.print(
+        Text.assemble(("Snapshots: ", "dim"), (counts, "cyan"))
+    )
+    if summary.obsolete:
+        output.console.print(
+            Text.assemble(
+                ("Obsolete snapshots (not touched by this run):\n", "yellow"),
+                ("\n".join(summary.obsolete), "yellow"),
+            )
+        )
+
+
 def format_test_results(result: TestResult) -> None:
     """Print a Rich table summarizing test results.
 
@@ -222,23 +247,7 @@ def format_test_results(result: TestResult) -> None:
         )
 
     if result.snapshot_summary is not None:
-        summary = result.snapshot_summary
-        line = (
-            f"{summary.written} written, {summary.updated} updated, "
-            f"{summary.matched} matched, {summary.failed} failed"
-        )
-        parts: list[tuple[str, str]] = [("Snapshots: ", "dim"), (line, "cyan")]
-        output.console.print(Text.assemble(*parts))
-        if summary.obsolete:
-            output.console.print(
-                Text.assemble(
-                    (
-                        "Obsolete snapshots (not touched by this run):\n",
-                        "yellow",
-                    ),
-                    ("\n".join(summary.obsolete), "yellow"),
-                )
-            )
+        _print_snapshot_summary(result.snapshot_summary)
 
     if result.failed == 0:
         # A skipped test did not run, so counting it as passed would report a
