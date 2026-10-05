@@ -145,8 +145,12 @@ def test_expression_only_plan_is_not_zero_branch_exempt(tmp_path):
         )
 
 
-def test_derived_short_arm_hit_flips_gate(tmp_path):
-    """A derived short-circuit hit counts like any other arm hit."""
+def test_derived_zero_short_arm_stays_uncovered_fails_gate(tmp_path):
+    """A derived short arm with zero hits still counts as uncovered.
+
+    The short arm is derivable (site and right are both recorded) but
+    its derived hit count is 0 here, so the 100% branch gate must fail.
+    """
     plan = _expression_plan()
     # Only site and right covered: short is derivable (site - right) but
     # zero here, so it stays uncovered and the 100% gate must fail.

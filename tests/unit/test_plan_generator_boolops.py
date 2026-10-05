@@ -170,10 +170,10 @@ def test_parenthesized_boolop_is_tracked(tmp_path):
 
     assert _count(points, "and_site") == 1
     assert _count(points, "or_site") == 1
-    # The and node's right operand spans the parenthesized ``b or c``.
+    # The and node's right operand spans the parenthesized ``b or c``
+    # including the parens: the child node is the par_expr itself.
     and_right_line, and_right_span = _by_type(points, "and_right")
-    assert and_right_span[0] == 4
-    assert and_right_span[1] == 11
+    assert and_right_span == (4, 11, 4, 19)
 
 
 def test_multiline_boolop_spans_cross_lines(tmp_path):

@@ -74,11 +74,17 @@ static func activate(plan_path: String, output_path: String) -> bool:
 			if type_name.is_empty() or type_name in KNOWN_BRANCH_TYPES:
 				continue
 			push_error(
-				"[gd-tools] Coverage plan uses unsupported branch type "
-				+ "'%s' (point id %s in %s). The installed collector is "
-				+ "older than the plan that produced it; update the "
-				+ "gd-tools addons so instrumentation matches the plan."
-				% [type_name, str(line_entry.get("id", "?")), str(file_data.get("path", "?"))]
+				(
+					"[gd-tools] Coverage plan uses unsupported branch type "
+					+ "'%s' (point id %s in %s). The installed collector is "
+					+ "older than the plan that produced it; update the "
+					+ "gd-tools addons so instrumentation matches the plan."
+				)
+				% [
+					type_name,
+					str(line_entry.get("id", "?")),
+					str(file_data.get("path", "?")),
+				]
 			)
 			return false
 

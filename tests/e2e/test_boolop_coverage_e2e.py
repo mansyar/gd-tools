@@ -85,16 +85,16 @@ def _coverage_artifacts(project: Path) -> tuple[dict, dict]:
     return plan, data
 
 
-def _boolop_hits(plan: dict, data: dict) -> dict[tuple, int]:
+def _subject_hits(
+    plan: dict, data: dict, filename: str, prefixes: tuple[str, ...]
+) -> dict[tuple, int]:
     """Map (branch_type, line, operand_span, point_id) to hit counts.
 
     Keyed by span and id rather than branch type alone because chained
     operators emit several same-type points (one per right operand) and
     subject functions contribute same-type points on different lines.
     """
-    entry = next(
-        f for f in plan["files"] if f["path"].endswith("boolop_subject.gd")
-    )
+    entry = next(f for f in plan["files"] if f["path"].endswith(filename))
     ids = {
         (
             line["branch_type"],
@@ -103,7 +103,7 @@ def _boolop_hits(plan: dict, data: dict) -> dict[tuple, int]:
             line["id"],
         ): line["id"]
         for line in entry["lines"]
-        if (line.get("branch_type") or "").startswith(("and_", "or_"))
+        if (line.get("branch_type") or "").startswith(prefixes)
     }
     file_data = next(
         f for f in data["files"] if f["file_id"] == entry["file_id"]
@@ -114,8 +114,18 @@ def _boolop_hits(plan: dict, data: dict) -> dict[tuple, int]:
     }
 
 
+def _boolop_hits(plan: dict, data: dict) -> dict[tuple, int]:
+    """Expression-arm hits for ``boolop_subject.gd`` (and/or arms)."""
+    return _subject_hits(plan, data, "boolop_subject.gd", ("and_", "or_"))
+
+
 def _hits_for(hits: dict, branch_type: str, line: int) -> list[int]:
-    """Hit counts for one branch type on one line, ordered by point id."""
+    """Hit counts for one branch type on one line, ordered by point id.
+
+    Point ids are assigned in AST visit order, which for flat operator
+    chains corresponds to left-to-right operand order; the expected
+    lists in the chained test rely on that correspondence.
+    """
     return [
         count
         for key, count in sorted(hits.items(), key=lambda item: item[0][3])
@@ -124,28 +134,8 @@ def _hits_for(hits: dict, branch_type: str, line: int) -> list[int]:
 
 
 def _assert_hits(plan: dict, data: dict) -> dict[tuple, int]:
-    """Map (branch_type, line, operand_span, point_id) to hit counts for
-    the assert subject."""
-    entry = next(
-        f for f in plan["files"] if f["path"].endswith("assert_subject.gd")
-    )
-    ids = {
-        (
-            line["branch_type"],
-            line["line"],
-            tuple(line["operand_span"]) if line.get("operand_span") else None,
-            line["id"],
-        ): line["id"]
-        for line in entry["lines"]
-        if (line.get("branch_type") or "").startswith("assert_")
-    }
-    file_data = next(
-        f for f in data["files"] if f["file_id"] == entry["file_id"]
-    )
-    hits = file_data["hits"]
-    return {
-        key: int(hits.get(str(point_id), 0)) for key, point_id in ids.items()
-    }
+    """Assert-arm hits for ``assert_subject.gd`` (assert_true/false)."""
+    return _subject_hits(plan, data, "assert_subject.gd", ("assert_",))
 
 
 def _run_coverage_suite(
@@ -297,9 +287,9 @@ def test_unknown_branch_type_fails_loudly(tmp_path, godot_bin):
     )
     combined = second.stdout + second.stderr
     assert second.returncode != 0, combined
-    assert (
-        "future_arm" in combined or "activate native coverage" in combined
-    ), combined
+    # The collector's refusal must name the unsupported type itself; a
+    # failure for any other reason would not prove the loud handshake.
+    assert "future_arm" in combined, combined
 
 
 @pytest.mark.slow

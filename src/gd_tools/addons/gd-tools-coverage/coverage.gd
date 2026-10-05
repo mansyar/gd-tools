@@ -727,8 +727,10 @@ func _validate_branch_type(line_entry: Dictionary) -> bool:
 		return true
 	_log_error(
 		"Unsupported coverage plan.",
-		"Branch type '%s' (point id %s) is not implemented by this "
-		+ "collector." % [type_name, str(line_entry.get("id", "?"))],
+		(
+			"Branch type '%s' (point id %s) is not implemented by this "
+			+ "collector."
+		) % [type_name, str(line_entry.get("id", "?"))],
 		"Update the gd-tools addons so the collector matches the plan "
 		+ "version."
 	)
