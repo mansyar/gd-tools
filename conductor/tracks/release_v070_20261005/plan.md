@@ -30,9 +30,9 @@
 
 ## Phase 3: Release Execution
 
-- [ ] Task: Bump version via commitizen
-  - [ ] Run `cz bump` (expect minor bump to 0.7.0, dated `## v0.7.0` CHANGELOG section, `v0.7.0` tag created)
-  - [ ] Verify CHANGELOG content, `pyproject.toml` version, and tag
+- [x] Task: Bump version via commitizen
+  - [x] Run `cz bump` (expect minor bump to 0.7.0, dated `## v0.7.0` CHANGELOG section, `v0.7.0` tag created)
+  - [x] Verify CHANGELOG content, `pyproject.toml` version, and tag
 - [ ] Task: Merge to main and push tag
   - [ ] Merge feature branch to `main`
   - [ ] Push `main` and the `v0.7.0` tag to origin
