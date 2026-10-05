@@ -47,10 +47,10 @@
   native collector (Green)
 - [x] Task: Mirror instrumentation in `coverage.gd` (`gd-tools-coverage`
   autoload / playtest path) (Green)
-- [ ] Task: Write failing test + implement loud-failure handshake: collector
+- [x] Task: Write failing test + implement loud-failure handshake: collector
   rejects plans containing unknown/unimplemented branch types (old addon +
   v7 plan must fail loudly, not silently mis-measure)
-- [ ] Task: Refactor pass — keep wrap/derivation logic consistent across the
+- [x] Task: Refactor pass — keep wrap/derivation logic consistent across the
   two collectors
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
