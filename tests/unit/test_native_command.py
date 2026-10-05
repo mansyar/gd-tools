@@ -229,9 +229,7 @@ def test_run_native_command_forwards_durations_to_reporting():
             return_value=_native_result(),
         ),
         patch("gd_tools.native_test.command._generate_native_report"),
-        patch(
-            "gd_tools.native_test.command.format_test_results"
-        ) as fmt,
+        patch("gd_tools.native_test.command.format_test_results") as fmt,
     ):
         run_native_test_command(_config(), durations=7)
 
@@ -270,9 +268,7 @@ def test_run_native_command_durations_default_is_none():
             return_value=_native_result(),
         ),
         patch("gd_tools.native_test.command._generate_native_report"),
-        patch(
-            "gd_tools.native_test.command.format_test_results"
-        ) as fmt,
+        patch("gd_tools.native_test.command.format_test_results") as fmt,
     ):
         run_native_test_command(_config())
 

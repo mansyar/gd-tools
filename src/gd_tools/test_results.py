@@ -250,7 +250,9 @@ def print_durations_table(result: TestResult, n: int) -> None:
     output.print_table(table)
 
 
-def format_test_results(result: TestResult, durations: int | None = None) -> None:
+def format_test_results(
+    result: TestResult, durations: int | None = None
+) -> None:
     """Print a Rich table summarizing test results.
 
     Always prints a table with total, passed, failed, skipped, and

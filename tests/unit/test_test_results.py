@@ -668,9 +668,7 @@ def test_print_durations_table_sorted_slowest_first(capsys):
 @pytest.mark.unit
 def test_print_durations_table_truncates_to_n(capsys):
     """--durations N shows only the N slowest tests."""
-    details = [
-        _detail(f"test_{i}", float(5 - i)) for i in range(5)
-    ]
+    details = [_detail(f"test_{i}", float(5 - i)) for i in range(5)]
     print_durations_table(_durations_result(details), 3)
     captured = capsys.readouterr()
     assert "test_0" in captured.out
