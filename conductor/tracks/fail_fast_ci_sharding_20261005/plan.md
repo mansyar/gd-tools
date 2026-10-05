@@ -15,7 +15,7 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 - [x] **Task 1.3: Verify coverage & commit** (`ruff check` + `black --check` + `CI=true pytest` + coverage gate) `799400f`
 - [ ] **Task 1.4: Phase Verification & Checkpoint (Refer to workflow.md)**
 
-## Phase 2: Suite-level sharding (orchestrator)
+## Phase 2: Suite-level sharding (orchestrator) `[checkpoint: 354a539]`
 
 - [x] **Task 2.1: Write failing tests for shard selection (Red)** `c40ca90`
   - [x] Unit tests: round-robin assignment function — suite *i* → shard ((i mod N)+1) over deterministic plan order
