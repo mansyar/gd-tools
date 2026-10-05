@@ -643,15 +643,26 @@ def render_uncovered_panels(
 
         if fs.uncovered_branches:
             if file_plan is not None:
-                branch_map = {
-                    lp.line: lp.branch_type
-                    for lp in file_plan.lines
-                    if lp.type == "branch" and lp.branch_type is not None
-                }
+                # ``uncovered_branches`` repeats the line number once per
+                # uncovered branch point (e.g. three ``and`` arms on one
+                # line appear three times). Map each occurrence to the
+                # branch type of its own plan point, in plan order, so
+                # partially covered lines label the arms that are
+                # actually uncovered.
+                branch_types_by_line: dict[int, list[str]] = {}
+                for lp in file_plan.lines:
+                    if lp.type == "branch" and lp.branch_type is not None:
+                        branch_types_by_line.setdefault(lp.line, []).append(
+                            lp.branch_type
+                        )
+                used: dict[int, int] = {}
                 branch_parts: list[str] = []
                 for line_num in fs.uncovered_branches:
-                    bt = branch_map.get(line_num, "unknown")
-                    display = _BRANCH_TYPE_DISPLAY.get(bt, bt)
+                    types = branch_types_by_line.get(line_num, ["unknown"])
+                    index = used.get(line_num, 0)
+                    arm_type = types[index] if index < len(types) else "unknown"
+                    display = _BRANCH_TYPE_DISPLAY.get(arm_type, arm_type)
+                    used[line_num] = index + 1
                     branch_parts.append(f"{line_num} ({display})")
             else:
                 branch_parts = [str(ln) for ln in fs.uncovered_branches]
