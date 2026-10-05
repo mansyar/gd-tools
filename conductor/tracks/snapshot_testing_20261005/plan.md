@@ -37,12 +37,12 @@
 
 ## Phase 3 — Python CLI & Reporting
 
-- [~] Task: Write failing tests for `gd-tools test --snapshot-update` (Red)
-- [ ] Task: Implement flag pass-through to native runtime & update semantics (Green)
-- [ ] Task: Write failing tests for summary counts & obsolete detection (Red)
+- [x] Task: Write failing tests for `gd-tools test --snapshot-update` (Red) (dfe2824)
+- [x] Task: Implement flag pass-through to native runtime & update semantics (Green) (dfe2824)
+- [x] Task: Write failing tests for summary counts & obsolete detection (Red) (c93d875)
   - written / passed / failed / obsolete counts; obsolete = stored snapshots
     with no owning suite/test in the run
-- [ ] Task: Implement summary reporting & obsolete detection (Green)
+- [x] Task: Implement summary reporting & obsolete detection (Green) (c93d875)
 - [ ] Task: Write failing tests for `gd-tools clean --snapshots` (Red)
 - [ ] Task: Implement `gd-tools clean --snapshots` (Green)
 - [ ] Task: Refactor pass — reporting alignment with existing summary/artifact patterns
