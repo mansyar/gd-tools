@@ -247,9 +247,7 @@ def test_behavioral_equivalence_under_instrumentation(tmp_path, godot_bin):
     Each right operand evaluates exactly when the original short-circuit
     semantics reach it, and returned values are unchanged.
     """
-    _, result = _run_coverage_suite(
-        tmp_path, godot_bin, "BoolopBehaviorSuite"
-    )
+    _, result = _run_coverage_suite(tmp_path, godot_bin, "BoolopBehaviorSuite")
 
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -285,8 +283,7 @@ def test_unknown_branch_type_fails_loudly(tmp_path, godot_bin):
     plan_path = project / ".gd-tools" / "coverage" / "plan.json"
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     subject = next(
-        f for f in plan["files"]
-        if f["path"].endswith("boolop_subject.gd")
+        f for f in plan["files"] if f["path"].endswith("boolop_subject.gd")
     )
     subject["lines"].append(
         {"line": 6, "id": 9999, "type": "branch", "branch_type": "future_arm"}
@@ -360,4 +357,6 @@ def test_hit_bool_records_exactly_one_arm(tmp_path, godot_bin):
     values = (project / "collector_probe_values.txt").read_text(
         encoding="utf-8"
     )
-    assert values.strip() == "activated=true kept=true dropped=false written=true"
+    assert (
+        values.strip() == "activated=true kept=true dropped=false written=true"
+    )
