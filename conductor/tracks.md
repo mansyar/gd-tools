@@ -290,6 +290,14 @@ _Archived tracks live in `./archive/`._
 
 - [x] **Track: Codecov upload resilience** (chore: continue-on-error on the Codecov upload step in ci.yml so codecov outages cannot fail CI or block PR merges; coverage remains preserved as a workflow artifact) *Link: [codecov_upload_resilience_20261005](./archive/codecov_upload_resilience_20261005/index.md)*
 
+- [x] **Track: Expression-Level Branch Coverage** (feature: `and`/`or`
+  short-circuit operators (per-operator branch points with
+  `and_right`/`and_short`, `or_right`/`or_short` arms) and `assert`
+  conditions (`assert_true`/`assert_false` arms) become first-class, fully
+  gated branch points measured by value-preserving span wrapping;
+  PLAN_VERSION 6→7 with cache invalidation and a loud old-addon handshake)
+  *Link: [expression_branch_coverage_20261005](./archive/expression_branch_coverage_20261005/index.md)*
+
 ---
 
 - [x] **Track: Test Durations Reporting** (feature: pytest-parity `--durations N`

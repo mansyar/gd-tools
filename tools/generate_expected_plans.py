@@ -12,10 +12,21 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import sys
 import tempfile
 from pathlib import Path
 
-from gd_tools.coverage.plan_generator import generate_plan, write_plan_json
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Import gd_tools from this checkout's src/ so regeneration always uses the
+# same PLAN_VERSION and point rules as the tests that verify the fixtures --
+# a globally installed (editable) copy may point at a different checkout.
+sys.path.insert(0, str(_PROJECT_ROOT / "src"))
+
+from gd_tools.coverage.plan_generator import (  # noqa: E402
+    generate_plan,
+    write_plan_json,
+)
 
 _FIXTURE_NAMES = [
     "simple",
@@ -28,7 +39,6 @@ _FIXTURE_NAMES = [
     "ternary_anchors",
 ]
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_FIXTURES_DIR = _PROJECT_ROOT / "tests" / "fixtures" / "gdscript"
 _DEFAULT_OUTPUT_DIR = _PROJECT_ROOT / "tests" / "fixtures" / "plans"
 

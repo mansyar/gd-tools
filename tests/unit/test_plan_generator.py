@@ -264,16 +264,17 @@ def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
     assert plan.files  # a fresh plan was generated
 
 
-def test_plan_version_is_6_after_operand_spans_and_continuation_drops():
-    """PLAN_VERSION is 6 so both pre-fix plan flavours are stale.
+def test_plan_version_is_7_after_expression_branch_points():
+    """PLAN_VERSION is 7 so pre-expression plan flavours are stale.
 
     Version 4/5 plans either carry no ``operand_span`` on ternary branch
     points (restoring the shared-arm limitation) or hold statement points
     recorded on illegal continuation lines (breaking the instrumented
-    file). Reusing either would regress, so the version must have moved
-    on to 6.
+    file). Version 6 plans additionally carry no boolean-operator or
+    assert branch points, so reusing any of them would silently
+    under-measure branch coverage. The version must have moved on to 7.
     """
-    assert PLAN_VERSION == 6
+    assert PLAN_VERSION == 7
 
 
 def test_cache_v3_plan_is_regenerated_with_outdated_reason(tmp_path):

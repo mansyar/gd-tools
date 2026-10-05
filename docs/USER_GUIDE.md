@@ -384,7 +384,7 @@ gd-tools test [PATHS]... [OPTIONS]
 |---|---|---|---|
 | `--coverage` | flag | `false` | Generate a coverage report during the test run. |
 | `--min` | integer | None | Minimum coverage percentage threshold. Fails if coverage is below this value. Requires `--coverage`; pass both together. |
-| `--min-branch` | integer | None | Minimum branch coverage threshold. Fails (exit 1) if branch coverage is below this value. Requires `--coverage`; ternary arms are measured independently, so an uncovered arm fails this gate. Projects with zero branch points are exempt (pass with a note). |
+| `--min-branch` | integer | None | Minimum branch coverage threshold. Fails (exit 1) if branch coverage is below this value. Requires `--coverage`; ternary arms and boolean-operator/assert arms (`and_site`/`and_right`/`and_short`, `or_*`, `assert_true`/`assert_false`) are measured independently, so an uncovered arm fails this gate. Projects with zero branch points are exempt (pass with a note). |
 | `--suite` | string | None | Run only the specified test suite. |
 | `--test` | string | None | Run only the specified test. |
 | `--tag` | string, repeatable | Config `[test].tags` | Run native suites matching a class-level tag. |

@@ -350,6 +350,9 @@ nodes in the GDScript AST:
 | `for_stmt_typed` | `loop_body` | Typed `for` loop body |
 | `match_branch` | `match_case` | `match` case body |
 | `test_expr` | `ternary_true`, `ternary_false` | Ternary expression (`a if cond else b`) — both value-branches |
+| `and_test`, `asless_and_test` | `and_site`, `and_right`, `and_short` | Boolean `and` chain — whole-expression site, each right operand, and the derived short-circuit arm |
+| `or_test`, `asless_or_test` | `or_site`, `or_right`, `or_short` | Boolean `or` chain — same shape as `and` |
+| `standalone_call` (`assert`) | `assert_true`, `assert_false` | `assert(cond)` — condition held / would have aborted |
 
 #### Line placement: a tracker must land on a statement
 
@@ -386,15 +389,17 @@ failed `reload()`, and `_instrument_file` recorded the file as an
 exit 2. A ternary in a `const` or `@export` initialiser failed the same
 way with `Unexpected identifier in class body`.
 
-`CoverageVisitor` therefore resolves each `test_expr` to the nearest
+`CoverageVisitor` therefore resolves each ternary, boolean-operator chain
+and `assert` call to the nearest
 enclosing **anchor node** — one whose line is a legal insertion point — and
 records the branch points at that line. The anchor set
 (`ANCHOR_NODES`) is the tracked statement nodes plus the control-flow
 statement headers (`if_stmt`, `while_stmt`, `for_stmt`, `for_stmt_typed`,
-`match_stmt`), so a ternary in a header is recorded on the header's own line.
+`match_stmt`), so a ternary or `and`/`or` chain in a header is recorded on
+the header's own line.
 Lark's default `Visitor` traverses flat and bottom-up with no ancestry
 exposed, so the mapping is built by one recursive pre-pass over the tree
-(`_map_ternary_anchors`) that walks downward carrying the most recent anchor
+(`_map_expression_anchors`) that walks downward carrying the most recent anchor
 line as context. Three consequences follow:
 
 * A ternary in a position with **no** enclosing anchor node — a class-level
@@ -431,6 +436,23 @@ line as context. Three consequences follow:
   ternary branches combined under the anchor line, and `--min-branch`
   gates branch coverage independently of `--min`. Ternaries in class-level
   initialisers and default parameter values remain untracked (no anchor).
+* `and`/`or` chains and `assert` calls gain branch points the same way
+  (Expression-Level Branch Coverage, `PLAN_VERSION` 7). Each operator
+  chain records one whole-expression `*_site` point plus one `*_right`
+  point per right operand — both wrapped with `hit_ret` at the operand's
+  exact source span, so short-circuit evaluation is measured directly —
+  and one derived `*_short` point per right operand, computed at write
+  time as `max(0, site_hits - right_hits)` (the operator evaluated but
+  skipped its right operand). Each `assert(cond)` records
+  `assert_true`/`assert_false` sharing the condition's span; a firing
+  `assert` aborts the game, so a passing suite can only ever measure
+  `assert_true`. All expression arms sit in the `--min-branch`
+  denominator, are suppressed by the same line-level
+  `# gd-tools: no cover` annotation as their anchor statement, and are
+  anchored like ternaries: no enclosing statement means untracked.
+  Collectors reject plans carrying branch types they do not implement,
+  so an old addon paired with a v7 plan fails loudly instead of
+  silently mis-measuring the unknown arms.
 * The branch gate (`--min-branch`, on `gd-tools test --coverage`,
   `gd-tools coverage run`, and `gd-tools coverage show`) is exempt when
   the project plan records **zero** branch points: there is nothing to

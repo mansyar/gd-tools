@@ -125,6 +125,11 @@ class FileSummary:
         total_branches: Total branch points in this file's plan.
         uncovered_lines: Line numbers with zero hits.
         uncovered_branches: Line numbers of branch points with zero hits.
+
+        uncovered_branch_types: Branch types aligned index-for-index with
+        ``uncovered_branches`` (e.g. ``and_short`` for a derived
+        short-circuit arm), so renderers can label the specific arm that
+        is uncovered rather than guessing from the line number.
     """
 
     file_id: int
@@ -137,6 +142,8 @@ class FileSummary:
     total_branches: int
     uncovered_lines: list[int]
     uncovered_branches: list[int] = field(default_factory=list)
+
+    uncovered_branch_types: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -455,6 +462,7 @@ def compute_file_summary(
     total_branches = 0
     uncovered_lines: list[int] = []
     uncovered_branches: list[int] = []
+    uncovered_branch_types: list[str] = []
 
     for line in file_plan.lines:
         total_lines += 1
@@ -471,6 +479,7 @@ def compute_file_summary(
                 covered_branches += 1
             else:
                 uncovered_branches.append(line.line)
+                uncovered_branch_types.append(line.branch_type or "unknown")
 
     line_rate = covered_lines / total_lines if total_lines > 0 else 0.0
     branch_rate = (
@@ -488,6 +497,7 @@ def compute_file_summary(
         total_branches=total_branches,
         uncovered_lines=uncovered_lines,
         uncovered_branches=uncovered_branches,
+        uncovered_branch_types=uncovered_branch_types,
     )
 
 
@@ -643,15 +653,18 @@ def render_uncovered_panels(
 
         if fs.uncovered_branches:
             if file_plan is not None:
-                branch_map = {
-                    lp.line: lp.branch_type
-                    for lp in file_plan.lines
-                    if lp.type == "branch" and lp.branch_type is not None
-                }
+                # ``uncovered_branches`` repeats the line number once per
+                # uncovered branch point, and ``uncovered_branch_types``
+                # carries the matching branch type for each entry (see
+                # :func:`compute_file_summary`), so each arm is labeled
+                # with what it actually is.
                 branch_parts: list[str] = []
-                for line_num in fs.uncovered_branches:
-                    bt = branch_map.get(line_num, "unknown")
-                    display = _BRANCH_TYPE_DISPLAY.get(bt, bt)
+                for line_num, arm_type in zip(
+                    fs.uncovered_branches,
+                    fs.uncovered_branch_types,
+                    strict=False,
+                ):
+                    display = _BRANCH_TYPE_DISPLAY.get(arm_type, arm_type)
                     branch_parts.append(f"{line_num} ({display})")
             else:
                 branch_parts = [str(ln) for ln in fs.uncovered_branches]

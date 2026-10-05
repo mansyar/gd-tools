@@ -28,7 +28,7 @@ from gd_tools.atomic_io import atomic_write_text
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 6
+PLAN_VERSION = 7
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
@@ -52,6 +52,12 @@ Bumped 5 -> 6 when ternary branch points gained ``operand_span``
 (Ternary Branch Separation). Version 5 plans carry no operand
 positions, so reusing one would inject anchor-line trackers instead of
 operand-wrapping calls and silently restore the shared-arm limitation.
+
+Bumped 6 -> 7 when boolean short-circuit operators (``and``/``or``) and
+``assert`` conditions gained branch points (Expression-Level Branch
+Coverage). Version 6 plans carry no expression points, so reusing one
+would silently under-measure branch coverage for expressions and let
+``--min-branch`` pass on files with untested short-circuit paths.
 """
 
 # --- Data structures (FR-1) ---
@@ -66,11 +72,13 @@ class LinePlan:
         id: Unique identifier within the file (sequential 0-indexed).
         type: Either "statement" or "branch".
         branch_type: Branch type string if type is "branch", else None.
-        operand_span: For ternary branch points only, the source span of
-            the arm's operand expression as a ``(start_line, start_col,
-            end_line, end_col)`` tuple -- 1-based lines and columns with an
-            exclusive end -- so the injector can wrap the operand textually.
-            ``None`` for every other point type.
+        operand_span: For ternary and expression branch points, the source
+            span of the wrapped operand expression as a ``(start_line,
+            start_col, end_line, end_col)`` tuple -- 1-based lines and
+            columns with an exclusive end -- so the injector can wrap the
+            operand textually. ``None`` for every other point type,
+            including derived short-circuit arms (which are never
+            line-injected nor span-wrapped).
     """
 
     line: int
@@ -591,14 +599,34 @@ def _collect_continuation_lines(source: str) -> set[int]:
     return illegal
 
 
-def _map_ternary_anchors(root: Tree) -> dict[int, int]:
-    """Map ``id()`` of each ``test_expr`` node to its anchor line.
+#: AST node names for boolean short-circuit operators (``and``/``or``).
+#: gdtoolkit emits the ``asless_`` variants when the operator expression
+#: appears in a comparison-less context (e.g. ``a or b and c`` nests an
+#: ``asless_and_test`` inside the ``or_test``).
+BOOL_OPERATOR_NODES = frozenset(
+    {
+        "and_test",
+        "or_test",
+        "asless_and_test",
+        "asless_or_test",
+    }
+)
 
-    A ternary branch point is only instrumentable when recorded at a line
-    where a statement may begin, so it is anchored to the nearest enclosing
-    node in :data:`ANCHOR_NODES`. A ternary with no such node -- one inside a
-    class-level initializer or a default parameter value -- has no legal
-    insertion point and is not tracked.
+#: AST nodes whose branch points are anchored like ternaries: mapped to the
+#: nearest enclosing :data:`ANCHOR_NODES` line. ``assert`` is excluded -- an
+#: assert is itself a statement, so its own line is always a legal anchor.
+_EXPRESSION_ANCHOR_NODES = frozenset({"test_expr", *BOOL_OPERATOR_NODES})
+
+
+def _map_expression_anchors(root: Tree) -> dict[int, int]:
+    """Map ``id()`` of each ternary or boolean-operator node to its anchor
+    line.
+
+    An expression branch point is only instrumentable when recorded at a
+    line where a statement may begin, so it is anchored to the nearest
+    enclosing node in :data:`ANCHOR_NODES`. An expression with no such node
+    -- one inside a class-level initializer or a default parameter value --
+    has no legal insertion point and is not tracked.
 
     A recursive walk is required rather than the flat bottom-up visitor:
     :meth:`lark.visitors.Visitor.visit` exposes no ancestry, so a ternary
@@ -614,15 +642,15 @@ def _map_ternary_anchors(root: Tree) -> dict[int, int]:
         root: Root of the parsed GDScript AST.
 
     Returns:
-        Mapping from ``id()`` of each ``test_expr`` node to its anchor
-        line, containing only anchorable ternaries.
+        Mapping from ``id()`` of each ternary or boolean-operator node to
+        its anchor line, containing only anchorable expressions.
     """
     anchors: dict[int, int] = {}
 
     def walk(node: Tree, enclosing: int | None) -> None:
         if node.data in ANCHOR_NODES:
             enclosing = node.meta.line
-        if node.data == "test_expr" and enclosing is not None:
+        if node.data in _EXPRESSION_ANCHOR_NODES and enclosing is not None:
             anchors[id(node)] = enclosing
         for child in node.children:
             if isinstance(child, Tree):
@@ -670,17 +698,17 @@ class CoverageVisitor(Visitor):
         self._next_id: int = 0
         self._excluded_lines = excluded_lines or set()
         self._source = source
-        self._ternary_anchors: dict[int, int] = {}
+        self._expression_anchors: dict[int, int] = {}
         self._illegal_lines: set[int] = set()
 
     def visit(self, tree: Tree) -> Tree:
-        """Resolve ternary anchors and illegal lines, then walk bottom-up.
+        """Resolve expression anchors and illegal lines, then walk bottom-up.
 
         :meth:`visit` is overridden so that anchor resolution cannot be
         bypassed by a caller that only invokes ``visit()``, which is how
         :func:`generate_plan` drives this visitor.
         """
-        self._ternary_anchors = _map_ternary_anchors(tree)
+        self._expression_anchors = _map_expression_anchors(tree)
         self._illegal_lines = _collect_illegal_lines(tree)
         if self._source is not None:
             self._illegal_lines |= _collect_continuation_lines(self._source)
@@ -810,7 +838,7 @@ class CoverageVisitor(Visitor):
         parameter value -- has no legal insertion point at all and is not
         tracked.
         """
-        anchor = self._ternary_anchors.get(id(tree))
+        anchor = self._expression_anchors.get(id(tree))
         if anchor is None:
             return
         self._add_point(
@@ -827,6 +855,98 @@ class CoverageVisitor(Visitor):
             line=anchor,
             operand_span=_node_span(tree.children[4]),
         )
+
+    # --- Expression methods ---
+
+    def and_test(self, tree: Tree) -> None:
+        """Track ``and`` short-circuit branches."""
+        self._add_boolop_points(tree, "and")
+
+    def or_test(self, tree: Tree) -> None:
+        """Track ``or`` short-circuit branches."""
+        self._add_boolop_points(tree, "or")
+
+    def asless_and_test(self, tree: Tree) -> None:
+        """Track ``and`` short-circuit branches in ``asless`` position."""
+        self._add_boolop_points(tree, "and")
+
+    def asless_or_test(self, tree: Tree) -> None:
+        """Track ``or`` short-circuit branches in ``asless`` position."""
+        self._add_boolop_points(tree, "or")
+
+    def standalone_call(self, tree: Tree) -> None:
+        """Track ``assert(cond)`` pass/fail branches.
+
+        gdtoolkit parses ``assert(cond)`` as a ``standalone_call`` whose
+        first child is the ``assert`` token, followed by the condition and
+        the optional message argument. Both arms share the condition's
+        source span: the collector wraps the span once with a value-aware
+        call that records exactly one arm per evaluation.
+
+        The paren-less form ``assert cond`` is not handled -- gdtoolkit
+        cannot parse it, so such files are skipped during plan generation
+        with a warning before this visitor ever sees them.
+
+        An assert is itself a statement, so its own line is a legal tracker
+        insertion point and no anchor lookup is needed. An assert nested in
+        a multi-line parenthesized expression is span-wrapped (never
+        line-injected), so its recorded line only drives reporting.
+        """
+        children = tree.children
+        if len(children) < 2:
+            return
+        first = children[0]
+        if not isinstance(first, Token) or first.value != "assert":
+            return
+        span = _node_span(children[1])
+        self._add_point(tree, "branch", "assert_true", operand_span=span)
+        self._add_point(tree, "branch", "assert_false", operand_span=span)
+
+    def _add_boolop_points(self, tree: Tree, operator: str) -> None:
+        """Track one boolean operator node as site/right/short branch points.
+
+        Short-circuit semantics mean the right operand may never evaluate:
+        the ``<op>_right`` point carries the right operand's span so the
+        collector can count actual evaluations with a value-preserving
+        wrapper, while the ``<op>_site`` point carries the whole operator
+        expression's span. The ``<op>_short`` point has no span -- the
+        collector derives its hits as ``site - right`` (never line-injected,
+        since the short-circuit path executes no source text of its own).
+
+        Points are anchored to the nearest enclosing node whose line is a
+        legal tracker insertion point (see :data:`ANCHOR_NODES`), matching
+        the ternary scheme; an operator with no enclosing anchor node --
+        one inside a class-level initializer or a default parameter value
+        -- is not tracked.
+
+        Args:
+            tree: The ``and``/``or`` operator AST node.
+            operator: Either ``"and"`` or ``"or"``; prefixes the branch
+                type of each emitted point.
+        """
+        anchor = self._expression_anchors.get(id(tree))
+        if anchor is None:
+            return
+        self._add_point(
+            tree,
+            "branch",
+            f"{operator}_site",
+            line=anchor,
+            operand_span=_node_span(tree),
+        )
+        # gdtoolkit flattens operator chains into a single node whose
+        # children alternate operand, operator token, operand, ... so the
+        # right operands sit at even child indices >= 2.
+        for index in range(2, len(tree.children), 2):
+            operand = tree.children[index]
+            self._add_point(
+                tree,
+                "branch",
+                f"{operator}_right",
+                line=anchor,
+                operand_span=_node_span(operand),
+            )
+            self._add_point(tree, "branch", f"{operator}_short", line=anchor)
 
 
 # --- Plan Generation (FR-4, FR-6) ---

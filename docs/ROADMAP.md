@@ -1560,6 +1560,41 @@ its backup path. Unmodified files are overwritten silently (idempotent).
 
 ---
 
+### Track 41: Expression-Level Branch Coverage (Delivered)
+
+| Field | Value |
+|-------|-------|
+| **Phase** | Ad-hoc (instrumentation correctness arc) |
+| **Goal** | Measure `and`/`or` short-circuit arms and `assert` conditions as branch points, completing the arc begun with ternary branch separation |
+| **Dependencies** | Track 38 (ternary branch points), Ternary Branch Separation (`ternary_branch_separation_20261003`) |
+| **Modules** | `src/gd_tools/coverage/plan_generator.py`, both GDScript collectors, `reporter.py` |
+| **Effort** | 1 day |
+| **Risk** | MEDIUM (PLAN_VERSION bump + addon/plan handshake) |
+| **Status** | Delivered — track `expression_branch_coverage_20261005` |
+
+**Delivered:** `PLAN_VERSION` 6 → 7. Each boolean-operator chain now
+records an `and_site`/`or_site` whole-expression point, one
+`*_right` point per right operand (both wrapped with `hit_ret` at the
+operand's exact span, so short-circuit evaluation is measured
+directly), and one derived `*_short` point per right operand computed
+at write time as `max(0, site_hits - right_hits)`. Each
+`assert(cond)` records `assert_true`/`assert_false` sharing the
+condition's span (a firing `assert` aborts the game, so a passing
+suite can only ever measure `assert_true`). All expression arms live
+in the `--min-branch` denominator, are suppressed by the same
+line-level `# gd-tools: no cover` annotation as their anchor
+statement, and are anchored like ternaries (no enclosing statement —
+class-level initialisers, default parameter values — means
+untracked). Both GDScript collectors implement the points in
+lockstep, and collectors now reject plans carrying branch types they
+do not implement, so an old addon paired with a v7 plan fails loudly
+instead of silently mis-measuring. The uncovered-branch panels label
+each uncovered entry with its actual arm type (fixing a latent
+mislabeling where a line's last branch type was shown for every
+uncovered arm on that line).
+
+---
+
 ## 6. Conductor Track Creation Guide
 
 To create a track using the Conductor methodology:

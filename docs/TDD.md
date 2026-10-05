@@ -1098,8 +1098,8 @@ class LinePlan:
     line: int  # 1-indexed line number
     id: int  # unique within file
     type: str  # "statement" | "branch"
-    branch_type: str | None  # "if_true" | "if_false" | "elif_true" | "loop_body" | "match_case" | "ternary_true" | "ternary_false"
-    operand_span: tuple[int, int, int, int] | None  # (line, col, end_line, end_col) of a ternary arm's operand; None for other point kinds
+    branch_type: str | None  # "if_true" | "if_false" | "elif_true" | "loop_body" | "match_case" | "ternary_true" | "ternary_false" | "and_site" | "and_right" | "and_short" | "or_site" | "or_right" | "or_short" | "assert_true" | "assert_false"
+    operand_span: tuple[int, int, int, int] | None  # (line, col, end_line, end_col) of a ternary arm's or expression operand; None for other point kinds
 
 class CoverageVisitor:
     """Lark Visitor that walks the AST and collects trackable points.
@@ -1221,6 +1221,9 @@ def read_plan_json(path: Path) -> CoveragePlan:
 | `for_stmt_typed`      | branch        | yes    | loop_body       |
 | `match_branch`        | branch        | yes    | match_case      |
 | `test_expr`           | branch        | yes    | ternary_true/ternary_false |
+| `and_test`, `asless_and_test` | branch | yes   | and_site/and_right/and_short |
+| `or_test`, `asless_or_test`   | branch | yes   | or_site/or_right/or_short |
+| `standalone_call` (`assert`)  | branch | yes   | assert_true/assert_false |
 | `pass_stmt`           | no-op         | no     | —               |
 | `breakpoint_stmt`     | debug         | no     | —               |
 | `const_stmt`          | declarative   | no     | —               |
@@ -2361,8 +2364,12 @@ branch_rate = covered_branches / total_branch_points
 ```
 
 Branch points are: `if_true`, `if_false`, `elif_true`, `loop_body`,
-`match_case`, `ternary_true`, `ternary_false`. A branch is "covered" if
-its hit count > 0.
+`match_case`, `ternary_true`, `ternary_false`, `and_site`, `and_right`,
+`and_short`, `or_site`, `or_right`, `or_short`, `assert_true`,
+`assert_false`. A branch is "covered" if
+its hit count > 0. The derived `*_short` arms count as covered when their
+write-time value (`max(0, site_hits - right_hits)`) is positive — a
+short-circuit that skipped its right operand.
 
 **Example:** An `if` statement with no `else`:
 - `if_true` branch: tracked, covered if hit > 0

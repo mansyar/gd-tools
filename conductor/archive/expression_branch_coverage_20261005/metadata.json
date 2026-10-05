@@ -1,0 +1,8 @@
+{
+  "track_id": "expression_branch_coverage_20261005",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-10-05",
+  "branch": "feature/expression-branch-coverage-20261005",
+  "summary": "Expression-level branch coverage: and/or short-circuit operators (per-operator branch points with right/short arms) and assert conditions (assert_true/assert_false arms) become first-class, fully gated branch points; PLAN_VERSION 6->7 with cache invalidation and a loud old-addon handshake."
+}

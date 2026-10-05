@@ -11,6 +11,7 @@ The windowed launch requires a display server.  CI provides one via
 display is detected on Linux so local headless runs stay clean.
 """
 
+import json
 import os
 import re
 import shutil
@@ -108,13 +109,18 @@ MAIN_SCENE_SOURCE = (
 )
 
 
-def _prepare_cli_project(tmp_path: Path, godot_bin: str, scene: str) -> Path:
+def _prepare_cli_project(
+    tmp_path: Path,
+    godot_bin: str,
+    scene: str,
+    subject: str = SUBJECT_SOURCE,
+) -> Path:
     """Build a fixture project with a main scene that exercises coverage."""
     project = tmp_path / "playtest_cli_project"
     shutil.copytree(AUTOLOAD_FIXTURE, project)
     shutil.copytree(COVERAGE_ADDON, project / "addons" / "gd-tools-coverage")
     (project / "scripts" / "playtest_subject.gd").write_text(
-        SUBJECT_SOURCE, encoding="utf-8", newline="\n"
+        subject, encoding="utf-8", newline="\n"
     )
     (project / "scripts" / "main_scene.gd").write_text(
         scene, encoding="utf-8", newline="\n"
@@ -174,3 +180,105 @@ def test_coverage_run_timeout_closes_game_and_reports(godot_bin, tmp_path):
 
     coverage_dir = project / ".gd-tools" / "coverage"
     assert (coverage_dir / "coverage_report.txt").is_file()
+
+
+EXPRESSION_SUBJECT_SOURCE = (
+    "\n".join(
+        [
+            "extends RefCounted",
+            "",
+            "",
+            "func both(a: bool, b: bool) -> bool:",
+            "\treturn a and b",
+            "",
+            "",
+            "func pick(x: int) -> int:",
+            "\treturn 10 if x > 0 else 20",
+            "",
+            "",
+            "func check(ok: bool) -> void:",
+            '\tassert(ok, "must hold")',
+        ]
+    )
+    + "\n"
+)
+
+# Exercise the short-circuit arm (``false and b`` never evaluates ``b``),
+# both ternary arms and a passing assert. A failing assert would abort the
+# game, so the ``assert_false`` arm can only ever be unmeasured here.
+EXPRESSION_SCENE_SOURCE = (
+    "\n".join(
+        [
+            "extends Node",
+            "",
+            "",
+            "func _ready() -> void:",
+            '\tvar Subject: Script = load("res://scripts/playtest_subject.gd")',
+            "\tvar subject: Object = Subject.new()",
+            "\tsubject.both(false, true)",
+            "\tsubject.pick(1)",
+            "\tsubject.pick(-1)",
+            "\tsubject.check(true)",
+            "\tawait get_tree().create_timer(0.5).timeout",
+            "\tget_tree().quit()",
+        ]
+    )
+    + "\n"
+)
+
+EXPECTED_EXPRESSION_TYPES = {
+    "and_site",
+    "and_right",
+    "and_short",
+    "ternary_true",
+    "ternary_false",
+    "assert_true",
+    "assert_false",
+}
+
+
+def test_coverage_run_measures_expression_arms(godot_bin, tmp_path):
+    """Playtest coverage measures and/or/assert arms with v7 plans."""
+    project = _prepare_cli_project(
+        tmp_path,
+        godot_bin,
+        EXPRESSION_SCENE_SOURCE,
+        subject=EXPRESSION_SUBJECT_SOURCE,
+    )
+    result = _run_cli(project, ["--timeout", "15", "--report-format", "text"])
+    assert result.exit_code == 0, result.output
+
+    coverage_dir = project / ".gd-tools" / "coverage"
+    plan = json.loads((coverage_dir / "plan.json").read_text(encoding="utf-8"))
+    coverage = json.loads(
+        (coverage_dir / "coverage.json").read_text(encoding="utf-8")
+    )
+
+    assert plan["version"] == 7
+    subject = next(
+        f for f in plan["files"] if "playtest_subject.gd" in f["path"]
+    )
+    arm_points = {
+        entry["id"]: entry["branch_type"]
+        for entry in subject["lines"]
+        if entry.get("branch_type") in EXPECTED_EXPRESSION_TYPES
+    }
+    assert set(arm_points.values()) == EXPECTED_EXPRESSION_TYPES
+
+    hits = {}
+    for file_data in coverage["files"]:
+        if file_data["file_id"] == subject["file_id"]:
+            hits = {int(k): v for k, v in file_data["hits"].items()}
+    by_type: dict[str, int] = {}
+    for point_id, arm_type in arm_points.items():
+        by_type[arm_type] = by_type.get(arm_type, 0) + hits.get(point_id, 0)
+
+    # ``false and b`` skips the right operand: the short arm is derived
+    # as site minus right, and the right arm records no hit.
+    assert by_type["and_site"] == 1
+    assert by_type["and_right"] == 0
+    assert by_type["and_short"] == 1
+    assert by_type["ternary_true"] == 1
+    assert by_type["ternary_false"] == 1
+    assert by_type["assert_true"] == 1
+    assert by_type["assert_false"] == 0
