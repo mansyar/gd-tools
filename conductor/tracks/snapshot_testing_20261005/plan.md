@@ -54,6 +54,6 @@
 - [x] Task: ARCHITECTURE — snapshot subsystem description (storage, (6fde9df)
   serialization tiers, protocol touchpoints)
 - [x] Task: Update JSON schema / config docs if any config surface was added (6fde9df; none needed - config-only schema, no new keys)
-- [ ] Task: Full verification — `CI=true pytest`, `ruff check`, `black --check`,
+- [x] Task: Full verification — `CI=true pytest`, `ruff check`, `black --check`, (2390df6)
   coverage targets, Definition-of-Done sweep
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
