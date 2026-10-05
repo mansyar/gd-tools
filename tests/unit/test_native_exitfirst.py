@@ -9,9 +9,10 @@ skipped (spec FR1.1-FR1.7).
 import itertools
 import json
 import threading
+from contextlib import ExitStack
 from pathlib import Path
 from subprocess import CompletedProcess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -21,8 +22,10 @@ from gd_tools.native_test.orchestrator import (
 )
 from gd_tools.native_test.protocol import (
     NativeCoverage,
+    NativeRunResult,
     NativeSuite,
     NativeTest,
+    NativeTestResult,
 )
 
 pytestmark = pytest.mark.unit
@@ -141,7 +144,9 @@ def _run_with_status_map(tmp_path, suites, statuses, *, exitfirst, **kwargs):
         with lock:
             calls.append(name)
         status, options = statuses[name]
-        return _finish(fake_kwargs, _result_for(name, status, **options), status)
+        return _finish(
+            fake_kwargs, _result_for(name, status, **options), status
+        )
 
     with patch(
         "gd_tools.native_test.orchestrator._spawn_process",
@@ -164,7 +169,12 @@ _ERROR = ("error", {})
 
 def test_exitfirst_stops_dispatch_after_failing_suite(tmp_path):
     """Sequential: dispatch stops after the first failing suite result."""
-    suites = [_suite("ASuite"), _suite("BSuite"), _suite("CSuite"), _suite("DSuite")]
+    suites = [
+        _suite("ASuite"),
+        _suite("BSuite"),
+        _suite("CSuite"),
+        _suite("DSuite"),
+    ]
 
     result, calls = _run_with_status_map(
         tmp_path,
@@ -175,7 +185,9 @@ def test_exitfirst_stops_dispatch_after_failing_suite(tmp_path):
 
     assert calls == ["ASuite", "BSuite"]
     assert result.status == "failed"
-    assert [test.suite for test in result.tests if test.status == "skipped"] == [
+    assert [
+        test.suite for test in result.tests if test.status == "skipped"
+    ] == [
         "CSuite",
         "DSuite",
     ]
@@ -364,31 +376,13 @@ def test_exitfirst_still_merges_coverage_from_drained_suites(tmp_path):
     assert result.status == "failed"
     assert result.coverage_data_path == final_coverage
     merged = json.loads(final_coverage.read_text(encoding="utf-8"))
-    assert merged["files"][0]["hits"]["0"] == 2
+    # Shard hits sum across the drained suites (A wrote 1, B wrote 2).
+    assert merged["files"][0]["hits"]["0"] == 3
 
 
-def test_command_prints_fail_fast_summary_line(capsys, tmp_path):
-    """The command layer renders the fail-fast summary line (FR1.6)."""
-    from unittest.mock import MagicMock, patch
-
-    from gd_tools.errors import TestFailureError
-    from gd_tools.native_test.command import run_native_test_command
-    from gd_tools.native_test.protocol import NativeRunResult, NativeTestResult
-
-    config = MagicMock()
-    config.test.test_dirs = ["test"]
-    native = NativeRunResult(
-        run_id="run-1",
-        status="failed",
-        tests=[
-            NativeTestResult(suite="ASuite", name="test_ok", status="passed"),
-            NativeTestResult(
-                suite="BSuite", name="test_bad", status="failed"
-            ),
-        ],
-        fail_fast={"trigger": "BSuite", "skipped": 2, "planned": 4},
-    )
-    with (
+def _command_patches(tmp_path, native_result):
+    """Patch the command seams for run_native_test_command unit tests."""
+    return (
         patch(
             "gd_tools.native_test.command.find_project_root",
             return_value=tmp_path,
@@ -401,12 +395,8 @@ def test_command_prints_fail_fast_summary_line(capsys, tmp_path):
         patch(
             "gd_tools.native_test.command.discover_native_suites",
             return_value=[
-                NativeSuite(
-                    name="ASuite", path="res://test/a_test.gd"
-                ),
-                NativeSuite(
-                    name="BSuite", path="res://test/b_test.gd"
-                ),
+                NativeSuite(name="ASuite", path="res://test/a_test.gd"),
+                NativeSuite(name="BSuite", path="res://test/b_test.gd"),
             ],
         ),
         patch(
@@ -421,10 +411,40 @@ def test_command_prints_fail_fast_summary_line(capsys, tmp_path):
         ),
         patch(
             "gd_tools.native_test.command.run_native_tests",
-            return_value=native,
+            return_value=native_result,
         ),
         patch("gd_tools.native_test.command._generate_native_report"),
-    ):
+    )
+
+
+def _enter_command(stack, tmp_path, native_result):
+    """Enter all command patches; return the run_native_tests mock."""
+    run_mock = None
+    for item in _command_patches(tmp_path, native_result):
+        entered = stack.enter_context(item)
+        if item.attribute == "run_native_tests":
+            run_mock = entered
+    return run_mock
+
+
+def test_command_prints_fail_fast_summary_line(capsys, tmp_path):
+    """The command layer renders the fail-fast summary line (FR1.6)."""
+    from gd_tools.errors import TestFailureError
+    from gd_tools.native_test.command import run_native_test_command
+
+    config = MagicMock()
+    config.test.test_dirs = ["test"]
+    native = NativeRunResult(
+        run_id="run-1",
+        status="failed",
+        tests=[
+            NativeTestResult(suite="ASuite", name="test_ok", status="passed"),
+            NativeTestResult(suite="BSuite", name="test_bad", status="failed"),
+        ],
+        fail_fast={"trigger": "BSuite", "skipped": 2, "planned": 4},
+    )
+    with ExitStack() as stack:
+        _enter_command(stack, tmp_path, native)
         with pytest.raises(TestFailureError):
             run_native_test_command(config)
 
@@ -433,3 +453,50 @@ def test_command_prints_fail_fast_summary_line(capsys, tmp_path):
         "Stopped early: fail-fast after suite BSuite (2 of 4 suites skipped)"
         in captured.out
     )
+
+
+def test_command_forwards_exitfirst_and_parallel_together(tmp_path):
+    """--exitfirst and --parallel reach the orchestrator in one call."""
+    from gd_tools.native_test.command import run_native_test_command
+
+    config = MagicMock()
+    config.test.test_dirs = ["test"]
+    native = NativeRunResult(run_id="run-1", status="passed")
+    with ExitStack() as stack:
+        run_mock = _enter_command(stack, tmp_path, native)
+        run_native_test_command(config, exitfirst=True, parallel=3)
+
+    assert run_mock.call_args.kwargs["exitfirst"] is True
+    assert run_mock.call_args.kwargs["parallel"] == 3
+
+
+def test_command_fail_fast_result_carries_skip_details(tmp_path):
+    """The raised TestFailureError carries the fail-fast skip breakdown."""
+    from gd_tools.errors import TestFailureError
+    from gd_tools.native_test.command import run_native_test_command
+
+    config = MagicMock()
+    config.test.test_dirs = ["test"]
+    native = NativeRunResult(
+        run_id="run-1",
+        status="failed",
+        tests=[
+            NativeTestResult(suite="BSuite", name="test_bad", status="failed"),
+            NativeTestResult(
+                suite="CSuite",
+                name="not_run",
+                status="skipped",
+                message="Suite not run: fail-fast stopped dispatch after "
+                "suite 'BSuite'.",
+            ),
+        ],
+        fail_fast={"trigger": "BSuite", "skipped": 1, "planned": 2},
+    )
+    with ExitStack() as stack:
+        _enter_command(stack, tmp_path, native)
+        with pytest.raises(TestFailureError) as excinfo:
+            run_native_test_command(config)
+
+    result = excinfo.value.result
+    statuses = [detail.status for detail in result.test_details]
+    assert "skip" in statuses

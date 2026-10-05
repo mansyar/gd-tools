@@ -179,6 +179,7 @@ def run_watch_mode(
                 parallel=parallel,
                 durations=durations,
                 snapshot_update=snapshot_update,
+                exitfirst=exitfirst,
             )
         except TestFailureError as exc:
             return _watch_result(getattr(exc, "result", None), "failed")

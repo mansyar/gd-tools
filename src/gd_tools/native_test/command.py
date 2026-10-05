@@ -335,6 +335,7 @@ def _run_native_test_command(
             run_id=run_id,
             artifact_layout=artifact_layout,
             snapshot_update=snapshot_update,
+            exitfirst=exitfirst,
         )
     except (KeyboardInterrupt, NativeInterruptError):
         # The orchestrator has already published the incomplete index for
