@@ -379,6 +379,13 @@ def _run_native_test_command(
         junit_xml,
     )
     format_test_results(result, durations=durations)
+    if native_result.fail_fast:
+        fail_fast = native_result.fail_fast
+        output.print_warning(
+            "Stopped early: fail-fast after suite "
+            f"{fail_fast['trigger']} ({fail_fast['skipped']} of "
+            f"{fail_fast['planned']} suites skipped)"
+        )
     if infrastructure_error:
         _raise_for_native_error(native_result)
     if test_failure is not None:
