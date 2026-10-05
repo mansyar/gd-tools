@@ -1368,6 +1368,7 @@ Isolation over throughput. See [8.2](#82-isolation-model).
 | Instrumentation plan and coverage data formats | This document | Sections 4.1, 4.2 |
 | Runtime protocol and exit codes | This document | Sections 9, 11 |
 | GUT migration guide (the bridge was removed in v0.6.0) | [gut-migration](./gut-migration.md) | Whole document |
+| Snapshot subsystem | This document | Section 14 |
 
 ### Known Limitations
 
@@ -1380,6 +1381,38 @@ The GUT compatibility bridge shipped in v0.5.0 and was removed in v0.6.0:
 suites with exit 2 and migration guidance (run `gd-tools migrate`; see the
 [migration guide](./gut-migration.md) and the [Native Runtime Transition
 section](./ROADMAP.md#native-runtime-transition-completed-foundation)).
+
+## 14. Snapshot Subsystem
+
+Snapshot testing pins a value's rendered form against a committed file so
+unintended changes fail the test. The feature spans the same layers as the
+rest of the runtime: GDScript serialization and storage, the test-context
+API, and Python-side reporting.
+
+### Components
+
+| Component | Role |
+| --- | --- |
+| `gd_tools_snapshot_serializer.gd` | Renders values deterministically: primitives, arrays/dictionaries (sorted keys, 2-space indent), script objects (script-variable properties, recursive), and node trees (path + class headers, properties, children). Cycles render as `<ref>` markers via an identity (`is_same`) ancestor scan. |
+| `gd_tools_snapshot_store.gd` | Reads/writes `.snap` files at `.gd-tools/snapshots/<suite>/<test>/<name>.snap`. The `# gd-tools snapshot v1` header records format version, suite, test, and name; a header mismatch or missing key is a `malformed` error, a missing file is `not_found`, and I/O errors fail closed. Writes use `store_string`, so line endings stay LF. |
+| `assert_snapshot(value, name)` | `gd_tools_test.gd` API. Auto-names snapshots `<test>_<call_index>` (1-based per test). Renders via the serializer and compares to the stored file: a match passes, a first sighting auto-writes and passes, a mismatch records a failure with an LCS-based unified diff and an `--snapshot-update` hint, and read/write errors fail closed. Update mode (env `GD_TOOLS_SNAPSHOT_UPDATE=1`) rewrites mismatches instead of failing. |
+| `gd_tools_test_runner.gd` | Injects suite/test names into the test context per test and reports `snapshots_written`, `snapshots_updated`, and `snapshots_matched` in per-test diagnostics. |
+| `test_results.py` | `build_snapshot_summary` aggregates the diagnostics into counts and detects obsolete snapshots -- stored `.snap` files under suites that ran whose owning test did not run this time. `format_test_results` prints the `Snapshots:` line and the obsolete list. |
+
+### Flow
+
+1. The suite calls `assert_snapshot(value)`.
+2. The serializer renders the value; the store reads the snapshot.
+3. First sighting: the store writes the file, the test passes, and the path
+   is reported in `snapshots_written`. Later runs: an equal render passes
+   (`snapshots_matched`); a difference fails with a diff, or is rewritten
+   under `--snapshot-update` (`snapshots_updated`).
+4. After the run, Python aggregates the diagnostics into the summary line and
+   reports obsolete snapshots; `gd-tools clean --snapshots` removes the
+   directory.
+
+Snapshots are plain files under `.gd-tools/snapshots/`; `gd-tools clean
+--snapshots` removes them as a unit and `--all` subsumes it.
 
 ---
 
