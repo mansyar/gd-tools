@@ -12,20 +12,20 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 - [x] **Task 1.2: Implement parsing & validation (Green)** `799400f`
   - [x] Add `--exitfirst`/`-x` and `--shard k/N` options to `test` command
   - [x] Validate shard form at parse time; plumb both into orchestrator invocation
-- [ ] **Task 1.3: Verify coverage & commit** (`ruff check` + `black --check` + `CI=true pytest` + coverage gate)
+- [x] **Task 1.3: Verify coverage & commit** (`ruff check` + `black --check` + `CI=true pytest` + coverage gate) `799400f`
 - [ ] **Task 1.4: Phase Verification & Checkpoint (Refer to workflow.md)**
 
 ## Phase 2: Suite-level sharding (orchestrator)
 
-- [ ] **Task 2.1: Write failing tests for shard selection (Red)**
-  - [ ] Unit tests: round-robin assignment function — suite *i* → shard ((i mod N)+1) over deterministic plan order
-  - [ ] Unit tests: selection is a pure filter of the plan (plan cache unaffected)
-  - [ ] Unit tests: `--shard 1/1` selects the full plan; empty shard yields clean "nothing to run" exit
-  - [ ] Unit tests: changed → shard ordering (selection applies to the changed-filtered plan)
-  - [ ] Unit tests: shard banner reports `Running shard k/N (M of T suites)`
-- [ ] **Task 2.2: Implement shard selection & banner (Green)**
-  - [ ] Round-robin selection step in plan assembly after changed-filtering, before parallelism
-  - [ ] Shard context in run header/artifact index metadata (additive field)
+- [x] **Task 2.1: Write failing tests for shard selection (Red)** `c40ca90`
+  - [x] Unit tests: round-robin assignment function — suite *i* → shard ((i mod N)+1) over deterministic plan order
+  - [x] Unit tests: selection is a pure filter of the plan (plan cache unaffected)
+  - [x] Unit tests: `--shard 1/1` selects the full plan; empty shard yields clean "nothing to run" exit
+  - [x] Unit tests: changed → shard ordering (selection applies to the changed-filtered plan)
+  - [x] Unit tests: shard banner reports `Running shard k/N (M of T suites)`
+- [x] **Task 2.2: Implement shard selection & banner (Green)** `c40ca90`
+  - [x] Round-robin selection step in plan assembly after changed-filtering, before parallelism
+  - [x] Shard context in run banner `Running shard k/N (M of T suites)` (FR2.7; plan previously over-specified an artifact-index field — spec requires banner only)
 - [ ] **Task 2.3: Write failing integration tests for shard × parallel × coverage (Red)**
   - [ ] `--shard 2/3` + `--parallel`: parallelism applies within shard only
   - [ ] `--shard k/N` + `--coverage`: per-shard coverage data/report as today
