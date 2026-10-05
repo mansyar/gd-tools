@@ -65,3 +65,12 @@ coverage gates >80% line / >70% branch, task commits with git notes).
 - click 8.2.1 rejects negative values for `flag_value` options at parse level in
   every syntax; the CLI contract is "negatives never reach the tool" and
   `_validate_durations` remains as a guard against click-version drift.
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions 8a79510
+  - Low: `format_test_results` docstring corrected — durations table prints
+    after failure details on the failure path but before the success line on
+    the success path. `tests/unit/test_test_results.py` 31 passed post-fix.
+  - Review verdict: no Critical/High/Medium findings; plan/style/coverage/test
+    checks all passed (full suite 1782 passed, 95.75% coverage).
