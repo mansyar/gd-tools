@@ -4,14 +4,14 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 
 ## Phase 1: CLI flag parsing & validation (`cli.py`)
 
-- [ ] **Task 1.1: Write failing tests for flag parsing (Red)**
+- [x] **Task 1.1: Write failing tests for flag parsing (Red)** `799400f`
   - [ ] Unit tests: `--exitfirst` and `-x` set the fail-fast option (default False)
   - [ ] Unit tests: `--shard k/N` parses to (k, N) tuple; `--shard 1/1` valid
   - [ ] Unit tests: invalid shard forms (`4/3`, `0/3`, `3`, `a/b`) exit 2 with usage error
   - [ ] Unit tests: `--shard` + `--watch` → exit 2; `--exitfirst` + `--watch` accepted
-- [ ] **Task 1.2: Implement parsing & validation (Green)**
-  - [ ] Add `--exitfirst`/`-x` and `--shard k/N` options to `test` command
-  - [ ] Validate shard form at parse time; plumb both into orchestrator invocation
+- [x] **Task 1.2: Implement parsing & validation (Green)** `799400f`
+  - [x] Add `--exitfirst`/`-x` and `--shard k/N` options to `test` command
+  - [x] Validate shard form at parse time; plumb both into orchestrator invocation
 - [ ] **Task 1.3: Verify coverage & commit** (`ruff check` + `black --check` + `CI=true pytest` + coverage gate)
 - [ ] **Task 1.4: Phase Verification & Checkpoint (Refer to workflow.md)**
 
