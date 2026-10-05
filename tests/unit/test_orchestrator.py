@@ -583,6 +583,7 @@ def _make_uncovered_file_summaries() -> list[FileSummary]:
             total_branches=1,
             uncovered_lines=[2],
             uncovered_branches=[3],
+            uncovered_branch_types=["ternary_true"],
         )
     ]
 

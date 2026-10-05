@@ -975,6 +975,7 @@ def test_render_uncovered_panels_shows_file_path_and_lines():
             total_branches=2,
             uncovered_lines=[7, 12, 15, 16],
             uncovered_branches=[12],
+            uncovered_branch_types=["if_true"],
         ),
     ]
     plan = CoveragePlan(
@@ -1072,6 +1073,7 @@ def test_render_uncovered_panels_branch_type_annotations():
             total_branches=3,
             uncovered_lines=[5, 8, 10],
             uncovered_branches=[5, 8, 10],
+            uncovered_branch_types=["if_true", "loop_body", "match_case"],
         ),
     ]
     plan = CoveragePlan(
