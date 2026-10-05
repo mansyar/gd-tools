@@ -138,6 +138,8 @@ STORE_METHODS = [
     "test_read_round_trips_stored_value",
     "test_read_missing_snapshot_reports_not_found",
     "test_read_malformed_snapshot_reports_error",
+    "test_read_malformed_header_line_reports_clean_error",
+    "test_read_missing_header_field_reports_clean_error",
 ]
 
 ASSERT_METHODS = [
@@ -146,6 +148,7 @@ ASSERT_METHODS = [
     "test_explicit_snapshot_name",
     "test_mismatch_fails_and_reports_diff",
     "test_io_error_fails_closed",
+    "test_snapshot_name_with_separator_fails_cleanly",
     "test_parameterized_case_snapshots",
 ]
 

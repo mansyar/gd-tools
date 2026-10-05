@@ -6,7 +6,7 @@ extends RefCounted
 ## The snapshot subsystem stores one rendered string per assertion, so the
 ## output must be byte-identical across repeated runs and platforms. Tier 1
 ## renders primitives, Arrays, and Dictionaries with sorted keys; Objects and
-## node trees extend the same renderer in later phases.
+## node trees extend the same renderer.
 
 const _INDENT := "  "
 

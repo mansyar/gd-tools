@@ -84,3 +84,53 @@ func test_read_malformed_snapshot_reports_error() -> void:
 	assert_true(not result.get("ok", true))
 	assert_eq(result.get("error"), "malformed")
 	assert_true(str(result.get("message", "")).length() > 0)
+
+
+func test_read_malformed_header_line_reports_clean_error() -> void:
+	var path := STORE.snapshot_path(
+		BASE_DIR,
+		SUITE,
+		"test_read_malformed_header_line_reports_clean_error",
+		"default"
+	)
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	assert_true(file != null)
+	file.store_string(
+		"# gd-tools snapshot v1\n# suite: NativeSnapshotStoreSuite\n# brokenline\nvalue\n"
+	)
+	file.close()
+	var result := STORE.read(
+		BASE_DIR,
+		SUITE,
+		"test_read_malformed_header_line_reports_clean_error",
+		"default"
+	)
+	assert_true(not result.get("ok", true))
+	assert_eq(result.get("error"), "malformed")
+	assert_true(str(result.get("message", "")).contains("malformed header line"))
+
+
+func test_read_missing_header_field_reports_clean_error() -> void:
+	var path := STORE.snapshot_path(
+		BASE_DIR,
+		SUITE,
+		"test_read_missing_header_field_reports_clean_error",
+		"default"
+	)
+	DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	assert_true(file != null)
+	file.store_string(
+		"# gd-tools snapshot v1\n# suite: NativeSnapshotStoreSuite\nvalue\n"
+	)
+	file.close()
+	var result := STORE.read(
+		BASE_DIR,
+		SUITE,
+		"test_read_missing_header_field_reports_clean_error",
+		"default"
+	)
+	assert_true(not result.get("ok", true))
+	assert_eq(result.get("error"), "malformed")
+	assert_true(str(result.get("message", "")).contains("missing header field"))

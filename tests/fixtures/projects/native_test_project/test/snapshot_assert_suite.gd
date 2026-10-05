@@ -66,7 +66,7 @@ func test_mismatch_fails_and_reports_diff() -> void:
 	var failure := get_failures()[0]
 	assert_eq(failure.get("assertion"), "assert_snapshot")
 	var message := str(failure.get("message", ""))
-	assert_true(message.contains("Snapshot mismatch"), message)
+	assert_true(message.contains("the rendered output differs"), message)
 	assert_true(message.contains('- "stored"'), message)
 	assert_true(message.contains('+ "actual"'), message)
 	assert_eq(failure.get("expected"), '"stored"')
@@ -82,6 +82,17 @@ func test_io_error_fails_closed() -> void:
 	var failure := get_failures()[0]
 	assert_eq(failure.get("assertion"), "assert_snapshot")
 	assert_true(str(failure.get("message", "")).length() > 0)
+	clear_failures()
+
+
+func test_snapshot_name_with_separator_fails_cleanly() -> void:
+	assert_snapshot(1, "nested/name")
+	assert_eq(get_failures().size(), 1)
+	var failure := get_failures()[0]
+	assert_eq(failure.get("assertion"), "assert_snapshot")
+	assert_true(
+		str(failure.get("message", "")).contains("without path separators")
+	)
 	clear_failures()
 
 

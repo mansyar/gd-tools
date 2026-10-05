@@ -1362,6 +1362,19 @@ func assert_snapshot(value, name: String = "") -> void:
 	if snapshot_name.is_empty():
 		_gd_tools_snapshot_call_count += 1
 		snapshot_name = "%s_%d" % [test_name, _gd_tools_snapshot_call_count]
+	if (
+		"/" in snapshot_name
+		or "\\" in snapshot_name
+		or snapshot_name == "."
+		or snapshot_name == ".."
+	):
+		_gd_tools_record_failure(
+			"assert_snapshot",
+			"Expected a snapshot name without path separators, but \"%s\" contains one." % snapshot_name,
+			snapshot_name,
+			""
+		)
+		return
 	var rendered := _GD_TOOLS_SNAPSHOT_SERIALIZER.render(value)
 	var existing := _GD_TOOLS_SNAPSHOT_STORE.read(
 		_gd_tools_snapshot_base_dir(), suite_name, test_name, snapshot_name

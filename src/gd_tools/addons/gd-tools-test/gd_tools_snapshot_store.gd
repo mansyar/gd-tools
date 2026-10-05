@@ -95,11 +95,11 @@ static func _parse(
 			break
 		var separator := line.find(": ")
 		if separator == -1:
-			return _malformed(path, "malformed header line %r" % line)
+			return _malformed(path, "malformed header line \"%s\"" % line)
 		fields[line.substr(2, separator - 2)] = line.substr(separator + 2)
 	for key in ["suite", "test", "name"]:
 		if not fields.has(key):
-			return _malformed(path, "missing header field %r" % key)
+			return _malformed(path, "missing header field \"%s\"" % key)
 	if fields["suite"] != suite_name or fields["test"] != test_name or fields["name"] != snapshot_name:
 		return _malformed(
 			path,
