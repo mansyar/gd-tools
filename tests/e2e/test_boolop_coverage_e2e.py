@@ -123,6 +123,31 @@ def _hits_for(hits: dict, branch_type: str, line: int) -> list[int]:
     ]
 
 
+def _assert_hits(plan: dict, data: dict) -> dict[tuple, int]:
+    """Map (branch_type, line, operand_span, point_id) to hit counts for
+    the assert subject."""
+    entry = next(
+        f for f in plan["files"] if f["path"].endswith("assert_subject.gd")
+    )
+    ids = {
+        (
+            line["branch_type"],
+            line["line"],
+            tuple(line["operand_span"]) if line.get("operand_span") else None,
+            line["id"],
+        ): line["id"]
+        for line in entry["lines"]
+        if (line.get("branch_type") or "").startswith("assert_")
+    }
+    file_data = next(
+        f for f in data["files"] if f["file_id"] == entry["file_id"]
+    )
+    hits = file_data["hits"]
+    return {
+        key: int(hits.get(str(point_id), 0)) for key, point_id in ids.items()
+    }
+
+
 def _run_coverage_suite(
     tmp_path, godot_bin, suite: str, extra: list[str] | None = None
 ):
@@ -227,3 +252,76 @@ def test_behavioral_equivalence_under_instrumentation(tmp_path, godot_bin):
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.slow
+def test_assert_true_measured_when_condition_holds(tmp_path, godot_bin):
+    """A passing assert records its true arm and never its false arm."""
+    project, result = _run_coverage_suite(
+        tmp_path, godot_bin, "AssertTrueSuite"
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    plan, data = _coverage_artifacts(project)
+    hits = _assert_hits(plan, data)
+
+    assert _hits_for(hits, "assert_true", 6) == [1]
+    assert _hits_for(hits, "assert_false", 6) == [0]
+
+
+@pytest.mark.slow
+def test_hit_bool_records_exactly_one_arm(tmp_path, godot_bin):
+    """One hit_bool call records exactly one arm and passes the value.
+
+    A firing assert halts headless debug runs (the engine never quits),
+    so the false arm cannot be observed through a real assert. This test
+    drives the collector's own hit_bool entry point through both truth
+    values, the same call the assert instrumentation emits.
+    """
+    project = _setup_project(tmp_path)
+    assert (
+        _run_cli(["init", "--non-interactive"], project, godot_bin).returncode
+        == 0
+    )
+    # A coverage run installs the addon the probe drives.
+    suite_result = _run_cli(
+        ["--quiet", "test", "--coverage", "--suite", "AssertTrueSuite"],
+        project,
+        godot_bin,
+    )
+    assert suite_result.returncode == 0, (
+        suite_result.stdout + suite_result.stderr
+    )
+
+    env = os.environ.copy()
+    env.update({"GODOT_BIN": godot_bin, "PYTHONIOENCODING": "utf-8"})
+    probe = subprocess.run(
+        [
+            godot_bin,
+            "--headless",
+            "--path",
+            str(project),
+            "--script",
+            "res://collector_probe.gd",
+        ],
+        cwd=project,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        timeout=120,
+    )
+    assert probe.returncode == 0, probe.stdout + probe.stderr
+
+    out = json.loads(
+        (project / "collector_probe_out.json").read_text(encoding="utf-8")
+    )
+    file_hits = out["files"][0]["hits"]
+    # Two calls, one arm each: the true call hit 10 only, the false call
+    # hit 11 only.
+    assert file_hits == {"10": 1, "11": 1}
+    values = (project / "collector_probe_values.txt").read_text(
+        encoding="utf-8"
+    )
+    assert values.strip() == "activated=true kept=true dropped=false written=true"

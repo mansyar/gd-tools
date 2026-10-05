@@ -69,6 +69,17 @@ static func hit_ret(file_id: int, line_id: int, value: Variant) -> Variant:
 	return value
 
 
+static func hit_bool(file_id: int, true_id: int, false_id: int, value: Variant) -> Variant:
+	## Record exactly one boolean-arm hit and pass the value through.
+	##
+	## Injected around assert conditions: the condition's truth decides
+	## which of the two arms is recorded, and the value continues into
+	## the assert itself. One wrapper call therefore records exactly one
+	## of assert_true / assert_false per evaluation.
+	hit(file_id, true_id if value else false_id)
+	return value
+
+
 static func write() -> bool:
 	## Write collected hits using the existing coverage JSON schema.
 	if not _active or _output_path.is_empty():
@@ -239,15 +250,15 @@ static func _inject_trackers(
 		file_id: int,
 		lines: Array
 ) -> String:
-	var wrapped := _wrap_ternary_operands(source, file_id, lines)
+	var wrapped := _wrap_expression_operands(source, file_id, lines)
 	var source_lines: PackedStringArray = wrapped.split("\n")
 	var entries: Array = lines.duplicate(true)
 	entries.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
 	for entry in entries:
-		# Ternary arms are instrumented by wrapping their operand text
-		# (see _wrap_ternary_operands); a line-inserted hit() on the
-		# shared anchor line fires both arms in lockstep and can never
-		# report an uncovered arm.
+		# Ternary and boolean-operator arms are instrumented by wrapping
+		# their operand text (see _wrap_expression_operands); a
+		# line-inserted hit() on the shared anchor line fires both arms
+		# in lockstep and can never report an uncovered arm.
 		if entry.get("operand_span") != null:
 			continue
 		# Short-circuit arms are derived at write() as site - right; a
@@ -288,22 +299,39 @@ static func _offset_of(source: String, line: int, col: int) -> int:
 	return target
 
 
-static func _wrap_ternary_operands(
+static func _wrap_expression_operands(
 		source: String,
 		file_id: int,
 		lines: Array
 ) -> String:
-	## Replace each ternary operand with a value-preserving tracker call.
+	## Replace each tracked operand with a value-preserving tracker call.
 	##
-	## The plan records the source span of every ternary arm operand.
-	## Wrapping the operand records the arm's hit exactly when that arm
-	## evaluates, keeping values, evaluation order, and single evaluation
-	## intact. Line numbers are unchanged: a wrapper never adds or removes
-	## a newline, so the line-based insertion that follows stays valid.
+	## The plan records the source span of every ternary arm operand and
+	## boolean-operator site/right operand. Wrapping the operand records
+	## the arm's hit exactly when that operand evaluates, keeping values,
+	## evaluation order, and single evaluation intact. Line numbers are
+	## unchanged: a wrapper never adds or removes a newline, so the
+	## line-based insertion that follows stays valid.
+	##
+	## Assert conditions carry two arm ids (assert_true/assert_false)
+	## over one shared span: the pair becomes a single value-aware
+	## hit_bool wrap that records exactly one arm per evaluation.
 	var spans: Array = []
+	var assert_pairs: Dictionary = {}
 	for entry in lines:
+		var branch_type := str(entry.get("branch_type", ""))
 		var span: Variant = entry.get("operand_span")
 		if span == null:
+			continue
+		if branch_type == "assert_true" or branch_type == "assert_false":
+			var key := str(span)
+			if not assert_pairs.has(key):
+				assert_pairs[key] = {
+					"span": span,
+					"assert_true": -1,
+					"assert_false": -1,
+				}
+			assert_pairs[key][branch_type] = int(entry["id"])
 			continue
 		var start := _offset_of(source, int(span[0]), int(span[1]))
 		var end := _offset_of(source, int(span[2]), int(span[3]))
@@ -311,7 +339,24 @@ static func _wrap_ternary_operands(
 			# Fail open: an unusable span leaves the arm uninstrumented
 			# rather than corrupting the source.
 			continue
-		spans.append({"start": start, "end": end, "id": int(entry["id"])})
+		spans.append({"start": start, "end": end, "kind": "ret", "id": int(entry["id"])})
+	for key in assert_pairs:
+		var pair: Dictionary = assert_pairs[key]
+		if int(pair["assert_true"]) < 0 or int(pair["assert_false"]) < 0:
+			# Fail open: an incomplete pair leaves the assert uninstrumented.
+			continue
+		var span: Array = pair["span"]
+		var start := _offset_of(source, int(span[0]), int(span[1]))
+		var end := _offset_of(source, int(span[2]), int(span[3]))
+		if start < 0 or end < 0 or start >= end or end > source.length():
+			continue
+		spans.append({
+			"start": start,
+			"end": end,
+			"kind": "bool",
+			"true_id": int(pair["assert_true"]),
+			"false_id": int(pair["assert_false"]),
+		})
 	if spans.is_empty():
 		return source
 	spans.sort_custom(func(a, b):
@@ -354,11 +399,19 @@ static func _wrap_spans(
 			j += 1
 		result += source.substr(cursor, start - cursor)
 		var operand := _wrap_spans(source, file_id, children, 0, start, end)
-		result += "GdToolsNativeCoverage.hit_ret(%d, %d, %s)" % [
-			file_id,
-			int(span["id"]),
-			operand,
-		]
+		if str(span.get("kind", "ret")) == "bool":
+			result += "GdToolsNativeCoverage.hit_bool(%d, %d, %d, %s)" % [
+				file_id,
+				int(span["true_id"]),
+				int(span["false_id"]),
+				operand,
+			]
+		else:
+			result += "GdToolsNativeCoverage.hit_ret(%d, %d, %s)" % [
+				file_id,
+				int(span["id"]),
+				operand,
+			]
 		cursor = end
 		i = j
 	result += source.substr(cursor, to - cursor)
