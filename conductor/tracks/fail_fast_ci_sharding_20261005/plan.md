@@ -30,7 +30,7 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
   - [x] `--shard 2/3` + `--parallel`: parallelism applies within shard only (e2e: `tests/e2e/test_native_shard_e2e.py`; composition behavior already implemented by Task 2.2, so tests passed on first full run — earlier Red runs against the un-instrumented fixture shaped the fixture prep)
   - [x] `--shard k/N` + `--coverage`: per-shard coverage data/report as today, with a shard-agnostic plan (NFR2)
 - [x] **Task 2.4: Implement integration behavior (Green)** `bc8045c` — no further code needed: selection (2.2) already applies before preflight/parallelism; coverage behaves per-shard as with `--suite` filtering today
-- [ ] **Task 2.5: Verify coverage & commit**
+- [x] **Task 2.5: Verify coverage & commit** `bc8045c` — ruff + black clean; unit suite 1528 passed / 3 skipped; coverage 92.88% ≥ 80% gate
 - [ ] **Task 2.6: Phase Verification & Checkpoint (Refer to workflow.md)**
 
 ## Phase 3: Fail-fast dispatch gate (orchestrator)
