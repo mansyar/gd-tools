@@ -341,6 +341,7 @@ def _clean_target_label(name: str) -> str:
         "artifacts": ".gd-tools/artifacts",
         "baselines": ".gd-tools/coverage/baseline.json",
         "cache": ".gd-tools/native",
+        "snapshots": ".gd-tools/snapshots",
     }
     return labels.get(name, name)
 
@@ -367,7 +368,8 @@ def _render_clean(result: CleanResult, inventory: bool, dry_run: bool) -> None:
                 )
         output.print_info(
             "Hint: run `gd-tools clean --coverage` (or --artifacts, "
-            "--baselines, --cache) to remove a target, or `gd-tools clean "
+            "--baselines, --cache, --snapshots) to remove a target, or "
+            "`gd-tools clean "
             "--all` to remove everything. Nothing was deleted."
         )
         return
@@ -435,6 +437,11 @@ def _render_clean(result: CleanResult, inventory: bool, dry_run: bool) -> None:
     help="Remove the native worker scratch directory (.gd-tools/native).",
 )
 @click.option(
+    "--snapshots",
+    is_flag=True,
+    help="Remove stored test snapshots (.gd-tools/snapshots).",
+)
+@click.option(
     "--all",
     "clean_all",
     is_flag=True,
@@ -445,7 +452,7 @@ def _render_clean(result: CleanResult, inventory: bool, dry_run: bool) -> None:
     is_flag=True,
     help="Report what would be removed without deleting anything.",
 )
-def clean(coverage, artifacts, baselines, cache, clean_all, dry_run):
+def clean(coverage, artifacts, baselines, cache, snapshots, clean_all, dry_run):
     """Remove generated artifacts under .gd-tools (inventory only with no flags)."""
     try:
         project_root = find_project_root()
@@ -456,6 +463,7 @@ def clean(coverage, artifacts, baselines, cache, clean_all, dry_run):
         artifacts=artifacts,
         baselines=baselines,
         cache=cache,
+        snapshots=snapshots,
         all=clean_all,
         dry_run=dry_run,
         project_root=project_root,
@@ -676,6 +684,12 @@ def _validate_parallel(
     help="With --changed: diff from merge-base of this ref and HEAD "
     "instead of the working tree (for CI on pull requests).",
 )
+@click.option(
+    "--snapshot-update",
+    is_flag=True,
+    help="Rewrite mismatched and malformed snapshots with the rendered "
+    "output instead of failing their tests.",
+)
 def test(
     paths,
     runtime,
@@ -695,6 +709,7 @@ def test(
     watch,
     changed,
     base,
+    snapshot_update,
 ):
     """Run GDScript tests with the native runtime.
 
@@ -784,6 +799,7 @@ def test(
                     show_uncovered=show_uncovered,
                     no_cache=no_cache,
                     parallel=effective_parallel,
+                    snapshot_update=snapshot_update,
                 )
             )
         if selected_runtime == "native":
@@ -805,6 +821,7 @@ def test(
                 parallel=effective_parallel,
                 changed=changed,
                 base=base,
+                snapshot_update=snapshot_update,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)

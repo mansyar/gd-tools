@@ -298,7 +298,7 @@ func _run_test(
 
 	while true:
 		var attempt_result: Dictionary = await _run_test_attempt(
-			suite_context, script, test_name, test_data
+			suite_context, script, test_name, test_data, suite_name
 		)
 		total_duration += float(attempt_result.get("duration_seconds", 0.0))
 		final_result = attempt_result
@@ -333,7 +333,11 @@ func _run_test(
 
 
 func _run_test_attempt(
-	suite_context: GdToolsTest, script: GDScript, test_name: String, test_data: Dictionary
+	suite_context: GdToolsTest,
+	script: GDScript,
+	test_name: String,
+	test_data: Dictionary,
+	suite_name: String,
 ) -> Dictionary:
 	var test_context = _new_test_context(script, suite_context)
 	if test_context == null:
@@ -376,6 +380,8 @@ func _run_test_attempt(
 	if not timed_out:
 		if test_context.has_method(method_name):
 			test_context._gd_tools_case_index = int(test_data.get("parameters_index", 0))
+			test_context._gd_tools_snapshot_suite_name = suite_name
+			test_context._gd_tools_snapshot_test_name = test_name
 			if _script_error_trap == null:
 				_script_error_trap = _GdToolsScriptErrorTrap.new()
 			_script_error_trap.hits.clear()
@@ -452,6 +458,14 @@ func _run_test_attempt(
 		status = "timeout"
 		message = "Test timed out after %.3f seconds" % timeout_seconds
 	var diagnostics := {"failures": failures}
+	var snapshots_written: Array[String] = test_context._gd_tools_snapshots_written
+	if not snapshots_written.is_empty():
+		diagnostics["snapshots_written"] = snapshots_written
+	var snapshots_updated: Array[String] = test_context._gd_tools_snapshots_updated
+	if not snapshots_updated.is_empty():
+		diagnostics["snapshots_updated"] = snapshots_updated
+	if test_context._gd_tools_snapshots_matched > 0:
+		diagnostics["snapshots_matched"] = test_context._gd_tools_snapshots_matched
 	if _current_windowed and status in ["failed", "timeout", "error"]:
 		var screenshot_result := await _capture_failure_screenshot(test_context, test_name)
 		if not bool(screenshot_result.get("ok", false)):

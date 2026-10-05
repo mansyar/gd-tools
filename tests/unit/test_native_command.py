@@ -890,6 +890,45 @@ def test_native_report_still_reconciles_when_threshold_fails(tmp_path):
     assert report_coverage.call_args.args[2] is summary
 
 
+def test_run_native_command_forwards_snapshot_update_to_orchestrator(tmp_path):
+    """The adapter passes the --snapshot-update flag to the orchestrator."""
+    suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")
+    with (
+        patch(
+            "gd_tools.native_test.command.find_project_root",
+            return_value=tmp_path,
+        ),
+        patch(
+            "gd_tools.native_test.command.find_godot",
+            return_value=SimpleNamespace(
+                path="godot", version="4.7", is_valid=True
+            ),
+        ),
+        patch("gd_tools.native_test.command._import_project"),
+        patch(
+            "gd_tools.native_test.command.discover_native_suites",
+            return_value=[suite],
+        ),
+        patch(
+            "gd_tools.native_test.command._prepare_coverage",
+            return_value=(None, None),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_preflight_cached",
+            return_value=_preflight([suite]),
+        ),
+        patch(
+            "gd_tools.native_test.command.run_native_tests",
+            return_value=_native_result(),
+        ) as run,
+        patch("gd_tools.native_test.command._generate_native_report"),
+        patch("gd_tools.native_test.command.format_test_results"),
+    ):
+        run_native_test_command(_config(), snapshot_update=True)
+
+    assert run.call_args.kwargs["snapshot_update"] is True
+
+
 def test_run_native_command_forwards_parallel_to_orchestrator(tmp_path):
     """The adapter passes the parallel worker count to the orchestrator."""
     suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")

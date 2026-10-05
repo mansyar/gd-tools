@@ -1,0 +1,8 @@
+{
+  "track_id": "snapshot_testing_20261005",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-10-05",
+  "branch": "feature/snapshot-testing-20261005",
+  "summary": "Jest-style snapshot testing in the native GdToolsTest runtime: assert_snapshot(value, name) with deterministic 3-tier serialization (values/objects/node trees), .gd-tools/snapshots/ storage, fail-with-diff mismatches, --snapshot-update flag, obsolete reporting, and gd-tools clean --snapshots."
+}

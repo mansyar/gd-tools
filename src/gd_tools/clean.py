@@ -23,7 +23,7 @@ STATUS_ABSENT = "absent"
 # Structural protection: every target is a fixed constant under
 # <project_root>/.gd-tools. Nothing outside this tree is ever a target,
 # and the project's configuration/addons always survive a clean run.
-TARGET_NAMES = ("coverage", "artifacts", "baselines", "cache")
+TARGET_NAMES = ("coverage", "artifacts", "baselines", "cache", "snapshots")
 
 
 @dataclass(frozen=True)
@@ -97,6 +97,7 @@ def _target_paths(project_root: Path) -> dict[str, Path]:
         "artifacts": gd / "artifacts",
         "baselines": gd / "coverage" / "baseline.json",
         "cache": gd / "native",
+        "snapshots": gd / "snapshots",
     }
 
 
@@ -153,6 +154,7 @@ def run_clean(
     artifacts: bool = False,
     baselines: bool = False,
     cache: bool = False,
+    snapshots: bool = False,
     all: bool = False,  # noqa: A002 - mirrors the CLI flag name
     dry_run: bool = False,
     project_root: Path | None = None,
@@ -167,6 +169,8 @@ def run_clean(
         baselines: Remove only ``baseline.json`` from the coverage
             output.
         cache: Remove the native worker scratch directory.
+        snapshots: Remove the stored snapshots directory
+            (``.gd-tools/snapshots``).
         all: Remove every target directory (subsumes all other flags).
         dry_run: Compute and report what would be removed without
             deleting anything.
@@ -179,7 +183,7 @@ def run_clean(
     root = project_root if project_root is not None else Path.cwd()
     paths = _target_paths(root)
 
-    if not (coverage or artifacts or baselines or cache or all):
+    if not (coverage or artifacts or baselines or cache or snapshots or all):
         # Inventory mode: report presence and size, delete nothing.
         entries = tuple(
             TargetResult(
@@ -193,7 +197,7 @@ def run_clean(
         return CleanResult(targets=entries)
 
     if all:
-        coverage = artifacts = baselines = cache = True
+        coverage = artifacts = baselines = cache = snapshots = True
 
     selected = {
         name
@@ -202,6 +206,7 @@ def run_clean(
             ("artifacts", artifacts),
             ("baselines", baselines),
             ("cache", cache),
+            ("snapshots", snapshots),
         )
         if flag
     }

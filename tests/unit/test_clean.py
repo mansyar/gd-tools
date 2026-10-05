@@ -302,3 +302,58 @@ def test_every_mode_leaves_the_project_dir_itself_intact(tmp_path, kwargs):
     root = _make_project(tmp_path)
     run_clean(project_root=root, **kwargs)
     assert (root / ".gd-tools").exists()
+
+
+# --- Snapshots target ---
+
+
+def test_snapshots_flag_removes_snapshots_directory(tmp_path):
+    root = _make_project(tmp_path)
+    snapshots_dir = root / ".gd-tools" / "snapshots" / "SuiteA" / "test_a"
+    snapshots_dir.mkdir(parents=True)
+    snapshot_file = snapshots_dir / "a_1.snap"
+    snapshot_file.write_text(
+        "# gd-tools snapshot v1\n", encoding="utf-8", newline="\n"
+    )
+
+    result = run_clean(snapshots=True, project_root=root)
+
+    entry = _status(result, "snapshots")
+    assert not snapshots_dir.exists()
+    assert entry.status == "removed"
+    assert entry.freed_bytes == len("# gd-tools snapshot v1\n".encode())
+
+
+def test_snapshots_flag_absent_reports_nothing(tmp_path):
+    root = _make_project(tmp_path)
+    result = run_clean(snapshots=True, project_root=root)
+    entry = _status(result, "snapshots")
+    assert entry.status == "nothing"
+
+
+def test_snapshots_survive_other_clean_flags(tmp_path):
+    """--coverage must not delete stored snapshots."""
+    root = _make_project(tmp_path)
+    snapshots_dir = root / ".gd-tools" / "snapshots"
+    snapshots_dir.mkdir(parents=True)
+    run_clean(coverage=True, project_root=root)
+    assert snapshots_dir.exists()
+
+
+def test_all_flag_subsumes_snapshots(tmp_path):
+    root = _make_project(tmp_path)
+    snapshots_dir = root / ".gd-tools" / "snapshots"
+    snapshots_dir.mkdir(parents=True)
+    result = run_clean(all=True, project_root=root)
+    assert _status(result, "snapshots").status == "removed"
+    assert not snapshots_dir.exists()
+
+
+def test_inventory_lists_snapshots_target(tmp_path):
+    root = _make_project(tmp_path)
+    snapshots_dir = root / ".gd-tools" / "snapshots"
+    snapshots_dir.mkdir(parents=True)
+    result = run_clean(project_root=root)
+    entry = _status(result, "snapshots")
+    assert entry.status == "present"
+    assert entry.freed_bytes == 0

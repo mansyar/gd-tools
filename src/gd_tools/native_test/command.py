@@ -46,7 +46,12 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     RuntimeMode,
 )
-from gd_tools.test_results import TestDetail, TestResult, format_test_results
+from gd_tools.test_results import (
+    TestDetail,
+    TestResult,
+    build_snapshot_summary,
+    format_test_results,
+)
 from gd_tools.watch.mapping import map_changed_file, select_suites_for_changes
 
 
@@ -68,6 +73,7 @@ def run_native_test_command(
     parallel: int | None = None,
     changed: bool = False,
     base: str | None = None,
+    snapshot_update: bool = False,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -99,6 +105,7 @@ def run_native_test_command(
             parallel=parallel,
             changed=changed,
             base=base,
+            snapshot_update=snapshot_update,
         )
     finally:
         if previous_sigterm is not None:
@@ -128,6 +135,7 @@ def _run_native_test_command(
     parallel: int | None = None,
     changed: bool = False,
     base: str | None = None,
+    snapshot_update: bool = False,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -151,6 +159,8 @@ def _run_native_test_command(
             back to the full suite when a change maps to no suite.
         base: With ``changed``, diff from ``merge-base(ref, HEAD)`` instead
             of the working tree.
+        snapshot_update: Rewrite mismatched snapshots instead of failing
+            their tests.
 
     Returns:
         The normalized CLI-facing test result.
@@ -283,6 +293,7 @@ def _run_native_test_command(
             parallel=parallel,
             run_id=run_id,
             artifact_layout=artifact_layout,
+            snapshot_update=snapshot_update,
         )
     except (KeyboardInterrupt, NativeInterruptError):
         # The orchestrator has already published the incomplete index for
@@ -641,6 +652,7 @@ def _to_test_result(
         stderr=native_result.stderr,
         test_details=details,
         artifact_index_path=native_result.artifact_index_path,
+        snapshot_summary=build_snapshot_summary(details, project_root),
     )
 
 

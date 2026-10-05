@@ -437,6 +437,9 @@ gd-tools test --changed --parallel 4 --coverage --min 80
 
 # Run exactly one native test file
 gd-tools test tests/unit/test_player.gd
+
+# Accept new snapshot output after an intentional change
+gd-tools test --snapshot-update
 ```
 
 **Native runtime notes:**
@@ -638,6 +641,39 @@ func _heal_after(frames: int) -> void:
     for index in frames:
         await get_tree().process_frame
     health_changed.emit(2)
+```
+
+**Snapshot assertions:**
+
+`assert_snapshot(value, name := "")` compares the rendered value against a
+stored snapshot file under `.gd-tools/snapshots/`. The first sighting writes
+the snapshot and the test passes; later runs compare and fail with a unified
+diff when the rendered output differs from the stored file.
+
+- `name` is optional; without it snapshots are auto-named `<test>_1`,
+  `<test>_2`, ... in call order, so one test can take several snapshots.
+- Serialization is deterministic: dictionary keys are sorted, script-object
+  properties are dumped recursively, Nodes render as an indented tree with
+  paths and class names, and cycles render as `<ref>` markers instead of
+  recursing.
+- Snapshot files carry a `# gd-tools snapshot v1` header naming the format
+  version, suite, test, and snapshot name -- commit them and review changes
+  like any other test expectation.
+- `gd-tools test --snapshot-update` rewrites mismatched snapshots with the
+  freshly rendered output instead of failing their tests. Use it to accept
+  intentional changes; it is CI-safe and never prompts.
+- The run summary prints snapshot counts (written / updated / matched /
+  failed) and lists obsolete snapshots -- stored files whose owning test no
+  longer ran. Prune obsolete files with `gd-tools clean --snapshots`.
+
+```gdscript
+extends GdToolsTest
+
+const HUD := preload("res://scripts/hud.gd")
+
+func test_hud_renders_expected_layout() -> void:
+    var hud := HUD.new()
+    assert_snapshot(hud.build_layout(), "layout")
 ```
 
 **Scene and resource integration:**
@@ -1613,6 +1649,9 @@ gd-tools clean --all --dry-run
 
 # Remove only coverage output
 gd-tools clean --coverage
+
+# Remove stored test snapshots
+gd-tools clean --snapshots
 
 # Full reset of generated artifacts
 gd-tools clean --all

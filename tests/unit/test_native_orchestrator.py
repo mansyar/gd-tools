@@ -1335,6 +1335,39 @@ def test_suite_env_carries_suite_name_and_worker_slot(tmp_path):
     assert [env["GD_TOOLS_WORKER_SLOT"] for env in envs] == ["0", "0"]
 
 
+def test_suite_env_carries_snapshot_update_flag(tmp_path):
+    """The snapshot-update flag flows to the runner as a 1-valued env var."""
+    envs = []
+    with patch(
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(_env_collecting_runner(envs)),
+    ):
+        run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite")],
+            godot_binary="godot",
+            snapshot_update=True,
+        )
+
+    assert envs[0]["GD_TOOLS_SNAPSHOT_UPDATE"] == "1"
+
+
+def test_suite_env_omits_snapshot_update_by_default(tmp_path):
+    """Without the flag, no snapshot-update variable reaches the runner."""
+    envs = []
+    with patch(
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(_env_collecting_runner(envs)),
+    ):
+        run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite")],
+            godot_binary="godot",
+        )
+
+    assert "GD_TOOLS_SNAPSHOT_UPDATE" not in envs[0]
+
+
 def test_worker_slot_cycles_across_pool(tmp_path):
     """The worker slot is the suite index modulo the worker count.
 
