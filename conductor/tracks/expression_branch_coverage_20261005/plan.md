@@ -40,10 +40,10 @@
     whole expression; derivation in collector aggregation, clamped ≥ 0)
 - [x] Task: Implement right-operand + site span wrapping in
   `gd_tools_native_coverage.gd` (Green) — generalize `_wrap_ternary_operands`
-- [ ] Task: Write failing e2e tests for `assert` arm measurement (Red)
+- [x] Task: Write failing e2e tests for `assert` arm measurement (Red)
   - A single wrapper call records exactly one of `assert_true`/
     `assert_false` based on the evaluated condition value
-- [ ] Task: Implement value-aware dual-arm helper (e.g. `hit_bool`) in the
+- [x] Task: Implement value-aware dual-arm helper (e.g. `hit_bool`) in the
   native collector (Green)
 - [ ] Task: Mirror instrumentation in `coverage.gd` (`gd-tools-coverage`
   autoload / playtest path) (Green)
