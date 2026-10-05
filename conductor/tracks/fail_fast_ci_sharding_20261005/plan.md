@@ -35,15 +35,15 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 
 ## Phase 3: Fail-fast dispatch gate (orchestrator)
 
-- [ ] **Task 3.1: Write failing tests for the dispatch gate (Red)**
-  - [ ] Unit tests: failure result sets stop-dispatch flag; queued suites not started; in-flight drained and collected
-  - [ ] Unit tests: trigger on any failure class — test failure, infra error, preflight failure, timeout; skip/pass never triggers
-  - [ ] Unit tests: retries respected — suite passing after retry does not trigger
-  - [ ] Unit tests: exit code 1 with summary line `Stopped early: fail-fast after suite <id> (K of M suites skipped)`
-  - [ ] Unit tests: unstarted suites recorded as skipped-due-to-fail-fast in results/artifact index (additive)
-  - [ ] Unit tests: `--exitfirst` + `--coverage`: partial report generated and labeled partial
-  - [ ] Unit tests: without the flag, dispatch loop behavior byte-identical to v0.7.0 (regression guard)
-- [ ] **Task 3.2: Implement the gate in the dispatch loop (Green)**
+- [x] **Task 3.1: Write failing tests for the dispatch gate (Red)** (`sha: 18e7052`, `tests/unit/test_native_exitfirst.py`, 8 tests, all Red: TypeError 'exitfirst' / ValidationError 'fail_fast')
+  - [x] Unit tests: failure result sets stop-dispatch flag; queued suites not started; in-flight drained and collected (sequential + parallel drain test)
+  - [x] Unit tests: trigger on any failure class - test failure, infra error (status "error"), timeout (timeout covered by existing _process_error path → has_error, same gate); skip/pass never triggers
+  - [x] Unit tests: retries respected - suite passing after retry (attempts=2) does not trigger
+  - [x] Unit tests: exit code 1 with summary line `Stopped early: fail-fast after suite <id> (K of M suites skipped)` (command-level rendering test; exit 1 via existing TestFailureError)
+  - [x] Unit tests: unstarted suites recorded as skipped-due-to-fail-fast in results (synthetic skipped entries); artifact index already lists the full plan's suite_names
+  - [x] Unit tests: `--exitfirst` + `--coverage`: shards from drained suites still merged (existing omission "partial" labeling applies unchanged)
+  - [x] Unit tests: without the flag, dispatch loop behavior byte-identical to v0.7.0 (regression guard)
+- [x] **Task 3.2: Implement the gate in the dispatch loop (Green)** `58a6efb` - `run_native_tests(exitfirst=...)`: plain parallel dispatch unchanged (submit-all-upfront); exitfirst dispatches incrementally bounded by --parallel, stops on has_failure/has_error, drains in-flight futures, records unstarted suites as synthetic skipped entries in discovery order; `NativeRunResult.fail_fast = {trigger, skipped, planned}`; command.py renders `Stopped early: fail-fast after suite <id> (K of M suites skipped)` before the failure exit; interrupt-test result stub updated for the additive field
 - [ ] **Task 3.3: Write failing integration tests for combined interplay (Red)**
   - [ ] `--exitfirst` + `--parallel N`: drain semantics, coherent results, no orphaned processes
   - [ ] `--exitfirst` + `--shard`: fail-fast applies within the shard's run
