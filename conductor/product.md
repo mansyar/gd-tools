@@ -208,6 +208,18 @@ permanent migration path.
 - The native test addon and generated harness files are excluded from
   application coverage automatically.
 
+### Snapshot testing
+
+- `assert_snapshot(value, name := "")` pins a value's rendered form —
+  primitives, containers with sorted keys, script-object property dumps, and
+  node trees — against versioned `.snap` files under `.gd-tools/snapshots/`.
+- The first sighting writes the snapshot and passes; mismatches fail with a
+  unified diff and `--snapshot-update` rewrites them for intentional changes
+  (CI-safe, never prompts).
+- Snapshot files are plain, reviewable text committed with the suite; obsolete
+  snapshots are reported in the run summary and removed with
+  `gd-tools clean --snapshots`.
+
 ### Migration boundary
 
 - `gd-tools test` defaults to native execution.
