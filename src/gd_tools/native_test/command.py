@@ -46,7 +46,12 @@ from gd_tools.native_test.protocol import (
     NativeSuite,
     RuntimeMode,
 )
-from gd_tools.test_results import TestDetail, TestResult, format_test_results
+from gd_tools.test_results import (
+    TestDetail,
+    TestResult,
+    build_snapshot_summary,
+    format_test_results,
+)
 from gd_tools.watch.mapping import map_changed_file, select_suites_for_changes
 
 
@@ -647,6 +652,7 @@ def _to_test_result(
         stderr=native_result.stderr,
         test_details=details,
         artifact_index_path=native_result.artifact_index_path,
+        snapshot_summary=build_snapshot_summary(details, project_root),
     )
 
 

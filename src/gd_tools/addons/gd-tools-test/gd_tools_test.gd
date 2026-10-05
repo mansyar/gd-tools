@@ -27,6 +27,7 @@ var _gd_tools_snapshot_test_name := ""
 var _gd_tools_snapshot_call_count := 0
 var _gd_tools_snapshots_written: Array[String] = []
 var _gd_tools_snapshots_updated: Array[String] = []
+var _gd_tools_snapshots_matched := 0
 
 const _GD_TOOLS_SNAPSHOT_SERIALIZER := preload(
 	"res://addons/gd-tools-test/gd_tools_snapshot_serializer.gd"
@@ -1368,6 +1369,7 @@ func assert_snapshot(value, name: String = "") -> void:
 	if bool(existing.get("ok", false)):
 		var stored := str(existing.get("value", ""))
 		if stored == rendered:
+			_gd_tools_snapshots_matched += 1
 			return
 		if _gd_tools_snapshot_update_mode():
 			if _gd_tools_rewrite_snapshot(

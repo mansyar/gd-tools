@@ -465,7 +465,9 @@ def test_snapshot_summary_aggregates_diagnostics(tmp_path):
             message="",
             duration=0.1,
             diagnostics={
-                "snapshots_written": ["SuiteA/test_first_run_writes_and_passes/s_1"],
+                "snapshots_written": [
+                    "SuiteA/test_first_run_writes_and_passes/s_1"
+                ],
             },
         ),
         TestDetail(
@@ -485,7 +487,10 @@ def test_snapshot_summary_aggregates_diagnostics(tmp_path):
             diagnostics={
                 "snapshots_updated": ["SuiteB/test_mismatch/m"],
                 "failures": [
-                    {"assertion": "assert_snapshot", "message": "Snapshot mismatch"}
+                    {
+                        "assertion": "assert_snapshot",
+                        "message": "Snapshot mismatch",
+                    }
                 ],
             },
         ),
@@ -506,13 +511,19 @@ def test_snapshot_summary_detects_obsolete_snapshots(tmp_path):
     snapshots_dir = tmp_path / ".gd-tools" / "snapshots"
     kept = snapshots_dir / "SuiteA" / "test_kept"
     kept.mkdir(parents=True)
-    (kept / "kept.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    (kept / "kept.snap").write_text(
+        "# gd-tools snapshot v1\n", encoding="utf-8"
+    )
     orphan = snapshots_dir / "SuiteA" / "test_gone"
     orphan.mkdir(parents=True)
-    (orphan / "orphan.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    (orphan / "orphan.snap").write_text(
+        "# gd-tools snapshot v1\n", encoding="utf-8"
+    )
     other_suite = snapshots_dir / "SuiteNeverRan" / "test_x"
     other_suite.mkdir(parents=True)
-    (other_suite / "x.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    (other_suite / "x.snap").write_text(
+        "# gd-tools snapshot v1\n", encoding="utf-8"
+    )
     details = [
         TestDetail(
             name="test_kept",
@@ -545,9 +556,13 @@ def test_snapshot_summary_none_without_snapshot_activity(tmp_path):
 @pytest.mark.unit
 def test_format_test_results_prints_snapshot_summary(capsys, tmp_path):
     """Snapshot activity renders as a summary line with obsolete paths."""
-    snapshots_dir = tmp_path / ".gd-tools" / "snapshots" / "SuiteA" / "test_gone"
+    snapshots_dir = (
+        tmp_path / ".gd-tools" / "snapshots" / "SuiteA" / "test_gone"
+    )
     snapshots_dir.mkdir(parents=True)
-    (snapshots_dir / "orphan.snap").write_text("# gd-tools snapshot v1\n", encoding="utf-8")
+    (snapshots_dir / "orphan.snap").write_text(
+        "# gd-tools snapshot v1\n", encoding="utf-8"
+    )
     details = [
         TestDetail(
             name="test_a",
@@ -577,7 +592,9 @@ def test_format_test_results_prints_snapshot_summary(capsys, tmp_path):
     )
     format_test_results(result)
     captured = capsys.readouterr()
-    assert "Snapshots: 1 written, 0 updated, 1 matched, 0 failed" in captured.out
+    assert (
+        "Snapshots: 1 written, 0 updated, 1 matched, 0 failed" in captured.out
+    )
     assert "SuiteA/test_gone/orphan.snap" in captured.out
 
 

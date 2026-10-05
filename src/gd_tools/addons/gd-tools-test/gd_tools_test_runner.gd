@@ -464,6 +464,8 @@ func _run_test_attempt(
 	var snapshots_updated: Array[String] = test_context._gd_tools_snapshots_updated
 	if not snapshots_updated.is_empty():
 		diagnostics["snapshots_updated"] = snapshots_updated
+	if test_context._gd_tools_snapshots_matched > 0:
+		diagnostics["snapshots_matched"] = test_context._gd_tools_snapshots_matched
 	if _current_windowed and status in ["failed", "timeout", "error"]:
 		var screenshot_result := await _capture_failure_screenshot(test_context, test_name)
 		if not bool(screenshot_result.get("ok", false)):

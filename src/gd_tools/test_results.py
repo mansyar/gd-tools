@@ -16,6 +16,26 @@ from gd_tools import output
 
 
 @dataclass
+class SnapshotSummary:
+    """Aggregated snapshot activity for one test run.
+
+    Attributes:
+        written: Number of snapshots auto-written on first sight.
+        updated: Number of snapshots rewritten by update mode.
+        matched: Number of snapshot comparisons that matched.
+        failed: Number of snapshot assertions that failed.
+        obsolete: Stored snapshots with no owning test in the run,
+            as ``suite/test/name`` paths.
+    """
+
+    written: int
+    updated: int
+    matched: int
+    failed: int
+    obsolete: list[str]
+
+
+@dataclass
 class TestDetail:
     """Details of a single test case.
 
@@ -70,6 +90,99 @@ class TestResult:
     stderr: str
     test_details: list[TestDetail] = field(default_factory=list)
     artifact_index_path: Path | None = None
+    snapshot_summary: SnapshotSummary | None = None
+
+
+def build_snapshot_summary(
+    test_details: list[TestDetail],
+    project_root: Path,
+) -> SnapshotSummary | None:
+    """Aggregate snapshot activity from test diagnostics and disk state.
+
+    Counts come from the runner's per-test diagnostics: lists under
+    ``snapshots_written`` / ``snapshots_updated``, integers under
+    ``snapshots_matched``, and snapshot failures among the recorded
+    ``failures`` (assertion ``"assert_snapshot"``). Obsolete snapshots are
+    stored files under ``.gd-tools/snapshots/<suite>/<test>/`` whose owning
+    suite ran but whose owning test did not.
+
+    Args:
+        test_details: Per-test breakdown of the finished run.
+        project_root: Project root containing the snapshots directory.
+
+    Returns:
+        A :class:`SnapshotSummary`, or ``None`` when the run shows no
+        snapshot activity and no obsolete snapshots.
+    """
+    written = 0
+    updated = 0
+    matched = 0
+    failed = 0
+    run_keys: set[tuple[str, str]] = set()
+    for detail in test_details:
+        run_keys.add((detail.suite, detail.name))
+        diagnostics = detail.diagnostics
+        written += len(diagnostics.get("snapshots_written", []))
+        updated += len(diagnostics.get("snapshots_updated", []))
+        matched += int(diagnostics.get("snapshots_matched", 0))
+        for failure in diagnostics.get("failures", []):
+            if failure.get("assertion") == "assert_snapshot":
+                failed += 1
+
+    obsolete = _find_obsolete_snapshots(test_details, project_root)
+    if (
+        not written
+        and not updated
+        and not matched
+        and not failed
+        and not obsolete
+    ):
+        return None
+    return SnapshotSummary(
+        written=written,
+        updated=updated,
+        matched=matched,
+        failed=failed,
+        obsolete=obsolete,
+    )
+
+
+def _find_obsolete_snapshots(
+    test_details: list[TestDetail],
+    project_root: Path,
+) -> list[str]:
+    """List stored snapshots whose owning test did not run.
+
+    Only suites that ran in this run are scanned: snapshots of suites the
+    run never touched are simply unvisited, not obsolete.
+
+    Args:
+        test_details: Per-test breakdown of the finished run.
+        project_root: Project root containing the snapshots directory.
+
+    Returns:
+        Obsolete snapshot paths as ``suite/test/name``, sorted.
+    """
+    snapshots_dir = project_root / ".gd-tools" / "snapshots"
+    if not snapshots_dir.is_dir():
+        return []
+    run_keys = {(detail.suite, detail.name) for detail in test_details}
+    ran_suites = {detail.suite for detail in test_details}
+    obsolete: list[str] = []
+    for suite_dir in sorted(snapshots_dir.iterdir()):
+        if not suite_dir.is_dir() or suite_dir.name not in ran_suites:
+            continue
+        for test_dir in sorted(suite_dir.iterdir()):
+            if (
+                not test_dir.is_dir()
+                or (suite_dir.name, test_dir.name) in run_keys
+            ):
+                continue
+            for snapshot_file in sorted(test_dir.glob("*.snap")):
+                obsolete.append(
+                    f"{suite_dir.name}/{test_dir.name}/{snapshot_file.name}"
+                )
+    return obsolete
 
 
 def format_test_results(result: TestResult) -> None:
@@ -107,6 +220,25 @@ def format_test_results(result: TestResult) -> None:
                 (str(result.artifact_index_path), "cyan"),
             )
         )
+
+    if result.snapshot_summary is not None:
+        summary = result.snapshot_summary
+        line = (
+            f"{summary.written} written, {summary.updated} updated, "
+            f"{summary.matched} matched, {summary.failed} failed"
+        )
+        parts: list[tuple[str, str]] = [("Snapshots: ", "dim"), (line, "cyan")]
+        output.console.print(Text.assemble(*parts))
+        if summary.obsolete:
+            output.console.print(
+                Text.assemble(
+                    (
+                        "Obsolete snapshots (not touched by this run):\n",
+                        "yellow",
+                    ),
+                    ("\n".join(summary.obsolete), "yellow"),
+                )
+            )
 
     if result.failed == 0:
         # A skipped test did not run, so counting it as passed would report a
