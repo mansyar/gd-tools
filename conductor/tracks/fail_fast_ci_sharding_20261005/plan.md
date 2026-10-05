@@ -52,13 +52,13 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 - [x] **Task 3.5: Verify coverage & commit** `fe46d96` - ruff + black clean (175 files unchanged); full unit suite 1539 passed / 3 skipped; coverage 92.88% >= 80% gate
 - [x] **Task 3.6: Phase Verification & Checkpoint (Refer to workflow.md)** `12f1b02` - manual fail-fast run: early stop, summary line, exit 1, coherent artifacts (found+fixed publish ValueError); regression run unchanged
 
-## Phase 4: Documentation
+## Phase 4: Documentation `[checkpoint: cac4819]`
 
 - [x] **Task 4.1: README flag reference** `6b9c71d` - test-command table row, flag examples, and interplay paragraphs for `--exitfirst`/`-x` and `--shard k/N` (watch rejections, retries, coverage, changed/shard/parallel pipeline)
 - [x] **Task 4.2: CI recipe** `6b9c71d` - USER_GUIDE 4.2 "Sharding a test run across CI jobs": GitHub Actions matrix over shard indices with a `coverage merge` across-shards job (plus flag-reference rows and examples in 3.4)
 - [x] **Task 4.3: ARCHITECTURE.md** `6b9c71d` - 11.2 orchestrator section: dispatch pipeline (changed -> shard -> parallel), round-robin rule, fail-fast gate + artifact-index `fail_fast: "skipped"` markers; 9.7 note that fail-fast introduces no new exit code
 - [x] **Task 4.4: Commit docs** `6b9c71d`
-- [ ] **Task 4.5: Phase Verification & Checkpoint (Refer to workflow.md)**
+- [x] **Task 4.5: Phase Verification & Checkpoint (Refer to workflow.md)** `cac4819` - anchor link resolves, markdown fences balanced, flag references present
 
 ## Phase 5: End-to-end validation
 
