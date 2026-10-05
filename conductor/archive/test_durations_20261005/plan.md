@@ -43,10 +43,25 @@ coverage gates >80% line / >70% branch, task commits with git notes).
   - [x] Composition: table still renders with `--suite`, `--tag`, `--parallel` filters
 - [x] Task: Wire `durations` through `cli.py` → reporting path; ensure `watch/session.py` re-runs honor config/flag (landed early in Phase 1 as commit b1e36a2 to keep e2e green; verified by the new forwarding tests in this phase)
 - [x] Task: Verify retries-sum timing behavior is preserved by the renderer (regression test with multi-attempt `TestDetail` fixtures)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: eaf18bd]
 
 ## Phase 4 — Documentation & Final Verification
 
-- [ ] Task: Update `README.md` with the `--durations` flag, config key, and `--durations 0` semantics (pytest-parity note)
-- [ ] Task: Final quality gates: `ruff check`, `black --check`, `CI=true pytest` with coverage >80% line / >70% branch on new code
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Update `README.md` with the `--durations` flag, config key, and `--durations 0` semantics (pytest-parity note) (docs 7229597)
+  - [x] README command summary, example block, and a dedicated paragraph
+  - [x] USER_GUIDE.md kept truthful: `[test]` config row + §3.4 flag row
+- [x] Task: Final quality gates: `ruff check`, `black --check`, `CI=true pytest` with coverage >80% line / >70% branch on new code (style ee7b3f6)
+  - [x] ruff clean on all touched files; black applied to 3 files
+  - [x] Full suite: 1782 passed, 7 skipped (15:30); total coverage 95.75% — gates passed
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: eaf18bd]
+
+## Completion Notes
+
+- The `durations` pass-through (command.py, watch/session.py, `format_test_results`
+  signature) landed during Phase 1 (commit b1e36a2) because the full e2e suite
+  invokes the real CLI; the 17 failing e2e tests served as the Red for that fix.
+  Phase 3's wiring tests are therefore born-green verification tests (documented
+  in the e6eaa20 git note).
+- click 8.2.1 rejects negative values for `flag_value` options at parse level in
+  every syntax; the CLI contract is "negatives never reach the tool" and
+  `_validate_durations` remains as a guard against click-version drift.
