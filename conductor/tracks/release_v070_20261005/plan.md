@@ -43,4 +43,4 @@
   - [x] Fix `test_package_version_is_0_6_0` → `test_package_version_is_0_7_0` (fresh-install CI caught the stale pin)
   - [x] Regenerate `docs/gd-tools.schema.json` (schema embeds the package version)
   - [x] Re-run full unit suite green (1479 passed)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)

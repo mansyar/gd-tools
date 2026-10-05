@@ -311,11 +311,12 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Ship v0.7.0** (chore/release: commitizen version bump to 0.7.0
+- [x] **Track: Ship v0.7.0** (chore/release: commitizen version bump to 0.7.0
   with dated CHANGELOG section, full documentation truth pass against the
   post-v0.6.0 feature set (GH Actions annotations, `--min-branch`, coverage
   `github-actions` format, spy framework upgrades, `error` outcome, ternary
   fixes), local pre-release verification per workflow.md checklist, then tag
   push triggering the automated release workflow: build → twine check →
-  TestPyPI → PyPI)
+  TestPyPI → PyPI) — completed 2026-10-05 (v0.7.0 live on PyPI; post-merge
+  CI hotfix for version-gate tests)
   *Link: [release_v070_20261005](./tracks/release_v070_20261005/index.md)*
