@@ -68,7 +68,7 @@
   with v7 plans (Red+Green) (c02f166)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (8ec08f2)
 
-## Phase 4 — Docs & Final Verification
+## Phase 4 — Docs & Final Verification [checkpoint: ee37df3]
 
 - [x] Task: README + ARCHITECTURE — expression branch points documented
   together with ternaries; coverage semantics updated (56cabb6)
@@ -76,6 +76,9 @@
     walk + expression-arms bullet, TDD.md plan-contract docs, USER_GUIDE
     `--min-branch` entry, tech-stack.md plan-schema note v4 → v7
 - [x] Task: CHANGELOG + ROADMAP track entry (56cabb6)
-- [ ] Task: Full verification — `CI=true pytest`, `ruff check src/ tests/`,
-  `black --check src/ tests/`, coverage targets, Definition-of-Done sweep
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Full verification — `CI=true pytest`, `ruff check src/ tests/`,
+  `black --check src/ tests/`, coverage targets, Definition-of-Done sweep (39ad8e6)
+  - 1776 passed / 7 skipped in 14:34; line coverage 95.88% (gate 80%),
+    branch coverage ~94% (gate 70%); ruff clean; black clean after
+    formatting one e2e test file
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (ee37df3)
