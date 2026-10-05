@@ -49,7 +49,7 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
   - [x] `--exitfirst` + `--shard`: fail-fast applies within the shard's run - shard selection happens upstream of run_native_tests, so the flag composes by construction; composition covered by shard e2e (bc8045c) + forwarding guard
   - [x] `--exitfirst` + `--watch`: per-iteration reset - Red: run_watch_mode accepted exitfirst but never forwarded it; now every iteration's call carries the flag (fresh orchestrator state per run)
 - [x] **Task 3.4: Implement combined behavior (Green)** `fe46d96` - exitfirst forwarded in `_run_native_test_command` -> `run_native_tests` and in `run_watch_mode.runner()` -> `run_native_test_command`
-- [ ] **Task 3.5: Verify coverage & commit**
+- [x] **Task 3.5: Verify coverage & commit** `fe46d96` - ruff + black clean (175 files unchanged); full unit suite 1539 passed / 3 skipped; coverage 92.88% >= 80% gate
 - [ ] **Task 3.6: Phase Verification & Checkpoint (Refer to workflow.md)**
 
 ## Phase 4: Documentation
