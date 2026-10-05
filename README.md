@@ -100,7 +100,7 @@ func test_health_starts_at_full() -> void:
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, coverage addon, tooling; reports legacy GUT artifacts as migration advice. |
-| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites must extend `GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration guidance. Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. `--durations N` reports the N slowest tests after the run. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
+| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites must extend `GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration guidance. Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. `--durations N` reports the N slowest tests after the run. `--exitfirst` (`-x`) stops dispatching new suites after the first failing suite; `--shard K/N` runs one round-robin shard for CI matrix splitting. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
 | `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text, JSON, or GitHub Actions annotation output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
@@ -121,6 +121,8 @@ gd-tools test --parallel 4                 # run suites with 4 concurrent worker
 gd-tools test --durations 10               # report the 10 slowest tests
 gd-tools test --changed                    # only suites mapped from git-changed files
 gd-tools test --changed --base main        # PR/CI mode: diff from merge-base with main
+gd-tools test --exitfirst                  # stop dispatching after the first failing suite
+gd-tools test --shard 2/4                  # CI sharding: run suite shard 2 of 4
 ```
 
 `--tag` is repeatable, and `--test-timeout` (per test) is separate from
@@ -148,6 +150,29 @@ reports how many suites were selected; per-file mapping detail prints under
 pull-request CI. `--changed` composes with `--parallel`, `--coverage`, and
 the `--suite`/`--test`/`--tag` filters (the active filters bound the
 mapping domain); an empty change set exits 0 without launching Godot.
+
+`--exitfirst` (short form `-x`) stops dispatching **new** suites after the
+first suite whose final result is a failure — a test failure or an
+infrastructure error. In-flight suites finish and are collected; suites that
+were never started are reported as skipped (`not_run`) and summarized in a
+`Stopped early: fail-fast after suite <id> (K of M suites skipped)` line.
+Passes and skips never trigger the gate, and a suite that passes after a
+retry does not either — only final suite results decide. The exit code stays
+1 for test failures. `--exitfirst` composes with `--parallel` (the pool
+drains instead of killing workers), with `--coverage` (the report covers the
+suites that ran, labeled partial when plan targets went unmeasured), and with
+`--watch` (the gate resets for every re-run).
+
+`--shard K/N` runs only the suites assigned to shard `K` of `N` — suite *i*
+of the deterministic plan order belongs to shard `(i mod N) + 1` — for
+splitting one test run across CI jobs. Selection happens after `--changed`
+filtering and before `--parallel`, so each flag keeps exactly one job.
+`--shard 1/1` is valid and equivalent to no sharding; malformed values
+(`--shard 4/3`, `--shard 3`) exit 2 before any work. Each shard produces its
+own coverage report; merge the shards with `gd-tools coverage merge`.
+`--shard` and `--watch` are rejected together (exit 2). See the
+[sharding recipe](./docs/USER_GUIDE.md#sharding-a-test-run-across-ci-jobs)
+for a GitHub Actions matrix example.
 
 Repeat runs are faster: the `godot --headless --import` step is cached under
 `.gd-tools/native/import-cache/` and skipped when `project.godot`, any
