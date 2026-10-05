@@ -2,7 +2,7 @@
 
 Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% branch on new source), phase checkpoints per `conductor/workflow.md`.
 
-## Phase 1: CLI flag parsing & validation (`cli.py`)
+## Phase 1: CLI flag parsing & validation (`cli.py`) `[checkpoint: 9c734ea]`
 
 - [x] **Task 1.1: Write failing tests for flag parsing (Red)** `799400f`
   - [ ] Unit tests: `--exitfirst` and `-x` set the fail-fast option (default False)
