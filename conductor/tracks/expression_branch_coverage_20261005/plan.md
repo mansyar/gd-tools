@@ -30,7 +30,7 @@
 - [x] Task: Refactor pass — span helper reuse, style-guide conformance (747968f)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (750326d)
 
-## Phase 2 — GDScript Collector Instrumentation (both addons)
+## Phase 2 — GDScript Collector Instrumentation (both addons) [checkpoint: 92b91e8]
 
 - [x] Task: Write failing e2e tests for `and`/`or` arm measurement (Red)
   - Right operand wrapped value-preservingly: `and_right` records exactly
@@ -52,7 +52,7 @@
   v7 plan must fail loudly, not silently mis-measure)
 - [x] Task: Refactor pass — keep wrap/derivation logic consistent across the
   two collectors
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (92b91e8)
 
 ## Phase 3 — Gate, Reporters & Compatibility
 
