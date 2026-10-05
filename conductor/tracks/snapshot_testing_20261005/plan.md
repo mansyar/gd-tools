@@ -57,3 +57,7 @@
 - [x] Task: Full verification — `CI=true pytest`, `ruff check`, `black --check`, (2390df6)
   coverage targets, Definition-of-Done sweep
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Review Fixes
+
+- [x] Task: Apply review findings (Medium: %r diagnostics in snapshot store; Low: stale docstring, snapshot-name path-separator guard; container-key finding retracted after engine-level investigation) (3f44ef8)
