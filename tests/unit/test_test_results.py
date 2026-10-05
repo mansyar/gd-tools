@@ -16,6 +16,7 @@ from gd_tools.test_results import (
     TestResult,
     build_snapshot_summary,
     format_test_results,
+    print_durations_table,
 )
 
 # Path to the fixture JUnit XML file.
@@ -616,3 +617,141 @@ def test_format_test_results_omits_snapshot_summary_when_none(capsys):
     format_test_results(result)
     captured = capsys.readouterr()
     assert "Snapshots:" not in captured.out
+
+
+# --- durations table ---
+
+
+def _durations_result(details):
+    """Build a TestResult whose counts derive from the given details."""
+    return TestResult(
+        total=len(details),
+        passed=sum(d.status == "pass" for d in details),
+        failed=sum(d.status == "fail" for d in details),
+        skipped=sum(d.status == "skip" for d in details),
+        duration=sum(d.duration for d in details),
+        junit_xml_path=None,
+        coverage_data_path=None,
+        stdout="",
+        stderr="",
+        test_details=list(details),
+    )
+
+
+def _detail(name, duration, status="pass", suite="SuiteA"):
+    """Build a TestDetail with terse defaults."""
+    return TestDetail(
+        name=name,
+        suite=suite,
+        status=status,
+        message="" if status != "fail" else "boom",
+        duration=duration,
+    )
+
+
+@pytest.mark.unit
+def test_print_durations_table_sorted_slowest_first(capsys):
+    """Rows are ordered slowest-first regardless of input order."""
+    details = [
+        _detail("test_fast", 0.1),
+        _detail("test_slowest", 2.0),
+        _detail("test_middle", 0.5),
+    ]
+    print_durations_table(_durations_result(details), 10)
+    captured = capsys.readouterr()
+    slowest = captured.out.index("test_slowest")
+    middle = captured.out.index("test_middle")
+    fast = captured.out.index("test_fast")
+    assert slowest < middle < fast
+
+
+@pytest.mark.unit
+def test_print_durations_table_truncates_to_n(capsys):
+    """--durations N shows only the N slowest tests."""
+    details = [
+        _detail(f"test_{i}", float(5 - i)) for i in range(5)
+    ]
+    print_durations_table(_durations_result(details), 3)
+    captured = capsys.readouterr()
+    assert "test_0" in captured.out
+    assert "test_1" in captured.out
+    assert "test_2" in captured.out
+    assert "test_3" not in captured.out
+    assert "test_4" not in captured.out
+
+
+@pytest.mark.unit
+def test_print_durations_table_zero_lists_all(capsys):
+    """--durations 0 lists every executed test, slowest-first."""
+    details = [_detail(f"test_{i}", float(i)) for i in range(4)]
+    print_durations_table(_durations_result(details), 0)
+    captured = capsys.readouterr()
+    for i in range(4):
+        assert f"test_{i}" in captured.out
+
+
+@pytest.mark.unit
+def test_print_durations_table_shows_all_outcomes(capsys):
+    """Pass, fail, and skip rows all appear with their outcome."""
+    details = [
+        _detail("test_ok", 1.0, status="pass"),
+        _detail("test_bad", 2.0, status="fail"),
+        _detail("test_skipped", 0.0, status="skip"),
+    ]
+    print_durations_table(_durations_result(details), 0)
+    captured = capsys.readouterr()
+    assert "test_ok" in captured.out
+    assert "test_bad" in captured.out
+    assert "test_skipped" in captured.out
+    assert "pass" in captured.out
+    assert "fail" in captured.out
+    assert "skip" in captured.out
+
+
+@pytest.mark.unit
+def test_print_durations_table_formats_durations(capsys):
+    """Durations render as seconds with two decimals."""
+    details = [_detail("test_timed", 1.234)]
+    print_durations_table(_durations_result(details), 10)
+    captured = capsys.readouterr()
+    assert "1.23s" in captured.out
+
+
+@pytest.mark.unit
+def test_print_durations_table_no_details_prints_nothing(capsys):
+    """A run with no per-test details prints no durations table."""
+    print_durations_table(_durations_result([]), 10)
+    captured = capsys.readouterr()
+    assert "Slowest" not in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_durations_disabled_by_default(capsys):
+    """Without the durations argument the default output is unchanged."""
+    details = [_detail("test_only", 0.4)]
+    format_test_results(_durations_result(details))
+    captured = capsys.readouterr()
+    assert "Slowest" not in captured.out
+
+
+@pytest.mark.unit
+def test_format_test_results_durations_before_success_line(capsys):
+    """The durations table prints before the success message."""
+    details = [_detail("test_only", 0.4)]
+    format_test_results(_durations_result(details), 10)
+    captured = capsys.readouterr()
+    assert captured.out.index("Slowest") < captured.out.index("passed")
+
+
+@pytest.mark.unit
+def test_format_test_results_durations_before_summary_footer(capsys):
+    """The durations table prints after failure details, before the footer."""
+    details = [
+        _detail("test_bad", 2.0, status="fail"),
+        _detail("test_ok", 0.1),
+    ]
+    format_test_results(_durations_result(details), 10)
+    captured = capsys.readouterr()
+    assert captured.out.index("Slowest") < captured.out.index(
+        "1 failed, 1 passed"
+    )
