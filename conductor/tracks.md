@@ -277,7 +277,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Snapshot Testing in the Native Runtime** (feature: Jest-style
+- [x] **Track: Snapshot Testing in the Native Runtime** (feature: Jest-style
   `assert_snapshot(value, name)` in the native GdToolsTest runtime —
   deterministic 3-tier serialization (values / object property dumps /
   node-tree dumps), versioned human-readable `.snap` files under
