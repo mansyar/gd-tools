@@ -9,7 +9,7 @@ import pytest
 from click.testing import CliRunner
 from rich.console import Console
 
-from gd_tools.cli import cli
+from gd_tools.cli import _validate_durations, cli
 from gd_tools.doctor import CheckResult, DoctorResult
 from gd_tools.verbosity import Verbosity, get_verbosity
 from gd_tools.errors import (
@@ -452,16 +452,33 @@ def test_test_durations_absent_is_none():
     assert mock_run.call_args.kwargs["durations"] is None
 
 
-@pytest.mark.parametrize("value", ["-1", "-5"])
-def test_test_durations_negative_exits_2(value):
-    """Negative --durations exits 2 with a fix hint and does not run."""
-    result, mock_run = _invoke_test_with_durations(
-        ["test", "--durations", value]
-    )
+@pytest.mark.parametrize("args", [["--durations", "-1"], ["--durations=-1"]])
+def test_test_durations_negative_exits_2(args):
+    """Negative --durations exits 2 without running, in both token forms.
+
+    Click's parser rejects negative numbers for flag_value options before
+    any callback runs; the validator hint is covered separately.
+    """
+    result, mock_run = _invoke_test_with_durations(["test", *args])
     assert result.exit_code == 2
-    assert "--durations" in result.output
-    assert "non-negative" in result.output
     mock_run.assert_not_called()
+
+
+def test_validate_durations_rejects_negative():
+    """The --durations callback rejects negatives with a fix hint."""
+    ctx = click.Context(click.Command("test"))
+    param = click.Option(["--durations"])
+    with pytest.raises(click.BadParameter, match="non-negative"):
+        _validate_durations(ctx, param, -1)
+
+
+def test_validate_durations_passes_through_valid():
+    """The --durations callback passes None and valid counts through."""
+    ctx = click.Context(click.Command("test"))
+    param = click.Option(["--durations"])
+    assert _validate_durations(ctx, param, None) is None
+    assert _validate_durations(ctx, param, 0) == 0
+    assert _validate_durations(ctx, param, 7) == 7
 
 
 def test_lint_exit_code_2_config_error():

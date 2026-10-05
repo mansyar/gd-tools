@@ -606,6 +606,23 @@ def _validate_parallel(
     return value
 
 
+def _validate_durations(
+    ctx: click.Context,
+    param: click.Parameter,
+    value: int | None,
+) -> int | None:
+    """Validate the --durations count (a non-negative integer)."""
+    if value is None:
+        return None
+    if value < 0:
+        raise click.BadParameter(
+            "must be a non-negative integer (0 shows all tests).",
+            ctx=ctx,
+            param=param,
+        )
+    return value
+
+
 @cli.command()
 @click.argument("paths", nargs=-1)
 @click.option(
@@ -624,6 +641,16 @@ def _validate_parallel(
     callback=_validate_parallel,
     help="Run suites with up to N concurrent workers (1-32). Bare "
     "--parallel defaults to 4 workers. Omit for sequential execution.",
+)
+@click.option(
+    "--durations",
+    type=click.INT,
+    is_flag=False,
+    flag_value="10",
+    default=None,
+    callback=_validate_durations,
+    help="Report the N slowest tests after the run. Bare --durations "
+    "defaults to 10; --durations 0 lists every test. Omit to disable.",
 )
 @click.option("--coverage", is_flag=True, help="Generate coverage report.")
 @click.option("--min", type=int, help="Minimum coverage threshold.")
@@ -694,6 +721,7 @@ def test(
     paths,
     runtime,
     parallel,
+    durations,
     coverage,
     min,
     min_branch,
@@ -765,6 +793,9 @@ def test(
     effective_parallel = (
         parallel if parallel is not None else config.test.parallel
     )
+    effective_durations = (
+        durations if durations is not None else config.test.durations
+    )
 
     if watch and os.environ.get("CI", "").lower() == "true":
         click.echo(
@@ -799,6 +830,7 @@ def test(
                     show_uncovered=show_uncovered,
                     no_cache=no_cache,
                     parallel=effective_parallel,
+                    durations=effective_durations,
                     snapshot_update=snapshot_update,
                 )
             )
@@ -819,6 +851,7 @@ def test(
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,
                 parallel=effective_parallel,
+                durations=effective_durations,
                 changed=changed,
                 base=base,
                 snapshot_update=snapshot_update,
