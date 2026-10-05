@@ -54,7 +54,7 @@
   two collectors
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (92b91e8)
 
-## Phase 3 — Gate, Reporters & Compatibility
+## Phase 3 — Gate, Reporters & Compatibility [checkpoint: 8ec08f2]
 
 - [x] Task: Write failing tests for gate integration (Red) (ae8022f)
   - Expression arms in the `--min-branch` denominator; zero-branch exemption
@@ -66,7 +66,7 @@
 - [x] Task: Implement reporter updates (Green) (ae8022f)
 - [x] Task: Write failing test + verify the playtest coverage path end-to-end
   with v7 plans (Red+Green) (c02f166)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (8ec08f2)
 
 ## Phase 4 — Docs & Final Verification
 
