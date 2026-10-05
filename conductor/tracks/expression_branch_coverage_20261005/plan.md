@@ -56,16 +56,16 @@
 
 ## Phase 3 — Gate, Reporters & Compatibility
 
-- [ ] Task: Write failing tests for gate integration (Red)
+- [x] Task: Write failing tests for gate integration (Red) (ae8022f)
   - Expression arms in the `--min-branch` denominator; zero-branch exemption
     unaffected; threshold blocking/passing scenarios
-- [ ] Task: Implement gate integration (Green)
-- [ ] Task: Write failing tests for reporter rendering (Red)
+- [x] Task: Implement gate integration (Green) (ae8022f)
+- [x] Task: Write failing tests for reporter rendering (Red) (ae8022f)
   - Terminal + HTML arm labels (ternary-style), `coverage diff` counts
     expression arms, lcov/cobertura branch data includes the new arms
-- [ ] Task: Implement reporter updates (Green)
-- [ ] Task: Write failing test + verify the playtest coverage path end-to-end
-  with v7 plans (Red+Green)
+- [x] Task: Implement reporter updates (Green) (ae8022f)
+- [x] Task: Write failing test + verify the playtest coverage path end-to-end
+  with v7 plans (Red+Green) (c02f166)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Docs & Final Verification
