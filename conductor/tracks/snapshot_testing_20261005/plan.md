@@ -46,7 +46,7 @@
 - [x] Task: Write failing tests for `gd-tools clean --snapshots` (Red) (1a52026)
 - [x] Task: Implement `gd-tools clean --snapshots` (Green) (1a52026)
 - [ ] Task: Refactor pass — reporting alignment with existing summary/artifact patterns
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Docs & Final Verification
 
@@ -56,4 +56,4 @@
 - [ ] Task: Update JSON schema / config docs if any config surface was added
 - [ ] Task: Full verification — `CI=true pytest`, `ruff check`, `black --check`,
   coverage targets, Definition-of-Done sweep
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
