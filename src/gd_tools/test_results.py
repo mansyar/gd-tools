@@ -210,6 +210,46 @@ def _print_snapshot_summary(summary: SnapshotSummary) -> None:
         )
 
 
+_STATUS_STYLES = {
+    "pass": "green",
+    "fail": "red",
+    "skip": "yellow",
+}
+
+
+def print_durations_table(result: TestResult, n: int) -> None:
+    """Print a Rich table of the slowest tests from a finished run.
+
+    Rows cover every executed test (pass, fail, and skip) sorted
+    slowest-first. ``n`` limits the table to the N slowest tests;
+    ``0`` lists every test. Prints nothing when the run carried no
+    per-test details.
+    """
+    details = sorted(
+        result.test_details,
+        key=lambda detail: detail.duration,
+        reverse=True,
+    )
+    if n > 0:
+        details = details[:n]
+    if not details:
+        return
+    table = Table(title="Slowest Tests")
+    table.add_column("Status")
+    table.add_column("Suite")
+    table.add_column("Test")
+    table.add_column("Duration", justify="right")
+    for detail in details:
+        style = _STATUS_STYLES.get(detail.status, "")
+        table.add_row(
+            Text(detail.status, style=style),
+            detail.suite,
+            detail.name,
+            f"{detail.duration:.2f}s",
+        )
+    output.print_table(table)
+
+
 def format_test_results(result: TestResult, durations: int | None = None) -> None:
     """Print a Rich table summarizing test results.
 
@@ -255,6 +295,8 @@ def format_test_results(result: TestResult, durations: int | None = None) -> Non
     if result.failed == 0:
         # A skipped test did not run, so counting it as passed would report a
         # suite as fully green when part of it never executed.
+        if durations is not None:
+            print_durations_table(result, durations)
         if result.skipped:
             output.print_success(
                 f"All {result.passed} test(s) passed, {result.skipped} skipped."
@@ -295,6 +337,10 @@ def format_test_results(result: TestResult, durations: int | None = None) -> Non
         if len(stderr_text) > 5000:
             stderr_text = stderr_text[:5000] + "\n... (truncated)"
         output.console.print(stderr_text, markup=False)
+
+    # Durations report comes after failure details, before the footer.
+    if durations is not None:
+        print_durations_table(result, durations)
 
     # Summary footer.
     output.print_summary(
