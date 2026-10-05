@@ -33,7 +33,7 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 - [x] **Task 2.5: Verify coverage & commit** `bc8045c` — ruff + black clean; unit suite 1528 passed / 3 skipped; coverage 92.88% ≥ 80% gate
 - [x] **Task 2.6: Phase Verification & Checkpoint (Refer to workflow.md)** `354a539`
 
-## Phase 3: Fail-fast dispatch gate (orchestrator)
+## Phase 3: Fail-fast dispatch gate (orchestrator) `[checkpoint: 12f1b02]`
 
 - [x] **Task 3.1: Write failing tests for the dispatch gate (Red)** (`sha: 18e7052`, `tests/unit/test_native_exitfirst.py`, 8 tests, all Red: TypeError 'exitfirst' / ValidationError 'fail_fast')
   - [x] Unit tests: failure result sets stop-dispatch flag; queued suites not started; in-flight drained and collected (sequential + parallel drain test)
@@ -50,7 +50,7 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
   - [x] `--exitfirst` + `--watch`: per-iteration reset - Red: run_watch_mode accepted exitfirst but never forwarded it; now every iteration's call carries the flag (fresh orchestrator state per run)
 - [x] **Task 3.4: Implement combined behavior (Green)** `fe46d96` - exitfirst forwarded in `_run_native_test_command` -> `run_native_tests` and in `run_watch_mode.runner()` -> `run_native_test_command`
 - [x] **Task 3.5: Verify coverage & commit** `fe46d96` - ruff + black clean (175 files unchanged); full unit suite 1539 passed / 3 skipped; coverage 92.88% >= 80% gate
-- [ ] **Task 3.6: Phase Verification & Checkpoint (Refer to workflow.md)**
+- [x] **Task 3.6: Phase Verification & Checkpoint (Refer to workflow.md)** `12f1b02` - manual fail-fast run: early stop, summary line, exit 1, coherent artifacts (found+fixed publish ValueError); regression run unchanged
 
 ## Phase 4: Documentation
 
