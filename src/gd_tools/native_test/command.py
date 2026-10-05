@@ -75,6 +75,8 @@ def run_native_test_command(
     base: str | None = None,
     snapshot_update: bool = False,
     durations: int | None = None,
+    exitfirst: bool = False,
+    shard: tuple[int, int] | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -108,6 +110,8 @@ def run_native_test_command(
             base=base,
             snapshot_update=snapshot_update,
             durations=durations,
+            exitfirst=exitfirst,
+            shard=shard,
         )
     finally:
         if previous_sigterm is not None:
@@ -139,6 +143,8 @@ def _run_native_test_command(
     base: str | None = None,
     snapshot_update: bool = False,
     durations: int | None = None,
+    exitfirst: bool = False,
+    shard: tuple[int, int] | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -166,6 +172,10 @@ def _run_native_test_command(
             their tests.
         durations: Optional count of slowest tests to report after the
             run; 0 lists every test, None disables the report.
+        exitfirst: Stop dispatching new suites after the first failing
+            suite result; in-flight suites finish (fail-fast).
+        shard: Optional (k, n) CI shard selection; runs only the suites
+            assigned to shard k of n by round-robin over the plan order.
 
     Returns:
         The normalized CLI-facing test result.
