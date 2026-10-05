@@ -44,3 +44,9 @@
   - [x] Regenerate `docs/gd-tools.schema.json` (schema embeds the package version)
   - [x] Re-run full unit suite green (1479 passed)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions (fix commit 4d8757f)
+  - [x] USER_GUIDE: scope the stale-file cleanup claim to the coverage addon (not "the project")
+  - [x] conductor/workflow.md: pre-release checklist must run after the version bump (stale-editable-install lesson)
