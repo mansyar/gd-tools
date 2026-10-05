@@ -70,9 +70,12 @@
 
 ## Phase 4 — Docs & Final Verification
 
-- [ ] Task: README + ARCHITECTURE — expression branch points documented
-  together with ternaries; coverage semantics updated
-- [ ] Task: CHANGELOG + ROADMAP track entry
+- [x] Task: README + ARCHITECTURE — expression branch points documented
+  together with ternaries; coverage semantics updated (56cabb6)
+  - README needed no change; ARCHITECTURE.md branch-type table + anchor
+    walk + expression-arms bullet, TDD.md plan-contract docs, USER_GUIDE
+    `--min-branch` entry, tech-stack.md plan-schema note v4 → v7
+- [x] Task: CHANGELOG + ROADMAP track entry (56cabb6)
 - [ ] Task: Full verification — `CI=true pytest`, `ruff check src/ tests/`,
   `black --check src/ tests/`, coverage targets, Definition-of-Done sweep
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
