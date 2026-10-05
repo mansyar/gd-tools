@@ -16,7 +16,7 @@
   - [x] Audit docs/ARCHITECTURE.md for stale GUT-era or pre-v0.6.0 content
   - [x] Audit docs/gd-tools.schema.json consistency with the current config model (min_branch, coverage format enum)
   - [x] Apply documentation updates for all gaps found
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Pre-Release Verification
 
