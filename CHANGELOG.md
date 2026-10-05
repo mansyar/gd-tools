@@ -1,171 +1,63 @@
-## Unreleased
+## v0.7.0 (2026-10-05)
 
-### Added
+### Feat
 
-- **lint**: New `--report-format github-actions` option emits GitHub
-  Actions workflow annotations (`::error`/`::warning`) so violations
-  appear inline on pull requests. Annotations follow the official
-  workflow-command spec (`file,line,col,title` property order,
-  `%`/CR/LF escaping in messages, `,`/`:` escaping in properties).
-  Exit codes and the existing `text`/`json` formats are unchanged.
-
-- **coverage**: New `github-actions` report format. Files below
-  `[coverage].min_percent` each emit a `::warning` annotation; when
-  the coverage gate fails (`coverage run`), a summary
-  `::error title=Coverage gate` is emitted first. `coverage report`
-  emits informational per-file warnings and exits 0; `coverage run`
-  prints its annotations before the threshold error (exit 1).
-
-- **coverage**: `--min-branch` is now accepted on `gd-tools coverage
-  run` (playtest sessions), matching `gd-tools test --coverage` and
-  `gd-tools coverage show`. The branch gate is exempt (passes with a
-  "no branch points" note) when the project plan records zero branch
-  points; otherwise an uncovered arm fails the gate with exit 1.
-
-- **config**: `[coverage].format` now accepts `"github-actions"` and
-  the validation error message lists it among the valid values. The
-  JSON Schema snapshot (`docs/gd-tools.schema.json`) was regenerated
-  to match.
-
-- **test**: Spy assertions accept the `"any"` wildcard in
-  `assert_call_arguments`, matching any recorded value per argument
-  position — the same wildcard `stub()` already uses. Assertion
-  failures now carry rich diagnostics: recorded-call listings (bounded),
-  and per-argument expected/actual diffs for argument mismatches.
-
-- **test**: `stub()` gains `.to_return_seq([values])` — calls are
-  answered with the values in registration order and the final value
-  repeats once the sequence is exhausted — and `.to_fail(message)`,
-  which records a test failure with the given message at call time while
-  still returning the method's type zero value so the code under test
-  keeps executing.
-
-- **test**: New `assert_call_order(double, ["method_a", "method_b"])`
-  verifies that a double's recorded calls happened in the expected
-  relative order. The check is subsequence-based: every listed method
-  must appear in the recorded order, calls to unlisted methods are
-  ignored, and failures show the actual recorded order (bounded).
-
-- **test**: New `assert_property_is(target, "property", expected)`
-  asserts the current value of a property via `get()`. Works on any
-  Object — doubles and real instances alike — with diagnostics that
-  distinguish a missing property from a value mismatch. (GDScript has
-  no property-access interception for declared members, so property
-  checks assert values rather than access events.)
+- **test-results**: render slowest-tests durations table
+- **native-test**: accept and forward durations through command and watch session
+- **cli**: add --durations flag with validation and config resolution
+- **config**: add [test] durations field and regenerate schema snapshot
+- **clean**: add --snapshots target to gd-tools clean
+- **test**: report snapshot summary counts and obsolete snapshots
+- **test**: add --snapshot-update to rewrite mismatches
+- **test**: add assert_snapshot with snapshot store integration
+- **test**: implement snapshot store read/write
+- **test**: make snapshot serializer cycle-safe
+- **test**: add object and node-tree snapshot serialization
+- **test**: add deterministic snapshot value serializer
+- **native**: add assert_property_is for object property values
+- **native**: add assert_call_order with order diagnostics
+- **native**: add sequenced returns and fail stubs to doubles
+- **native**: report script-error-aborted tests as errors
+- **native**: add rich failure diagnostics to spy assertions
+- **native**: match any-wildcards in assert_call_arguments
+- **coverage**: add --min-branch wiring to coverage run (playtest) command
+- **coverage**: exempt zero-branch projects from --min-branch gate with a note
+- **coverage**: add --min-branch gate; per-arm ternary e2e coverage tests
+- **coverage**: wrap ternary operands with value-preserving hit_ret instrumentation
+- **coverage**: record ternary operand spans in coverage plan (PLAN_VERSION 4)
+- **config**: Accept github-actions as coverage format
+- **coverage**: Add github-actions annotation format
+- **lint**: Add github-actions annotation format
+- **pre-commit**: Add install-hooks CLI command with selection flags
+- **pre-commit**: Implement hook generation and merge-by-id core module
 
 ### Fix
 
-- **test**: Script errors that abort a test body mid-run (for example a
-  call to a nonexistent method) are now reported as `error` for that
-  test instead of a false `passed`. The runner arms a Godot 4.5+
-  `Logger` around each test invocation and records the first script
-  error with its message and source location; per-test `error` maps to
-  exit code 2 like other infrastructure failures.
+- **conductor**: Apply review suggestions for track 'Test Durations Reporting'
+- **test**: harden snapshot diagnostics and snapshot-name handling
+- **init**: deploy snapshot addon scripts with the native test addon
+- **conductor**: Apply review suggestions for track "spy_framework_upgrade_20261004"
+- **conductor**: Apply review suggestions for track 'min_branch_coverage_run_20261004'
+- **tests**: align ternary parse cases with 3-tuple CASES format from main
+- **coverage**: Drop points on bracket-continuation lines; durable baseline and cache writes
+- **coverage**: Make durable writes atomic and carry omission reasons
+- **coverage**: Bump PLAN_VERSION to 4 for class-body anchoring
+- **coverage**: Drop points recorded on class-body and signature lines
+- **coverage**: Anchor header ternaries to their control-flow statement
+- **coverage**: Anchor ternary branch points to the enclosing statement
+- **coverage**: Forward configured min_percent to annotations
+- **conductor**: Apply review suggestions for track 'Coverage Format Bugfix + CLI Unification'
+- **config**: accept json in coverage format validator
+- **coverage**: support json report format
+- **pre-commit**: Apply review suggestions for install-hooks
+- **conductor**: Apply review suggestions for track 'legacy_sweep_20261002'
 
-- **coverage**: Fix unparseable GDScript when a ternary expression sits
-  inside a multi-line parenthesised expression, or in a position with no
-  legal insertion point. A recorded line is where a tracker call is
-  *inserted*, so it must be a line where a statement may begin. Every
-  tracked node either begins with a keyword, or (for `match_case`) is a case
-  label whose tracker is injected *after* the line; `test_expr` begins with an
-  arbitrary operand, so its line was the ternary's first operand — a
-  continuation line when the ternary is nested. The injected tracker broke the
-  parse (`Expected closing ")" after grouping expression`,
-  `Unexpected identifier in class body`), the reload failed, and the file
-  was recorded as an omission: it vanished from the report and `--min`
-  escalated to exit 2. Ternary branch points are now anchored to the nearest
-  enclosing **anchor node** — a tracked statement, or a control-flow statement
-  header, both of which begin with a keyword. A ternary in a control-flow
-  header (`if`, `while`, `for`, `match`) is therefore anchored to that
-  header's own line, including when the header spans several lines. A ternary
-  with no enclosing anchor node — a class-level `const`/`var`/`static var`
-  initialiser, an `@export` initialiser, or a default parameter value — is not
-  tracked, because there is no legal insertion point. `PLAN_VERSION` is
-  bumped 2 → 3 so cached plans from earlier versions are regenerated
-  rather than reused. Existing coverage totals may shift for projects
-  whose ternaries previously produced untrackable files, and branch totals
-  shift for projects with ternaries in control-flow headers, which were
-  tracked before and are now anchored explicitly rather than incidentally.
+### Refactor
 
-- **coverage**: Ternary branch coverage is now measured per arm. The
-  previous fix left `ternary_true` and `ternary_false` sharing one recorded
-  line, so both arms were always reported together and ternary branch
-  coverage could never fail. The plan now records an `operand_span` for
-  each arm (`PLAN_VERSION` 3 → 4, stale cached plans are regenerated), and
-  the collector wraps each operand in a value-preserving tracker call —
-  `hit_ret(file_id, point_id, operand)` records the hit and returns the
-  operand unchanged — instead of inserting a tracker before the anchor
-  line. The taken arm records its point exactly when it evaluates; the
-  other arm stays uncovered. Reports still display ternary branches
-  combined under the anchor line and the coverage JSON schema is
-  unchanged. New `--min-branch` option on `gd-tools test` and
-  `gd-tools coverage show` gates branch coverage independently of `--min`.
-
-- **coverage**: Fix unparseable GDScript when a lambda body is assigned to a
-  class-level `var`, `static var`, or `@export`, when a lambda appears in a
-  default parameter value, or when the body statement lands on a
-  continuation line of a multi-line initializer expression (for example a
-  signal-handler dict of lambdas). In each case the recorded point sits on
-  a line where no statement may begin - a class-member declaration line, a
-  function signature span, or a line inside an open bracket - so the
-  injected tracker broke the parse and the whole file silently vanished
-  from coverage. Such points are now dropped in the plan generator;
-  lambda bodies on their own lines remain tracked. `PLAN_VERSION` is
-  bumped to 5 (v4 dropped class-member and signature lines, v5 also drops
-  bracket-continuation and backslash-continuation lines) so cached plans
-  holding the dropped points are regenerated.
-
-- **coverage**: Fix `coverage merge` silently losing omission reasons. The
-  merge path writes through `write_coverage_json`, which did not serialize
-  the `omitted` key, so a merged `coverage.json` degraded real omission
-  reasons to a generic unknown reason. The key is now carried (additive;
-  readers already tolerate its absence). The same writer, the native
-  runtime's JUnit XML writer, the run marker, the coverage plan cache, and
-  `coverage diff` baselines now write through a shared crash-safe helper
-  (temp file beside the destination, flush, fsync, atomic rename), so an
-  interrupted run can no longer leave a truncated artifact behind.
-
-- **coverage**: Fix `coverage run --report-format json` always failing
-  after the playtest session completed. The `json` format was advertised
-  by the CLI but rejected by the reporter, so a finished session (minutes
-  of play) died at report generation with exit 2. `json` is now a
-  first-class report format: `coverage report` and `coverage run` emit a
-  deterministic machine-readable report (`coverage.json`) whose shape
-  mirrors the `coverage diff --report-format json` payload — a `totals`
-  block with the six shared metrics (covered/total lines, line rate,
-  covered/total branches, branch rate) and a `files` list sorted by path
-  with the same metrics per file plus uncovered line/branch lists. The
-  threshold error (if `--min` is not met) is still raised after the
-  report is written so CI can still read the report.
-
-- **config**: `[coverage].format` now accepts `"json"` (matching the
-  reporter) and the validation error message lists all valid values
-  (`html, lcov, cobertura, text, json`) instead of only echoing the
-  invalid one. The JSON Schema snapshot (`docs/gd-tools.schema.json`)
-  was regenerated to match.
-
-### Changed
-
-- **init**: `gd-tools init` now cleans up files it no longer deploys. The
-  legacy GUT hook scripts `pre_run_hook.gd` and `post_run_hook.gd` (which
-  extended the removed `GutHookScript` base class and could never load)
-  no longer ship; on upgraded projects `init` backs each stale copy up to
-  `addons/gd-tools-coverage/.backups/<name>.gd.bak`, deletes it, and
-  prints a notice.
-
-- **internals**: `gd_tools.test_runner` is renamed to
-  `gd_tools.test_results`. The module has not run anything since the GUT
-  bridge removal - it holds the `TestDetail`/`TestResult` result models and
-  their formatter, shared by the native runtime and watch mode.
-
-- **coverage**: `gd-tools coverage report` now takes the canonical
-  `--report-format` flag (with `click.Choice` validation over
-  `text|html|lcov|cobertura|json`, case-insensitive), matching
-  `coverage run` and `coverage diff`. The previous `--format` flag
-  remains as a hidden backwards-compatible alias with the same
-  validation; supplying both flags is a usage error (exit 2). Invalid
-  formats now fail fast at parse time instead of failing after
-  config/project loading.
+- **test**: extract snapshot summary rendering helper
+- **test**: align assert_snapshot failure messages with assert_* voice
+- **coverage**: Reuse gate_failed and pass resolved format
+- **coverage**: unify report format flags with validation
 
 ## v0.6.0 (2026-10-02)
 
