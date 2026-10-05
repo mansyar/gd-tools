@@ -33,9 +33,9 @@
 - [x] Task: Write failing tests for parallel/watch/changed-mode compatibility (Red) (26c72fa)
 - [x] Task: Fix parallel/watch/changed-mode compatibility (Green) (26c72fa)
 - [x] Task: Refactor pass — failure message consistency with existing `assert_*` diagnostics (e3a56e3)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Python CLI & Reporting
+## Phase 3 — Python CLI & Reporting [checkpoint: pending]
 
 - [ ] Task: Write failing tests for `gd-tools test --snapshot-update` (Red)
 - [ ] Task: Implement flag pass-through to native runtime & update semantics (Green)
