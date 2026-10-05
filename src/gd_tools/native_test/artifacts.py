@@ -131,6 +131,7 @@ def publish_artifact_index(
     suite_paths: list[dict[str, Any]],
     preflight_paths: dict[str, Path],
     omitted: list[dict[str, Any]] | None = None,
+    skipped: list[str] | None = None,
 ) -> Path:
     """Atomically publish one run index, then prune older run directories.
 
@@ -153,6 +154,9 @@ def publish_artifact_index(
             with its process, so this is the surface a machine consumer reads
             after the fact. Written as an additive key only when non-empty;
             the payload has no version field of its own, so nothing is bumped.
+        skipped: Suite names recorded as skipped because fail-fast stopped
+            dispatch before they started. Their index entries carry the
+            additive key ``fail_fast: "skipped"``.
 
     Returns:
         The published artifact index path.
@@ -166,11 +170,15 @@ def publish_artifact_index(
     if len(suite_names) != len(suite_paths):
         raise ValueError("suite_names and suite_paths must have equal length")
 
+    skipped_set = set(skipped or [])
     suites: list[dict[str, Any]] = []
     for suite_name, paths in zip(suite_names, suite_paths):
         if not suite_name:
             raise ValueError("suite_names cannot contain empty names")
-        suites.append({"suite": suite_name, **_realized(paths)})
+        entry = {"suite": suite_name, **_realized(paths)}
+        if suite_name in skipped_set:
+            entry["fail_fast"] = "skipped"
+        suites.append(entry)
 
     payload = {
         "protocol_version": NATIVE_PROTOCOL_VERSION,

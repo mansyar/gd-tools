@@ -16,7 +16,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from gd_tools.native_test.artifacts import NativeArtifactLayout
 from gd_tools.native_test.orchestrator import (
+    _SuiteOutcome,
     _kill_process_tree,
     run_native_tests,
 )
@@ -425,6 +427,42 @@ def _enter_command(stack, tmp_path, native_result):
         if item.attribute == "run_native_tests":
             run_mock = entered
     return run_mock
+
+
+def test_exitfirst_publishes_artifact_index_with_unstarted_suites(tmp_path):
+    """The artifact index stays consistent under fail-fast (FR1.6).
+
+    Unstarted suites keep their plan entry, listed with the additive
+    ``fail_fast`` marker and no realized artifact paths.
+    """
+    layout = NativeArtifactLayout.create(tmp_path, "run-ff")
+    suites = [_suite("ASuite"), _suite("BSuite"), _suite("CSuite")]
+
+    def fake_execute(index, suite, context):
+        context.attempted.append(suite.name)
+        return _SuiteOutcome(tests=[], has_failure=index == 1)
+
+    with patch(
+        "gd_tools.native_test.orchestrator._execute_suite",
+        side_effect=fake_execute,
+    ):
+        result = run_native_tests(
+            tmp_path,
+            suites,
+            godot_binary="godot",
+            artifact_layout=layout,
+            exitfirst=True,
+        )
+
+    assert result.status == "failed"
+    payload = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert [entry["suite"] for entry in payload["suites"]] == [
+        "ASuite",
+        "BSuite",
+        "CSuite",
+    ]
+    skipped = [entry for entry in payload["suites"] if entry.get("fail_fast")]
+    assert [entry["suite"] for entry in skipped] == ["CSuite"]
 
 
 def test_command_prints_fail_fast_summary_line(capsys, tmp_path):

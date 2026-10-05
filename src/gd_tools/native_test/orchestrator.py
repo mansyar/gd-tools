@@ -445,11 +445,13 @@ def run_native_tests(
                 coverage_omissions.append(omission)
 
     fail_fast: dict[str, Any] | None = None
+    skipped_suite_names: list[str] = []
     if fail_fast_trigger is not None:
         started = {index for index, _ in outcomes}
         unstarted = [
             suite for index, suite in work_items if index not in started
         ]
+        skipped_suite_names = [suite.name for suite in unstarted]
         for suite in unstarted:
             all_tests.append(
                 NativeTestResult(
@@ -505,14 +507,28 @@ def run_native_tests(
 
     artifact_index_path: Path | None = None
     if artifact_layout is not None:
+        # The index lists the whole plan; suites fail-fast never dispatched
+        # contribute no realized artifact files, so their entries fall back
+        # to the layout's (unrealized) stable paths.
+        suite_paths_by_index = {
+            index: outcome.suite_paths
+            for index, outcome in outcomes
+            if outcome.suite_paths is not None
+        }
+        ordered_suite_paths = [
+            suite_paths_by_index.get(index)
+            or artifact_layout.suite_paths(index)
+            for index in range(len(suites))
+        ]
         try:
             artifact_index_path = publish_artifact_index(
                 artifact_layout,
                 status=status,
                 suite_names=[suite.name for suite in suites],
-                suite_paths=suite_artifact_paths,
+                suite_paths=ordered_suite_paths,
                 preflight_paths=artifact_layout.preflight_paths(),
                 omitted=coverage_omissions or None,
+                skipped=skipped_suite_names or None,
             )
         except ArtifactPublishError as exc:
             has_error = True
@@ -525,9 +541,10 @@ def run_native_tests(
                     artifact_layout,
                     status="error",
                     suite_names=[suite.name for suite in suites],
-                    suite_paths=suite_artifact_paths,
+                    suite_paths=ordered_suite_paths,
                     preflight_paths=artifact_layout.preflight_paths(),
                     omitted=coverage_omissions or None,
+                    skipped=skipped_suite_names or None,
                 )
             except ArtifactPublishError:
                 pass
