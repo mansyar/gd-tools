@@ -82,3 +82,14 @@
     branch coverage ~94% (gate 70%); ruff clean; black clean after
     formatting one e2e test file
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (ee37df3)
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions (7d316ec)
+  - Renamed contradictory test + docstring; factored duplicate e2e hit
+    helpers into `_subject_hits`; tightened the loud-failure assertion to
+    require the unsupported type name — which exposed and fixed a GDScript
+    operator-precedence bug (`%` binding tighter than `+`) in both
+    collectors' unknown-branch-type error messages; pinned the full
+    parenthesized span (4, 11, 4, 19); documented the id-order assumption.
+    Verified: 25 unit + 9 e2e passed, gdlint + godot --check-only clean.
