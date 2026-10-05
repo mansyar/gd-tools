@@ -26,10 +26,10 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 - [x] **Task 2.2: Implement shard selection & banner (Green)** `c40ca90`
   - [x] Round-robin selection step in plan assembly after changed-filtering, before parallelism
   - [x] Shard context in run banner `Running shard k/N (M of T suites)` (FR2.7; plan previously over-specified an artifact-index field — spec requires banner only)
-- [ ] **Task 2.3: Write failing integration tests for shard × parallel × coverage (Red)**
-  - [ ] `--shard 2/3` + `--parallel`: parallelism applies within shard only
-  - [ ] `--shard k/N` + `--coverage`: per-shard coverage data/report as today
-- [ ] **Task 2.4: Implement integration behavior (Green)**
+- [x] **Task 2.3: Write failing integration tests for shard × parallel × coverage (Red)** `bc8045c`
+  - [x] `--shard 2/3` + `--parallel`: parallelism applies within shard only (e2e: `tests/e2e/test_native_shard_e2e.py`; composition behavior already implemented by Task 2.2, so tests passed on first full run — earlier Red runs against the un-instrumented fixture shaped the fixture prep)
+  - [x] `--shard k/N` + `--coverage`: per-shard coverage data/report as today, with a shard-agnostic plan (NFR2)
+- [x] **Task 2.4: Implement integration behavior (Green)** `bc8045c` — no further code needed: selection (2.2) already applies before preflight/parallelism; coverage behaves per-shard as with `--suite` filtering today
 - [ ] **Task 2.5: Verify coverage & commit**
 - [ ] **Task 2.6: Phase Verification & Checkpoint (Refer to workflow.md)**
 
