@@ -2,6 +2,19 @@
 
 ### Added
 
+- **coverage**: Boolean short-circuit operators (`and`/`or`) and
+  `assert` conditions are now measured as branch points
+  (`PLAN_VERSION` 7). Each operator chain records a site point, a
+  right-operand point (wrapped with a value-preserving tracker, so
+  short-circuit skipping is measured directly) and a derived
+  short-circuit arm per right operand; each `assert` records
+  `assert_true`/`assert_false`. All arms join the `--min-branch`
+  denominator and honour the line-level `# gd-tools: no cover`
+  annotation. Plans produced by a newer gd-tools than the installed
+  coverage addon are rejected loudly (unknown branch types) instead of
+  silently under-measuring. Uncovered-branch panels now label each
+  uncovered entry with its actual arm type.
+
 - **lint**: New `--report-format github-actions` option emits GitHub
   Actions workflow annotations (`::error`/`::warning`) so violations
   appear inline on pull requests. Annotations follow the official
