@@ -264,9 +264,10 @@ def format_test_results(
 
     Args:
         result: The :class:`TestResult` to format and print.
-        durations: Optional count of slowest tests to report after the
-            failure details; 0 lists every executed test, None disables
-            the durations report.
+        durations: Optional count of slowest tests to report near the
+            end of the run summary (after failure details when tests
+            fail, before the success line otherwise); 0 lists every
+            executed test, None disables the durations report.
     """
     table = Table(title="Test Results")
     table.add_column("Total", justify="right")
