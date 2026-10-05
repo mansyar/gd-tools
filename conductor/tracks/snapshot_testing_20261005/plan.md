@@ -43,8 +43,8 @@
   - written / passed / failed / obsolete counts; obsolete = stored snapshots
     with no owning suite/test in the run
 - [x] Task: Implement summary reporting & obsolete detection (Green) (c93d875)
-- [ ] Task: Write failing tests for `gd-tools clean --snapshots` (Red)
-- [ ] Task: Implement `gd-tools clean --snapshots` (Green)
+- [x] Task: Write failing tests for `gd-tools clean --snapshots` (Red) (1a52026)
+- [x] Task: Implement `gd-tools clean --snapshots` (Green) (1a52026)
 - [ ] Task: Refactor pass — reporting alignment with existing summary/artifact patterns
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
