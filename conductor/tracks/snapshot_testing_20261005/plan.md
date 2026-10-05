@@ -48,7 +48,7 @@
 - [x] Task: Refactor pass — reporting alignment with existing summary/artifact patterns (58fe272)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4 — Docs & Final Verification
+## Phase 4 [checkpoint: c90a7cc] — Docs & Final Verification
 
 - [x] Task: README — snapshot testing usage section + example suite (6fde9df)
 - [x] Task: ARCHITECTURE — snapshot subsystem description (storage, (6fde9df)
