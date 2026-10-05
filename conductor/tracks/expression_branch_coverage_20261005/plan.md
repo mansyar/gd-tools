@@ -6,7 +6,7 @@
   targets for new source: >80% line, >70% branch. Conventional commits with
   git-note summaries; phase checkpoints per `conductor/workflow.md`.
 
-## Phase 1 — Plan Generation (Python, `plan_generator.py`)
+## Phase 1 — Plan Generation (Python, `plan_generator.py`) [checkpoint: 750326d]
 
 - [x] Task: Write failing tests for boolean-operator branch points (Red) (747968f)
   - Per-operator granularity: `a and b and c` → 2 branch points; nesting
@@ -28,7 +28,7 @@
 - [x] Task: Bump `PLAN_VERSION` 6→7, update version-history docstring, verify
   cached-plan invalidation (Red+Green) (747968f)
 - [x] Task: Refactor pass — span helper reuse, style-guide conformance (747968f)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (750326d)
 
 ## Phase 2 — GDScript Collector Instrumentation (both addons)
 
