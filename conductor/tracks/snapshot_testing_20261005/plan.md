@@ -35,7 +35,7 @@
 - [x] Task: Refactor pass — failure message consistency with existing `assert_*` diagnostics (e3a56e3)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Python CLI & Reporting
+## Phase 3 [checkpoint: 71b31be] — Python CLI & Reporting
 
 - [x] Task: Write failing tests for `gd-tools test --snapshot-update` (Red) (dfe2824)
 - [x] Task: Implement flag pass-through to native runtime & update semantics (Green) (dfe2824)
