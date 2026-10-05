@@ -289,3 +289,14 @@ _Archived tracks live in `./archive/`._
 ---
 
 - [x] **Track: Codecov upload resilience** (chore: continue-on-error on the Codecov upload step in ci.yml so codecov outages cannot fail CI or block PR merges; coverage remains preserved as a workflow artifact) *Link: [codecov_upload_resilience_20261005](./archive/codecov_upload_resilience_20261005/index.md)*
+
+---
+
+- [ ] **Track: Test Durations Reporting** (feature: pytest-parity `--durations N`
+  slowest-test table for `gd-tools test` — opt-in via CLI flag with bare-flag
+  default N=10 and `[test] durations` config key (CLI overrides config), `N=0`
+  lists all tests slowest-first, all outcomes shown with markers, retries-sum
+  timing preserved, renders before the summary footer, composes with
+  `--watch`/`--parallel`/filters; built on existing per-test `duration_seconds`
+  from protocol v3, no GDScript/protocol changes)
+  *Link: [test_durations_20261005](./test_durations_20261005/index.md)*
