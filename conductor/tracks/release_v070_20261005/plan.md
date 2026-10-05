@@ -10,12 +10,12 @@
 
 ## Phase 1: Documentation Truth Pass
 
-- [ ] Task: Audit documentation against the v0.7.0 feature set
-  - [ ] Audit README.md for GH Actions annotations, `--min-branch`, spy framework upgrades (`any` wildcard, `to_return_seq`, `to_fail`, `assert_call_order`, `assert_property_is`), and the `error` test outcome
-  - [ ] Audit docs/USER_GUIDE.md for the same features plus snapshot testing and `[coverage].format github-actions`
-  - [ ] Audit docs/ARCHITECTURE.md for stale GUT-era or pre-v0.6.0 content
-  - [ ] Audit docs/gd-tools.schema.json consistency with the current config model (min_branch, coverage format enum)
-  - [ ] Apply documentation updates for all gaps found
+- [x] Task: Audit documentation against the v0.7.0 feature set
+  - [x] Audit README.md for GH Actions annotations, `--min-branch`, spy framework upgrades (`any` wildcard, `to_return_seq`, `to_fail`, `assert_call_order`, `assert_property_is`), and the `error` test outcome
+  - [x] Audit docs/USER_GUIDE.md for the same features plus snapshot testing and `[coverage].format github-actions`
+  - [x] Audit docs/ARCHITECTURE.md for stale GUT-era or pre-v0.6.0 content
+  - [x] Audit docs/gd-tools.schema.json consistency with the current config model (min_branch, coverage format enum)
+  - [x] Apply documentation updates for all gaps found
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Pre-Release Verification
