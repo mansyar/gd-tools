@@ -310,6 +310,16 @@ is auto-created on the first backup.
 This protects user customizations from being silently destroyed during
 re-init (e.g., after upgrading `gd-tools` via pip).
 
+**Cleanup of Undeployed Files:**
+
+`init` also removes bundled files it no longer deploys. When an upgraded
+gd-tools version stops shipping a file that an older version deployed (for
+example, the legacy GUT hook scripts `pre_run_hook.gd` and
+`post_run_hook.gd`, removed with the GUT compatibility bridge in v0.6.0),
+each stale copy found on the project is backed up to
+`addons/gd-tools-coverage/.backups/<name>.gd.bak`, deleted, and a notice is
+printed. Files you created yourself under `addons/` are never touched.
+
 ### 3.3 gd-tools doctor
 
 Run diagnostic checks on the development environment.
@@ -458,6 +468,9 @@ gd-tools test --snapshot-update
   `--coverage` adds plan-v1 data and a merged report.
 - Results include timestamps, assertion diagnostics, and Godot engine
   errors/warnings. Engine errors are infrastructure failures (exit `2`).
+  A script error that aborts a test body mid-run (for example a call to a
+  nonexistent method) is reported as `error` for that test rather than a
+  false `passed`.
 - Async tests may await process frames, physics frames, timers, and signals.
   The default per-test timeout is `5.0` seconds (`[test].timeout_seconds`);
   `--test-timeout` overrides it for one invocation, while `--timeout` limits
