@@ -33,10 +33,14 @@
 - [x] Task: Bump version via commitizen
   - [x] Run `cz bump` (expect minor bump to 0.7.0, dated `## v0.7.0` CHANGELOG section, `v0.7.0` tag created)
   - [x] Verify CHANGELOG content, `pyproject.toml` version, and tag
-- [ ] Task: Merge to main and push tag
-  - [ ] Merge feature branch to `main`
-  - [ ] Push `main` and the `v0.7.0` tag to origin
-- [ ] Task: Verify automated release pipeline
-  - [ ] Confirm `.github/workflows/release.yml` run is green (build → twine check → TestPyPI → PyPI)
-  - [ ] Confirm package is live on PyPI at version 0.7.0
+- [x] Task: Merge to main and push tag
+  - [x] Merge feature branch to `main`
+  - [x] Push `main` and the `v0.7.0` tag to origin
+- [x] Task: Verify automated release pipeline
+  - [x] Confirm `.github/workflows/release.yml` run is green (build → twine check → TestPyPI → PyPI)
+  - [x] Confirm package is live on PyPI at version 0.7.0
+- [x] Task: Post-merge CI hotfix (release gates pin pre-bump state)
+  - [x] Fix `test_package_version_is_0_6_0` → `test_package_version_is_0_7_0` (fresh-install CI caught the stale pin)
+  - [x] Regenerate `docs/gd-tools.schema.json` (schema embeds the package version)
+  - [x] Re-run full unit suite green (1479 passed)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
