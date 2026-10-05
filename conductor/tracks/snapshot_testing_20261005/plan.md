@@ -53,7 +53,7 @@
 - [ ] Task: README — snapshot testing usage section + example suite
 - [ ] Task: ARCHITECTURE — snapshot subsystem description (storage,
   serialization tiers, protocol touchpoints)
-- [ ] Task: Update JSON schema / config docs if any config surface was added
+- [x] Task: Update JSON schema / config docs if any config surface was added (6fde9df; none needed - config-only schema, no new keys)
 - [ ] Task: Full verification — `CI=true pytest`, `ruff check`, `black --check`,
   coverage targets, Definition-of-Done sweep
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
