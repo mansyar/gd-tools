@@ -807,6 +807,92 @@ def test_format_config_json_includes_parallel():
     assert parsed["test"]["parallel"] == 4
 
 
+# --- Durations reporting config ---
+
+
+def test_test_config_durations_defaults_to_none():
+    """Test TestConfig defaults durations to None (reporting disabled)."""
+    config = TestConfig()
+    assert config.durations is None
+
+
+@pytest.mark.parametrize("value", [0, 1, 5, 100])
+def test_test_config_durations_valid_values(value):
+    """Test TestConfig accepts non-negative durations values (0 = show all)."""
+    config = TestConfig(durations=value)
+    assert config.durations == value
+
+
+@pytest.mark.parametrize("value", [-1, -10])
+def test_test_config_durations_negative_rejected(value):
+    """Test TestConfig rejects negative durations values."""
+    with pytest.raises(ValidationError):
+        TestConfig(durations=value)
+
+
+def test_test_config_durations_rejects_non_integer():
+    """Test TestConfig rejects a non-integer durations value."""
+    with pytest.raises(ValidationError):
+        TestConfig(durations="ten")
+
+
+def test_load_config_durations_present(tmp_path):
+    """Test load_config reads [test] durations from TOML."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\ndurations = 5\n")
+    config = load_config(project_root=tmp_path)
+    assert config.test.durations == 5
+
+
+def test_load_config_durations_absent_is_none(tmp_path):
+    """Test load_config leaves durations None when absent from TOML."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text('[test]\nprefix = "check_"\n')
+    config = load_config(project_root=tmp_path)
+    assert config.test.durations is None
+
+
+def test_load_config_durations_negative_raises(tmp_path):
+    """Test load_config raises ConfigError for negative durations."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\ndurations = -1\n")
+    with pytest.raises(ConfigError):
+        load_config(project_root=tmp_path)
+
+
+def test_save_config_durations_round_trip(tmp_path):
+    """Test save_config + load_config round-trips a durations value."""
+    original = GdToolsConfig(test=TestConfig(durations=5))
+    save_config(original, project_root=tmp_path)
+    loaded = load_config(project_root=tmp_path)
+    assert loaded.test.durations == 5
+
+
+def test_save_config_durations_none_omitted(tmp_path):
+    """Test save_config omits durations=None from the TOML file."""
+    original = GdToolsConfig()
+    save_config(original, project_root=tmp_path)
+    content = (tmp_path / "gd-tools.toml").read_text()
+    assert "durations" not in content
+
+
+def test_format_config_toml_durations_roundtrip():
+    """Test format_config_toml round-trips a durations value."""
+    original = GdToolsConfig(test=TestConfig(durations=10))
+    toml_str = format_config_toml(original)
+    parsed = tomllib.loads(toml_str)
+    restored = GdToolsConfig(**parsed)
+    assert restored == original
+
+
+def test_format_config_json_includes_durations():
+    """Test format_config_json includes the durations key."""
+    config = GdToolsConfig(test=TestConfig(durations=5))
+    json_str = format_config_json(config)
+    parsed = json.loads(json_str)
+    assert parsed["test"]["durations"] == 5
+
+
 # --- explicit project root (--project anchor) ---
 
 

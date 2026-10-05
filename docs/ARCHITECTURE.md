@@ -723,9 +723,14 @@ Two environment variables control the coverage system:
 | `GD_TOOLS_COVERAGE_PLAN` | Path to `plan.json` for `coverage.gd._ready()` instrumentation |
 | `GD_TOOLS_COVERAGE_OUTPUT` | Path for `coverage.json` output |
 
-These are set by the coverage-aware launch paths: `coverage run playtest`
-sets them for manual playtest sessions, and the legacy standalone path set
-them via `test_runner.run_tests()`. The same Godot project can run with or
+`coverage run` (playtest sessions) sets both before launching Godot. The
+native test pipeline does not use environment variables: the Python side
+writes the plan to the coverage output directory, and the bundled
+`gd_tools_native_coverage.gd` collector is activated explicitly by
+`gd_tools_test_runner.gd` via `activate(plan_path, output_path)`. (The
+removed legacy standalone path set the same variables via
+`test_runner.run_tests()`; that module was deleted with the GUT bridge.)
+The same Godot project can run with or
 without coverage ---
 no project configuration change is needed. When the plan env var is
 absent, `_GDTCoverage._ready()` skips instrumentation and the tracker

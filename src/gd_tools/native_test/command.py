@@ -74,6 +74,7 @@ def run_native_test_command(
     changed: bool = False,
     base: str | None = None,
     snapshot_update: bool = False,
+    durations: int | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -106,6 +107,7 @@ def run_native_test_command(
             changed=changed,
             base=base,
             snapshot_update=snapshot_update,
+            durations=durations,
         )
     finally:
         if previous_sigterm is not None:
@@ -136,6 +138,7 @@ def _run_native_test_command(
     changed: bool = False,
     base: str | None = None,
     snapshot_update: bool = False,
+    durations: int | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -161,6 +164,8 @@ def _run_native_test_command(
             of the working tree.
         snapshot_update: Rewrite mismatched snapshots instead of failing
             their tests.
+        durations: Optional count of slowest tests to report after the
+            run; 0 lists every test, None disables the report.
 
     Returns:
         The normalized CLI-facing test result.
@@ -337,7 +342,7 @@ def _run_native_test_command(
         project_root,
         junit_xml,
     )
-    format_test_results(result)
+    format_test_results(result, durations=durations)
     if infrastructure_error:
         _raise_for_native_error(native_result)
     if test_failure is not None:

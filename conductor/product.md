@@ -169,6 +169,10 @@ permanent migration path.
 - Tests run sequentially by default; opt-in parallel execution (`--parallel N`
   / `[test].parallel`, 1–32 workers) runs suites concurrently while preserving
   discovery-order output, coverage parity, and interrupt safety.
+- Opt-in durations reporting (`--durations N` / `[test].durations`) prints a
+  "Slowest Tests" table after the run, sorted slowest-first; bare `--durations`
+  defaults to 10 and `N=0` lists every executed test (pytest parity). Built on
+  the per-test timing the native runtime already reports — no protocol changes.
 - Headless execution is the default; windowed execution is explicit and
   requires a real display; there is no automatic fallback to headless.
 - The runtime has no new third-party runtime dependency.

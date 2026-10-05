@@ -185,6 +185,7 @@ binary = "/usr/local/bin/godot"
 | `timeout_seconds` | number | `5.0` | Default native per-test async timeout in seconds. |
 | `retries` | integer | `0` | Default native retry count. |
 | `parallel` | integer | None | Persistent parallel worker count (1-32) for the native runtime. Omit for sequential execution; `--parallel` overrides this for one invocation. |
+| `durations` | integer | None | Number of slowest tests to report after a run (`0` lists every executed test). Omit to disable durations reporting; `--durations` overrides this for one invocation. |
 | `tags` | list of strings | `[]` | Native class-level tag filters; an empty list matches all tags. |
 | `prefix` | string | `"test_"` | Filename prefix for test scripts (GUT convention). |
 | `suffix` | string | `".gd"` | Filename suffix for test scripts. |
@@ -309,6 +310,16 @@ is auto-created on the first backup.
 This protects user customizations from being silently destroyed during
 re-init (e.g., after upgrading `gd-tools` via pip).
 
+**Cleanup of Undeployed Files:**
+
+`init` also removes bundled files it no longer deploys. When an upgraded
+gd-tools version stops shipping a file that an older version deployed (for
+example, the legacy GUT hook scripts `pre_run_hook.gd` and
+`post_run_hook.gd`, removed with the GUT compatibility bridge in v0.6.0),
+each stale copy found on the project is backed up to
+`addons/gd-tools-coverage/.backups/<name>.gd.bak`, deleted, and a notice is
+printed. Files you created yourself under `addons/` are never touched.
+
 ### 3.3 gd-tools doctor
 
 Run diagnostic checks on the development environment.
@@ -379,6 +390,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--tag` | string, repeatable | Config `[test].tags` | Run native suites matching a class-level tag. |
 | `--test-timeout` | number | Config `[test].timeout_seconds` | Per-test timeout in seconds for native tests. |
 | `--parallel` | integer | Config `[test].parallel` | Run suites with up to N concurrent workers (1-32). Bare `--parallel` defaults to 4 workers — note it overrides a configured value even if that value is higher. Omit for sequential execution. |
+| `--durations` | integer | Config `[test].durations` | Report the N slowest tests after the run in a "Slowest Tests" table (pass, fail, and skip rows, sorted slowest-first). Bare `--durations` defaults to 10; `--durations 0` lists every executed test. Omit to disable. |
 | `--junit-xml` | string | None | Path to write a JUnit XML report. |
 | `--no-exit-code` | flag | `false` | Do not exit with non-zero on test failure. |
 | `--timeout` | integer | None | Godot import and per-suite process timeout in seconds. |
@@ -456,6 +468,9 @@ gd-tools test --snapshot-update
   `--coverage` adds plan-v1 data and a merged report.
 - Results include timestamps, assertion diagnostics, and Godot engine
   errors/warnings. Engine errors are infrastructure failures (exit `2`).
+  A script error that aborts a test body mid-run (for example a call to a
+  nonexistent method) is reported as `error` for that test rather than a
+  false `passed`.
 - Async tests may await process frames, physics frames, timers, and signals.
   The default per-test timeout is `5.0` seconds (`[test].timeout_seconds`);
   `--test-timeout` overrides it for one invocation, while `--timeout` limits

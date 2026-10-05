@@ -81,6 +81,7 @@ def _run_watch(
     output,
     clock,
     parallel=None,
+    durations=None,
 ):
     with (
         patch(
@@ -105,8 +106,28 @@ def _run_watch(
             sleep=lambda _seconds: clock.advance(0.5),
             output=output.append,
             parallel=parallel,
+            durations=durations,
         )
     return code, mock_native
+
+
+def test_watch_forwards_durations_to_re_runs(tmp_path):
+    """Every watch re-run carries the resolved durations setting."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    fake_native = MagicMock(side_effect=KeyboardInterrupt)
+    code, mock_native = _run_watch(
+        tmp_path,
+        _config(tmp_path),
+        fake_native,
+        [],
+        output,
+        clock,
+        durations=2,
+    )
+    assert code == 0
+    assert mock_native.call_args.kwargs["durations"] == 2
 
 
 def test_banner_reports_watched_file_count(tmp_path):

@@ -15,6 +15,10 @@
   silently under-measuring. Uncovered-branch panels now label each
   uncovered entry with its actual arm type.
 
+## v0.7.0 (2026-10-05)
+
+### Added
+
 - **lint**: New `--report-format github-actions` option emits GitHub
   Actions workflow annotations (`::error`/`::warning`) so violations
   appear inline on pull requests. Annotations follow the official
