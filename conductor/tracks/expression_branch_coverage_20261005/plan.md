@@ -45,7 +45,7 @@
     `assert_false` based on the evaluated condition value
 - [x] Task: Implement value-aware dual-arm helper (e.g. `hit_bool`) in the
   native collector (Green)
-- [ ] Task: Mirror instrumentation in `coverage.gd` (`gd-tools-coverage`
+- [x] Task: Mirror instrumentation in `coverage.gd` (`gd-tools-coverage`
   autoload / playtest path) (Green)
 - [ ] Task: Write failing test + implement loud-failure handshake: collector
   rejects plans containing unknown/unimplemented branch types (old addon +
