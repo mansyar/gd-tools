@@ -241,6 +241,22 @@ def _abort_run(context: _SuiteContext) -> None:
         pass
 
 
+def select_shard(
+    suites: list[NativeSuite],
+    shard: int,
+    total_shards: int,
+) -> list[NativeSuite]:
+    """Select the suites assigned to shard ``shard`` of ``total_shards``.
+
+    Round-robin over the given (deterministic) plan order: suite ``i``
+    (0-based) belongs to shard ``(i mod total_shards) + 1``. Selection is
+    a pure filter; the input list is not modified.
+    """
+    return [
+        suite for i, suite in enumerate(suites) if i % total_shards == shard - 1
+    ]
+
+
 def run_native_tests(
     project_root: Path,
     suites: list[NativeSuite],

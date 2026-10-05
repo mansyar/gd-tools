@@ -36,7 +36,7 @@ from gd_tools.native_test.artifacts import (
     publish_artifact_index,
 )
 from gd_tools.native_test.discovery import discover_native_suites
-from gd_tools.native_test.orchestrator import run_native_tests
+from gd_tools.native_test.orchestrator import run_native_tests, select_shard
 from gd_tools.native_test.preflight import NativePreflightError
 from gd_tools.native_test.preflight_cache import run_preflight_cached
 from gd_tools.native_test.protocol import (
@@ -243,6 +243,32 @@ def _run_native_test_command(
     if changed:
         suites = _narrow_changed_suites(
             project_root, suites, changed_files, base
+        )
+    if shard is not None:
+        shard_k, shard_n = shard
+        total_suites = len(suites)
+        suites = select_shard(suites, shard_k, shard_n)
+        if not suites:
+            output.print_info(
+                f"--shard {shard_k}/{shard_n}: no suites assigned to this "
+                "shard; nothing to run."
+            )
+            return TestResult(
+                total=0,
+                passed=0,
+                failed=0,
+                skipped=0,
+                duration=0.0,
+                junit_xml_path=project_root / ".gd-tools" / "results.xml",
+                coverage_data_path=None,
+                artifact_index_path=None,
+                stdout="",
+                stderr="",
+                test_details=[],
+            )
+        output.print_info(
+            f"Running shard {shard_k}/{shard_n} "
+            f"({len(suites)} of {total_suites} suites)."
         )
 
     _ensure_project_imported(
