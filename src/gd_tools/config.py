@@ -59,6 +59,8 @@ class TestConfig(BaseModel):
         tags: Optional native suite tag filters.
         parallel: Number of suites to run concurrently (1-32), or
             None for sequential execution.
+        durations: Number of slowest tests to report (0 shows all),
+            or None to disable durations reporting.
     """
 
     __test__ = False
@@ -73,6 +75,7 @@ class TestConfig(BaseModel):
     retries: int = Field(default=0, ge=0)
     tags: list[str] = Field(default_factory=list)
     parallel: int | None = Field(default=None, ge=1, le=32)
+    durations: int | None = Field(default=None, ge=0)
 
     @model_validator(mode="before")
     @classmethod
