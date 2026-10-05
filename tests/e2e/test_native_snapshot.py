@@ -50,9 +50,11 @@ def _run_native_manifest(
     *,
     events_path: Path | None = None,
     log_path: Path | None = None,
+    extra_env: dict[str, str] | None = None,
 ):
     """Run the native Godot runner with optional event and log artifacts."""
     env = os.environ.copy()
+    env.update(extra_env or {})
     env["GD_TOOLS_NATIVE_MANIFEST"] = str(
         result_path.with_suffix(".manifest.json")
     )
@@ -391,6 +393,44 @@ def test_native_snapshot_parallel_and_selection_compat(godot_bin, tmp_path):
                 entry["name"],
                 entry["message"],
             )
+
+
+def test_native_snapshot_update_flag_rewrites_mismatch(godot_bin, tmp_path):
+    """--snapshot-update mode rewrites mismatches and reports them as updated."""
+    project = _prepare_project(tmp_path, godot_bin)
+    result_path = tmp_path / "snapshot-update.json"
+    result = _run_native_manifest(
+        project,
+        godot_bin,
+        _snapshot_manifest(
+            project,
+            ["test_update_mode_rewrites_mismatch"],
+            suite_name="NativeSnapshotUpdateSuite",
+            suite_path="res://test/snapshot_update_suite.gd",
+        ),
+        result_path,
+        extra_env={"GD_TOOLS_SNAPSHOT_UPDATE": "1"},
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    entry = payload["tests"][0]
+    assert entry["status"] == "passed", (entry["message"],)
+    assert entry.get("diagnostics", {}).get("snapshots_updated", []) == [
+        "NativeSnapshotUpdateSuite/test_update_mode_rewrites_mismatch/rewritten"
+    ]
+    snapshot_file = (
+        project
+        / ".gd-tools"
+        / "snapshots"
+        / "NativeSnapshotUpdateSuite"
+        / "test_update_mode_rewrites_mismatch"
+        / "rewritten.snap"
+    )
+    assert snapshot_file.exists()
+    content = snapshot_file.read_text(encoding="utf-8")
+    assert '"fresh"' in content
+    assert '"stale"' not in content
 
 
 def test_native_snapshot_store_round_trip(godot_bin, tmp_path):

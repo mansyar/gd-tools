@@ -676,6 +676,12 @@ def _validate_parallel(
     help="With --changed: diff from merge-base of this ref and HEAD "
     "instead of the working tree (for CI on pull requests).",
 )
+@click.option(
+    "--snapshot-update",
+    is_flag=True,
+    help="Rewrite mismatched and malformed snapshots with the rendered "
+    "output instead of failing their tests.",
+)
 def test(
     paths,
     runtime,
@@ -695,6 +701,7 @@ def test(
     watch,
     changed,
     base,
+    snapshot_update,
 ):
     """Run GDScript tests with the native runtime.
 
@@ -784,6 +791,7 @@ def test(
                     show_uncovered=show_uncovered,
                     no_cache=no_cache,
                     parallel=effective_parallel,
+                    snapshot_update=snapshot_update,
                 )
             )
         if selected_runtime == "native":
@@ -805,6 +813,7 @@ def test(
                 parallel=effective_parallel,
                 changed=changed,
                 base=base,
+                snapshot_update=snapshot_update,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)

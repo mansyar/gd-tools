@@ -26,6 +26,7 @@ var _gd_tools_snapshot_suite_name := ""
 var _gd_tools_snapshot_test_name := ""
 var _gd_tools_snapshot_call_count := 0
 var _gd_tools_snapshots_written: Array[String] = []
+var _gd_tools_snapshots_updated: Array[String] = []
 
 const _GD_TOOLS_SNAPSHOT_SERIALIZER := preload(
 	"res://addons/gd-tools-test/gd_tools_snapshot_serializer.gd"
@@ -1368,6 +1369,14 @@ func assert_snapshot(value, name: String = "") -> void:
 		var stored := str(existing.get("value", ""))
 		if stored == rendered:
 			return
+		if _gd_tools_snapshot_update_mode():
+			if _gd_tools_rewrite_snapshot(
+				suite_name, test_name, snapshot_name, rendered
+			):
+				_gd_tools_snapshots_updated.append(
+					"%s/%s/%s" % [suite_name, test_name, snapshot_name]
+				)
+			return
 		_gd_tools_record_failure(
 			"assert_snapshot",
 			(
@@ -1379,7 +1388,20 @@ func assert_snapshot(value, name: String = "") -> void:
 			stored,
 		)
 		return
-	if str(existing.get("error", "io")) != "not_found":
+	var read_error := str(existing.get("error", "io"))
+	if read_error == "not_found":
+		pass
+	elif _gd_tools_snapshot_update_mode() and read_error == "malformed":
+		# A broken stored snapshot cannot be trusted as a baseline, so
+		# update mode replaces it the same way as a mismatch.
+		if _gd_tools_rewrite_snapshot(
+			suite_name, test_name, snapshot_name, rendered
+		):
+			_gd_tools_snapshots_updated.append(
+				"%s/%s/%s" % [suite_name, test_name, snapshot_name]
+			)
+		return
+	else:
 		_gd_tools_record_failure(
 			"assert_snapshot",
 			"Snapshot read failed: %s" % str(existing.get("message", "unknown error")),
@@ -1399,6 +1421,32 @@ func assert_snapshot(value, name: String = "") -> void:
 		)
 		return
 	_gd_tools_snapshots_written.append("%s/%s/%s" % [suite_name, test_name, snapshot_name])
+
+
+## Snapshots updated (rewritten) by this test attempt, as ``suite/test/name``.
+func get_snapshots_updated() -> Array[String]:
+	return _gd_tools_snapshots_updated.duplicate()
+
+
+func _gd_tools_snapshot_update_mode() -> bool:
+	return OS.get_environment("GD_TOOLS_SNAPSHOT_UPDATE") == "1"
+
+
+func _gd_tools_rewrite_snapshot(
+	suite_name: String, test_name: String, snapshot_name: String, rendered: String
+) -> bool:
+	var write_result := _GD_TOOLS_SNAPSHOT_STORE.write(
+		_gd_tools_snapshot_base_dir(), suite_name, test_name, snapshot_name, rendered
+	)
+	if bool(write_result.get("ok", false)):
+		return true
+	_gd_tools_record_failure(
+		"assert_snapshot",
+		"Snapshot write failed: %s" % str(write_result.get("message", "unknown error")),
+		rendered,
+		""
+	)
+	return false
 
 
 ## Snapshots written by this test attempt, as ``suite/test/name`` paths.

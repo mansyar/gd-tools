@@ -175,6 +175,7 @@ class _SuiteContext:
     artifact_layout: NativeArtifactLayout | None
     coverage: NativeCoverage | None
     parallel: int = 1
+    snapshot_update: bool = False
     registry: _ProcessRegistry = field(default_factory=_ProcessRegistry)
     # Suites whose execution has started, in start order. The incomplete
     # index published on interrupt lists only these, so suites that never
@@ -252,6 +253,7 @@ def run_native_tests(
     run_id: str | None = None,
     artifact_layout: NativeArtifactLayout | None = None,
     parallel: int | None = None,
+    snapshot_update: bool = False,
 ) -> NativeRunResult:
     """Run each native suite in an isolated Godot process.
 
@@ -271,6 +273,8 @@ def run_native_tests(
             ``None`` or a value below 2 runs suites sequentially. Results are
             always aggregated in discovery order regardless of completion
             order.
+        snapshot_update: When True, the runner rewrites mismatched and
+            malformed snapshots instead of failing their tests.
 
     Returns:
         Aggregated native result. A process-level failure is represented as
@@ -297,6 +301,7 @@ def run_native_tests(
         artifact_layout=artifact_layout,
         coverage=coverage,
         parallel=parallel if parallel and parallel > 1 else 1,
+        snapshot_update=snapshot_update,
     )
     work_items = list(enumerate(suites))
     with _sigterm_as_interrupt():
@@ -509,6 +514,8 @@ def _execute_suite(
             "GD_TOOLS_WORKER_SLOT": str(index % context.parallel),
         }
     )
+    if context.snapshot_update:
+        env["GD_TOOLS_SNAPSHOT_UPDATE"] = "1"
     command = [context.godot_binary]
     if (
         suite.integration is None

@@ -71,6 +71,7 @@ def run_watch_mode(
     show_uncovered: bool = False,
     no_cache: bool = False,
     parallel: int | None = None,
+    snapshot_update: bool = False,
     event_source: WatchdogEventSource | None = None,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
@@ -98,6 +99,8 @@ def run_watch_mode(
         show_uncovered: Include uncovered lines in coverage summaries.
         no_cache: Bypass the coverage plan cache.
         parallel: Optional worker count forwarded to every watch re-run.
+        snapshot_update: Rewrite mismatched snapshots instead of failing
+            their tests, on every watch re-run.
         event_source: Injectable event source (defaults to watchdog).
         clock: Injectable clock for debounce timing.
         sleep: Injectable sleep used between poll ticks.
@@ -170,6 +173,7 @@ def run_watch_mode(
                 show_uncovered=show_uncovered,
                 no_cache=no_cache,
                 parallel=parallel,
+                snapshot_update=snapshot_update,
             )
         except TestFailureError as exc:
             return _watch_result(getattr(exc, "result", None), "failed")
