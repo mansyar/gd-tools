@@ -100,7 +100,7 @@ func test_health_starts_at_full() -> void:
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, coverage addon, tooling; reports legacy GUT artifacts as migration advice. |
-| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites must extend `GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration guidance. Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
+| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites must extend `GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration guidance. Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. `--durations N` reports the N slowest tests after the run. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
 | `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text or JSON output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
@@ -118,6 +118,7 @@ gd-tools test --test test_takes_damage     # one test method
 gd-tools test --tag smoke                  # suites with that class-level tag
 gd-tools test --test-timeout 30            # per-test timeout, in seconds
 gd-tools test --parallel 4                 # run suites with 4 concurrent workers
+gd-tools test --durations 10               # report the 10 slowest tests
 gd-tools test --changed                    # only suites mapped from git-changed files
 gd-tools test --changed --base main        # PR/CI mode: diff from merge-base with main
 ```
@@ -127,6 +128,13 @@ gd-tools test --changed --base main        # PR/CI mode: diff from merge-base wi
 worker pool (1-32 workers; bare `--parallel` means 4) while keeping results,
 JUnit XML, and merged coverage identical to a sequential run. Persist the
 choice with `parallel = 4` under `[test]` in `gd-tools.toml`.
+
+`--durations N` prints a "Slowest Tests" table after the run, sorted
+slowest-first, covering pass, fail, and skip outcomes. Bare `--durations`
+means 10; `--durations 0` lists every executed test (pytest parity). Persist
+the choice with `durations = 10` under `[test]` in `gd-tools.toml`; the flag
+overrides the config for one invocation. The table renders identically under
+`--watch` re-runs and `--parallel` runs.
 
 `--changed` selects suites from git instead of running everything: uncommitted
 changes (staged, unstaged, and untracked) map to suites by the same

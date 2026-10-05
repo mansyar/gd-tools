@@ -185,6 +185,7 @@ binary = "/usr/local/bin/godot"
 | `timeout_seconds` | number | `5.0` | Default native per-test async timeout in seconds. |
 | `retries` | integer | `0` | Default native retry count. |
 | `parallel` | integer | None | Persistent parallel worker count (1-32) for the native runtime. Omit for sequential execution; `--parallel` overrides this for one invocation. |
+| `durations` | integer | None | Number of slowest tests to report after a run (`0` lists every executed test). Omit to disable durations reporting; `--durations` overrides this for one invocation. |
 | `tags` | list of strings | `[]` | Native class-level tag filters; an empty list matches all tags. |
 | `prefix` | string | `"test_"` | Filename prefix for test scripts (GUT convention). |
 | `suffix` | string | `".gd"` | Filename suffix for test scripts. |
@@ -379,6 +380,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--tag` | string, repeatable | Config `[test].tags` | Run native suites matching a class-level tag. |
 | `--test-timeout` | number | Config `[test].timeout_seconds` | Per-test timeout in seconds for native tests. |
 | `--parallel` | integer | Config `[test].parallel` | Run suites with up to N concurrent workers (1-32). Bare `--parallel` defaults to 4 workers — note it overrides a configured value even if that value is higher. Omit for sequential execution. |
+| `--durations` | integer | Config `[test].durations` | Report the N slowest tests after the run in a "Slowest Tests" table (pass, fail, and skip rows, sorted slowest-first). Bare `--durations` defaults to 10; `--durations 0` lists every executed test. Omit to disable. |
 | `--junit-xml` | string | None | Path to write a JUnit XML report. |
 | `--no-exit-code` | flag | `false` | Do not exit with non-zero on test failure. |
 | `--timeout` | integer | None | Godot import and per-suite process timeout in seconds. |
