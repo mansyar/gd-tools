@@ -8,7 +8,7 @@
 
 ## Phase 1 — Plan Generation (Python, `plan_generator.py`)
 
-- [ ] Task: Write failing tests for boolean-operator branch points (Red)
+- [x] Task: Write failing tests for boolean-operator branch points (Red) (747968f)
   - Per-operator granularity: `a and b and c` → 2 branch points; nesting
     (`a and (b or c)`) → nested spans
   - Each operator point carries arm ids `and_right`/`and_short` (resp.
@@ -16,18 +16,18 @@
     whole-expression site span; multi-line and parenthesized conditions
   - No-anchor positions (class-level initializers, `@export` initializers,
     default parameter values) → not tracked (ternary precedent)
-- [ ] Task: Implement boolean-operator detection in `CoverageVisitor` (Green)
-- [ ] Task: Write failing tests for `assert` branch points (Red)
+- [x] Task: Implement boolean-operator detection in `CoverageVisitor` (Green) (747968f)
+- [x] Task: Write failing tests for `assert` branch points (Red) (747968f)
   - Both syntaxes: `assert cond` and `assert(cond, msg)`; arms
     `assert_true`/`assert_false`; condition span excludes the message
-- [ ] Task: Implement assert-call detection (Green)
-- [ ] Task: Write failing tests for exclusion interaction (Red)
+- [x] Task: Implement assert-call detection (Green) (747968f)
+- [x] Task: Write failing tests for exclusion interaction (Red) (747968f)
   - Line-level `# gd-tools: no cover` suppresses expression points on that
     line; non-expression points unaffected
-- [ ] Task: Implement exclusion handling for expression points (Green)
-- [ ] Task: Bump `PLAN_VERSION` 6→7, update version-history docstring, verify
-  cached-plan invalidation (Red+Green)
-- [ ] Task: Refactor pass — span helper reuse, style-guide conformance
+- [x] Task: Implement exclusion handling for expression points (Green) (747968f)
+- [x] Task: Bump `PLAN_VERSION` 6→7, update version-history docstring, verify
+  cached-plan invalidation (Red+Green) (747968f)
+- [x] Task: Refactor pass — span helper reuse, style-guide conformance (747968f)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — GDScript Collector Instrumentation (both addons)
