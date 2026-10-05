@@ -71,6 +71,10 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Import gd_tools from this checkout's src/ rather than any globally
+# installed (editable) copy, so worktrees and CI checkouts always test
+# their own tree.
+pythonpath = ["src"]
 markers = [
     "unit: Unit tests for individual modules.",
     "integration: Integration tests for command flows.",
