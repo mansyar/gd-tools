@@ -284,4 +284,4 @@ _Archived tracks live in `./archive/`._
   `.gd-tools/snapshots/`, first-run auto-write with summary counts,
   fail-with-unified-diff mismatches, `gd-tools test --snapshot-update`,
   obsolete-snapshot reporting, and snapshot-aware `gd-tools clean`)
-  *Link: [snapshot_testing_20261005](./tracks/snapshot_testing_20261005/index.md)*
+  *Link: [snapshot_testing_20261005](./archive/snapshot_testing_20261005/index.md)*
