@@ -255,7 +255,9 @@ def test_coverage_run_measures_expression_arms(godot_bin, tmp_path):
     )
 
     assert plan["version"] == 7
-    subject = next(f for f in plan["files"] if "playtest_subject.gd" in f["path"])
+    subject = next(
+        f for f in plan["files"] if "playtest_subject.gd" in f["path"]
+    )
     arm_points = {
         entry["id"]: entry["branch_type"]
         for entry in subject["lines"]
