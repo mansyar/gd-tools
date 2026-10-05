@@ -726,6 +726,19 @@ def test_print_durations_table_no_details_prints_nothing(capsys):
 
 
 @pytest.mark.unit
+def test_print_durations_table_retries_summed_duration(capsys):
+    """A retried test's duration (sum of all attempts) renders as-is.
+
+    The native runner already sums per-attempt durations into
+    TestDetail.duration; the renderer must display that value unchanged.
+    """
+    details = [_detail("test_retried", 3.6)]
+    print_durations_table(_durations_result(details), 10)
+    captured = capsys.readouterr()
+    assert "3.60s" in captured.out
+
+
+@pytest.mark.unit
 def test_format_test_results_durations_disabled_by_default(capsys):
     """Without the durations argument the default output is unchanged."""
     details = [_detail("test_only", 0.4)]
