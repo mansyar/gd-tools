@@ -54,10 +54,10 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 
 ## Phase 4: Documentation
 
-- [ ] **Task 4.1: README flag reference** — `--exitfirst`/`-x` and `--shard k/N` entries with interplay rules (watch, retries, coverage, changed→shard→parallel)
-- [ ] **Task 4.2: CI recipe** — GitHub Actions matrix over shard indices with `coverage merge` across shards
-- [ ] **Task 4.3: ARCHITECTURE.md** — orchestration section: dispatch-loop fail-fast gate, shard selection step, round-robin rule; §9.7 exit-map note that fail-fast exits 1
-- [ ] **Task 4.4: Commit docs**
+- [x] **Task 4.1: README flag reference** `6b9c71d` - test-command table row, flag examples, and interplay paragraphs for `--exitfirst`/`-x` and `--shard k/N` (watch rejections, retries, coverage, changed/shard/parallel pipeline)
+- [x] **Task 4.2: CI recipe** `6b9c71d` - USER_GUIDE 4.2 "Sharding a test run across CI jobs": GitHub Actions matrix over shard indices with a `coverage merge` across-shards job (plus flag-reference rows and examples in 3.4)
+- [x] **Task 4.3: ARCHITECTURE.md** `6b9c71d` - 11.2 orchestrator section: dispatch pipeline (changed -> shard -> parallel), round-robin rule, fail-fast gate + artifact-index `fail_fast: "skipped"` markers; 9.7 note that fail-fast introduces no new exit code
+- [x] **Task 4.4: Commit docs** `6b9c71d`
 - [ ] **Task 4.5: Phase Verification & Checkpoint (Refer to workflow.md)**
 
 ## Phase 5: End-to-end validation
