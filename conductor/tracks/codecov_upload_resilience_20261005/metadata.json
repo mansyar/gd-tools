@@ -1,0 +1,8 @@
+{
+  "id": "codecov_upload_resilience_20261005",
+  "type": "chore",
+  "status": "new",
+  "created": "2026-10-05",
+  "branch": "feature/codecov-upload-resilience-20261005",
+  "summary": "Make the Codecov upload step in ci.yml non-blocking (continue-on-error) so codecov outages cannot fail CI or block PR merges; coverage stays preserved as a workflow artifact."
+}

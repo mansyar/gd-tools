@@ -285,3 +285,7 @@ _Archived tracks live in `./archive/`._
   fail-with-unified-diff mismatches, `gd-tools test --snapshot-update`,
   obsolete-snapshot reporting, and snapshot-aware `gd-tools clean`)
   *Link: [snapshot_testing_20261005](./archive/snapshot_testing_20261005/index.md)*
+
+---
+
+- [ ] **Track: Codecov upload resilience** (chore: continue-on-error on the Codecov upload step in ci.yml so codecov outages cannot fail CI or block PR merges; coverage remains preserved as a workflow artifact) *Link: [codecov_upload_resilience_20261005](./tracks/codecov_upload_resilience_20261005/index.md)*
