@@ -20,13 +20,13 @@
 
 ## Phase 2: Pre-Release Verification
 
-- [ ] Task: Run the workflow.md pre-release checklist
-  - [ ] `CI=true pytest` — full suite green with coverage >80% line / >70% branch
-  - [ ] `ruff check src/ tests/` and `black --check src/ tests/` clean
-  - [ ] `python -m build` produces fresh sdist + wheel
-  - [ ] `twine check dist/*` passes on fresh artifacts
-  - [ ] `gd-tools --version` reports the current version correctly
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Run the workflow.md pre-release checklist
+  - [x] `CI=true pytest` — full suite green with coverage >80% line / >70% branch
+  - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean
+  - [x] `python -m build` produces fresh sdist + wheel
+  - [x] `twine check dist/*` passes on fresh artifacts
+  - [x] `gd-tools --version` reports the current version correctly
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Release Execution
 
