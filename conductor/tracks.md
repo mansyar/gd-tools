@@ -303,7 +303,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [ ] **Track: Ship v0.7.0** (chore/release: commitizen version bump to 0.7.0
+- [~] **Track: Ship v0.7.0** (chore/release: commitizen version bump to 0.7.0
   with dated CHANGELOG section, full documentation truth pass against the
   post-v0.6.0 feature set (GH Actions annotations, `--min-branch`, coverage
   `github-actions` format, spy framework upgrades, `error` outcome, ternary
