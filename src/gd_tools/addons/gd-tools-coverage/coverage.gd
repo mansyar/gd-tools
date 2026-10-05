@@ -24,6 +24,7 @@ const PLAYTEST_INTERVAL_ENV = "GD_TOOLS_COVERAGE_PLAYTEST_INTERVAL"
 const DEFAULT_PLAYTEST_INTERVAL: float = 5.0
 
 var _hits: Dictionary = {}
+var _derived: Dictionary = {}
 
 var _active: bool = false
 
@@ -83,9 +84,21 @@ func hit(file_id: int, line_id: int) -> void:
 func hit_ret(file_id: int, line_id: int, value: Variant) -> Variant:
 	## Record one instrumented hit and pass the tracked value through.
 	##
-	## Injected around ternary operands so each arm is measured exactly
-	## when it evaluates, without re-evaluating the condition.
+	## Injected around ternary operands and boolean-operator sites/right
+	## operands so each arm is measured exactly when it evaluates, without
+	## re-evaluating the condition.
 	hit(file_id, line_id)
+	return value
+
+
+func hit_bool(file_id: int, true_id: int, false_id: int, value: Variant) -> Variant:
+	## Record exactly one boolean-arm hit and pass the value through.
+	##
+	## Injected around assert conditions: the condition's truth decides
+	## which of the two arms is recorded, and the value continues into
+	## the assert itself. One wrapper call therefore records exactly one
+	## of assert_true / assert_false per evaluation.
+	hit(file_id, true_id if value else false_id)
 	return value
 
 
@@ -100,6 +113,7 @@ func get_omitted() -> Array:
 
 func reset() -> void:
 	_hits.clear()
+	_derived.clear()
 	_omitted.clear()
 
 
@@ -194,6 +208,7 @@ func _build_coverage_json(hits: Dictionary, omitted: Array = []) -> Dictionary:
 	# Matches the post-run hook output contract exactly so every
 	# reporter consumes playtest sessions unchanged.
 	var files: Array = []
+	_derive_short_hits(hits)
 	for file_id in hits:
 		var file_hits: Dictionary = hits[file_id]
 		var hits_dict: Dictionary = {}
@@ -318,7 +333,55 @@ func _instrument_file(file_entry: Dictionary) -> bool:
 	# change to any percentage.
 	if not _hits.has(file_id):
 		_hits[file_id] = {}
+	_derive_short_arms(file_id, lines)
 	return true
+
+
+func _derive_short_arms(file_id: int, lines: Array) -> void:
+	## Pair each ``<op>_short`` point with its operator's site and right
+	## point ids so coverage aggregation can derive short-circuit hits.
+	##
+	## Short-circuit arms have no span of their own: the collector records
+	## the site whenever the whole expression evaluates and the right arm
+	## whenever the right operand evaluates, so ``short = site - right``
+	## counts the evaluations the operator skipped. The plan emits each
+	## right operand immediately followed by its short arm, so pairing by
+	## most recent same-operator right is exact, including for chains.
+	var site_by_operator: Dictionary = {}
+	var last_right: Dictionary = {}
+	var pairs: Dictionary = {}
+	for entry in lines:
+		var branch_type := str(entry.get("branch_type", ""))
+		if branch_type.ends_with("_site"):
+			site_by_operator[branch_type.trim_suffix("_site")] = int(entry["id"])
+		elif branch_type.ends_with("_right"):
+			last_right[branch_type.trim_suffix("_right")] = int(entry["id"])
+		elif branch_type.ends_with("_short"):
+			var operator := branch_type.trim_suffix("_short")
+			if site_by_operator.has(operator) and last_right.has(operator):
+				pairs[int(entry["id"])] = [
+					site_by_operator[operator],
+					last_right[operator],
+				]
+	if not pairs.is_empty():
+		_derived[file_id] = pairs
+
+
+func _derive_short_hits(hits: Dictionary) -> void:
+	## Fold derived short-circuit arm hits into the recorded hit counts.
+	##
+	## ``short = site - right`` clamped at zero: a negative result would
+	## mean the wrap double-fired, which is a defect, not a measurement.
+	for file_id in _derived:
+		if not hits.has(file_id):
+			continue
+		var pairs: Dictionary = _derived[file_id]
+		for short_id in pairs:
+			var site_hits := int(hits[file_id].get(pairs[short_id][0], 0))
+			var right_hits := int(hits[file_id].get(pairs[short_id][1], 0))
+			var short_hits := maxi(0, site_hits - right_hits)
+			if short_hits > 0:
+				hits[file_id][short_id] = short_hits
 
 
 static func _extract_indent(line: String) -> String:
@@ -345,16 +408,21 @@ static func _detect_body_indent(source_lines: PackedStringArray, pattern_index: 
 
 
 static func _inject_trackers(source: String, file_id: int, lines: Array) -> String:
-	var wrapped := _wrap_ternary_operands(source, file_id, lines)
+	var wrapped := _wrap_expression_operands(source, file_id, lines)
 	var source_lines: PackedStringArray = wrapped.split("\n")
 	var sorted_lines: Array = lines.duplicate(true)
 	sorted_lines.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
 	for entry in sorted_lines:
-		# Ternary arms are instrumented by wrapping their operand text
-		# (see _wrap_ternary_operands); a line-inserted hit() on the
-		# shared anchor line fires both arms in lockstep and can never
-		# report an uncovered arm.
+		# Ternary and boolean-operator arms are instrumented by wrapping
+		# their operand text (see _wrap_expression_operands); a
+		# line-inserted hit() on the shared anchor line fires both arms
+		# in lockstep and can never report an uncovered arm.
 		if entry.get("operand_span") != null:
+			continue
+		# Short-circuit arms are derived at aggregation as site - right; a
+		# line-inserted hit() would fire whenever the statement runs
+		# rather than when the operator skipped its right operand.
+		if str(entry.get("branch_type", "")).ends_with("_short"):
 			continue
 		var target_line_num: int = int(entry["line"])
 		var line_id: int = int(entry["id"])
@@ -398,18 +466,35 @@ static func _offset_of(source: String, line: int, col: int) -> int:
 	return target
 
 
-static func _wrap_ternary_operands(source: String, file_id: int, lines: Array) -> String:
-	## Replace each ternary operand with a value-preserving tracker call.
+static func _wrap_expression_operands(source: String, file_id: int, lines: Array) -> String:
+	## Replace each tracked operand with a value-preserving tracker call.
 	##
-	## The plan records the source span of every ternary arm operand.
-	## Wrapping the operand records the arm's hit exactly when that arm
-	## evaluates, keeping values, evaluation order, and single evaluation
-	## intact. Line numbers are unchanged: a wrapper never adds or removes
-	## a newline, so the line-based insertion that follows stays valid.
+	## The plan records the source span of every ternary arm operand and
+	## boolean-operator site/right operand. Wrapping the operand records
+	## the arm's hit exactly when that operand evaluates, keeping values,
+	## evaluation order, and single evaluation intact. Line numbers are
+	## unchanged: a wrapper never adds or removes a newline, so the
+	## line-based insertion that follows stays valid.
+	##
+	## Assert conditions carry two arm ids (assert_true/assert_false)
+	## over one shared span: the pair becomes a single value-aware
+	## hit_bool wrap that records exactly one arm per evaluation.
 	var spans: Array = []
+	var assert_pairs: Dictionary = {}
 	for entry in lines:
+		var branch_type := str(entry.get("branch_type", ""))
 		var span: Variant = entry.get("operand_span")
 		if span == null:
+			continue
+		if branch_type == "assert_true" or branch_type == "assert_false":
+			var key := str(span)
+			if not assert_pairs.has(key):
+				assert_pairs[key] = {
+					"span": span,
+					"assert_true": -1,
+					"assert_false": -1,
+				}
+			assert_pairs[key][branch_type] = int(entry["id"])
 			continue
 		var start := _offset_of(source, int(span[0]), int(span[1]))
 		var end := _offset_of(source, int(span[2]), int(span[3]))
@@ -417,7 +502,24 @@ static func _wrap_ternary_operands(source: String, file_id: int, lines: Array) -
 			# Fail open: an unusable span leaves the arm uninstrumented
 			# rather than corrupting the source.
 			continue
-		spans.append({"start": start, "end": end, "id": int(entry["id"])})
+		spans.append({"start": start, "end": end, "kind": "ret", "id": int(entry["id"])})
+	for key in assert_pairs:
+		var pair: Dictionary = assert_pairs[key]
+		if int(pair["assert_true"]) < 0 or int(pair["assert_false"]) < 0:
+			# Fail open: an incomplete pair leaves the assert uninstrumented.
+			continue
+		var span: Array = pair["span"]
+		var start := _offset_of(source, int(span[0]), int(span[1]))
+		var end := _offset_of(source, int(span[2]), int(span[3]))
+		if start < 0 or end < 0 or start >= end or end > source.length():
+			continue
+		spans.append({
+			"start": start,
+			"end": end,
+			"kind": "bool",
+			"true_id": int(pair["assert_true"]),
+			"false_id": int(pair["assert_false"]),
+		})
 	if spans.is_empty():
 		return source
 	spans.sort_custom(func(a, b):
@@ -460,12 +562,21 @@ static func _wrap_spans(
 			j += 1
 		result += source.substr(cursor, start - cursor)
 		var operand := _wrap_spans(source, file_id, children, 0, start, end)
-		result += "%s.hit_ret(%d, %d, %s)" % [
-			TRACKER_NAME,
-			file_id,
-			int(span["id"]),
-			operand,
-		]
+		if str(span.get("kind", "ret")) == "bool":
+			result += "%s.hit_bool(%d, %d, %d, %s)" % [
+				TRACKER_NAME,
+				file_id,
+				int(span["true_id"]),
+				int(span["false_id"]),
+				operand,
+			]
+		else:
+			result += "%s.hit_ret(%d, %d, %s)" % [
+				TRACKER_NAME,
+				file_id,
+				int(span["id"]),
+				operand,
+			]
 		cursor = end
 		i = j
 	result += source.substr(cursor, to - cursor)
