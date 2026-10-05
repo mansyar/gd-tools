@@ -330,6 +330,10 @@ A task is complete when:
 ## Deployment Workflow
 
 ### Pre-Release Checklist
+- [ ] Run this checklist **after** the version bump, not before —
+  release-gate tests (version pin, checked-in schema snapshot) compare
+  fresh metadata, and a stale editable install silently masks failures
+  (learned in v0.7.0: CI caught two failures the pre-bump run missed)
 - [ ] All tests passing (`CI=true pytest`)
 - [ ] Coverage >80% line, >70% branch
 - [ ] No linting errors (`ruff check`)

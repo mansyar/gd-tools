@@ -316,7 +316,7 @@ re-init (e.g., after upgrading `gd-tools` via pip).
 gd-tools version stops shipping a file that an older version deployed (for
 example, the legacy GUT hook scripts `pre_run_hook.gd` and
 `post_run_hook.gd`, removed with the GUT compatibility bridge in v0.6.0),
-each stale copy found on the project is backed up to
+each stale copy found in the coverage addon is backed up to
 `addons/gd-tools-coverage/.backups/<name>.gd.bak`, deleted, and a notice is
 printed. Files you created yourself under `addons/` are never touched.
 
