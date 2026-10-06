@@ -373,7 +373,11 @@ def run_native_tests(
                                 index = pending.pop(future)
                                 outcome = future.result()
                                 outcomes.append((index, outcome))
-                                if outcome.has_failure or outcome.has_error:
+                                # Keep the FIRST failing suite in the batch as
+                                # the trigger; later ones would overwrite it.
+                                if fail_fast_trigger is None and (
+                                    outcome.has_failure or outcome.has_error
+                                ):
                                     fail_fast_trigger = suites[index].name
                             if fail_fast_trigger is not None:
                                 break
