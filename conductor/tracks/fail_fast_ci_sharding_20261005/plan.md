@@ -62,6 +62,6 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 
 ## Phase 5: End-to-end validation
 
-- [ ] **Task 5.1: E2E tests (Red → Green)** — full `gd-tools test` on the sample Godot project: fail-fast early stop with artifacts coherent; sharded runs produce expected suite subsets; combined `--changed --shard --exitfirst --parallel --coverage` run
-- [ ] **Task 5.2: Full quality gate** — `ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest --cov=gd_tools --cov-branch` (>80% line, >70% branch on new code)
+- [x] **Task 5.1: E2E tests (Red -> Green)** 169fcba - tests/e2e/test_native_exitfirst_e2e.py: fail-fast early stop (exit 1, Stopped early line, JUnit with synthetic skips, artifact index fail_fast markers) + combined --changed --shard --exitfirst --parallel --coverage run; 5/5 e2e green with shard suite
+- [x] **Task 5.2: Full quality gate** 169fcba - ruff clean, black 176 files unchanged, full unit suite 1540 passed / 3 skipped, coverage 92.89% >= 80% gate
 - [ ] **Task 5.3: Final Phase Verification & Checkpoint (Refer to workflow.md)**
