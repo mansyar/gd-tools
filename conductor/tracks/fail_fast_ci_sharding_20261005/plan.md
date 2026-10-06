@@ -60,8 +60,8 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 - [x] **Task 4.4: Commit docs** `6b9c71d`
 - [x] **Task 4.5: Phase Verification & Checkpoint (Refer to workflow.md)** `cac4819` - anchor link resolves, markdown fences balanced, flag references present
 
-## Phase 5: End-to-end validation
+## Phase 5: End-to-end validation [checkpoint: 9c0037b]
 
 - [x] **Task 5.1: E2E tests (Red -> Green)** 169fcba - tests/e2e/test_native_exitfirst_e2e.py: fail-fast early stop (exit 1, Stopped early line, JUnit with synthetic skips, artifact index fail_fast markers) + combined --changed --shard --exitfirst --parallel --coverage run; 5/5 e2e green with shard suite
 - [x] **Task 5.2: Full quality gate** 169fcba - ruff clean, black 176 files unchanged, full unit suite 1540 passed / 3 skipped, coverage 92.89% >= 80% gate
-- [ ] **Task 5.3: Final Phase Verification & Checkpoint (Refer to workflow.md)**
+- [x] **Task 5.3: Final Phase Verification & Checkpoint (Refer to workflow.md)** `9c0037b` - --help shows both flags; --exitfirst --shard 1/2 --parallel 2 stops early with coherent artifact index (18/21 skipped markers)
