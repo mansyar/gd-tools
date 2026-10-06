@@ -321,4 +321,4 @@ _Archived tracks live in `./archive/`._
   deterministic plan order for CI parallelism (changed → shard → parallel
   pipeline; composes with `--parallel` and `--exitfirst`; rejected with
   `--watch`; CLI-only flags with README + GitHub Actions sharding recipe docs)
-  *Link: [fail_fast_ci_sharding_20261005](./tracks/fail_fast_ci_sharding_20261005/index.md)*
+  *Link: [fail_fast_ci_sharding_20261005](./archive/fail_fast_ci_sharding_20261005/index.md)*
