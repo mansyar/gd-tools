@@ -65,3 +65,7 @@ Workflow: strict TDD per task (Red → Green), coverage gate (>80% line, >70% br
 - [x] **Task 5.1: E2E tests (Red -> Green)** 169fcba - tests/e2e/test_native_exitfirst_e2e.py: fail-fast early stop (exit 1, Stopped early line, JUnit with synthetic skips, artifact index fail_fast markers) + combined --changed --shard --exitfirst --parallel --coverage run; 5/5 e2e green with shard suite
 - [x] **Task 5.2: Full quality gate** 169fcba - ruff clean, black 176 files unchanged, full unit suite 1540 passed / 3 skipped, coverage 92.89% >= 80% gate
 - [x] **Task 5.3: Final Phase Verification & Checkpoint (Refer to workflow.md)** `9c0037b` - --help shows both flags; --exitfirst --shard 1/2 --parallel 2 stops early with coherent artifact index (18/21 skipped markers)
+
+## Phase: Review Fixes
+
+- [x] **Task: Apply review suggestions** ad8569e - Keep the first failing suite in a parallel completion batch as the fail-fast trigger
