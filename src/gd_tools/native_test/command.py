@@ -36,7 +36,7 @@ from gd_tools.native_test.artifacts import (
     publish_artifact_index,
 )
 from gd_tools.native_test.discovery import discover_native_suites
-from gd_tools.native_test.orchestrator import run_native_tests
+from gd_tools.native_test.orchestrator import run_native_tests, select_shard
 from gd_tools.native_test.preflight import NativePreflightError
 from gd_tools.native_test.preflight_cache import run_preflight_cached
 from gd_tools.native_test.protocol import (
@@ -75,6 +75,8 @@ def run_native_test_command(
     base: str | None = None,
     snapshot_update: bool = False,
     durations: int | None = None,
+    exitfirst: bool = False,
+    shard: tuple[int, int] | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -108,6 +110,8 @@ def run_native_test_command(
             base=base,
             snapshot_update=snapshot_update,
             durations=durations,
+            exitfirst=exitfirst,
+            shard=shard,
         )
     finally:
         if previous_sigterm is not None:
@@ -139,6 +143,8 @@ def _run_native_test_command(
     base: str | None = None,
     snapshot_update: bool = False,
     durations: int | None = None,
+    exitfirst: bool = False,
+    shard: tuple[int, int] | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -166,6 +172,10 @@ def _run_native_test_command(
             their tests.
         durations: Optional count of slowest tests to report after the
             run; 0 lists every test, None disables the report.
+        exitfirst: Stop dispatching new suites after the first failing
+            suite result; in-flight suites finish (fail-fast).
+        shard: Optional (k, n) CI shard selection; runs only the suites
+            assigned to shard k of n by round-robin over the plan order.
 
     Returns:
         The normalized CLI-facing test result.
@@ -234,6 +244,32 @@ def _run_native_test_command(
         suites = _narrow_changed_suites(
             project_root, suites, changed_files, base
         )
+    if shard is not None:
+        shard_k, shard_n = shard
+        total_suites = len(suites)
+        suites = select_shard(suites, shard_k, shard_n)
+        if not suites:
+            output.print_info(
+                f"--shard {shard_k}/{shard_n}: no suites assigned to this "
+                "shard; nothing to run."
+            )
+            return TestResult(
+                total=0,
+                passed=0,
+                failed=0,
+                skipped=0,
+                duration=0.0,
+                junit_xml_path=project_root / ".gd-tools" / "results.xml",
+                coverage_data_path=None,
+                artifact_index_path=None,
+                stdout="",
+                stderr="",
+                test_details=[],
+            )
+        output.print_info(
+            f"Running shard {shard_k}/{shard_n} "
+            f"({len(suites)} of {total_suites} suites)."
+        )
 
     _ensure_project_imported(
         godot_info, project_root, timeout, no_cache=no_cache
@@ -299,6 +335,7 @@ def _run_native_test_command(
             run_id=run_id,
             artifact_layout=artifact_layout,
             snapshot_update=snapshot_update,
+            exitfirst=exitfirst,
         )
     except (KeyboardInterrupt, NativeInterruptError):
         # The orchestrator has already published the incomplete index for
@@ -343,6 +380,13 @@ def _run_native_test_command(
         junit_xml,
     )
     format_test_results(result, durations=durations)
+    if native_result.fail_fast:
+        fail_fast = native_result.fail_fast
+        output.print_warning(
+            "Stopped early: fail-fast after suite "
+            f"{fail_fast['trigger']} ({fail_fast['skipped']} of "
+            f"{fail_fast['planned']} suites skipped)"
+        )
     if infrastructure_error:
         _raise_for_native_error(native_result)
     if test_failure is not None:

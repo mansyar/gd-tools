@@ -398,6 +398,8 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--no-cache` | flag | `false` | Force plan regeneration, bypassing the coverage plan cache. Only effective with `--coverage`; has no effect without it. |
 | `--changed` | flag | `false` | Run only the suites mapped from git-changed files (working tree vs `HEAD`). A change that maps to no suite falls back to the full suite with a notice; an empty change set exits 0 without launching Godot. |
 | `--base` | string | None | With `--changed`: diff committed changes from `merge-base(<ref>, HEAD)` instead of the working tree (the form for pull-request CI). Requires `--changed`; incompatible with `--watch` (exit 2). |
+| `--exitfirst`, `-x` | flag | `false` | Stop dispatching new suites after the first failing suite (test failure or infrastructure error). In-flight suites finish; unstarted suites are reported as skipped and summarized in a `Stopped early: fail-fast after suite <id> (K of M suites skipped)` line. Composes with `--parallel` (pool drains), `--coverage` (partial report), and `--watch` (gate resets per re-run). |
+| `--shard` | string `K/N` | None | Run only suite shard `K` of `N` for CI matrix splitting: suite *i* of the deterministic plan order belongs to shard `(i mod N) + 1`. Applied after `--changed`, before `--parallel`. `--shard 1/1` is valid; malformed values exit 2. Incompatible with `--watch` (exit 2). |
 
 **Examples:**
 
@@ -446,6 +448,12 @@ gd-tools test --changed --base main
 
 # Changed-file selection composes with the other flags
 gd-tools test --changed --parallel 4 --coverage --min 80
+
+# Fail fast: stop dispatching new suites after the first failing suite
+gd-tools test --exitfirst --parallel 4
+
+# CI sharding: run suite shard 2 of 4 (assignment is deterministic round-robin)
+gd-tools test --shard 2/4 --parallel 4 --coverage
 
 # Run exactly one native test file
 gd-tools test tests/unit/test_player.gd
@@ -1871,6 +1879,61 @@ jobs:
       - name: Format check
         run: gd-tools format --check
 ```
+
+#### Sharding a test run across CI jobs
+
+For large suites, split one run across several jobs with `--shard K/N`.
+Suites are assigned round-robin over the deterministic plan order, so
+shard membership is stable across runs and machines:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      # ... checkout, Godot setup, and gd-tools init as in the workflow above ...
+
+      - name: Run tests (shard)
+        run: gd-tools test --shard ${{ matrix.shard }}/4 --parallel 4 --coverage --junit-xml report-${{ matrix.shard }}.xml
+
+      - name: Upload coverage shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .gd-tools/coverage/coverage.json
+
+  merge-coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-shard-*
+          path: shards
+      - name: Install gd-tools
+        run: pip install gd-tools-cli
+      - name: Merge coverage shards
+        run: gd-tools coverage merge shards/coverage-shard-*/coverage.json --output .gd-tools/coverage/coverage.json
+```
+
+Notes:
+
+- `--shard 2/4` runs shard 2 of 4 (1-based); invalid forms such as
+  `--shard 4/3` or `--shard 3` exit 2 before any work. `--shard 1/1` is
+  valid and equivalent to no sharding.
+- `--shard` composes with `--changed` (sharding applies to the
+  changed-filtered plan) and with `--parallel` (parallelism applies within
+  the shard). `--shard` and `--watch` are rejected together.
+- The coverage plan is built pre-shard, so merging the per-shard reports
+  yields the same result as a single un-sharded run.
+- Add `--exitfirst` to each shard to fail it quickly: within a shard,
+  dispatch stops at the first failing suite and the remaining suites are
+  skipped (`Stopped early: fail-fast after suite <id> ...`).
 
 ### 4.3 Coverage Threshold Enforcement
 

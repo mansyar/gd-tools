@@ -322,6 +322,7 @@ def test_sigterm_handler_registered_and_restored(tmp_path):
                     tests=[],
                     coverage_data_path=None,
                     artifact_index_path=None,
+                    fail_fast=None,
                     engine_warnings=[],
                     diagnostics={},
                     stdout="",

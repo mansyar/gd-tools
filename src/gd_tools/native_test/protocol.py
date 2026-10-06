@@ -215,6 +215,7 @@ class NativeRunResult(BaseModel):
     tests: list[NativeTestResult] = Field(default_factory=list)
     coverage_data_path: Path | None = None
     artifact_index_path: Path | None = None
+    fail_fast: dict[str, Any] | None = None
     diagnostics: dict[str, Any] = Field(default_factory=dict)
     started_at: str | None = None
     finished_at: str | None = None

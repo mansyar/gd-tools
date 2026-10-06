@@ -28,6 +28,7 @@ Development teams requiring automated quality gates. They value:
 - `--check` flags for non-mutating CI mode
 - Machine-readable output (JSON, JUnit XML, LCOV, Cobertura)
 - Coverage threshold enforcement (`--min N`)
+- Test-run orchestration for CI: `--exitfirst` stops dispatching new suites after the first failing suite (pytest `-x` semantics), and `--shard K/N` splits one run across CI matrix jobs with round-robin suite assignment and per-shard coverage merge
 - Cross-platform support (Windows, macOS, Linux)
 
 > *Open-source Godot project maintainers are a secondary audience served by the same tooling, but not the primary design driver for v1.*

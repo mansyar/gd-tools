@@ -312,3 +312,13 @@ _Archived tracks live in `./archive/`._
 ---
 
   *Link: [release_v070_20261005](./tracks/release_v070_20261005/index.md)*
+
+- [x] **Track: Fail-Fast and CI Sharding** (feature: pytest-parity orchestration
+  flags for `gd-tools test` — `--exitfirst`/`-x` stops dispatching new suites on
+  the first failing suite result (any failure class; retries respected; in-flight
+  suites drain; exit 1 with summary line; partial coverage report labeled as
+  such) and `--shard k/N` selects a suite-level round-robin subset of the
+  deterministic plan order for CI parallelism (changed → shard → parallel
+  pipeline; composes with `--parallel` and `--exitfirst`; rejected with
+  `--watch`; CLI-only flags with README + GitHub Actions sharding recipe docs)
+  *Link: [fail_fast_ci_sharding_20261005](./archive/fail_fast_ci_sharding_20261005/index.md)*

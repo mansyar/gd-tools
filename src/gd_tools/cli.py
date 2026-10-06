@@ -623,6 +623,38 @@ def _validate_durations(
     return value
 
 
+def _validate_shard(
+    ctx: click.Context,
+    param: click.Parameter,
+    value: str | None,
+) -> tuple[int, int] | None:
+    """Validate the --shard K/N flag (1-based, 1 <= K <= N)."""
+    if value is None:
+        return None
+    parts = value.split("/")
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise click.BadParameter(
+            "must be of the form K/N (e.g. --shard 2/4).",
+            ctx=ctx,
+            param=param,
+        )
+    try:
+        k, n = int(parts[0]), int(parts[1])
+    except ValueError:
+        raise click.BadParameter(
+            "must be of the form K/N with integer parts (e.g. --shard 2/4).",
+            ctx=ctx,
+            param=param,
+        ) from None
+    if n < 1 or k < 1 or k > n:
+        raise click.BadParameter(
+            "requires 1 <= K <= N (e.g. --shard 2/4).",
+            ctx=ctx,
+            param=param,
+        )
+    return (k, n)
+
+
 @cli.command()
 @click.argument("paths", nargs=-1)
 @click.option(
@@ -717,6 +749,21 @@ def _validate_durations(
     help="Rewrite mismatched and malformed snapshots with the rendered "
     "output instead of failing their tests.",
 )
+@click.option(
+    "--exitfirst",
+    "-x",
+    is_flag=True,
+    default=False,
+    help="Stop dispatching new suites after the first failing suite "
+    "result. In-flight suites finish; unstarted suites are skipped.",
+)
+@click.option(
+    "--shard",
+    default=None,
+    callback=_validate_shard,
+    help="Run only shard K of N suites: suite i of the plan order goes to "
+    "shard (i %% N) + 1. For CI matrix splitting, e.g. --shard 2/4.",
+)
 def test(
     paths,
     runtime,
@@ -738,6 +785,8 @@ def test(
     changed,
     base,
     snapshot_update,
+    exitfirst,
+    shard,
 ):
     """Run GDScript tests with the native runtime.
 
@@ -757,6 +806,14 @@ def test(
         click.echo(
             "Error: --changed and --watch cannot be combined; --watch "
             "already selects suites per change.",
+            err=True,
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+    if shard and watch:
+        click.echo(
+            "Error: --shard and --watch cannot be combined; --shard is a "
+            "CI concern and --watch is a dev-loop concern.",
             err=True,
         )
         ctx = click.get_current_context()
@@ -832,6 +889,7 @@ def test(
                     parallel=effective_parallel,
                     durations=effective_durations,
                     snapshot_update=snapshot_update,
+                    exitfirst=exitfirst,
                 )
             )
         if selected_runtime == "native":
@@ -855,6 +913,8 @@ def test(
                 changed=changed,
                 base=base,
                 snapshot_update=snapshot_update,
+                exitfirst=exitfirst,
+                shard=shard,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)
