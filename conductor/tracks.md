@@ -313,7 +313,7 @@ _Archived tracks live in `./archive/`._
 
   *Link: [release_v070_20261005](./tracks/release_v070_20261005/index.md)*
 
-- [~] **Track: Fail-Fast and CI Sharding** (feature: pytest-parity orchestration
+- [x] **Track: Fail-Fast and CI Sharding** (feature: pytest-parity orchestration
   flags for `gd-tools test` — `--exitfirst`/`-x` stops dispatching new suites on
   the first failing suite result (any failure class; retries respected; in-flight
   suites drain; exit 1 with summary line; partial coverage report labeled as
