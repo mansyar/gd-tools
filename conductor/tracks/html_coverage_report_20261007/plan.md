@@ -10,7 +10,7 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 
 ---
 
-## Phase 1 — Report data model (TDD)
+## Phase 1 — Report data model (TDD) [checkpoint: d73a86e]
 
 - [x] Task: Write failing unit tests for the enriched per-line/per-branch view model (`8567428`)
   - [x] Branch-point lines expose their arm entries with terminal-parity labels (`if`/`elif`/`else`, ternary true/false, `and`/`or` site/right-operand/arm, `assert_true`/`assert_false`) and covered/uncovered state per arm
