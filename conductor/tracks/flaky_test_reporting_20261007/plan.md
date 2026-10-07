@@ -60,14 +60,14 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
 
 ## Phase 3: Terminal Flaky Panel
 
-- [~] Task: Write failing tests for panel rendering (Red)
+- [x] Task: Write failing tests for panel rendering (Red) `[275fc64]`
   - [ ] ≥1 flaky test ⇒ panel renders suite, test name, "passed on attempt N",
         and the message collapsed to its first line, truncated to ~120 chars
         with an ellipsis.
   - [ ] Multi-line/long messages collapse and truncate correctly.
   - [ ] Zero flaky tests ⇒ output identical to today (no panel).
   - [ ] QUIET verbosity suppresses the panel.
-- [ ] Task: Implement the flaky panel in the native run summary (Green)
+- [x] Task: Implement the flaky panel in the native run summary (Green) `[275fc64]`
   - [ ] Render via the shared output console, following existing summary
         panel conventions.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
