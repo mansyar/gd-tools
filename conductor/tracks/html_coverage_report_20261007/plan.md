@@ -50,8 +50,8 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 
 ## Phase 4 — Docs, CHANGELOG, and release polish
 
-- [ ] Task: Update coverage docs (HTML report section: dashboard, arm detail, exclusions, `--html-open`)
-- [ ] Task: Update `CHANGELOG.md` (Unreleased → Added/Changed entries)
+- [x] Task: Update coverage docs (HTML report section: dashboard, arm detail, exclusions, `--html-open`) (USER_GUIDE.md: `--html-open` flag row + example + "HTML report" subsection)
+- [x] Task: Update `CHANGELOG.md` (Unreleased → Added/Changed entries) (two Added entries: HTML report overhaul + `--html-open`)
 - [ ] Task: Run quality gates: `ruff check`, `black --check`, `CI=true pytest`, coverage ≥80%/≥70%
 - [ ] Task: Commit (`docs(coverage): document HTML report overhaul`) + git note + plan update
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)

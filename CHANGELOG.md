@@ -24,6 +24,25 @@
   silently under-measuring. Uncovered-branch panels now label each
   uncovered entry with its actual arm type.
 
+- **coverage**: The HTML coverage report is overhauled into a
+  self-contained, navigable report with full branch-arm visibility. The
+  `index.html` dashboard is now a sortable, filterable per-file table with
+  missed line/branch columns, project totals, "no branch points" labels for
+  zero-branch files, and a section listing targets omitted from analysis
+  (with reason and fix). Per-file pages anchor every line, link from the
+  dashboard, and carry an uncovered-branches panel whose labels match the
+  terminal report (`if`/`elif`/`else`, ternary true/false, `and`/`or`
+  site/right-operand/short-circuit arm, `assert_true`/`assert_false`), with
+  inline per-arm badges on each branch line. Lines carrying a
+  `# gd-tools: no cover` annotation render a chip with the annotation text
+  and stay outside the coverage totals. All CSS/JS is inlined — pages make
+  no external requests and work fully offline.
+
+- **coverage**: New `--html-open` flag on `coverage report` opens the
+  generated HTML report in the default browser. It only applies to the
+  `html` format and is suppressed when stdout is not a terminal (CI-safe);
+  browser-open failures warn on stderr without changing the exit code.
+
 ## v0.7.0 (2026-10-05)
 
 ### Added
