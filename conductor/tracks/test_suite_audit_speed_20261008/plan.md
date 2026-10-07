@@ -31,10 +31,10 @@
 - [x] Task 1.4: Scope `test_run_lint_default_paths` away from the repo cwd. *(commit 8fd795c)*
   - [x] Point `run_lint` at a tmp_path with small fixture files (or mock the ruff subprocess), preserving the default-paths assertion. *(monkeypatch.chdir(tmp_path) with one .gd fixture; added files_checked==1 proving default scope is cwd)*
   - [x] Verify: test passes, < 0.3s. *(call < 0.01s, was 1.91s; 44 passed; ruff/black clean)*
-- [~] Task 1.5: Event-drive `test_watch_observer` waits.
-  - [ ] Replace fixed sleeps with timeout-bounded event/poll synchronization; keep the same ignore/report assertions.
-  - [ ] Verify: 3 slowest observer tests each < 0.4s.
-- [ ] Task 1.6: Diagnose `test_format_test_results_truncates_long_output` (0.8s for string work).
+- [x] Task 1.5: Event-drive `test_watch_observer` waits. *(commit 2444940)*
+  - [x] Replace fixed sleeps with timeout-bounded event/poll synchronization; keep the same ignore/report assertions. *(modified/deleted: event-driven readiness probe replaces sleep(0.3); negative tests drive real watchdog events through the `_enqueue` filter directly — assertions preserved, wiring still covered by the positive real-dispatch tests)*
+  - [x] Verify: 3 slowest observer tests each < 0.4s. *(all four target tests ~0.01s, was 1.10/1.09/0.31/0.31; 11 passed in 0.89s; ruff/black clean)*
+- [~] Task 1.6: Diagnose `test_format_test_results_truncates_long_output` (0.8s for string work).
   - [ ] Profile the call; identify the cost (suspect console/rich init or per-line formatting).
   - [ ] Fix the root cause or reduce the input size without weakening the truncation assertion.
   - [ ] Verify: test < 0.2s.
