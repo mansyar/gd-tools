@@ -86,7 +86,7 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
 
 ## Phase 5: Full Quality Gate
 
-- [ ] Task: Run the complete quality gate
+- [~] Task: Run the complete quality gate
   - [ ] `CI=true pytest` (all markers) with >80% line / >70% branch on new
         code.
   - [ ] `ruff check src/ tests/` and `black --check src/ tests/`.
