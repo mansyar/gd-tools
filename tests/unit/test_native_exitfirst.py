@@ -99,15 +99,18 @@ class _FakePopen:
 
     _counter = itertools.count(2000)
 
-    def __init__(self, env, runner, args):
+    def __init__(self, env, runner, args, abort_event=None):
         self.pid = next(self._counter)
         self._env = env
         self._runner = runner
         self._args = args
+        self._abort_event = abort_event
         self.returncode = None
 
     def communicate(self, timeout=None):
-        outcome = self._runner(self._args, env=self._env)
+        outcome = self._runner(
+            self._args, env=self._env, abort_event=self._abort_event
+        )
         if isinstance(outcome, CompletedProcess):
             self.returncode = outcome.returncode
             return outcome.stdout, outcome.stderr
@@ -121,7 +124,7 @@ def _spawn_adapter(runner):
     """Wrap a fake_run(args, **kwargs) into the _spawn_process seam."""
 
     def adapt(command, *, env, registry, abort_event=None):
-        process = _FakePopen(env, runner, command)
+        process = _FakePopen(env, runner, command, abort_event)
         registry.add(process)
         if abort_event is not None and abort_event.is_set():
             _kill_process_tree(process.pid)
@@ -265,7 +268,6 @@ def test_exitfirst_parallel_stops_dispatch_and_drains_inflight(tmp_path):
         _suite("DSuite"),
         _suite("ESuite"),
     ]
-    release = threading.Event()
     calls = []
     lock = threading.Lock()
 
@@ -273,8 +275,16 @@ def test_exitfirst_parallel_stops_dispatch_and_drains_inflight(tmp_path):
         name = fake_kwargs["env"]["GD_TOOLS_SUITE_NAME"]
         with lock:
             calls.append(name)
-        if name == "ASuite":
-            release.wait(timeout=5)
+        abort = fake_kwargs.get("abort_event")
+        if name == "ASuite" and abort is not None:
+            # Stay in-flight until fail-fast signals the run-level abort
+            # event; the drain then collects A without ever spawning C/D/E.
+            # The sentinel makes a missing signal a failure, not a silent
+            # timeout.
+            if not abort.wait(timeout=5):
+                raise AssertionError(
+                    "fail-fast never signalled abort_event to ASuite"
+                )
         return _finish(
             fake_kwargs,
             _result_for(name, "failed" if name == "BSuite" else "passed"),
@@ -292,7 +302,6 @@ def test_exitfirst_parallel_stops_dispatch_and_drains_inflight(tmp_path):
             parallel=2,
             exitfirst=True,
         )
-        release.set()
 
     assert sorted(calls) == ["ASuite", "BSuite"]
     assert result.status == "failed"

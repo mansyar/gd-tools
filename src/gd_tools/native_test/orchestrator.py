@@ -379,6 +379,11 @@ def run_native_tests(
                                     outcome.has_failure or outcome.has_error
                                 ):
                                     fail_fast_trigger = suites[index].name
+                                    # Signal the run-level stop event so
+                                    # anything blocked on it (e.g. an
+                                    # in-flight suite finishing during the
+                                    # drain) unblocks deterministically.
+                                    context.abort_event.set()
                             if fail_fast_trigger is not None:
                                 break
                             _fill()
