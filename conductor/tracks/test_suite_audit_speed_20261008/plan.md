@@ -7,6 +7,8 @@
 ## Baseline Evidence (measured 2026-10-08, local, Godot 4.7.2)
 
 - Unit: `pytest tests/unit/ -m unit --no-cov -q` → 1,582 passed, 3 skipped, **40.7s** (×2 consistent; collection ≈ 2.95s)
+- Unit **with coverage** (CI Stage 1 parity: `CI=true pytest tests/unit/ -m unit --cov=gd_tools --cov-branch`): 1,582 passed, 3 skipped, **55.3s**
+- **Coverage baseline:** TOTAL **93% line** (315 missed / 5,303 stmts), branch 1,636 with 101 partial (≈ **94%**); gate is 80% — comfortably above.
 - Integration: `pytest tests/integration/ -m integration --no-cov -q` → 90 passed, **310.9s**
 - E2E smoke: `pytest tests/e2e/ -m "e2e and e2e_smoke" --no-cov -q` → 5 passed, **119.0s**
 - Coverage baseline: to be recorded at the start of Phase 1 (`CI=true pytest` coverage of default suite) and re-recorded after each phase.
@@ -15,8 +17,8 @@
 
 ## Phase 1 — Unit Quick Wins (FR-A)
 
-- [ ] Task: Record coverage + duration baselines in this plan (run `CI=true pytest` with coverage; append numbers to Baseline Evidence above).
-- [ ] Task 1.1: Fix exitfirst fake-runner event-wait bug.
+- [x] Task: Record coverage + duration baselines in this plan (run `CI=true pytest` with coverage; append numbers to Baseline Evidence above).
+- [~] Task 1.1: Fix exitfirst fake-runner event-wait bug.
   - [ ] Reproduce: run `test_exitfirst_parallel_stops_dispatch_and_drains_inflight` alone and confirm ≈5s wall from the never-set `release` Event (`wait(timeout=5)`).
   - [ ] Signal `release` at the correct point of the dispatch-stop/drain scenario so the test verifies the same semantics without the dead wait.
   - [ ] Verify: test passes and takes < 0.5s; exitfirst semantics assertions unchanged.
