@@ -45,7 +45,7 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
   - [ ] Bump the runner's reported protocol version to 4.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2: Flaky Detection and Aggregation
+## Phase 2: Flaky Detection and Aggregation `[checkpoint: c03bd91]`
 
 - [x] Task: Write failing tests for flaky classification (Red) `[40bfaf0]`
   - [ ] `passed` + `attempts > 1` ⇒ flaky (assertion-failure recovery).
@@ -56,7 +56,7 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
 - [x] Task: Implement flaky derivation over `NativeRunResult` (Green) `[40bfaf0]`
   - [ ] Pure helper returning the ordered flaky test list (suite, name,
         attempts, first_failure_message) from run results.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `[c03bd91]`
 
 ## Phase 3: Terminal Flaky Panel
 
