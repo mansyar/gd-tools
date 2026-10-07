@@ -16,7 +16,12 @@ from gd_tools.coverage.plan_generator import (
     LinePlan,
     read_plan_json,
 )
-from gd_tools.coverage.reporter import FileCoverage, read_coverage_json
+from gd_tools.coverage.reporter import (
+    CoverageData,
+    FileCoverage,
+    OmittedTarget,
+    read_coverage_json,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -249,6 +254,11 @@ def _view_model_data(hits: dict[str, int], file_id: int = 0) -> FileCoverage:
     return FileCoverage(file_id=file_id, hits=hits)
 
 
+def _generate_data(hits: dict[str, int]) -> CoverageData:
+    """Full coverage data for file 0 with the given hit counts."""
+    return CoverageData(version=4, files=[FileCoverage(file_id=0, hits=hits)])
+
+
 def test_branch_lines_expose_arms_with_labels_and_state():
     """Branch lines carry per-arm entries with terminal-parity labels."""
     from gd_tools.coverage.html_reporter import build_line_views
@@ -453,3 +463,202 @@ def test_source_lines_populate_source_text():
     assert lines[5]["source"] == "line 5"
     assert lines[3]["source"] == "line 3"
     assert lines[30]["source"] == "line 30"
+
+
+# --- Dashboard (index.html) ---
+
+
+def test_dashboard_table_has_missed_columns(tmp_path):
+    """Index table shows missed line and branch counts per file."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    result = generate_html_report(plan, data, tmp_path)
+
+    content = result.read_text(encoding="utf-8")
+    assert "Missed Lines" in content
+    assert "Missed Branches" in content
+
+
+def test_dashboard_rows_link_to_file_pages(tmp_path):
+    """Index rows link to their per-file pages."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    result = generate_html_report(plan, data, tmp_path)
+
+    content = result.read_text(encoding="utf-8")
+    assert 'href="file_0.html"' in content
+    assert 'href="file_1.html"' in content
+
+
+def test_dashboard_is_filterable(tmp_path):
+    """Index has a filter input that narrows the file table."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    result = generate_html_report(plan, data, tmp_path)
+
+    content = result.read_text(encoding="utf-8")
+    assert "<input" in content
+    assert "filterTable" in content
+
+
+def test_dashboard_zero_branch_files_show_note(tmp_path):
+    """Files without branch points are labeled with a no-branch-points note."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    plan = _view_model_plan()
+    data = CoverageData(
+        version=4,
+        files=[
+            FileCoverage(file_id=0, hits={"0": 1}),
+            FileCoverage(file_id=1, hits={}),
+        ],
+    )
+
+    result = generate_html_report(plan, data, tmp_path)
+
+    content = result.read_text(encoding="utf-8")
+    assert "no branch points" in content
+
+
+def test_dashboard_lists_omitted_targets(tmp_path):
+    """Omitted targets are listed with their reason and fix."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    plan = _view_model_plan()
+    data = CoverageData(
+        version=4,
+        files=[FileCoverage(file_id=0, hits={"0": 1})],
+        omitted=[
+            OmittedTarget(
+                file_id=7,
+                path="res://unparsed.gd",
+                reason="parse error",
+                fix="fix the syntax error",
+            )
+        ],
+    )
+
+    result = generate_html_report(plan, data, tmp_path)
+
+    content = result.read_text(encoding="utf-8")
+    assert "res://unparsed.gd" in content
+    assert "parse error" in content
+    assert "fix the syntax error" in content
+
+
+# --- Per-file pages ---
+
+
+def test_file_page_shows_uncovered_branch_panel(tmp_path, monkeypatch):
+    """Per-file page lists uncovered branches with arm-type labels."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    monkeypatch.chdir(tmp_path)
+    plan = _view_model_plan()
+    data = _generate_data({"1": 1, "3": 5, "8": 1})
+    _read_source(tmp_path, plan.files[0])
+
+    generate_html_report(plan, data, tmp_path)
+    file_page = (tmp_path / "file_0.html").read_text(encoding="utf-8")
+
+    assert "Uncovered branches:" in file_page
+    assert "(and short-circuit arm)" in file_page
+    assert "(ternary true)" in file_page
+    assert "(assert_false)" in file_page
+    assert "(elif)" in file_page
+
+
+def test_file_page_has_inline_branch_badges(tmp_path, monkeypatch):
+    """Lines hosting branch points carry inline per-arm badges."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    monkeypatch.chdir(tmp_path)
+    plan = _view_model_plan()
+    data = _generate_data({"1": 1})
+    _read_source(tmp_path, plan.files[0])
+
+    generate_html_report(plan, data, tmp_path)
+    file_page = (tmp_path / "file_0.html").read_text(encoding="utf-8")
+
+    assert "branch-badge" in file_page
+    assert "badge-uncovered" in file_page
+    assert "badge-covered" in file_page
+
+
+def test_file_page_exclusion_chip_and_tooltip(tmp_path, monkeypatch):
+    """Excluded lines show a chip with a tooltip explaining the annotation."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    monkeypatch.chdir(tmp_path)
+    plan = _view_model_plan()
+    data = _generate_data({})
+    _read_source(tmp_path, plan.files[0])
+
+    generate_html_report(plan, data, tmp_path)
+    file_page = (tmp_path / "file_0.html").read_text(encoding="utf-8")
+
+    assert "exclusion-chip" in file_page
+    assert "no cover" in file_page
+
+
+def test_file_page_has_anchor_jumps(tmp_path, monkeypatch):
+    """Uncovered lines and branches are reachable via anchors from the panel."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    monkeypatch.chdir(tmp_path)
+    plan = _view_model_plan()
+    data = _generate_data({"1": 1})
+    _read_source(tmp_path, plan.files[0])
+
+    generate_html_report(plan, data, tmp_path)
+    file_page = (tmp_path / "file_0.html").read_text(encoding="utf-8")
+
+    assert 'id="line-14"' in file_page
+    assert 'href="#line-14"' in file_page
+
+
+def test_file_page_links_back_to_index(tmp_path):
+    """Per-file pages link back to the index page."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_FULL_COV)
+    generate_html_report(plan, data, tmp_path)
+    file_page = (tmp_path / "file_0.html").read_text(encoding="utf-8")
+
+    assert 'href="index.html"' in file_page
+
+
+# --- Self-containment ---
+
+
+def test_html_has_no_external_references(tmp_path):
+    """Generated pages reference no external assets (fully offline)."""
+    from gd_tools.coverage.html_reporter import generate_html_report
+
+    plan = read_plan_json(_PLAN_FIXTURE)
+    data = read_coverage_json(_PARTIAL_COV)
+    generate_html_report(plan, data, tmp_path)
+
+    for html_file in tmp_path.glob("*.html"):
+        content = html_file.read_text(encoding="utf-8")
+        for marker in ('src="http', 'href="http', 'src="//', 'href="//'):
+            assert (
+                marker not in content
+            ), f"{html_file.name} contains external reference {marker!r}"
+
+
+def _read_source(output_dir: Path, file_plan) -> None:
+    """Create a stub source file so the reporter can render source text."""
+    res_path = file_plan.path.removeprefix("res://")
+    path = Path(res_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(f"line {n}" for n in range(1, 40)), encoding="utf-8"
+    )

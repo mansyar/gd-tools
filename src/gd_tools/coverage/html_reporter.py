@@ -11,6 +11,7 @@ from jinja2 import Environment, FileSystemLoader
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan, LinePlan
 from gd_tools.coverage.reporter import (
     _BRANCH_TYPE_DISPLAY,
+    _format_line_ranges,
     CoverageData,
     FileCoverage,
     compute_file_summary,
@@ -75,9 +76,13 @@ def generate_html_report(
 ) -> Path:
     """Generate an HTML coverage report with index and per-file pages.
 
-    Creates ``index.html`` with a summary table and one ``file_<id>.html``
-    per source file showing line-by-line coverage status with CSS
-    highlighting (covered=green, uncovered=red, partial=yellow).
+    Creates ``index.html`` with a summary dashboard (sortable, filterable
+    file table with missed counts, zero-branch notes, and omitted targets)
+    and one ``file_<id>.html`` per source file showing line-by-line
+    coverage status with CSS highlighting (covered=green, uncovered=red,
+    partial=yellow), inline branch-arm badges, exclusion chips for
+    ``# gd-tools: no cover`` lines, and an uncovered-branch panel with
+    terminal-parity arm labels and anchor links.
 
     Args:
         plan: The instrumentation plan defining tracked lines.
@@ -101,9 +106,17 @@ def generate_html_report(
         )
         file_summaries.append(compute_file_summary(file_plan, file_data))
 
+    branch_flags = {
+        file_plan.file_id: file_has_branch_points(file_plan)
+        for file_plan in plan.files
+    }
+
     index_template = _env.get_template("index.html")
     index_content = index_template.render(
-        summary=summary, file_summaries=file_summaries
+        summary=summary,
+        file_summaries=file_summaries,
+        branch_flags=branch_flags,
+        omitted=data.omitted,
     )
     index_path = output_dir / "index.html"
     index_path.write_text(index_content, encoding="utf-8")
@@ -118,44 +131,21 @@ def generate_html_report(
         # Resolve res:// path to filesystem path for source display
         source_lines = _read_source_lines(file_plan.path)
 
-        lines = []
-        for line_plan in file_plan.lines:
-            hit_count = file_data.hits.get(str(line_plan.id), 0)
-            if hit_count > 0 and line_plan.type == "branch":
-                css_class = "partial"
-            elif hit_count > 0:
-                css_class = "covered"
-            else:
-                css_class = "uncovered"
-            line_num = line_plan.line
-            source_text = ""
-            if source_lines and 1 <= line_num <= len(source_lines):
-                source_text = source_lines[line_num - 1]
-            lines.append(
-                {
-                    "number": line_num,
-                    "hits": hit_count,
-                    "source": source_text,
-                    "css_class": css_class,
-                }
+        line_views = build_line_views(
+            file_plan, file_data, source_lines=source_lines
+        )
+        uncovered_branches = [
+            {"line": line_num, "label": _arm_label(branch_type)}
+            for line_num, branch_type in zip(
+                fs.uncovered_branches, fs.uncovered_branch_types
             )
-
-        # Excluded lines (``# gd-tools: no cover``) render in place,
-        # greyed out, but are not part of the coverage totals.
-        for excluded_num in file_plan.excluded_lines:
-            source_text = ""
-            if source_lines and 1 <= excluded_num <= len(source_lines):
-                source_text = source_lines[excluded_num - 1]
-            lines.append(
-                {
-                    "number": excluded_num,
-                    "hits": None,
-                    "source": source_text,
-                    "css_class": "excluded",
-                }
-            )
-        lines.sort(key=lambda entry: entry["number"])
-        file_content = file_template.render(file_summary=fs, lines=lines)
+        ]
+        file_content = file_template.render(
+            file_summary=fs,
+            lines=line_views,
+            uncovered_line_ranges=_format_line_ranges(fs.uncovered_lines),
+            uncovered_branches=uncovered_branches,
+        )
         file_path = output_dir / f"file_{file_plan.file_id}.html"
         file_path.write_text(file_content, encoding="utf-8")
 

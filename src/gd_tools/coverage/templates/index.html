@@ -17,14 +17,24 @@
     .rate-good { color: #2e7d32; }
     .rate-medium { color: #f57f17; }
     .rate-low { color: #c62828; }
+    .filter-row { margin-bottom: 1em; }
+    .filter-row input {
+      font-size: 1em; padding: 0.4em 0.8em; width: 20em;
+      border: 1px solid #ccc; border-radius: 4px;
+    }
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ddd; padding: 0.5em 1em; text-align: left; }
     th { background: #f0f0f0; cursor: pointer; user-select: none; }
     th:hover { background: #e0e0e0; }
-    th.sorted-asc::after { content: " \\25B2"; }
-    th.sorted-desc::after { content: " \\25BC"; }
+    th.sorted-asc::after { content: " \25B2"; }
+    th.sorted-desc::after { content: " \25BC"; }
     tr:nth-child(even) { background: #f9f9f9; }
     td.rate { font-family: monospace; }
+    td.missed { font-family: monospace; }
+    td.missed.missed-any { color: #c62828; font-weight: bold; }
+    .no-branch-note { color: #90a4ae; font-size: 0.85em; font-style: italic; }
+    .omitted-section { margin-top: 2em; }
+    .omitted-section table { width: auto; min-width: 50%; }
     a { color: #1565c0; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
@@ -41,28 +51,61 @@
       <div class="label">Branch Coverage ({{ summary.covered_branches }}/{{ summary.total_branches }})</div>
     </div>
   </div>
+  <div class="filter-row">
+    <input id="filter-input" type="text" placeholder="Filter files..." oninput="filterTable()" autocomplete="off">
+  </div>
   <table id="file-table">
     <thead>
       <tr>
         <th data-sort="file" onclick="sortTable(0)">File</th>
         <th data-sort="lines" onclick="sortTable(1)">Lines (found/hit)</th>
-        <th data-sort="line-pct" onclick="sortTable(2)">Line %</th>
-        <th data-sort="branches" onclick="sortTable(3)">Branches (found/hit)</th>
-        <th data-sort="branch-pct" onclick="sortTable(4)">Branch %</th>
+        <th data-sort="missed-lines" onclick="sortTable(2)">Missed Lines</th>
+        <th data-sort="line-pct" onclick="sortTable(3)">Line %</th>
+        <th data-sort="branches" onclick="sortTable(4)">Branches (found/hit)</th>
+        <th data-sort="missed-branches" onclick="sortTable(5)">Missed Branches</th>
+        <th data-sort="branch-pct" onclick="sortTable(6)">Branch %</th>
       </tr>
     </thead>
     <tbody>
       {% for fs in file_summaries %}
-      <tr>
+      <tr data-path="{{ fs.path }}">
         <td><a href="file_{{ fs.file_id }}.html">{{ fs.path }}</a></td>
         <td>{{ fs.total_lines }}/{{ fs.covered_lines }}</td>
+        <td class="missed {{ 'missed-any' if fs.total_lines > fs.covered_lines else '' }}">{{ fs.total_lines - fs.covered_lines }}</td>
         <td class="rate">{{ (fs.line_rate * 100) | round(1) }}%</td>
+        {% if branch_flags[fs.file_id] %}
         <td>{{ fs.total_branches }}/{{ fs.covered_branches }}</td>
+        <td class="missed {{ 'missed-any' if fs.total_branches > fs.covered_branches else '' }}">{{ fs.total_branches - fs.covered_branches }}</td>
         <td class="rate">{{ (fs.branch_rate * 100) | round(1) }}%</td>
+        {% else %}
+        <td>&ndash;</td>
+        <td>&ndash;</td>
+        <td class="rate"><span class="no-branch-note">no branch points</span></td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  {% if omitted %}
+  <div class="omitted-section">
+    <h2>Excluded from analysis</h2>
+    <p>The following targets could not be instrumented or measured:</p>
+    <table>
+      <thead>
+        <tr><th>File</th><th>Reason</th><th>Fix</th></tr>
+      </thead>
+      <tbody>
+        {% for target in omitted %}
+        <tr>
+          <td>{{ target.path }}</td>
+          <td>{{ target.reason }}</td>
+          <td>{{ target.fix }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
   <script>
     function sortTable(colIndex) {
       var table = document.getElementById("file-table");
@@ -84,6 +127,15 @@
         return ascending ? av.localeCompare(bv) : bv.localeCompare(av);
       });
       rows.forEach(function(r) { tbody.appendChild(r); });
+    }
+    function filterTable() {
+      var query = document.getElementById("filter-input").value.toLowerCase();
+      var tbody = document.querySelector("#file-table tbody");
+      var rows = Array.from(tbody.querySelectorAll("tr"));
+      rows.forEach(function(r) {
+        var path = (r.getAttribute("data-path") || "").toLowerCase();
+        r.style.display = path.indexOf(query) !== -1 ? "" : "none";
+      });
     }
   </script>
 </body>
