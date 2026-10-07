@@ -13,7 +13,7 @@ checkpoints, quality gates.
 
 ## Phase 1: Protocol v4 — First-Attempt Failure Message
 
-- [ ] Task: Write failing Python tests for protocol v4 (Red)
+- [~] Task: Write failing Python tests for protocol v4 (Red)
   - [ ] `NATIVE_PROTOCOL_VERSION` is 4 and `NativeRunResult.protocol_version`
         accepts 4.
   - [ ] `NativeTestResult` parses a result with `first_failure_message` set.

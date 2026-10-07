@@ -74,7 +74,7 @@ def _result_for(
         )
     return json.dumps(
         {
-            "protocol_version": 3,
+            "protocol_version": 4,
             "run_id": "test-run",
             "status": status,
             "engine_warnings": [],

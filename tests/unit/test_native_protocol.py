@@ -78,7 +78,7 @@ def test_manifest_serializes_suite_test_and_coverage_metadata(tmp_path):
     path = write_json_atomic(tmp_path / "manifest.json", manifest)
     loaded = NativeManifest.model_validate(json.loads(path.read_text()))
 
-    assert loaded.protocol_version == 3
+    assert loaded.protocol_version == 4
     assert loaded.project_root == Path("project")
     assert loaded.runtime is RuntimeMode.NATIVE
     assert loaded.suites[0].name == "ExampleSuite"
@@ -191,9 +191,9 @@ def test_write_json_atomic_replaces_existing_file(tmp_path):
     assert sorted(item.name for item in tmp_path.iterdir()) == ["result.json"]
 
 
-def test_protocol_v3_is_current():
+def test_protocol_v4_is_current():
     """Python and Godot share the intentionally incremented protocol version."""
-    assert NATIVE_PROTOCOL_VERSION == 3
+    assert NATIVE_PROTOCOL_VERSION == 4
 
 
 def test_integration_defaults_to_headless_without_assets():
@@ -267,6 +267,51 @@ def test_manifest_rejects_protocol_v1():
         )
 
 
+def test_run_result_serializes_flaky_first_failure_message(tmp_path):
+    """A retried-then-passed test retains its first failure's message."""
+    result = NativeRunResult(
+        run_id="run-flaky",
+        status="passed",
+        tests=[
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_flaky",
+                status="passed",
+                attempts=2,
+                first_failure_message="Expected 2, got 3",
+            )
+        ],
+    )
+
+    path = write_json_atomic(tmp_path / "flaky.json", result)
+    loaded = NativeRunResult.model_validate(json.loads(path.read_text()))
+
+    assert loaded.tests[0].status == "passed"
+    assert loaded.tests[0].attempts == 2
+    assert loaded.tests[0].first_failure_message == "Expected 2, got 3"
+
+
+def test_run_result_first_failure_message_defaults_to_empty():
+    """Results without a first-failure message parse as before."""
+    result = NativeTestResult(
+        suite="ExampleSuite",
+        name="test_stable",
+        status="passed",
+    )
+
+    assert result.first_failure_message == ""
+
+
+def test_run_result_rejects_protocol_v3():
+    """Protocol-v3 run results are rejected after the v4 migration."""
+    with pytest.raises(ValidationError):
+        NativeRunResult(
+            protocol_version=3,
+            run_id="run-v3",
+            status="passed",
+        )
+
+
 def test_run_result_rejects_protocol_v1():
     """Protocol-v1 run results are rejected after the v2 migration."""
     with pytest.raises(ValidationError):
@@ -293,7 +338,7 @@ def test_preflight_result_round_trips_integration_metadata(tmp_path):
     path = write_json_atomic(tmp_path / "preflight.json", result)
     loaded = NativePreflightResult.model_validate(json.loads(path.read_text()))
 
-    assert loaded.protocol_version == 3
+    assert loaded.protocol_version == 4
     assert loaded.status == "ok"
     assert loaded.error is None
     assert loaded.suites[0].integration is not None
