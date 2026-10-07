@@ -41,11 +41,11 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 
 ## Phase 3 — `--html-open` convenience flag (TDD)
 
-- [ ] Task: Write failing tests for `coverage report --html-open`
-  - [ ] Opens `index.html` via `webbrowser` when TTY; suppressed when not a TTY (CI-safe); open failure degrades gracefully (no crash, unchanged exit code)
-  - [ ] Flag only affects the `html` report format
-- [ ] Task: Add the `--html-open` click option and wire it in `report()` (`src/gd_tools/cli.py`), gated on TTY
-- [ ] Task: Commit (`feat(coverage): add --html-open to coverage report`) + git note + plan update
+- [x] Task: Write failing tests for `coverage report --html-open` (`8220a3b`)
+  - [x] Opens `index.html` via `webbrowser` when TTY; suppressed when not a TTY (CI-safe); open failure degrades gracefully (no crash, unchanged exit code)
+  - [x] Flag only affects the `html` report format
+- [x] Task: Add the `--html-open` click option and wire it in `report()` (`src/gd_tools/cli.py`), gated on TTY (`8220a3b`; `_is_interactive()` helper + `webbrowser.open`, both TTY states unit-tested)
+- [x] Task: Commit (`feat(coverage): add --html-open to coverage report`) + git note + plan update (`8220a3b`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Docs, CHANGELOG, and release polish
