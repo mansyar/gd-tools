@@ -74,14 +74,14 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
 
 ## Phase 4: Parallel, Watch, and Documentation
 
-- [ ] Task: Write failing tests for parallel/watch integration (Red)
+- [x] Task: Write failing tests for parallel/watch integration (Red) `[aced445]`
   - [ ] Flaky tests from multiple parallel workers all appear in the panel.
-  - [ ] Watch re-run summary renders the flaky panel like a normal run.
-- [ ] Task: Implement any parallel/watch gaps surfaced by the tests (Green)
-- [ ] Task: Update documentation
-  - [ ] README: retries/flaky panel mention in the native test section.
-  - [ ] USER_GUIDE: flaky panel behavior, protocol v4 note.
-  - [ ] CHANGELOG "Unreleased": flaky test reporting entry.
+  - [x] Watch re-run summary renders the flaky panel like a normal run.
+- [x] Task: Implement any parallel/watch gaps surfaced by the tests (Green) `[aced445]`
+- [x] Task: Update documentation `[cf7c9de]`
+  - [x] README: retries/flaky panel mention in the native test section.
+  - [x] USER_GUIDE: flaky panel behavior, protocol v4 note.
+  - [x] CHANGELOG "Unreleased": flaky test reporting entry.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5: Full Quality Gate
