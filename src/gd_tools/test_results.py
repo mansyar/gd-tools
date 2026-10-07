@@ -13,8 +13,8 @@ from rich.table import Table
 from rich.text import Text
 
 from gd_tools import output
-from gd_tools.verbosity import Verbosity, get_verbosity
 from gd_tools.native_test.flaky import is_flaky
+from gd_tools.verbosity import Verbosity, get_verbosity
 
 
 @dataclass

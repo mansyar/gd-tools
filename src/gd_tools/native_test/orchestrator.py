@@ -787,7 +787,7 @@ def _execute_suite(
             "; ".join(part for part in message_parts if part),
             diagnostics={
                 "kind": kind,
-                "expected": "a parseable protocol result.json",
+                "expected": "a parseable native protocol result.json",
                 "found": found,
                 "remedy": remedy,
             },

@@ -2143,7 +2143,7 @@ check as failing.
 **Cause:** The deployed `addons/gd-tools-test/` scripts were written by a
 different `gd-tools` version than the one running the command. Python and
 Godot exchange a versioned protocol; the current version is `4`, which
-adds scene and resource integration metadata and the first-attempt
+carries scene and resource integration metadata plus the first-attempt
 failure message for retried tests. An older protocol payload, malformed
 integration metadata, or a partially deployed addon is rejected as a
 configuration failure rather than being guessed at.
