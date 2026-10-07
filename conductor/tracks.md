@@ -323,11 +323,3 @@ _Archived tracks live in `./archive/`._
   `--watch`; CLI-only flags with README + GitHub Actions sharding recipe docs)
   *Link: [fail_fast_ci_sharding_20261005](./archive/fail_fast_ci_sharding_20261005/index.md)*
 
-- [x] **Track: Flaky Test Reporting** (feature: surface tests that pass only
-  after a retry in the native test run summary - protocol v4 adds an optional
-  `first_failure_message` field carrying the first failed attempt's error
-  message; the terminal summary gains a flaky panel listing suite, test name,
-  "passed on attempt N", and the first-line truncated message; exit codes
-  unchanged; CLI-only; suppressed when no flaky tests exist or under
-  `--quiet`; works identically under `--parallel` and `--watch`)
-  *Link: [flaky_test_reporting_20261007](./tracks/flaky_test_reporting_20261007/index.md)*
