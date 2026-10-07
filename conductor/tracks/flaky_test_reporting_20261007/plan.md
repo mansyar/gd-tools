@@ -58,7 +58,7 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
         attempts, first_failure_message) from run results.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `[c03bd91]`
 
-## Phase 3: Terminal Flaky Panel
+## Phase 3: Terminal Flaky Panel `[checkpoint: 3987d9a]`
 
 - [x] Task: Write failing tests for panel rendering (Red) `[275fc64]`
   - [ ] ≥1 flaky test ⇒ panel renders suite, test name, "passed on attempt N",
@@ -70,7 +70,7 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
 - [x] Task: Implement the flaky panel in the native run summary (Green) `[275fc64]`
   - [ ] Render via the shared output console, following existing summary
         panel conventions.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `[3987d9a]`
 
 ## Phase 4: Parallel, Watch, and Documentation
 
