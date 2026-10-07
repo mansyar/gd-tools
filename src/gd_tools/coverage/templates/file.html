@@ -7,6 +7,7 @@
   <style>
     body { font-family: sans-serif; margin: 2em; color: #333; }
     h1 { margin-bottom: 0.5em; }
+    h2 { margin-top: 1.5em; }
     .file-info { margin-bottom: 1em; color: #666; }
     .summary-bar {
       display: flex; gap: 2em; margin-bottom: 2em;
@@ -18,6 +19,12 @@
     .rate-good { color: #2e7d32; }
     .rate-medium { color: #f57f17; }
     .rate-low { color: #c62828; }
+    .uncovered-panel {
+      border: 1px solid #ffcdd2; background: #fff5f5;
+      border-radius: 4px; padding: 1em 1.5em; margin-bottom: 2em;
+    }
+    .uncovered-panel ul { margin: 0.5em 0 0 0; padding-left: 1.5em; }
+    .uncovered-panel li { margin: 0.2em 0; font-family: monospace; }
     .source-listing {
       font-family: monospace; font-size: 0.9em;
       border: 1px solid #ddd; border-radius: 4px; overflow: hidden;
@@ -25,6 +32,7 @@
     .source-line {
       display: flex; padding: 0.2em 0;
       border-bottom: 1px solid #eee;
+      scroll-margin-top: 2em;
     }
     .source-line:last-child { border-bottom: none; }
     .line-number {
@@ -32,7 +40,7 @@
       padding: 0 1em; color: #999; user-select: none;
       border-right: 1px solid #ddd;
     }
-    .line-content { padding: 0 1em; flex-grow: 1; }
+    .line-content { padding: 0 1em; flex-grow: 1; white-space: pre-wrap; }
     .line-hits {
       min-width: 5em; text-align: right;
       padding: 0 1em; color: #666; font-size: 0.85em;
@@ -45,6 +53,19 @@
       text-decoration: line-through;
     }
     .not-tracked { color: #ccc; }
+    .branch-badge {
+      display: inline-block; margin-left: 0.5em; padding: 0 0.5em;
+      border-radius: 3px; font-size: 0.8em; font-weight: bold;
+      vertical-align: middle;
+    }
+    .badge-covered { background: #2e7d32; color: #fff; }
+    .badge-uncovered { background: #c62828; color: #fff; }
+    .exclusion-chip {
+      display: inline-block; margin-left: 0.5em; padding: 0 0.5em;
+      border-radius: 3px; font-size: 0.75em;
+      background: #eceff1; color: #90a4ae; border: 1px solid #cfd8dc;
+      text-decoration: none; vertical-align: middle; cursor: help;
+    }
     a { color: #1565c0; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
@@ -63,11 +84,27 @@
       <div class="label">Branch Coverage ({{ file_summary.covered_branches }}/{{ file_summary.total_branches }})</div>
     </div>
   </div>
+  {% if uncovered_line_ranges or uncovered_branches %}
+  <div class="uncovered-panel">
+    <h2>Uncovered in this file</h2>
+    {% if uncovered_line_ranges %}
+    <p>Uncovered lines: {{ uncovered_line_ranges }}</p>
+    {% endif %}
+    {% if uncovered_branches %}
+    <p>Uncovered branches:</p>
+    <ul>
+      {% for branch in uncovered_branches %}
+      <li><a href="#line-{{ branch.line }}">{{ branch.line }}</a> ({{ branch.label }})</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endif %}
   <div class="source-listing">
     {% for line in lines %}
-    <div class="source-line {{ line.css_class }}">
+    <div class="source-line {{ line.css_class }}" id="line-{{ line.number }}">
       <span class="line-number">{{ line.number }}</span>
-      <span class="line-content">{{ line.source }}</span>
+      <span class="line-content">{{ line.source }}{% for arm in line.branches %}<span class="branch-badge badge-{{ 'covered' if arm.covered else 'uncovered' }}" title="{{ arm.label }}{% if arm.hits is not none %} ({{ arm.hits }} hits){% endif %}">{{ arm.label }}</span>{% endfor %}{% if line.excluded %}<span class="exclusion-chip" title="{{ line.annotation }}">no cover</span>{% endif %}</span>
       <span class="line-hits">{% if line.css_class == 'excluded' %}&ndash;{% else %}{{ line.hits }}x{% endif %}</span>
     </div>
     {% endfor %}

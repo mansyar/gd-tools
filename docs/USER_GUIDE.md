@@ -1041,6 +1041,7 @@ gd-tools coverage report [OPTIONS]
 |---|---|---|---|
 | `--report-format` | choice | Config `[coverage].format` | Output format for the report: `text`, `html`, `lcov`, `cobertura`, `json`, or `github-actions`. Invalid values fail fast with a usage error. |
 | `--output-dir` | string | Config `[coverage].output_dir` | Directory to write the report to. |
+| `--html-open` | flag | off | Open the generated HTML report in the default browser. Only applies with the `html` format; suppressed when stdout is not a terminal (e.g. in CI), so it is safe to leave in scripts. Open failures never change the exit code. |
 
 > **Note:** `--format` remains as a hidden backwards-compatible alias
 > for `--report-format` on this command. Supplying both is an error.
@@ -1061,6 +1062,9 @@ gd-tools coverage report --report-format json
 
 # Write report to a custom directory
 gd-tools coverage report --report-format html --output-dir reports/coverage
+
+# Generate and open the HTML report in the default browser
+gd-tools coverage report --report-format html --html-open
 ```
 
 **Exit Codes:**
@@ -1069,6 +1073,25 @@ gd-tools coverage report --report-format html --output-dir reports/coverage
 |---|---|
 | 0 | Report generated successfully. |
 | 2 | Configuration or environment error, or no coverage data found. |
+
+**HTML report:**
+
+The `html` format produces self-contained pages (all CSS/JS inlined, no
+external requests) written to the report output directory — an `index.html`
+summary plus one page per measured file:
+
+- **Summary dashboard** — per-file table with statements, line %, branch %,
+  and missed line/branch counts, sortable by any column and filterable by
+  path substring, plus project totals. Files with no branch points are
+  labeled; targets omitted from analysis are listed with their reason and fix.
+- **Per-file pages** — source lines colored by coverage state, with
+  line-level anchors from the dashboard and the uncovered-lines panel.
+- **Branch-arm detail** — uncovered branches are labeled to match the
+  terminal report (`if`/`elif`/`else`, ternary true/false, `and`/`or`
+  site/right-operand/short-circuit arm, `assert_true`/`assert_false`), with
+  inline per-arm badges on each branch line.
+- **Exclusions** — lines carrying a `# gd-tools: no cover` annotation show a
+  chip with the annotation text and remain outside the coverage totals.
 
 #### 3.7.2 coverage merge
 

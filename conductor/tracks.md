@@ -311,7 +311,11 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-  *Link: [release_v070_20261005](./tracks/release_v070_20261005/index.md)*
+- [x] **Track: Ship v0.7.0** (archived → `./archive/release_v070_20261005/`)
+  *Link: [release_v070_20261005](./archive/release_v070_20261005/index.md)*
+
+
+  *Link: [html_coverage_report_20261007](./tracks/html_coverage_report_20261007/index.md)*
 
 - [x] **Track: Fail-Fast and CI Sharding** (feature: pytest-parity orchestration
   flags for `gd-tools test` — `--exitfirst`/`-x` stops dispatching new suites on
