@@ -1,0 +1,8 @@
+{
+  "id": "html_coverage_report_20261007",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-10-07",
+  "branch": "feature/html-coverage-report-20261007",
+  "summary": "Overhaul the HTML coverage report into a self-contained, navigable report: summary dashboard with sortable file table, branch-arm detail matching the terminal reporter (PLAN_VERSION 7 arms), inline branch markers, # gd-tools: no cover exclusion styling, and a --html-open convenience flag. No plan-schema or report-format changes."
+}
