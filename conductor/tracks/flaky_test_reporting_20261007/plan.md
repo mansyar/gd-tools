@@ -13,23 +13,23 @@ checkpoints, quality gates.
 
 ## Phase 1: Protocol v4 — First-Attempt Failure Message
 
-- [~] Task: Write failing Python tests for protocol v4 (Red)
+- [x] Task: Write failing Python tests for protocol v4 (Red) `[0040f18]`
   - [ ] `NATIVE_PROTOCOL_VERSION` is 4 and `NativeRunResult.protocol_version`
         accepts 4.
   - [ ] `NativeTestResult` parses a result with `first_failure_message` set.
   - [ ] `NativeTestResult` parses a v3-style result **without**
         `first_failure_message` (defaults to empty) — compatibility test.
-- [ ] Task: Write failing GDScript-runtime tests for first-attempt capture (Red)
+- [x] Task: Write failing GDScript-runtime tests for first-attempt capture (Red) `[5b70123]`
   - [ ] A test failing on attempt 1 and passing on attempt 2 (retries=1)
         reports `attempts: 2` and carries the attempt-1 failure message in
         `first_failure_message`.
   - [ ] A test passing on attempt 1 carries no `first_failure_message`.
   - [ ] A timeout-then-pass test carries the timeout message.
-- [ ] Task: Implement protocol v4 in Python (Green)
+- [x] Task: Implement protocol v4 in Python (Green) `[0040f18]`
   - [ ] Bump `NATIVE_PROTOCOL_VERSION` to 4; widen `protocol_version`
         literal.
   - [ ] Add optional `first_failure_message: str = ""` to `NativeTestResult`.
-- [ ] Task: Implement capture + emission in `gd_tools_test_runner.gd` (Green)
+- [x] Task: Implement capture + emission in `gd_tools_test_runner.gd` (Green) `[5b70123]`
   - [ ] Track the first retryable attempt's message across the retry loop.
   - [ ] Emit `first_failure_message` in the per-test result and the
         `test_finished` NDJSON event (omit/empty when absent).
