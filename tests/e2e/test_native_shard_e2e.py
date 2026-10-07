@@ -89,10 +89,15 @@ def _prepare_project(tmp_path: Path, godot_bin: str) -> Path:
     # complete for this minimal project.
     config = project / "gd-tools.toml"
     config.write_text(
-        config.read_text(encoding="utf-8").replace(
-            'output_dir = ".gd-tools/coverage"\nexclude = [',
-            'output_dir = ".gd-tools/coverage"\nexclude = [\n    "scripts",',
-        ),
+        "[coverage]\n"
+        'output_dir = ".gd-tools/coverage"\n'
+        "exclude = [\n"
+        '    "scripts",\n'
+        '    "addons",\n'
+        '    ".godot",\n'
+        '    ".gd-tools",\n'
+        '    ".git",\n'
+        "]\n",
         encoding="utf-8",
     )
 

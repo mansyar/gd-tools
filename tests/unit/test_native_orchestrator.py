@@ -55,7 +55,7 @@ def _write_result(
     result_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "run_id": "test-run",
                 "status": status,
                 "engine_warnings": engine_warnings or [],
@@ -557,7 +557,7 @@ def test_run_native_tests_records_expired_process_timeout(tmp_path):
 def _result_for(suite_name: str, status: str = "passed") -> str:
     return json.dumps(
         {
-            "protocol_version": 3,
+            "protocol_version": 4,
             "run_id": "test-run",
             "status": status,
             "engine_warnings": [],

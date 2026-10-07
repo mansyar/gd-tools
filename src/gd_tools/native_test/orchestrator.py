@@ -760,7 +760,8 @@ def _execute_suite(
 
     outcome.has_error = True
     if result_path.is_file():
-        # The runner wrote something it cannot be parsed as a protocol v3
+        # The runner wrote something it cannot be parsed as a protocol
+        # result.json
         # result: a protocol mismatch rather than an engine crash.
         kind = "protocol"
         remedy = (
@@ -786,7 +787,7 @@ def _execute_suite(
             "; ".join(part for part in message_parts if part),
             diagnostics={
                 "kind": kind,
-                "expected": "a parseable protocol v3 result.json",
+                "expected": "a parseable native protocol result.json",
                 "found": found,
                 "remedy": remedy,
             },

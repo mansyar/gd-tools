@@ -96,7 +96,7 @@ def _snapshot_manifest(
 ) -> dict:
     """Build a native manifest over a snapshot fixture suite."""
     return {
-        "protocol_version": 3,
+        "protocol_version": 4,
         "project_root": str(project),
         "runtime": "native",
         "suites": [

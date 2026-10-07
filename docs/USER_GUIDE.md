@@ -484,6 +484,12 @@ gd-tools test --snapshot-update
   `--test-timeout` overrides it for one invocation, while `--timeout` limits
   Godot import and suite processes. Failed or timed-out tests are retried
   according to `[test].retries`.
+- A test that passes only after a retry is reported as **flaky** in the
+  run summary: a "Flaky tests (N)" panel lists the suite, the test name,
+  "passed on attempt N", and the first failed attempt's message (collapsed
+  to one line, truncated at 120 characters). The panel is omitted when no
+  test was flaky and suppressed under `--quiet`; flakiness never changes
+  the exit code.
 - Class-level tags can be configured with `[test].tags` or selected with
   repeatable `--tag` options. Explicit file paths are never broadened to
   sibling suites.
@@ -2136,8 +2142,9 @@ check as failing.
 
 **Cause:** The deployed `addons/gd-tools-test/` scripts were written by a
 different `gd-tools` version than the one running the command. Python and
-Godot exchange a versioned protocol; the current version is `2`, which adds
-scene and resource integration metadata. A protocol-v1 payload, malformed
+Godot exchange a versioned protocol; the current version is `4`, which
+carries scene and resource integration metadata plus the first-attempt
+failure message for retried tests. An older protocol payload, malformed
 integration metadata, or a partially deployed addon is rejected as a
 configuration failure rather than being guessed at.
 

@@ -71,7 +71,7 @@ def _write_result(result_path: Path) -> None:
     result_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "run_id": "test-run",
                 "status": "passed",
                 "engine_warnings": [],

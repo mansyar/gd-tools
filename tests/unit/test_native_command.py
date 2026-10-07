@@ -140,6 +140,32 @@ def test_to_test_result_normalizes_statuses_and_writes_junit(tmp_path):
     assert root.find("testsuite/testcase[3]/skipped") is not None
 
 
+def test_to_test_result_maps_retry_metadata(tmp_path):
+    """Retry attempts and the first failure message reach the details."""
+    from gd_tools.native_test.command import _to_test_result
+
+    native = _native_result(
+        "passed",
+        [
+            NativeTestResult(
+                suite="ExampleSuite",
+                name="test_flaky",
+                status="passed",
+                attempts=2,
+                first_failure_message="expected 1 to be 2",
+            ),
+        ],
+    )
+
+    result = _to_test_result(native, tmp_path, str(tmp_path / "results.xml"))
+
+    detail = result.test_details[0]
+    assert (detail.attempts, detail.first_failure_message) == (
+        2,
+        "expected 1 to be 2",
+    )
+
+
 def test_run_native_command_propagates_filters_and_timeout(tmp_path):
     """The adapter passes discovery filters and the process timeout through."""
     suite = NativeSuite(name="ExampleSuite", path="res://test/example.gd")

@@ -9,7 +9,7 @@ extends SceneTree
 
 signal test_call_completed
 
-const PROTOCOL_VERSION := 3
+const PROTOCOL_VERSION := 4
 const TEST_CONTEXT_SCRIPT = preload("res://addons/gd-tools-test/gd_tools_test_context.gd")
 const PARAMETER_NAMING = preload("res://addons/gd-tools-test/gd_tools_parameter_naming.gd")
 
@@ -295,12 +295,17 @@ func _run_test(
 	var attempt := 1
 	var total_duration := 0.0
 	var final_result: Dictionary = {}
+	var first_failure_message := ""
 
 	while true:
 		var attempt_result: Dictionary = await _run_test_attempt(
 			suite_context, script, test_name, test_data, suite_name
 		)
 		total_duration += float(attempt_result.get("duration_seconds", 0.0))
+		if attempt == 1:
+			var attempt_status := str(attempt_result.get("status", "error"))
+			if attempt_status == "failed" or attempt_status == "timeout":
+				first_failure_message = str(attempt_result.get("message", ""))
 		final_result = attempt_result
 		var status := str(final_result.get("status", "error"))
 		var retryable := status == "failed" or status == "timeout"
@@ -318,7 +323,8 @@ func _run_test(
 		final_result.get("diagnostics", {}),
 		attempt,
 		str(final_result.get("started_at", "")),
-		str(final_result.get("finished_at", ""))
+		str(final_result.get("finished_at", "")),
+		first_failure_message
 	)
 	_emit_event(
 		{
@@ -328,6 +334,7 @@ func _run_test(
 			"status": final_status,
 			"attempts": attempt,
 			"worker_slot": _worker_slot,
+			"first_failure_message": first_failure_message,
 		}
 	)
 
@@ -756,7 +763,8 @@ func _record_test_result(
 	diagnostics: Dictionary,
 	attempts: int = 1,
 	started_at: String = "",
-	finished_at: String = ""
+	finished_at: String = "",
+	first_failure_message: String = ""
 ) -> void:
 	if status == "failed" or status == "timeout":
 		_run_status = "failed"
@@ -775,6 +783,7 @@ func _record_test_result(
 				"diagnostics": diagnostics,
 				"started_at": started_at,
 				"finished_at": finished_at,
+				"first_failure_message": first_failure_message,
 			}
 		)
 	)

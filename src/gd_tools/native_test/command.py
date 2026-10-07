@@ -674,6 +674,8 @@ def _to_test_result(
                 status=status,
                 message=test.message,
                 duration=test.duration_seconds,
+                attempts=test.attempts,
+                first_failure_message=test.first_failure_message,
                 diagnostics=test.diagnostics,
             )
         )
