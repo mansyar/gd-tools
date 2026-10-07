@@ -22,18 +22,21 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 
 ## Phase 2 — Templates: dashboard + per-file pages (TDD)
 
-- [ ] Task: Write failing tests for index.html dashboard
-  - [ ] Sortable/filterable file table (path, statements, line %, branch %, missed) with project totals header
-  - [ ] Zero-branch files show the "no branch points" note; omitted targets listed with reason/fix
-  - [ ] Rows link to `file_<id>.html`
-- [ ] Task: Write failing tests for per-file pages
-  - [ ] Uncovered-branch panel with arm-type labels matching the terminal reporter wording
-  - [ ] Inline branch markers/badges on source lines hosting branch points
-  - [ ] Exclusion chip + tooltip on `# gd-tools: no cover` lines; excluded lines out of totals
-  - [ ] Back-link to index; anchor jumps to uncovered lines/branches
-- [ ] Task: Rewrite `templates/index.html` + `templates/file.html` with inlined CSS/JS (no external requests)
-- [ ] Task: Add generated-output test asserting no `http(s)://` asset references in any produced page
-- [ ] Task: Commit (`feat(coverage): overhaul HTML report dashboard and per-file pages`) + git note + plan update
+- [x] Task: Write failing tests for index.html dashboard
+  - [x] Sortable/filterable file table (path, statements, line %, branch %, missed) with project totals header
+  - [x] Zero-branch files show the "no branch points" note; omitted targets listed with reason/fix
+  - [x] Rows link to `file_<id>.html`
+- [x] Task: Write failing tests for per-file pages
+  - [x] Uncovered-branch panel with arm-type labels matching the terminal reporter wording
+  - [x] Inline branch markers/badges on source lines hosting branch points
+  - [x] Exclusion chip + tooltip on `# gd-tools: no cover` lines; excluded lines out of totals
+  - [x] Back-link to index; anchor jumps to uncovered lines/branches
+  - [x] Test-side corrections during red: panel assertion updated to an actually-uncovered arm (`and short-circuit arm` instead of covered `and site`); generate tests switched from `FileCoverage` to a `CoverageData` helper
+- [x] Task: Rewrite `templates/index.html` + `templates/file.html` with inlined CSS/JS (no external requests)
+  - [x] Index: Missed Lines/Missed Branches columns, filter input + `filterTable()` JS, zero-branch note, omitted-targets section, `branch_flags` in context
+  - [x] Per-file: lines from `build_line_views` with `id="line-N"` anchors, per-arm badges, exclusion chip, uncovered panel with anchor links
+- [x] Task: Add generated-output test asserting no `http(s)://` asset references in any produced page (`test_html_has_no_external_references`)
+- [x] Task: Commit (`feat(coverage): overhaul HTML report dashboard and per-file pages`) + git note + plan update (`6282295`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — `--html-open` convenience flag (TDD)
