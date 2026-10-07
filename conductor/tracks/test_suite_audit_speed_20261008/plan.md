@@ -22,12 +22,12 @@
   - [x] Reproduce: run `test_exitfirst_parallel_stops_dispatch_and_drains_inflight` alone and confirm ≈5s wall from the never-set `release` Event (`wait(timeout=5)`).
   - [x] Signal `release` at the correct point of the dispatch-stop/drain scenario so the test verifies the same semantics without the dead wait. *(test now waits on the orchestrator's `abort_event` with a sentinel assertion; product side sets `context.abort_event` on the fail-fast trigger)*
   - [x] Verify: test passes and takes < 0.5s; exitfirst semantics assertions unchanged. *(drain call < 0.05s; 49 passed, 2 skipped; e2e exitfirst 2 passed in 22.2s)*
-- [ ] Task 1.2: De-subprocess `test_main::TestSubprocess` (3 tests).
-  - [ ] Replace `python -m` real spawns with in-process invocation or `mock_subprocess_run` (unit conftest helper), preserving exit-code/output assertions.
-  - [ ] Verify: all 3 tests pass, each < 0.2s.
-- [ ] Task 1.3: De-subprocess `test_generate_expected_plans` (2 tests).
-  - [ ] Invoke the plan-generation logic in-process (import the script module) or mock the subprocess, preserving the "regenerated fixtures match committed" assertion.
-  - [ ] Verify: tests pass, each < 0.3s.
+- [x] Task 1.2: De-subprocess `test_main::TestSubprocess` (3 tests). *(commit 30c5a95)*
+  - [x] Replace `python -m` real spawns with in-process invocation or `mock_subprocess_run` (unit conftest helper), preserving exit-code/output assertions. *(runpy.run_module with run_name='__main__'; class renamed TestPythonDashM; autouse fixture drops pre-imported `__main__` to avoid the double-import warning)*
+  - [x] Verify: all 3 tests pass, each < 0.2s. *(~0.01s each, was ~1.1s; 7 passed; ruff/black clean)*
+- [x] Task 1.3: De-subprocess `test_generate_expected_plans` (2 tests). *(commit c081033)*
+  - [x] Invoke the plan-generation logic in-process (import the script module) or mock the subprocess, preserving the "regenerated fixtures match committed" assertion. *(importlib load of tools/generate_expected_plans.py via module-scoped fixture; all-fixtures assertion now checks the returned generated list; drift assertion unchanged)*
+  - [x] Verify: tests pass, each < 0.3s. *(calls 0.31s/0.13s — the 0.31s is real `generate_plan` work over 8 GDScript fixtures, not overhead; file total 1.02s vs ~2.2s before; ruff/black clean)*
 - [ ] Task 1.4: Scope `test_run_lint_default_paths` away from the repo cwd.
   - [ ] Point `run_lint` at a tmp_path with small fixture files (or mock the ruff subprocess), preserving the default-paths assertion.
   - [ ] Verify: test passes, < 0.3s.
