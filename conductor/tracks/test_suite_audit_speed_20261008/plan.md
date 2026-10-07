@@ -15,7 +15,7 @@
 
 **Note on TDD:** this track modifies test infrastructure and configuration, not product source. Per workflow.md, RED-phase tests are required only for product source (`.py`/`.gd`) changes; where product source *is* touched, strict red→green applies. Every task still ends with a verified green suite and coverage check.
 
-## Phase 1 — Unit Quick Wins (FR-A)
+## Phase 1 — Unit Quick Wins (FR-A) [checkpoint: a4c284b]
 
 - [x] Task: Record coverage + duration baselines in this plan (run `CI=true pytest` with coverage; append numbers to Baseline Evidence above).
 - [x] Task 1.1: Fix exitfirst fake-runner event-wait bug. *(commit 9ea0820)*
