@@ -38,7 +38,20 @@
   - [x] Profile the call; identify the cost (suspect console/rich init or per-line formatting). *(rich's word-wrap is superlinear on unbroken single-word strings: 5000 chars ~0.25s per print; measured 500/1000/2000/5000 -> 5/11/40/256ms)*
   - [x] Fix the root cause or reduce the input size without weakening the truncation assertion. *(test builds >5000-char volume as 75 x 80-char lines — boundary and both assertions intact; `no_wrap` product fix rejected as out-of-scope behavior change)*
   - [x] Verify: test < 0.2s. *(call 0.02s, was 0.80s; 31 passed; ruff/black clean)*
-- [~] Task 1.7: Record Phase 1 results in plan (unit suite duration before/after, top durations, coverage delta).
+- [x] Task 1.7: Record Phase 1 results in plan (unit suite duration before/after, top durations, coverage delta).
+
+  **Phase 1 results (measured 2026-10-08):**
+
+  | Metric | Baseline | After Phase 1 | Δ |
+  |---|---|---|---|
+  | Unit, no coverage | 41.27s (1582 passed, 3 skipped) | **17.50s** (1582 passed, 3 skipped) | −58% |
+  | Unit, with coverage (`CI=true`) | 55.34s | **32.62s** | −41% |
+  | Line coverage (TOTAL) | 93% (315 missed / 5303 stmts) | 93.03% (314 missed / 5304 stmts) | preserved (+1 stmt from orchestrator change, covered) |
+  | Branch partials | 101 of 1636 | 100 of 1636 | improved by 1 |
+
+  Removed hotspots: exitfirst drain 5.02s → <0.05s; `TestSubprocess` 3×~1.1s → ~0.01s; `test_generate_expected_plans` 2×~1.0s → 0.31/0.13s; `test_run_lint_default_paths` 1.91s → <0.01s; watch_observer 1.10/1.09/0.31/0.31s → ~0.01s each; rich-wrap truncation test 0.80s → 0.02s. Remaining top durations are now ≤0.90s (`test_performance_100_files`) with the bulk of the wall spread across ~1570 small tests (~8.5ms avg) plus ~3s collection — further serial gains need Phase 2 (xdist, CI-only).
+
+  Product change in this phase: one line in `native_test/orchestrator.py` (set `context.abort_event` on the fail-fast trigger before the drain) — covered by `test_native_exitfirst` (new sentinel assertion) and verified against the real-Godot e2e exitfirst tests (2 passed).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — pytest-xdist for CI (FR-B)
