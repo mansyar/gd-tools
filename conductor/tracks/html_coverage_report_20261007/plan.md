@@ -50,6 +50,10 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 
 ## Phase 4 — Docs, CHANGELOG, and release polish [checkpoint: d4beaf8]
 
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions (narrow browser-open catch to `OSError`/`webbrowser.Error` + `webbrowser.Error` test case; `white-space: pre-wrap` on `.line-content`; `_is_interactive()` docstring `Returns:` section) (`f364b44`)
+
 - [x] Task: Update coverage docs (HTML report section: dashboard, arm detail, exclusions, `--html-open`) (USER_GUIDE.md: `--html-open` flag row + example + "HTML report" subsection)
 - [x] Task: Update `CHANGELOG.md` (Unreleased → Added/Changed entries) (two Added entries: HTML report overhaul + `--html-open`)
 - [x] Task: Run quality gates: `ruff check`, `black --check`, `CI=true pytest`, coverage ≥80%/≥70% (all green: 1902 passed / 95.88%)
