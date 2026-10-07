@@ -11,7 +11,7 @@ checkpoints, quality gates.
 
 ---
 
-## Phase 1: Protocol v4 — First-Attempt Failure Message
+## Phase 1: Protocol v4 — First-Attempt Failure Message `[checkpoint: 9e7ec57]`
 
 Addendum (pre-existing test-infra repairs, made before checkpoint sign-off at
 user request, `4129c5c`): shard e2e `_prepare_project` now writes its own
@@ -47,7 +47,7 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
 
 ## Phase 2: Flaky Detection and Aggregation
 
-- [ ] Task: Write failing tests for flaky classification (Red)
+- [~] Task: Write failing tests for flaky classification (Red)
   - [ ] `passed` + `attempts > 1` ⇒ flaky (assertion-failure recovery).
   - [ ] `passed` + `attempts > 1` ⇒ flaky (timeout recovery).
   - [ ] `passed` + `attempts == 1` ⇒ not flaky.
