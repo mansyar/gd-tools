@@ -93,3 +93,6 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
   - [x] Manual verification of the flaky panel against a sample Godot project
         (retries > 0).
 - [x] Task: Final review readiness (Refer to workflow.md) `[ba3a437]`
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions `[d21af4b]`
