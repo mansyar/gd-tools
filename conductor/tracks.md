@@ -323,7 +323,7 @@ _Archived tracks live in `./archive/`._
   `--watch`; CLI-only flags with README + GitHub Actions sharding recipe docs)
   *Link: [fail_fast_ci_sharding_20261005](./archive/fail_fast_ci_sharding_20261005/index.md)*
 
-- [ ] **Track: Flaky Test Reporting** (feature: surface tests that pass only
+- [~] **Track: Flaky Test Reporting** (feature: surface tests that pass only
   after a retry in the native test run summary - protocol v4 adds an optional
   `first_failure_message` field carrying the first failed attempt's error
   message; the terminal summary gains a flaky panel listing suite, test name,
