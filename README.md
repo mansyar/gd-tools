@@ -362,7 +362,7 @@ prefix = "test_"
 suffix = ".gd"
 runtime = "native"        # native (default); "gut" is no longer a runnable runtime
 timeout_seconds = 5.0     # default per-test timeout for async native tests
-retries = 0               # opt-in retries per native test
+retries = 0               # opt-in retries per native test; retried passes are flagged as flaky
 # parallel = 4            # opt-in parallel suite execution (1-32; unset runs sequentially)
 tags = []                 # native suite tag filters
 

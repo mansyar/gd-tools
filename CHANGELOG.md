@@ -2,6 +2,15 @@
 
 ### Added
 
+- **test**: Flaky test reporting. Native runs capture the first failed
+  attempt's message for every retried test (protocol v4 adds the
+  optional `first_failure_message` field) and the run summary prints a
+  "Flaky tests (N)" panel listing each test that passed only after a
+  retry, with its suite, "passed on attempt N", and the collapsed
+  first-attempt message (one line, truncated at 120 characters). The
+  panel is omitted when no test was flaky and suppressed under
+  `--quiet`; flakiness never changes the exit code.
+
 - **coverage**: Boolean short-circuit operators (`and`/`or`) and
   `assert` conditions are now measured as branch points
   (`PLAN_VERSION` 7). Each operator chain records a site point, a
