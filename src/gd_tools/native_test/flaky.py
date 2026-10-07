@@ -21,12 +21,29 @@ class FlakyTest:
     first_failure_message: str
 
 
+def is_flaky(status: str, attempts: int) -> bool:
+    """Return True when a final result passed only after a retry.
+
+    Accepts both the native status vocabulary (``"passed"``) and the
+    mapped CLI vocabulary (``"pass"``) so the terminal panel and the
+    protocol-level aggregation share one predicate.
+
+    Args:
+        status: Final test status.
+        attempts: Number of attempts the runtime spent on the test.
+
+    Returns:
+        True when the test passed after more than one attempt.
+    """
+    return status in ("passed", "pass") and attempts > 1
+
+
 def collect_flaky_tests(run_result: NativeRunResult) -> list[FlakyTest]:
     """Return the run's flaky tests in run order.
 
-    A test qualifies when its final status is ``passed`` and it needed more
-    than one attempt.  Non-passing outcomes are never flaky, regardless of
-    how many attempts were made.
+    A test qualifies when its final status is ``passed`` and it needed
+    more than one attempt.  Non-passing outcomes are never flaky,
+    regardless of how many attempts were made.
 
     Args:
         run_result: The parsed native run result.
@@ -42,5 +59,5 @@ def collect_flaky_tests(run_result: NativeRunResult) -> list[FlakyTest]:
             first_failure_message=result.first_failure_message,
         )
         for result in run_result.tests
-        if result.status == "passed" and result.attempts > 1
+        if is_flaky(result.status, result.attempts)
     ]
