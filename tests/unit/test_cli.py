@@ -986,6 +986,139 @@ def test_coverage_report_rejects_invalid_report_format():
     assert "Invalid value" in result.output
 
 
+def test_coverage_report_html_open_tty_opens_browser():
+    """Test --html-open opens the report in the browser on an interactive TTY."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
+    mock_result = MagicMock()
+    mock_result.output_path = "/tmp/report/index.html"
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+        patch("gd_tools.cli._is_interactive", return_value=True),
+        patch("gd_tools.cli.webbrowser.open") as mock_open,
+    ):
+        result = runner.invoke(
+            cli,
+            ["coverage", "report", "--report-format", "html", "--html-open"],
+        )
+    assert result.exit_code == 0
+    mock_open.assert_called_once_with("/tmp/report/index.html")
+
+
+def test_coverage_report_html_open_suppressed_when_not_tty():
+    """Test --html-open is suppressed without a TTY (CI-safe)."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+        patch("gd_tools.cli._is_interactive", return_value=False),
+        patch("gd_tools.cli.webbrowser.open") as mock_open,
+    ):
+        result = runner.invoke(
+            cli,
+            ["coverage", "report", "--report-format", "html", "--html-open"],
+        )
+    assert result.exit_code == 0
+    mock_open.assert_not_called()
+
+
+def test_coverage_report_html_open_ignored_for_other_formats():
+    """Test --html-open only affects the html report format."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+        patch("gd_tools.cli._is_interactive", return_value=True),
+        patch("gd_tools.cli.webbrowser.open") as mock_open,
+    ):
+        result = runner.invoke(
+            cli,
+            ["coverage", "report", "--report-format", "json", "--html-open"],
+        )
+    assert result.exit_code == 0
+    mock_open.assert_not_called()
+
+
+def test_coverage_report_html_open_off_by_default():
+    """Test the browser is not opened without --html-open."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
+    mock_result = MagicMock()
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+        patch("gd_tools.cli._is_interactive", return_value=True),
+        patch("gd_tools.cli.webbrowser.open") as mock_open,
+    ):
+        result = runner.invoke(
+            cli, ["coverage", "report", "--report-format", "html"]
+        )
+    assert result.exit_code == 0
+    mock_open.assert_not_called()
+
+
+def test_coverage_report_html_open_failure_is_graceful():
+    """Test a browser-open failure degrades gracefully without changing the exit code."""
+    runner = CliRunner()
+    mock_config = MagicMock()
+    mock_config.coverage.min_percent = 0
+    mock_result = MagicMock()
+    mock_result.output_path = "/tmp/report/index.html"
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+        patch("gd_tools.cli._is_interactive", return_value=True),
+        patch(
+            "gd_tools.cli.webbrowser.open", side_effect=OSError("no browser")
+        ),
+    ):
+        result = runner.invoke(
+            cli,
+            ["coverage", "report", "--report-format", "html", "--html-open"],
+        )
+    assert result.exit_code == 0
+
+
+def test_is_interactive_reflects_stdout_tty(monkeypatch):
+    """Test _is_interactive reports the TTY state of stdout."""
+    import io
+    import sys
+
+    import gd_tools.cli as cli_module
+
+    fake_tty = io.StringIO()
+    fake_tty.isatty = lambda: True  # type: ignore[method-assign]
+    monkeypatch.setattr(sys, "stdout", fake_tty)
+    assert cli_module._is_interactive() is True
+
+    monkeypatch.setattr(sys, "stdout", io.StringIO())
+    assert cli_module._is_interactive() is False
+
+
 def test_coverage_report_rejects_both_format_flags():
     """Test supplying both --format and --report-format is a usage error."""
     runner = CliRunner()
