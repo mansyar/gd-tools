@@ -450,11 +450,16 @@ def test_run_lint_multiple_paths_deduplicates(tmp_path):
     assert result.files_checked == 2
 
 
-def test_run_lint_default_paths(tmp_path):
+def test_run_lint_default_paths(tmp_path, monkeypatch):
     """Test run_lint with None paths defaults to current directory."""
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    monkeypatch.chdir(tmp_path)
     config = GdToolsConfig()
     result = run_lint(config, None)
     assert isinstance(result, LintResult)
+    # Exactly the one file in cwd was linted (proves the default scope is
+    # the current directory, not some larger ambient path).
+    assert result.files_checked == 1
 
 
 # --- Verbose mode: command display ---
