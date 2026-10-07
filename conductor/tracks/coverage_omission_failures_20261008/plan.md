@@ -4,11 +4,13 @@ Workflow: TDD mandatory (Red→Green per task). Quality gates: `ruff check src/ 
 
 ## Phase 1 — Plan generator: zero-point exclusion & inference-site detection (R1, R2)
 
-- [ ] Task: Red — unit tests in `tests/unit/test_plan_generator*.py`: visitor flags `:=` statements whose initializer contains a wrapped operand span (nested ternary, boolop operand, multiline initializer, excluded-statement edge). Include an empirical check of untyped `var x = <variant>` under Godot 4.7 → decision gate to also cover `func_var_assigned` sites.
-- [ ] Task: Green — implement detection in `CoverageVisitor` (`func_var_inf` runs bottom-up after children, so operand points are already recorded); add per-file `warning_ignores` to `FilePlan` output.
-- [ ] Task: Red — unit test: `generate_plan` drops zero-point files and emits a stderr warning per skipped file.
-- [ ] Task: Green — implement exclusion + warning; bump `PLAN_VERSION` 7→8; update `load_plan` handshake tests (old-version rejection stays loud).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Red — unit tests in `tests/unit/test_plan_generator*.py`: visitor flags `:=` statements whose initializer contains a wrapped operand span (nested ternary, boolop operand, multiline initializer, excluded-statement edge). Include an empirical check of untyped `var x = <variant>` under Godot 4.7 → decision gate to also cover `func_var_assigned` sites. *(Gate resolved: untyped `=` is clean on Godot 4.7.2 — only `:=` annotated.)*
+- [x] Task: Green — implement detection in `CoverageVisitor` (`func_var_inf` runs bottom-up after children, so operand points are already recorded); add per-file `warning_ignores` to `FilePlan` output.
+- [x] Task: Red — unit test: `generate_plan` drops zero-point files and emits a stderr warning per skipped file.
+- [x] Task: Green — implement exclusion + warning; bump `PLAN_VERSION` 7→8; update `load_plan` handshake tests (old-version rejection stays loud).
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - Full suite + lint gate in progress. Regression fallout resolved: golden plan fixtures regenerated to v8; zero-point test fixtures made pointful (`pass`/bare-`extends` sources) in `test_plan_generator.py`, `test_plan_generator_boolops.py`, `test_plan_generator_ternary.py`, `test_native_coverage.py`; `test_coverage_exclusions.py` helpers tolerate unplanned (fully-excluded) files and the unterminated-start fixture keeps a point before the block; `test_coverage_playtest_cli.py` version assert → 8; `ternary_export_wrapped` integration fixture gains a trailing function so the file stays a plan target.
+  - Environment note (not a code failure): e2e tests that shell out via `python -m gd_tools` resolve the pip-installed CLI from another checkout (protocol 4 / plan 7), not this worktree. `test_native_cli_runs_scene_suite_with_default_and_overridden_metadata` and `test_watch_session_end_to_end` fail without it and pass with `PYTHONPATH=<worktree>/src`. Pre-existing environmental issue, unaffected by this track.
 
 ## Phase 2 — Collector: annotation injection & omission diagnostics (R2, R3)
 
