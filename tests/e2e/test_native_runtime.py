@@ -2594,6 +2594,60 @@ def test_native_parallel_run_matches_sequential_outcomes(
     assert parallel_coverage == sequential_coverage
 
 
+def test_parallel_retry_flaky_metadata_survives_merge(
+    godot_bin, tmp_path, monkeypatch
+):
+    """Flaky tests from parallel workers keep retry metadata after the merge.
+
+    Each worker suite recovers on its second attempt; the merged run must
+    carry attempts and the first-attempt failure message for both, so the
+    terminal panel can list every flaky test regardless of which worker
+    ran it.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    shutil.rmtree(project / "test")
+    (project / "test").mkdir()
+    for index in range(2):
+        # Marker-file pattern (per-suite name): attempt 1 fails after
+        # writing the marker, attempt 2 sees it and passes.
+        (project / "test" / f"flaky_{index}_suite.gd").write_text(
+            "extends GdToolsTest\n"
+            "\n\n"
+            f'const MARKER := "res://.retry_attempted_{index}"\n'
+            "\n\n"
+            "func test_flaky() -> void:\n"
+            "    if FileAccess.file_exists(MARKER):\n"
+            "        DirAccess.remove_absolute(MARKER)\n"
+            "        assert_true(true)\n"
+            "    else:\n"
+            "        var marker := FileAccess.open(MARKER, FileAccess.WRITE)\n"
+            '        marker.store_line("attempted")\n'
+            "        marker.close()\n"
+            f'        assert_true(false, "first attempt fails {index}")\n',
+            encoding="utf-8",
+        )
+    monkeypatch.chdir(project)
+    config = GdToolsConfig(
+        godot=GodotConfig(binary=godot_bin),
+        test=TestConfig(test_dirs=["test"], retries=1),
+    )
+
+    result = run_native_test_command(
+        config,
+        timeout=60,
+        parallel=2,
+        no_exit_code=True,
+    )
+
+    flaky = [
+        (detail.suite, detail.attempts, detail.first_failure_message)
+        for detail in result.test_details
+    ]
+    assert result.failed == 0
+    assert ("flaky_0_suite", 2, "first attempt fails 0") in flaky
+    assert ("flaky_1_suite", 2, "first attempt fails 1") in flaky
+
+
 SIGNAL_PASSING_METHODS = [
     "test_watch_node_target_and_assert_emitted",
     "test_watch_refcounted_target_and_assert_emitted",
