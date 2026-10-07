@@ -34,11 +34,11 @@
 - [x] Task 1.5: Event-drive `test_watch_observer` waits. *(commit 2444940)*
   - [x] Replace fixed sleeps with timeout-bounded event/poll synchronization; keep the same ignore/report assertions. *(modified/deleted: event-driven readiness probe replaces sleep(0.3); negative tests drive real watchdog events through the `_enqueue` filter directly — assertions preserved, wiring still covered by the positive real-dispatch tests)*
   - [x] Verify: 3 slowest observer tests each < 0.4s. *(all four target tests ~0.01s, was 1.10/1.09/0.31/0.31; 11 passed in 0.89s; ruff/black clean)*
-- [~] Task 1.6: Diagnose `test_format_test_results_truncates_long_output` (0.8s for string work).
-  - [ ] Profile the call; identify the cost (suspect console/rich init or per-line formatting).
-  - [ ] Fix the root cause or reduce the input size without weakening the truncation assertion.
-  - [ ] Verify: test < 0.2s.
-- [ ] Task 1.7: Record Phase 1 results in plan (unit suite duration before/after, top durations, coverage delta).
+- [x] Task 1.6: Diagnose `test_format_test_results_truncates_long_output` (0.8s for string work). *(commit a6f1a3f)*
+  - [x] Profile the call; identify the cost (suspect console/rich init or per-line formatting). *(rich's word-wrap is superlinear on unbroken single-word strings: 5000 chars ~0.25s per print; measured 500/1000/2000/5000 -> 5/11/40/256ms)*
+  - [x] Fix the root cause or reduce the input size without weakening the truncation assertion. *(test builds >5000-char volume as 75 x 80-char lines — boundary and both assertions intact; `no_wrap` product fix rejected as out-of-scope behavior change)*
+  - [x] Verify: test < 0.2s. *(call 0.02s, was 0.80s; 31 passed; ruff/black clean)*
+- [~] Task 1.7: Record Phase 1 results in plan (unit suite duration before/after, top durations, coverage delta).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — pytest-xdist for CI (FR-B)
