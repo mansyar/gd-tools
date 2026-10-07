@@ -143,6 +143,16 @@ CASES = {
         [],
         [10],
     ),
+    # A `:=` initializer holding a wrapped operand infers from Variant
+    # (INFERENCE_ON_VARIANT is error-by-default in Godot 4.x), so the
+    # annotation must ride the same line or the instrumented file cannot
+    # reload at all.
+    "inferred_wrapped": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tvar x := 10 if a > 0 else 20\n\tprint(x)\n",
+        [5, 5],
+        [5, 6],
+    ),
     "param_orphan": (
         "extends Node\n\n\nfunc f(a: int, x = 1 if a > 0 else 2) -> void:\n"
         "\tprint(x)\n",
@@ -357,16 +367,26 @@ def _indent_of(line: str) -> str:
     return out
 
 
-def _inject(source: str, lines) -> str:
+def _inject(source: str, lines, warning_ignores=()) -> str:
     """Port of ``_inject_trackers`` from the native coverage collector.
 
-    Mirrors the collector's ordering: entries are sorted by line descending
-    so that each insertion leaves earlier indices valid. Ternary arms are
-    instrumented by wrapping their operand text with ``hit_ret`` instead of
-    inserting a line-based ``hit()`` on the shared anchor line.
+    Mirrors the collector's ordering: operand wrapping first, then
+    same-line ``@warning_ignore`` prefixes (annotations never shift line
+    counts), then entries sorted by line descending so that each insertion
+    leaves earlier indices valid. Ternary arms are instrumented by
+    wrapping their operand text with ``hit_ret`` instead of inserting a
+    line-based ``hit()`` on the shared anchor line.
     """
     wrapped = _wrap_operands(source, lines)
     src_lines = wrapped.split("\n")
+    for annotation in warning_ignores:
+        target = annotation["line"] - 1
+        if 0 <= target < len(src_lines) and annotation.get("warning"):
+            indent = _indent_of(src_lines[target])
+            src_lines[target] = (
+                f'{indent}@warning_ignore("{annotation["warning"]}") '
+                f"{src_lines[target][len(indent):]}"
+            )
     for entry in sorted(lines, key=lambda e: e.line, reverse=True):
         if getattr(entry, "operand_span", None) is not None:
             continue
@@ -525,6 +545,14 @@ def test_injection_port_tracks_the_collector():
         "lockstep and cannot ever report an uncovered arm."
     )
 
+    warning_annotation = re.search(r"@warning_ignore\(", source)
+    assert warning_annotation, (
+        "Collector no longer injects @warning_ignore for plan "
+        "warning_ignores entries; wrapped operands inside inferred `:=` "
+        "declarations would fail to reload (INFERENCE_ON_VARIANT is "
+        "error-by-default) and the file would vanish from coverage."
+    )
+
 
 SIMPLE_TERNARY = (
     "extends Node\n\n\nfunc f(a: int) -> void:\n"
@@ -680,7 +708,13 @@ def test_instrumented_source_parses(case, tmp_path, godot_bin):
             f"line makes the instrumented file unparseable."
         )
 
-    instrumented = _inject(source, entry.lines)
+    instrumented = _inject(source, entry.lines, entry.warning_ignores)
+    for annotation in entry.warning_ignores:
+        assert f'@warning_ignore("{annotation["warning"]}")' in instrumented, (
+            f"Case '{case}' lost its {annotation['warning']} annotation; "
+            "the instrumented source would fail to reload with "
+            f"INFERENCE_ON_VARIANT.\n{instrumented}"
+        )
     (project / "fixture.gd").write_text(instrumented, encoding="utf-8")
 
     valid, output = _check(godot_bin, project, "fixture.gd")
