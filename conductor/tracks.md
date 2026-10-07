@@ -314,7 +314,7 @@ _Archived tracks live in `./archive/`._
 - [x] **Track: Ship v0.7.0** (archived → `./archive/release_v070_20261005/`)
   *Link: [release_v070_20261005](./archive/release_v070_20261005/index.md)*
 
-- [~] **Track: HTML Coverage Report Overhaul** (feature: self-contained HTML coverage report overhaul — summary dashboard with sortable/filterable file table, branch-arm detail with terminal-parity labels (PLAN_VERSION 7 and/or/ternary/assert arms), inline branch markers, `# gd-tools: no cover` exclusion styling/chips, and a CI-safe `coverage report --html-open` convenience flag; no plan-schema or report-format changes)
+- [x] **Track: HTML Coverage Report Overhaul** (feature: self-contained HTML coverage report overhaul — summary dashboard with sortable/filterable file table, branch-arm detail with terminal-parity labels (PLAN_VERSION 7 and/or/ternary/assert arms), inline branch markers, `# gd-tools: no cover` exclusion styling/chips, and a CI-safe `coverage report --html-open` convenience flag; no plan-schema or report-format changes)
   *Link: [html_coverage_report_20261007](./tracks/html_coverage_report_20261007/index.md)*
 
 - [x] **Track: Fail-Fast and CI Sharding** (feature: pytest-parity orchestration
