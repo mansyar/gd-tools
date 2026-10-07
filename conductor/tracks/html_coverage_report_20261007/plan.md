@@ -12,12 +12,12 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 
 ## Phase 1 — Report data model (TDD)
 
-- [ ] Task: Write failing unit tests for the enriched per-line/per-branch view model
-  - [ ] Branch-point lines expose their arm entries with terminal-parity labels (`if`/`elif`/`else`, ternary true/false, `and`/`or` site/right-operand/arm, `assert_true`/`assert_false`) and covered/uncovered state per arm
-  - [ ] Excluded lines carry an `excluded` flag plus the annotation text context
-  - [ ] Zero-branch files are flagged for the "no branch points" note
-- [ ] Task: Implement view-model builders in `html_reporter.py` reusing `FileSummary` + plan data (no `reporter.py` changes)
-- [ ] Task: Commit (`feat(coverage): add branch-arm and exclusion view model for HTML report`) + git note + plan update
+- [x] Task: Write failing unit tests for the enriched per-line/per-branch view model (`8567428`)
+  - [x] Branch-point lines expose their arm entries with terminal-parity labels (`if`/`elif`/`else`, ternary true/false, `and`/`or` site/right-operand/arm, `assert_true`/`assert_false`) and covered/uncovered state per arm
+  - [x] Excluded lines carry an `excluded` flag plus the annotation text context
+  - [x] Zero-branch files are flagged for the "no branch points" note
+- [x] Task: Implement view-model builders in `html_reporter.py` reusing `FileSummary` + plan data (no `reporter.py` changes) (`8567428`)
+- [x] Task: Commit (`feat(coverage): add branch-arm and exclusion view model for HTML report`) + git note + plan update (`8567428`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Templates: dashboard + per-file pages (TDD)
