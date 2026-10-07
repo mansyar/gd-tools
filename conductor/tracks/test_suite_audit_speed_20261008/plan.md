@@ -18,10 +18,10 @@
 ## Phase 1 — Unit Quick Wins (FR-A)
 
 - [x] Task: Record coverage + duration baselines in this plan (run `CI=true pytest` with coverage; append numbers to Baseline Evidence above).
-- [~] Task 1.1: Fix exitfirst fake-runner event-wait bug.
-  - [ ] Reproduce: run `test_exitfirst_parallel_stops_dispatch_and_drains_inflight` alone and confirm ≈5s wall from the never-set `release` Event (`wait(timeout=5)`).
-  - [ ] Signal `release` at the correct point of the dispatch-stop/drain scenario so the test verifies the same semantics without the dead wait.
-  - [ ] Verify: test passes and takes < 0.5s; exitfirst semantics assertions unchanged.
+- [x] Task 1.1: Fix exitfirst fake-runner event-wait bug. *(commit 9ea0820)*
+  - [x] Reproduce: run `test_exitfirst_parallel_stops_dispatch_and_drains_inflight` alone and confirm ≈5s wall from the never-set `release` Event (`wait(timeout=5)`).
+  - [x] Signal `release` at the correct point of the dispatch-stop/drain scenario so the test verifies the same semantics without the dead wait. *(test now waits on the orchestrator's `abort_event` with a sentinel assertion; product side sets `context.abort_event` on the fail-fast trigger)*
+  - [x] Verify: test passes and takes < 0.5s; exitfirst semantics assertions unchanged. *(drain call < 0.05s; 49 passed, 2 skipped; e2e exitfirst 2 passed in 22.2s)*
 - [ ] Task 1.2: De-subprocess `test_main::TestSubprocess` (3 tests).
   - [ ] Replace `python -m` real spawns with in-process invocation or `mock_subprocess_run` (unit conftest helper), preserving exit-code/output assertions.
   - [ ] Verify: all 3 tests pass, each < 0.2s.
