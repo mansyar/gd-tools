@@ -20,7 +20,7 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 - [x] Task: Commit (`feat(coverage): add branch-arm and exclusion view model for HTML report`) + git note + plan update (`8567428`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — Templates: dashboard + per-file pages (TDD)
+## Phase 2 — Templates: dashboard + per-file pages (TDD) [checkpoint: e136598]
 
 - [x] Task: Write failing tests for index.html dashboard
   - [x] Sortable/filterable file table (path, statements, line %, branch %, missed) with project totals header
@@ -37,7 +37,7 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
   - [x] Per-file: lines from `build_line_views` with `id="line-N"` anchors, per-arm badges, exclusion chip, uncovered panel with anchor links
 - [x] Task: Add generated-output test asserting no `http(s)://` asset references in any produced page (`test_html_has_no_external_references`)
 - [x] Task: Commit (`feat(coverage): overhaul HTML report dashboard and per-file pages`) + git note + plan update (`6282295`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (approved; suite 1896 passed / 95.87%)
 
 ## Phase 3 — `--html-open` convenience flag (TDD)
 
