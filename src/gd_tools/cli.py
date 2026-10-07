@@ -1165,7 +1165,11 @@ def format(paths, check, diff):
 
 
 def _is_interactive() -> bool:
-    """Return True when stdout is attached to an interactive terminal."""
+    """Return True when stdout is attached to an interactive terminal.
+
+    Returns:
+        ``True`` when ``sys.stdout`` reports a TTY.
+    """
     return sys.stdout.isatty()
 
 
@@ -1249,7 +1253,7 @@ def report(report_format, format_alias, output_dir, html_open):
         if html_open and effective == "html" and _is_interactive():
             try:
                 webbrowser.open(str(result.output_path))
-            except Exception as e:
+            except (OSError, webbrowser.Error) as e:
                 click.echo(f"Warning: could not open browser: {e}", err=True)
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)

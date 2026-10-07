@@ -1102,6 +1102,26 @@ def test_coverage_report_html_open_failure_is_graceful():
         )
     assert result.exit_code == 0
 
+    import webbrowser as webbrowser_module
+
+    with (
+        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.cli.generate_coverage_report",
+            return_value=mock_result,
+        ),
+        patch("gd_tools.cli._is_interactive", return_value=True),
+        patch(
+            "gd_tools.cli.webbrowser.open",
+            side_effect=webbrowser_module.Error("no browser"),
+        ),
+    ):
+        result = runner.invoke(
+            cli,
+            ["coverage", "report", "--report-format", "html", "--html-open"],
+        )
+    assert result.exit_code == 0
+
 
 def test_is_interactive_reflects_stdout_tty(monkeypatch):
     """Test _is_interactive reports the TTY state of stdout."""
