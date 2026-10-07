@@ -33,13 +33,25 @@ pytestmark = [
 _RUN_TIMEOUT = 120.0
 
 
+_REPO_SRC = str(Path(__file__).resolve().parents[2] / "src")
+
+
 def _gd_tools_command() -> list[str]:
-    """Use the installed CLI entry point when available."""
-    bin_dir = Path(sys.executable).parent
-    for name in ("gd-tools.exe", "gd-tools"):
-        candidate = bin_dir / name
-        if candidate.exists():
-            return [str(candidate)]
+    """Run this repository's CLI; never a globally installed one.
+
+    A global ``gd-tools`` entry point can resolve to a different checkout
+    (stale version, different native protocol), which made these e2e
+    subprocesses test the wrong code. Force ``python -m gd_tools`` with
+    the repository's ``src`` prepended to PYTHONPATH; every subprocess in
+    this module copies ``os.environ``, so they all inherit it.
+    """
+    existing = os.environ.get("PYTHONPATH", "")
+    parts = [_REPO_SRC] + [
+        part
+        for part in existing.split(os.pathsep)
+        if part and part != _REPO_SRC
+    ]
+    os.environ["PYTHONPATH"] = os.pathsep.join(parts)
     return [sys.executable, "-m", "gd_tools"]
 
 
@@ -182,6 +194,9 @@ def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
     project = tmp_path / "watch_project"
     project.mkdir()
     _write_project(project)
+    # Resolve the command first: it prepends the repository src to
+    # os.environ's PYTHONPATH, which the copy below must already reflect.
+    command = _gd_tools_command()
     env = os.environ.copy()
     env.update(
         {
@@ -191,7 +206,7 @@ def test_watch_session_end_to_end(tmp_path, monkeypatch, godot_bin):
         }
     )
     init = subprocess.run(
-        [*_gd_tools_command(), "init", "--non-interactive"],
+        [*command, "init", "--non-interactive"],
         cwd=project,
         capture_output=True,
         text=True,
