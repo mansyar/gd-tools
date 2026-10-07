@@ -28,10 +28,10 @@
 - [x] Task 1.3: De-subprocess `test_generate_expected_plans` (2 tests). *(commit c081033)*
   - [x] Invoke the plan-generation logic in-process (import the script module) or mock the subprocess, preserving the "regenerated fixtures match committed" assertion. *(importlib load of tools/generate_expected_plans.py via module-scoped fixture; all-fixtures assertion now checks the returned generated list; drift assertion unchanged)*
   - [x] Verify: tests pass, each < 0.3s. *(calls 0.31s/0.13s — the 0.31s is real `generate_plan` work over 8 GDScript fixtures, not overhead; file total 1.02s vs ~2.2s before; ruff/black clean)*
-- [ ] Task 1.4: Scope `test_run_lint_default_paths` away from the repo cwd.
-  - [ ] Point `run_lint` at a tmp_path with small fixture files (or mock the ruff subprocess), preserving the default-paths assertion.
-  - [ ] Verify: test passes, < 0.3s.
-- [ ] Task 1.5: Event-drive `test_watch_observer` waits.
+- [x] Task 1.4: Scope `test_run_lint_default_paths` away from the repo cwd. *(commit 8fd795c)*
+  - [x] Point `run_lint` at a tmp_path with small fixture files (or mock the ruff subprocess), preserving the default-paths assertion. *(monkeypatch.chdir(tmp_path) with one .gd fixture; added files_checked==1 proving default scope is cwd)*
+  - [x] Verify: test passes, < 0.3s. *(call < 0.01s, was 1.91s; 44 passed; ruff/black clean)*
+- [~] Task 1.5: Event-drive `test_watch_observer` waits.
   - [ ] Replace fixed sleeps with timeout-bounded event/poll synchronization; keep the same ignore/report assertions.
   - [ ] Verify: 3 slowest observer tests each < 0.4s.
 - [ ] Task 1.6: Diagnose `test_format_test_results_truncates_long_output` (0.8s for string work).
