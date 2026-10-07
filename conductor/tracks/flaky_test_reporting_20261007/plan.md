@@ -84,12 +84,12 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
   - [x] CHANGELOG "Unreleased": flaky test reporting entry.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `[41389f4]`
 
-## Phase 5: Full Quality Gate
+## Phase 5: Full Quality Gate `[checkpoint: ba3a437]`
 
-- [~] Task: Run the complete quality gate
-  - [ ] `CI=true pytest` (all markers) with >80% line / >70% branch on new
+- [x] Task: Run the complete quality gate `[ba3a437]`
+  - [x] `CI=true pytest` (all markers) with >80% line / >70% branch on new
         code.
-  - [ ] `ruff check src/ tests/` and `black --check src/ tests/`.
-  - [ ] Manual verification of the flaky panel against a sample Godot project
+  - [x] `ruff check src/ tests/` and `black --check src/ tests/`.
+  - [x] Manual verification of the flaky panel against a sample Godot project
         (retries > 0).
-- [ ] Task: Final review readiness (Refer to workflow.md)
+- [x] Task: Final review readiness (Refer to workflow.md) `[ba3a437]`
