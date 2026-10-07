@@ -1,0 +1,89 @@
+# Implementation Plan: Test Suite Audit & Speed-Up
+
+- **Track ID:** `test_suite_audit_speed_20261008`
+- **Type:** Chore
+- **Branch:** `feature/test-suite-audit-speed-20261008`
+
+## Baseline Evidence (measured 2026-10-08, local, Godot 4.7.2)
+
+- Unit: `pytest tests/unit/ -m unit --no-cov -q` → 1,582 passed, 3 skipped, **40.7s** (×2 consistent; collection ≈ 2.95s)
+- Integration: `pytest tests/integration/ -m integration --no-cov -q` → 90 passed, **310.9s**
+- E2E smoke: `pytest tests/e2e/ -m "e2e and e2e_smoke" --no-cov -q` → 5 passed, **119.0s**
+- Coverage baseline: to be recorded at the start of Phase 1 (`CI=true pytest` coverage of default suite) and re-recorded after each phase.
+
+**Note on TDD:** this track modifies test infrastructure and configuration, not product source. Per workflow.md, RED-phase tests are required only for product source (`.py`/`.gd`) changes; where product source *is* touched, strict red→green applies. Every task still ends with a verified green suite and coverage check.
+
+## Phase 1 — Unit Quick Wins (FR-A)
+
+- [ ] Task: Record coverage + duration baselines in this plan (run `CI=true pytest` with coverage; append numbers to Baseline Evidence above).
+- [ ] Task 1.1: Fix exitfirst fake-runner event-wait bug.
+  - [ ] Reproduce: run `test_exitfirst_parallel_stops_dispatch_and_drains_inflight` alone and confirm ≈5s wall from the never-set `release` Event (`wait(timeout=5)`).
+  - [ ] Signal `release` at the correct point of the dispatch-stop/drain scenario so the test verifies the same semantics without the dead wait.
+  - [ ] Verify: test passes and takes < 0.5s; exitfirst semantics assertions unchanged.
+- [ ] Task 1.2: De-subprocess `test_main::TestSubprocess` (3 tests).
+  - [ ] Replace `python -m` real spawns with in-process invocation or `mock_subprocess_run` (unit conftest helper), preserving exit-code/output assertions.
+  - [ ] Verify: all 3 tests pass, each < 0.2s.
+- [ ] Task 1.3: De-subprocess `test_generate_expected_plans` (2 tests).
+  - [ ] Invoke the plan-generation logic in-process (import the script module) or mock the subprocess, preserving the "regenerated fixtures match committed" assertion.
+  - [ ] Verify: tests pass, each < 0.3s.
+- [ ] Task 1.4: Scope `test_run_lint_default_paths` away from the repo cwd.
+  - [ ] Point `run_lint` at a tmp_path with small fixture files (or mock the ruff subprocess), preserving the default-paths assertion.
+  - [ ] Verify: test passes, < 0.3s.
+- [ ] Task 1.5: Event-drive `test_watch_observer` waits.
+  - [ ] Replace fixed sleeps with timeout-bounded event/poll synchronization; keep the same ignore/report assertions.
+  - [ ] Verify: 3 slowest observer tests each < 0.4s.
+- [ ] Task 1.6: Diagnose `test_format_test_results_truncates_long_output` (0.8s for string work).
+  - [ ] Profile the call; identify the cost (suspect console/rich init or per-line formatting).
+  - [ ] Fix the root cause or reduce the input size without weakening the truncation assertion.
+  - [ ] Verify: test < 0.2s.
+- [ ] Task 1.7: Record Phase 1 results in plan (unit suite duration before/after, top durations, coverage delta).
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 2 — pytest-xdist for CI (FR-B)
+
+- [ ] Task 2.1: Add `pytest-xdist` to dev dependencies (`pyproject.toml`); document in `docs/TESTING_STRATEGY.md`.
+- [ ] Task 2.2: Prove the suite is xdist-safe.
+  - [ ] Run `pytest tests/unit/ -m unit --no-cov -n 4` locally; confirm 1,582 pass, 3 skipped.
+  - [ ] If any shared-state failures appear (artifact dirs, caches, tmp fixtures), fix them with tmp_path isolation before proceeding.
+- [ ] Task 2.3: Update `.github/workflows/ci.yml` Stage 1 (cov job) and matrix-unit jobs to run with `-n auto`.
+- [ ] Task 2.4: Record Phase 2 results (local `-n 4` duration; note CI duration change after next CI run).
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 3 — Integration Parse Batching (FR-C)
+
+- [ ] Task 3.1: Build the batch manifest harness.
+  - [ ] Extend the instrumentation harness so one Godot session parses all instrumented fixtures listed in a manifest and emits per-fixture results (e.g., JSON with fixture name → parse ok/error).
+  - [ ] Verify: harness runs against the current fixture set; every fixture's result matches current per-case outcomes.
+- [ ] Task 3.2: Rewrite `test_instrumented_source_parses` to consume batch results.
+  - [ ] Parametrize over the manifest; each case asserts its own fixture's outcome.
+  - [ ] A failing fixture still pinpoints itself (clear test ID + assertion message).
+- [ ] Task 3.3: Verify equivalence.
+  - [ ] Same number of parametrized cases as before (~27); identical pass/fail set.
+  - [ ] Measure: `pytest tests/integration/ -m integration --no-cov -q --durations=20` — the parse block drops from ≈170s toward ≤ 25s.
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 4 — Integration Tuning (FR-D)
+
+- [ ] Task 4.1: Shorten the timeout test.
+  - [ ] `test_coverage_run_timeout_closes_game_and_reports` (20.9s): inject a configured short timeout so the close-and-report semantics are still exercised; verify wall < 5s.
+- [ ] Task 4.2: Playtest scenario tuning.
+  - [ ] Profile the 7–11s playtest/playtest_cli tests; batch scenarios per Godot launch where semantics allow, or trim fixed waits.
+  - [ ] If a wait is semantically necessary, document the evidence here and leave it.
+- [ ] Task 4.3: Record Phase 4 results (integration suite duration after Phase 3 + 4 vs 310.9s baseline; coverage delta).
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 5 — E2E Smoke Speed-Up (FR-E) + Final Verification
+
+- [ ] Task 5.1: Root-cause the two slow smoke tests.
+  - [ ] Instrument `test_changed_selection_end_to_end` (40.5s) and `test_watch_session_end_to_end` (34.1s) with coarse timing; identify fixed waits/real process churn.
+- [ ] Task 5.2: Fix the waits (configured short timeouts, event-based waits), preserving end-to-end semantics; re-run smoke subset.
+- [ ] Task 5.3: Final measurement pass.
+  - [ ] Run all three suites with the acceptance commands; record before/after table in this plan.
+  - [ ] Verify acceptance criteria: unit ≤ 15s, integration ≤ 2:30, e2e smoke ≤ 1:15, coverage ≥ baseline, all tests pass.
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Out of Scope (deferred, recorded for future tracks)
+
+- CI matrix rationalization (full OS×Godot matrix on every PR)
+- `test_cli.py` consolidation (146 tests, near-duplicate flag families)
+- Performance benchmark suite changes
