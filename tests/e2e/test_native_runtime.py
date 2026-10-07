@@ -119,7 +119,7 @@ def test_native_fixture_loads_without_gut(godot_bin, tmp_path):
 def _manifest(project, path, names, suite_name):
     """Build a native manifest selecting specific methods from one suite."""
     return {
-        "protocol_version": 3,
+        "protocol_version": 4,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -471,7 +471,7 @@ def test_native_runner_executes_manifest(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -513,7 +513,7 @@ def test_native_runner_executes_manifest(godot_bin, tmp_path):
 
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert payload["protocol_version"] == 3
+    assert payload["protocol_version"] == 4
     assert payload["status"] == "passed"
     assert [test["name"] for test in payload["tests"]] == [
         "test_pass",
@@ -530,7 +530,7 @@ def test_native_runner_runs_lifecycle_hooks_after_failure(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -597,7 +597,7 @@ def test_native_runner_reports_lifecycle_failures_and_preserves_suite_state(
     """Setup/teardown failures and suite state affect the native result."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 3,
+        "protocol_version": 4,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -647,7 +647,7 @@ def test_native_runner_bounds_lifecycle_timeout_and_runs_cleanup(
     """A hanging setup hook is bounded and cleanup still runs."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 3,
+        "protocol_version": 4,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -689,7 +689,7 @@ def test_native_runner_captures_engine_errors_and_warnings(godot_bin, tmp_path):
     """Godot engine diagnostics fail the run and appear in native JSON."""
     project = _prepare_project(tmp_path, godot_bin)
     manifest = {
-        "protocol_version": 3,
+        "protocol_version": 4,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
@@ -731,7 +731,7 @@ def test_native_assertions_report_values_and_source(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -786,7 +786,7 @@ def test_native_skipped_tests_report_status_and_reason(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 3,
+            "protocol_version": 4,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -830,7 +830,7 @@ def test_native_post_skip_assertions_are_discarded(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 3,
+            "protocol_version": 4,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -874,7 +874,7 @@ def test_native_all_skipped_suite_exits_zero(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 3,
+            "protocol_version": 4,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -914,7 +914,7 @@ def test_native_runner_emits_structured_events(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -976,7 +976,7 @@ def test_native_runner_events_carry_env_suite_identity(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1033,7 +1033,7 @@ def test_native_runner_marks_timed_out_tests(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1124,6 +1124,58 @@ def test_native_runner_retries_failed_test_with_fresh_instance(
     assert len(result.tests) == 1
     assert result.tests[0].status == "passed"
     assert result.tests[0].attempts == 2
+    assert result.tests[0].first_failure_message == "first attempt fails"
+
+
+def test_native_runner_reports_timeout_recovery_first_failure(
+    godot_bin, tmp_path
+):
+    """A timeout recovered by a retry carries the attempt-1 timeout message."""
+    project = _prepare_project(tmp_path, godot_bin)
+    timeout_script = project / "test" / "timeout_recovery_suite.gd"
+    # Marker file pattern: attempt 1 sleeps past the per-test timeout after
+    # writing the marker, attempt 2 sees the marker and passes immediately.
+    timeout_script.write_text(
+        "extends GdToolsTest\n"
+        "\n\n"
+        'const MARKER := "res://.timeout_attempted"\n'
+        "\n\n"
+        "func test_slow_then_fast() -> void:\n"
+        "    if FileAccess.file_exists(MARKER):\n"
+        "        DirAccess.remove_absolute(MARKER)\n"
+        "        assert_true(true)\n"
+        "    else:\n"
+        "        var marker := FileAccess.open(MARKER, FileAccess.WRITE)\n"
+        '        marker.store_line("attempted")\n'
+        "        marker.close()\n"
+        "        await get_tree().create_timer(2.0).timeout\n"
+        "        assert_true(true)\n",
+        encoding="utf-8",
+    )
+    suite = NativeSuite(
+        name="NativeTimeoutRecoverySuite",
+        path="res://test/timeout_recovery_suite.gd",
+        tests=[
+            NativeTest(
+                name="test_slow_then_fast",
+                timeout_seconds=0.5,
+                retries=1,
+            )
+        ],
+    )
+
+    result = run_native_tests(
+        project,
+        [suite],
+        godot_bin,
+        work_dir=tmp_path / "timeout-recovery",
+    )
+
+    assert result.status == "passed"
+    assert result.tests[0].status == "passed"
+    assert result.tests[0].attempts == 2
+    first_failure = result.tests[0].first_failure_message
+    assert first_failure.startswith("Test timed out after")
 
 
 def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
@@ -1134,7 +1186,7 @@ def test_native_runner_supports_async_helpers(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1199,7 +1251,7 @@ def test_native_wait_for_signal_is_bounded(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1262,7 +1314,7 @@ def _run_suite_timeout_manifest(project, godot_bin, tmp_path, tag, test_specs):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1420,6 +1472,7 @@ def test_native_orchestrator_runs_multiple_real_suites(godot_bin, tmp_path):
         "NativeAsyncHelpersSuite",
     }
     assert all(test.status == "passed" for test in result.tests)
+    assert all(test.first_failure_message == "" for test in result.tests)
 
 
 def test_native_orchestrator_continues_after_process_crash(godot_bin, tmp_path):
@@ -1628,7 +1681,7 @@ def test_native_runner_collects_line_and_branch_coverage(godot_bin, tmp_path):
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1763,7 +1816,7 @@ def test_native_coverage_warns_and_continues_past_uninstrumentable_target(
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -1843,7 +1896,7 @@ def test_native_coverage_warns_and_continues_past_uninstrumentable_target(
     # AC 9 / R5: the omission reaches the run result through the existing
     # channels -- a warning line and the structured diagnostics dict -- with
     # the protocol version unchanged.
-    assert payload["protocol_version"] == 3
+    assert payload["protocol_version"] == 4
     assert any(
         "missing_target.gd" in warning for warning in payload["engine_warnings"]
     ), payload["engine_warnings"]
@@ -1916,7 +1969,7 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
     manifest_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "project_root": str(project),
                 "runtime": "native",
                 "suites": [
@@ -2431,7 +2484,7 @@ def test_native_suite_skip_in_before_all_skips_every_test(godot_bin, tmp_path):
         project,
         godot_bin,
         {
-            "protocol_version": 3,
+            "protocol_version": 4,
             "project_root": str(project),
             "runtime": "native",
             "suites": [
@@ -2569,7 +2622,7 @@ def _signal_assertion_manifest(
 ):
     """Build a native manifest over a signal assertion fixture suite."""
     return {
-        "protocol_version": 3,
+        "protocol_version": 4,
         "project_root": str(project),
         "runtime": "native",
         "suites": [
