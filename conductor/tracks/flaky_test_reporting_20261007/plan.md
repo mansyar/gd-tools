@@ -13,6 +13,15 @@ checkpoints, quality gates.
 
 ## Phase 1: Protocol v4 — First-Attempt Failure Message
 
+Addendum (pre-existing test-infra repairs, made before checkpoint sign-off at
+user request, `4129c5c`): shard e2e `_prepare_project` now writes its own
+`gd-tools.toml` (the test previously patched a fixture file that was never
+committed to git); the exclude list retains the addon defaults so coverage does
+not self-instrument the addons (which crashed Godot 4.7.2's VM); e2e conftest
+gained a session-autouse fixture that sweeps gitignored `.gd-tools/` run
+residue out of fixture sources; orchestrator diagnostics no longer hardcode
+"protocol v3".
+
 - [x] Task: Write failing Python tests for protocol v4 (Red) `[0040f18]`
   - [ ] `NATIVE_PROTOCOL_VERSION` is 4 and `NativeRunResult.protocol_version`
         accepts 4.
