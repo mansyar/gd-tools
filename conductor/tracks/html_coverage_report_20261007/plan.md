@@ -48,10 +48,10 @@ new source); commit + git-note + plan-update per task; phase checkpoints per
 - [x] Task: Commit (`feat(coverage): add --html-open to coverage report`) + git note + plan update (`8220a3b`)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (approved; full suite pending, result to be appended)
 
-## Phase 4 — Docs, CHANGELOG, and release polish
+## Phase 4 — Docs, CHANGELOG, and release polish [checkpoint: d4beaf8]
 
 - [x] Task: Update coverage docs (HTML report section: dashboard, arm detail, exclusions, `--html-open`) (USER_GUIDE.md: `--html-open` flag row + example + "HTML report" subsection)
 - [x] Task: Update `CHANGELOG.md` (Unreleased → Added/Changed entries) (two Added entries: HTML report overhaul + `--html-open`)
-- [ ] Task: Run quality gates: `ruff check`, `black --check`, `CI=true pytest`, coverage ≥80%/≥70%
-- [ ] Task: Commit (`docs(coverage): document HTML report overhaul`) + git note + plan update
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Run quality gates: `ruff check`, `black --check`, `CI=true pytest`, coverage ≥80%/≥70% (all green: 1902 passed / 95.88%)
+- [x] Task: Commit (`docs(coverage): document HTML report overhaul`) + git note + plan update (`8f8eb62`)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (all gates green; suite 1902 passed / 95.88%)
