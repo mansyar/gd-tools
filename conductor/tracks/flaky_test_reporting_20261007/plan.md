@@ -72,17 +72,17 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
         panel conventions.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `[3987d9a]`
 
-## Phase 4: Parallel, Watch, and Documentation
+## Phase 4: Parallel, Watch, and Documentation `[checkpoint: 41389f4]`
 
 - [x] Task: Write failing tests for parallel/watch integration (Red) `[aced445]`
-  - [ ] Flaky tests from multiple parallel workers all appear in the panel.
+  - [x] Flaky tests from multiple parallel workers all appear in the panel.
   - [x] Watch re-run summary renders the flaky panel like a normal run.
 - [x] Task: Implement any parallel/watch gaps surfaced by the tests (Green) `[aced445]`
 - [x] Task: Update documentation `[cf7c9de]`
   - [x] README: retries/flaky panel mention in the native test section.
   - [x] USER_GUIDE: flaky panel behavior, protocol v4 note.
   - [x] CHANGELOG "Unreleased": flaky test reporting entry.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `[41389f4]`
 
 ## Phase 5: Full Quality Gate
 
