@@ -254,7 +254,7 @@ def test_coverage_run_measures_expression_arms(godot_bin, tmp_path):
         (coverage_dir / "coverage.json").read_text(encoding="utf-8")
     )
 
-    assert plan["version"] == 7
+    assert plan["version"] == 8
     subject = next(
         f for f in plan["files"] if "playtest_subject.gd" in f["path"]
     )

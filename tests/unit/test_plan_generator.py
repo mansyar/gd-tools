@@ -203,7 +203,7 @@ def test_read_plan_json_wrong_version(tmp_path):
 def test_generate_plan_emits_current_version(tmp_path):
     """generate_plan stamps plans with the current schema version."""
     (tmp_path / "player.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
     plan = generate_plan(str(tmp_path))
 
@@ -247,7 +247,7 @@ def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
     # Downgrade the cache file to the pre-exclusion schema version.
     data = json.loads(cache_path.read_text(encoding="utf-8"))
@@ -264,17 +264,15 @@ def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
     assert plan.files  # a fresh plan was generated
 
 
-def test_plan_version_is_7_after_expression_branch_points():
-    """PLAN_VERSION is 7 so pre-expression plan flavours are stale.
+def test_plan_version_is_8_after_inference_annotations():
+    """PLAN_VERSION is 8 so pre-inference-annotation plans are stale.
 
-    Version 4/5 plans either carry no ``operand_span`` on ternary branch
-    points (restoring the shared-arm limitation) or hold statement points
-    recorded on illegal continuation lines (breaking the instrumented
-    file). Version 6 plans additionally carry no boolean-operator or
-    assert branch points, so reusing any of them would silently
-    under-measure branch coverage. The version must have moved on to 7.
+    Version 7 plans keep zero-point files as silent-omission targets and
+    carry no per-file ``warning_ignores``, so wrapped-operand inferred
+    declarations fail to reload under default warning settings. The
+    version must have moved on to 8.
     """
-    assert PLAN_VERSION == 7
+    assert PLAN_VERSION == 8
 
 
 def test_cache_v3_plan_is_regenerated_with_outdated_reason(tmp_path):
@@ -283,7 +281,7 @@ def test_cache_v3_plan_is_regenerated_with_outdated_reason(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
     data = json.loads(cache_path.read_text(encoding="utf-8"))
     data["version"] = 3
@@ -312,7 +310,7 @@ def test_cache_v4_plan_is_regenerated_with_outdated_reason(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
     data = json.loads(cache_path.read_text(encoding="utf-8"))
     data["version"] = 4
@@ -335,7 +333,7 @@ def test_cache_with_non_integer_version_is_a_miss(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
     data = json.loads(cache_path.read_text(encoding="utf-8"))
     data["version"] = "2"
@@ -355,7 +353,7 @@ def test_cache_hit_ignores_files_with_syntax_errors(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
     # Added after the cache was written: unparseable, so not hashable.
     (tmp_path / "broken.gd").write_text(
@@ -376,7 +374,7 @@ def test_cache_hit_with_explicit_exclude_and_test_dirs(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
 
     plan, status = generate_plan_cached(
@@ -504,7 +502,7 @@ def test_read_plan_json_file_entry_not_dict(tmp_path):
 
 def test_parse_gdscript_valid_source():
     """parse_gdscript returns a Lark Tree for valid GDScript source."""
-    source = "extends Node\nfunc _ready():\n    pass\n"
+    source = "extends Node\nfunc _ready():\n    print(1)\n"
     tree = parse_gdscript(source)
     assert tree is not None
     assert hasattr(tree, "meta")
@@ -751,10 +749,10 @@ def test_branch_ids_are_unique_per_file():
 def test_generate_plan_multiple_files(tmp_path):
     """Multiple .gd files produce multiple FilePlan entries with sequential file_ids."""
     (tmp_path / "player.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n"
+        "extends Node\nfunc _ready():\n    print(1)\n"
     )
     (tmp_path / "enemy.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n"
+        "extends Node\nfunc _ready():\n    print(1)\n"
     )
 
     cp = generate_plan(str(tmp_path))
@@ -765,7 +763,7 @@ def test_generate_plan_multiple_files(tmp_path):
 
 def test_generate_plan_source_hash_computed(tmp_path):
     """Each file entry has correct sha256: prefixed source hash."""
-    source = "extends Node\n"
+    source = "extends Node\nfunc _ready():\n    print(1)\n"
     (tmp_path / "player.gd").write_text(source)
 
     cp = generate_plan(str(tmp_path))
@@ -774,9 +772,13 @@ def test_generate_plan_source_hash_computed(tmp_path):
 
 def test_generate_plan_excludes_addons(tmp_path):
     """addons/ directory is excluded from coverage by default."""
-    (tmp_path / "player.gd").write_text("extends Node\n")
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
     (tmp_path / "addons").mkdir()
-    (tmp_path / "addons" / "plugin.gd").write_text("extends Node\n")
+    (tmp_path / "addons" / "plugin.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
 
     cp = generate_plan(str(tmp_path))
     assert len(cp.files) == 1
@@ -785,9 +787,13 @@ def test_generate_plan_excludes_addons(tmp_path):
 
 def test_generate_plan_excludes_test_dirs(tmp_path):
     """Files in test_dirs are excluded from coverage targets."""
-    (tmp_path / "player.gd").write_text("extends Node\n")
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
     (tmp_path / "test").mkdir()
-    (tmp_path / "test" / "test_player.gd").write_text("extends Node\n")
+    (tmp_path / "test" / "test_player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
 
     cp = generate_plan(str(tmp_path))
     assert len(cp.files) == 1
@@ -796,7 +802,9 @@ def test_generate_plan_excludes_test_dirs(tmp_path):
 
 def test_generate_plan_res_prefix(tmp_path):
     """File paths use res:// prefix."""
-    (tmp_path / "player.gd").write_text("extends Node\n")
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
 
     cp = generate_plan(str(tmp_path))
     assert cp.files[0].path.startswith("res://")
@@ -804,9 +812,13 @@ def test_generate_plan_res_prefix(tmp_path):
 
 def test_generate_plan_with_custom_exclude_dirs(tmp_path):
     """Custom exclude_dirs are respected."""
-    (tmp_path / "player.gd").write_text("extends Node\n")
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
     (tmp_path / "custom_excluded").mkdir()
-    (tmp_path / "custom_excluded" / "plugin.gd").write_text("extends Node\n")
+    (tmp_path / "custom_excluded" / "plugin.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
 
     cp = generate_plan(str(tmp_path), exclude_dirs=["custom_excluded"])
     assert len(cp.files) == 1
@@ -815,9 +827,13 @@ def test_generate_plan_with_custom_exclude_dirs(tmp_path):
 
 def test_generate_plan_with_custom_test_dirs(tmp_path):
     """Custom test_dirs are respected for exclusion."""
-    (tmp_path / "player.gd").write_text("extends Node\n")
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
     (tmp_path / "spec").mkdir()
-    (tmp_path / "spec" / "spec_player.gd").write_text("extends Node\n")
+    (tmp_path / "spec" / "spec_player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
 
     cp = generate_plan(str(tmp_path), test_dirs=["spec"])
     assert len(cp.files) == 1
@@ -826,7 +842,9 @@ def test_generate_plan_with_custom_test_dirs(tmp_path):
 
 def test_generate_plan_skips_files_with_syntax_errors(tmp_path):
     """Files with syntax errors are skipped, valid files are still included."""
-    (tmp_path / "valid.gd").write_text("extends Node\n")
+    (tmp_path / "valid.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n"
+    )
     (tmp_path / "broken.gd").write_text("func ((\n")
 
     cp = generate_plan(str(tmp_path))
@@ -914,10 +932,10 @@ def test_generate_plan_includes_autoload_scripts(tmp_path):
 
     (tmp_path / "autoload").mkdir()
     (tmp_path / "autoload" / "global_manager.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
     (tmp_path / "player.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
 
     cp = generate_plan(str(tmp_path))
@@ -963,16 +981,16 @@ def test_generate_plan_includes_both_autoload_and_non_autoload(tmp_path):
 
     (tmp_path / "autoload").mkdir()
     (tmp_path / "autoload" / "global_manager.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
     (tmp_path / "autoload" / "scene_manager.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
     (tmp_path / "player.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
     (tmp_path / "enemy.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
 
     cp = generate_plan(str(tmp_path))
@@ -992,8 +1010,12 @@ def test_generate_plan_no_autoload_section_all_files_included(tmp_path):
         encoding="utf-8",
     )
 
-    (tmp_path / "player.gd").write_text("extends Node\n", encoding="utf-8")
-    (tmp_path / "enemy.gd").write_text("extends Node\n", encoding="utf-8")
+    (tmp_path / "player.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
+    )
+    (tmp_path / "enemy.gd").write_text(
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
+    )
 
     cp = generate_plan(str(tmp_path))
     assert len(cp.files) == 2
@@ -1031,7 +1053,7 @@ def test_generate_plan_cached_hit(tmp_path):
     original = _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
 
     plan, status = generate_plan_cached(
@@ -1049,7 +1071,7 @@ def test_generate_plan_cached_miss_file_modified(tmp_path):
     original = _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
 
     # Modify the file content (changes the source hash).
@@ -1073,12 +1095,12 @@ def test_generate_plan_cached_miss_file_added(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
 
     # Add a new file on disk not present in the cached plan.
     (tmp_path / "enemy.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
 
     plan, status = generate_plan_cached(
@@ -1096,8 +1118,8 @@ def test_generate_plan_cached_miss_file_deleted(tmp_path):
         tmp_path,
         cache_path,
         {
-            "player.gd": "extends Node\nfunc _ready():\n    pass\n",
-            "enemy.gd": "extends Node\nfunc _ready():\n    pass\n",
+            "player.gd": "extends Node\nfunc _ready():\n    print(1)\n",
+            "enemy.gd": "extends Node\nfunc _ready():\n    print(1)\n",
         },
     )
 
@@ -1116,7 +1138,7 @@ def test_generate_plan_cached_miss_no_cache_file(tmp_path):
     """Cache miss: plan.json does not exist -> regenerates."""
     cache_path = tmp_path / "nonexistent.json"
     (tmp_path / "player.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
 
     plan, status = generate_plan_cached(
@@ -1131,7 +1153,7 @@ def test_generate_plan_cached_miss_corrupt_plan(tmp_path):
     """Cache miss: corrupt plan.json -> safe fallback to regeneration."""
     cache_path = tmp_path / "plan.json"
     (tmp_path / "player.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
     # Write corrupt JSON that read_plan_json will reject.
     cache_path.write_text("{not valid json", encoding="utf-8")
@@ -1150,7 +1172,7 @@ def test_generate_plan_cached_use_cache_false(tmp_path):
     _write_cached_plan(
         tmp_path,
         cache_path,
-        {"player.gd": "extends Node\nfunc _ready():\n    pass\n"},
+        {"player.gd": "extends Node\nfunc _ready():\n    print(1)\n"},
     )
 
     plan, status = generate_plan_cached(
@@ -1164,7 +1186,7 @@ def test_generate_plan_cached_use_cache_false(tmp_path):
 def test_generate_plan_cached_no_cache_path(tmp_path):
     """cache_path=None -> no cache available -> regenerates."""
     (tmp_path / "player.gd").write_text(
-        "extends Node\nfunc _ready():\n    pass\n", encoding="utf-8"
+        "extends Node\nfunc _ready():\n    print(1)\n", encoding="utf-8"
     )
 
     plan, status = generate_plan_cached(str(tmp_path), cache_path=None)

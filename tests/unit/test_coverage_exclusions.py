@@ -30,13 +30,21 @@ def _plan_for(tmp_path, name, source):
 
 
 def _point_lines(plan):
-    """Return the set of instrumented line numbers for the sole file."""
+    """Return the set of instrumented line numbers for the sole file.
+
+    A file whose every point is excluded is left out of the plan
+    entirely (zero-point exclusion), which reads as an empty set.
+    """
+    if not plan.files:
+        return set()
     assert len(plan.files) == 1
     return {lp.line for lp in plan.files[0].lines}
 
 
 def _excluded_lines(plan):
     """Return the excluded line numbers recorded for the sole file."""
+    if not plan.files:
+        return []
     assert len(plan.files) == 1
     return plan.files[0].excluded_lines
 
@@ -308,17 +316,18 @@ class TestBlockEdgeCases:
         source = (
             "extends Node\n"
             "func _ready():\n"
+            "    print(0)\n"
             f"    {BLOCK_START}\n"
             "    var a = 1\n"
             "    var b = 2\n"
         )
         plan = _plan_for(tmp_path, "player.gd", source)
 
-        assert _point_lines(plan) == set()
-        assert _excluded_lines(plan) == [3, 4, 5]
+        assert _point_lines(plan) == {3}
+        assert _excluded_lines(plan) == [4, 5, 6]
 
         err = capsys.readouterr().err
-        assert "line 3" in err
+        assert "line 4" in err
 
     def test_stray_end_ignored_with_warning(self, tmp_path, capsys):
         """An `end` without an open block is ignored with a warning."""

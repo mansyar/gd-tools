@@ -133,13 +133,15 @@ CASES = {
     # initializer (tracker call in the ternary operand) still compiles, so
     # excluding @export ternaries is a conservative choice, not a hard
     # technical blocker. They stay untracked (no anchor), like const and
-    # default-parameter ternaries.
+    # default-parameter ternaries. The trailing function keeps the file a
+    # plan target now that zero-point files are excluded from plans.
     "ternary_export_wrapped": (
         "extends Node\n\n@export var enabled := true\n\n\n"
         "@export var size: int = GdToolsNativeCoverage.hit_ret(0, 5, 2) "
-        "if enabled else 4\n",
+        "if enabled else 4\n\n\n"
+        "func f() -> void:\n\tprint(enabled)\n",
         [],
-        [],
+        [10],
     ),
     "param_orphan": (
         "extends Node\n\n\nfunc f(a: int, x = 1 if a > 0 else 2) -> void:\n"
