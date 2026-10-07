@@ -47,13 +47,13 @@ residue out of fixture sources; orchestrator diagnostics no longer hardcode
 
 ## Phase 2: Flaky Detection and Aggregation
 
-- [~] Task: Write failing tests for flaky classification (Red)
+- [x] Task: Write failing tests for flaky classification (Red) `[40bfaf0]`
   - [ ] `passed` + `attempts > 1` ⇒ flaky (assertion-failure recovery).
   - [ ] `passed` + `attempts > 1` ⇒ flaky (timeout recovery).
   - [ ] `passed` + `attempts == 1` ⇒ not flaky.
   - [ ] `failed`/`timeout`/`skipped` results are never flaky regardless of
         attempts.
-- [ ] Task: Implement flaky derivation over `NativeRunResult` (Green)
+- [x] Task: Implement flaky derivation over `NativeRunResult` (Green) `[40bfaf0]`
   - [ ] Pure helper returning the ordered flaky test list (suite, name,
         attempts, first_failure_message) from run results.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
