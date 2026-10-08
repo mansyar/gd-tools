@@ -7,6 +7,7 @@ locally but *fails* when it is absent in CI -- a skip there would
 report a green run that executed nothing.
 """
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,25 @@ import pytest
 from conftest import require_godot_binary
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def clean_fixture_run_residue():
+    """Remove gitignored run residue from fixture projects.
+
+    Local runs occasionally leave ``.gd-tools/`` working directories
+    (artifacts, caches, snapshots) inside the fixture sources.  Those
+    files are gitignored, so CI checkouts are clean but developer
+    workspaces are not; a ``copytree`` of the fixture then silently
+    inherits stale state (for example, snapshot files that turn "first
+    run writes" into "matches").  Sweep the residue before the e2e
+    session so every copy starts from a pristine fixture.
+    """
+    projects_dir = FIXTURES_DIR / "projects"
+    if projects_dir.is_dir():
+        for project in projects_dir.iterdir():
+            shutil.rmtree(project / ".gd-tools", ignore_errors=True)
+    yield
 
 
 @pytest.fixture(scope="session")

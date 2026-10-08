@@ -1,10 +1,16 @@
 """Unit tests for the watch-mode event source abstraction and watchdog adapter."""
 
 import os
+import queue
 import time
 from types import SimpleNamespace
 
 import pytest
+from watchdog.events import (
+    FileCreatedEvent,
+    FileDeletedEvent,
+    FileModifiedEvent,
+)
 
 from gd_tools.watch.observer import (
     FileEvent,
@@ -22,11 +28,12 @@ def _write(root, relative: str, content: str = "extends Node\n") -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def _collect(source, predicate, timeout=3.0):
+def _collect(source, predicate, timeout=3.0, generator=None):
     """Poll the event source until predicate holds or the timeout elapses."""
+    if generator is None:
+        generator = source.events()
     deadline = time.monotonic() + timeout
     collected: list[FileEvent] = []
-    generator = source.events()
     while time.monotonic() < deadline:
         event = next(generator)
         if event is not None:
@@ -69,13 +76,30 @@ def test_adapter_reports_modified_gd_file(tmp_path):
     _write(tmp_path, "src/enemy.gd")
     source = WatchdogEventSource(tmp_path)
     try:
-        time.sleep(0.3)
+        generator = source.events()
+        # Event-driven readiness probe: the observer is confirmed live
+        # once it reports the prime file, replacing the fixed sleep.
+        _write(tmp_path, "src/prime.gd")
+        _collect(
+            source,
+            lambda evs: any(e.path == "src/prime.gd" for e in evs),
+            generator=generator,
+        )
         path = tmp_path / "src" / "enemy.gd"
         path.write_text("extends Node\n# touched\n", encoding="utf-8")
         events = _collect(
-            source, lambda evs: any(e.event_type == "modified" for e in evs)
+            source,
+            lambda evs: any(
+                e.path == "src/enemy.gd" and e.event_type == "modified"
+                for e in evs
+            ),
+            generator=generator,
         )
-        modified = [e for e in events if e.event_type == "modified"]
+        modified = [
+            e
+            for e in events
+            if e.event_type == "modified" and e.path == "src/enemy.gd"
+        ]
         assert modified and modified[0].path == "src/enemy.gd"
     finally:
         source.stop()
@@ -86,39 +110,85 @@ def test_adapter_reports_deleted_gd_file(tmp_path):
     _write(tmp_path, "src/enemy.gd")
     source = WatchdogEventSource(tmp_path)
     try:
-        time.sleep(0.3)
+        generator = source.events()
+        # Event-driven readiness probe: the observer is confirmed live
+        # once it reports the prime file, replacing the fixed sleep.
+        _write(tmp_path, "src/prime.gd")
+        _collect(
+            source,
+            lambda evs: any(e.path == "src/prime.gd" for e in evs),
+            generator=generator,
+        )
         (tmp_path / "src" / "enemy.gd").unlink()
         events = _collect(
-            source, lambda evs: any(e.event_type == "deleted" for e in evs)
+            source,
+            lambda evs: any(
+                e.path == "src/enemy.gd" and e.event_type == "deleted"
+                for e in evs
+            ),
+            generator=generator,
         )
-        deleted = [e for e in events if e.event_type == "deleted"]
+        deleted = [
+            e
+            for e in events
+            if e.event_type == "deleted" and e.path == "src/enemy.gd"
+        ]
         assert deleted and deleted[0].path == "src/enemy.gd"
+    finally:
+        source.stop()
+
+
+_EVENT_CLASSES = {
+    "created": FileCreatedEvent,
+    "modified": FileModifiedEvent,
+    "deleted": FileDeletedEvent,
+}
+
+
+def _run_through_filter(
+    tmp_path, relative: str, event_types
+) -> list[FileEvent]:
+    """Drive real watchdog events for ``relative`` through the filter.
+
+    Returns the events the adapter queued (empty when everything was
+    filtered out). The real observer wiring (any event -> _enqueue) is
+    covered by the report tests above; these tests exercise the scope
+    filter itself, deterministically.
+    """
+    source = WatchdogEventSource(tmp_path)
+    try:
+        for event_type in event_types:
+            event_cls = _EVENT_CLASSES[event_type]
+            source._enqueue(event_cls(str(tmp_path / relative)))
+        events: list[FileEvent] = []
+        while True:
+            try:
+                events.append(source._queue.get_nowait())
+            except queue.Empty:
+                return events
     finally:
         source.stop()
 
 
 def test_adapter_ignores_non_gd_files(tmp_path):
     """Non-.gd file activity produces no events."""
-    source = WatchdogEventSource(tmp_path)
-    try:
-        _write(tmp_path, "src/scene.tscn")
-        _write(tmp_path, "notes.txt", content="hello\n")
-        events = _collect(source, lambda evs: len(evs) > 0, timeout=1.0)
+    for relative in ("src/scene.tscn", "notes.txt"):
+        events = _run_through_filter(
+            tmp_path, relative, ("created", "modified")
+        )
         assert events == []
-    finally:
-        source.stop()
 
 
 def test_adapter_ignores_excluded_directories(tmp_path):
     """Events inside standard excludes are filtered out."""
-    source = WatchdogEventSource(tmp_path)
-    try:
-        _write(tmp_path, ".godot/imported/cache.gd")
-        _write(tmp_path, "addons/gd-tools-test/gd_tools_test.gd")
-        events = _collect(source, lambda evs: len(evs) > 0, timeout=1.0)
+    for relative in (
+        ".godot/imported/cache.gd",
+        "addons/gd-tools-test/gd_tools_test.gd",
+    ):
+        events = _run_through_filter(
+            tmp_path, relative, ("created", "modified")
+        )
         assert events == []
-    finally:
-        source.stop()
 
 
 def test_adapter_stop_terminates_event_stream(tmp_path):

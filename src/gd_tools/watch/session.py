@@ -73,6 +73,7 @@ def run_watch_mode(
     parallel: int | None = None,
     durations: int | None = None,
     snapshot_update: bool = False,
+    exitfirst: bool = False,
     event_source: WatchdogEventSource | None = None,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
@@ -178,6 +179,7 @@ def run_watch_mode(
                 parallel=parallel,
                 durations=durations,
                 snapshot_update=snapshot_update,
+                exitfirst=exitfirst,
             )
         except TestFailureError as exc:
             return _watch_result(getattr(exc, "result", None), "failed")

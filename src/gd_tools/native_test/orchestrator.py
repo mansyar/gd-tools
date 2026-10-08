@@ -12,7 +12,7 @@ import tempfile
 import threading
 import uuid
 from collections.abc import Iterator
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -241,6 +241,22 @@ def _abort_run(context: _SuiteContext) -> None:
         pass
 
 
+def select_shard(
+    suites: list[NativeSuite],
+    shard: int,
+    total_shards: int,
+) -> list[NativeSuite]:
+    """Select the suites assigned to shard ``shard`` of ``total_shards``.
+
+    Round-robin over the given (deterministic) plan order: suite ``i``
+    (0-based) belongs to shard ``(i mod total_shards) + 1``. Selection is
+    a pure filter; the input list is not modified.
+    """
+    return [
+        suite for i, suite in enumerate(suites) if i % total_shards == shard - 1
+    ]
+
+
 def run_native_tests(
     project_root: Path,
     suites: list[NativeSuite],
@@ -254,6 +270,7 @@ def run_native_tests(
     artifact_layout: NativeArtifactLayout | None = None,
     parallel: int | None = None,
     snapshot_update: bool = False,
+    exitfirst: bool = False,
 ) -> NativeRunResult:
     """Run each native suite in an isolated Godot process.
 
@@ -275,6 +292,11 @@ def run_native_tests(
             order.
         snapshot_update: When True, the runner rewrites mismatched and
             malformed snapshots instead of failing their tests.
+        exitfirst: When True (fail-fast), stop dispatching new suites after
+            the first suite whose final aggregated result is a failure or an
+            infrastructure error. In-flight suites finish and are collected;
+            unstarted suites are recorded as skipped test entries and
+            summarized on ``result.fail_fast``.
 
     Returns:
         Aggregated native result. A process-level failure is represented as
@@ -304,15 +326,72 @@ def run_native_tests(
         snapshot_update=snapshot_update,
     )
     work_items = list(enumerate(suites))
+    outcomes: list[tuple[int, _SuiteOutcome]] = []
+    fail_fast_trigger: str | None = None
     with _sigterm_as_interrupt():
         if parallel is not None and parallel > 1:
             with ThreadPoolExecutor(max_workers=parallel) as executor:
-                futures = [
-                    executor.submit(_execute_suite, index, suite, context)
-                    for index, suite in work_items
-                ]
                 try:
-                    outcomes = [future.result() for future in futures]
+                    if not exitfirst:
+                        # Plain runs keep the historical submit-all-upfront
+                        # dispatch; results are awaited in submission order.
+                        submitted = [
+                            (
+                                index,
+                                executor.submit(
+                                    _execute_suite, index, suite, context
+                                ),
+                            )
+                            for index, suite in work_items
+                        ]
+                        outcomes = [
+                            (index, future.result())
+                            for index, future in submitted
+                        ]
+                    else:
+                        pending: dict[Future[int], int] = {}
+                        item_iter = iter(work_items)
+
+                        def _fill() -> None:
+                            # Keep `parallel` suites in flight; dispatch one
+                            # new suite each time a worker frees up so a
+                            # failing suite can stop queued dispatch.
+                            while len(pending) < parallel:
+                                try:
+                                    index, suite = next(item_iter)
+                                except StopIteration:
+                                    return
+                                future = executor.submit(
+                                    _execute_suite, index, suite, context
+                                )
+                                pending[future] = index
+
+                        _fill()
+                        while pending:
+                            done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                            for future in done:
+                                index = pending.pop(future)
+                                outcome = future.result()
+                                outcomes.append((index, outcome))
+                                # Keep the FIRST failing suite in the batch as
+                                # the trigger; later ones would overwrite it.
+                                if fail_fast_trigger is None and (
+                                    outcome.has_failure or outcome.has_error
+                                ):
+                                    fail_fast_trigger = suites[index].name
+                                    # Signal the run-level stop event so
+                                    # anything blocked on it (e.g. an
+                                    # in-flight suite finishing during the
+                                    # drain) unblocks deterministically.
+                                    context.abort_event.set()
+                            if fail_fast_trigger is not None:
+                                break
+                            _fill()
+                        if fail_fast_trigger is not None:
+                            # Drain: let the in-flight suites finish and
+                            # collect them; do NOT kill running processes.
+                            for future, index in pending.items():
+                                outcomes.append((index, future.result()))
                 except KeyboardInterrupt:
                     # Handle the interrupt INSIDE the with-block:
                     # __exit__ calls shutdown(wait=True), which would
@@ -327,16 +406,19 @@ def run_native_tests(
                     ) from None
         else:
             try:
-                outcomes = [
-                    _execute_suite(index, suite, context)
-                    for index, suite in work_items
-                ]
+                for index, suite in work_items:
+                    outcome = _execute_suite(index, suite, context)
+                    outcomes.append((index, outcome))
+                    if exitfirst and (outcome.has_failure or outcome.has_error):
+                        fail_fast_trigger = suite.name
+                        break
             except KeyboardInterrupt:
                 _ignore_sigterm()
                 _abort_run(context)
                 raise NativeInterruptError(
                     _interrupt_message(context)
                 ) from None
+    outcomes.sort(key=lambda item: item[0])
 
     all_tests: list[NativeTestResult] = []
     coverage_shards: list[Path] = []
@@ -347,7 +429,7 @@ def run_native_tests(
     suite_artifact_paths: list[dict[str, Any]] = []
     engine_warnings: list[str] = []
     coverage_omissions: list[dict[str, Any]] = []
-    for outcome in outcomes:
+    for _, outcome in outcomes:
         all_tests.extend(outcome.tests)
         if outcome.stdout:
             process_stdout.append(outcome.stdout)
@@ -370,6 +452,34 @@ def run_native_tests(
         for omission in outcome.coverage_omissions:
             if omission not in coverage_omissions:
                 coverage_omissions.append(omission)
+
+    fail_fast: dict[str, Any] | None = None
+    skipped_suite_names: list[str] = []
+    if fail_fast_trigger is not None:
+        started = {index for index, _ in outcomes}
+        unstarted = [
+            suite for index, suite in work_items if index not in started
+        ]
+        skipped_suite_names = [suite.name for suite in unstarted]
+        for suite in unstarted:
+            all_tests.append(
+                NativeTestResult(
+                    suite=suite.name,
+                    name="not_run",
+                    status="skipped",
+                    duration_seconds=0.0,
+                    attempts=1,
+                    message=(
+                        "Suite not run: fail-fast stopped dispatch after "
+                        f"suite {fail_fast_trigger!r}."
+                    ),
+                )
+            )
+        fail_fast = {
+            "trigger": fail_fast_trigger,
+            "skipped": len(unstarted),
+            "planned": len(work_items),
+        }
 
     coverage_output = _resolve_path(
         project_root,
@@ -406,14 +516,28 @@ def run_native_tests(
 
     artifact_index_path: Path | None = None
     if artifact_layout is not None:
+        # The index lists the whole plan; suites fail-fast never dispatched
+        # contribute no realized artifact files, so their entries fall back
+        # to the layout's (unrealized) stable paths.
+        suite_paths_by_index = {
+            index: outcome.suite_paths
+            for index, outcome in outcomes
+            if outcome.suite_paths is not None
+        }
+        ordered_suite_paths = [
+            suite_paths_by_index.get(index)
+            or artifact_layout.suite_paths(index)
+            for index in range(len(suites))
+        ]
         try:
             artifact_index_path = publish_artifact_index(
                 artifact_layout,
                 status=status,
                 suite_names=[suite.name for suite in suites],
-                suite_paths=suite_artifact_paths,
+                suite_paths=ordered_suite_paths,
                 preflight_paths=artifact_layout.preflight_paths(),
                 omitted=coverage_omissions or None,
+                skipped=skipped_suite_names or None,
             )
         except ArtifactPublishError as exc:
             has_error = True
@@ -426,9 +550,10 @@ def run_native_tests(
                     artifact_layout,
                     status="error",
                     suite_names=[suite.name for suite in suites],
-                    suite_paths=suite_artifact_paths,
+                    suite_paths=ordered_suite_paths,
                     preflight_paths=artifact_layout.preflight_paths(),
                     omitted=coverage_omissions or None,
+                    skipped=skipped_suite_names or None,
                 )
             except ArtifactPublishError:
                 pass
@@ -440,6 +565,7 @@ def run_native_tests(
         tests=all_tests,
         coverage_data_path=merged_coverage_path,
         artifact_index_path=artifact_index_path,
+        fail_fast=fail_fast,
         engine_warnings=engine_warnings,
         diagnostics=(
             {"coverage_omissions": coverage_omissions}
@@ -639,7 +765,8 @@ def _execute_suite(
 
     outcome.has_error = True
     if result_path.is_file():
-        # The runner wrote something it cannot be parsed as a protocol v3
+        # The runner wrote something it cannot be parsed as a protocol
+        # result.json
         # result: a protocol mismatch rather than an engine crash.
         kind = "protocol"
         remedy = (
@@ -665,7 +792,7 @@ def _execute_suite(
             "; ".join(part for part in message_parts if part),
             diagnostics={
                 "kind": kind,
-                "expected": "a parseable protocol v3 result.json",
+                "expected": "a parseable native protocol result.json",
                 "found": found,
                 "remedy": remedy,
             },

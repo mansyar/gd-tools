@@ -18,7 +18,7 @@ from pydantic import (
 
 from gd_tools.atomic_io import atomic_write_text
 
-NATIVE_PROTOCOL_VERSION = 3
+NATIVE_PROTOCOL_VERSION = 4
 
 
 def _reject_relative_segments(value: str) -> str:
@@ -149,7 +149,7 @@ class NativeManifest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    protocol_version: Literal[3] = NATIVE_PROTOCOL_VERSION
+    protocol_version: Literal[4] = NATIVE_PROTOCOL_VERSION
     project_root: Path
     runtime: RuntimeMode
     suites: list[NativeSuite] = Field(default_factory=list)
@@ -161,7 +161,7 @@ class NativePreflightResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    protocol_version: Literal[3] = NATIVE_PROTOCOL_VERSION
+    protocol_version: Literal[4] = NATIVE_PROTOCOL_VERSION
     status: Literal["ok", "error"]
     suites: list[NativeSuite] = Field(default_factory=list)
     error: str | None = None
@@ -197,6 +197,7 @@ class NativeTestResult(BaseModel):
     duration_seconds: float = Field(default=0.0, ge=0)
     attempts: int = Field(default=1, ge=1)
     message: str = ""
+    first_failure_message: str = ""
     diagnostics: dict[str, Any] = Field(default_factory=dict)
     started_at: str | None = None
     finished_at: str | None = None
@@ -209,12 +210,13 @@ class NativeRunResult(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    protocol_version: Literal[3] = NATIVE_PROTOCOL_VERSION
+    protocol_version: Literal[4] = NATIVE_PROTOCOL_VERSION
     run_id: str
     status: Literal["passed", "failed", "error", "cancelled"]
     tests: list[NativeTestResult] = Field(default_factory=list)
     coverage_data_path: Path | None = None
     artifact_index_path: Path | None = None
+    fail_fast: dict[str, Any] | None = None
     diagnostics: dict[str, Any] = Field(default_factory=dict)
     started_at: str | None = None
     finished_at: str | None = None

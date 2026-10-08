@@ -88,7 +88,7 @@ def _write_result(result_path: Path, status: str = "passed") -> None:
     result_path.write_text(
         json.dumps(
             {
-                "protocol_version": 3,
+                "protocol_version": 4,
                 "run_id": "test-run",
                 "status": status,
                 "engine_warnings": [],
@@ -322,6 +322,7 @@ def test_sigterm_handler_registered_and_restored(tmp_path):
                     tests=[],
                     coverage_data_path=None,
                     artifact_index_path=None,
+                    fail_fast=None,
                     engine_warnings=[],
                     diagnostics={},
                     stdout="",

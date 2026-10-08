@@ -316,7 +316,7 @@ re-init (e.g., after upgrading `gd-tools` via pip).
 gd-tools version stops shipping a file that an older version deployed (for
 example, the legacy GUT hook scripts `pre_run_hook.gd` and
 `post_run_hook.gd`, removed with the GUT compatibility bridge in v0.6.0),
-each stale copy found on the project is backed up to
+each stale copy found in the coverage addon is backed up to
 `addons/gd-tools-coverage/.backups/<name>.gd.bak`, deleted, and a notice is
 printed. Files you created yourself under `addons/` are never touched.
 
@@ -398,6 +398,8 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--no-cache` | flag | `false` | Force plan regeneration, bypassing the coverage plan cache. Only effective with `--coverage`; has no effect without it. |
 | `--changed` | flag | `false` | Run only the suites mapped from git-changed files (working tree vs `HEAD`). A change that maps to no suite falls back to the full suite with a notice; an empty change set exits 0 without launching Godot. |
 | `--base` | string | None | With `--changed`: diff committed changes from `merge-base(<ref>, HEAD)` instead of the working tree (the form for pull-request CI). Requires `--changed`; incompatible with `--watch` (exit 2). |
+| `--exitfirst`, `-x` | flag | `false` | Stop dispatching new suites after the first failing suite (test failure or infrastructure error). In-flight suites finish; unstarted suites are reported as skipped and summarized in a `Stopped early: fail-fast after suite <id> (K of M suites skipped)` line. Composes with `--parallel` (pool drains), `--coverage` (partial report), and `--watch` (gate resets per re-run). |
+| `--shard` | string `K/N` | None | Run only suite shard `K` of `N` for CI matrix splitting: suite *i* of the deterministic plan order belongs to shard `(i mod N) + 1`. Applied after `--changed`, before `--parallel`. `--shard 1/1` is valid; malformed values exit 2. Incompatible with `--watch` (exit 2). |
 
 **Examples:**
 
@@ -447,6 +449,12 @@ gd-tools test --changed --base main
 # Changed-file selection composes with the other flags
 gd-tools test --changed --parallel 4 --coverage --min 80
 
+# Fail fast: stop dispatching new suites after the first failing suite
+gd-tools test --exitfirst --parallel 4
+
+# CI sharding: run suite shard 2 of 4 (assignment is deterministic round-robin)
+gd-tools test --shard 2/4 --parallel 4 --coverage
+
 # Run exactly one native test file
 gd-tools test tests/unit/test_player.gd
 
@@ -476,6 +484,12 @@ gd-tools test --snapshot-update
   `--test-timeout` overrides it for one invocation, while `--timeout` limits
   Godot import and suite processes. Failed or timed-out tests are retried
   according to `[test].retries`.
+- A test that passes only after a retry is reported as **flaky** in the
+  run summary: a "Flaky tests (N)" panel lists the suite, the test name,
+  "passed on attempt N", and the first failed attempt's message (collapsed
+  to one line, truncated at 120 characters). The panel is omitted when no
+  test was flaky and suppressed under `--quiet`; flakiness never changes
+  the exit code.
 - Class-level tags can be configured with `[test].tags` or selected with
   repeatable `--tag` options. Explicit file paths are never broadened to
   sibling suites.
@@ -1031,6 +1045,7 @@ gd-tools coverage report [OPTIONS]
 |---|---|---|---|
 | `--report-format` | choice | Config `[coverage].format` | Output format for the report: `text`, `html`, `lcov`, `cobertura`, `json`, or `github-actions`. Invalid values fail fast with a usage error. |
 | `--output-dir` | string | Config `[coverage].output_dir` | Directory to write the report to. |
+| `--html-open` | flag | off | Open the generated HTML report in the default browser. Only applies with the `html` format; suppressed when stdout is not a terminal (e.g. in CI), so it is safe to leave in scripts. Open failures never change the exit code. |
 
 > **Note:** `--format` remains as a hidden backwards-compatible alias
 > for `--report-format` on this command. Supplying both is an error.
@@ -1051,6 +1066,9 @@ gd-tools coverage report --report-format json
 
 # Write report to a custom directory
 gd-tools coverage report --report-format html --output-dir reports/coverage
+
+# Generate and open the HTML report in the default browser
+gd-tools coverage report --report-format html --html-open
 ```
 
 **Exit Codes:**
@@ -1059,6 +1077,25 @@ gd-tools coverage report --report-format html --output-dir reports/coverage
 |---|---|
 | 0 | Report generated successfully. |
 | 2 | Configuration or environment error, or no coverage data found. |
+
+**HTML report:**
+
+The `html` format produces self-contained pages (all CSS/JS inlined, no
+external requests) written to the report output directory — an `index.html`
+summary plus one page per measured file:
+
+- **Summary dashboard** — per-file table with statements, line %, branch %,
+  and missed line/branch counts, sortable by any column and filterable by
+  path substring, plus project totals. Files with no branch points are
+  labeled; targets omitted from analysis are listed with their reason and fix.
+- **Per-file pages** — source lines colored by coverage state, with
+  line-level anchors from the dashboard and the uncovered-lines panel.
+- **Branch-arm detail** — uncovered branches are labeled to match the
+  terminal report (`if`/`elif`/`else`, ternary true/false, `and`/`or`
+  site/right-operand/short-circuit arm, `assert_true`/`assert_false`), with
+  inline per-arm badges on each branch line.
+- **Exclusions** — lines carrying a `# gd-tools: no cover` annotation show a
+  chip with the annotation text and remain outside the coverage totals.
 
 #### 3.7.2 coverage merge
 
@@ -1876,6 +1913,61 @@ jobs:
         run: gd-tools format --check
 ```
 
+#### Sharding a test run across CI jobs
+
+For large suites, split one run across several jobs with `--shard K/N`.
+Suites are assigned round-robin over the deterministic plan order, so
+shard membership is stable across runs and machines:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      # ... checkout, Godot setup, and gd-tools init as in the workflow above ...
+
+      - name: Run tests (shard)
+        run: gd-tools test --shard ${{ matrix.shard }}/4 --parallel 4 --coverage --junit-xml report-${{ matrix.shard }}.xml
+
+      - name: Upload coverage shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: .gd-tools/coverage/coverage.json
+
+  merge-coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-shard-*
+          path: shards
+      - name: Install gd-tools
+        run: pip install gd-tools-cli
+      - name: Merge coverage shards
+        run: gd-tools coverage merge shards/coverage-shard-*/coverage.json --output .gd-tools/coverage/coverage.json
+```
+
+Notes:
+
+- `--shard 2/4` runs shard 2 of 4 (1-based); invalid forms such as
+  `--shard 4/3` or `--shard 3` exit 2 before any work. `--shard 1/1` is
+  valid and equivalent to no sharding.
+- `--shard` composes with `--changed` (sharding applies to the
+  changed-filtered plan) and with `--parallel` (parallelism applies within
+  the shard). `--shard` and `--watch` are rejected together.
+- The coverage plan is built pre-shard, so merging the per-shard reports
+  yields the same result as a single un-sharded run.
+- Add `--exitfirst` to each shard to fail it quickly: within a shard,
+  dispatch stops at the first failing suite and the remaining suites are
+  skipped (`Stopped early: fail-fast after suite <id> ...`).
+
 ### 4.3 Coverage Threshold Enforcement
 
 To enforce a minimum coverage percentage in CI:
@@ -2077,8 +2169,9 @@ check as failing.
 
 **Cause:** The deployed `addons/gd-tools-test/` scripts were written by a
 different `gd-tools` version than the one running the command. Python and
-Godot exchange a versioned protocol; the current version is `2`, which adds
-scene and resource integration metadata. A protocol-v1 payload, malformed
+Godot exchange a versioned protocol; the current version is `4`, which
+carries scene and resource integration metadata plus the first-attempt
+failure message for retried tests. An older protocol payload, malformed
 integration metadata, or a partially deployed addon is rejected as a
 configuration failure rather than being guessed at.
 

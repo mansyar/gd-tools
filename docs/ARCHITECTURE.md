@@ -1063,6 +1063,12 @@ could not be instrumented, so the reported percentage does not describe the
 whole project the threshold was written for. Without `--min`, the same
 condition is a prominent warning and does not change the exit code.
 
+Fail-fast does not introduce a new exit code: `--exitfirst` stops dispatching
+new suites after the first failing suite, but the run's exit code follows the
+same table — `1` when the triggering result is a test failure, `2` when it is
+an infrastructure error. The skipped suites are reported, not treated as
+passes.
+
 ## 10. Environment Contract
 
 Python passes paths to Godot through the process environment rather than
@@ -1107,6 +1113,28 @@ reported as a coverage shortfall.
 ### 11.2 orchestrator.py
 
 Runs one Godot process per suite, in a loop, and merges what comes back.
+
+The dispatch order is fixed: `--changed` filtering (in the command layer)
+narrows the plan first, then `--shard K/N` selects the shard's subset of the
+filtered plan, and only then does `--parallel` distribute suites. Shard
+assignment is a pure round-robin over the deterministic plan order — suite
+*i* (0-based) belongs to shard `(i mod N) + 1` — so selection is stable
+across runs and machines and the coverage plan (built pre-shard) is
+unaffected. An empty shard exits cleanly with zero suites without launching
+Godot.
+
+With `--exitfirst` (fail-fast), the dispatch loop stops **submitting** new
+suites after the first suite whose final aggregated result is a failure or
+an infrastructure error. In-flight suites finish and are collected; suites
+that were never started are recorded as synthetic skipped entries
+(`not_run`) in discovery order and summarized on the result's `fail_fast`
+field, which the command layer renders as
+`Stopped early: fail-fast after suite <id> (K of M suites skipped)` and
+publishes in the artifact index as per-suite `fail_fast: "skipped"` markers.
+Skips and passes never trigger the gate — only final results do, so a suite
+that passes after an in-process retry does not stop the run. Without the
+flag, dispatch behavior is unchanged (all suites always run; a failure never
+cancels other suites).
 
 Per suite it writes a manifest, unlinks any stale shard before the run so a
 crash cannot leave last run's coverage looking current, launches the process

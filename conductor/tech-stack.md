@@ -33,6 +33,7 @@
 |---------|---------|
 | `pytest` | Test framework for gd-tools itself |
 | `pytest-cov` | Coverage measurement for gd-tools's own code |
+| `pytest-xdist` | Parallel pytest execution for CI unit-test jobs (`-n auto`; local runs stay serial) |
 | `ruff` | Linter for gd-tools Python code |
 | `black` | Formatter for gd-tools Python code |
 | `commitizen` | Conventional commit enforcement, automated semantic versioning, and changelog generation |
@@ -125,7 +126,7 @@
 - **Runtime mode:** Native execution is the only supported runtime; `GutTest` suites are rejected with exit `2` and migration guidance (`gd-tools migrate`).
 - **Packaging:** One bundled native test addon with the Python distribution.
 - **Execution:** Suite-scoped Godot processes, fresh test instances, async-first test methods, and sequential execution by default (opt-in bounded parallel worker pool via `--parallel N` / `[test].parallel`).
-- **Integration protocol:** Native protocol v3. One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
+- **Integration protocol:** Native protocol v4 (v4 adds an optional `first_failure_message` to each test result, carrying the first failed attempt's error message for retried tests). One headless preflight per command reads suite `INTEGRATION` constants through Godot metadata, validates and merges them into the per-suite manifest. Python never parses GDScript.
 - **Execution modes:** Headless by default; `windowed` suites run without `--headless`, require a real display, and fail with exit `2` when the renderer is headless.
 - **Artifacts:** `.gd-tools/artifacts/<run_id>/` holds a machine-readable index plus preflight and per-suite artifacts; only the latest run is retained.
 - **Coverage:** Native runtime owns activation; the versioned coverage plan schema (currently v7 — v3 anchors ternary branch points to their enclosing statement, v4 drops points recorded on class-member declaration and signature lines, v5 additionally drops bracket/backslash continuation lines, v6 adds ternary `operand_span` value-preserving arm wrapping, v7 adds `and`/`or` short-circuit and `assert` condition branch points) is reused where possible for line and branch metrics. Collectors reject plans carrying branch types they do not implement, so a stale addon fails loudly against a newer plan.

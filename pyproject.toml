@@ -49,6 +49,7 @@ Documentation = "https://github.com/mansyar/gd-tools#readme"
 dev = [
     "pytest",
     "pytest-cov",
+    "pytest-xdist",
     "ruff==0.15.21",
     "black",
     "commitizen",

@@ -1,0 +1,8 @@
+{
+  "id": "test_suite_audit_speed_20261008",
+  "type": "chore",
+  "status": "new",
+  "created": "2026-10-08",
+  "branch": "feature/test-suite-audit-speed-20261008",
+  "summary": "Measured audit-driven speed-up of the pytest suites: unit quick wins (event-wait bug, de-subprocess, watcher waits), pytest-xdist for CI Stage 1/matrix, batching integration parse-checks into one Godot session, integration timeout/playtest tuning, and E2E smoke wait fixes. Numeric targets: unit 40.7s->15s, integration 5:10->2:30, e2e smoke 1:59->1:15, coverage never reduced."
+}

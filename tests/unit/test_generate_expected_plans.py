@@ -1,8 +1,7 @@
 """Unit tests for the generate_expected_plans fixture script."""
 
+import importlib.util
 import json
-import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -29,42 +28,29 @@ _FIXTURE_NAMES = [
 ]
 
 
-def test_script_regenerates_all_fixtures(tmp_path):
-    """Script runs and regenerates all expected plan JSON fixtures."""
-    result = subprocess.run(
-        [
-            sys.executable,
-            str(_SCRIPT),
-            "--fixtures-dir",
-            str(_FIXTURES_DIR),
-            "--output-dir",
-            str(tmp_path),
-        ],
-        capture_output=True,
-        text=True,
+@pytest.fixture(scope="module")
+def script():
+    """Load the tools script as a module (in-process, once per module)."""
+    spec = importlib.util.spec_from_file_location(
+        "generate_expected_plans", _SCRIPT
     )
-    assert result.returncode == 0, result.stderr
-
-    for name in _FIXTURE_NAMES:
-        json_file = tmp_path / f"{name}.expected.json"
-        assert json_file.exists(), f"Missing {json_file}"
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
-def test_regenerated_fixtures_match_committed(tmp_path):
+def test_script_regenerates_all_fixtures(tmp_path, script):
+    """Script regenerates all expected plan JSON fixtures."""
+    generated = script.regenerate_expected_plans(_FIXTURES_DIR, tmp_path)
+
+    assert [path.name for path in generated] == [
+        f"{name}.expected.json" for name in _FIXTURE_NAMES
+    ]
+
+
+def test_regenerated_fixtures_match_committed(tmp_path, script):
     """Regenerated fixtures match committed fixtures (no drift)."""
-    result = subprocess.run(
-        [
-            sys.executable,
-            str(_SCRIPT),
-            "--fixtures-dir",
-            str(_FIXTURES_DIR),
-            "--output-dir",
-            str(tmp_path),
-        ],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, result.stderr
+    script.regenerate_expected_plans(_FIXTURES_DIR, tmp_path)
 
     for name in _FIXTURE_NAMES:
         generated = json.loads(

@@ -311,14 +311,30 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Ship v0.7.0** (chore/release: commitizen version bump to 0.7.0
-  with dated CHANGELOG section, full documentation truth pass against the
-  post-v0.6.0 feature set (GH Actions annotations, `--min-branch`, coverage
-  `github-actions` format, spy framework upgrades, `error` outcome, ternary
-  fixes), local pre-release verification per workflow.md checklist, then tag
-  push triggering the automated release workflow: build → twine check →
-  TestPyPI → PyPI)
-  *Link: [release_v070_20261005](./tracks/release_v070_20261005/index.md)*
+- [x] **Track: Ship v0.7.0** (archived → `./archive/release_v070_20261005/`)
+  *Link: [release_v070_20261005](./archive/release_v070_20261005/index.md)*
 
----
+
+- [x] **Track: HTML Coverage Report Overhaul** (feature: self-contained HTML
+  coverage report with sortable dashboard, branch-arm detail panels, per-file
+  anchors, and `--html-open` convenience flag)
+  *Link: [html_coverage_report_20261007](./archive/html_coverage_report_20261007/index.md)*
+
+- [x] **Track: Fail-Fast and CI Sharding** (feature: pytest-parity orchestration
+  flags for `gd-tools test` — `--exitfirst`/`-x` stops dispatching new suites on
+  the first failing suite result (any failure class; retries respected; in-flight
+  suites drain; exit 1 with summary line; partial coverage report labeled as
+  such) and `--shard k/N` selects a suite-level round-robin subset of the
+  deterministic plan order for CI parallelism (changed → shard → parallel
+  pipeline; composes with `--parallel` and `--exitfirst`; rejected with
+  `--watch`; CLI-only flags with README + GitHub Actions sharding recipe docs)
+  *Link: [fail_fast_ci_sharding_20261005](./archive/fail_fast_ci_sharding_20261005/index.md)*
+
+- [x] **Track: Test Suite Audit & Speed-Up** (chore: measured audit-driven
+  pytest speed-up - fix exitfirst event-wait bug + de-subprocess unit tests,
+  pytest-xdist `-n auto` for CI Stage 1/matrix, batch integration parse-checks
+  into one Godot session, shorten timeout/playtest waits, fix E2E smoke waits;
+  targets: unit 40.7s→≤15s, integration 5:10→≤2:30, e2e smoke 1:59→≤1:15,
+  coverage never reduced)
+  *Link: [test_suite_audit_speed_20261008](./archive/test_suite_audit_speed_20261008/index.md)*
 

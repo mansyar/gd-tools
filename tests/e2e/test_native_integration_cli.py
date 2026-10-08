@@ -266,7 +266,7 @@ def test_native_cli_runs_scene_suite_with_default_and_overridden_metadata(
     preflight = json.loads(
         Path(index["preflight"]["result"]).read_text(encoding="utf-8")
     )
-    assert preflight["protocol_version"] == 3
+    assert preflight["protocol_version"] == 4
     assert preflight["status"] == "ok"
     suite = preflight["suites"][0]
     assert suite["integration"]["mode"] == "headless"

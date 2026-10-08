@@ -13,6 +13,8 @@ from rich.table import Table
 from rich.text import Text
 
 from gd_tools import output
+from gd_tools.native_test.flaky import is_flaky
+from gd_tools.verbosity import Verbosity, get_verbosity
 
 
 @dataclass
@@ -45,6 +47,9 @@ class TestDetail:
         status: One of ``"pass"``, ``"fail"``, ``"skip"``.
         message: Failure message or empty string on pass/skip.
         duration: Execution time in seconds.
+        attempts: Retry attempts the native runtime spent on the test.
+        first_failure_message: The first failing attempt's message
+            (empty when the test passed on its first attempt).
     """
 
     __test__ = False
@@ -55,6 +60,8 @@ class TestDetail:
     message: str
     duration: float
     diagnostics: dict[str, Any] = field(default_factory=dict)
+    attempts: int = 1
+    first_failure_message: str = ""
 
 
 @dataclass
@@ -217,6 +224,64 @@ _STATUS_STYLES = {
 }
 
 
+def _collapse_message(message: str, limit: int = 120) -> str:
+    """Collapse a failure message to its first line, truncated.
+
+    Args:
+        message: The raw (possibly multi-line) failure message.
+        limit: Maximum rendered length; longer lines are cut and
+            closed with an ellipsis.
+
+    Returns:
+        The single-line, truncated message (empty when the message is
+        blank).
+    """
+    lines = message.splitlines()
+    first_line = lines[0].strip() if lines else ""
+    if not first_line:
+        return ""
+    if len(first_line) > limit:
+        return first_line[: limit - 1] + "\u2026"
+    return first_line
+
+
+def _print_flaky_panel(test_details: list[TestDetail]) -> None:
+    """Print the flaky-test panel when the run had flaky tests.
+
+    A test is flaky when it ultimately passed but needed more than one
+    attempt.  The panel is suppressed entirely when no test qualifies,
+    and under QUIET verbosity.
+
+    Args:
+        test_details: The run's per-test details.
+    """
+    flaky = [
+        detail
+        for detail in test_details
+        if is_flaky(detail.status, detail.attempts)
+    ]
+    if not flaky:
+        return
+    if get_verbosity() == Verbosity.QUIET:
+        return
+    output.console.print(
+        Text.assemble(
+            ("Flaky tests ", "yellow"),
+            (f"({len(flaky)}):", "yellow"),
+        )
+    )
+    for detail in flaky:
+        output.console.print(
+            Text.assemble(
+                (f"  {detail.suite}.{detail.name}", ""),
+                (f" passed on attempt {detail.attempts}", "dim"),
+            )
+        )
+        message = _collapse_message(detail.first_failure_message)
+        if message:
+            output.console.print(f"    {message}", markup=False)
+
+
 def print_durations_table(result: TestResult, n: int) -> None:
     """Print a Rich table of the slowest tests from a finished run.
 
@@ -294,6 +359,8 @@ def format_test_results(
 
     if result.snapshot_summary is not None:
         _print_snapshot_summary(result.snapshot_summary)
+
+    _print_flaky_panel(result.test_details)
 
     if result.failed == 0:
         # A skipped test did not run, so counting it as passed would report a

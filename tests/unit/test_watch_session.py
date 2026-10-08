@@ -82,6 +82,7 @@ def _run_watch(
     clock,
     parallel=None,
     durations=None,
+    exitfirst=None,
 ):
     with (
         patch(
@@ -99,6 +100,7 @@ def _run_watch(
             side_effect=fake_native,
         ) as mock_native,
     ):
+        extra = {"exitfirst": exitfirst} if exitfirst is not None else {}
         code = run_watch_mode(
             config,
             event_source=FakeEventSource(events),
@@ -107,6 +109,7 @@ def _run_watch(
             output=output.append,
             parallel=parallel,
             durations=durations,
+            **extra,
         )
     return code, mock_native
 
@@ -128,6 +131,33 @@ def test_watch_forwards_durations_to_re_runs(tmp_path):
     )
     assert code == 0
     assert mock_native.call_args.kwargs["durations"] == 2
+
+
+def test_watch_forwards_exitfirst_to_every_iteration(tmp_path):
+    """Fail-fast is passed per watch iteration, never persisting state."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    calls = []
+
+    def fake_native(*args, **kwargs):
+        calls.append(dict(kwargs))
+        if len(calls) == 1:
+            raise TestFailureError("1 test(s) failed")
+        raise KeyboardInterrupt
+
+    code, _ = _run_watch(
+        tmp_path,
+        _config(tmp_path),
+        fake_native,
+        [("src/enemy.gd", "modified")],
+        output,
+        clock,
+        exitfirst=True,
+    )
+    assert code == 0
+    assert len(calls) == 2
+    assert all(call.get("exitfirst") is True for call in calls)
 
 
 def test_banner_reports_watched_file_count(tmp_path):

@@ -452,11 +452,16 @@ def test_run_lint_multiple_paths_deduplicates(tmp_path):
     assert result.files_checked == 2
 
 
-def test_run_lint_default_paths(tmp_path):
+def test_run_lint_default_paths(tmp_path, monkeypatch):
     """Test run_lint with None paths defaults to current directory."""
+    (tmp_path / "player.gd").write_text("extends Node\n")
+    monkeypatch.chdir(tmp_path)
     config = GdToolsConfig()
     result = run_lint(config, None)
     assert isinstance(result, LintResult)
+    # Exactly the one file in cwd was linted (proves the default scope is
+    # the current directory, not some larger ambient path).
+    assert result.files_checked == 1
 
 
 # --- Verbose mode: command display ---
@@ -473,7 +478,10 @@ def test_run_lint_verbose_shows_file_being_linted(tmp_path, capsys):
     run_lint(config, [str(tmp_path)])
 
     captured = capsys.readouterr()
-    assert "player.gd" in captured.out
+    # Rich soft-wraps long paths at the console width (80 on CI), which
+    # under xdist's longer tmp dirs can split the basename across lines;
+    # collapse soft-wraps before matching.
+    assert "player.gd" in captured.out.replace("\n", "")
 
 
 def test_run_lint_default_mode_no_file_info_shown(tmp_path, capsys):

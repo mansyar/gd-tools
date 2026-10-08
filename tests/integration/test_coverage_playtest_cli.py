@@ -109,16 +109,8 @@ MAIN_SCENE_SOURCE = (
 )
 
 
-def _prepare_cli_project(
-    tmp_path: Path,
-    godot_bin: str,
-    scene: str,
-    subject: str = SUBJECT_SOURCE,
-) -> Path:
-    """Build a fixture project with a main scene that exercises coverage."""
-    project = tmp_path / "playtest_cli_project"
-    shutil.copytree(AUTOLOAD_FIXTURE, project)
-    shutil.copytree(COVERAGE_ADDON, project / "addons" / "gd-tools-coverage")
+def _write_project_scripts(project: Path, scene: str, subject: str) -> None:
+    """Write the subject/scene scripts and main scene into ``project``."""
     (project / "scripts" / "playtest_subject.gd").write_text(
         subject, encoding="utf-8", newline="\n"
     )
@@ -128,7 +120,23 @@ def _prepare_cli_project(
     (project / "main.tscn").write_text(
         MAIN_SCENE_SOURCE, encoding="utf-8", newline="\n"
     )
-    project_godot = project / "project.godot"
+
+
+@pytest.fixture(scope="module")
+def imported_base_project(tmp_path_factory, godot_bin):
+    """Prepare and import the fixture project once for the whole module.
+
+    The subject and scene scripts are plain GDScript (no ``class_name``),
+    so tests can copy this imported project and rewrite script contents
+    afterwards without re-importing: the global script class cache only
+    depends on ``class_name`` declarations, and Godot's per-script ``.uid``
+    files follow the file path, not the content.
+    """
+    base = tmp_path_factory.mktemp("playtest_cli_base") / "base"
+    shutil.copytree(AUTOLOAD_FIXTURE, base)
+    shutil.copytree(COVERAGE_ADDON, base / "addons" / "gd-tools-coverage")
+    _write_project_scripts(base, CLEAN_SCENE_SOURCE, SUBJECT_SOURCE)
+    project_godot = base / "project.godot"
     content = project_godot.read_text(encoding="utf-8")
     content = re.sub(
         r'(config/name="[^"]*")',
@@ -137,8 +145,21 @@ def _prepare_cli_project(
         count=1,
     )
     project_godot.write_text(content, encoding="utf-8")
-    register_coverage_autoload(project)
-    import_godot_project(godot_bin, project)
+    register_coverage_autoload(base)
+    import_godot_project(godot_bin, base)
+    return base
+
+
+def _prepare_cli_project(
+    imported_base: Path,
+    tmp_path: Path,
+    scene: str,
+    subject: str = SUBJECT_SOURCE,
+) -> Path:
+    """Fork the imported base project and point it at this test's scene."""
+    project = tmp_path / "playtest_cli_project"
+    shutil.copytree(imported_base, project)
+    _write_project_scripts(project, scene, subject)
     return project
 
 
@@ -153,9 +174,11 @@ def _run_cli(project: Path, args: list[str]):
         os.chdir(cwd)
 
 
-def test_coverage_run_reports_after_clean_exit(godot_bin, tmp_path):
+def test_coverage_run_reports_after_clean_exit(imported_base_project, tmp_path):
     """A scene that quits cleanly produces a report and exits 0."""
-    project = _prepare_cli_project(tmp_path, godot_bin, CLEAN_SCENE_SOURCE)
+    project = _prepare_cli_project(
+        imported_base_project, tmp_path, CLEAN_SCENE_SOURCE
+    )
     result = _run_cli(project, ["--report-format", "text"])
     assert result.exit_code == 0, result.output
     assert "Report written to:" in result.output
@@ -171,9 +194,18 @@ def test_coverage_run_reports_after_clean_exit(godot_bin, tmp_path):
     assert "playtest_subject.gd" in report_text
 
 
-def test_coverage_run_timeout_closes_game_and_reports(godot_bin, tmp_path):
+def test_coverage_run_timeout_closes_game_and_reports(
+    imported_base_project, tmp_path
+):
     """--timeout closes a lingering game and reports the last snapshot."""
-    project = _prepare_cli_project(tmp_path, godot_bin, LINGER_SCENE_SOURCE)
+    project = _prepare_cli_project(
+        imported_base_project, tmp_path, LINGER_SCENE_SOURCE
+    )
+    # 15s keeps the flush interval at its 5s cap, leaving ~10s of headroom
+    # for engine boot before the first periodic snapshot; a 6s timeout
+    # (3s interval) was falsified on macOS CI runners where boot alone can
+    # exceed 3s, killing the game before any snapshot landed. The
+    # close-and-report semantics this test exists to prove are unchanged.
     result = _run_cli(project, ["--timeout", "15", "--report-format", "text"])
     assert result.exit_code == 0, result.output
     assert "Report written to:" in result.output
@@ -237,11 +269,11 @@ EXPECTED_EXPRESSION_TYPES = {
 }
 
 
-def test_coverage_run_measures_expression_arms(godot_bin, tmp_path):
+def test_coverage_run_measures_expression_arms(imported_base_project, tmp_path):
     """Playtest coverage measures and/or/assert arms with v7 plans."""
     project = _prepare_cli_project(
+        imported_base_project,
         tmp_path,
-        godot_bin,
         EXPRESSION_SCENE_SOURCE,
         subject=EXPRESSION_SUBJECT_SOURCE,
     )

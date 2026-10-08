@@ -96,7 +96,7 @@ def test_publish_records_paths_and_prunes_only_after_publication(tmp_path):
     )
 
     index = json.loads(index_path.read_text(encoding="utf-8"))
-    assert index["protocol_version"] == 3
+    assert index["protocol_version"] == 4
     assert index["run_id"] == "run-1"
     assert index["status"] == "passed"
     assert index["run_dir"] == str(layout.run_dir)
