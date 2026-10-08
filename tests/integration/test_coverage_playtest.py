@@ -128,19 +128,32 @@ def _playtest_plan() -> dict:
     }
 
 
-def _prepare_playtest_project(tmp_path: Path, godot_bin: str) -> Path:
-    """Copy the fixture project, install the coverage addon and autoload."""
-    project = tmp_path / "playtest_project"
-    shutil.copytree(AUTOLOAD_FIXTURE, project)
-    shutil.copytree(COVERAGE_ADDON, project / "addons" / "gd-tools-coverage")
-    (project / "scripts" / "playtest_subject.gd").write_text(
+@pytest.fixture(scope="module")
+def imported_playtest_base(tmp_path_factory, godot_bin):
+    """Prepare and import the playtest fixture project once for the module.
+
+    Every test runs the same driver scene, so each test copies this
+    imported base project (plain scripts, no ``class_name``) without
+    needing a re-import.
+    """
+    base = tmp_path_factory.mktemp("playtest_base") / "base"
+    shutil.copytree(AUTOLOAD_FIXTURE, base)
+    shutil.copytree(COVERAGE_ADDON, base / "addons" / "gd-tools-coverage")
+    (base / "scripts" / "playtest_subject.gd").write_text(
         SUBJECT_SOURCE, encoding="utf-8", newline="\n"
     )
-    (project / "playtest_driver.gd").write_text(
+    (base / "playtest_driver.gd").write_text(
         DRIVER_SOURCE, encoding="utf-8", newline="\n"
     )
-    register_coverage_autoload(project)
-    import_godot_project(godot_bin, project)
+    register_coverage_autoload(base)
+    import_godot_project(godot_bin, base)
+    return base
+
+
+def _prepare_playtest_project(base: Path, tmp_path: Path) -> Path:
+    """Fork the imported base project for one test session."""
+    project = tmp_path / "playtest_project"
+    shutil.copytree(base, project)
     return project
 
 
@@ -184,9 +197,11 @@ def _run_playtest(
     return result, output_path
 
 
-def test_playtest_exit_flush_writes_coverage_on_close(godot_bin, tmp_path):
+def test_playtest_exit_flush_writes_coverage_on_close(
+    godot_bin, imported_playtest_base, tmp_path
+):
     """Playtest mode finalizes and writes coverage data on window close."""
-    project = _prepare_playtest_project(tmp_path, godot_bin)
+    project = _prepare_playtest_project(imported_playtest_base, tmp_path)
     result, output_path = _run_playtest(
         tmp_path,
         project,
@@ -207,9 +222,11 @@ def test_playtest_exit_flush_writes_coverage_on_close(godot_bin, tmp_path):
     assert hits["2"] == 1  # statement
 
 
-def test_playtest_periodic_flush_writes_before_exit(godot_bin, tmp_path):
+def test_playtest_periodic_flush_writes_before_exit(
+    godot_bin, imported_playtest_base, tmp_path
+):
     """Periodic flush writes the output file while the game is still running."""
-    project = _prepare_playtest_project(tmp_path, godot_bin)
+    project = _prepare_playtest_project(imported_playtest_base, tmp_path)
     result, output_path = _run_playtest(
         tmp_path,
         project,
@@ -228,9 +245,11 @@ def test_playtest_periodic_flush_writes_before_exit(godot_bin, tmp_path):
     assert data["files"][0]["hits"]
 
 
-def test_playtest_without_output_env_exits_cleanly(godot_bin, tmp_path):
+def test_playtest_without_output_env_exits_cleanly(
+    godot_bin, imported_playtest_base, tmp_path
+):
     """Playtest mode with no output path warns once, not again at exit."""
-    project = _prepare_playtest_project(tmp_path, godot_bin)
+    project = _prepare_playtest_project(imported_playtest_base, tmp_path)
     result, output_path = _run_playtest(
         tmp_path,
         project,
@@ -248,9 +267,11 @@ def test_playtest_without_output_env_exits_cleanly(godot_bin, tmp_path):
     assert not output_path.exists()
 
 
-def test_playtest_inactive_without_env(godot_bin, tmp_path):
+def test_playtest_inactive_without_env(
+    godot_bin, imported_playtest_base, tmp_path
+):
     """Without the playtest env var the tracker must not write anything."""
-    project = _prepare_playtest_project(tmp_path, godot_bin)
+    project = _prepare_playtest_project(imported_playtest_base, tmp_path)
     result, output_path = _run_playtest(
         tmp_path,
         project,
