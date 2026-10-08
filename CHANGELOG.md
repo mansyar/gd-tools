@@ -1,5 +1,38 @@
 ## Unreleased
 
+### Fixed
+
+- **coverage**: Pure-declaration/data GDScript files (e.g. `class_name`
+  modules holding only constants or definitions) no longer become
+  silent coverage omissions. Files with no trackable statements are
+  excluded from the plan with a visible warning instead of being
+  planned with zero points, skipped by the collector without an
+  omission record, and reported as "the runtime did not report why
+  this target could not be instrumented" (`PLAN_VERSION` 8; old plans
+  regenerate automatically).
+
+- **coverage**: Instrumented `var x := ...` declarations whose
+  initializer contains a wrapped ternary or boolean-operator operand
+  no longer fail to reload under Godot's error-by-default
+  `inference_on_variant` warning. The plan records the inference site
+  and the collector injects `@warning_ignore("inference_on_variant")`
+  alongside the covered line, so strict warning configurations cannot
+  reject instrumentation.
+
+- **coverage**: Reload-failure omission records now embed the engine's
+  error code and point at the actual mechanism (the `SCRIPT ERROR`
+  lines logged around the warning) instead of the misleading "Fix the
+  script's own syntax" hint.
+
+- **lint**: `gd-tools lint` now honors the project's `gdlintrc` /
+  `.gdlintrc` — the same file bare `gdlint` reads — including
+  `disable:` lists and per-rule settings. Previously the config was
+  ignored because `lint_code` was called without one, so rules
+  disabled in `gdlintrc` were still reported. A `--lint-config` option
+  overrides discovery with an explicit path; discovery is bounded at
+  the project root so a stray config outside the project cannot
+  silently govern the project's lint run.
+
 ### Added
 
 - **coverage**: Boolean short-circuit operators (`and`/`or`) and
