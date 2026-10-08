@@ -54,7 +54,7 @@
   Product change in this phase: one line in `native_test/orchestrator.py` (set `context.abort_event` on the fail-fast trigger before the drain) — covered by `test_native_exitfirst` (new sentinel assertion) and verified against the real-Godot e2e exitfirst tests (2 passed).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — pytest-xdist for CI (FR-B)
+## Phase 2 — pytest-xdist for CI (FR-B) [checkpoint: 218ffaa]
 
 - [x] Task 2.1: Add `pytest-xdist` to dev dependencies (`pyproject.toml`); document in `docs/TESTING_STRATEGY.md`.
   - [x] `pytest-xdist` added to `[project.optional-dependencies].dev` (installed locally: 3.8.0 on pytest 9.0.2).
