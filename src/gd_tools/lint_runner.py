@@ -86,6 +86,9 @@ def load_gdlint_config(
         return DEFAULT_CONFIG
 
     with open(file_path, "r", encoding="utf-8") as handle:
+        # safe_load differs from bare gdlint (yaml.Loader) on YAML tags;
+        # the stricter loader is intentional — configs are plain data and
+        # untrusted tags should never execute.
         loaded = yaml.safe_load(handle.read())
     if not isinstance(loaded, dict):
         loaded = {}

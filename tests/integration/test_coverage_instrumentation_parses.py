@@ -153,6 +153,16 @@ CASES = {
         [5, 5],
         [5, 6],
     ),
+    # A statement that already carries a same-line annotation gets the
+    # collector's annotation stacked in front of it; GDScript accepts
+    # stacked annotations, and this case pins that the result still parses.
+    "inferred_wrapped_preannotated": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        '\t@warning_ignore("inference_on_variant") var x := '
+        "10 if a > 0 else 20\n\tprint(x)\n",
+        [5, 5],
+        [5, 6],
+    ),
     "param_orphan": (
         "extends Node\n\n\nfunc f(a: int, x = 1 if a > 0 else 2) -> void:\n"
         "\tprint(x)\n",
