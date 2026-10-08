@@ -101,9 +101,9 @@
 
 ## Phase 5 — E2E Smoke Speed-Up (FR-E) + Final Verification
 
-- [~] Task 5.1: Root-cause the two slow smoke tests.
-  - [ ] Instrument `test_changed_selection_end_to_end` (40.5s) and `test_watch_session_end_to_end` (34.1s) with coarse timing; identify fixed waits/real process churn.
-- [ ] Task 5.2: Fix the waits (configured short timeouts, event-based waits), preserving end-to-end semantics; re-run smoke subset.
+- [x] Task 5.1: Root-cause the two slow smoke tests.
+  - [x] Instrument `test_changed_selection_end_to_end` (40.5s) and `test_watch_session_end_to_end` (34.1s) with coarse timing; identify fixed waits/real process churn. *(temporary stderr timing instrumentation, removed after measuring. changed: init 1.9s, warmup 14.3s, clean 1.4s, mapped 13.4s, fallback 14.2s, base 12.0s, committed 1.3s. watch: Run 1 at 9.8s, Run 2 at 18.9s, Run 3 at 29.9s, Run 4 at 44.1s. Verdict: no test-side fixed waits - the cost is ~7s of real Godot time per suite execution (9 suite runs + 3 --changed discovery passes across the two tests). Watch mutator waits are already event-driven (0.05s debounce, 0.1s poll).)*
+- [x] Task 5.2: Fix the waits (configured short timeouts, event-based waits), preserving end-to-end semantics; re-run smoke subset. *(no fix applicable: instrumentation proved there are no artificial waits to remove. A direct `godot --import` warmup replacing the full warmup run was tried and passed 2/2 but saved nothing (36.4s/41.7s vs 40.5s baseline, within +/-5s noise) because the warmup test run was double-serving as the cache warmer for the later runs; the experiment was reverted to keep the test surgical. Cutting the remaining ~90s requires product-side per-suite startup optimization (~7s/suite), which is out of scope for this track and recommended as a future track.)*
 - [ ] Task 5.3: Final measurement pass.
   - [ ] Run all three suites with the acceptance commands; record before/after table in this plan.
   - [ ] Verify acceptance criteria: unit ≤ 15s, integration ≤ 2:30, e2e smoke ≤ 1:15, coverage ≥ baseline, all tests pass.
