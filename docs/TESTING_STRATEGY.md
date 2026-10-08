@@ -1271,6 +1271,12 @@ monkeypatch.delenv("GODOT_BIN", raising=False)
 The CI pipeline uses staged gating with three sequential jobs plus a
 cross-platform matrix:
 
+> **Parallel unit jobs:** the unit-test jobs (Stage 1 and `matrix-unit`)
+> run under [pytest-xdist](https://pytest-xdist.readthedocs.io/) with
+> `-n auto` (added in track `test_suite_audit_speed_20261008`). Local
+> runs stay serial by default — pass `-n auto` manually if you want to
+> parallelize locally.
+
 ```yaml
 name: CI
 
@@ -1300,7 +1306,7 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: ruff check src/ tests/
       - run: black --check src/ tests/
-      - run: pytest tests/unit/ -m unit --cov=gd_tools --cov-report=xml --junitxml=junit-unit.xml
+      - run: pytest tests/unit/ -m unit --cov=gd_tools --cov-report=xml --junitxml=junit-unit.xml -n auto
       - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -1321,7 +1327,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: pytest tests/unit/ -m unit --no-cov
+      - run: pytest tests/unit/ -m unit --no-cov -n auto
 
   # Stage 2: Integration tests (requires Godot)
   integration:

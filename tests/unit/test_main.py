@@ -1,6 +1,6 @@
 """Tests for the module entry point (__main__.py)."""
 
-import subprocess
+import runpy
 import sys
 
 import pytest
@@ -11,39 +11,49 @@ from gd_tools.errors import ConfigError
 pytestmark = pytest.mark.unit
 
 
-class TestSubprocess:
-    """Subprocess tests for python -m gd_tools."""
+class TestPythonDashM:
+    """``python -m gd_tools`` tests, executed in-process via ``runpy``.
 
-    def test_python_m_version(self):
+    ``runpy.run_module`` with ``run_name="__main__"`` is the exact
+    machinery ``python -m`` uses, so the module-execution semantics are
+    preserved without paying per-test interpreter startup (~1.1s each
+    for the original subprocess-based versions).
+    """
+
+    @pytest.fixture(autouse=True)
+    def _fresh_main_module(self, monkeypatch):
+        """Drop the pre-imported ``__main__`` so runpy executes it fresh.
+
+        Without this, runpy warns that ``gd_tools.__main__`` is already
+        in ``sys.modules`` (the test module imports it for ``TestMain``)
+        and would skip re-execution.
+        """
+        monkeypatch.delitem(sys.modules, "gd_tools.__main__", raising=False)
+
+    def test_python_m_version(self, monkeypatch, capsys):
         """Test python -m gd_tools --version outputs the correct version."""
         from gd_tools import __version__
 
-        result = subprocess.run(
-            [sys.executable, "-m", "gd_tools", "--version"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 0
-        assert f"gd-tools {__version__}" in result.stdout
+        monkeypatch.setattr(sys, "argv", ["gd_tools", "--version"])
+        with pytest.raises(SystemExit) as exc_info:
+            runpy.run_module("gd_tools", run_name="__main__", alter_sys=True)
+        assert exc_info.value.code == 0
+        assert f"gd-tools {__version__}" in capsys.readouterr().out
 
-    def test_python_m_help(self):
+    def test_python_m_help(self, monkeypatch, capsys):
         """Test python -m gd_tools --help exits with code 0."""
-        result = subprocess.run(
-            [sys.executable, "-m", "gd_tools", "--help"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 0
-        assert "Usage:" in result.stdout
+        monkeypatch.setattr(sys, "argv", ["gd_tools", "--help"])
+        with pytest.raises(SystemExit) as exc_info:
+            runpy.run_module("gd_tools", run_name="__main__", alter_sys=True)
+        assert exc_info.value.code == 0
+        assert "Usage:" in capsys.readouterr().out
 
-    def test_python_m_test_stub_exit_code_2(self):
+    def test_python_m_test_stub_exit_code_2(self, monkeypatch, capsys):
         """Test python -m gd_tools test exits with code 2 (stub)."""
-        result = subprocess.run(
-            [sys.executable, "-m", "gd_tools", "test"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 2
+        monkeypatch.setattr(sys, "argv", ["gd_tools", "test"])
+        with pytest.raises(SystemExit) as exc_info:
+            runpy.run_module("gd_tools", run_name="__main__", alter_sys=True)
+        assert exc_info.value.code == 2
 
 
 class TestMain:

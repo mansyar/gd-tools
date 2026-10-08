@@ -269,11 +269,22 @@ def test_format_test_results_with_failures(capsys):
     assert "1 failed" in captured.out
 
 
+def _long_blob(fill: str) -> str:
+    """Build a >5000-char, line-oriented output blob (75 x 80-char lines).
+
+    Real runner output is line-oriented. Keeping the line structure also
+    avoids rich's pathological wrap cost on a single unbroken word (its
+    word-wrapper is superlinear: ~0.25s to render 5000 chars without
+    whitespace, vs ~1ms for the same content as 80-char lines).
+    """
+    return (fill * 80 + "\n") * 75
+
+
 @pytest.mark.unit
 def test_format_test_results_truncates_long_output(capsys):
     """format_test_results truncates stdout/stderr > 5000 chars."""
-    long_stdout = "x" * 6000
-    long_stderr = "y" * 6000
+    long_stdout = _long_blob("x")
+    long_stderr = _long_blob("y")
     result = TestResult(
         total=1,
         passed=0,

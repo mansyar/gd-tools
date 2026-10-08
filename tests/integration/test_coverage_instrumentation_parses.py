@@ -17,17 +17,24 @@ Two harness constraints were learned the hard way and are load-bearing:
 * ``GdToolsNativeCoverage`` must be declared with ``class_name``, not as an
   autoload. Godot rejects a script that both declares a ``class_name`` and is
   registered as an autoload of the same name (``Class ... hides an autoload
-  singleton``), and ``--check-only --script`` does not initialise autoloads.
+  singleton``), and script-mode Godot does not initialise autoloads.
 * ``--import`` must run once per project before any check, or the global
   script class cache is empty and every fixture fails with ``Identifier not
   found``. A stale ``.godot`` directory silently reports broken fixtures as
   valid, which is what the canary below exists to catch.
+
+All fixtures share one Godot project and one parse session (the
+``batch`` fixture): ``--import`` runs once for the whole set, and a
+single checker script loads every instrumented fixture, printing a
+per-fixture ok/fail manifest. Each parametrized case still asserts its
+own fixture's outcome, so a failure pinpoints its fixture.
 
 The port in :func:`_inject` is guarded by
 :func:`test_injection_port_tracks_the_collector`, so it cannot silently
 diverge from the real collector.
 """
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -60,8 +67,6 @@ PROJECT_FILE = (
     "[rendering]\n"
     'renderer/rendering_method="gl_compatibility"\n'
 )
-
-_PARSE_ERROR = re.compile(r"(Parse Error|Compile Error|SCRIPT ERROR)")
 
 #: Branch types whose tracker is injected *after* the recorded line, into the
 #: branch body, because the recorded line is a keyword or case label rather
@@ -455,28 +460,90 @@ def _run(godot_bin: str, project: Path, *args: str) -> str:
     return result.stdout + result.stderr
 
 
-def _build_project(godot_bin: str, root: Path, source: str, name: str) -> Path:
-    """Create a fresh project holding ``source``, then import it.
+#: The batch checker: one Godot process loads every fixture and prints a
+#: per-fixture ok/fail manifest as JSON. ``load()`` compiles the script
+#: (a superset of ``--check-only``'s parse), and ``can_instantiate()``
+#: distinguishes a compiled script from one that merely loaded as a
+#: resource despite parse errors -- which is what "the instrumented file
+#: must be loadable by a real Godot" requires.
+_CHECKER_TEMPLATE = (
+    "extends SceneTree\n"
+    "\n"
+    "const FIXTURES: Array[String] = [\n{fixtures}\n]\n"
+    "\n"
+    "\n"
+    "func _initialize() -> void:\n"
+    "\tvar results := {{}}\n"
+    "\tfor path in FIXTURES:\n"
+    "\t\tvar script = load(path)\n"
+    "\t\tresults[path] = script != null and script.can_instantiate()\n"
+    '\tprint("{marker}" + JSON.stringify(results))\n'
+    "\tquit(0)\n"
+)
 
-    ``--import`` must run after every ``.gd`` file exists so the global
-    script class cache is populated before any ``--check-only``.
+_RESULTS_MARKER = "PARSE_RESULTS_JSON:"
+
+
+def _parse_results(output: str) -> dict[str, bool]:
+    """Extract the checker's per-fixture manifest from Godot output.
+
+    Parse errors from broken fixtures are printed *before* the manifest
+    line, so the last marker occurrence is the authoritative one.
     """
-    project = root
-    project.mkdir(parents=True, exist_ok=True)
+    for line in reversed(output.splitlines()):
+        if line.startswith(_RESULTS_MARKER):
+            return json.loads(line[len(_RESULTS_MARKER) :])
+    raise AssertionError(
+        "The batch checker emitted no results manifest. "
+        f"Raw Godot output:\n{output}"
+    )
+
+
+@pytest.fixture(scope="module")
+def batch(tmp_path_factory, godot_bin):
+    """Instrument and parse every fixture in ONE Godot project/session.
+
+    Replaces the former per-case project (one ``--import`` plus one
+    ``--check-only`` per fixture): a single project holds all raw
+    fixtures, ``--import`` runs once, plans are generated for the whole
+    project, every fixture is rewritten with its injected trackers, and
+    one checker run loads them all, reporting per-fixture outcomes. The
+    deliberately broken canary rides along to keep the harness honest.
+    """
+    root = tmp_path_factory.mktemp("instrumented-batch")
+    project = root / "batch"
+    project.mkdir()
     (project / "project.godot").write_text(PROJECT_FILE, encoding="utf-8")
     (project / "gdtools_stub.gd").write_text(STUB, encoding="utf-8")
-    (project / name).write_text(source, encoding="utf-8")
-    _run(godot_bin, project, "--import")
-    return project
-
-
-def _check(godot_bin: str, project: Path, name: str) -> tuple[bool, str]:
-    """Return whether ``name`` parses, plus the raw Godot output."""
-    output = _run(
-        godot_bin, project, "--check-only", "--script", f"res://{name}"
+    for case, (source, _, _) in CASES.items():
+        (project / f"{case}.gd").write_text(source, encoding="utf-8")
+    (project / "canary_broken.gd").write_text(BROKEN_CONTROL, encoding="utf-8")
+    fixtures = "".join(f'\t"res://{case}.gd",\n' for case in sorted(CASES))
+    fixtures += '\t"res://canary_broken.gd",\n'
+    (project / "check_all.gd").write_text(
+        _CHECKER_TEMPLATE.format(fixtures=fixtures, marker=_RESULTS_MARKER),
+        encoding="utf-8",
     )
-    is_broken = bool(_PARSE_ERROR.search(output))
-    return not is_broken, output
+    _run(godot_bin, project, "--import")
+
+    plan = generate_plan(str(project))
+    lines_by_case: dict[str, list] = {}
+    instrumented: dict[str, str] = {}
+    for case, (source, _, _) in CASES.items():
+        entry = next(f for f in plan.files if Path(f.path).name == f"{case}.gd")
+        lines_by_case[case] = entry.lines
+        instrumented[case] = _inject(source, entry.lines)
+        (project / f"{case}.gd").write_text(
+            instrumented[case], encoding="utf-8"
+        )
+
+    output = _run(godot_bin, project, "--script", "res://check_all.gd")
+    return {
+        "results": _parse_results(output),
+        "lines_by_case": lines_by_case,
+        "instrumented": instrumented,
+        "output": output,
+    }
 
 
 def test_injection_port_tracks_the_collector():
@@ -632,34 +699,29 @@ def test_ternary_entry_without_span_falls_back_to_line_tracker(tmp_path):
     assert "GdToolsNativeCoverage.hit(0, 99)" in out, out
 
 
-def test_harness_detects_a_deliberately_broken_script(tmp_path, godot_bin):
+def test_harness_detects_a_deliberately_broken_script(batch):
     """The harness must flag broken input, or every other test is vacuous.
 
     A stale ``.godot`` cache or a missing stub once made broken scripts
-    report as valid. This canary pins that failure mode shut.
+    report as valid. The canary rides in the batch project itself, so
+    the exact session whose results the parse tests consume is proven
+    able to detect broken GDScript.
     """
-    project = _build_project(godot_bin, tmp_path, BROKEN_CONTROL, "control.gd")
-
-    valid, output = _check(godot_bin, project, "control.gd")
-
-    assert not valid, (
+    assert not batch["results"]["res://canary_broken.gd"], (
         "Harness reported a deliberately broken script as valid, so every "
-        f"other assertion here is unreliable. Output:\n{output}"
+        f"other assertion here is unreliable. Output:\n{batch['output']}"
     )
 
 
 @pytest.mark.parametrize("case", sorted(CASES))
-def test_instrumented_source_parses(case, tmp_path, godot_bin):
+def test_instrumented_source_parses(case, batch):
     """Each instrumented fixture compiles and records the expected points."""
-    source, expected_ternaries, expected_statements = CASES[case]
-    project = _build_project(godot_bin, tmp_path, source, "fixture.gd")
-
-    plan = generate_plan(str(project))
-    entry = next(f for f in plan.files if f.path.endswith("fixture.gd"))
+    _, expected_ternaries, expected_statements = CASES[case]
+    lines = batch["lines_by_case"][case]
 
     planned = [
         p.line
-        for p in entry.lines
+        for p in lines
         if p.branch_type and p.branch_type.startswith("ternary")
     ]
     assert planned == expected_ternaries, (
@@ -669,20 +731,14 @@ def test_instrumented_source_parses(case, tmp_path, godot_bin):
     )
 
     if expected_statements is not None:
-        stmt_lines = sorted(
-            p.line for p in entry.lines if p.type == "statement"
-        )
+        stmt_lines = sorted(p.line for p in lines if p.type == "statement")
         assert stmt_lines == expected_statements, (
             f"Case '{case}' recorded statement lines {stmt_lines}, expected "
             f"{expected_statements}. A point on a class-body or signature "
             f"line makes the instrumented file unparseable."
         )
 
-    instrumented = _inject(source, entry.lines)
-    (project / "fixture.gd").write_text(instrumented, encoding="utf-8")
-
-    valid, output = _check(godot_bin, project, "fixture.gd")
-
-    assert (
-        valid
-    ), f"Instrumented '{case}' does not parse:\n{instrumented}\n---\n{output}"
+    assert batch["results"][f"res://{case}.gd"], (
+        f"Instrumented '{case}' does not parse:\n"
+        f"{batch['instrumented'][case]}\n---\n{batch['output']}"
+    )

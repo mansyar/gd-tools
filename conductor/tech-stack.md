@@ -33,6 +33,7 @@
 |---------|---------|
 | `pytest` | Test framework for gd-tools itself |
 | `pytest-cov` | Coverage measurement for gd-tools's own code |
+| `pytest-xdist` | Parallel pytest execution for CI unit-test jobs (`-n auto`; local runs stay serial) |
 | `ruff` | Linter for gd-tools Python code |
 | `black` | Formatter for gd-tools Python code |
 | `commitizen` | Conventional commit enforcement, automated semantic versioning, and changelog generation |
