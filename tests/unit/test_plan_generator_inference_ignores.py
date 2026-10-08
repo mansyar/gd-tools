@@ -237,8 +237,11 @@ def test_zero_point_exclusion_warns(tmp_path, capsys):
 
     captured = capsys.readouterr()
     combined = captured.out + captured.err
-    assert "track_waypoints.gd" in combined
-    assert "no trackable coverage points" in combined
+    # Rich soft-wraps the warning under narrow CI consoles, which can
+    # split the path mid-word; unwrap before matching the filename.
+    unwrapped = combined.replace("\n", "")
+    assert "track_waypoints.gd" in unwrapped
+    assert "no trackable coverage points" in unwrapped
 
 
 # --- FR-R1: version bump ---
