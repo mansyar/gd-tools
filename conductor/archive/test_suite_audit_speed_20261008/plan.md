@@ -91,13 +91,13 @@
 
 ## Phase 4 — Integration Tuning (FR-D) [checkpoint: 3042c9c]
 
-- [~] Task 4.1: Shorten the timeout test.
+- [x] Task 4.1: Shorten the timeout test. *(final outcome: 15 -> 6 was falsified by macOS CI - boot + 3s flush exceeded 6s so the game was killed before the first snapshot, yielding exit 2 'no coverage data' on Godot 4.5.2/4.7.1 macOS; reverted to 15s in review fix 61ac30d+, wall back to ~20.9s. The integration speedup comes from Task 4.2, not this task.)*
   - [x] `test_coverage_run_timeout_closes_game_and_reports` (20.9s): inject a configured short timeout so the close-and-report semantics are still exercised; verify wall < 5s. *(--timeout 15 -> 6; flush interval derives as min(5, timeout/2) = 3s so a snapshot still lands; assertions need no hits. 4s passed 3/3 warm but failed once cold -> 6s for CI robustness. Wall 11.6-14.4s vs 18.8s. The <5s sub-target is unattainable: fixed per-test overhead alone is ~5-8s (project copy + --import + boot + CLI startup) — overhead reduction moved to Task 4.2.)*
 - [~] Task 4.2: Playtest scenario tuning.
   - [ ] Profile the 7–11s playtest/playtest_cli tests; batch scenarios per Godot launch where semantics allow, or trim fixed waits.
   - [x] If a wait is semantically necessary, document the evidence here and leave it. *(the 6s timeout wait is semantically necessary: it exercises the auto-close kill path; flush interval derives as min(5, timeout/2)=3s)*
 - [x] Task 4.3: Record Phase 4 results (integration suite duration after Phase 3 + 4 vs 310.9s baseline; coverage delta). *(integration suite: 310.9s baseline -> 54.7s after Phase 3 -> 34.4s after Phase 4 (-89%); 90 passed throughout; product src untouched in Phase 4, so coverage delta is nil - test-only changes)*
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) *(checkpoint 3042c9c)*
 
 ## Phase 5 — E2E Smoke Speed-Up (FR-E) + Final Verification [checkpoint: 2d42623]
 

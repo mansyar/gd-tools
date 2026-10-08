@@ -201,11 +201,12 @@ def test_coverage_run_timeout_closes_game_and_reports(
     project = _prepare_cli_project(
         imported_base_project, tmp_path, LINGER_SCENE_SOURCE
     )
-    # 6s leaves headroom for a cold Godot boot (a 4s kill failed once on a
-    # cold cache) while the runner derives a 3s flush interval, so a
-    # snapshot lands before the auto-close. The close-and-report semantics
-    # this test exists to prove are unchanged.
-    result = _run_cli(project, ["--timeout", "6", "--report-format", "text"])
+    # 15s keeps the flush interval at its 5s cap, leaving ~10s of headroom
+    # for engine boot before the first periodic snapshot; a 6s timeout
+    # (3s interval) was falsified on macOS CI runners where boot alone can
+    # exceed 3s, killing the game before any snapshot landed. The
+    # close-and-report semantics this test exists to prove are unchanged.
+    result = _run_cli(project, ["--timeout", "15", "--report-format", "text"])
     assert result.exit_code == 0, result.output
     assert "Report written to:" in result.output
 
