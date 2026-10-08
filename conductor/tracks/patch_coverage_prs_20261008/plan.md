@@ -2,11 +2,11 @@
 
 ## Phase 1 — Changed-line extraction
 
-- [ ] Task: Write failing unit tests for changed-line-range extraction (`tests/unit/test_patch_lines.py`)
-  - [ ] Test: parse `git diff -U0` output into per-file added-line ranges (added/modified hunks)
-  - [ ] Test: brand-new file → full-file range; deleted file → excluded; rename → handled as modified
-  - [ ] Test: non-`.gd` files filtered out; merge-base resolution failure → config error
-- [ ] Task: Implement `changed_lines(base)` in `src/gd_tools/changes.py` (extend the existing merge-base module; single `git diff -U0 merge_base..HEAD` subprocess, no shell)
+- [x] Task: Write failing unit tests for changed-line-range extraction (`tests/unit/test_patch_lines.py`)
+  - [x] Test: parse `git diff -U0` output into per-file added-line ranges (added/modified hunks)
+  - [x] Test: brand-new file → full-file range; deleted file → excluded; rename → handled as modified (rename-with-edits emits standard hunks; pure rename emits none — covered by modified-file + pure-deletion tests)
+  - [x] Test: non-`.gd` files filtered out; merge-base resolution failure → config error
+- [x] Task: Implement `changed_lines(base)` in `src/gd_tools/changes.py` (extend the existing merge-base module; single `git diff -U0 merge_base..HEAD` subprocess, no shell) — `8abf4e7`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Patch coverage computation
