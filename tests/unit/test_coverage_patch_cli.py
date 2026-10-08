@@ -351,3 +351,99 @@ def test_coverage_diff_without_patch_unchanged():
         report_format="text",
         fail_on_regression=False,
     )
+
+
+# --- GitHub Actions annotations + summary emission ---
+
+
+def test_diff_coverage_patch_annotations_forced(tmp_path, capsys, monkeypatch):
+    """annotations=True emits ::warning runs even outside GitHub."""
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _setup_project(tmp_path, _plan(), _data({"0": 0, "1": 0}))
+    root_patch, changed_patch = _patched_env(tmp_path)
+    with root_patch, changed_patch:
+        diff_coverage_patch(_mock_config(), "main", annotations=True)
+
+    out = capsys.readouterr().out
+    assert "::warning file=player.gd,line=5,end_line=5," in out
+    assert "::warning file=player.gd,line=10,end_line=10," in out
+
+
+def test_diff_coverage_patch_annotations_suppressed(
+    tmp_path, capsys, monkeypatch
+):
+    """annotations=False suppresses emission even inside GitHub."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    _setup_project(tmp_path, _plan(), _data({"0": 0, "1": 0}))
+    root_patch, changed_patch = _patched_env(tmp_path)
+    with root_patch, changed_patch:
+        diff_coverage_patch(_mock_config(), "main", annotations=False)
+
+    out = capsys.readouterr().out
+    assert "::warning" not in out
+
+
+def test_diff_coverage_patch_annotations_auto_env(
+    tmp_path, capsys, monkeypatch
+):
+    """annotations=None auto-detects emission from GITHUB_ACTIONS=true."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _setup_project(tmp_path, _plan(), _data({"0": 0, "1": 0}))
+    root_patch, changed_patch = _patched_env(tmp_path)
+    with root_patch, changed_patch:
+        diff_coverage_patch(_mock_config(), "main")
+
+    out = capsys.readouterr().out
+    assert "::warning file=player.gd," in out
+
+
+def test_diff_coverage_patch_annotations_auto_off(
+    tmp_path, capsys, monkeypatch
+):
+    """annotations=None with GITHUB_ACTIONS unset emits nothing."""
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    _setup_project(tmp_path, _plan(), _data({"0": 0, "1": 0}))
+    root_patch, changed_patch = _patched_env(tmp_path)
+    with root_patch, changed_patch:
+        diff_coverage_patch(_mock_config(), "main")
+
+    out = capsys.readouterr().out
+    assert "::warning" not in out
+
+
+def test_diff_coverage_patch_summary_written(tmp_path, monkeypatch):
+    """Emission writes the markdown summary to $GITHUB_STEP_SUMMARY."""
+    summary_path = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_path))
+    _setup_project(tmp_path, _plan(), _data({"0": 0, "1": 0}))
+    root_patch, changed_patch = _patched_env(tmp_path)
+    with root_patch, changed_patch:
+        with pytest.raises(CoverageThresholdError):
+            diff_coverage_patch(_mock_config(), "main", fail_under=80.0)
+
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "## Patch coverage" in summary
+    assert "| player.gd | 2 | 0 | 2 | 0% |" in summary
+    assert "| TOTAL | 2 | 0 | 2 | 0% |" in summary
+    assert "FAIL" in summary
+
+
+def test_diff_coverage_patch_json_keeps_stdout_pure(
+    tmp_path, capsys, monkeypatch
+):
+    """JSON format stays parseable even when annotations are requested."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    _setup_project(tmp_path, _plan(), _data({"0": 0, "1": 0}))
+    root_patch, changed_patch = _patched_env(tmp_path)
+    import json as _json
+
+    with root_patch, changed_patch:
+        diff_coverage_patch(_mock_config(), "main", report_format="json")
+
+    out = capsys.readouterr().out
+    assert "::warning" not in out
+    payload = _json.loads(out)  # would raise on annotation noise
+    assert payload["totals"]["total"] == 2

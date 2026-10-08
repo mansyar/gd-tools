@@ -19,6 +19,7 @@ from rich.table import Table
 
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.coverage.reporter import CoverageData
+from gd_tools.gh_annotations import escape_gh_property
 
 
 @dataclass
@@ -31,6 +32,8 @@ class PatchFileMetric:
         covered: Changed executable lines with at least one hit.
         uncovered: Changed executable lines with zero hits.
         rate: Covered / changed as a fraction; 0.0 when changed is 0.
+        uncovered_lines: Sorted line numbers of the changed executable
+            lines with zero hits (for annotation emission).
     """
 
     path: str
@@ -38,6 +41,7 @@ class PatchFileMetric:
     covered: int
     uncovered: int
     rate: float
+    uncovered_lines: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -124,6 +128,11 @@ def compute_patch_coverage(
                 covered=covered_count,
                 uncovered=changed_count - covered_count,
                 rate=covered_count / changed_count,
+                uncovered_lines=[
+                    line_number
+                    for line_number in executable_changed
+                    if hits.get(str(lines_by_line[line_number].id), 0) == 0
+                ],
             )
         )
         total_covered += covered_count
@@ -250,3 +259,92 @@ def build_patch_json(
         "verdict": patch_verdict(result, threshold),
         "empty": result.total == 0,
     }
+
+
+def _coalesce_runs(lines: list[int]) -> list[tuple[int, int]]:
+    """Coalesce sorted line numbers into inclusive (start, end) runs."""
+    if not lines:
+        return []
+    runs: list[tuple[int, int]] = []
+    start = previous = lines[0]
+    for line in lines[1:]:
+        if line == previous + 1:
+            previous = line
+        else:
+            runs.append((start, previous))
+            start = previous = line
+    runs.append((start, previous))
+    return runs
+
+
+def build_patch_annotations(result: PatchCoverageResult) -> str:
+    """Build GitHub Actions annotations for uncovered changed lines.
+
+    Each contiguous run of uncovered lines in a file renders as one
+    workflow log command::
+
+        ::warning file=<path>,line=<n>,end_line=<m>,title=Uncovered in patch
+
+    Property values are escaped with
+    :func:`gd_tools.gh_annotations.escape_gh_property`.
+
+    Args:
+        result: The computed patch coverage.
+
+    Returns:
+        Annotation commands joined by newlines with a trailing newline,
+        or an empty string when nothing is uncovered.
+    """
+    lines: list[str] = []
+    for fm in result.files:
+        for start, end in _coalesce_runs(fm.uncovered_lines):
+            lines.append(
+                f"::warning file={escape_gh_property(fm.path)},"
+                f"line={start},"
+                f"end_line={end},"
+                f"title={escape_gh_property('Uncovered in patch')}"
+            )
+    if not lines:
+        return ""
+    return "\n".join(lines) + "\n"
+
+
+def build_patch_summary(
+    result: PatchCoverageResult, threshold: float | None
+) -> str:
+    """Build the markdown job summary (``$GITHUB_STEP_SUMMARY``).
+
+    Args:
+        result: The computed patch coverage.
+        threshold: Gate threshold percentage, or ``None``.
+
+    Returns:
+        A markdown document with the per-file patch table and the gate
+        verdict line (or the empty-patch notice).
+    """
+    header = "| File | Changed | Covered | Uncovered | Coverage |\n"
+    header += "|---|---|---|---|---|\n"
+    rows = [
+        f"| {fm.path} | {fm.changed} | {fm.covered} | {fm.uncovered} "
+        f"| {fm.rate:.0%} |"
+        for fm in result.files
+    ]
+    body = "".join(row + "\n" for row in rows)
+    body += (
+        f"| TOTAL | {result.total} | {result.covered} | "
+        f"{result.total - result.covered} "
+        f"| {result.rate:.0%} |\n"
+    )
+    if result.total == 0:
+        verdict = "No changed executable lines\n"
+    else:
+        verdict = patch_verdict(result, threshold)
+        if verdict == "informational":
+            verdict = "Patch coverage gate: informational (no threshold)\n"
+        else:
+            label = "PASS" if verdict == "pass" else "FAIL"
+            verdict = (
+                f"Patch coverage gate: {label} "
+                f"({result.rate:.0%} vs {threshold:.0f}% required)\n"
+            )
+    return "## Patch coverage\n\n" + header + body + "\n" + verdict

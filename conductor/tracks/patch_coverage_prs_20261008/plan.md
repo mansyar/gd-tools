@@ -40,7 +40,7 @@
 
 ## Phase 5 — GitHub Actions annotations + summary
 
-- [ ] Task: Write failing tests for annotation emission
+- [~] Task: Write failing tests for annotation emission
   - [ ] Test: uncovered changed lines coalesce into contiguous `::warning file=,line=,end_line=,title=` runs (using `gh_annotations` escaping helpers)
   - [ ] Test: auto-emit when `GITHUB_ACTIONS=true`; suppressed when flag set to false; forced on with flag
   - [ ] Test: markdown job summary content (patch table)

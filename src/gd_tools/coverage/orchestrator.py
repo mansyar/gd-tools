@@ -7,6 +7,8 @@ business logic directly.
 
 from __future__ import annotations
 
+import json
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -17,7 +19,6 @@ from gd_tools import output
 from gd_tools.changes import collect_changed_lines
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
-import json
 
 from gd_tools.coverage.diff_reporter import (
     BaselineMeta,
@@ -36,7 +37,9 @@ from gd_tools.coverage.omissions import (
     reconcile_omissions,
 )
 from gd_tools.coverage.patch import (
+    build_patch_annotations,
     build_patch_json,
+    build_patch_summary,
     build_patch_table,
     compute_patch_coverage,
     patch_verdict,
@@ -595,7 +598,8 @@ def diff_coverage_patch(
             ``None`` keeps the report informational. An empty patch
             never fails the gate.
         annotations: Whether to emit GitHub Actions annotations for
-            uncovered changed lines. ``None`` auto-detects from the
+            uncovered changed lines (text format only; JSON output
+            stays parseable). ``None`` auto-detects from the
             ``GITHUB_ACTIONS`` environment variable.
         fail_on_regression: Also check full coverage against the saved
             baseline and raise :class:`CoverageThresholdError` when any
@@ -622,6 +626,20 @@ def diff_coverage_patch(
         print(json.dumps(build_patch_json(result, fail_under), indent=2))
     else:
         output.print_table(build_patch_table(result, fail_under))
+
+    emit_annotations = (
+        annotations
+        if annotations is not None
+        else os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    )
+    if emit_annotations and report_format != "json":
+        annotation_text = build_patch_annotations(result)
+        if annotation_text:
+            print(annotation_text, end="")
+        summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary_path:
+            with open(summary_path, "a", encoding="utf-8") as summary_file:
+                summary_file.write(build_patch_summary(result, fail_under))
 
     if fail_under is not None and patch_verdict(result, fail_under) == "fail":
         raise CoverageThresholdError(

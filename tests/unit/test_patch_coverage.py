@@ -78,7 +78,12 @@ def test_intersect_ranges_with_plan_lines():
 
     assert result.files == [
         PatchFileMetric(
-            path="player.gd", changed=2, covered=1, uncovered=1, rate=0.5
+            path="player.gd",
+            changed=2,
+            covered=1,
+            uncovered=1,
+            rate=0.5,
+            uncovered_lines=[10],
         )
     ]
     assert result.total == 2
@@ -290,3 +295,103 @@ def test_patch_verdict_boundary_and_informational():
     assert patch_verdict(_result(), None) == "informational"
     assert patch_verdict(EMPTY_RESULT, None) == "informational"
     assert patch_verdict(EMPTY_RESULT, 80.0) == "pass"
+
+
+# --- GitHub Actions annotations + summary builders ---
+
+
+def _uncovered_result(**overrides):
+    """player.gd has uncovered changed lines 3, 4 and 7 (two runs)."""
+    defaults = dict(
+        files=[
+            PatchFileMetric(
+                path="player.gd",
+                changed=5,
+                covered=2,
+                uncovered=3,
+                rate=0.4,
+                uncovered_lines=[3, 4, 7],
+            ),
+            PatchFileMetric(
+                path="src/enemy.gd",
+                changed=2,
+                covered=2,
+                uncovered=0,
+                rate=1.0,
+                uncovered_lines=[],
+            ),
+        ],
+        covered=4,
+        total=7,
+        rate=4 / 7,
+    )
+    defaults.update(overrides)
+    return PatchCoverageResult(**defaults)
+
+
+def test_build_patch_annotations_coalesces_runs():
+    """Uncovered lines coalesce into contiguous file/line/end_line runs."""
+    from gd_tools.coverage.patch import build_patch_annotations
+
+    text = build_patch_annotations(_uncovered_result())
+
+    lines = text.strip().splitlines()
+    assert lines == [
+        "::warning file=player.gd,line=3,end_line=4,"
+        "title=Uncovered in patch",
+        "::warning file=player.gd,line=7,end_line=7,"
+        "title=Uncovered in patch",
+    ]
+
+
+def test_build_patch_annotations_escapes_properties():
+    """Property values use the shared GitHub escaping helpers."""
+    from gd_tools.coverage.patch import build_patch_annotations
+
+    result = _uncovered_result(
+        files=[
+            PatchFileMetric(
+                path="a,b.gd",
+                changed=1,
+                covered=0,
+                uncovered=1,
+                rate=0.0,
+                uncovered_lines=[2],
+            )
+        ],
+        covered=0,
+        total=1,
+        rate=0.0,
+    )
+    text = build_patch_annotations(result)
+    assert "file=a%2Cb.gd" in text
+
+
+def test_build_patch_annotations_empty_result():
+    """No uncovered changed lines -> no annotations at all."""
+    from gd_tools.coverage.patch import build_patch_annotations
+
+    assert build_patch_annotations(_result()) == ""
+    assert build_patch_annotations(EMPTY_RESULT) == ""
+
+
+def test_build_patch_summary_contains_table_and_verdict():
+    """The markdown summary carries a table and the gate verdict."""
+    from gd_tools.coverage.patch import build_patch_summary
+
+    summary = build_patch_summary(_uncovered_result(), 80.0)
+
+    assert "| File |" in summary
+    assert "|---|" in summary
+    assert "| player.gd | 5 | 2 | 3 | 40% |" in summary
+    assert "| TOTAL | 7 | 4 | 3 | 57% |" in summary
+    assert "FAIL" in summary
+    assert "80%" in summary
+
+
+def test_build_patch_summary_empty_patch():
+    """Empty patch summary states no changed executable lines."""
+    from gd_tools.coverage.patch import build_patch_summary
+
+    summary = build_patch_summary(EMPTY_RESULT, 80.0)
+    assert "No changed executable lines" in summary
