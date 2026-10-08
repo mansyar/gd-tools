@@ -52,3 +52,7 @@
 - [x] Task: Update docs — README, `docs/USER_GUIDE.md` (patch coverage + CI recipe), `docs/ROADMAP.md`, `CHANGELOG.md` (Unreleased) — `695e20f`
 - [x] Task: Full quality gate — `ruff check`, `black --check`, `CI=true pytest`, project coverage ≥80/70 on new modules — `695e20f` (1835 passed / 3 skipped, 95.45%)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: 695e20f]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions — `ad5fc84` (JSON `uncovered_lines` field added to match USER_GUIDE contract; per-point counting for lines holding statement + branch points)
