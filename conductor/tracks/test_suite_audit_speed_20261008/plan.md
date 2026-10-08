@@ -76,7 +76,7 @@
   Local (Windows) parallelism shows **no wall-clock gain** — per-worker interpreter startup and CPU contention offset the distribution benefit on this machine. The `-n auto` benefit is expected on the Linux CI runners, where the Stage 1 job previously spent ~3–5 min on a 55s local-equivalent unit run plus coverage; the concrete CI duration change will be recorded after the next CI run on this branch. One test required an xdist guard: `test_performance_100_files` (timing assertion serial-only, see Task 2.2).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Integration Parse Batching (FR-C)
+## Phase 3 — Integration Parse Batching (FR-C) [checkpoint: e8bf3ad]
 
 - [x] Task 3.1: Build the batch manifest harness. *(commit ee42867)*
   - [ ] Extend the instrumentation harness so one Godot session parses all instrumented fixtures listed in a manifest and emits per-fixture results (e.g., JSON with fixture name → parse ok/error). *(module-scoped `batch` fixture: one project, one `--import`, one `generate_plan`, one checker script (SceneTree) loading every fixture and printing a `PARSE_RESULTS_JSON` manifest; `can_instantiate()` distinguishes parse failures since a broken script still `load()`s)*
