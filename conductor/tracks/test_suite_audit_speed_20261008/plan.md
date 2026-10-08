@@ -91,7 +91,7 @@
 
 ## Phase 4 — Integration Tuning (FR-D)
 
-- [ ] Task 4.1: Shorten the timeout test.
+- [~] Task 4.1: Shorten the timeout test.
   - [ ] `test_coverage_run_timeout_closes_game_and_reports` (20.9s): inject a configured short timeout so the close-and-report semantics are still exercised; verify wall < 5s.
 - [ ] Task 4.2: Playtest scenario tuning.
   - [ ] Profile the 7–11s playtest/playtest_cli tests; batch scenarios per Godot launch where semantics allow, or trim fixed waits.
