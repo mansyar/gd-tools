@@ -107,20 +107,17 @@ def compute_patch_coverage(
         changed_lines: set[int] = set()
         for start, end in changed[path]:
             changed_lines.update(range(start, end + 1))
-        executable_changed = sorted(
-            {lp.line for lp in file_plan.lines} & changed_lines
-        )
-        if not executable_changed:
+        changed_points = [
+            lp for lp in file_plan.lines if lp.line in changed_lines
+        ]
+        if not changed_points:
             continue
 
-        lines_by_line = {lp.line: lp for lp in file_plan.lines}
         hits = hits_by_file_id.get(file_plan.file_id, {})
         covered_count = sum(
-            1
-            for line_number in executable_changed
-            if hits.get(str(lines_by_line[line_number].id), 0) > 0
+            1 for lp in changed_points if hits.get(str(lp.id), 0) > 0
         )
-        changed_count = len(executable_changed)
+        changed_count = len(changed_points)
         metrics.append(
             PatchFileMetric(
                 path=path.as_posix(),
@@ -128,11 +125,13 @@ def compute_patch_coverage(
                 covered=covered_count,
                 uncovered=changed_count - covered_count,
                 rate=covered_count / changed_count,
-                uncovered_lines=[
-                    line_number
-                    for line_number in executable_changed
-                    if hits.get(str(lines_by_line[line_number].id), 0) == 0
-                ],
+                uncovered_lines=sorted(
+                    {
+                        lp.line
+                        for lp in changed_points
+                        if hits.get(str(lp.id), 0) == 0
+                    }
+                ),
             )
         )
         total_covered += covered_count
@@ -246,6 +245,7 @@ def build_patch_json(
                 "changed": fm.changed,
                 "covered": fm.covered,
                 "uncovered": fm.uncovered,
+                "uncovered_lines": list(fm.uncovered_lines),
                 "rate": fm.rate,
             }
             for fm in result.files

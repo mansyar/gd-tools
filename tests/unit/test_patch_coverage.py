@@ -86,9 +86,30 @@ def test_intersect_ranges_with_plan_lines():
             uncovered_lines=[10],
         )
     ]
-    assert result.total == 2
+
+
+def test_statement_and_branch_point_on_same_line_both_counted():
+    """A changed line holding statement + branch points counts every point."""
+    plan = _plan()
+    plan.files[0].lines.append(
+        LinePlan(line=6, id=3, type="branch", branch_type="ternary_true")
+    )
+    data = _data({0: {"0": 0, "1": 3, "2": 0, "3": 0}})
+    result = compute_patch_coverage(
+        plan,
+        data,
+        {Path("player.gd"): [(5, 10)]},
+    )
+
+    # Range (5, 10) covers lines 5, 6, 10; line 6 carries two points
+    # (statement id 1 covered, branch id 3 uncovered) -> 1/4 covered.
+    metric = result.files[0]
+    assert (metric.changed, metric.covered, metric.uncovered) == (4, 1, 3)
+    assert metric.rate == pytest.approx(1 / 4)
+    assert metric.uncovered_lines == [5, 6, 10]
+    assert result.total == 4
     assert result.covered == 1
-    assert result.rate == 0.5
+    assert result.rate == pytest.approx(1 / 4)
 
 
 def test_subdir_path_matching_uses_res_prefix():
@@ -185,7 +206,12 @@ def _result(**overrides):
     defaults = dict(
         files=[
             PatchFileMetric(
-                path="player.gd", changed=2, covered=1, uncovered=1, rate=0.5
+                path="player.gd",
+                changed=2,
+                covered=1,
+                uncovered=1,
+                rate=0.5,
+                uncovered_lines=[10],
             ),
             PatchFileMetric(
                 path="src/enemy.gd", changed=2, covered=2, uncovered=0, rate=1.0
@@ -263,6 +289,7 @@ def test_build_patch_json_structure():
             "covered": 1,
             "uncovered": 1,
             "rate": 0.5,
+            "uncovered_lines": [10],
         },
         {
             "path": "src/enemy.gd",
@@ -270,6 +297,7 @@ def test_build_patch_json_structure():
             "covered": 2,
             "uncovered": 0,
             "rate": 1.0,
+            "uncovered_lines": [],
         },
     ]
     assert payload["totals"] == {"covered": 3, "total": 4, "rate": 0.75}
@@ -371,8 +399,17 @@ def test_build_patch_annotations_empty_result():
     """No uncovered changed lines -> no annotations at all."""
     from gd_tools.coverage.patch import build_patch_annotations
 
-    assert build_patch_annotations(_result()) == ""
     assert build_patch_annotations(EMPTY_RESULT) == ""
+
+
+def test_build_patch_annotations_from_result_uncovered_lines():
+    """Annotations are derived from each file's uncovered_lines runs."""
+    from gd_tools.coverage.patch import build_patch_annotations
+
+    assert build_patch_annotations(_result()) == (
+        "::warning file=player.gd,line=10,end_line=10,"
+        "title=Uncovered in patch\n"
+    )
 
 
 def test_build_patch_summary_contains_table_and_verdict():
