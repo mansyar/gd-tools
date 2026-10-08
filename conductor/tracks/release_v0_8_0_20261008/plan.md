@@ -5,7 +5,7 @@
 
 ## Phase 1 — Bump & verify
 
-- [ ] Task: Bump version via commitizen
+- [~] Task: Bump version via commitizen
   - [ ] Run `cz bump --version 0.8.0` (bump commit + `v0.8.0` tag created locally)
   - [ ] Verify `pyproject.toml` shows `0.8.0` in both version fields
 - [ ] Task: Finalize changelog
