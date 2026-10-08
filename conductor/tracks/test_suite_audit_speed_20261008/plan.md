@@ -89,7 +89,7 @@
   - [ ] Measure: `pytest tests/integration/ -m integration --no-cov -q --durations=20` — the parse block drops from ≈170s toward ≤ 25s.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4 — Integration Tuning (FR-D)
+## Phase 4 — Integration Tuning (FR-D) [checkpoint: 3042c9c]
 
 - [~] Task 4.1: Shorten the timeout test.
   - [x] `test_coverage_run_timeout_closes_game_and_reports` (20.9s): inject a configured short timeout so the close-and-report semantics are still exercised; verify wall < 5s. *(--timeout 15 -> 6; flush interval derives as min(5, timeout/2) = 3s so a snapshot still lands; assertions need no hits. 4s passed 3/3 warm but failed once cold -> 6s for CI robustness. Wall 11.6-14.4s vs 18.8s. The <5s sub-target is unattainable: fixed per-test overhead alone is ~5-8s (project copy + --import + boot + CLI startup) — overhead reduction moved to Task 4.2.)*
