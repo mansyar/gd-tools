@@ -1,7 +1,7 @@
 {
   "track_id": "coverage_omission_failures_20261008",
   "type": "bug",
-  "status": "new",
+  "status": "done",
   "created": "2026-10-08",
   "branch": "feature/coverage-omission-failures-20261008",
   "description": "Native coverage instrumentation failures (Variant-inference compile errors, zero-point plan targets, omission diagnostics) plus lint gdlintrc support."

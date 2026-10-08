@@ -322,7 +322,7 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [~] **Track: Native coverage instrumentation failures** (bug: fix
+- [x] **Track: Native coverage instrumentation failures** (bug: fix
   Variant-inference compile errors from operand wrapping via
   `@warning_ignore` plan annotations, exclude zero-point files from the plan
   with a visible skip warning, carry reload error codes in omission records,
