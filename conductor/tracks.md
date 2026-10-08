@@ -336,5 +336,5 @@ _Archived tracks live in `./archive/`._
   into one Godot session, shorten timeout/playtest waits, fix E2E smoke waits;
   targets: unit 40.7s→≤15s, integration 5:10→≤2:30, e2e smoke 1:59→≤1:15,
   coverage never reduced)
-  *Link: [test_suite_audit_speed_20261008](./tracks/test_suite_audit_speed_20261008/index.md)*
+  *Link: [test_suite_audit_speed_20261008](./archive/test_suite_audit_speed_20261008/index.md)*
 
