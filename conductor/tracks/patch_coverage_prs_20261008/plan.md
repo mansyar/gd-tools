@@ -28,14 +28,14 @@
 - [x] Task: Implement rendering in `coverage/patch.py` (or `diff_reporter.py` sibling functions, matching existing table builder style) — `c92a70e` (implemented in `patch.py` alongside the computation, matching `build_diff_table`/`build_diff_json` style)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4 — CLI integration + gate
+## Phase 4 — CLI integration + gate [checkpoint: db012bb]
 
-- [~] Task: Write failing CLI tests (click runner, `tests/` diff command tests)
-  - [ ] Test: `coverage diff --patch` without `--base` → exit 2 with actionable error
-  - [ ] Test: `--patch-fail-under 80` below threshold → exit 1; at threshold → exit 0; without flag → exit 0 informational
-  - [ ] Test: combined `--patch-fail-under` + `--fail-on-regression` → exit 1 if either fails
-  - [ ] Test: `--patch-annotations` flag parsing/validation
-- [ ] Task: Wire options onto the `coverage diff` command in `cli.py`; validate option combinations; keep non-patch behavior untouched
+- [x] Task: Write failing CLI tests (click runner, `tests/` diff command tests) — in `tests/unit/test_coverage_patch_cli.py`
+  - [x] Test: `coverage diff --patch` without `--base` → exit 2 with actionable error (click `required=True` → usage exit 2)
+  - [x] Test: `--patch-fail-under 80` below threshold → exit 1; at threshold → exit 0; without flag → exit 0 informational
+  - [x] Test: combined `--patch-fail-under` + `--fail-on-regression` → exit 1 if either fails (regression loads canonical `<output_dir>/baseline.json`; missing baseline → exit 2)
+  - [x] Test: `--patch-annotations` flag parsing/validation (plus `--show-lines` conflict → exit 2)
+- [x] Task: Wire options onto the `coverage diff` command in `cli.py`; validate option combinations; keep non-patch behavior untouched — `db012bb` (orchestrator `diff_coverage_patch` + CLI options; `--base` help updated to cover both modes)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — GitHub Actions annotations + summary
