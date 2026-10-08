@@ -347,5 +347,5 @@ _Archived tracks live in `./archive/`._
   `--patch-annotations` override), GH job markdown summary; strict edge
   semantics: missing data = uncovered, new files counted, deleted ignored,
   .gd-only, zero-plan files skipped)
-  *Link: [patch_coverage_prs_20261008](./tracks/patch_coverage_prs_20261008/index.md)*
+  *Link: [patch_coverage_prs_20261008](./archive/patch_coverage_prs_20261008/index.md)*
 
