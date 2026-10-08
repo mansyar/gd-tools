@@ -885,7 +885,12 @@ func _ready() -> void:
 
 
 def test_performance_100_files(tmp_path):
-    """Generating a plan for 100 .gd files completes in <1 second."""
+    """Generating a plan for 100 .gd files completes in <1 second.
+
+    The wall-clock threshold is only meaningful without CPU contention,
+    so it is enforced in serial runs; under pytest-xdist the test still
+    verifies correctness (all 100 files planned) but not the timing.
+    """
     for i in range(100):
         (tmp_path / f"script_{i:03d}.gd").write_text(
             _GD_TEMPLATE, encoding="utf-8"
@@ -898,7 +903,8 @@ def test_performance_100_files(tmp_path):
     elapsed = time.perf_counter() - start
 
     assert len(cp.files) == 100
-    assert elapsed < 1.0, f"Plan generation took {elapsed:.3f}s (>1s)"
+    if not os.environ.get("PYTEST_XDIST_WORKER"):
+        assert elapsed < 1.0, f"Plan generation took {elapsed:.3f}s (>1s)"
 
 
 # --- Autoload inclusion ---
