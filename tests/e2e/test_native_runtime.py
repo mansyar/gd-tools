@@ -12,6 +12,7 @@ import pytest
 from conftest import import_godot_project
 
 from gd_tools.config import GdToolsConfig, GodotConfig, TestConfig
+from gd_tools.coverage.plan_generator import generate_plan, write_plan_json
 from gd_tools.native_test.command import run_native_test_command
 from gd_tools.native_test.orchestrator import run_native_tests
 from gd_tools.native_test.protocol import NativeSuite, NativeTest
@@ -2012,25 +2013,318 @@ def test_native_coverage_demotes_activation_engine_errors_when_target_fails_to_l
     assert by_id[0]["0"] > 0, by_id[0]
 
     # R5: the omission declares itself with the broken-script message, not
-    # the stale-plan one -- R4 keeps the two causes distinct.
-    assert coverage["omitted"] == [
-        {
-            "file_id": 1,
-            "path": "res://scripts/broken.gd",
-            "reason": (
-                "Trackers could not be injected, so the script did not "
-                "reload: res://scripts/broken.gd"
-            ),
-            "fix": (
-                "Fix the script's own syntax, or exclude it from the plan."
-            ),
-        }
-    ], coverage.get("omitted")
+    # the stale-plan one -- R4 keeps the two causes distinct. The Godot
+    # error code rides the reason so diagnostics stay actionable.
+    assert len(coverage["omitted"]) == 1, coverage.get("omitted")
+    omission = coverage["omitted"][0]
+    assert omission["file_id"] == 1
+    assert omission["path"] == "res://scripts/broken.gd"
+    assert omission["reason"].startswith(
+        "Trackers could not be injected, so the script did not reload "
+        "(Godot error code "
+    ), omission["reason"]
+    assert "no longer exists" not in omission["reason"], omission["reason"]
+    assert "SCRIPT ERROR" in omission["fix"], omission["fix"]
 
     # The demoted engine output lands in the warnings channel.
     assert any(
         "broken.gd" in warning for warning in payload["engine_warnings"]
     ), payload["engine_warnings"]
+
+
+INFERRED_SUBJECT = (
+    "extends RefCounted\n"
+    "\n"
+    "\n"
+    "func pick(a: bool) -> int:\n"
+    "\tvar value := 10 if a else 20\n"
+    "\treturn value\n"
+)
+
+
+def _plan_for_subject(project: Path, tmp_path: Path, plan_path: Path):
+    """Plan the project, keep only the inferred subject, return its lines."""
+    plan = generate_plan(
+        str(project), exclude_dirs=["addons", ".godot"], test_dirs=["test"]
+    )
+    staged = tmp_path / "full-plan.json"
+    write_plan_json(plan, str(staged))
+    document = json.loads(staged.read_text(encoding="utf-8"))
+    document["files"] = [
+        entry
+        for entry in document["files"]
+        if entry["path"] == "res://scripts/inferred_subject.gd"
+    ]
+    assert len(document["files"]) == 1, document["files"]
+    plan_path.write_text(json.dumps(document), encoding="utf-8")
+    return document["files"][0]
+
+
+def test_native_coverage_annotates_inferred_declarations(godot_bin, tmp_path):
+    """A plan carrying warning_ignores instruments a wrapped ``:=`` file.
+
+    Godot treats INFERENCE_ON_VARIANT as an error by default. When the
+    collector wraps a ternary operand with the value-preserving ``hit_ret``
+    wrapper (statically Variant), a ``var x := <wrapped>`` declaration
+    infers from Variant and the instrumented script fails to reload — the
+    file drops out of coverage entirely (the reported Class-1 failure). The
+    plan annotates such statements; the collector must inline the
+    annotation on the same line so the script compiles and both ternary
+    arms record distinct hits.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    (project / "scripts" / "inferred_subject.gd").write_text(
+        INFERRED_SUBJECT, encoding="utf-8"
+    )
+    (project / "test" / "inferred_suite.gd").write_text(
+        "extends GdToolsTest\n"
+        "\n"
+        "func test_inferred_arms_cover_both_branches() -> void:\n"
+        '\tvar subject := preload("res://scripts/inferred_subject.gd").new()\n'
+        "\tassert_eq(subject.pick(true), 10)\n"
+        "\tassert_eq(subject.pick(false), 20)\n",
+        encoding="utf-8",
+    )
+
+    plan_path = tmp_path / "native-plan.json"
+    coverage_path = tmp_path / "native-coverage.json"
+    result_path = tmp_path / "coverage-result.json"
+    subject = _plan_for_subject(project, tmp_path, plan_path)
+    branch_ids = {
+        entry["branch_type"]: entry["id"]
+        for entry in subject["lines"]
+        if entry["branch_type"]
+    }
+    statement_ids = [
+        entry["id"]
+        for entry in subject["lines"]
+        if entry["type"] == "statement"
+    ]
+
+    manifest = {
+        "protocol_version": 3,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": "InferredSuite",
+                "path": "res://test/inferred_suite.gd",
+                "tests": [{"name": "test_inferred_arms_cover_both_branches"}],
+            }
+        ],
+        "coverage": {
+            "enabled": True,
+            "plan_path": str(plan_path),
+            "output_path": str(coverage_path),
+        },
+    }
+    result = _run_native_manifest(project, godot_bin, manifest, result_path)
+    output = result.stdout + result.stderr
+
+    assert result.returncode == 0, output
+    assert "inferred from a Variant" not in output, output
+    assert coverage_path.is_file()
+    coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
+    assert "omitted" not in coverage, coverage.get("omitted")
+    assert len(coverage["files"]) == 1, coverage["files"]
+    assert coverage["files"][0]["file_id"] == subject["file_id"]
+    hits = coverage["files"][0]["hits"]
+    assert hits[str(branch_ids["ternary_true"])] > 0, hits
+    assert hits[str(branch_ids["ternary_false"])] > 0, hits
+    for statement_id in statement_ids:
+        assert hits[str(statement_id)] > 0, hits
+
+
+def test_coverage_repro_omission_classes_from_bug_report(godot_bin, tmp_path):
+    """Repro fixture for the two omission classes in the adoption report.
+
+    Class 1 was a ``var x := <wrapped ternary>`` failing to reload under
+    INFERENCE_ON_VARIANT once the operand was wrapped (fixed by plan
+    ``warning_ignores`` + collector annotation injection). Class 2 was
+    pure-const/definition modules silently vanishing: the plan gave them
+    zero points, the collector skipped them without an omission record, and
+    the reconciler substituted its generic "the runtime did not report why"
+    reason. The dependency hypothesis (a ``class_name`` module refusing
+    ``reload()`` because a dependent was already loaded) is exercised here
+    too: the suite loads a consumer that preloads the definition module,
+    so the engine log will show whether reload refusal is real.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    (project / "scripts" / "waypoint_data.gd").write_text(
+        "class_name TrackWaypoints\n"
+        "extends RefCounted\n"
+        "\n"
+        "const POINTS: Array[Vector2] = [\n"
+        "\tVector2(0, 0),\n"
+        "\tVector2(1, 0),\n"
+        "]\n",
+        encoding="utf-8",
+    )
+    (project / "scripts" / "part_def.gd").write_text(
+        "class_name PartDef\n"
+        "extends Resource\n"
+        "\n"
+        '@export var label: String = ""\n'
+        "\n"
+        "\n"
+        "func cost_for(quantity: int) -> int:\n"
+        "\treturn quantity * 2\n",
+        encoding="utf-8",
+    )
+    (project / "scripts" / "consumer.gd").write_text(
+        "class_name PartConsumer\n"
+        "extends RefCounted\n"
+        "\n"
+        "\n"
+        "func total(quantity: int) -> int:\n"
+        '\tvar part = preload("res://scripts/part_def.gd").new()\n'
+        "\treturn part.cost_for(quantity)\n",
+        encoding="utf-8",
+    )
+    (project / "scripts" / "inferred_subject.gd").write_text(
+        INFERRED_SUBJECT, encoding="utf-8"
+    )
+    (project / "test" / "repro_suite.gd").write_text(
+        "extends GdToolsTest\n"
+        "\n"
+        "func test_repro_classes_all_measured() -> void:\n"
+        '\tvar subject = preload("res://scripts/inferred_subject.gd").new()\n'
+        "\tassert_eq(subject.pick(true), 10)\n"
+        "\tassert_eq(subject.pick(false), 20)\n"
+        '\tvar part = preload("res://scripts/part_def.gd").new()\n'
+        "\tassert_eq(part.cost_for(2), 4)\n"
+        '\tvar consumer = preload("res://scripts/consumer.gd").new()\n'
+        "\tassert_eq(consumer.total(3), 6)\n",
+        encoding="utf-8",
+    )
+
+    plan_path = tmp_path / "native-plan.json"
+    coverage_path = tmp_path / "native-coverage.json"
+    result_path = tmp_path / "coverage-result.json"
+    plan = generate_plan(
+        str(project), exclude_dirs=["addons", ".godot"], test_dirs=["test"]
+    )
+    staged = tmp_path / "full-plan.json"
+    write_plan_json(plan, str(staged))
+    plan_path.write_text(staged.read_text(encoding="utf-8"), encoding="utf-8")
+
+    planned_paths = [
+        entry["path"]
+        for entry in json.loads(plan_path.read_text(encoding="utf-8"))["files"]
+    ]
+    assert "res://scripts/waypoint_data.gd" not in planned_paths, planned_paths
+    assert "res://scripts/part_def.gd" in planned_paths, planned_paths
+    assert "res://scripts/consumer.gd" in planned_paths, planned_paths
+    assert "res://scripts/inferred_subject.gd" in planned_paths, planned_paths
+
+    manifest = {
+        "protocol_version": 3,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": "ReproSuite",
+                "path": "res://test/repro_suite.gd",
+                "tests": [{"name": "test_repro_classes_all_measured"}],
+            }
+        ],
+        "coverage": {
+            "enabled": True,
+            "plan_path": str(plan_path),
+            "output_path": str(coverage_path),
+        },
+    }
+    result = _run_native_manifest(project, godot_bin, manifest, result_path)
+    output = result.stdout + result.stderr
+
+    assert result.returncode == 0, output
+    assert "inferred from a Variant" not in output, output
+    assert "did not reload" not in output, output
+    assert coverage_path.is_file()
+    coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
+    assert "omitted" not in coverage, coverage.get("omitted")
+    hits_by_file = {
+        entry["file_id"]: entry["hits"] for entry in coverage["files"]
+    }
+    planned = {
+        entry["path"]: entry
+        for entry in json.loads(plan_path.read_text(encoding="utf-8"))["files"]
+    }
+    for path in (
+        "res://scripts/part_def.gd",
+        "res://scripts/consumer.gd",
+        "res://scripts/inferred_subject.gd",
+    ):
+        file_id = planned[path]["file_id"]
+        assert hits_by_file[file_id], f"{path} recorded no hits: {hits_by_file}"
+    subject_id = planned["res://scripts/inferred_subject.gd"]["file_id"]
+    arms = {
+        entry["branch_type"]: entry["id"]
+        for entry in planned["res://scripts/inferred_subject.gd"]["lines"]
+        if entry["branch_type"]
+    }
+    assert hits_by_file[subject_id][str(arms["ternary_true"])] > 0
+    assert hits_by_file[subject_id][str(arms["ternary_false"])] > 0
+
+
+def test_native_omission_reports_reload_error_code(godot_bin, tmp_path):
+    """A reload failure records its error code instead of a vague reason.
+
+    Without the plan's ``warning_ignores`` (e.g. a plan produced before the
+    annotation existed), the wrapped-operand inferred declaration fails to
+    reload. The omission must say so — carrying the Godot error code and a
+    fix that points at the real mechanism — rather than telling the user
+    to fix their own syntax, which is not broken.
+    """
+    project = _prepare_project(tmp_path, godot_bin)
+    (project / "scripts" / "inferred_subject.gd").write_text(
+        INFERRED_SUBJECT, encoding="utf-8"
+    )
+
+    plan_path = tmp_path / "native-plan.json"
+    coverage_path = tmp_path / "native-coverage.json"
+    result_path = tmp_path / "coverage-result.json"
+    subject = _plan_for_subject(project, tmp_path, plan_path)
+    # Simulate a plan from before warning_ignores existed: the failure mode
+    # the reporter hit, reproducibly.
+    subject.pop("warning_ignores", None)
+    plan_path.write_text(
+        json.dumps({"version": 1, "generated_by": "test", "files": [subject]}),
+        encoding="utf-8",
+    )
+
+    manifest = {
+        "protocol_version": 3,
+        "project_root": str(project),
+        "runtime": "native",
+        "suites": [
+            {
+                "name": "NativeCoverageSuite",
+                "path": "res://test/coverage_suite.gd",
+                "tests": [{"name": "test_statement_and_branch_coverage"}],
+            }
+        ],
+        "coverage": {
+            "enabled": True,
+            "plan_path": str(plan_path),
+            "output_path": str(coverage_path),
+        },
+    }
+    result = _run_native_manifest(project, godot_bin, manifest, result_path)
+    output = result.stdout + result.stderr
+
+    assert result.returncode == 0, output
+    # The engine's own diagnosis stays visible in the run log.
+    assert "inferred from a Variant" in output, output
+    assert coverage_path.is_file()
+    coverage = json.loads(coverage_path.read_text(encoding="utf-8"))
+    assert len(coverage.get("omitted", [])) == 1, coverage.get("omitted")
+    omission = coverage["omitted"][0]
+    assert omission["file_id"] == subject["file_id"]
+    assert "error code" in omission["reason"], omission
+    assert "Fix the script's own syntax" not in (
+        omission["reason"] + omission["fix"]
+    ), omission
 
 
 MOCKING_METHODS = [

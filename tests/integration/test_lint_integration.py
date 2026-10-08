@@ -7,6 +7,8 @@ Uses fixture .gd files from tests/fixtures/ and the real run_lint function
 
 import json
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -103,3 +105,91 @@ def test_lint_fix_flag_noop(tmp_path):
     assert bad_file.read_text() == original_content
     # Lint still ran (exit 1 because bad.gd has errors)
     assert result.exit_code == 1
+
+
+def test_lint_matches_bare_gdlint_on_gdlintrc_disable(tmp_path, monkeypatch):
+    """gd-tools lint and bare gdlint agree on a gdlintrc disable list.
+
+    Regression for the adoption report: a ``disable:`` entry in
+    gdlintrc was honored by bare gdlint but ignored by
+    ``gd-tools lint`` because ``run_lint`` called ``lint_code``
+    without a config.
+    """
+    source = "extends Node\n\nvar later = 1\nconst EARLIER = 1\n"
+    (tmp_path / "order.gd").write_text(source, encoding="utf-8")
+    (tmp_path / "gdlintrc").write_text(
+        "disable:\n  - class-definitions-order\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+
+    # Bare gdlint honors the disable list.
+    bare = subprocess.run(
+        [sys.executable, "-m", "gdtoolkit.linter", "order.gd"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=120,
+    )
+    assert bare.returncode == 0, bare.stdout + bare.stderr
+    assert "class-definitions-order" not in bare.stdout
+
+    # gd-tools lint honors it too.
+    runner = CliRunner()
+    mock_config = GdToolsConfig()
+    with patch("gd_tools.cli.load_config", return_value=mock_config):
+        result = runner.invoke(cli, ["lint", str(tmp_path)])
+
+    assert result.exit_code == 0, result.output
+    assert "class-definitions-order" not in result.output
+
+
+def test_lint_matches_bare_gdlint_without_disables(tmp_path, monkeypatch):
+    """With nothing disabled both tools report the rule violation.
+
+    An explicit empty ``disable:`` list keeps the test hermetic — an
+    ambient gdlintrc above the tmp tree must not influence gdlint.
+    """
+    source = "extends Node\n\nvar later = 1\nconst EARLIER = 1\n"
+    (tmp_path / "order.gd").write_text(source, encoding="utf-8")
+    (tmp_path / "gdlintrc").write_text("disable: []\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    bare = subprocess.run(
+        [sys.executable, "-m", "gdtoolkit.linter", "order.gd"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=120,
+    )
+    assert bare.returncode == 1, bare.stdout + bare.stderr
+
+    runner = CliRunner()
+    mock_config = GdToolsConfig()
+    with patch("gd_tools.cli.load_config", return_value=mock_config):
+        result = runner.invoke(cli, ["lint", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "class-definitions-order" in result.output
+
+
+def test_lint_explicit_config_path_flag(tmp_path, monkeypatch):
+    """--lint-config points at a config outside the discovered search."""
+    source = "extends Node\n\nvar later = 1\nconst EARLIER = 1\n"
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "order.gd").write_text(source, encoding="utf-8")
+    rc = tmp_path / "elsewhere.yaml"
+    rc.write_text("disable:\n  - class-definitions-order\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    runner = CliRunner()
+    mock_config = GdToolsConfig()
+    with patch("gd_tools.cli.load_config", return_value=mock_config):
+        result = runner.invoke(
+            cli, ["lint", str(project), "--lint-config", str(rc)]
+        )
+
+    assert result.exit_code == 0, result.output
+    assert "class-definitions-order" not in result.output

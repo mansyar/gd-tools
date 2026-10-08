@@ -328,6 +328,7 @@ def test_no_cover_annotation_suppresses_assert_points(tmp_path):
         "\n"
         "func f(a: bool) -> void:\n"
         "\tassert(a)  # gd-tools: no cover\n"
+        "\tprint(1)\n"
     )
     points = _expr_points(tmp_path, source)
 

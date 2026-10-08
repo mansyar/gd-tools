@@ -500,7 +500,7 @@ def test_class_initializer_still_records_no_ternary(tmp_path):
     """
     lines = _lines_for(
         tmp_path,
-        "extends Node\n\nclass Inner:\n"
+        "extends Node\n\nfunc f():\n\tprint(1)\n\nclass Inner:\n"
         "\tvar x = 1 if true else 2\n"
         "\tconst Y = 1 if true else 2\n"
         "\tstatic var z = 1 if true else 2\n",

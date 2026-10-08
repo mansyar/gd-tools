@@ -9,21 +9,93 @@ format or JSON.
 
 import json
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
+from types import MappingProxyType
 
+import yaml
 from rich.console import Console
 from rich.text import Text
 
-from gdtoolkit.linter import lint_code
+from gdtoolkit.linter import DEFAULT_CONFIG, lint_code
 from lark.exceptions import LarkError
 
 from gd_tools import output
-from gd_tools.config import GdToolsConfig
+from gd_tools.config import ConfigError, GdToolsConfig, find_project_root
 from gd_tools.file_discovery import discover_gd_files
 from gd_tools.gh_annotations import (
     escape_gh_message_data,
     escape_gh_property,
 )
+
+_GDLINT_RC_NAMES = ("gdlintrc", ".gdlintrc")
+
+
+def load_gdlint_config(
+    config_path: str | None = None,
+    project_root: Path | None = None,
+) -> MappingProxyType:
+    """Load the gdlint config that bare ``gdlint`` would honor.
+
+    Resolution order:
+
+    1. ``config_path`` — an explicit path, loaded directly.
+    2. ``project_root`` — when known (a Godot project), the project's
+       own ``gdlintrc`` / ``.gdlintrc`` is used; the search does not
+       escape the project, so a stray config outside it cannot
+       silently govern the project's lint run.
+    3. Outside a Godot project, discovery walks up from the current
+       working directory — mirroring bare gdlint's own search.
+    4. gdtoolkit's ``DEFAULT_CONFIG`` when no file is found.
+
+    Entries absent from the loaded file are filled in from
+    ``DEFAULT_CONFIG``, matching gdlint's merge behavior.
+
+    Args:
+        config_path: Explicit path to a gdlint config file.
+        project_root: Project directory whose gdlintrc governs the
+            run, without searching above it.
+
+    Returns:
+        An immutable config mapping suitable for
+        ``gdtoolkit.linter.lint_code``.
+    """
+    file_path: Path | None = None
+    if config_path is not None:
+        file_path = Path(config_path)
+    elif project_root is not None:
+        for name in _GDLINT_RC_NAMES:
+            candidate = project_root / name
+            if candidate.is_file():
+                file_path = candidate
+                break
+    else:
+        current = Path.cwd().resolve()
+        while True:
+            for name in _GDLINT_RC_NAMES:
+                candidate = current / name
+                if candidate.is_file():
+                    file_path = candidate
+                    break
+            if file_path is not None or current == current.parent:
+                break
+            current = current.parent
+
+    if file_path is None:
+        return DEFAULT_CONFIG
+
+    with open(file_path, "r", encoding="utf-8") as handle:
+        # safe_load differs from bare gdlint (yaml.Loader) on YAML tags;
+        # the stricter loader is intentional — configs are plain data and
+        # untrusted tags should never execute.
+        loaded = yaml.safe_load(handle.read())
+    if not isinstance(loaded, dict):
+        loaded = {}
+    for key, value in DEFAULT_CONFIG.items():
+        if key not in loaded:
+            loaded[key] = value
+    return MappingProxyType(loaded)
 
 
 @dataclass
@@ -66,6 +138,8 @@ def run_lint(
     config: GdToolsConfig,
     paths: list[str] | None = None,
     report_format: str = "text",
+    lint_config: Mapping | None = None,
+    lint_config_path: str | None = None,
 ) -> LintResult:
     """Run gdlint on ``paths``, respecting config excludes.
 
@@ -74,18 +148,39 @@ def run_lint(
     issues.  All gdlint problems are treated as errors (gdlint does
     not distinguish severities).
 
+    The gdlint rule config is resolved from ``lint_config_path`` when
+    given, else from ``lint_config`` when given, else from the
+    project's ``gdlintrc`` (discovered like bare gdlint does), so
+    ``disable:`` lists and rule settings behave the same as running
+    ``gdlint`` directly.
+
     Args:
         config: Project configuration with lint excludes.
         paths: Root directories to lint. Defaults to ``["."]``.
         report_format: Output format hint (unused here; formatting
             is handled by :func:`format_lint_text` /
             :func:`format_lint_json`).
+        lint_config: Pre-loaded gdlint config mapping for
+            ``lint_code``. Takes precedence over discovery but not
+            over ``lint_config_path``.
+        lint_config_path: Explicit path to a gdlint config file.
+            Takes precedence over every other source.
 
     Returns:
         :class:`LintResult` with file count and issue lists.
     """
     if not paths:
         paths = ["."]
+
+    if lint_config_path is not None:
+        lint_config = load_gdlint_config(config_path=lint_config_path)
+    elif lint_config is None:
+        project_root: Path | None
+        try:
+            project_root = find_project_root()
+        except ConfigError:
+            project_root = None
+        lint_config = load_gdlint_config(project_root=project_root)
 
     excludes = config.lint.exclude
     gd_files: list[str] = []
@@ -112,7 +207,7 @@ def run_lint(
             continue
         output.print_verbose(f"Linting: {file_path}")
         try:
-            problems = lint_code(code)
+            problems = lint_code(code, lint_config)
         except LarkError as e:
             # Parse/syntax error from Lark — report and continue linting
             errors.append(

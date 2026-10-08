@@ -305,6 +305,69 @@ def test_run_native_tests_publishes_coverage_omissions_in_the_index(tmp_path):
     assert index["omitted"] == [omission]
 
 
+def test_index_omitted_is_union_across_suites(tmp_path):
+    """The run index ``omitted`` is the deduplicated union of every suite.
+
+    Each suite process reports its own omissions in its result diagnostics;
+    a machine consumer reading the index top-level must see every target
+    omitted anywhere in the run, not just one suite's share of them.
+    """
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    shared = {
+        "file_id": 1,
+        "path": "res://scripts/shared.gd",
+        "reason": (
+            "Trackers could not be injected, so the script did not reload "
+            "(Godot error code 1): res://scripts/shared.gd"
+        ),
+        "fix": "exclude the file from the plan.",
+    }
+    first_only = {
+        "file_id": 2,
+        "path": "res://scripts/only_first.gd",
+        "reason": "r1",
+        "fix": "f1",
+    }
+    second_only = {
+        "file_id": 3,
+        "path": "res://scripts/only_second.gd",
+        "reason": "r2",
+        "fix": "f2",
+    }
+
+    def fake_run(args, **kwargs):
+        manifest = json.loads(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_MANIFEST"]).read_text()
+        )
+        suite_name = manifest["suites"][0]["name"]
+        omissions = [shared]
+        omissions.append(
+            first_only if suite_name == "FirstSuite" else second_only
+        )
+        _write_result(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]),
+            run_diagnostics={"coverage_omissions": omissions},
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
+    ):
+        run_native_tests(
+            tmp_path,
+            [_suite("FirstSuite"), _suite("SecondSuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+        )
+
+    index = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    expected = sorted(
+        [shared, first_only, second_only], key=lambda omission: omission["path"]
+    )
+    assert sorted(index["omitted"], key=lambda o: o["path"]) == expected
+
+
 def test_run_native_tests_passes_screenshot_base_and_indexes_captures(
     tmp_path,
 ):

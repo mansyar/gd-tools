@@ -44,19 +44,34 @@ var label := "acceptance"
 """
 
 
+_REPO_SRC = str(Path(__file__).resolve().parents[2] / "src")
+
+
 def _gd_tools_command() -> list[str]:
-    """Use the installed CLI entry point when available."""
-    bin_dir = Path(sys.executable).parent
-    for name in ("gd-tools.exe", "gd-tools"):
-        candidate = bin_dir / name
-        if candidate.exists():
-            return [str(candidate)]
+    """Run this repository's CLI; never a globally installed one.
+
+    A global ``gd-tools`` entry point can resolve to a different checkout
+    (stale version, different native protocol), which made these e2e
+    subprocesses test the wrong code. Force ``python -m gd_tools`` with
+    the repository's ``src`` prepended to PYTHONPATH; every subprocess in
+    this module copies ``os.environ``, so they all inherit it.
+    """
+    existing = os.environ.get("PYTHONPATH", "")
+    parts = [_REPO_SRC] + [
+        part
+        for part in existing.split(os.pathsep)
+        if part and part != _REPO_SRC
+    ]
+    os.environ["PYTHONPATH"] = os.pathsep.join(parts)
     return [sys.executable, "-m", "gd_tools"]
 
 
 def _run_cli(
     args: list[str], project: Path, godot_bin: str
 ) -> subprocess.CompletedProcess:
+    # Resolve the command first: it prepends the repository src to
+    # os.environ's PYTHONPATH, which the copy below must already reflect.
+    command = _gd_tools_command()
     env = os.environ.copy()
     env.update(
         {
@@ -66,7 +81,7 @@ def _run_cli(
         }
     )
     return subprocess.run(
-        [*_gd_tools_command(), *args],
+        [*command, *args],
         cwd=project,
         capture_output=True,
         text=True,

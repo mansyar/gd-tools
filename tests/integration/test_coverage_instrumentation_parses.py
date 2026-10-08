@@ -138,13 +138,35 @@ CASES = {
     # initializer (tracker call in the ternary operand) still compiles, so
     # excluding @export ternaries is a conservative choice, not a hard
     # technical blocker. They stay untracked (no anchor), like const and
-    # default-parameter ternaries.
+    # default-parameter ternaries. The trailing function keeps the file a
+    # plan target now that zero-point files are excluded from plans.
     "ternary_export_wrapped": (
         "extends Node\n\n@export var enabled := true\n\n\n"
         "@export var size: int = GdToolsNativeCoverage.hit_ret(0, 5, 2) "
-        "if enabled else 4\n",
+        "if enabled else 4\n\n\n"
+        "func f() -> void:\n\tprint(enabled)\n",
         [],
-        [],
+        [10],
+    ),
+    # A `:=` initializer holding a wrapped operand infers from Variant
+    # (INFERENCE_ON_VARIANT is error-by-default in Godot 4.x), so the
+    # annotation must ride the same line or the instrumented file cannot
+    # reload at all.
+    "inferred_wrapped": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tvar x := 10 if a > 0 else 20\n\tprint(x)\n",
+        [5, 5],
+        [5, 6],
+    ),
+    # A statement that already carries a same-line annotation gets the
+    # collector's annotation stacked in front of it; GDScript accepts
+    # stacked annotations, and this case pins that the result still parses.
+    "inferred_wrapped_preannotated": (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        '\t@warning_ignore("inference_on_variant") var x := '
+        "10 if a > 0 else 20\n\tprint(x)\n",
+        [5, 5],
+        [5, 6],
     ),
     "param_orphan": (
         "extends Node\n\n\nfunc f(a: int, x = 1 if a > 0 else 2) -> void:\n"
@@ -360,16 +382,26 @@ def _indent_of(line: str) -> str:
     return out
 
 
-def _inject(source: str, lines) -> str:
+def _inject(source: str, lines, warning_ignores=()) -> str:
     """Port of ``_inject_trackers`` from the native coverage collector.
 
-    Mirrors the collector's ordering: entries are sorted by line descending
-    so that each insertion leaves earlier indices valid. Ternary arms are
-    instrumented by wrapping their operand text with ``hit_ret`` instead of
-    inserting a line-based ``hit()`` on the shared anchor line.
+    Mirrors the collector's ordering: operand wrapping first, then
+    same-line ``@warning_ignore`` prefixes (annotations never shift line
+    counts), then entries sorted by line descending so that each insertion
+    leaves earlier indices valid. Ternary arms are instrumented by
+    wrapping their operand text with ``hit_ret`` instead of inserting a
+    line-based ``hit()`` on the shared anchor line.
     """
     wrapped = _wrap_operands(source, lines)
     src_lines = wrapped.split("\n")
+    for annotation in warning_ignores:
+        target = annotation["line"] - 1
+        if 0 <= target < len(src_lines) and annotation.get("warning"):
+            indent = _indent_of(src_lines[target])
+            src_lines[target] = (
+                f'{indent}@warning_ignore("{annotation["warning"]}") '
+                f"{src_lines[target][len(indent):]}"
+            )
     for entry in sorted(lines, key=lambda e: e.line, reverse=True):
         if getattr(entry, "operand_span", None) is not None:
             continue
@@ -528,11 +560,13 @@ def batch(tmp_path_factory, godot_bin):
 
     plan = generate_plan(str(project))
     lines_by_case: dict[str, list] = {}
+    ignores_by_case: dict[str, list] = {}
     instrumented: dict[str, str] = {}
     for case, (source, _, _) in CASES.items():
         entry = next(f for f in plan.files if Path(f.path).name == f"{case}.gd")
         lines_by_case[case] = entry.lines
-        instrumented[case] = _inject(source, entry.lines)
+        ignores_by_case[case] = entry.warning_ignores
+        instrumented[case] = _inject(source, entry.lines, entry.warning_ignores)
         (project / f"{case}.gd").write_text(
             instrumented[case], encoding="utf-8"
         )
@@ -541,6 +575,7 @@ def batch(tmp_path_factory, godot_bin):
     return {
         "results": _parse_results(output),
         "lines_by_case": lines_by_case,
+        "ignores_by_case": ignores_by_case,
         "instrumented": instrumented,
         "output": output,
     }
@@ -588,6 +623,14 @@ def test_injection_port_tracks_the_collector():
         "Collector no longer consults operand_span; ternary arms would be "
         "instrumented by line insertion again, which fires both arms in "
         "lockstep and cannot ever report an uncovered arm."
+    )
+
+    warning_annotation = re.search(r"@warning_ignore\(", source)
+    assert warning_annotation, (
+        "Collector no longer injects @warning_ignore for plan "
+        "warning_ignores entries; wrapped operands inside inferred `:=` "
+        "declarations would fail to reload (INFERENCE_ON_VARIANT is "
+        "error-by-default) and the file would vanish from coverage."
     )
 
 
@@ -738,7 +781,14 @@ def test_instrumented_source_parses(case, batch):
             f"line makes the instrumented file unparseable."
         )
 
+    instrumented = batch["instrumented"][case]
+    for annotation in batch["ignores_by_case"][case]:
+        assert f'@warning_ignore("{annotation["warning"]}")' in instrumented, (
+            f"Case '{case}' lost its {annotation['warning']} annotation; "
+            "the instrumented source would fail to reload with "
+            f"INFERENCE_ON_VARIANT.\n{instrumented}"
+        )
     assert batch["results"][f"res://{case}.gd"], (
         f"Instrumented '{case}' does not parse:\n"
-        f"{batch['instrumented'][case]}\n---\n{batch['output']}"
+        f"{instrumented}\n---\n{batch['output']}"
     )

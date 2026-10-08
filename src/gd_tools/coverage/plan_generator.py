@@ -28,7 +28,7 @@ from gd_tools.atomic_io import atomic_write_text
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 7
+PLAN_VERSION = 8
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
@@ -58,6 +58,12 @@ Bumped 6 -> 7 when boolean short-circuit operators (``and``/``or``) and
 Coverage). Version 6 plans carry no expression points, so reusing one
 would silently under-measure branch coverage for expressions and let
 ``--min-branch`` pass on files with untested short-circuit paths.
+
+Bumped 7 -> 8 when per-file ``warning_ignores`` annotations were added
+and files with zero trackable points were excluded from the plan.
+Version 7 plans keep zero-point files as silent-omission targets and
+lack the annotations the collector needs to keep wrapped-operand
+inferred declarations compiling under default warning settings.
 """
 
 # --- Data structures (FR-1) ---
@@ -99,6 +105,13 @@ class FilePlan:
         lines: List of trackable points in this file.
         excluded_lines: Sorted 1-based line numbers excluded from
             instrumentation via ``# gd-tools: no cover`` annotations.
+        warning_ignores: Annotations the collector must inline before a
+            statement for the instrumented source to compile under
+            default warning settings. Each entry is
+            ``{"line": <1-based line>, "warning": <warning name>}``;
+            populated only for ``:=`` inferred declarations whose
+            initializer contains a span-wrapped operand (see
+            :class:`CoverageVisitor`).
     """
 
     file_id: int
@@ -106,6 +119,7 @@ class FilePlan:
     source_hash: str
     lines: list[LinePlan] = field(default_factory=list)
     excluded_lines: list[int] = field(default_factory=list)
+    warning_ignores: list[dict[str, str | int]] = field(default_factory=list)
 
 
 @dataclass
@@ -151,30 +165,33 @@ def write_plan_json(plan: CoveragePlan, output_path: str) -> None:
         plan: The coverage plan to serialize.
         output_path: Path to the output JSON file.
     """
+    files: list[dict[str, object]] = []
+    for fp in plan.files:
+        entry: dict[str, object] = {
+            "file_id": fp.file_id,
+            "path": fp.path,
+            "source_hash": fp.source_hash,
+            "excluded_lines": fp.excluded_lines,
+            "lines": [
+                {
+                    "line": lp.line,
+                    "id": lp.id,
+                    "type": lp.type,
+                    "branch_type": lp.branch_type,
+                    "operand_span": (
+                        list(lp.operand_span) if lp.operand_span else None
+                    ),
+                }
+                for lp in fp.lines
+            ],
+        }
+        if fp.warning_ignores:
+            entry["warning_ignores"] = fp.warning_ignores
+        files.append(entry)
     data = {
         "version": plan.version,
         "generated_by": plan.generated_by,
-        "files": [
-            {
-                "file_id": fp.file_id,
-                "path": fp.path,
-                "source_hash": fp.source_hash,
-                "excluded_lines": fp.excluded_lines,
-                "lines": [
-                    {
-                        "line": lp.line,
-                        "id": lp.id,
-                        "type": lp.type,
-                        "branch_type": lp.branch_type,
-                        "operand_span": (
-                            list(lp.operand_span) if lp.operand_span else None
-                        ),
-                    }
-                    for lp in fp.lines
-                ],
-            }
-            for fp in plan.files
-        ],
+        "files": files,
     }
     atomic_write_text(output_path, json.dumps(data, indent=2))
 
@@ -249,6 +266,7 @@ def read_plan_json(path: str) -> CoveragePlan:
                 source_hash=fdata["source_hash"],
                 lines=lines,
                 excluded_lines=fdata.get("excluded_lines", []),
+                warning_ignores=fdata.get("warning_ignores", []),
             )
         )
 
@@ -679,6 +697,22 @@ def _node_span(node: Tree | Token) -> tuple[int, int, int, int]:
     return (node.line, node.column, node.end_line, node.end_column)
 
 
+def _span_contains(
+    outer: tuple[int, int, int, int],
+    inner: tuple[int, int, int, int],
+) -> bool:
+    """Return whether span ``inner`` lies entirely within span ``outer``.
+
+    Spans are ``(start_line, start_col, end_line, end_col)`` tuples with
+    1-based lines and columns and an exclusive end.
+    """
+    o_sl, o_sc, o_el, o_ec = outer
+    i_sl, i_sc, i_el, i_ec = inner
+    starts_inside = i_sl > o_sl or (i_sl == o_sl and i_sc >= o_sc)
+    ends_inside = i_el < o_el or (i_el == o_el and i_ec <= o_ec)
+    return starts_inside and ends_inside
+
+
 class CoverageVisitor(Visitor):
     """Lark AST visitor that identifies trackable statements and branches.
 
@@ -687,6 +721,9 @@ class CoverageVisitor(Visitor):
 
     Attributes:
         points: List of collected trackable points.
+        warning_ignores: Statement annotations the collector must inline
+            for the instrumented source to compile (see
+            :meth:`func_var_inf`).
     """
 
     def __init__(
@@ -695,6 +732,7 @@ class CoverageVisitor(Visitor):
         source: str | None = None,
     ) -> None:
         self.points: list[LinePlan] = []
+        self.warning_ignores: list[dict[str, str | int]] = []
         self._next_id: int = 0
         self._excluded_lines = excluded_lines or set()
         self._source = source
@@ -775,8 +813,35 @@ class CoverageVisitor(Visitor):
         self._add_point(tree, "statement")
 
     def func_var_inf(self, tree: Tree) -> None:
-        """Track ``:=`` inferred-type variable assignments."""
+        """Track ``:=`` inferred-type variable assignments.
+
+        When the initializer contains a span-wrapped operand (a ternary
+        arm or boolop operand), the value-preserving wrapper returns
+        ``Variant`` and the whole initializer becomes statically
+        ``Variant``. Godot 4.x treats ``INFERENCE_ON_VARIANT`` as an
+        error by default, so such statements are recorded in
+        :attr:`warning_ignores` and the collector annotates them with
+        ``@warning_ignore("inference_on_variant")``.
+
+        Runs bottom-up, so operand points from the initializer subtree
+        are already recorded when this handler fires. Untyped ``var x =
+        ...`` assignments (:meth:`func_var_assigned`) need no
+        annotation: Godot warns only for ``:=`` inference (verified
+        against Godot 4.7.2).
+        """
         self._add_point(tree, "statement")
+        statement_span = _node_span(tree)
+        if any(
+            point.operand_span is not None
+            and _span_contains(statement_span, point.operand_span)
+            for point in self.points
+        ):
+            self.warning_ignores.append(
+                {
+                    "line": tree.meta.line,
+                    "warning": "inference_on_variant",
+                }
+            )
 
     def break_stmt(self, tree: Tree) -> None:
         """Track break statements."""
@@ -972,7 +1037,9 @@ def generate_plan(
 
     Returns:
         A :class:`CoveragePlan` with one :class:`FilePlan` per
-        discovered file.
+        discovered file that has trackable points. Files that yield no
+        points (declaration- or data-only modules) are skipped with a
+        visible warning instead of becoming silent omissions.
     """
     if exclude_dirs is None:
         from gd_tools.config import DEFAULT_EXCLUDES
@@ -1019,6 +1086,13 @@ def generate_plan(
                 f"[yellow]Warning: '{gd_file}' {warning}[/yellow]"
             )
 
+        if not visitor.points:
+            console.print(
+                f"[yellow]Warning: Skipping '{gd_file}' — "
+                "no trackable coverage points.[/yellow]"
+            )
+            continue
+
         # Build res:// path
         rel_path = Path(gd_file).relative_to(project_root)
         res_path = "res://" + str(rel_path).replace("\\", "/")
@@ -1030,6 +1104,7 @@ def generate_plan(
                 source_hash=source_hash,
                 lines=visitor.points,
                 excluded_lines=excluded,
+                warning_ignores=visitor.warning_ignores,
             )
         )
 
@@ -1129,12 +1204,14 @@ def generate_plan_cached(
             ]
 
             current_hashes: dict[str, str] = {}
+            current_sources: dict[str, str] = {}
+            current_trees: dict[str, Tree] = {}
             for gd_file in gd_files:
                 source = Path(gd_file).read_text(encoding="utf-8")
                 # Skip files that generate_plan() would skip (syntax
                 # errors) to avoid false cache misses.
                 try:
-                    parse_gdscript(source)
+                    tree = parse_gdscript(source)
                 except LarkError:
                     continue
                 res_path = "res://" + str(
@@ -1144,10 +1221,29 @@ def generate_plan_cached(
                     "sha256:"
                     + hashlib.sha256(source.encode("utf-8")).hexdigest()
                 )
+                current_sources[res_path] = source
+                current_trees[res_path] = tree
 
             cached_hashes = {
                 fp.path: fp.source_hash for fp in cached_plan.files
             }
+
+            # Files absent from the cached plan may be zero-point files
+            # that generate_plan() excludes (data-only or
+            # declaration-only modules). Visit them before counting
+            # them as added, so adding such a module does not force a
+            # pointless regeneration on every subsequent run.
+            for res_path in sorted(set(current_hashes) - set(cached_hashes)):
+                excluded, _warnings = find_excluded_lines(
+                    current_sources[res_path]
+                )
+                visitor = CoverageVisitor(
+                    excluded_lines=set(excluded),
+                    source=current_sources[res_path],
+                )
+                visitor.visit(current_trees[res_path])
+                if not visitor.points:
+                    del current_hashes[res_path]
 
             if current_hashes == cached_hashes:
                 return cached_plan, CacheStatus(

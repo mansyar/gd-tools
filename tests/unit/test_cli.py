@@ -503,7 +503,9 @@ def test_lint_default_path():
     ):
         result = runner.invoke(cli, ["lint"])
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(mock_config, [], "text")
+    mock_run.assert_called_once_with(
+        mock_config, [], "text", lint_config_path=None
+    )
 
 
 def test_lint_report_format_json():
@@ -638,7 +640,9 @@ def test_lint_wired_to_run_lint():
             cli, ["lint", "some/path", "--report-format", "json"]
         )
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(mock_config, ["some/path"], "json")
+    mock_run.assert_called_once_with(
+        mock_config, ["some/path"], "json", lint_config_path=None
+    )
 
 
 def test_format_config_error_exit_2():
@@ -1505,7 +1509,9 @@ def test_lint_multiple_paths():
     ):
         result = runner.invoke(cli, ["lint", "path_a", "path_b"])
     assert result.exit_code == 0
-    mock_run.assert_called_once_with(mock_config, ["path_a", "path_b"], "text")
+    mock_run.assert_called_once_with(
+        mock_config, ["path_a", "path_b"], "text", lint_config_path=None
+    )
 
 
 def test_format_multiple_paths():

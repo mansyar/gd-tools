@@ -22,7 +22,9 @@ def test_native_plan_excludes_managed_addon_and_test_directories(tmp_path):
     ):
         path = tmp_path / relative_path
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("extends Node\n", encoding="utf-8")
+        path.write_text(
+            "extends Node\nfunc _ready():\n\tprint(1)\n", encoding="utf-8"
+        )
 
     plan = generate_plan(tmp_path)
 

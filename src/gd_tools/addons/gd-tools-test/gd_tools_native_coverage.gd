@@ -186,6 +186,7 @@ static func _instrument_file(file_data: Dictionary) -> bool:
 	var path := str(file_data.get("path", ""))
 	var file_id := int(file_data.get("file_id", -1))
 	var lines: Array = file_data.get("lines", [])
+	var warning_ignores: Array = file_data.get("warning_ignores", [])
 	if path.is_empty() or file_id < 0 or lines.is_empty():
 		return false
 
@@ -214,7 +215,8 @@ static func _instrument_file(file_data: Dictionary) -> bool:
 	script.source_code = _inject_trackers(
 			original_source,
 			file_id,
-			lines
+			lines,
+			warning_ignores
 	)
 	var reload_error: int = script.reload(true)
 	if reload_error != OK:
@@ -224,8 +226,19 @@ static func _instrument_file(file_data: Dictionary) -> bool:
 			file_id,
 			path,
 			"Skipped uninstrumentable coverage target.",
-			"Trackers could not be injected, so the script did not reload: " + path,
-			"Fix the script's own syntax, or exclude it from the plan."
+			(
+				"Trackers could not be injected, so the script did not reload "
+				+ "(Godot error code %d): " % reload_error
+			)
+				+ path,
+			(
+				"The engine's SCRIPT ERROR lines logged above this warning name "
+				+ "the failing construct in the instrumented source. If the "
+				+ "reported line does not exist in the original file, the "
+				+ "injected coverage code is at fault -- re-run with "
+				+ "--no-cache to regenerate the plan, or exclude the file "
+				+ "from the plan."
+			)
 		)
 		return false
 
@@ -299,10 +312,32 @@ static func _record_omission(
 static func _inject_trackers(
 		source: String,
 		file_id: int,
-		lines: Array
+		lines: Array,
+		warning_ignores: Array = []
 ) -> String:
 	var wrapped := _wrap_expression_operands(source, file_id, lines)
 	var source_lines: PackedStringArray = wrapped.split("\n")
+	# Inline warning suppressions before any line insertion: each
+	# annotation rides the statement's own line (never shifts line
+	# counts), and the indices below are still the plan's original
+	# numbering at this point. Without the annotation a wrapped operand
+	# inside an inferred `:=` declaration infers from Variant and
+	# INFERENCE_ON_VARIANT -- error-by-default in Godot 4.x -- fails the
+	# reload, dropping the whole file from coverage.
+	for annotation in warning_ignores:
+		var target_index := int(annotation.get("line", 0)) - 1
+		var warning := str(annotation.get("warning", ""))
+		if target_index < 0 or target_index >= source_lines.size():
+			continue
+		if warning.is_empty():
+			continue
+		var indent := _extract_indent(source_lines[target_index])
+		var line := source_lines[target_index]
+		source_lines[target_index] = (
+			indent
+			+ '@warning_ignore("%s") ' % warning
+			+ line.substr(indent.length())
+		)
 	var entries: Array = lines.duplicate(true)
 	entries.sort_custom(func(a, b): return int(a["line"]) > int(b["line"]))
 	for entry in entries:

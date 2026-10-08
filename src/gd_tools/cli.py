@@ -1070,7 +1070,16 @@ def migrate(path, apply, config_only):
     is_flag=True,
     help="Attempt to fix lint issues (no-op for gdlint).",
 )
-def lint(paths, report_format, fix):
+@click.option(
+    "--lint-config",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help=(
+        "Path to a gdlint config file (gdlintrc). Defaults to the "
+        "project's gdlintrc discovered like bare gdlint does."
+    ),
+)
+def lint(paths, report_format, fix, lint_config):
     """Lint GDScript files."""
     if fix:
         click.echo(
@@ -1084,7 +1093,9 @@ def lint(paths, report_format, fix):
         ctx = click.get_current_context()
         ctx.exit(2)
 
-    result = run_lint(config, list(paths), report_format)
+    result = run_lint(
+        config, list(paths), report_format, lint_config_path=lint_config
+    )
 
     if report_format == "json":
         click.echo(format_lint_json(result))

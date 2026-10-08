@@ -909,6 +909,7 @@ gd-tools lint [PATHS]... [OPTIONS]
 |---|---|---|---|
 | `--report-format` | choice | `text` | Output format: `text`, `json`, or `github-actions`. |
 | `--fix` | flag | `false` | Attempt to fix lint issues. Note: `gdlint` is read-only, so this flag prints a warning and has no effect. |
+| `--lint-config` | path | project `gdlintrc` | Path to a gdlint config file. Defaults to the project's `gdlintrc`/`.gdlintrc` (same file `init` generates), so `disable:` lists and rule settings behave exactly like bare `gdlint`. |
 
 **Examples:**
 
@@ -927,6 +928,9 @@ gd-tools lint --report-format json
 
 # Lint a specific directory
 gd-tools lint src/scripts/
+
+# Use a specific gdlint config instead of the project's gdlintrc
+gd-tools lint --lint-config path/to/gdlintrc
 ```
 
 **Output Format (text):**
