@@ -102,8 +102,8 @@ def test_collect_versions_return_structure():
     }
 
 
-def test_package_version_is_0_7_0():
-    """The package version matches the v0.7.0 release being prepared."""
+def test_package_version_is_0_8_0():
+    """The package version matches the v0.8.0 release being prepared."""
     with PYPROJECT.open("rb") as handle:
         data = tomllib.load(handle)
-    assert data["project"]["version"] == "0.7.0"
+    assert data["project"]["version"] == "0.8.0"

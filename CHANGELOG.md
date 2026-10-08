@@ -1,4 +1,4 @@
-## Unreleased
+## v0.8.0 (2026-10-08)
 
 ### Added
 
@@ -42,7 +42,7 @@
   script's own syntax" hint.
 
 - **lint**: `gd-tools lint` now honors the project's `gdlintrc` /
-  `.gdlintrc` — the same file bare `gdlint` reads — including
+  `.gdlintrc` ΓÇö the same file bare `gdlint` reads ΓÇö including
   `disable:` lists and per-rule settings. Previously the config was
   ignored because `lint_code` was called without one, so rules
   disabled in `gdlintrc` were still reported. A `--lint-config` option
@@ -85,7 +85,7 @@
   site/right-operand/short-circuit arm, `assert_true`/`assert_false`), with
   inline per-arm badges on each branch line. Lines carrying a
   `# gd-tools: no cover` annotation render a chip with the annotation text
-  and stay outside the coverage totals. All CSS/JS is inlined — pages make
+  and stay outside the coverage totals. All CSS/JS is inlined ΓÇö pages make
   no external requests and work fully offline.
 
 - **coverage**: New `--html-open` flag on `coverage report` opens the
@@ -124,13 +124,13 @@
 
 - **test**: Spy assertions accept the `"any"` wildcard in
   `assert_call_arguments`, matching any recorded value per argument
-  position — the same wildcard `stub()` already uses. Assertion
+  position ΓÇö the same wildcard `stub()` already uses. Assertion
   failures now carry rich diagnostics: recorded-call listings (bounded),
   and per-argument expected/actual diffs for argument mismatches.
 
-- **test**: `stub()` gains `.to_return_seq([values])` — calls are
+- **test**: `stub()` gains `.to_return_seq([values])` ΓÇö calls are
   answered with the values in registration order and the final value
-  repeats once the sequence is exhausted — and `.to_fail(message)`,
+  repeats once the sequence is exhausted ΓÇö and `.to_fail(message)`,
   which records a test failure with the given message at call time while
   still returning the method's type zero value so the code under test
   keeps executing.
@@ -143,7 +143,7 @@
 
 - **test**: New `assert_property_is(target, "property", expected)`
   asserts the current value of a property via `get()`. Works on any
-  Object — doubles and real instances alike — with diagnostics that
+  Object ΓÇö doubles and real instances alike ΓÇö with diagnostics that
   distinguish a missing property from a value mismatch. (GDScript has
   no property-access interception for declared members, so property
   checks assert values rather than access events.)
@@ -163,20 +163,20 @@
   *inserted*, so it must be a line where a statement may begin. Every
   tracked node either begins with a keyword, or (for `match_case`) is a case
   label whose tracker is injected *after* the line; `test_expr` begins with an
-  arbitrary operand, so its line was the ternary's first operand — a
+  arbitrary operand, so its line was the ternary's first operand ΓÇö a
   continuation line when the ternary is nested. The injected tracker broke the
   parse (`Expected closing ")" after grouping expression`,
   `Unexpected identifier in class body`), the reload failed, and the file
   was recorded as an omission: it vanished from the report and `--min`
   escalated to exit 2. Ternary branch points are now anchored to the nearest
-  enclosing **anchor node** — a tracked statement, or a control-flow statement
+  enclosing **anchor node** ΓÇö a tracked statement, or a control-flow statement
   header, both of which begin with a keyword. A ternary in a control-flow
   header (`if`, `while`, `for`, `match`) is therefore anchored to that
   header's own line, including when the header spans several lines. A ternary
-  with no enclosing anchor node — a class-level `const`/`var`/`static var`
-  initialiser, an `@export` initialiser, or a default parameter value — is not
+  with no enclosing anchor node ΓÇö a class-level `const`/`var`/`static var`
+  initialiser, an `@export` initialiser, or a default parameter value ΓÇö is not
   tracked, because there is no legal insertion point. `PLAN_VERSION` is
-  bumped 2 → 3 so cached plans from earlier versions are regenerated
+  bumped 2 ΓåÆ 3 so cached plans from earlier versions are regenerated
   rather than reused. Existing coverage totals may shift for projects
   whose ternaries previously produced untrackable files, and branch totals
   shift for projects with ternaries in control-flow headers, which were
@@ -186,10 +186,10 @@
   previous fix left `ternary_true` and `ternary_false` sharing one recorded
   line, so both arms were always reported together and ternary branch
   coverage could never fail. The plan now records an `operand_span` for
-  each arm (`PLAN_VERSION` 3 → 4, stale cached plans are regenerated), and
-  the collector wraps each operand in a value-preserving tracker call —
+  each arm (`PLAN_VERSION` 3 ΓåÆ 4, stale cached plans are regenerated), and
+  the collector wraps each operand in a value-preserving tracker call ΓÇö
   `hit_ret(file_id, point_id, operand)` records the hit and returns the
-  operand unchanged — instead of inserting a tracker before the anchor
+  operand unchanged ΓÇö instead of inserting a tracker before the anchor
   line. The taken arm records its point exactly when it evaluates; the
   other arm stays uncovered. Reports still display ternary branches
   combined under the anchor line and the coverage JSON schema is
@@ -226,7 +226,7 @@
   of play) died at report generation with exit 2. `json` is now a
   first-class report format: `coverage report` and `coverage run` emit a
   deterministic machine-readable report (`coverage.json`) whose shape
-  mirrors the `coverage diff --report-format json` payload — a `totals`
+  mirrors the `coverage diff --report-format json` payload ΓÇö a `totals`
   block with the six shared metrics (covered/total lines, line rate,
   covered/total branches, branch rate) and a `files` list sorted by path
   with the same metrics per file plus uncovered line/branch lists. The
@@ -266,7 +266,7 @@
 
 ### Breaking
 
-- **native-test**: Remove the GUT compatibility bridge. The bundled `class_name GutTest` shim is deleted and `extends GutTest` no longer resolves: test discovery rejects legacy suites with exit 2 — "GUT runtime support was removed in v0.6.0. The native runtime is the default. Run `gd-tools migrate` or see docs/gut-migration.md." `--runtime gut` and `test.runtime = "gut"` in `gd-tools.toml` are rejected with exit 2 and the same guidance (`[test].runtime` now only accepts `"native"`), and `gd-tools init --with-gut` is removed — `gd-tools init` bootstraps the native runtime only. `gd-tools doctor` runs 9 checks (down from 12): the GUT Installed / GUT Version / GUT Suites / GUT Config checks are replaced by a single informational **Legacy GUT** advisory that detects leftover `addons/gut`, `.gutconfig.json`, and `extends GutTest` suites and points at the migration path. `gd-tools migrate` is unchanged and fully supported (report / `--config-only` / `--apply`; its construct catalog is retained in the migrate scanner) — it is the supported path from GUT to the native runtime. See docs/gut-migration.md for the full migration guide.
+- **native-test**: Remove the GUT compatibility bridge. The bundled `class_name GutTest` shim is deleted and `extends GutTest` no longer resolves: test discovery rejects legacy suites with exit 2 ΓÇö "GUT runtime support was removed in v0.6.0. The native runtime is the default. Run `gd-tools migrate` or see docs/gut-migration.md." `--runtime gut` and `test.runtime = "gut"` in `gd-tools.toml` are rejected with exit 2 and the same guidance (`[test].runtime` now only accepts `"native"`), and `gd-tools init --with-gut` is removed ΓÇö `gd-tools init` bootstraps the native runtime only. `gd-tools doctor` runs 9 checks (down from 12): the GUT Installed / GUT Version / GUT Suites / GUT Config checks are replaced by a single informational **Legacy GUT** advisory that detects leftover `addons/gut`, `.gutconfig.json`, and `extends GutTest` suites and points at the migration path. `gd-tools migrate` is unchanged and fully supported (report / `--config-only` / `--apply`; its construct catalog is retained in the migrate scanner) ΓÇö it is the supported path from GUT to the native runtime. See docs/gut-migration.md for the full migration guide.
 
 ### Feat
 
@@ -286,9 +286,9 @@
   a real Godot binary, warm repeat runs are ~56% faster end-to-end (7.12s
   cold vs 3.14s warm median; the import process is eliminated).
 
-- **config**: Add `gd-tools config schema` - print or write the JSON Schema for `gd-tools.toml`. The schema is generated live from the installed version's Pydantic config model (never hardcoded), declared as draft 2020-12 with a stable `$id`, and mirrors `extra='forbid'` so editors flag unknown keys. `gd-tools config schema` prints pretty-printed JSON to stdout; `--output <path>` writes it to a file, creating parent directories (unwritable targets exit 2). `gd-tools.toml` now accepts a top-level `"$schema"` key (accepted and ignored — it carries no runtime meaning) so editors can reference the schema for autocomplete and inline validation. A checked-in snapshot (`docs/gd-tools.schema.json`) with a byte-identical sync test keeps the published schema from drifting; see the README's "Editor Autocomplete & Validation" section for VS Code (Even Better TOML) and taplo setup.
+- **config**: Add `gd-tools config schema` - print or write the JSON Schema for `gd-tools.toml`. The schema is generated live from the installed version's Pydantic config model (never hardcoded), declared as draft 2020-12 with a stable `$id`, and mirrors `extra='forbid'` so editors flag unknown keys. `gd-tools config schema` prints pretty-printed JSON to stdout; `--output <path>` writes it to a file, creating parent directories (unwritable targets exit 2). `gd-tools.toml` now accepts a top-level `"$schema"` key (accepted and ignored ΓÇö it carries no runtime meaning) so editors can reference the schema for autocomplete and inline validation. A checked-in snapshot (`docs/gd-tools.schema.json`) with a byte-identical sync test keeps the published schema from drifting; see the README's "Editor Autocomplete & Validation" section for VS Code (Even Better TOML) and taplo setup.
 
-- **native-test**: Add `gd-tools test --changed` — run only the suites mapped from git-changed files. Working-tree mode (`--changed`) collects staged, unstaged, untracked, deleted, and renamed files via `git status --porcelain` and maps them to suites with the same file→suite convention as `--watch` (`src/enemy.gd` → `test_enemy.gd`/`enemy_test.gd`, same-directory preferred); `--base <ref>` diffs committed changes from `merge-base(<ref>, HEAD)` instead (the pull-request/CI form). A change that maps to no selected suite (e.g. `project.godot`, scenes, addons) falls back to the full suite with an explicit per-file notice — the same contract as watch mode — so CI never silently narrows to nothing; an empty change set exits 0 without launching Godot; running outside a git repository or passing an unknown `--base` ref exits 2 with actionable diagnostics. The selection respects the active `--suite`/`--test`/`--tag` filters (the filtered suites are the mapping domain) and composes with `--parallel` and `--coverage`. An always-on summary line reports how many of the discovered suites were selected; per-file mapping detail prints under `--verbose`.
+- **native-test**: Add `gd-tools test --changed` ΓÇö run only the suites mapped from git-changed files. Working-tree mode (`--changed`) collects staged, unstaged, untracked, deleted, and renamed files via `git status --porcelain` and maps them to suites with the same fileΓåÆsuite convention as `--watch` (`src/enemy.gd` ΓåÆ `test_enemy.gd`/`enemy_test.gd`, same-directory preferred); `--base <ref>` diffs committed changes from `merge-base(<ref>, HEAD)` instead (the pull-request/CI form). A change that maps to no selected suite (e.g. `project.godot`, scenes, addons) falls back to the full suite with an explicit per-file notice ΓÇö the same contract as watch mode ΓÇö so CI never silently narrows to nothing; an empty change set exits 0 without launching Godot; running outside a git repository or passing an unknown `--base` ref exits 2 with actionable diagnostics. The selection respects the active `--suite`/`--test`/`--tag` filters (the filtered suites are the mapping domain) and composes with `--parallel` and `--coverage`. An always-on summary line reports how many of the discovered suites were selected; per-file mapping detail prints under `--verbose`.
 - **native-test**: Add signal assertions to the native runtime. `watch_signals(obj)` records every emission of every declared signal on any Object (Node, RefCounted, or double) for the current test. `assert_signal_emitted`, `assert_signal_not_emitted`, and `assert_signal_emit_count` assert on the recording with rich diagnostics (emission count, expected vs actual, and a compact captured-emission list); `assert_signal_emitted_with_args` passes when any recorded emission matches element-wise, using the same `"any"` per-element wildcard as stub argument matching; and `await assert_signal_emitted_after(signal, timeout_seconds := 5.0)` awaits an emission and fails with a timeout diagnostic naming the signal. Watches auto-reset between tests (hooks, parameterized cases, and retries included); asserting against an unwatched object fails with guidance pointing at `watch_signals`; and freeing a watched object mid-test tears down safely. No protocol changes: failures are plain failure entries.
 
 
@@ -300,9 +300,9 @@
 ### Feat
 
 - **native-test**: Add optional parallel suite execution. `gd-tools test --parallel N` (or persistent `parallel = N` under `[test]` in `gd-tools.toml`, 1-32; bare `--parallel` defaults to 4) dispatches discovered suites to a bounded worker pool of concurrent, isolated Godot processes. Dispatch and result aggregation follow discovery order regardless of completion order; a failed, timed-out, or crashed suite never cancels in-flight neighbors; per-suite timeouts are enforced independently per worker; per-suite coverage shards merge into a report structurally identical to the sequential run; JUnit XML preserves discovery order; and `--watch` re-runs inherit the parallel setting. Interrupting a run (sequential or parallel) cancels queued suites, kills every in-flight Godot process tree (POSIX `killpg` / Windows `taskkill /T`), publishes an `incomplete` artifact index, and exits 130. NDJSON progress events now carry `suite` and `worker_slot` fields (protocol version 3). Opt-in performance benchmarks in `tests/performance/` prove an M-suite parallel run completes faster than sequential.
-- **native-test**: Add GUT-compatible parameterized tests to the native runtime. Suites declare value sets once in `before_all` with `parameterize(names, values)`, and every method whose arity matches expands into one first-class case per value set (own hooks, timeout, retry accounting, result entry, and artifacts) with pytest-style case names (`test_foo[3]`, `test_foo[3-admin]`, index fallback for unstable types). The GUT legacy `use_parameters(values)` inside a test body is also supported (array or dictionary form). Preflight statically resolves declarations and rejects malformed ones with exit 2; `--test "method[case]"` selects a single case. Bridge (`GutTest`) suites use the same machinery — parameterization is removed from the bridge scan's unsupported list. This closes the "no parameterized tests" known limitation in ARCHITECTURE.md.
+- **native-test**: Add GUT-compatible parameterized tests to the native runtime. Suites declare value sets once in `before_all` with `parameterize(names, values)`, and every method whose arity matches expands into one first-class case per value set (own hooks, timeout, retry accounting, result entry, and artifacts) with pytest-style case names (`test_foo[3]`, `test_foo[3-admin]`, index fallback for unstable types). The GUT legacy `use_parameters(values)` inside a test body is also supported (array or dictionary form). Preflight statically resolves declarations and rejects malformed ones with exit 2; `--test "method[case]"` selects a single case. Bridge (`GutTest`) suites use the same machinery ΓÇö parameterization is removed from the bridge scan's unsupported list. This closes the "no parameterized tests" known limitation in ARCHITECTURE.md.
 - **native-test**: `skip_test()` in `before_all` now skips the whole suite: every test (and every expanded parameterized case) is reported `skipped` with the recorded reason, no test body or per-test hook runs, and the skip is terminal (never consumes a retry). Per-test `skip_test()` behavior is unchanged. This closes the "no suite-level skip" known limitation in ARCHITECTURE.md.
-- **watch**: Add `gd-tools test --watch` — interactive watch mode for the native runtime. An initial full suite is followed by debounced re-runs mapped from changed `.gd` files by convention (`src/enemy.gd` → `test_enemy.gd`/`enemy_test.gd`, same-directory preferred), with an explicit full-suite fallback when nothing maps. Existing filters (`--suite`, `--test`, `--tag`) and `--coverage` apply to every run; rapid saves coalesce into one re-run and a save during a run queues exactly one follow-up. The screen is cleared between runs under a watching banner, `Ctrl+C` exits 0, and `--watch` rejects `--runtime gut` and `CI=true` with exit 2.
+- **watch**: Add `gd-tools test --watch` ΓÇö interactive watch mode for the native runtime. An initial full suite is followed by debounced re-runs mapped from changed `.gd` files by convention (`src/enemy.gd` ΓåÆ `test_enemy.gd`/`enemy_test.gd`, same-directory preferred), with an explicit full-suite fallback when nothing maps. Existing filters (`--suite`, `--test`, `--tag`) and `--coverage` apply to every run; rapid saves coalesce into one re-run and a save during a run queues exactly one follow-up. The screen is cleared between runs under a watching banner, `Ctrl+C` exits 0, and `--watch` rejects `--runtime gut` and `CI=true` with exit 2.
 - **coverage**: Add `coverage save-baseline` and `coverage diff` subcommands (codecov-style). `save-baseline` persists the latest coverage run as a self-contained baseline document with advisory metadata; `diff --base` reports per-file line and branch deltas (improved/regressed/unchanged/new/removed) with newly-uncovered line detail (`--show-lines`), deterministic JSON output (`--report-format json`), and CI gating (`--fail-on-regression` exits 1 on any per-file regression).
 - **coverage**: Support `# gd-tools: no cover` exclusion annotations. Single-line, block `start`/`end`, and func-line exclusions remove lines from instrumentation and from the coverage percentage denominator and `--min` gate; excluded lines are recorded in the plan JSON (plan version bumped to 2, which regenerates cached plans) and styled distinctly in the HTML report. Malformed annotations warn on stderr and never abort plan generation.
 - **native-test**: Deprecate the GUT compatibility bridge. Runs using `GutTest` suites print a one-time deprecation notice stating removal is planned for v0.6.0; the one-release migration window gives projects the full v0.5.0 cycle to move to `GdToolsTest`. Doctor and `init --with-gut` messaging now state the deprecation and the addon-vs-bridge conflict.
@@ -310,9 +310,9 @@
 
 ### Fix
 
-- **native-test**: `GdToolsTest.wait_for_signal` is bounded and returns whether the signal was emitted. It was declared `-> bool` but could only ever return `true`, so a guard such as `if not wait_for_signal(sig): fail(...)` never reached the `fail` — the await blocked to the per-test timeout and the test was reported as `timeout` rather than `failed`, discarding the reason. A test waiting on a signal that never arrives now receives `false` at the wait budget (default `5.0`, matching the per-test default) instead of running to the per-test timeout, and the wait resolves as soon as the signal fires rather than when the budget runs out. The wait records no failure of its own.
-- **native-test**: Infrastructure failures (exit 2) now carry structured diagnostics. Timeout, engine-crash, unparseable-result, and protocol-mismatch failures report `expected` / `found` / `kind` / `remedy` — e.g. a timeout names its budget and points at `--timeout` / `[test].timeout_seconds`; an engine crash points at the engine log directory; the aggregate error surfaces the first remedy.
-- **docs**: Correct stale capability claims left over from earlier milestones. README, ROADMAP, and PRD no longer describe parallel suite execution as "planned but not yet available" / "deferred", and README's bridge capability table no longer claims `parameterize()` is bridge-unsupported — parameterized tests and parallel execution both shipped in this release (`cli.py --parallel`, bridge parameterization included).
+- **native-test**: `GdToolsTest.wait_for_signal` is bounded and returns whether the signal was emitted. It was declared `-> bool` but could only ever return `true`, so a guard such as `if not wait_for_signal(sig): fail(...)` never reached the `fail` ΓÇö the await blocked to the per-test timeout and the test was reported as `timeout` rather than `failed`, discarding the reason. A test waiting on a signal that never arrives now receives `false` at the wait budget (default `5.0`, matching the per-test default) instead of running to the per-test timeout, and the wait resolves as soon as the signal fires rather than when the budget runs out. The wait records no failure of its own.
+- **native-test**: Infrastructure failures (exit 2) now carry structured diagnostics. Timeout, engine-crash, unparseable-result, and protocol-mismatch failures report `expected` / `found` / `kind` / `remedy` ΓÇö e.g. a timeout names its budget and points at `--timeout` / `[test].timeout_seconds`; an engine crash points at the engine log directory; the aggregate error surfaces the first remedy.
+- **docs**: Correct stale capability claims left over from earlier milestones. README, ROADMAP, and PRD no longer describe parallel suite execution as "planned but not yet available" / "deferred", and README's bridge capability table no longer claims `parameterize()` is bridge-unsupported ΓÇö parameterized tests and parallel execution both shipped in this release (`cli.py --parallel`, bridge parameterization included).
 
 ### Known Limitations
 
@@ -341,7 +341,7 @@
 
 ### Fix
 
-- **tests**: Fix CI failures — tomllib import for Python 3.10 and format summary assertion
+- **tests**: Fix CI failures ΓÇö tomllib import for Python 3.10 and format summary assertion
 - **conductor**: Apply review suggestions for track 'stdout_20260715'
 - **conductor**: Apply review suggestions for track 'Config Show/Validate'
 - **conductor**: Apply review suggestions for track 'lint_output_clipping_fix_20260715'
