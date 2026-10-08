@@ -330,7 +330,7 @@ _Archived tracks live in `./archive/`._
   `--watch`; CLI-only flags with README + GitHub Actions sharding recipe docs)
   *Link: [fail_fast_ci_sharding_20261005](./archive/fail_fast_ci_sharding_20261005/index.md)*
 
-- [~] **Track: Test Suite Audit & Speed-Up** (chore: measured audit-driven
+- [x] **Track: Test Suite Audit & Speed-Up** (chore: measured audit-driven
   pytest speed-up - fix exitfirst event-wait bug + de-subprocess unit tests,
   pytest-xdist `-n auto` for CI Stage 1/matrix, batch integration parse-checks
   into one Godot session, shorten timeout/playtest waits, fix E2E smoke waits;
