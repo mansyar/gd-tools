@@ -1595,6 +1595,39 @@ uncovered arm on that line).
 
 ---
 
+### Track 42: Patch Coverage for PRs (Delivered)
+
+| Field | Value |
+|-------|-------|
+| **Phase** | Ad-hoc (coverage reporting arc) |
+| **Goal** | PR-scoped coverage signal: report and gate coverage over only the executable lines a change touches, with GitHub Actions annotations — completing the "production-quality GDScript coverage" differentiator for code review |
+| **Dependencies** | Coverage diff (`coverage_baseline_diff_20261007`), `test --changed --base` merge-base contract |
+| **Modules** | `src/gd_tools/changes.py`, `src/gd_tools/coverage/patch.py`, `orchestrator.py`, `cli.py` |
+| **Effort** | 1 day |
+| **Risk** | LOW (additive CLI surface; non-patch behavior unchanged) |
+| **Status** | Delivered — track `patch_coverage_prs_20261008` |
+
+**Delivered:** `coverage diff --patch --base <git-ref>` computes
+`covered changed / total changed` by intersecting `git diff -U0`
+added-line ranges (from `merge-base(<base>, HEAD)`, via the new
+`changes.collect_changed_lines`) with the current plan's executable
+points and coverage hits — codecov-style, no baseline snapshot
+required. Strict edge semantics: files missing from coverage data
+count as fully uncovered, new files are included, deleted files and
+non-`.gd` files are ignored, and files with no executable plan lines
+never fail the gate. `--patch-fail-under <0-100>` fails with exit 1
+below the threshold (empty patches pass vacuously); `--report-format
+json` emits a deterministic `files`/`totals`/`threshold`/`verdict`/
+`empty` document; on GitHub Actions (`GITHUB_ACTIONS=true`,
+overridable via `--patch-annotations`) uncovered changed lines are
+emitted as coalesced `::warning file=,line=,end_line=,title=Uncovered
+in patch` annotations and a markdown patch table is appended to
+`$GITHUB_STEP_SUMMARY` (suppressed in `json` format to keep piped
+stdout parseable). All pre-existing `coverage diff` behavior is
+unchanged.
+
+---
+
 ## 6. Conductor Track Creation Guide
 
 To create a track using the Conductor methodology:

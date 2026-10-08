@@ -7,6 +7,8 @@ business logic directly.
 
 from __future__ import annotations
 
+import json
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -14,9 +16,9 @@ from rich.table import Table
 from rich.text import Text
 
 from gd_tools import output
+from gd_tools.changes import collect_changed_lines
 from gd_tools.config import GdToolsConfig, find_project_root
 from gd_tools.coverage import plan_generator, reporter
-import json
 
 from gd_tools.coverage.diff_reporter import (
     BaselineMeta,
@@ -34,6 +36,14 @@ from gd_tools.coverage.omissions import (
     omission_gate_message,
     reconcile_omissions,
 )
+from gd_tools.coverage.patch import (
+    build_patch_annotations,
+    build_patch_json,
+    build_patch_summary,
+    build_patch_table,
+    compute_patch_coverage,
+    patch_verdict,
+)
 from gd_tools.coverage.reporter import (
     CoverageData,
     CoverageSummary,
@@ -41,6 +51,7 @@ from gd_tools.coverage.reporter import (
     ReportResult,
 )
 from gd_tools.errors import (
+    CoveragePlanError,
     CoverageThresholdError,
 )
 
@@ -557,3 +568,116 @@ def diff_coverage(
         )
 
     return result
+
+
+def diff_coverage_patch(
+    config: GdToolsConfig,
+    base: str,
+    *,
+    report_format: str = "text",
+    fail_under: float | None = None,
+    annotations: bool | None = None,
+    fail_on_regression: bool = False,
+) -> None:
+    """Report coverage over only the lines changed relative to a base ref.
+
+    Loads the current plan/data pair from the coverage output directory,
+    collects the changed-line ranges between HEAD and ``base`` (same
+    merge-base contract as ``test --changed --base``), and reports patch
+    coverage in the terminal or as machine-readable JSON. Optionally
+    gates the result with ``fail_under`` and/or a regression check
+    against the saved baseline (``<output_dir>/baseline.json``).
+
+    Args:
+        config: Resolved project configuration.
+        base: Git ref to diff against (merge-base with HEAD).
+        report_format: ``"text"`` for the terminal table, ``"json"`` for
+            deterministic machine-readable output.
+        fail_under: Minimum patch coverage percentage (0-100); raise
+            :class:`CoverageThresholdError` when below it (exit 1).
+            ``None`` keeps the report informational. An empty patch
+            never fails the gate.
+        annotations: Whether to emit GitHub Actions annotations for
+            uncovered changed lines (text format only; JSON output
+            stays parseable). ``None`` auto-detects from the
+            ``GITHUB_ACTIONS`` environment variable.
+        fail_on_regression: Also check full coverage against the saved
+            baseline and raise :class:`CoverageThresholdError` when any
+            file regressed.
+
+    Raises:
+        CoveragePlanError: If the current plan/data pair is missing or
+            malformed, or no saved baseline exists when required (exit
+            code 2 at the CLI boundary).
+        CoverageThresholdError: If the patch gate or the regression
+            check fails (exit code 1 at the CLI boundary).
+    """
+    project_root = find_project_root()
+    output_dir = project_root / config.coverage.output_dir
+    plan = plan_generator.read_plan_json(str(output_dir / "plan.json"))
+    data = reporter.read_coverage_json(output_dir / "coverage.json")
+
+    changed = collect_changed_lines(project_root, base)
+    result = compute_patch_coverage(plan, data, changed)
+
+    if report_format == "json":
+        # Plain print (not the Rich console) so piped output is never
+        # line-wrapped and stays valid, deterministic JSON.
+        print(json.dumps(build_patch_json(result, fail_under), indent=2))
+    else:
+        output.print_table(build_patch_table(result, fail_under))
+
+    emit_annotations = (
+        annotations
+        if annotations is not None
+        else os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    )
+    if emit_annotations and report_format != "json":
+        annotation_text = build_patch_annotations(result)
+        if annotation_text:
+            print(annotation_text, end="")
+        summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary_path:
+            with open(summary_path, "a", encoding="utf-8") as summary_file:
+                summary_file.write(build_patch_summary(result, fail_under))
+
+    if fail_under is not None and patch_verdict(result, fail_under) == "fail":
+        raise CoverageThresholdError(
+            "[Error] Patch coverage gate failed\n"
+            f"  Cause: patch coverage is {result.rate * 100:.1f}% over "
+            f"{result.total} changed executable line(s), below the "
+            f"{fail_under:g}% threshold\n"
+            "  Fix: Add tests covering the changed lines, or rerun "
+            "without --patch-fail-under.",
+            exit_code=1,
+        )
+
+    if fail_on_regression:
+        baseline_path = output_dir / "baseline.json"
+        if not baseline_path.exists():
+            raise CoveragePlanError(
+                f"Baseline file not found: {baseline_path}\n"
+                "  Cause: --fail-on-regression requires a saved baseline\n"
+                "  Fix: Run 'gd-tools coverage save-baseline' first."
+            )
+        baseline = load_baseline(baseline_path)
+        head = BaselineSnapshot(
+            plan=plan,
+            data=data,
+            meta=BaselineMeta(),
+        )
+        diff_result = compute_diff(baseline, head)
+        if diff_result.has_regression:
+            regressed = [
+                fd.path
+                for fd in diff_result.files
+                if fd.classification == "regressed"
+            ]
+            raise CoverageThresholdError(
+                "[Error] Coverage regression detected\n"
+                f"  Cause: {len(regressed)} file(s) have lower coverage "
+                f"than the baseline: {', '.join(regressed)}\n"
+                "  Fix: Add tests to restore coverage, or rerun without "
+                "--fail-on-regression.",
+                exit_code=1,
+            )

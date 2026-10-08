@@ -1,0 +1,8 @@
+{
+  "id": "patch_coverage_prs_20261008",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-10-08",
+  "branch": "feature/patch-coverage-20261008",
+  "summary": "Patch coverage for PRs: `coverage diff --patch --base <ref>` computes coverage over only the executable lines changed since the merge-base (same contract as `test --changed --base`), using the current run's coverage JSON (no baseline snapshot). Ships a rich terminal table, a JSON patch section, a `--patch-fail-under <N>` gate (exit 1), `::warning` GitHub Actions annotations on uncovered changed lines (auto when GITHUB_ACTIONS=true, `--patch-annotations` override), and a GH job markdown summary. Strict edge semantics: missing data = uncovered, new files fully counted, deleted files ignored, .gd-only, zero-plan files skipped."
+}

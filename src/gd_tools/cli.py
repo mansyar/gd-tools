@@ -49,6 +49,7 @@ from .config import (
 from .schema import generate_schema_text
 from .coverage.orchestrator import (
     diff_coverage,
+    diff_coverage_patch,
     generate_coverage_report,
     merge_coverage_files,
     save_coverage_baseline,
@@ -1349,7 +1350,7 @@ def save_baseline_cmd():
 @click.option(
     "--base",
     required=True,
-    help="Path to the baseline file written by 'coverage save-baseline'.",
+    help="Baseline file path, or a git ref when --patch is set.",
 )
 @click.option(
     "--show-lines",
@@ -1369,8 +1370,60 @@ def save_baseline_cmd():
     default=False,
     help="Exit 1 when any file has lower coverage than the baseline.",
 )
-def diff_cmd(base, show_lines, report_format, fail_on_regression):
-    """Compare current coverage against a baseline."""
+@click.option(
+    "--patch",
+    is_flag=True,
+    default=False,
+    help=(
+        "Patch-coverage mode: report coverage for only the executable "
+        "lines changed relative to the --base git ref (merge-base "
+        "contract, same as 'test --changed --base')."
+    ),
+)
+@click.option(
+    "--patch-fail-under",
+    type=click.FloatRange(0, 100),
+    default=None,
+    help=(
+        "Minimum patch coverage percentage (0-100). Exit 1 below it. "
+        "Requires --patch."
+    ),
+)
+@click.option(
+    "--patch-annotations",
+    type=click.Choice(["true", "false"], case_sensitive=False),
+    default=None,
+    help=(
+        "Emit GitHub Actions annotations for uncovered changed lines. "
+        "Defaults to auto-detection via GITHUB_ACTIONS=true. "
+        "Requires --patch."
+    ),
+)
+def diff_cmd(
+    base,
+    show_lines,
+    report_format,
+    fail_on_regression,
+    patch,
+    patch_fail_under,
+    patch_annotations,
+):
+    """Compare current coverage against a baseline (--patch: vs a base ref)."""
+    if patch_fail_under is not None and not patch:
+        click.echo("Error: --patch-fail-under requires --patch.", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+    if patch_annotations is not None and not patch:
+        click.echo("Error: --patch-annotations requires --patch.", err=True)
+        ctx = click.get_current_context()
+        ctx.exit(2)
+    if patch and show_lines:
+        click.echo(
+            "Error: --show-lines is not compatible with --patch.", err=True
+        )
+        ctx = click.get_current_context()
+        ctx.exit(2)
+
     try:
         config = load_config()
     except ConfigError as e:
@@ -1379,13 +1432,27 @@ def diff_cmd(base, show_lines, report_format, fail_on_regression):
         ctx.exit(2)
 
     try:
-        diff_coverage(
-            config,
-            base,
-            show_lines=show_lines,
-            report_format=report_format.lower(),
-            fail_on_regression=fail_on_regression,
-        )
+        if patch:
+            diff_coverage_patch(
+                config,
+                base,
+                report_format=report_format.lower(),
+                fail_under=patch_fail_under,
+                annotations=(
+                    patch_annotations.lower() == "true"
+                    if patch_annotations is not None
+                    else None
+                ),
+                fail_on_regression=fail_on_regression,
+            )
+        else:
+            diff_coverage(
+                config,
+                base,
+                show_lines=show_lines,
+                report_format=report_format.lower(),
+                fail_on_regression=fail_on_regression,
+            )
     except GdToolsError as e:
         click.echo(f"Error: {e}", err=True)
         ctx = click.get_current_context()

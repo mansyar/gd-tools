@@ -9,12 +9,17 @@ files in a project from git in one of two modes:
 - **Base ref** (``--changed --base <ref>``): committed changes since the
   merge-base of ``<ref>`` and ``HEAD`` via ``git diff --name-only``.
 
+The same base-ref mode also powers patch coverage via
+:func:`collect_changed_lines`, which extracts inclusive added-line
+ranges per ``.gd`` file from ``git diff -U0`` output.
+
 Failures are environment/configuration problems (exit code 2): the caller
 is not inside a git repository, or the requested base ref does not exist.
 """
 
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -50,6 +55,39 @@ def collect_changed_files(
         project_root,
     )
     return _parse_name_only(result.stdout)
+
+
+def collect_changed_lines(
+    project_root: Path, base: str
+) -> dict[Path, list[tuple[int, int]]]:
+    """Return inclusive added-line ranges per changed ``.gd`` file.
+
+    Diffs from ``merge-base(base, HEAD)`` to ``HEAD`` with
+    ``git diff -U0`` and parses the added side of each hunk.
+
+    Deleted files are excluded (their added side is ``/dev/null``),
+    and only ``.gd`` files are returned since patch coverage tracks
+    GDScript sources.
+
+    Args:
+        project_root: The Godot project root (also the git working tree).
+        base: Git ref to diff against, via its merge-base with ``HEAD``.
+
+    Returns:
+        Mapping of project-relative ``.gd`` paths to sorted, inclusive
+        ``(start, end)`` ranges of added lines, in diff order. Files
+        whose diff contains no added lines map to an empty list.
+
+    Raises:
+        GitChangeError: When the directory is not a git repository or
+            ``base`` is not a valid ref.
+    """
+    merge_base = _git(["merge-base", base, "HEAD"], project_root)
+    result = _git(
+        ["diff", "-U0", merge_base.stdout.strip(), "HEAD"],
+        project_root,
+    )
+    return _parse_added_line_ranges(result.stdout)
 
 
 def _git(args: list[str], project_root: Path) -> subprocess.CompletedProcess:
@@ -115,3 +153,47 @@ def _parse_porcelain(stdout: str) -> list[Path]:
 def _parse_name_only(stdout: str) -> list[Path]:
     """Parse ``git diff --name-only`` output into paths (one per line)."""
     return [Path(line) for line in stdout.splitlines() if line]
+
+
+_HUNK_HEADER = re.compile(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+
+def _parse_added_line_ranges(
+    stdout: str,
+) -> dict[Path, list[tuple[int, int]]]:
+    """Parse ``git diff -U0`` output into per-file added-line ranges.
+
+    Tracks the current file from ``+++ b/<path>`` headers, skipping
+    deleted files (``/dev/null``) and non-``.gd`` paths, then turns
+    each ``@@ -a,b +c,d @@`` hunk header into an inclusive
+    ``(start, start + count - 1)`` range. Hunks with a zero new-side
+    count (pure deletions) contribute no range.
+    """
+    ranges: dict[Path, list[tuple[int, int]]] = {}
+    current: Path | None = None
+    for line in stdout.splitlines():
+        if line.startswith("diff --git "):
+            current = None
+            continue
+        if line.startswith("+++ "):
+            raw = line[4:].split("\t", 1)[0]
+            if raw == "/dev/null":
+                current = None
+                continue
+            path = Path(raw[2:] if raw.startswith("b/") else raw)
+            if path.suffix == ".gd":
+                current = path
+                ranges.setdefault(current, [])
+            else:
+                current = None
+            continue
+        if current is None:
+            continue
+        match = _HUNK_HEADER.match(line)
+        if match is None:
+            continue
+        start = int(match.group(1))
+        count = int(match.group(2) or "1")
+        if count > 0:
+            ranges[current].append((start, start + count - 1))
+    return ranges
