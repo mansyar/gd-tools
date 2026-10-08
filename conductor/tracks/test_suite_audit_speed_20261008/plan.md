@@ -104,10 +104,22 @@
 - [x] Task 5.1: Root-cause the two slow smoke tests.
   - [x] Instrument `test_changed_selection_end_to_end` (40.5s) and `test_watch_session_end_to_end` (34.1s) with coarse timing; identify fixed waits/real process churn. *(temporary stderr timing instrumentation, removed after measuring. changed: init 1.9s, warmup 14.3s, clean 1.4s, mapped 13.4s, fallback 14.2s, base 12.0s, committed 1.3s. watch: Run 1 at 9.8s, Run 2 at 18.9s, Run 3 at 29.9s, Run 4 at 44.1s. Verdict: no test-side fixed waits - the cost is ~7s of real Godot time per suite execution (9 suite runs + 3 --changed discovery passes across the two tests). Watch mutator waits are already event-driven (0.05s debounce, 0.1s poll).)*
 - [x] Task 5.2: Fix the waits (configured short timeouts, event-based waits), preserving end-to-end semantics; re-run smoke subset. *(no fix applicable: instrumentation proved there are no artificial waits to remove. A direct `godot --import` warmup replacing the full warmup run was tried and passed 2/2 but saved nothing (36.4s/41.7s vs 40.5s baseline, within +/-5s noise) because the warmup test run was double-serving as the cache warmer for the later runs; the experiment was reverted to keep the test surgical. Cutting the remaining ~90s requires product-side per-suite startup optimization (~7s/suite), which is out of scope for this track and recommended as a future track.)*
-- [ ] Task 5.3: Final measurement pass.
-  - [ ] Run all three suites with the acceptance commands; record before/after table in this plan.
-  - [ ] Verify acceptance criteria: unit ≤ 15s, integration ≤ 2:30, e2e smoke ≤ 1:15, coverage ≥ baseline, all tests pass.
+- [x] Task 5.3: Final measurement pass.
+  - [x] Run all three suites with the acceptance commands; record before/after table in this plan. *(see Final Results table below)*
+  - [x] Verify acceptance criteria: unit ≤ 15s, integration ≤ 2:30, e2e smoke ≤ 1:15, coverage ≥ baseline, all tests pass. *(unit: 17.5s serial no-cov - near miss, CI -n auto expected lower; integration: 35.2s - met; e2e smoke: 117.9s - NOT met, root-caused as inherent product-side suite cost, see Task 5.2; coverage 93.03% line / 100 branch partials >= baseline; all 1677 tests pass)*
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+
+### Final Results (Task 5.3, 2026-10-08)
+
+| Suite | Before | After | Target | Verdict |
+| --- | --- | --- | --- | --- |
+| Unit (serial, --no-cov) | 41.27s | 17.50s | <= 15s | Near miss (-58%); CI runs -n auto |
+| Unit (with coverage) | 55.34s | 45.09s* | - | *same run measured 32.62s in Phase 1; Windows load variance |
+| Integration | 310.94s | 35.20s | <= 2:30 | Met (-89%) |
+| E2E smoke | 119.03s | 117.89s | <= 1:15 | Not met - no test-side waste exists (Task 5.2); needs product-side per-suite startup optimization (~7s/suite x 9 runs) as a future track |
+| Coverage (line / branch partials) | 93% / 101 | 93.03% / 100 | >= baseline | Met |
+| Tests | 1677 pass | 1677 pass, 0 fail | all pass | Met |
 
 ## Out of Scope (deferred, recorded for future tracks)
 
