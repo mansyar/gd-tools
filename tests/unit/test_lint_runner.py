@@ -16,8 +16,10 @@ from gd_tools.lint_runner import (
     format_lint_github_actions,
     format_lint_json,
     format_lint_text,
+    load_gdlint_config,
     run_lint,
 )
+from gdtoolkit.linter import DEFAULT_CONFIG
 
 pytestmark = pytest.mark.unit
 
@@ -629,3 +631,132 @@ def test_format_lint_github_actions_no_issues():
     """Test no issues produces empty output (no annotations, no noise)."""
     result = LintResult(files_checked=3, errors=[], warnings=[])
     assert format_lint_github_actions(result) == ""
+
+
+# --- gdlintrc config loading (R6) ---
+
+
+_ORDER_VIOLATION = "extends Node\n\nvar later = 1\nconst EARLIER = 1\n"
+
+
+def _rules(result):
+    return [issue.rule for issue in result.errors]
+
+
+def test_run_lint_without_gdlintrc_reports_class_definitions_order(tmp_path):
+    """Baseline: with no gdlintrc the rule fires (disable is not ambient)."""
+    (tmp_path / "order.gd").write_text(_ORDER_VIOLATION)
+    config = GdToolsConfig()
+    result = run_lint(config, [str(tmp_path)])
+    assert "class-definitions-order" in _rules(result)
+
+
+def test_run_lint_honors_gdlintrc_disable(tmp_path, monkeypatch):
+    """A gdlintrc disable list is honored, matching bare gdlint."""
+    (tmp_path / "gdlintrc").write_text(
+        "disable:\n  - class-definitions-order\n", encoding="utf-8"
+    )
+    (tmp_path / "order.gd").write_text(_ORDER_VIOLATION)
+    monkeypatch.chdir(tmp_path)
+    config = GdToolsConfig()
+    result = run_lint(config, [str(tmp_path)])
+    assert "class-definitions-order" not in _rules(result)
+
+
+def test_run_lint_honors_dot_gdlintrc_disable(tmp_path, monkeypatch):
+    """The dotted .gdlintrc variant is discovered like bare gdlint does."""
+    (tmp_path / ".gdlintrc").write_text(
+        "disable:\n  - class-definitions-order\n", encoding="utf-8"
+    )
+    (tmp_path / "order.gd").write_text(_ORDER_VIOLATION)
+    monkeypatch.chdir(tmp_path)
+    config = GdToolsConfig()
+    result = run_lint(config, [str(tmp_path)])
+    assert "class-definitions-order" not in _rules(result)
+
+
+def test_run_lint_explicit_lint_config_path(tmp_path):
+    """An explicit config path is used regardless of discovery."""
+    rc = tmp_path / "custom-lint-config.yaml"
+    rc.write_text("disable:\n  - class-definitions-order\n", encoding="utf-8")
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "order.gd").write_text(_ORDER_VIOLATION)
+    config = GdToolsConfig()
+    result = run_lint(config, [str(project)], lint_config_path=str(rc))
+    assert "class-definitions-order" not in _rules(result)
+
+
+def test_run_lint_explicit_lint_config_path_beats_gdlintrc(
+    tmp_path, monkeypatch
+):
+    """The explicit config path wins over a discovered gdlintrc."""
+    (tmp_path / "gdlintrc").write_text("disable: []\n", encoding="utf-8")
+    rc = tmp_path / "strict.yaml"
+    rc.write_text("disable:\n  - class-definitions-order\n", encoding="utf-8")
+    (tmp_path / "order.gd").write_text(_ORDER_VIOLATION)
+    monkeypatch.chdir(tmp_path)
+    config = GdToolsConfig()
+    result = run_lint(config, [str(tmp_path)], lint_config_path=str(rc))
+    assert "class-definitions-order" not in _rules(result)
+
+
+def test_load_gdlint_config_defaults_when_absent(tmp_path):
+    """A clean project root without a config yields gdtoolkit defaults.
+
+    The search is bounded at the project root, so an ambient gdlintrc
+    above it (e.g. a stray file in the temp directory) cannot leak in.
+    """
+    config = load_gdlint_config(project_root=tmp_path)
+    assert dict(config) == dict(DEFAULT_CONFIG)
+
+
+def test_load_gdlint_config_walks_up_from_cwd(tmp_path, monkeypatch):
+    """Outside a Godot project, discovery walks up from the cwd."""
+    (tmp_path / "gdlintrc").write_text(
+        "disable:\n  - class-definitions-order\n", encoding="utf-8"
+    )
+    sub = tmp_path / "scripts"
+    sub.mkdir()
+    monkeypatch.chdir(sub)
+    config = load_gdlint_config()
+    assert config["disable"] == ["class-definitions-order"]
+
+
+def test_load_gdlint_config_does_not_escape_project_root(tmp_path):
+    """A config outside the project root does not govern the project."""
+    (tmp_path / "gdlintrc").write_text(
+        "disable:\n  - class-definitions-order\n", encoding="utf-8"
+    )
+    project = tmp_path / "project"
+    project.mkdir()
+    config = load_gdlint_config(project_root=project)
+    assert dict(config) == dict(DEFAULT_CONFIG)
+
+
+def test_load_gdlint_config_reads_dotted_variant(tmp_path):
+    """Both gdlintrc and .gdlintrc names are accepted."""
+    (tmp_path / ".gdlintrc").write_text(
+        "disable:\n  - max-line-length\n", encoding="utf-8"
+    )
+    config = load_gdlint_config(project_root=tmp_path)
+    assert config["disable"] == ["max-line-length"]
+
+
+def test_load_gdlint_config_merges_missing_defaults(tmp_path):
+    """Entries absent from the file are filled in from gdtoolkit defaults."""
+    (tmp_path / "gdlintrc").write_text(
+        "disable:\n  - class-definitions-order\n", encoding="utf-8"
+    )
+    config = load_gdlint_config(project_root=tmp_path)
+    assert config["disable"] == ["class-definitions-order"]
+    assert config["max-line-length"] == DEFAULT_CONFIG["max-line-length"]
+
+
+def test_load_gdlint_config_explicit_path_beats_discovery(tmp_path):
+    """An explicit config path is loaded even when a gdlintrc exists."""
+    (tmp_path / "gdlintrc").write_text("disable: []\n", encoding="utf-8")
+    rc = tmp_path / "strict.yaml"
+    rc.write_text("disable:\n  - class-definitions-order\n", encoding="utf-8")
+    config = load_gdlint_config(config_path=str(rc), project_root=tmp_path)
+    assert config["disable"] == ["class-definitions-order"]
