@@ -7,7 +7,7 @@
   - [x] Test: brand-new file → full-file range; deleted file → excluded; rename → handled as modified (rename-with-edits emits standard hunks; pure rename emits none — covered by modified-file + pure-deletion tests)
   - [x] Test: non-`.gd` files filtered out; merge-base resolution failure → config error
 - [x] Task: Implement `changed_lines(base)` in `src/gd_tools/changes.py` (extend the existing merge-base module; single `git diff -U0 merge_base..HEAD` subprocess, no shell) — `8abf4e7`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: a58d3e5]
 
 ## Phase 2 — Patch coverage computation [checkpoint: 26e7eab]
 
@@ -17,7 +17,7 @@
   - [x] Test: file with zero executable plan lines → excluded from metrics entirely (also covers changed-but-unplanned files)
   - [x] Test: totals + percentage math (0 lines edge case)
 - [x] Task: Implement `compute_patch_coverage(...)` in new `src/gd_tools/coverage/patch.py` (loads current coverage JSON + plan, reuses plan cache) — `26e7eab` (pure function over loaded plan+data; cache/JSON loading deferred to Phase 4 CLI wiring)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: 26e7eab]
 
 ## Phase 3 — Reporting (terminal + JSON) [checkpoint: c92a70e]
 
@@ -36,7 +36,7 @@
   - [x] Test: combined `--patch-fail-under` + `--fail-on-regression` → exit 1 if either fails (regression loads canonical `<output_dir>/baseline.json`; missing baseline → exit 2)
   - [x] Test: `--patch-annotations` flag parsing/validation (plus `--show-lines` conflict → exit 2)
 - [x] Task: Wire options onto the `coverage diff` command in `cli.py`; validate option combinations; keep non-patch behavior untouched — `db012bb` (orchestrator `diff_coverage_patch` + CLI options; `--base` help updated to cover both modes)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: 16a5371]
 
 ## Phase 5 — GitHub Actions annotations + summary [checkpoint: 321684c]
 
@@ -45,10 +45,10 @@
   - [x] Test: auto-emit when `GITHUB_ACTIONS=true`; suppressed when flag set to false; forced on with flag
   - [x] Test: markdown job summary content (patch table)
 - [x] Task: Implement emission + summary write (`$GITHUB_STEP_SUMMARY`) in the diff/patch flow — `321684c` (JSON format keeps stdout pure: annotations suppressed there; additional test added for that invariant)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: 8a8f86e]
 
-## Phase 6 — Documentation & final verification
+## Phase 6 — Documentation & final verification [checkpoint: 695e20f]
 
-- [ ] Task: Update docs — README, `docs/USER_GUIDE.md` (patch coverage + CI recipe), `docs/ROADMAP.md`, `CHANGELOG.md` (Unreleased)
-- [ ] Task: Full quality gate — `ruff check`, `black --check`, `CI=true pytest`, project coverage ≥80/70 on new modules
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Update docs — README, `docs/USER_GUIDE.md` (patch coverage + CI recipe), `docs/ROADMAP.md`, `CHANGELOG.md` (Unreleased) — `695e20f`
+- [x] Task: Full quality gate — `ruff check`, `black --check`, `CI=true pytest`, project coverage ≥80/70 on new modules — `695e20f` (1835 passed / 3 skipped, 95.45%)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: 695e20f]
