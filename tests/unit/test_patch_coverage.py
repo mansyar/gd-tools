@@ -7,7 +7,10 @@ import pytest
 from gd_tools.coverage.patch import (
     PatchCoverageResult,
     PatchFileMetric,
+    build_patch_json,
+    build_patch_table,
     compute_patch_coverage,
+    patch_verdict,
 )
 from gd_tools.coverage.plan_generator import (
     CoveragePlan,
@@ -167,3 +170,123 @@ def test_empty_patch_yields_zero_totals():
     assert result.total == 0
     assert result.covered == 0
     assert result.rate == 0.0
+
+
+# --- Rendering (Phase 3) ---
+
+
+def _result(**overrides):
+    """Build a two-file PatchCoverageResult (1/2 and 2/2 -> 3/4 = 75%)."""
+    defaults = dict(
+        files=[
+            PatchFileMetric(
+                path="player.gd", changed=2, covered=1, uncovered=1, rate=0.5
+            ),
+            PatchFileMetric(
+                path="src/enemy.gd", changed=2, covered=2, uncovered=0, rate=1.0
+            ),
+        ],
+        covered=3,
+        total=4,
+        rate=0.75,
+    )
+    defaults.update(overrides)
+    return PatchCoverageResult(**defaults)
+
+
+EMPTY_RESULT = PatchCoverageResult(files=[], covered=0, total=0, rate=0.0)
+
+
+def _table_text(table) -> str:
+    """Render a Rich table to plain text with a fixed-width console."""
+    from io import StringIO
+
+    from rich.console import Console
+
+    io = StringIO()
+    Console(file=io, width=140).print(table)
+    return io.getvalue()
+
+
+def test_build_patch_table_lists_per_file_rows_and_total():
+    """The table lists per-file rows with counts, rates, and a total."""
+    text = _table_text(build_patch_table(_result(), None))
+
+    assert "player.gd" in text
+    assert "src/enemy.gd" in text
+    assert "1/2 (50%)" in text
+    assert "2/2 (100%)" in text
+    assert "TOTAL" in text
+    assert "3/4 (75%)" in text
+
+
+def test_build_patch_table_shows_gate_verdict():
+    """The caption carries the gate verdict for the configured threshold."""
+    fail_text = _table_text(build_patch_table(_result(), 80.0))
+    assert "FAIL" in fail_text
+
+    pass_text = _table_text(
+        build_patch_table(
+            PatchCoverageResult(
+                files=_result().files, covered=4, total=4, rate=1.0
+            ),
+            80.0,
+        )
+    )
+    assert "PASS" in pass_text
+
+    info_text = _table_text(build_patch_table(_result(), None))
+    assert "informational" in info_text.lower()
+
+
+def test_build_patch_table_empty_patch_notice():
+    """An empty patch renders a no-changed-lines notice, not a gate verdict."""
+    text = _table_text(build_patch_table(EMPTY_RESULT, 80.0))
+
+    assert "No changed executable lines" in text
+    assert "FAIL" not in text
+
+
+def test_build_patch_json_structure():
+    """The JSON payload has per-file entries, totals, threshold, verdict."""
+    payload = build_patch_json(_result(), 80.0)
+
+    assert payload["files"] == [
+        {
+            "path": "player.gd",
+            "changed": 2,
+            "covered": 1,
+            "uncovered": 1,
+            "rate": 0.5,
+        },
+        {
+            "path": "src/enemy.gd",
+            "changed": 2,
+            "covered": 2,
+            "uncovered": 0,
+            "rate": 1.0,
+        },
+    ]
+    assert payload["totals"] == {"covered": 3, "total": 4, "rate": 0.75}
+    assert payload["threshold"] == 80.0
+    assert payload["verdict"] == "fail"
+    assert payload["empty"] is False
+
+
+def test_build_patch_json_empty_patch():
+    """An empty patch reports empty=True and never a failing verdict."""
+    payload = build_patch_json(EMPTY_RESULT, 80.0)
+
+    assert payload["files"] == []
+    assert payload["totals"] == {"covered": 0, "total": 0, "rate": 0.0}
+    assert payload["empty"] is True
+    assert payload["verdict"] == "pass"
+
+
+def test_patch_verdict_boundary_and_informational():
+    """Rate exactly at the threshold passes; no threshold is informational."""
+    assert patch_verdict(_result(), 75.0) == "pass"
+    assert patch_verdict(_result(), 75.1) == "fail"
+    assert patch_verdict(_result(), None) == "informational"
+    assert patch_verdict(EMPTY_RESULT, None) == "informational"
+    assert patch_verdict(EMPTY_RESULT, 80.0) == "pass"

@@ -15,6 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from rich.table import Table
+
 from gd_tools.coverage.plan_generator import CoveragePlan, FilePlan
 from gd_tools.coverage.reporter import CoverageData
 
@@ -133,3 +135,118 @@ def compute_patch_coverage(
         total=total_changed,
         rate=total_covered / total_changed if total_changed > 0 else 0.0,
     )
+
+
+def patch_verdict(result: PatchCoverageResult, threshold: float | None) -> str:
+    """Classify a patch coverage result against an optional threshold.
+
+    Args:
+        result: The computed patch coverage.
+        threshold: Minimum required patch coverage percentage
+            (``--patch-fail-under``), or ``None`` for informational mode.
+
+    Returns:
+        ``"pass"`` when the gate holds (an empty patch always passes),
+        ``"fail"`` when below the threshold, or ``"informational"``
+        when no threshold is configured.
+    """
+    if threshold is None:
+        return "informational"
+    if result.total == 0:
+        return "pass"
+    return "pass" if result.rate * 100 >= threshold else "fail"
+
+
+def build_patch_table(
+    result: PatchCoverageResult, threshold: float | None
+) -> Table:
+    """Build the Rich summary table for patch coverage.
+
+    Rows are one per file (sorted by path) plus a ``TOTAL`` row. The
+    caption carries the gate verdict: ``PASS``/``FAIL`` against the
+    threshold, ``informational`` without one, or a no-changed-lines
+    notice for an empty patch (which never fails the gate).
+
+    Args:
+        result: The computed patch coverage.
+        threshold: Gate threshold percentage, or ``None``.
+
+    Returns:
+        A :class:`rich.table.Table` ready to print via
+        ``gd_tools.output.print_table``.
+    """
+    table = Table(title="Patch coverage vs base")
+    table.add_column("File", style="dim", no_wrap=True)
+    table.add_column("Changed", justify="right")
+    table.add_column("Covered", justify="right")
+    table.add_column("Uncovered", justify="right")
+    table.add_column("Coverage", justify="right")
+
+    for fm in result.files:
+        table.add_row(
+            fm.path,
+            str(fm.changed),
+            str(fm.covered),
+            str(fm.uncovered),
+            f"{fm.covered}/{fm.changed} ({fm.rate:.0%})",
+        )
+
+    table.add_row(
+        "TOTAL",
+        str(result.total),
+        str(result.covered),
+        str(result.total - result.covered),
+        f"{result.covered}/{result.total} ({result.rate:.0%})",
+    )
+
+    if result.total == 0:
+        table.caption = "No changed executable lines"
+    else:
+        verdict = patch_verdict(result, threshold)
+        if verdict == "informational":
+            table.caption = "Patch coverage gate: informational (no threshold)"
+        else:
+            label = "PASS" if verdict == "pass" else "FAIL"
+            table.caption = (
+                f"Patch coverage gate: {label} "
+                f"({result.rate:.0%} vs {threshold:.0f}% required)"
+            )
+    return table
+
+
+def build_patch_json(
+    result: PatchCoverageResult, threshold: float | None
+) -> dict:
+    """Build the machine-readable patch payload (``--report-format json``).
+
+    The structure is deterministic: files are sorted by path (as in
+    :func:`compute_patch_coverage`) and all keys are fixed.
+
+    Args:
+        result: The computed patch coverage.
+        threshold: Gate threshold percentage, or ``None``.
+
+    Returns:
+        A JSON-serializable dict with ``files``, ``totals``,
+        ``threshold``, ``verdict``, and ``empty``.
+    """
+    return {
+        "files": [
+            {
+                "path": fm.path,
+                "changed": fm.changed,
+                "covered": fm.covered,
+                "uncovered": fm.uncovered,
+                "rate": fm.rate,
+            }
+            for fm in result.files
+        ],
+        "totals": {
+            "covered": result.covered,
+            "total": result.total,
+            "rate": result.rate,
+        },
+        "threshold": threshold,
+        "verdict": patch_verdict(result, threshold),
+        "empty": result.total == 0,
+    }
