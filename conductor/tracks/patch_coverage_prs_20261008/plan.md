@@ -38,13 +38,13 @@
 - [x] Task: Wire options onto the `coverage diff` command in `cli.py`; validate option combinations; keep non-patch behavior untouched — `db012bb` (orchestrator `diff_coverage_patch` + CLI options; `--base` help updated to cover both modes)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 5 — GitHub Actions annotations + summary
+## Phase 5 — GitHub Actions annotations + summary [checkpoint: 321684c]
 
-- [~] Task: Write failing tests for annotation emission
-  - [ ] Test: uncovered changed lines coalesce into contiguous `::warning file=,line=,end_line=,title=` runs (using `gh_annotations` escaping helpers)
-  - [ ] Test: auto-emit when `GITHUB_ACTIONS=true`; suppressed when flag set to false; forced on with flag
-  - [ ] Test: markdown job summary content (patch table)
-- [ ] Task: Implement emission + summary write (`$GITHUB_STEP_SUMMARY`) in the diff/patch flow
+- [x] Task: Write failing tests for annotation emission
+  - [x] Test: uncovered changed lines coalesce into contiguous `::warning file=,line=,end_line=,title=` runs (using `gh_annotations` escaping helpers)
+  - [x] Test: auto-emit when `GITHUB_ACTIONS=true`; suppressed when flag set to false; forced on with flag
+  - [x] Test: markdown job summary content (patch table)
+- [x] Task: Implement emission + summary write (`$GITHUB_STEP_SUMMARY`) in the diff/patch flow — `321684c` (JSON format keeps stdout pure: annotations suppressed there; additional test added for that invariant)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 — Documentation & final verification
