@@ -349,3 +349,8 @@ _Archived tracks live in `./archive/`._
   .gd-only, zero-plan files skipped)
   *Link: [patch_coverage_prs_20261008](./archive/patch_coverage_prs_20261008/index.md)*
 
+- [ ] **Track: Release v0.8.0** (chore: cz bump to 0.8.0, date the changelog,
+  full release checklist after the bump, push the v0.8.0 tag, watch
+  release.yml publish to TestPyPI + PyPI)
+  *Link: [release_v0_8_0_20261008](./tracks/release_v0_8_0_20261008/index.md)*
+
