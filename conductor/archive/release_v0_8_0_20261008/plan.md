@@ -25,4 +25,4 @@
   - [x] Watch `release.yml`: build → TestPyPI stage green → PyPI stage green (run 37742143647: both jobs success)
   - [x] Verify `gd-tools-cli 0.8.0` visible on PyPI — confirmed via PyPI JSON API
   - [x] Merge release branch to main via PR #52 (commit-check fail on the `release:` commit is PR-only, precedented by v0.7.0, no ongoing impact)
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: PENDING]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: cb68ade]
