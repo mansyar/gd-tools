@@ -11,7 +11,7 @@
 
 ## Phase 2 — Patch coverage computation
 
-- [ ] Task: Write failing unit tests for patch metric computation (`tests/unit/test_patch_coverage.py`)
+- [~] Task: Write failing unit tests for patch metric computation (`tests/unit/test_patch_coverage.py`)
   - [ ] Test: intersect changed line ranges with plan executable line points → covered/uncovered counts per file
   - [ ] Test: changed file missing from coverage data → all changed executable lines uncovered
   - [ ] Test: file with zero executable plan lines → excluded from metrics entirely
