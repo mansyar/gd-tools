@@ -338,3 +338,14 @@ _Archived tracks live in `./archive/`._
   coverage never reduced)
   *Link: [test_suite_audit_speed_20261008](./archive/test_suite_audit_speed_20261008/index.md)*
 
+- [ ] **Track: Patch Coverage for PRs** (feature: `coverage diff --patch --base <ref>`
+  computes coverage over only the changed executable lines since merge-base
+  (same contract as `test --changed --base`), from the current run's coverage
+  JSON — no baseline snapshot; rich terminal table, JSON `patch` section,
+  `--patch-fail-under <N>` gate (exit 1), `::warning` GH Actions annotations
+  on uncovered changed lines (auto when GITHUB_ACTIONS=true,
+  `--patch-annotations` override), GH job markdown summary; strict edge
+  semantics: missing data = uncovered, new files counted, deleted ignored,
+  .gd-only, zero-plan files skipped)
+  *Link: [patch_coverage_prs_20261008](./tracks/patch_coverage_prs_20261008/index.md)*
+
