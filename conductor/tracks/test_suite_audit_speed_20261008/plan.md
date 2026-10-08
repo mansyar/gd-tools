@@ -56,7 +56,9 @@
 
 ## Phase 2 — pytest-xdist for CI (FR-B)
 
-- [ ] Task 2.1: Add `pytest-xdist` to dev dependencies (`pyproject.toml`); document in `docs/TESTING_STRATEGY.md`.
+- [x] Task 2.1: Add `pytest-xdist` to dev dependencies (`pyproject.toml`); document in `docs/TESTING_STRATEGY.md`.
+  - [x] `pytest-xdist` added to `[project.optional-dependencies].dev` (installed locally: 3.8.0 on pytest 9.0.2).
+  - [x] `docs/TESTING_STRATEGY.md` section 9: note that unit jobs run `-n auto` in CI, local stays serial; condensed YAML reference updated.
 - [ ] Task 2.2: Prove the suite is xdist-safe.
   - [ ] Run `pytest tests/unit/ -m unit --no-cov -n 4` locally; confirm 1,582 pass, 3 skipped.
   - [ ] If any shared-state failures appear (artifact dirs, caches, tmp fixtures), fix them with tmp_path isolation before proceeding.
