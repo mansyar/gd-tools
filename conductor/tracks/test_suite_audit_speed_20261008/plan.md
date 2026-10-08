@@ -101,7 +101,7 @@
 
 ## Phase 5 — E2E Smoke Speed-Up (FR-E) + Final Verification
 
-- [ ] Task 5.1: Root-cause the two slow smoke tests.
+- [~] Task 5.1: Root-cause the two slow smoke tests.
   - [ ] Instrument `test_changed_selection_end_to_end` (40.5s) and `test_watch_session_end_to_end` (34.1s) with coarse timing; identify fixed waits/real process churn.
 - [ ] Task 5.2: Fix the waits (configured short timeouts, event-based waits), preserving end-to-end semantics; re-run smoke subset.
 - [ ] Task 5.3: Final measurement pass.
