@@ -34,10 +34,10 @@ Workflow: TDD mandatory (Red→Green per task). Quality gates: `ruff check src/ 
 
 ## Phase 5 — Lint honors gdlintrc (R6)
 
-- [ ] Task: Red — unit: `run_lint` passes a loaded gdlintrc config into `lint_code`; `disable: [- class-definitions-order]` suppresses that rule.
-- [ ] Task: Green — load `gdlintrc` via gdtoolkit's own config loader; optional explicit `--lint-config` path on the CLI.
-- [ ] Task: Test: `gd-tools lint` matches bare `gdlint` behavior on the disable scenario (with and without the disable).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Red — unit: `run_lint` passes a loaded gdlintrc config into `lint_code`; `disable: [- class-definitions-order]` suppresses that rule. *(10 new unit tests in `test_lint_runner.py`; Red confirmed as ImportError. Empirical: `var` before `const` fires `class-definitions-order`; a config with `disable` suppresses it. During Red, an ambient `gdlintrc` was discovered in `%TEMP%` disabling exactly the test rule — unbounded walk-up discovery is env-sensitive.)*
+- [x] Task: Green — load `gdlintrc` via gdtoolkit's own config loader; optional explicit `--lint-config` path on the CLI. *(Implemented `load_gdlint_config(config_path, project_root)` in `lint_runner.py` — own loader mirroring gdlint semantics (yaml.safe_load + DEFAULT_CONFIG merge) rather than gdtoolkit's private `_find_config_file` helpers. Discovery bounded at the project root when known (project-scoped config; `find_project_root` result), cwd walk-up only outside a Godot project — this keeps ambient configs above the project from silently governing a lint run. `run_lint` gained `lint_config` (mapping) and `lint_config_path` params; `cli.py lint` gained `--lint-config`.)*
+- [x] Task: Test: `gd-tools lint` matches bare `gdlint` behavior on the disable scenario (with and without the disable). *(Two integration parity tests via `python -m gdtoolkit.linter` subprocess: disable list honored by both (exit 0), nothing disabled reported by both (exit 1 — bare gdlint logs go to a stale captured stream, so parity is asserted on returncode). Plus `--lint-config` CLI test. 62 lint tests pass; ruff/black clean.)*
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) *(Full gate deferred to Phase 6.)*
 
 ## Phase 6 — Wrap-up
 
