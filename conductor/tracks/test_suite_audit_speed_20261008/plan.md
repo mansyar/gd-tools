@@ -99,7 +99,7 @@
 - [x] Task 4.3: Record Phase 4 results (integration suite duration after Phase 3 + 4 vs 310.9s baseline; coverage delta). *(integration suite: 310.9s baseline -> 54.7s after Phase 3 -> 34.4s after Phase 4 (-89%); 90 passed throughout; product src untouched in Phase 4, so coverage delta is nil - test-only changes)*
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 5 — E2E Smoke Speed-Up (FR-E) + Final Verification
+## Phase 5 — E2E Smoke Speed-Up (FR-E) + Final Verification [checkpoint: 2d42623]
 
 - [x] Task 5.1: Root-cause the two slow smoke tests.
   - [x] Instrument `test_changed_selection_end_to_end` (40.5s) and `test_watch_session_end_to_end` (34.1s) with coarse timing; identify fixed waits/real process churn. *(temporary stderr timing instrumentation, removed after measuring. changed: init 1.9s, warmup 14.3s, clean 1.4s, mapped 13.4s, fallback 14.2s, base 12.0s, committed 1.3s. watch: Run 1 at 9.8s, Run 2 at 18.9s, Run 3 at 29.9s, Run 4 at 44.1s. Verdict: no test-side fixed waits - the cost is ~7s of real Godot time per suite execution (9 suite runs + 3 --changed discovery passes across the two tests). Watch mutator waits are already event-driven (0.05s debounce, 0.1s poll).)*
