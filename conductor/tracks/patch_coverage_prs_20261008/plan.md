@@ -19,13 +19,13 @@
 - [x] Task: Implement `compute_patch_coverage(...)` in new `src/gd_tools/coverage/patch.py` (loads current coverage JSON + plan, reuses plan cache) — `26e7eab` (pure function over loaded plan+data; cache/JSON loading deferred to Phase 4 CLI wiring)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Reporting (terminal + JSON)
+## Phase 3 — Reporting (terminal + JSON) [checkpoint: c92a70e]
 
-- [ ] Task: Write failing tests for patch report rendering
-  - [ ] Test: rich terminal table — per-file (path, changed, covered, uncovered, %), total, gate verdict line
-  - [ ] Test: JSON `patch` section structure (per-file entries + totals + threshold + verdict)
-  - [ ] Test: empty patch → "no changed lines" notice in both formats
-- [ ] Task: Implement rendering in `coverage/patch.py` (or `diff_reporter.py` sibling functions, matching existing table builder style)
+- [x] Task: Write failing tests for patch report rendering
+  - [x] Test: rich terminal table — per-file (path, changed, covered, uncovered, %), total, gate verdict line
+  - [x] Test: JSON `patch` section structure (per-file entries + totals + threshold + verdict)
+  - [x] Test: empty patch → "no changed lines" notice in both formats
+- [x] Task: Implement rendering in `coverage/patch.py` (or `diff_reporter.py` sibling functions, matching existing table builder style) — `c92a70e` (implemented in `patch.py` alongside the computation, matching `build_diff_table`/`build_diff_json` style)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — CLI integration + gate
