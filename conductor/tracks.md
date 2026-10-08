@@ -322,11 +322,3 @@ _Archived tracks live in `./archive/`._
 
 ---
 
-- [x] **Track: Native coverage instrumentation failures** (bug: fix
-  Variant-inference compile errors from operand wrapping via
-  `@warning_ignore` plan annotations, exclude zero-point files from the plan
-  with a visible skip warning, carry reload error codes in omission records,
-  union artifacts.json omitted across suites, e2e repro fixture settling the
-  dependency-reload hypothesis, and make `gd-tools lint` honor the project's
-  gdlintrc)
-  *Link: [coverage_omission_failures_20261008](./tracks/coverage_omission_failures_20261008/index.md)*
