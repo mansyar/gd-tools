@@ -78,14 +78,14 @@
 
 ## Phase 3 — Integration Parse Batching (FR-C)
 
-- [ ] Task 3.1: Build the batch manifest harness.
-  - [ ] Extend the instrumentation harness so one Godot session parses all instrumented fixtures listed in a manifest and emits per-fixture results (e.g., JSON with fixture name → parse ok/error).
-  - [ ] Verify: harness runs against the current fixture set; every fixture's result matches current per-case outcomes.
-- [ ] Task 3.2: Rewrite `test_instrumented_source_parses` to consume batch results.
-  - [ ] Parametrize over the manifest; each case asserts its own fixture's outcome.
-  - [ ] A failing fixture still pinpoints itself (clear test ID + assertion message).
-- [ ] Task 3.3: Verify equivalence.
-  - [ ] Same number of parametrized cases as before (~27); identical pass/fail set.
+- [x] Task 3.1: Build the batch manifest harness. *(commit ee42867)*
+  - [ ] Extend the instrumentation harness so one Godot session parses all instrumented fixtures listed in a manifest and emits per-fixture results (e.g., JSON with fixture name → parse ok/error). *(module-scoped `batch` fixture: one project, one `--import`, one `generate_plan`, one checker script (SceneTree) loading every fixture and printing a `PARSE_RESULTS_JSON` manifest; `can_instantiate()` distinguishes parse failures since a broken script still `load()`s)*
+  - [x] Verify: harness runs against the current fixture set; every fixture's result matches current per-case outcomes. *(all 35 fixtures report valid, canary reports invalid — identical to the previous per-case outcomes; canary rides in the same session)*
+- [x] Task 3.2: Rewrite `test_instrumented_source_parses` to consume batch results. *(commit ee42867)*
+  - [x] Parametrize over the manifest; each case asserts its own fixture's outcome. *(same parametrization over `sorted(CASES)`; per-case ternary/statement-line assertions unchanged, parse assertion reads `batch["results"]`)*
+  - [x] A failing fixture still pinpoints itself (clear test ID + assertion message). *(test ID contains the case name; failure message includes the instrumented source and full Godot output)*
+- [x] Task 3.3: Verify equivalence. *(commit ee42867)*
+  - [x] Same number of parametrized cases as before (~27); identical pass/fail set. *(proven: 35 cases before = 35 after with identical CASES key sets; `--collect-only` yields the same 35 `test_instrumented_source_parses[*]` IDs; all 42 module tests pass in 5.5s vs ~176s serial — no failures before, none after)*
   - [ ] Measure: `pytest tests/integration/ -m integration --no-cov -q --durations=20` — the parse block drops from ≈170s toward ≤ 25s.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
