@@ -1,6 +1,6 @@
 # Plan: Patch Coverage for PRs (`patch_coverage_prs_20261008`)
 
-## Phase 1 — Changed-line extraction
+## Phase 1 — Changed-line extraction [checkpoint: a58d3e5]
 
 - [x] Task: Write failing unit tests for changed-line-range extraction (`tests/unit/test_patch_lines.py`)
   - [x] Test: parse `git diff -U0` output into per-file added-line ranges (added/modified hunks)
