@@ -19,6 +19,8 @@ Covered here:
 * ``PLAN_VERSION`` is bumped 7 -> 8 so stale cached plans regenerate (FR-R1)
 """
 
+import re
+
 import pytest
 
 from gd_tools.coverage.plan_generator import (
@@ -237,11 +239,13 @@ def test_zero_point_exclusion_warns(tmp_path, capsys):
 
     captured = capsys.readouterr()
     combined = captured.out + captured.err
-    # Rich soft-wraps the warning under narrow CI consoles, which can
-    # split the path mid-word; unwrap before matching the filename.
+    # Rich soft-wraps under narrow CI consoles: it can split the path
+    # mid-word with a newline (stripped below) and it *consumes* the
+    # space at a wrap point, so multi-word phrases cannot be matched
+    # verbatim. Allow zero-or-more whitespace between words.
     unwrapped = combined.replace("\n", "")
     assert "track_waypoints.gd" in unwrapped
-    assert "no trackable coverage points" in unwrapped
+    assert re.search(r"no\s*trackable\s*coverage\s*points", unwrapped)
 
 
 # --- FR-R1: version bump ---
