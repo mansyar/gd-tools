@@ -476,7 +476,10 @@ def test_run_lint_verbose_shows_file_being_linted(tmp_path, capsys):
     run_lint(config, [str(tmp_path)])
 
     captured = capsys.readouterr()
-    assert "player.gd" in captured.out
+    # Rich soft-wraps long paths at the console width (80 on CI), which
+    # under xdist's longer tmp dirs can split the basename across lines;
+    # collapse soft-wraps before matching.
+    assert "player.gd" in captured.out.replace("\n", "")
 
 
 def test_run_lint_default_mode_no_file_info_shown(tmp_path, capsys):
