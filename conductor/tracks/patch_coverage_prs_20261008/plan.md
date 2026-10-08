@@ -9,14 +9,14 @@
 - [x] Task: Implement `changed_lines(base)` in `src/gd_tools/changes.py` (extend the existing merge-base module; single `git diff -U0 merge_base..HEAD` subprocess, no shell) — `8abf4e7`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — Patch coverage computation
+## Phase 2 — Patch coverage computation [checkpoint: 26e7eab]
 
-- [~] Task: Write failing unit tests for patch metric computation (`tests/unit/test_patch_coverage.py`)
-  - [ ] Test: intersect changed line ranges with plan executable line points → covered/uncovered counts per file
-  - [ ] Test: changed file missing from coverage data → all changed executable lines uncovered
-  - [ ] Test: file with zero executable plan lines → excluded from metrics entirely
-  - [ ] Test: totals + percentage math (0 lines edge case)
-- [ ] Task: Implement `compute_patch_coverage(...)` in new `src/gd_tools/coverage/patch.py` (loads current coverage JSON + plan, reuses plan cache)
+- [x] Task: Write failing unit tests for patch metric computation (`tests/unit/test_patch_coverage.py`)
+  - [x] Test: intersect changed line ranges with plan executable line points → covered/uncovered counts per file
+  - [x] Test: changed file missing from coverage data → all changed executable lines uncovered
+  - [x] Test: file with zero executable plan lines → excluded from metrics entirely (also covers changed-but-unplanned files)
+  - [x] Test: totals + percentage math (0 lines edge case)
+- [x] Task: Implement `compute_patch_coverage(...)` in new `src/gd_tools/coverage/patch.py` (loads current coverage JSON + plan, reuses plan cache) — `26e7eab` (pure function over loaded plan+data; cache/JSON loading deferred to Phase 4 CLI wiring)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Reporting (terminal + JSON)
