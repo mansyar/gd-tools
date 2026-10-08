@@ -174,7 +174,11 @@ def test_coverage_run_reports_after_clean_exit(godot_bin, tmp_path):
 def test_coverage_run_timeout_closes_game_and_reports(godot_bin, tmp_path):
     """--timeout closes a lingering game and reports the last snapshot."""
     project = _prepare_cli_project(tmp_path, godot_bin, LINGER_SCENE_SOURCE)
-    result = _run_cli(project, ["--timeout", "15", "--report-format", "text"])
+    # 6s leaves headroom for a cold Godot boot (a 4s kill failed once on a
+    # cold cache) while the runner derives a 3s flush interval, so a
+    # snapshot lands before the auto-close. The close-and-report semantics
+    # this test exists to prove are unchanged.
+    result = _run_cli(project, ["--timeout", "6", "--report-format", "text"])
     assert result.exit_code == 0, result.output
     assert "Report written to:" in result.output
 
