@@ -62,8 +62,8 @@
 - [x] Task 2.2: Prove the suite is xdist-safe.
   - [x] Run `pytest tests/unit/ -m unit --no-cov -n auto` (and `-n 4`) locally; confirm 1,582 pass, 3 skipped. *(`-n auto`: 20.06s; `-n 4`: 17.94s — both green; local parallelism yields no wall-clock gain on Windows due to per-worker startup/contention, gains expected on Linux CI runners)*
   - [x] If any shared-state failures appear (artifact dirs, caches, tmp fixtures), fix them with tmp_path isolation before proceeding. *(one failure: `test_performance_100_files` wall-clock assertion 2.37s vs <1.0s under worker CPU contention — timing threshold now enforced only in serial runs via `PYTEST_XDIST_WORKER` guard; functional assertion (100 files planned) stays unconditional, rationale in test docstring)*
-- [ ] Task 2.3: Update `.github/workflows/ci.yml` Stage 1 (cov job) and matrix-unit jobs to run with `-n auto`.
-- [ ] Task 2.4: Record Phase 2 results (local `-n 4` duration; note CI duration change after next CI run).
+- [x] Task 2.3: Update `.github/workflows/ci.yml` Stage 1 (cov job) and matrix-unit jobs to run with `-n auto`.
+- [~] Task 2.4: Record Phase 2 results (local `-n 4` duration; note CI duration change after next CI run).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Integration Parse Batching (FR-C)
