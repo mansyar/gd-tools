@@ -15,7 +15,7 @@
   - [x] `gd-tools version` prints `0.8.0`
   - [x] `CI=true pytest` — full suite green (unit+integration: 1837 passed / 3 skipped, 95.45%; full run incl. e2e times out locally as in prior checkpoints)
   - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean
-- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: PENDING]
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: efa68ad]
 
 ## Phase 2 — Tag & publish
 
