@@ -92,8 +92,8 @@
 ## Phase 4 — Integration Tuning (FR-D)
 
 - [~] Task 4.1: Shorten the timeout test.
-  - [ ] `test_coverage_run_timeout_closes_game_and_reports` (20.9s): inject a configured short timeout so the close-and-report semantics are still exercised; verify wall < 5s.
-- [ ] Task 4.2: Playtest scenario tuning.
+  - [x] `test_coverage_run_timeout_closes_game_and_reports` (20.9s): inject a configured short timeout so the close-and-report semantics are still exercised; verify wall < 5s. *(--timeout 15 -> 6; flush interval derives as min(5, timeout/2) = 3s so a snapshot still lands; assertions need no hits. 4s passed 3/3 warm but failed once cold -> 6s for CI robustness. Wall 11.6-14.4s vs 18.8s. The <5s sub-target is unattainable: fixed per-test overhead alone is ~5-8s (project copy + --import + boot + CLI startup) — overhead reduction moved to Task 4.2.)*
+- [~] Task 4.2: Playtest scenario tuning.
   - [ ] Profile the 7–11s playtest/playtest_cli tests; batch scenarios per Godot launch where semantics allow, or trim fixed waits.
   - [ ] If a wait is semantically necessary, document the evidence here and leave it.
 - [ ] Task 4.3: Record Phase 4 results (integration suite duration after Phase 3 + 4 vs 310.9s baseline; coverage delta).
