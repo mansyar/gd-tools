@@ -1223,10 +1223,18 @@ Saving again overwrites the previous baseline.
 
 #### 3.7.5 coverage diff
 
-Compare current coverage against a saved baseline and report per-file
-line and branch deltas — which files improved, regressed, were added,
-or removed. This answers the code-review question a single coverage
-snapshot cannot: *did this change add or remove coverage?*
+Two modes:
+
+- **Baseline mode** (default): compare current coverage against a
+  saved baseline and report per-file line and branch deltas — which
+  files improved, regressed, were added, or removed. This answers the
+  code-review question a single coverage snapshot cannot: *did this
+  change add or remove coverage?*
+- **Patch mode** (`--patch`): report coverage for only the executable
+  lines changed relative to a git base ref — the pull-request signal
+  (codecov-style; no baseline snapshot required).
+
+#### Baseline mode
 
 **Usage:**
 
@@ -1238,10 +1246,18 @@ gd-tools coverage diff --base BASELINE [OPTIONS]
 
 | Flag | Type | Default | Description |
 |---|---|---|---|
-| `--base` | path | required | Path to a baseline file written by `coverage save-baseline`. |
-| `--show-lines` | flag | off | List newly-uncovered line numbers for regressed files. |
+| `--base` | path/ref | required | Baseline mode: path to a baseline file written by `coverage save-baseline`. Patch mode (`--patch`): a git ref (branch, tag, or SHA); changed lines come from `merge-base(<ref>, HEAD)` — same contract as `test --changed --base`. |
+| `--show-lines` | flag | off | List newly-uncovered line numbers for regressed files. Baseline mode only. |
 | `--report-format` | `text` or `json` | `text` | `text` renders a Rich table; `json` emits deterministic machine-readable output. |
 | `--fail-on-regression` | flag | off | Exit with code 1 when any file's line or branch coverage rate is lower than in the baseline. |
+| `--patch` | flag | off | Patch-coverage mode: report coverage over only the executable lines changed vs the `--base` git ref. |
+| `--patch-fail-under` | number (0-100) | None | Minimum patch coverage percentage; exit 1 below it. An empty patch never fails. Requires `--patch`. |
+| `--patch-annotations` | `true`/`false` | auto | Emit `::warning` annotations for uncovered changed lines and write the markdown job summary. Defaults to `GITHUB_ACTIONS=true` auto-detection. Requires `--patch`. |
+
+Option validation: `--patch-fail-under` or `--patch-annotations`
+without `--patch`, and `--show-lines` with `--patch`, are
+configuration errors (exit 2). In `json` format the patch
+annotations are suppressed so piped stdout stays valid JSON.
 
 **Example output (`text`):**
 
@@ -1327,6 +1343,88 @@ jobs:
 | 0 | Diff computed and rendered (no regression, or `--fail-on-regression` not set). |
 | 1 | `--fail-on-regression` is set and at least one file regressed. |
 | 2 | The baseline or the current coverage data is missing or malformed, or a configuration/environment error occurred. |
+
+#### Patch mode
+
+**Usage:**
+
+```bash
+gd-tools coverage diff --patch --base REF [OPTIONS]
+```
+
+Reports coverage over only the executable lines your change touches:
+`covered changed / total changed`. Changed lines come from
+`git merge-base(<base>, HEAD)` to `HEAD` with `git diff -U0` (deleted
+files are ignored, non-`.gd` files are skipped, and lines in files
+with no executable plan points never count against the gate). The
+numbers pair the **current** plan and coverage data (from
+`gd-tools test --coverage`) with the git diff — no baseline snapshot
+is needed.
+
+**Example output (`text`):**
+
+```
+                 Patch coverage vs base
+┌───────────┬─────────┬─────────┬───────────┬───────────┐
+│ File      │ Changed │ Covered │ Uncovered │  Coverage │
+├───────────┼─────────┼─────────┼───────────┼───────────┤
+│ player.gd │       2 │       1 │         1 │ 1/2 (50%) │
+│ TOTAL     │       2 │       1 │         1 │ 1/2 (50%) │
+└───────────┴─────────┴─────────┴───────────┴───────────┘
+     Patch coverage gate: FAIL (50% vs 80% required)
+```
+
+The caption is informational when no `--patch-fail-under` is given,
+`PASS`/`FAIL` otherwise. An empty patch (no changed executable lines)
+prints `No changed executable lines` and never fails the gate.
+
+**JSON output shape (`--report-format json`):**
+
+```json
+{
+  "files": [
+    {"path": "player.gd", "changed": 2, "covered": 1, "uncovered": 1,
+     "rate": 0.5, "uncovered_lines": [5]}
+  ],
+  "totals": {"covered": 1, "total": 2, "rate": 0.5},
+  "threshold": 80.0,
+  "verdict": "fail",
+  "empty": false
+}
+```
+
+`verdict` is `pass`, `fail`, or `informational` (no threshold).
+`empty` is `true` when no changed executable lines were found; an
+empty patch always yields verdict `pass` (or `informational`).
+
+**GitHub Actions:** with `GITHUB_ACTIONS=true` (or
+`--patch-annotations true`), uncovered changed lines are emitted as
+coalesced `::warning file=...,line=...,end_line=...,title=Uncovered in patch`
+annotations and a markdown patch table is appended to
+`$GITHUB_STEP_SUMMARY`. Suppress with `--patch-annotations false`.
+
+**CI usage:** the simple pull-request recipe — no baseline artifact
+needed (combine with baseline mode's `--fail-on-regression` for a
+whole-repo regression check if you also keep a baseline):
+
+```yaml
+# .github/workflows/ci.yml (excerpt)
+  patch-coverage:
+    if: github.event_name == 'pull_request'
+    steps:
+      - run: gd-tools test --coverage
+      - run: >
+          gd-tools coverage diff --patch --base origin/main
+          --patch-fail-under 80
+```
+
+**Exit Codes (patch mode):**
+
+| Code | Condition |
+|---|---|
+| 0 | Patch coverage reported (gate passed, not set, or empty patch). |
+| 1 | `--patch-fail-under` is set and patch coverage is below it (or `--fail-on-regression` fired). |
+| 2 | `--base` is missing or not a valid git ref, plan/coverage data is missing or malformed, or a configuration/environment error occurred. |
 
 #### 3.7.6 Coverage exclusions
 

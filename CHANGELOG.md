@@ -1,5 +1,22 @@
 ## Unreleased
 
+### Added
+
+- **coverage**: Patch coverage for pull requests via
+  `gd-tools coverage diff --patch --base <git-ref>`. Reports coverage
+  over only the executable lines changed relative to the base ref
+  (`git merge-base` contract, same as `test --changed --base`):
+  terminal table with per-file and TOTAL metrics, deterministic JSON
+  (`--report-format json`), and an optional gate (`--patch-fail-under`,
+  exit 1 below the threshold; an empty patch never fails). On GitHub
+  Actions, uncovered changed lines are emitted as coalesced
+  `::warning` annotations and a markdown patch table is appended to
+  the job summary (override auto-detection with
+  `--patch-annotations true|false`). Strict edge semantics: files
+  missing from coverage data count as fully uncovered, new files are
+  included, deleted files and non-`.gd` files are ignored, and files
+  with no executable plan lines are skipped without failing the gate.
+
 ### Fixed
 
 - **coverage**: Pure-declaration/data GDScript files (e.g. `class_name`
