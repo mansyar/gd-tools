@@ -30,7 +30,7 @@
 
 ## Phase 4 — CLI integration + gate
 
-- [ ] Task: Write failing CLI tests (click runner, `tests/` diff command tests)
+- [~] Task: Write failing CLI tests (click runner, `tests/` diff command tests)
   - [ ] Test: `coverage diff --patch` without `--base` → exit 2 with actionable error
   - [ ] Test: `--patch-fail-under 80` below threshold → exit 1; at threshold → exit 0; without flag → exit 0 informational
   - [ ] Test: combined `--patch-fail-under` + `--fail-on-regression` → exit 1 if either fails
