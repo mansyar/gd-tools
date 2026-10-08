@@ -19,9 +19,10 @@
 
 ## Phase 2 — Tag & publish
 
-- [ ] Task: Push and watch the release workflow
-  - [ ] Confirm with user before the point of no return (NFR-3)
-  - [ ] `git push origin main` + `git push origin v0.8.0`
-  - [ ] Watch `release.yml`: build → TestPyPI stage green → PyPI stage green
-  - [ ] Verify `gd-tools-cli 0.8.0` visible on PyPI
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Push and watch the release workflow
+  - [x] Confirm with user before the point of no return (NFR-3) — approved
+  - [x] `git push origin main` + `git push origin v0.8.0`
+  - [x] Watch `release.yml`: build → TestPyPI stage green → PyPI stage green (run 37742143647: both jobs success)
+  - [x] Verify `gd-tools-cli 0.8.0` visible on PyPI — confirmed via PyPI JSON API
+  - [x] Merge release branch to main via PR #52 (commit-check fail on the `release:` commit is PR-only, precedented by v0.7.0, no ongoing impact)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — [checkpoint: PENDING]
