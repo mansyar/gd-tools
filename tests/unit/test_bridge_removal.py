@@ -64,7 +64,7 @@ def test_cli_rejects_config_runtime_gut_with_removal_message():
 
     config = MagicMock()
     config.test.runtime = "gut"
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.test.load_config", return_value=config):
         result = CliRunner().invoke(cli, ["test"])
 
     assert result.exit_code == 2

@@ -18,9 +18,9 @@ def _invoke_test(args, env=None):
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=MagicMock(),
         ) as mock_run,
     ):
@@ -56,8 +56,10 @@ def test_exitfirst_accepted_with_watch():
     """--exitfirst composes with --watch; it is forwarded to the session."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
-        patch("gd_tools.cli.run_watch_mode", return_value=0) as mock_watch,
+        patch("gd_tools.commands.test.load_config", return_value=MagicMock()),
+        patch(
+            "gd_tools.commands.test.run_watch_mode", return_value=0
+        ) as mock_watch,
     ):
         result = runner.invoke(
             cli, ["test", "--exitfirst", "--watch"], env={"CI": ""}

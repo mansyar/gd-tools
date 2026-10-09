@@ -68,7 +68,7 @@ def test_verbose_lint_shows_file_being_linted(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["--verbose", "lint", str(tmp_path)])
 
     assert result.exit_code == 1
@@ -82,7 +82,7 @@ def test_verbose_lint_shows_timing(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["--verbose", "lint", str(tmp_path)])
 
     assert result.exit_code == 1
@@ -95,7 +95,7 @@ def test_default_lint_no_verbose_output(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["lint", str(tmp_path)])
 
     assert result.exit_code == 1
@@ -114,7 +114,7 @@ def test_quiet_lint_shows_only_violations(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["--quiet", "lint", str(tmp_path)])
 
     assert result.exit_code == 1
@@ -128,7 +128,7 @@ def test_quiet_lint_no_files_suppressed(tmp_path):
     """--quiet lint with no files suppresses the info message."""
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["--quiet", "lint", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -147,7 +147,9 @@ def test_verbose_format_shows_file_being_formatted(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["--verbose", "format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -161,7 +163,9 @@ def test_verbose_format_shows_timing(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["--verbose", "format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -174,7 +178,9 @@ def test_default_format_no_verbose_output(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -193,7 +199,9 @@ def test_quiet_format_shows_results(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["--quiet", "format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -205,7 +213,9 @@ def test_quiet_format_no_files_suppressed(tmp_path):
     """--quiet format with no files suppresses the info message."""
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["--quiet", "format", str(tmp_path)])
 
     assert result.exit_code == 0

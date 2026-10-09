@@ -27,7 +27,7 @@ def test_config_show_table_default():
     """config show prints Rich table with all sections by default."""
     runner = CliRunner()
     config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.config.load_config", return_value=config):
         result = runner.invoke(cli, ["config", "show"])
     assert result.exit_code == 0
     for section in ["godot", "test", "lint", "format", "coverage"]:
@@ -38,7 +38,7 @@ def test_config_show_format_toml():
     """config show --format toml prints valid TOML."""
     runner = CliRunner()
     config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.config.load_config", return_value=config):
         result = runner.invoke(cli, ["config", "show", "--format", "toml"])
     assert result.exit_code == 0
     parsed = tomllib.loads(result.output)
@@ -50,7 +50,7 @@ def test_config_show_json():
     """config show --json prints valid JSON."""
     runner = CliRunner()
     config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.config.load_config", return_value=config):
         result = runner.invoke(cli, ["config", "show", "--json"])
     assert result.exit_code == 0
     parsed = json.loads(result.output)
@@ -65,7 +65,7 @@ def test_config_show_no_config_file_shows_defaults():
     """config show with no config file shows defaults (exit 0)."""
     runner = CliRunner()
     config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.config.load_config", return_value=config):
         result = runner.invoke(cli, ["config", "show"])
     assert result.exit_code == 0
     assert "test" in result.output
@@ -76,7 +76,7 @@ def test_config_show_format_and_json_mutually_exclusive():
     """config show --format toml --json produces error and exit code 2."""
     runner = CliRunner()
     config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.config.load_config", return_value=config):
         result = runner.invoke(
             cli, ["config", "show", "--format", "toml", "--json"]
         )
@@ -87,7 +87,7 @@ def test_config_show_exit_0_on_success():
     """config show exits 0 on success."""
     runner = CliRunner()
     config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.config.load_config", return_value=config):
         result = runner.invoke(cli, ["config", "show"])
     assert result.exit_code == 0
 
@@ -96,7 +96,8 @@ def test_config_show_config_error_exit_2():
     """config show exits 2 on config load error."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config", side_effect=ConfigError("bad config")
+        "gd_tools.commands.config.load_config",
+        side_effect=ConfigError("bad config"),
     ):
         result = runner.invoke(cli, ["config", "show"])
     assert result.exit_code == 2
@@ -276,3 +277,23 @@ def test_config_schema_output_unwritable_exits_2(tmp_path):
     runner = CliRunner()
     result = runner.invoke(cli, ["config", "schema", "--output", str(blocked)])
     assert result.exit_code == 2
+
+
+# ---------------------------------------------------------------------------
+# config validate — sections summary (FR-6)
+# ---------------------------------------------------------------------------
+
+
+def test_config_validate_sections_summary_derived_from_model():
+    """The "Sections validated" summary derives from GdToolsConfig.model_fields.
+
+    Imported inside the test so the Red state stays a single failure instead
+    of an ImportError at module collection.
+    """
+    from gd_tools.commands.config import _sections_summary
+
+    expected = (
+        f"Sections validated: {len(GdToolsConfig.model_fields)} "
+        f"({', '.join(GdToolsConfig.model_fields)})"
+    )
+    assert _sections_summary() == expected

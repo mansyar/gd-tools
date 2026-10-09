@@ -43,7 +43,9 @@ def test_format_full_run_default_mode(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -60,7 +62,9 @@ def test_format_full_run_all_formatted(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -78,7 +82,9 @@ def test_format_full_run_check_needs_formatting(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", "--check", str(tmp_path)])
 
     assert result.exit_code == 1
@@ -95,7 +101,9 @@ def test_format_full_run_check_all_formatted(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", "--check", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -112,7 +120,9 @@ def test_format_full_run_diff_mode(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", "--diff", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -135,7 +145,9 @@ def test_format_excludes_addons_directory(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -159,7 +171,9 @@ def test_format_syntax_error_skipped(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -181,7 +195,9 @@ def test_format_no_files_found(tmp_path):
     """Format on empty directory prints graceful message, exit 0."""
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch(
+        "gd_tools.commands.format.load_config", return_value=mock_config
+    ):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0
@@ -221,7 +237,7 @@ def test_format_respects_same_excludes_as_gdformatrc(tmp_path):
     original_bad = bad_file.read_text()
 
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.format.load_config", return_value=config):
         result = runner.invoke(cli, ["format", str(tmp_path)])
 
     assert result.exit_code == 0

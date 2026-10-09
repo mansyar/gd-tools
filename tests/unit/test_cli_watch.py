@@ -14,8 +14,8 @@ def test_watch_with_gut_runtime_exits_2():
     """The removed GUT runtime is rejected (exit 2); watch never starts."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
-        patch("gd_tools.cli.run_watch_mode") as mock_watch,
+        patch("gd_tools.commands.test.load_config", return_value=MagicMock()),
+        patch("gd_tools.commands.test.run_watch_mode") as mock_watch,
     ):
         result = runner.invoke(cli, ["test", "--watch", "--runtime", "gut"])
     assert result.exit_code == 2
@@ -27,8 +27,8 @@ def test_watch_with_ci_env_exits_2():
     """Watch mode is interactive; CI=true makes it a hard error (exit 2)."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
-        patch("gd_tools.cli.run_watch_mode") as mock_watch,
+        patch("gd_tools.commands.test.load_config", return_value=MagicMock()),
+        patch("gd_tools.commands.test.run_watch_mode") as mock_watch,
     ):
         result = runner.invoke(cli, ["test", "--watch"], env={"CI": "true"})
     assert result.exit_code == 2
@@ -40,8 +40,8 @@ def test_watch_with_path_arguments_exits_2():
     """Watch mode ignores positional paths; it must reject them instead."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
-        patch("gd_tools.cli.run_watch_mode") as mock_watch,
+        patch("gd_tools.commands.test.load_config", return_value=MagicMock()),
+        patch("gd_tools.commands.test.run_watch_mode") as mock_watch,
     ):
         result = runner.invoke(
             cli, ["test", "tests/", "--watch"], env={"CI": ""}
@@ -56,8 +56,10 @@ def test_watch_passes_filters_and_coverage_to_session():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_watch_mode", return_value=0) as mock_watch,
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.commands.test.run_watch_mode", return_value=0
+        ) as mock_watch,
     ):
         result = runner.invoke(
             cli,

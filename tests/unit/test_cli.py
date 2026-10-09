@@ -9,7 +9,8 @@ import pytest
 from click.testing import CliRunner
 from rich.console import Console
 
-from gd_tools.cli import _validate_durations, cli
+from gd_tools.cli import cli
+from gd_tools.commands.test import _validate_durations
 from gd_tools.doctor import CheckResult, DoctorResult
 from gd_tools.verbosity import Verbosity, get_verbosity
 from gd_tools.errors import (
@@ -134,7 +135,7 @@ def test_test_config_error_exit_code_2():
     """Test test exits with code 2 when config loading fails."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.test.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["test"])
@@ -161,9 +162,9 @@ def test_test_forwards_selection_options_to_native():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -194,9 +195,9 @@ def test_test_forwards_coverage_options_to_native():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -229,9 +230,9 @@ def test_test_min_without_coverage_warns():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -246,9 +247,9 @@ def test_test_show_uncovered_without_coverage_warns():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -263,9 +264,9 @@ def test_test_test_failure_exit_code_1():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             side_effect=TestFailureError("2 test(s) failed"),
         ),
     ):
@@ -278,9 +279,9 @@ def test_test_coverage_threshold_error_exit_1():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             side_effect=CoverageThresholdError("Coverage below threshold"),
         ),
     ):
@@ -293,9 +294,9 @@ def test_test_coverage_plan_error_exit_2():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             side_effect=CoveragePlanError("Missing plan"),
         ),
     ):
@@ -315,9 +316,9 @@ def _invoke_test_with_parallel(args, config_parallel=None):
     mock_config = MagicMock()
     mock_config.test.parallel = config_parallel
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -398,9 +399,9 @@ def _invoke_test_with_durations(args, config_durations=None):
     mock_config = MagicMock()
     mock_config.test.durations = config_durations
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -485,7 +486,7 @@ def test_lint_exit_code_2_config_error():
     """Test lint exits with code 2 when config loading fails."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.lint.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["lint"])
@@ -498,8 +499,10 @@ def test_lint_default_path():
     mock_config = MagicMock()
     mock_result = LintResult(files_checked=0, errors=[], warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result) as mock_run,
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.commands.lint.run_lint", return_value=mock_result
+        ) as mock_run,
     ):
         result = runner.invoke(cli, ["lint"])
     assert result.exit_code == 0
@@ -514,8 +517,8 @@ def test_lint_report_format_json():
     mock_config = MagicMock()
     mock_result = LintResult(files_checked=1, errors=[], warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result),
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch("gd_tools.commands.lint.run_lint", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["lint", "--report-format", "json"])
     assert result.exit_code == 0
@@ -530,8 +533,8 @@ def test_lint_report_format_text_default():
     mock_config = MagicMock()
     mock_result = LintResult(files_checked=1, errors=[], warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result),
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch("gd_tools.commands.lint.run_lint", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["lint"])
     assert result.exit_code == 0
@@ -549,8 +552,8 @@ def test_lint_report_format_github_actions():
     ]
     mock_result = LintResult(files_checked=1, errors=errors, warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result),
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch("gd_tools.commands.lint.run_lint", return_value=mock_result),
     ):
         result = runner.invoke(
             cli, ["lint", "--report-format", "github-actions"]
@@ -567,8 +570,8 @@ def test_lint_rejects_unknown_report_format():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint"),
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch("gd_tools.commands.lint.run_lint"),
     ):
         result = runner.invoke(cli, ["lint", "--report-format", "sarif"])
     assert result.exit_code == 2
@@ -580,8 +583,8 @@ def test_lint_fix_flag_warning():
     mock_config = MagicMock()
     mock_result = LintResult(files_checked=0, errors=[], warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result),
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch("gd_tools.commands.lint.run_lint", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["lint", "--fix"])
     assert "gdlint is read-only" in result.output
@@ -594,8 +597,8 @@ def test_lint_exit_code_0_clean():
     mock_config = MagicMock()
     mock_result = LintResult(files_checked=2, errors=[], warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result),
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch("gd_tools.commands.lint.run_lint", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["lint"])
     assert result.exit_code == 0
@@ -620,8 +623,8 @@ def test_lint_exit_code_1_errors():
         warnings=[],
     )
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result),
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch("gd_tools.commands.lint.run_lint", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["lint"])
     assert result.exit_code == 1
@@ -633,8 +636,10 @@ def test_lint_wired_to_run_lint():
     mock_config = MagicMock()
     mock_result = LintResult(files_checked=0, errors=[], warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result) as mock_run,
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.commands.lint.run_lint", return_value=mock_result
+        ) as mock_run,
     ):
         result = runner.invoke(
             cli, ["lint", "some/path", "--report-format", "json"]
@@ -649,7 +654,7 @@ def test_format_config_error_exit_2():
     """Test format exits with code 2 when config loading fails."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.format.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["format", "some_path"])
@@ -662,8 +667,10 @@ def test_format_default_mode():
     mock_config = MagicMock()
     mock_result = FormatResult(files_checked=3, files_formatted=2)
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result) as mock_run,
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.commands.format.run_format", return_value=mock_result
+        ) as mock_run,
     ):
         result = runner.invoke(cli, ["format", "some/path"])
     assert result.exit_code == 0
@@ -680,8 +687,10 @@ def test_format_default_path():
     mock_config = MagicMock()
     mock_result = FormatResult(files_checked=0)
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result) as mock_run,
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.commands.format.run_format", return_value=mock_result
+        ) as mock_run,
     ):
         result = runner.invoke(cli, ["format"])
     assert result.exit_code == 0
@@ -694,8 +703,8 @@ def test_format_default_all_formatted():
     mock_config = MagicMock()
     mock_result = FormatResult(files_checked=2, files_formatted=0)
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result),
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch("gd_tools.commands.format.run_format", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["format", "some/path"])
     assert result.exit_code == 0
@@ -713,8 +722,8 @@ def test_format_check_needs_formatting():
         files_needing_format_paths=["a.gd", "b.gd"],
     )
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result),
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch("gd_tools.commands.format.run_format", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["format", "--check", "some/path"])
     assert result.exit_code == 1
@@ -730,8 +739,8 @@ def test_format_check_all_formatted():
     mock_config = MagicMock()
     mock_result = FormatResult(files_checked=2, files_needing_format=0)
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result),
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch("gd_tools.commands.format.run_format", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["format", "--check", "some/path"])
     assert result.exit_code == 0
@@ -751,8 +760,8 @@ def test_format_diff_renders_diffs():
         ],
     )
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result),
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch("gd_tools.commands.format.run_format", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["format", "--diff", "some/path"])
     assert result.exit_code == 0
@@ -773,8 +782,8 @@ def test_format_no_files_found():
     mock_config = MagicMock()
     mock_result = FormatResult(files_checked=0)
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result),
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch("gd_tools.commands.format.run_format", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["format", "some/path"])
     assert result.exit_code == 0
@@ -787,8 +796,8 @@ def test_format_diff_no_diffs():
     mock_config = MagicMock()
     mock_result = FormatResult(files_checked=2, diffs=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result),
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch("gd_tools.commands.format.run_format", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["format", "--diff", "some/path"])
     assert result.exit_code == 0
@@ -807,8 +816,8 @@ def test_format_check_dim_file_paths(monkeypatch):
         files_needing_format_paths=["test.gd"],
     )
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result),
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch("gd_tools.commands.format.run_format", return_value=mock_result),
     ):
         result = runner.invoke(cli, ["format", "--check", "some/path"])
     assert result.exit_code == 1
@@ -820,7 +829,7 @@ def test_format_check_dim_file_paths(monkeypatch):
 def test_cli_init_calls_run_init():
     """Test invoking init calls run_init."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_init") as mock_run:
+    with patch("gd_tools.commands.init.run_init") as mock_run:
         result = runner.invoke(cli, ["init"])
     assert result.exit_code == 0
     mock_run.assert_called_once()
@@ -829,7 +838,7 @@ def test_cli_init_calls_run_init():
 def test_cli_init_passes_non_interactive_flag():
     """Test invoking init with --non-interactive passes the flag."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_init") as mock_run:
+    with patch("gd_tools.commands.init.run_init") as mock_run:
         result = runner.invoke(cli, ["init", "--non-interactive"])
     assert result.exit_code == 0
     mock_run.assert_called_once_with(non_interactive=True)
@@ -838,7 +847,7 @@ def test_cli_init_passes_non_interactive_flag():
 def test_cli_init_exits_zero_on_success():
     """Test init exits with code 0 on success."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_init"):
+    with patch("gd_tools.commands.init.run_init"):
         result = runner.invoke(cli, ["init"])
     assert result.exit_code == 0
 
@@ -846,7 +855,7 @@ def test_cli_init_exits_zero_on_success():
 def test_cli_doctor_calls_run_doctor():
     """Test invoking doctor calls run_doctor."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["doctor"])
     mock_run.assert_called_once()
@@ -856,7 +865,7 @@ def test_cli_doctor_calls_run_doctor():
 def test_cli_doctor_prints_table():
     """Test doctor command prints the table with check names."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(
             checks=[
                 CheckResult(name="Godot Binary", passed=True, message="Found"),
@@ -870,7 +879,7 @@ def test_cli_doctor_prints_table():
 def test_cli_doctor_exits_zero_when_all_pass():
     """Test doctor exits with code 0 when all checks pass."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(
             checks=[
                 CheckResult(name="Test", passed=True, message="OK"),
@@ -884,7 +893,7 @@ def test_cli_doctor_exits_zero_when_all_pass():
 def test_cli_doctor_exits_one_when_any_fails():
     """Test doctor exits with code 1 when any check fails."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(
             checks=[
                 CheckResult(
@@ -907,9 +916,11 @@ def test_coverage_report_calls_orchestrator():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ) as mock_report,
     ):
@@ -925,9 +936,11 @@ def test_coverage_report_format_override():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ) as mock_report,
     ):
@@ -944,9 +957,11 @@ def test_coverage_report_report_format_canonical():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ) as mock_report,
     ):
@@ -965,9 +980,11 @@ def test_coverage_report_report_format_case_insensitive():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ) as mock_report,
     ):
@@ -982,7 +999,9 @@ def test_coverage_report_report_format_case_insensitive():
 def test_coverage_report_rejects_invalid_report_format():
     """Test an invalid --report-format fails fast with a usage error."""
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=MagicMock()):
+    with patch(
+        "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+    ):
         result = runner.invoke(
             cli, ["coverage", "report", "--report-format", "xml"]
         )
@@ -998,13 +1017,15 @@ def test_coverage_report_html_open_tty_opens_browser():
     mock_result = MagicMock()
     mock_result.output_path = "/tmp/report/index.html"
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
-        patch("gd_tools.cli._is_interactive", return_value=True),
-        patch("gd_tools.cli.webbrowser.open") as mock_open,
+        patch("gd_tools.commands.coverage._is_interactive", return_value=True),
+        patch("gd_tools.commands.coverage.webbrowser.open") as mock_open,
     ):
         result = runner.invoke(
             cli,
@@ -1021,13 +1042,15 @@ def test_coverage_report_html_open_suppressed_when_not_tty():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
-        patch("gd_tools.cli._is_interactive", return_value=False),
-        patch("gd_tools.cli.webbrowser.open") as mock_open,
+        patch("gd_tools.commands.coverage._is_interactive", return_value=False),
+        patch("gd_tools.commands.coverage.webbrowser.open") as mock_open,
     ):
         result = runner.invoke(
             cli,
@@ -1044,13 +1067,15 @@ def test_coverage_report_html_open_ignored_for_other_formats():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
-        patch("gd_tools.cli._is_interactive", return_value=True),
-        patch("gd_tools.cli.webbrowser.open") as mock_open,
+        patch("gd_tools.commands.coverage._is_interactive", return_value=True),
+        patch("gd_tools.commands.coverage.webbrowser.open") as mock_open,
     ):
         result = runner.invoke(
             cli,
@@ -1067,13 +1092,15 @@ def test_coverage_report_html_open_off_by_default():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
-        patch("gd_tools.cli._is_interactive", return_value=True),
-        patch("gd_tools.cli.webbrowser.open") as mock_open,
+        patch("gd_tools.commands.coverage._is_interactive", return_value=True),
+        patch("gd_tools.commands.coverage.webbrowser.open") as mock_open,
     ):
         result = runner.invoke(
             cli, ["coverage", "report", "--report-format", "html"]
@@ -1090,14 +1117,17 @@ def test_coverage_report_html_open_failure_is_graceful():
     mock_result = MagicMock()
     mock_result.output_path = "/tmp/report/index.html"
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
-        patch("gd_tools.cli._is_interactive", return_value=True),
+        patch("gd_tools.commands.coverage._is_interactive", return_value=True),
         patch(
-            "gd_tools.cli.webbrowser.open", side_effect=OSError("no browser")
+            "gd_tools.commands.coverage.webbrowser.open",
+            side_effect=OSError("no browser"),
         ),
     ):
         result = runner.invoke(
@@ -1109,14 +1139,16 @@ def test_coverage_report_html_open_failure_is_graceful():
     import webbrowser as webbrowser_module
 
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
-        patch("gd_tools.cli._is_interactive", return_value=True),
+        patch("gd_tools.commands.coverage._is_interactive", return_value=True),
         patch(
-            "gd_tools.cli.webbrowser.open",
+            "gd_tools.commands.coverage.webbrowser.open",
             side_effect=webbrowser_module.Error("no browser"),
         ),
     ):
@@ -1132,15 +1164,15 @@ def test_is_interactive_reflects_stdout_tty(monkeypatch):
     import io
     import sys
 
-    import gd_tools.cli as cli_module
+    import gd_tools.commands.coverage as coverage_module
 
     fake_tty = io.StringIO()
     fake_tty.isatty = lambda: True  # type: ignore[method-assign]
     monkeypatch.setattr(sys, "stdout", fake_tty)
-    assert cli_module._is_interactive() is True
+    assert coverage_module._is_interactive() is True
 
     monkeypatch.setattr(sys, "stdout", io.StringIO())
-    assert cli_module._is_interactive() is False
+    assert coverage_module._is_interactive() is False
 
 
 def test_coverage_report_rejects_both_format_flags():
@@ -1184,9 +1216,11 @@ def test_coverage_report_output_dir_override():
     mock_config.coverage.min_percent = 0
     mock_result = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ) as mock_report,
     ):
@@ -1204,9 +1238,11 @@ def test_coverage_report_plan_error_exit_2():
     mock_config = MagicMock()
     mock_config.coverage.min_percent = 0
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             side_effect=CoveragePlanError("missing"),
         ),
     ):
@@ -1222,9 +1258,11 @@ def test_coverage_report_success_exit_0():
     mock_result = MagicMock()
     mock_result.output_path = Path("/tmp/reports/report.html")
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
     ):
@@ -1239,9 +1277,11 @@ def test_coverage_merge_calls_orchestrator():
     mock_result = MagicMock()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.merge_coverage_files",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.merge_coverage_files",
             return_value=mock_result,
         ) as mock_merge,
     ):
@@ -1262,9 +1302,11 @@ def test_coverage_merge_output_override():
     mock_result = MagicMock()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.merge_coverage_files",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.merge_coverage_files",
             return_value=mock_result,
         ) as mock_merge,
     ):
@@ -1290,9 +1332,11 @@ def test_coverage_merge_success_exit_0():
     mock_result = MagicMock()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.merge_coverage_files",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.merge_coverage_files",
             return_value=mock_result,
         ),
     ):
@@ -1306,9 +1350,11 @@ def test_coverage_show_calls_orchestrator():
     mock_config = MagicMock()
     mock_summary = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.show_coverage_summary",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.show_coverage_summary",
             return_value=mock_summary,
         ) as mock_show,
     ):
@@ -1323,9 +1369,11 @@ def test_coverage_show_min_passed_to_orchestrator():
     mock_config = MagicMock()
     mock_summary = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.show_coverage_summary",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.show_coverage_summary",
             return_value=mock_summary,
         ) as mock_show,
     ):
@@ -1340,9 +1388,11 @@ def test_coverage_show_threshold_error_exit_1():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.show_coverage_summary",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.show_coverage_summary",
             side_effect=CoverageThresholdError("below threshold"),
         ),
     ):
@@ -1355,9 +1405,11 @@ def test_coverage_show_plan_error_exit_2():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.show_coverage_summary",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.show_coverage_summary",
             side_effect=CoveragePlanError("missing"),
         ),
     ):
@@ -1368,7 +1420,9 @@ def test_coverage_show_plan_error_exit_2():
 def test_cli_group_not_implemented_error_exit_2():
     """Test GdToolsGroup catches NotImplementedError and exits 2."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_init", side_effect=NotImplementedError()):
+    with patch(
+        "gd_tools.commands.init.run_init", side_effect=NotImplementedError()
+    ):
         result = runner.invoke(cli, ["init"])
     assert result.exit_code == 2
 
@@ -1377,7 +1431,7 @@ def test_cli_init_gdtools_error_exit_code():
     """Test init exits with GdToolsError.exit_code when run_init raises."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.run_init",
+        "gd_tools.commands.init.run_init",
         side_effect=GdToolsError("init failed", exit_code=3),
     ):
         result = runner.invoke(cli, ["init"])
@@ -1388,7 +1442,7 @@ def test_coverage_report_config_error_exit_2():
     """Test coverage report exits 2 when load_config raises ConfigError."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.coverage.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["coverage", "report"])
@@ -1399,7 +1453,7 @@ def test_coverage_merge_config_error_exit_2():
     """Test coverage merge exits 2 when load_config raises ConfigError."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.coverage.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["coverage", "merge", "file1.json"])
@@ -1411,9 +1465,11 @@ def test_coverage_merge_gdtools_error_exit_code():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.merge_coverage_files",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.merge_coverage_files",
             side_effect=GdToolsError("merge failed", exit_code=3),
         ),
     ):
@@ -1425,7 +1481,7 @@ def test_coverage_show_config_error_exit_2():
     """Test coverage show exits 2 when load_config raises ConfigError."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.coverage.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["coverage", "show"])
@@ -1443,7 +1499,7 @@ def test_update_notification_printed_when_update_available():
     with (
         patch("gd_tools.cli.check_for_update", return_value="1.0.0"),
         patch("gd_tools.cli.__version__", "0.1.0"),
-        patch("gd_tools.cli.run_doctor") as mock_run,
+        patch("gd_tools.commands.doctor.run_doctor") as mock_run,
     ):
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["doctor"])
@@ -1458,7 +1514,7 @@ def test_update_notification_printed_when_update_available():
 def test_no_notification_when_no_update_available():
     """No notification when check_for_update returns None."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["doctor"])
     assert result.exit_code == 0
@@ -1470,7 +1526,7 @@ def test_notification_does_not_affect_exit_code():
     runner = CliRunner()
     with (
         patch("gd_tools.cli.check_for_update", return_value="1.0.0"),
-        patch("gd_tools.cli.run_doctor") as mock_run,
+        patch("gd_tools.commands.doctor.run_doctor") as mock_run,
     ):
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["doctor"])
@@ -1486,7 +1542,7 @@ def test_env_var_disables_notification_in_cli(mock_requests_get, monkeypatch):
     with (
         patch("gd_tools.cli.check_for_update", new=real_check_for_update),
         mock_requests_get(json_data={"info": {"version": "1.0.0"}}) as mock_get,
-        patch("gd_tools.cli.run_doctor") as mock_run,
+        patch("gd_tools.commands.doctor.run_doctor") as mock_run,
     ):
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["doctor"])
@@ -1504,8 +1560,10 @@ def test_lint_multiple_paths():
     mock_config = MagicMock()
     mock_result = LintResult(files_checked=0, errors=[], warnings=[])
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_lint", return_value=mock_result) as mock_run,
+        patch("gd_tools.commands.lint.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.commands.lint.run_lint", return_value=mock_result
+        ) as mock_run,
     ):
         result = runner.invoke(cli, ["lint", "path_a", "path_b"])
     assert result.exit_code == 0
@@ -1520,8 +1578,10 @@ def test_format_multiple_paths():
     mock_config = MagicMock()
     mock_result = FormatResult(files_checked=2, files_formatted=1)
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.run_format", return_value=mock_result) as mock_run,
+        patch("gd_tools.commands.format.load_config", return_value=mock_config),
+        patch(
+            "gd_tools.commands.format.run_format", return_value=mock_result
+        ) as mock_run,
     ):
         result = runner.invoke(cli, ["format", "path_a", "path_b"])
     assert result.exit_code == 0
@@ -1533,7 +1593,7 @@ def test_format_multiple_paths():
 def test_cli_version_table_output():
     """Test version command renders Rich table with all component names."""
     runner = CliRunner()
-    with patch("gd_tools.cli.collect_versions") as mock_collect:
+    with patch("gd_tools.commands.version.collect_versions") as mock_collect:
         mock_collect.return_value = {
             "gd-tools": "0.3.0",
             "godot": "4.5.1",
@@ -1553,7 +1613,7 @@ def test_cli_version_table_output():
 def test_cli_version_json_output():
     """Test --json flag outputs valid JSON with null for missing."""
     runner = CliRunner()
-    with patch("gd_tools.cli.collect_versions") as mock_collect:
+    with patch("gd_tools.commands.version.collect_versions") as mock_collect:
         mock_collect.return_value = {
             "gd-tools": "0.3.0",
             "godot": None,
@@ -1574,7 +1634,7 @@ def test_cli_version_json_output():
 def test_cli_version_exit_zero_with_missing():
     """Test version exits 0 even when components are missing."""
     runner = CliRunner()
-    with patch("gd_tools.cli.collect_versions") as mock_collect:
+    with patch("gd_tools.commands.version.collect_versions") as mock_collect:
         mock_collect.return_value = {
             "gd-tools": "0.3.0",
             "godot": None,
@@ -1589,7 +1649,7 @@ def test_cli_version_exit_zero_with_missing():
 def test_cli_version_missing_display():
     """Test missing components show 'not detected' or 'not installed'."""
     runner = CliRunner()
-    with patch("gd_tools.cli.collect_versions") as mock_collect:
+    with patch("gd_tools.commands.version.collect_versions") as mock_collect:
         mock_collect.return_value = {
             "gd-tools": "0.3.0",
             "godot": None,
@@ -1686,7 +1746,7 @@ def test_quiet_suppresses_update_and_addon_checks():
             "gd_tools.cli.check_for_update", return_value=None
         ) as mock_update,
         patch("gd_tools.cli.check_addon_version") as mock_addon,
-        patch("gd_tools.cli.run_doctor") as mock_run,
+        patch("gd_tools.commands.doctor.run_doctor") as mock_run,
     ):
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["--quiet", "doctor"])
@@ -1703,7 +1763,7 @@ def test_quiet_short_flag_suppresses_update_and_addon_checks():
             "gd_tools.cli.check_for_update", return_value=None
         ) as mock_update,
         patch("gd_tools.cli.check_addon_version") as mock_addon,
-        patch("gd_tools.cli.run_doctor") as mock_run,
+        patch("gd_tools.commands.doctor.run_doctor") as mock_run,
     ):
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["-q", "doctor"])
@@ -1720,7 +1780,7 @@ def test_default_mode_calls_update_and_addon_checks():
             "gd_tools.cli.check_for_update", return_value=None
         ) as mock_update,
         patch("gd_tools.cli.check_addon_version") as mock_addon,
-        patch("gd_tools.cli.run_doctor") as mock_run,
+        patch("gd_tools.commands.doctor.run_doctor") as mock_run,
     ):
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["doctor"])
@@ -1736,7 +1796,7 @@ def test_quiet_suppresses_update_notification_when_available():
         patch("gd_tools.cli.check_for_update", return_value="1.0.0"),
         patch("gd_tools.cli.__version__", "0.1.0"),
         patch("gd_tools.cli.check_addon_version"),
-        patch("gd_tools.cli.run_doctor") as mock_run,
+        patch("gd_tools.commands.doctor.run_doctor") as mock_run,
     ):
         mock_run.return_value = DoctorResult(checks=[], all_passed=True)
         result = runner.invoke(cli, ["--quiet", "doctor"])
@@ -1752,7 +1812,7 @@ def test_quiet_suppresses_update_notification_when_available():
 def test_doctor_quiet_shows_one_line_pass():
     """--quiet doctor shows only a one-line pass status, no table."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(
             checks=[
                 CheckResult(name="Godot Binary", passed=True, message="Found"),
@@ -1768,7 +1828,7 @@ def test_doctor_quiet_shows_one_line_pass():
 def test_doctor_quiet_shows_one_line_fail():
     """--quiet doctor shows only a one-line fail status, no table."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(
             checks=[
                 CheckResult(
@@ -1788,7 +1848,7 @@ def test_doctor_quiet_shows_one_line_fail():
 def test_doctor_default_shows_table():
     """Without --quiet, doctor shows the full table with check names."""
     runner = CliRunner()
-    with patch("gd_tools.cli.run_doctor") as mock_run:
+    with patch("gd_tools.commands.doctor.run_doctor") as mock_run:
         mock_run.return_value = DoctorResult(
             checks=[
                 CheckResult(name="Godot Binary", passed=True, message="Found"),
@@ -1818,9 +1878,11 @@ def test_coverage_save_baseline_calls_orchestrator():
     mock_config = MagicMock()
     baseline_path = Path(".gd-tools") / "coverage" / "baseline.json"
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.save_coverage_baseline",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.save_coverage_baseline",
             return_value=baseline_path,
         ) as mock_save,
     ):
@@ -1834,9 +1896,11 @@ def test_coverage_save_baseline_missing_data_exit_2():
     """Test save-baseline exits 2 when coverage data is missing."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.save_coverage_baseline",
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.save_coverage_baseline",
             side_effect=CoveragePlanError("Coverage data file not found"),
         ),
     ):
@@ -1870,8 +1934,12 @@ def test_coverage_diff_calls_orchestrator():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.diff_coverage", return_value=None) as mock_diff,
+        patch(
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage", return_value=None
+        ) as mock_diff,
     ):
         result = runner.invoke(cli, ["coverage", "diff", "--base", "b.json"])
     assert result.exit_code == 0
@@ -1889,8 +1957,12 @@ def test_coverage_diff_flags_passed_to_orchestrator():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.diff_coverage", return_value=None) as mock_diff,
+        patch(
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage", return_value=None
+        ) as mock_diff,
     ):
         result = runner.invoke(
             cli,
@@ -1919,9 +1991,11 @@ def test_coverage_diff_plan_error_exit_2():
     """Test missing/malformed baseline or current data exits 2."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.diff_coverage",
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage",
             side_effect=CoveragePlanError("Baseline file not found"),
         ),
     ):
@@ -1933,9 +2007,11 @@ def test_coverage_diff_regression_gate_exit_1():
     """Test a gated regression raises CoverageThresholdError mapped to exit 1."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.diff_coverage",
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage",
             side_effect=CoverageThresholdError("Coverage regressed"),
         ),
     ):
@@ -1976,9 +2052,11 @@ def test_coverage_run_calls_orchestrator():
     mock_result = MagicMock()
     mock_result.output_path = Path("report.txt")
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_playtest_coverage",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.run_playtest_coverage",
             return_value=mock_result,
         ) as mock_run,
     ):
@@ -2009,9 +2087,11 @@ def test_coverage_run_calls_orchestrator():
 
     # --min-branch is threaded through unchanged.
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_playtest_coverage",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.run_playtest_coverage",
             return_value=mock_result,
         ) as mock_run,
     ):
@@ -2033,8 +2113,13 @@ def test_coverage_run_success_exit_0():
     mock_result = MagicMock()
     mock_result.output_path = Path("coverage_report.txt")
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
-        patch("gd_tools.cli.run_playtest_coverage", return_value=mock_result),
+        patch(
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.run_playtest_coverage",
+            return_value=mock_result,
+        ),
     ):
         result = runner.invoke(cli, ["coverage", "run"])
     assert result.exit_code == 0
@@ -2059,9 +2144,11 @@ def test_coverage_report_github_actions_echoes_annotations(tmp_path):
     mock_result = MagicMock()
     mock_result.output_path = _write_gh_annotations(tmp_path)
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.generate_coverage_report",
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.generate_coverage_report",
             return_value=mock_result,
         ),
     ):
@@ -2081,8 +2168,13 @@ def test_coverage_run_github_actions_echoes_annotations(tmp_path):
     mock_result = MagicMock()
     mock_result.output_path = _write_gh_annotations(tmp_path)
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
-        patch("gd_tools.cli.run_playtest_coverage", return_value=mock_result),
+        patch(
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.run_playtest_coverage",
+            return_value=mock_result,
+        ),
     ):
         result = runner.invoke(
             cli,
@@ -2111,9 +2203,11 @@ def test_coverage_run_github_actions_echoes_on_threshold_failure(tmp_path):
         "Coverage below minimum", report_result=report_result
     )
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.run_playtest_coverage",
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.run_playtest_coverage",
             side_effect=error,
         ),
     ):
@@ -2138,7 +2232,7 @@ def test_coverage_run_config_error_exit_2():
     """Test coverage run exits 2 when load_config raises ConfigError."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.coverage.load_config",
         side_effect=ConfigError("Invalid config"),
     ):
         result = runner.invoke(cli, ["coverage", "run"])
@@ -2149,9 +2243,11 @@ def test_coverage_run_threshold_error_exit_1():
     """A --min gate failure raises CoverageThresholdError mapped to exit 1."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.run_playtest_coverage",
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.run_playtest_coverage",
             side_effect=CoverageThresholdError("Coverage below minimum"),
         ),
     ):
@@ -2163,9 +2259,11 @@ def test_coverage_run_playtest_error_exit_2():
     """Invalid scene / missing project / launch failure exits 2."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.run_playtest_coverage",
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.run_playtest_coverage",
             side_effect=CoveragePlaytestError("No main scene configured"),
         ),
     ):
@@ -2178,9 +2276,9 @@ def test_test_watch_forwards_resolved_parallel():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):
@@ -2197,9 +2295,9 @@ def test_test_watch_uses_config_parallel_without_flag():
     mock_config = MagicMock()
     mock_config.test.parallel = 2
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):
@@ -2213,9 +2311,9 @@ def test_test_watch_forwards_resolved_durations():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):
@@ -2232,9 +2330,9 @@ def test_test_watch_uses_config_durations_without_flag():
     mock_config = MagicMock()
     mock_config.test.durations = 2
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):

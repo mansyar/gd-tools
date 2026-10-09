@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from enum import Enum
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -16,7 +15,7 @@ from pydantic import (
     model_validator,
 )
 
-from gd_tools.atomic_io import atomic_write_text
+from gd_tools.atomic_io import atomic_write_json
 
 NATIVE_PROTOCOL_VERSION = 4
 
@@ -242,8 +241,4 @@ def write_json_atomic(path: Path, value: BaseModel) -> Path:
     Raises:
         OSError: If the temporary file or final replacement cannot be written.
     """
-    payload = (
-        json.dumps(value.model_dump(mode="json"), indent=2, sort_keys=True)
-        + "\n"
-    )
-    return atomic_write_text(path, payload)
+    return atomic_write_json(path, value.model_dump(mode="json"))

@@ -39,7 +39,7 @@ def test_lint_full_run_text_output(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["lint", str(tmp_path)])
 
     assert result.exit_code == 1
@@ -59,7 +59,7 @@ def test_lint_full_run_json_output(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(
             cli, ["lint", str(tmp_path), "--report-format", "json"]
         )
@@ -80,7 +80,7 @@ def test_lint_excludes_respected(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["lint", str(tmp_path)])
 
     # Only clean.gd was checked — no errors, exit 0
@@ -95,7 +95,7 @@ def test_lint_fix_flag_noop(tmp_path):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["lint", str(tmp_path), "--fix"])
 
     # Warning message present
@@ -137,7 +137,7 @@ def test_lint_matches_bare_gdlint_on_gdlintrc_disable(tmp_path, monkeypatch):
     # gd-tools lint honors it too.
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["lint", str(tmp_path)])
 
     assert result.exit_code == 0, result.output
@@ -167,7 +167,7 @@ def test_lint_matches_bare_gdlint_without_disables(tmp_path, monkeypatch):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(cli, ["lint", str(tmp_path)])
 
     assert result.exit_code == 1
@@ -186,7 +186,7 @@ def test_lint_explicit_config_path_flag(tmp_path, monkeypatch):
 
     runner = CliRunner()
     mock_config = GdToolsConfig()
-    with patch("gd_tools.cli.load_config", return_value=mock_config):
+    with patch("gd_tools.commands.lint.load_config", return_value=mock_config):
         result = runner.invoke(
             cli, ["lint", str(project), "--lint-config", str(rc)]
         )
