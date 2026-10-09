@@ -354,7 +354,7 @@ _Archived tracks live in `./archive/`._
   release.yml publish to TestPyPI + PyPI)
   *Link: [release_v0_8_0_20261008](./archive/release_v0_8_0_20261008/index.md)*
 
-- [~] **Track: CLI Core Refactor** (chore: decompose cli.py into commands/
+- [x] **Track: CLI Core Refactor** (chore: decompose cli.py into commands/
   package, consolidate 4x-duplicated atomic JSON writes, declarative
   flag-conflict table for the test command, repo hygiene sweep;
   behavior-frozen refactor verified by full suite)
