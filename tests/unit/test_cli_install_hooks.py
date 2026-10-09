@@ -126,7 +126,9 @@ def test_non_interactive_installs_default_pair(tmp_path: Path):
 
 def test_prompt_defaults_accept_format_and_lint_decline_test(tmp_path: Path):
     """y/y/n answers (accepting defaults) install format + lint only."""
-    with patch("gd_tools.cli._stdin_is_tty", return_value=True):
+    with patch(
+        "gd_tools.commands.install_hooks._stdin_is_tty", return_value=True
+    ):
         result = _invoke_in(tmp_path, ["install-hooks"], input="y\ny\nn\n")
     assert result.exit_code == 0
     config = tmp_path / ".pre-commit-config.yaml"
@@ -134,7 +136,9 @@ def test_prompt_defaults_accept_format_and_lint_decline_test(tmp_path: Path):
 
 
 def test_prompt_accept_all_installs_three_hooks(tmp_path: Path):
-    with patch("gd_tools.cli._stdin_is_tty", return_value=True):
+    with patch(
+        "gd_tools.commands.install_hooks._stdin_is_tty", return_value=True
+    ):
         result = _invoke_in(tmp_path, ["install-hooks"], input="y\ny\ny\n")
     assert result.exit_code == 0
     config = tmp_path / ".pre-commit-config.yaml"

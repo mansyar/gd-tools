@@ -195,9 +195,11 @@ def test_coverage_diff_patch_calls_orchestrator():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.diff_coverage_patch", return_value=None
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage_patch", return_value=None
         ) as mock_patch_cmd,
     ):
         result = runner.invoke(
@@ -219,8 +221,12 @@ def test_coverage_diff_patch_options_forwarded():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.diff_coverage_patch", return_value=None) as m,
+        patch(
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage_patch", return_value=None
+        ) as m,
     ):
         result = runner.invoke(
             cli,
@@ -252,7 +258,9 @@ def test_coverage_diff_patch_options_forwarded():
 def test_coverage_diff_patch_fail_under_requires_patch():
     """--patch-fail-under without --patch is a config error (exit 2)."""
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=MagicMock()):
+    with patch(
+        "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+    ):
         result = runner.invoke(
             cli,
             [
@@ -271,7 +279,9 @@ def test_coverage_diff_patch_fail_under_requires_patch():
 def test_coverage_diff_patch_annotations_requires_patch():
     """--patch-annotations without --patch is a config error (exit 2)."""
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=MagicMock()):
+    with patch(
+        "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+    ):
         result = runner.invoke(
             cli,
             [
@@ -290,7 +300,9 @@ def test_coverage_diff_patch_annotations_requires_patch():
 def test_coverage_diff_patch_show_lines_conflict():
     """--show-lines has no meaning in patch mode and is rejected."""
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=MagicMock()):
+    with patch(
+        "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+    ):
         result = runner.invoke(
             cli,
             ["coverage", "diff", "--patch", "--base", "main", "--show-lines"],
@@ -302,7 +314,9 @@ def test_coverage_diff_patch_show_lines_conflict():
 def test_coverage_diff_patch_fail_under_range():
     """--patch-fail-under outside 0-100 is a usage error (exit 2)."""
     runner = CliRunner()
-    with patch("gd_tools.cli.load_config", return_value=MagicMock()):
+    with patch(
+        "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+    ):
         result = runner.invoke(
             cli,
             [
@@ -322,9 +336,11 @@ def test_coverage_diff_patch_threshold_error_exit_1():
     """CoverageThresholdError from the orchestrator maps to exit 1."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.diff_coverage_patch",
+            "gd_tools.commands.coverage.load_config", return_value=MagicMock()
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage_patch",
             side_effect=CoverageThresholdError("below threshold"),
         ),
     ):
@@ -339,8 +355,12 @@ def test_coverage_diff_without_patch_unchanged():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
-        patch("gd_tools.cli.diff_coverage", return_value=None) as mock_diff,
+        patch(
+            "gd_tools.commands.coverage.load_config", return_value=mock_config
+        ),
+        patch(
+            "gd_tools.commands.coverage.diff_coverage", return_value=None
+        ) as mock_diff,
     ):
         result = runner.invoke(cli, ["coverage", "diff", "--base", "b.json"])
     assert result.exit_code == 0
