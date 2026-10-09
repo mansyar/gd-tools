@@ -38,7 +38,7 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [x] Commit: `refactor(test): declarative flag-conflict validation table`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4: Full Command Decomposition (FR-1, FR-2) [checkpoint: 27c2b6a]
+## Phase 4: Full Command Decomposition (FR-1, FR-2) [checkpoint: dfa617d]
 
 - [x] Task: Create `src/gd_tools/commands/` package; extract low-risk commands first (version, clean, completion, config group, install-hooks, doctor, init, lint, format, migrate) [30415e6]
   - [ ] Commands import shared modules directly (config, output, verbosity, errors) — no new context layer
