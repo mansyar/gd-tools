@@ -30,12 +30,12 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 
 ## Phase 3: Declarative Flag-Conflict Table (FR-3) — TDD
 
-- [ ] Task: Red — capture current behavior: exact error messages and exit codes for every pairwise constraint in cli.py:800–873; encode them as unit tests for `src/gd_tools/commands/test_validation.py`; confirm failures
-  - [ ] Existing constraints catalogued
-  - [ ] Failing tests confirmed
-- [ ] Task: Green — implement the data-driven conflict table + validator in `commands/test_validation.py`; wire into the `test` command replacing hand-written checks
-  - [ ] Suite green with byte-identical error messages
-  - [ ] Commit: `refactor(test): declarative flag-conflict validation table`
+- [x] Task: Red — capture current behavior: exact error messages and exit codes for every pairwise constraint in cli.py:800–873; encode them as unit tests for `src/gd_tools/commands/test_validation.py`; confirm failures
+  - [x] Existing constraints catalogued
+  - [x] Failing tests confirmed
+- [x] Task: Green — implement the data-driven conflict table + validator in `commands/test_validation.py`; wire into the `test` command replacing hand-written checks
+  - [x] Suite green with byte-identical error messages
+  - [x] Commit: `refactor(test): declarative flag-conflict validation table`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Full Command Decomposition (FR-1, FR-2)
