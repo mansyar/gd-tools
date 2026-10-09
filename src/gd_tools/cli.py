@@ -1,7 +1,6 @@
 """CLI entry point for gd-tools."""
 
 import json
-import os
 import sys
 import webbrowser
 from pathlib import Path
@@ -19,6 +18,7 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from . import __version__, output
+from .commands.test_validation import FlagState, RuleStage, validate_test_flags
 from .clean import (
     STATUS_ABSENT,
     STATUS_FAILED,
@@ -797,29 +797,17 @@ def test(
     """
     if runtime == "gut":
         _reject_legacy_runtime("--runtime gut")
-    if base is not None and not changed:
-        click.echo(
-            "Error: --base requires --changed.",
-            err=True,
-        )
-        ctx = click.get_current_context()
-        ctx.exit(2)
-    if changed and watch:
-        click.echo(
-            "Error: --changed and --watch cannot be combined; --watch "
-            "already selects suites per change.",
-            err=True,
-        )
-        ctx = click.get_current_context()
-        ctx.exit(2)
-    if shard and watch:
-        click.echo(
-            "Error: --shard and --watch cannot be combined; --shard is a "
-            "CI concern and --watch is a dev-loop concern.",
-            err=True,
-        )
-        ctx = click.get_current_context()
-        ctx.exit(2)
+    flags = FlagState(
+        paths=tuple(paths),
+        coverage=coverage,
+        min=min,
+        show_uncovered=show_uncovered,
+        watch=watch,
+        changed=changed,
+        base=base,
+        shard=shard,
+    )
+    validate_test_flags(flags, stage=RuleStage.PRE_CONFIG)
     try:
         config = load_config()
     except ConfigError as e:
@@ -827,19 +815,7 @@ def test(
         ctx = click.get_current_context()
         ctx.exit(2)
 
-    if min is not None and not coverage:
-        console = Console()
-        console.print(
-            "[yellow]Warning: --min is only valid with --coverage; "
-            "ignoring.[/yellow]"
-        )
-
-    if show_uncovered and not coverage:
-        console = Console()
-        console.print(
-            "[yellow]Warning: --show-uncovered is only valid with "
-            "--coverage; ignoring.[/yellow]"
-        )
+    validate_test_flags(flags, stage=RuleStage.POST_CONFIG)
 
     selected_runtime = runtime
     if selected_runtime is None:
@@ -856,21 +832,7 @@ def test(
         durations if durations is not None else config.test.durations
     )
 
-    if watch and os.environ.get("CI", "").lower() == "true":
-        click.echo(
-            "Error: --watch is interactive and cannot run with CI=true.",
-            err=True,
-        )
-        ctx = click.get_current_context()
-        ctx.exit(2)
-    if watch and paths:
-        click.echo(
-            "Error: --watch does not accept path arguments; it watches the "
-            "whole project scope.",
-            err=True,
-        )
-        ctx = click.get_current_context()
-        ctx.exit(2)
+    validate_test_flags(flags, stage=RuleStage.PRE_DISPATCH)
 
     try:
         if watch:
