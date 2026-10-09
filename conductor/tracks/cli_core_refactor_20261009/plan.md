@@ -8,12 +8,12 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 
 ## Phase 1: Baseline & Repo Hygiene (FR-5)
 
-- [ ] Task: Record baseline — run `CI=true pytest` and `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`; record test count, line/branch coverage, and `ruff`/`black` status in this plan as the no-regression reference
-  - [ ] Baseline numbers recorded below under "Baseline"
-- [ ] Task: Repo hygiene sweep — verify unreferenced (grep for imports/references), then delete: stray `out.json`, stale `__pycache__/test_runner.cpython-313*.pyc`, duplicate `gd_tools_cli.egg-info/`, `tools/verify_watch_phase2.py`
-  - [ ] Reference check performed before each deletion
-  - [ ] Suite still green after deletion
-  - [ ] Commit: `chore(repo): remove dead artifacts`
+- [x] Task: Record baseline — run `CI=true pytest` and `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`; record test count, line/branch coverage, and `ruff`/`black` status in this plan as the no-regression reference
+  - [x] Baseline numbers recorded below under "Baseline"
+- [x] Task: Repo hygiene sweep — verify unreferenced (grep for imports/references), then delete: stray `out.json`, stale `__pycache__/test_runner.cpython-313*.pyc`, duplicate `gd_tools_cli.egg-info/`, `tools/verify_watch_phase2.py`
+  - [x] Reference check performed before each deletion
+  - [x] Suite still green after deletion (unit tier: 1,742 passed, 3 skipped; import smoke ok)
+  - [x] Commit: `chore(repo): remove dead artifacts` (2d1ec3a)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Atomic-Write Consolidation (FR-4) — TDD
@@ -67,4 +67,12 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 
 ## Baseline
 
-*To be recorded in Phase 1, Task 1.*
+Recorded 2026-10-09 on `feature/cli-core-refactor-20261009` (pre-work, commit c282c21):
+
+- **Tests:** 1,993 collected — 1,982 passed, 7 skipped, **4 failed (pre-existing, environmental, zero code changes made)**:
+  - 3× `tests/e2e/test_native_runtime.py` (coverage e2e) — local Godot subprocess (`C:\Godot\godot.exe`, v4.7.2 mono) returns rc=2; environment-dependent
+  - 1× `tests/e2e/test_watch_e2e.py::test_watch_session_end_to_end` — wall-clock timing assertion (`6 <= 5`); flaky
+  - These must not *increase* as a result of this track.
+- **Runtime:** 8m20s (`pytest -n auto --cov`).
+- **Coverage (pytest-cov TOTAL):** 5,570 stmts / 182 miss, 1,748 branches / 101 partial → **95.89%** (line ≈96.7%, branch ≈94.2%). Notable: `cli.py` 93% (48 miss, 18 partial).
+- **Style:** `ruff check src/ tests/` — all checks passed; `black --check` — 184 files unchanged.
