@@ -348,9 +348,9 @@ def test_cli_interrupted_test_run_exits_130():
     """Ctrl+C during `gd-tools test` exits with the SIGINT code 130."""
     runner = CliRunner()
     with (
-        patch("gd_tools.cli.load_config", return_value=MagicMock()),
+        patch("gd_tools.commands.test.load_config", return_value=MagicMock()),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             side_effect=KeyboardInterrupt,
         ),
     ):

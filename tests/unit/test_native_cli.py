@@ -42,9 +42,9 @@ def test_test_defaults_to_native_runtime_dispatch():
     """The default command routes to the native runner."""
     config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=config),
+        patch("gd_tools.commands.test.load_config", return_value=config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_result(),
         ) as native_run,
     ):
@@ -58,9 +58,9 @@ def test_test_explicit_native_and_no_exit_dispatch_native_options():
     """Explicit native selection forwards suppression to the native adapter."""
     config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=config),
+        patch("gd_tools.commands.test.load_config", return_value=config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_result(),
         ) as native_run,
     ):
@@ -76,9 +76,9 @@ def test_test_forwards_native_tags_and_test_timeout():
     """Native tag and per-test timeout options reach the adapter."""
     config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=config),
+        patch("gd_tools.commands.test.load_config", return_value=config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_result(),
         ) as native_run,
     ):
@@ -114,7 +114,7 @@ def test_test_config_runtime_gut_is_rejected_with_removal_message():
     """`test.runtime = "gut"` in the project config is rejected the same way."""
     config = MagicMock()
     config.test.runtime = "gut"
-    with patch("gd_tools.cli.load_config", return_value=config):
+    with patch("gd_tools.commands.test.load_config", return_value=config):
         result = CliRunner().invoke(cli, ["test"])
 
     assert result.exit_code == 2

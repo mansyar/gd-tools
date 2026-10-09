@@ -9,7 +9,8 @@ import pytest
 from click.testing import CliRunner
 from rich.console import Console
 
-from gd_tools.cli import _validate_durations, cli
+from gd_tools.cli import cli
+from gd_tools.commands.test import _validate_durations
 from gd_tools.doctor import CheckResult, DoctorResult
 from gd_tools.verbosity import Verbosity, get_verbosity
 from gd_tools.errors import (
@@ -134,7 +135,7 @@ def test_test_config_error_exit_code_2():
     """Test test exits with code 2 when config loading fails."""
     runner = CliRunner()
     with patch(
-        "gd_tools.cli.load_config",
+        "gd_tools.commands.test.load_config",
         side_effect=ConfigError("project.godot not found"),
     ):
         result = runner.invoke(cli, ["test"])
@@ -161,9 +162,9 @@ def test_test_forwards_selection_options_to_native():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -194,9 +195,9 @@ def test_test_forwards_coverage_options_to_native():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -229,9 +230,9 @@ def test_test_min_without_coverage_warns():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -246,9 +247,9 @@ def test_test_show_uncovered_without_coverage_warns():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -263,9 +264,9 @@ def test_test_test_failure_exit_code_1():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             side_effect=TestFailureError("2 test(s) failed"),
         ),
     ):
@@ -278,9 +279,9 @@ def test_test_coverage_threshold_error_exit_1():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             side_effect=CoverageThresholdError("Coverage below threshold"),
         ),
     ):
@@ -293,9 +294,9 @@ def test_test_coverage_plan_error_exit_2():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             side_effect=CoveragePlanError("Missing plan"),
         ),
     ):
@@ -315,9 +316,9 @@ def _invoke_test_with_parallel(args, config_parallel=None):
     mock_config = MagicMock()
     mock_config.test.parallel = config_parallel
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -398,9 +399,9 @@ def _invoke_test_with_durations(args, config_durations=None):
     mock_config = MagicMock()
     mock_config.test.durations = config_durations
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_native_test_command",
+            "gd_tools.commands.test.run_native_test_command",
             return_value=_native_result(),
         ) as mock_run,
     ):
@@ -2275,9 +2276,9 @@ def test_test_watch_forwards_resolved_parallel():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):
@@ -2294,9 +2295,9 @@ def test_test_watch_uses_config_parallel_without_flag():
     mock_config = MagicMock()
     mock_config.test.parallel = 2
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):
@@ -2310,9 +2311,9 @@ def test_test_watch_forwards_resolved_durations():
     runner = CliRunner()
     mock_config = MagicMock()
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):
@@ -2329,9 +2330,9 @@ def test_test_watch_uses_config_durations_without_flag():
     mock_config = MagicMock()
     mock_config.test.durations = 2
     with (
-        patch("gd_tools.cli.load_config", return_value=mock_config),
+        patch("gd_tools.commands.test.load_config", return_value=mock_config),
         patch(
-            "gd_tools.cli.run_watch_mode",
+            "gd_tools.commands.test.run_watch_mode",
             return_value=0,
         ) as mock_watch,
     ):
