@@ -277,3 +277,23 @@ def test_config_schema_output_unwritable_exits_2(tmp_path):
     runner = CliRunner()
     result = runner.invoke(cli, ["config", "schema", "--output", str(blocked)])
     assert result.exit_code == 2
+
+
+# ---------------------------------------------------------------------------
+# config validate — sections summary (FR-6)
+# ---------------------------------------------------------------------------
+
+
+def test_config_validate_sections_summary_derived_from_model():
+    """The "Sections validated" summary derives from GdToolsConfig.model_fields.
+
+    Imported inside the test so the Red state stays a single failure instead
+    of an ImportError at module collection.
+    """
+    from gd_tools.commands.config import _sections_summary
+
+    expected = (
+        f"Sections validated: {len(GdToolsConfig.model_fields)} "
+        f"({', '.join(GdToolsConfig.model_fields)})"
+    )
+    assert _sections_summary() == expected

@@ -196,7 +196,7 @@ def validate():
 
     # --- Summary ---
     click.echo(f"Configuration file: {config_file}")
-    click.echo("Sections validated: 5 (godot, test, lint, format, coverage)")
+    click.echo(_sections_summary())
     has_errors = bool(schema_errors)
     if has_errors or path_warnings:
         click.echo(
@@ -210,6 +210,17 @@ def validate():
 
     ctx = click.get_current_context()
     ctx.exit(1 if has_errors else 0)
+
+
+def _sections_summary() -> str:
+    """Return the "Sections validated" summary derived from the config model.
+
+    Deriving the section list from ``GdToolsConfig.model_fields`` keeps the
+    line correct if a section is added to or removed from the schema
+    (track spec FR-6) instead of drifting from a hardcoded literal.
+    """
+    sections = list(GdToolsConfig.model_fields)
+    return f"Sections validated: {len(sections)} ({', '.join(sections)})"
 
 
 @config.command(name="schema")
