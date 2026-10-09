@@ -54,7 +54,7 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [ ] Suite green; commit: `refactor(cli): reduce cli.py to thin dispatcher`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 5: Final Verification & NFR Gates
+## Phase 5: Final Verification & NFR Gates [checkpoint: e121025]
 
 - [x] Task: Full gate run against Baseline
   - [x] `CI=true pytest` - full suite green, test count ≥ baseline [2,002 passed / 3 failed / 7 skipped in 10m11s vs baseline 1,982/4/7 — the 3 failures are the same pre-existing environmental Godot e2e failures; the 4th baseline failure (flaky watch timing) passed this run; +13 new tests from Phases 2–3]
