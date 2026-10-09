@@ -16,7 +16,7 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [x] Commit: `chore(repo): remove dead artifacts` (2d1ec3a)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2: Atomic-Write Consolidation (FR-4) — TDD
+## Phase 2: Atomic-Write Consolidation (FR-4) — TDD [checkpoint: e17ff90]
 
 - [x] Task: Red — add unit tests for `atomic_io.atomic_write_json` (serialize + atomic replace semantics: temp file + os.replace, parent-dir creation, failure leaves no partial file) in `tests/unit/test_atomic_io.py`; confirm they fail
   - [x] Failing tests confirmed
