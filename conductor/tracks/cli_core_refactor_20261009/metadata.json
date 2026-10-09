@@ -1,0 +1,11 @@
+{
+  "track_id": "cli_core_refactor_20261009",
+  "title": "CLI Core Refactor",
+  "type": "chore",
+  "status": "new",
+  "created": "2026-10-09",
+  "branch": "feature/cli-core-refactor-20261009",
+  "description": "Decompose the 1,790-line cli.py into per-command modules under src/gd_tools/commands/, consolidate the 4x-duplicated atomic JSON write into atomic_io.py, replace hand-written pairwise flag-conflict checks with a declarative conflict table, and sweep dead repo artifacts. Behavior-frozen: CLI contract (commands, flags, output, exit codes) unchanged, verified by the existing ~1,825-test suite with no coverage reduction.",
+  "spec": "./spec.md",
+  "plan": "./plan.md"
+}
