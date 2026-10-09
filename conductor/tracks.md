@@ -358,5 +358,5 @@ _Archived tracks live in `./archive/`._
   package, consolidate 4x-duplicated atomic JSON writes, declarative
   flag-conflict table for the test command, repo hygiene sweep;
   behavior-frozen refactor verified by full suite)
-  *Link: [cli_core_refactor_20261009](./tracks/cli_core_refactor_20261009/index.md)*
+  *Link: [cli_core_refactor_20261009](./archive/cli_core_refactor_20261009/index.md)*
 
