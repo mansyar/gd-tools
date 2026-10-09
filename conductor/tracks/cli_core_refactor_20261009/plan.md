@@ -63,6 +63,10 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [x] Behavior-freeze spot-check: `gd-tools --help`, one sample command's output identical to pre-track behavior [`gd-tools --help` shows all 12 commands with unchanged descriptions; `gd-tools test --help` options verified; `gd-tools doctor`, `gd-tools test --base main` exit-2 message, `gd-tools completion powershell` confirmed in Phase 4 manual verification]
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions — FR-6: derive the `config validate` "Sections validated" summary from `GdToolsConfig.model_fields` (TDD) instead of the hardcoded literal at `commands/config.py:199`; fix stale "are being extracted" docstring in `commands/__init__.py` [96f6f78]
+
 ---
 
 ## Baseline
