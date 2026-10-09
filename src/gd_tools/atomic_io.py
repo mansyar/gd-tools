@@ -8,9 +8,11 @@ this module: the content is staged in a temporary file beside the destination, f
 and fsynced, and moved into place with a single ``os.replace``.
 """
 
+import json
 import os
 import tempfile
 from pathlib import Path
+from typing import Any
 
 
 def atomic_write_bytes(path: Path | str, payload: bytes) -> Path:
@@ -76,3 +78,36 @@ def atomic_write_text(path: Path | str, text: str) -> Path:
             written.
     """
     return atomic_write_bytes(path, text.encode("utf-8"))
+
+
+def atomic_write_json(
+    path: Path | str,
+    payload: Any,
+    *,
+    sort_keys: bool = True,
+    indent: int | None = 2,
+) -> Path:
+    """Serialize ``payload`` as JSON and write it atomically as UTF-8.
+
+    Convenience wrapper around :func:`atomic_write_text` for JSON
+    documents. A trailing newline is appended so the file ends cleanly
+    for diffing and line-oriented tooling.
+
+    Args:
+        path: Destination file path (a :class:`~pathlib.Path` or a
+            string).
+        payload: JSON-serializable value (dicts, lists, scalars).
+        sort_keys: Sort dictionary keys; ``True`` matches the writers
+            this helper consolidates.
+        indent: JSON indentation depth, or ``None`` for compact output.
+
+    Returns:
+        The destination path.
+
+    Raises:
+        TypeError, ValueError: If ``payload`` is not JSON-serializable.
+        OSError: If the temporary file or final replacement cannot be
+            written.
+    """
+    text = json.dumps(payload, indent=indent, sort_keys=sort_keys) + "\n"
+    return atomic_write_text(path, text)

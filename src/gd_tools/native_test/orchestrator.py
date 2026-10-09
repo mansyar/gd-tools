@@ -8,7 +8,6 @@ import os
 import signal
 import subprocess
 import sys
-import tempfile
 import threading
 import uuid
 from collections.abc import Iterator
@@ -19,6 +18,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from gd_tools.atomic_io import atomic_write_json
 from gd_tools.errors import NativeInterruptError
 from gd_tools.native_test.artifacts import (
     ArtifactPublishError,
@@ -860,28 +860,12 @@ def _merge_coverage_shards(
 
 
 def _write_json_atomic(path: Path, data: dict) -> bool:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path: Path | None = None
+    """Write a JSON document atomically, reporting failure as ``False``."""
     try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as temporary_file:
-            temporary_path = Path(temporary_file.name)
-            json.dump(data, temporary_file, indent=2, sort_keys=True)
-            temporary_file.write("\n")
-            temporary_file.flush()
-            os.fsync(temporary_file.fileno())
-        os.replace(temporary_path, path)
-        return True
+        atomic_write_json(path, data)
     except (OSError, TypeError, ValueError):
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
         return False
+    return True
 
 
 def _read_native_result(path: Path) -> NativeRunResult | None:

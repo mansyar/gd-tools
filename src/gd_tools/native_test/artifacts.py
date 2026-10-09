@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-import json
-import os
 import re
 import shutil
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from gd_tools.atomic_io import atomic_write_text
+from gd_tools.atomic_io import atomic_write_json, atomic_write_text
 from gd_tools.native_test.protocol import NATIVE_PROTOCOL_VERSION
 
 _SAFE_RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -192,7 +189,7 @@ def publish_artifact_index(
     if omitted:
         payload["omitted"] = omitted
     try:
-        _write_json_atomic(layout.index_path, payload)
+        atomic_write_json(layout.index_path, payload)
     except (OSError, TypeError, ValueError) as exc:
         raise ArtifactPublishError(
             f"Could not publish native artifact index at {layout.index_path}"
@@ -229,31 +226,6 @@ def _realized(paths: dict[str, Any]) -> dict[str, Any]:
         elif not isinstance(value, Path) or value.is_file():
             realized[key] = str(value)
     return realized
-
-
-def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
-    """Write a JSON payload through a neighboring temporary file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary_path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            suffix=".tmp",
-            delete=False,
-        ) as temporary_file:
-            temporary_path = Path(temporary_file.name)
-            json.dump(payload, temporary_file, indent=2, sort_keys=True)
-            temporary_file.write("\n")
-            temporary_file.flush()
-            os.fsync(temporary_file.fileno())
-        os.replace(temporary_path, path)
-    except Exception:
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
-        raise
 
 
 def _prune_old_runs(artifact_root: Path, current_run_dir: Path) -> None:

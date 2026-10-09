@@ -348,7 +348,7 @@ def test_failed_publication_keeps_older_runs(tmp_path):
     layout = NativeArtifactLayout.create(tmp_path, "run-1")
 
     with patch(
-        "gd_tools.native_test.artifacts._write_json_atomic",
+        "gd_tools.native_test.artifacts.atomic_write_json",
         side_effect=OSError("disk full"),
     ):
         with pytest.raises(ArtifactPublishError, match="publish"):
