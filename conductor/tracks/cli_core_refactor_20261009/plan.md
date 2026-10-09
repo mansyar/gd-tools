@@ -40,13 +40,13 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 
 ## Phase 4: Full Command Decomposition (FR-1, FR-2) [checkpoint: 27c2b6a]
 
-- [ ] Task: Create `src/gd_tools/commands/` package; extract low-risk commands first (version, clean, completion, config group, install-hooks, doctor, init, lint, format, migrate)
+- [x] Task: Create `src/gd_tools/commands/` package; extract low-risk commands first (version, clean, completion, config group, install-hooks, doctor, init, lint, format, migrate) [30415e6]
   - [ ] Commands import shared modules directly (config, output, verbosity, errors) — no new context layer
   - [ ] Existing suite is the safety net; test import-path updates mechanical only
   - [ ] Suite green; commit: `refactor(cli): extract low-risk commands into commands/ package`
 - [ ] Task: Extract the `test` command module (largest; consumes the Phase 3 conflict table)
   - [ ] Suite green; commit: `refactor(cli): extract test command`
-- [ ] Task: Extract the `coverage` subcommand group (6 subcommands)
+- [x] Task: Extract the `coverage` subcommand group (6 subcommands) [30415e6 — done early with the low-risk batch to avoid a second cli.py surgery]
   - [ ] Suite green; commit: `refactor(cli): extract coverage subcommand group`
 - [ ] Task: Slim `cli.py` to the thin dispatcher (GdToolsGroup, completion, UTF-8 setup, command registration)
   - [ ] Import smoke test passes (`python -c "import gd_tools.cli"` + `python -m gd_tools --help`)
