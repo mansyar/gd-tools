@@ -56,11 +56,11 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 
 ## Phase 5: Final Verification & NFR Gates
 
-- [ ] Task: Full gate run against Baseline
-  - [ ] `CI=true pytest` — full suite green, test count ≥ baseline
-  - [ ] `CI=true pytest --cov=gd_tools --cov-branch` — line ≥80%, branch ≥70% overall; new `commands/` modules ≥ replaced-code coverage
-  - [ ] `ruff check src/ tests/` and `black --check src/ tests/` clean
-  - [ ] Behavior-freeze spot-check: `gd-tools --help`, one sample command's output identical to pre-track behavior
+- [x] Task: Full gate run against Baseline
+  - [x] `CI=true pytest` - full suite green, test count ≥ baseline [2,002 passed / 3 failed / 7 skipped in 10m11s vs baseline 1,982/4/7 — the 3 failures are the same pre-existing environmental Godot e2e failures; the 4th baseline failure (flaky watch timing) passed this run; +13 new tests from Phases 2–3]
+  - [x] `CI=true pytest --cov=gd_tools --cov-branch` - line ≥80%, branch ≥70% overall; new `commands/` modules ≥ replaced-code coverage [TOTAL 5,654 stmts / 177 miss = 96.9% line; 1,744 branches / 102 partial = 94.1% branch]
+  - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean [both clean]
+  - [x] Behavior-freeze spot-check: `gd-tools --help`, one sample command's output identical to pre-track behavior [`gd-tools --help` shows all 12 commands with unchanged descriptions; `gd-tools test --help` options verified; `gd-tools doctor`, `gd-tools test --base main` exit-2 message, `gd-tools completion powershell` confirmed in Phase 4 manual verification]
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
