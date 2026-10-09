@@ -6,7 +6,7 @@ Methodology: per `conductor/workflow.md` — TDD for all new code (failing tests
 
 Sequencing rationale: hygiene → dedup → conflict table → decomposition → verification. The safety net strengthens before the riskiest move (full decomposition); the conflict table lands before the `test` command extraction so the extracted module consumes it on arrival.
 
-## Phase 1: Baseline & Repo Hygiene (FR-5)
+## Phase 1: Baseline & Repo Hygiene (FR-5) [checkpoint: ce528f6]
 
 - [x] Task: Record baseline — run `CI=true pytest` and `CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing`; record test count, line/branch coverage, and `ruff`/`black` status in this plan as the no-regression reference
   - [x] Baseline numbers recorded below under "Baseline"
