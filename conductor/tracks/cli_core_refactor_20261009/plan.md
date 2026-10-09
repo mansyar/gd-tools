@@ -44,11 +44,11 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [ ] Commands import shared modules directly (config, output, verbosity, errors) — no new context layer
   - [ ] Existing suite is the safety net; test import-path updates mechanical only
   - [ ] Suite green; commit: `refactor(cli): extract low-risk commands into commands/ package`
-- [ ] Task: Extract the `test` command module (largest; consumes the Phase 3 conflict table)
+- [x] Task: Extract the `test` command module (largest; consumes the Phase 3 conflict table) [f02c701]
   - [ ] Suite green; commit: `refactor(cli): extract test command`
 - [x] Task: Extract the `coverage` subcommand group (6 subcommands) [30415e6 — done early with the low-risk batch to avoid a second cli.py surgery]
   - [ ] Suite green; commit: `refactor(cli): extract coverage subcommand group`
-- [ ] Task: Slim `cli.py` to the thin dispatcher (GdToolsGroup, completion, UTF-8 setup, command registration)
+- [x] Task: Slim `cli.py` to the thin dispatcher (GdToolsGroup, completion, UTF-8 setup, command registration) [f02c701]
   - [ ] Import smoke test passes (`python -c "import gd_tools.cli"` + `python -m gd_tools --help`)
   - [ ] No circular imports
   - [ ] Suite green; commit: `refactor(cli): reduce cli.py to thin dispatcher`
