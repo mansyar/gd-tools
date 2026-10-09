@@ -18,14 +18,14 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 
 ## Phase 2: Atomic-Write Consolidation (FR-4) — TDD
 
-- [ ] Task: Red — add unit tests for `atomic_io.atomic_write_json` (serialize + atomic replace semantics: temp file + os.replace, parent-dir creation, failure leaves no partial file) in `tests/unit/test_atomic_io.py`; confirm they fail
-  - [ ] Failing tests confirmed
-- [ ] Task: Green — implement `atomic_write_json` in `atomic_io.py`
-  - [ ] Tests pass
-- [ ] Task: Migrate the four call sites — `native_test/artifacts.py` (`_write_json_atomic`), `native_test/orchestrator.py` inline copy, `native_test/protocol.py` inline copy, plus `atomic_io` internal reuse; delete duplicated helpers
-  - [ ] All four sites delegate to `atomic_io`
-  - [ ] Suite green
-  - [ ] Commit: `refactor(atomic): consolidate duplicate atomic JSON writers`
+- [x] Task: Red — add unit tests for `atomic_io.atomic_write_json` (serialize + atomic replace semantics: temp file + os.replace, parent-dir creation, failure leaves no partial file) in `tests/unit/test_atomic_io.py`; confirm they fail
+  - [x] Failing tests confirmed
+- [x] Task: Green — implement `atomic_write_json` in `atomic_io.py`
+  - [x] Tests pass
+- [x] Task: Migrate the four call sites — `native_test/artifacts.py` (`_write_json_atomic`), `native_test/orchestrator.py` inline copy, `native_test/protocol.py` inline copy, plus `atomic_io` internal reuse; delete duplicated helpers
+  - [x] All four sites delegate to `atomic_io`
+  - [x] Suite green
+  - [x] Commit: `refactor(atomic): consolidate duplicate atomic JSON writers`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Declarative Flag-Conflict Table (FR-3) — TDD
