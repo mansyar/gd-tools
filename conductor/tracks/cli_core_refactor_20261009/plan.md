@@ -28,7 +28,7 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [x] Commit: `refactor(atomic): consolidate duplicate atomic JSON writers`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3: Declarative Flag-Conflict Table (FR-3) — TDD
+## Phase 3: Declarative Flag-Conflict Table (FR-3) — TDD [checkpoint: 27c2b6a]
 
 - [x] Task: Red — capture current behavior: exact error messages and exit codes for every pairwise constraint in cli.py:800–873; encode them as unit tests for `src/gd_tools/commands/test_validation.py`; confirm failures
   - [x] Existing constraints catalogued
@@ -36,9 +36,9 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 - [x] Task: Green — implement the data-driven conflict table + validator in `commands/test_validation.py`; wire into the `test` command replacing hand-written checks
   - [x] Suite green with byte-identical error messages
   - [x] Commit: `refactor(test): declarative flag-conflict validation table`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4: Full Command Decomposition (FR-1, FR-2)
+## Phase 4: Full Command Decomposition (FR-1, FR-2) [checkpoint: 27c2b6a]
 
 - [ ] Task: Create `src/gd_tools/commands/` package; extract low-risk commands first (version, clean, completion, config group, install-hooks, doctor, init, lint, format, migrate)
   - [ ] Commands import shared modules directly (config, output, verbosity, errors) — no new context layer
