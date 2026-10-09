@@ -14,7 +14,7 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [x] Reference check performed before each deletion
   - [x] Suite still green after deletion (unit tier: 1,742 passed, 3 skipped; import smoke ok)
   - [x] Commit: `chore(repo): remove dead artifacts` (2d1ec3a)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Atomic-Write Consolidation (FR-4) — TDD [checkpoint: e17ff90]
 
@@ -26,7 +26,7 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [x] All four sites delegate to `atomic_io`
   - [x] Suite green
   - [x] Commit: `refactor(atomic): consolidate duplicate atomic JSON writers`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Declarative Flag-Conflict Table (FR-3) — TDD [checkpoint: 27c2b6a]
 
@@ -41,18 +41,18 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
 ## Phase 4: Full Command Decomposition (FR-1, FR-2) [checkpoint: dfa617d]
 
 - [x] Task: Create `src/gd_tools/commands/` package; extract low-risk commands first (version, clean, completion, config group, install-hooks, doctor, init, lint, format, migrate) [30415e6]
-  - [ ] Commands import shared modules directly (config, output, verbosity, errors) — no new context layer
-  - [ ] Existing suite is the safety net; test import-path updates mechanical only
-  - [ ] Suite green; commit: `refactor(cli): extract low-risk commands into commands/ package`
+  - [x] Commands import shared modules directly (config, output, verbosity, errors) — no new context layer
+  - [x] Existing suite is the safety net; test import-path updates mechanical only
+  - [x] Suite green; commit: `refactor(cli): extract low-risk commands into commands/ package`
 - [x] Task: Extract the `test` command module (largest; consumes the Phase 3 conflict table) [f02c701]
-  - [ ] Suite green; commit: `refactor(cli): extract test command`
+  - [x] Suite green; commit: `refactor(cli): extract test command`
 - [x] Task: Extract the `coverage` subcommand group (6 subcommands) [30415e6 — done early with the low-risk batch to avoid a second cli.py surgery]
-  - [ ] Suite green; commit: `refactor(cli): extract coverage subcommand group`
+  - [x] Suite green; commit: `refactor(cli): extract coverage subcommand group`
 - [x] Task: Slim `cli.py` to the thin dispatcher (GdToolsGroup, completion, UTF-8 setup, command registration) [f02c701]
-  - [ ] Import smoke test passes (`python -c "import gd_tools.cli"` + `python -m gd_tools --help`)
-  - [ ] No circular imports
-  - [ ] Suite green; commit: `refactor(cli): reduce cli.py to thin dispatcher`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Import smoke test passes (`python -c "import gd_tools.cli"` + `python -m gd_tools --help`)
+  - [x] No circular imports
+  - [x] Suite green; commit: `refactor(cli): reduce cli.py to thin dispatcher`
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5: Final Verification & NFR Gates [checkpoint: e121025]
 
@@ -61,7 +61,7 @@ Sequencing rationale: hygiene → dedup → conflict table → decomposition →
   - [x] `CI=true pytest --cov=gd_tools --cov-branch` - line ≥80%, branch ≥70% overall; new `commands/` modules ≥ replaced-code coverage [TOTAL 5,654 stmts / 177 miss = 96.9% line; 1,744 branches / 102 partial = 94.1% branch]
   - [x] `ruff check src/ tests/` and `black --check src/ tests/` clean [both clean]
   - [x] Behavior-freeze spot-check: `gd-tools --help`, one sample command's output identical to pre-track behavior [`gd-tools --help` shows all 12 commands with unchanged descriptions; `gd-tools test --help` options verified; `gd-tools doctor`, `gd-tools test --base main` exit-2 message, `gd-tools completion powershell` confirmed in Phase 4 manual verification]
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ---
 
