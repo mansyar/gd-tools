@@ -893,6 +893,135 @@ def test_format_config_json_includes_durations():
     assert parsed["test"]["durations"] == 5
 
 
+# --- Random order config ---
+
+
+def test_test_config_random_order_defaults_to_false():
+    """Test TestConfig defaults random_order to False (opt-in)."""
+    config = TestConfig()
+    assert config.random_order is False
+
+
+def test_test_config_seed_defaults_to_none():
+    """Test TestConfig defaults seed to None (fresh seed per run)."""
+    config = TestConfig()
+    assert config.seed is None
+
+
+def test_load_config_random_order_present(tmp_path):
+    """Test load_config reads [test] random_order from TOML."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\nrandom_order = true\n")
+    config = load_config(project_root=tmp_path)
+    assert config.test.random_order is True
+
+
+def test_load_config_random_order_absent_is_false(tmp_path):
+    """Test load_config leaves random_order False when absent."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text('[test]\nprefix = "check_"\n')
+    config = load_config(project_root=tmp_path)
+    assert config.test.random_order is False
+
+
+def test_load_config_seed_present(tmp_path):
+    """Test load_config reads [test] seed from TOML."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\nseed = 1234\n")
+    config = load_config(project_root=tmp_path)
+    assert config.test.seed == 1234
+
+
+def test_load_config_seed_absent_is_none(tmp_path):
+    """Test load_config leaves seed None when absent from TOML."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text('[test]\nprefix = "check_"\n')
+    config = load_config(project_root=tmp_path)
+    assert config.test.seed is None
+
+
+def test_test_config_seed_accepts_zero():
+    """Test TestConfig accepts seed 0 (a legal shuffle seed)."""
+    config = TestConfig(seed=0)
+    assert config.seed == 0
+
+
+@pytest.mark.parametrize("value", [-1, -1234])
+def test_test_config_seed_negative_rejected(value):
+    """Test TestConfig rejects negative seed values.
+
+    The assertion is on the error location and type, not merely that
+    ``ValidationError`` was raised: with ``extra="forbid"`` an undefined
+    ``seed`` also raises ``ValidationError``, so a bare ``pytest.raises``
+    would pass before the field exists.
+    """
+    with pytest.raises(ValidationError) as excinfo:
+        TestConfig(seed=value)
+    errors = excinfo.value.errors()
+    assert errors[0]["loc"] == ("seed",)
+    assert errors[0]["type"] == "greater_than_equal"
+
+
+def test_test_config_seed_rejects_non_integer():
+    """Test TestConfig rejects a non-integer seed value."""
+    with pytest.raises(ValidationError) as excinfo:
+        TestConfig(seed="abc")
+    errors = excinfo.value.errors()
+    assert errors[0]["loc"] == ("seed",)
+    assert errors[0]["type"] == "int_parsing"
+
+
+def test_load_config_seed_negative_raises(tmp_path):
+    """Test load_config raises ConfigError for a negative seed."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\nseed = -1\n")
+    with pytest.raises(ConfigError):
+        load_config(project_root=tmp_path)
+
+
+def test_load_config_unknown_random_order_sibling_raises(tmp_path):
+    """Test load_config rejects a typo'd random_order key (extra=forbid)."""
+    (tmp_path / "project.godot").touch()
+    (tmp_path / "gd-tools.toml").write_text("[test]\nrandom_orders = true\n")
+    with pytest.raises(ConfigError):
+        load_config(project_root=tmp_path)
+
+
+def test_save_config_random_order_and_seed_round_trip(tmp_path):
+    """Test save_config + load_config round-trips random_order and seed."""
+    original = GdToolsConfig(test=TestConfig(random_order=True, seed=4242))
+    save_config(original, project_root=tmp_path)
+    loaded = load_config(project_root=tmp_path)
+    assert loaded.test.random_order is True
+    assert loaded.test.seed == 4242
+
+
+def test_save_config_seed_none_omitted(tmp_path):
+    """Test save_config omits seed=None from the TOML file."""
+    original = GdToolsConfig()
+    save_config(original, project_root=tmp_path)
+    content = (tmp_path / "gd-tools.toml").read_text()
+    assert "seed" not in content
+
+
+def test_format_config_toml_random_order_roundtrip():
+    """Test format_config_toml round-trips random_order and seed."""
+    original = GdToolsConfig(test=TestConfig(random_order=True, seed=99))
+    toml_str = format_config_toml(original)
+    parsed = tomllib.loads(toml_str)
+    restored = GdToolsConfig(**parsed)
+    assert restored == original
+
+
+def test_format_config_json_includes_random_order_and_seed():
+    """Test format_config_json includes the random_order and seed keys."""
+    config = GdToolsConfig(test=TestConfig(random_order=True, seed=7))
+    json_str = format_config_json(config)
+    parsed = json.loads(json_str)
+    assert parsed["test"]["random_order"] is True
+    assert parsed["test"]["seed"] == 7
+
+
 # --- explicit project root (--project anchor) ---
 
 
