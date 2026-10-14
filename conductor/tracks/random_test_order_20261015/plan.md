@@ -2,20 +2,20 @@
 
 ## Phase 1 — Config and CLI surface
 
-- [ ] Task: Write failing unit tests for the new config keys (`tests/unit/test_config.py`)
-  - [ ] Test: `TestConfig` defaults are `random_order=False` and `seed=None`
-  - [ ] Test: `[test] random_order = true` and `[test] seed = 1234` load and round-trip through `save_config`
-  - [ ] Test: unknown-key rejection still fires for a typo'd sibling (guards `extra="forbid"`)
-  - [ ] Test: `seed = -1` and `seed = "abc"` are rejected by validation
-- [ ] Task: Add `random_order: bool = False` and `seed: int | None = None` to `TestConfig` in `src/gd_tools/config.py`, matching the docstring style of the neighbouring `parallel`/`durations` fields
-- [ ] Task: Regenerate the checked-in schema snapshot — `gd-tools config schema --output docs/gd-tools.schema.json` — and confirm `tests/unit/test_schema.py::test_checked_in_schema_snapshot_is_current` passes (FR-6)
-- [ ] Task: Write failing CLI tests (`tests/unit/test_cli_random_order.py`)
-  - [ ] Test: `--random-order` parses and reaches dispatch with `random_order=True`
-  - [ ] Test: `--seed 1234` alone implies random ordering (FR-3)
-  - [ ] Test: `--seed -1` and `--seed abc` exit 2 with an actionable message naming the accepted range (FR-2)
-  - [ ] Test: config `random_order`/`seed` are used when the flags are absent; `--seed 99` overrides `[test] seed`
-  - [ ] Test: existing flag-conflict table in `commands/test_validation.py` is unchanged for unrelated combinations
-- [ ] Task: Add `--random-order` and `--seed` to the `test` command in `src/gd_tools/commands/test.py` with a validating callback, extend `FlagState`, and thread both through `run_native_test_command` and `run_watch_mode`
+- [x] Task: Write failing unit tests for the new config keys (`tests/unit/test_config.py`) — `a699de8`
+  - [x] Test: `TestConfig` defaults are `random_order=False` and `seed=None`
+  - [x] Test: `[test] random_order = true` and `[test] seed = 1234` load and round-trip through `save_config`
+  - [x] Test: unknown-key rejection still fires for a typo'd sibling (guards `extra="forbid"`)
+  - [x] Test: `seed = -1` and `seed = "abc"` are rejected by validation (asserted on the pydantic error location/type, not just the exception class — `extra="forbid"` raises the same class for an undefined field)
+- [x] Task: Add `random_order: bool = False` and `seed: int | None = None` to `TestConfig` in `src/gd_tools/config.py`, matching the docstring style of the neighbouring `parallel`/`durations` fields — `eadb3f2` (implemented as `Field(default=None, ge=0)` for the integer bound)
+- [x] Task: Regenerate the checked-in schema snapshot — `gd-tools config schema --output docs/gd-tools.schema.json` — and confirm `tests/unit/test_schema.py::test_checked_in_schema_snapshot_is_current` passes (FR-6) — `eadb3f2` (red before regen, green after; diff purely additive)
+- [x] Task: Write failing CLI tests (`tests/unit/test_cli_random_order.py`) — `ca5d159`
+  - [x] Test: `--random-order` parses and reaches dispatch with `random_order=True`
+  - [x] Test: `--seed 1234` alone implies random ordering (FR-3)
+  - [x] Test: `--seed -1` and `--seed abc` exit 2 with an actionable message naming the accepted range (FR-2)
+  - [x] Test: config `random_order`/`seed` are used when the flags are absent; `--seed 99` overrides `[test] seed`
+  - [x] Test: existing flag-conflict table in `commands/test_validation.py` is unchanged for unrelated combinations (asserted positively: `--random-order --shard 2/4` must NOT exit 2, per FR-19)
+- [x] Task: Add `--random-order` and `--seed` to the `test` command in `src/gd_tools/commands/test.py`, and thread both through `run_native_test_command` and `run_watch_mode` — `29c3228`. Deviation: `FlagState` was **not** extended. It exists only to feed `TEST_FLAG_RULES`, and FR-19 defines no rule for this feature, so the fields would have been dead. `--seed` uses `click.IntRange(min=0)` rather than a hand-written callback, which supplies the exit-2 range message for free.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Seeded ordering core
