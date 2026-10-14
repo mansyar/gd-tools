@@ -196,6 +196,21 @@ def _validate_shard(
     help="Run only shard K of N suites: suite i of the plan order goes to "
     "shard (i %% N) + 1. For CI matrix splitting, e.g. --shard 2/4.",
 )
+@click.option(
+    "--random-order",
+    is_flag=True,
+    default=None,
+    help="Shuffle the execution order of suites and of the test methods "
+    "within each suite. Off unless [test] random_order enables it.",
+)
+@click.option(
+    "--seed",
+    type=click.IntRange(min=0),
+    default=None,
+    help="Shuffle seed for --random-order; passing it implies the flag. "
+    "Omit to generate a fresh seed per run. Replay a reported seed to "
+    "reproduce its order.",
+)
 def test(
     paths,
     runtime,
@@ -219,6 +234,8 @@ def test(
     snapshot_update,
     exitfirst,
     shard,
+    random_order,
+    seed,
 ):
     """Run GDScript tests with the native runtime.
 
@@ -261,6 +278,15 @@ def test(
     effective_durations = (
         durations if durations is not None else config.test.durations
     )
+    effective_seed = seed if seed is not None else config.test.seed
+    if random_order is None:
+        # Opt-in either way: a flag, a configured random_order, or a
+        # configured seed all turn ordering on. Neither turns it off.
+        effective_random_order = bool(
+            config.test.random_order or effective_seed is not None
+        )
+    else:
+        effective_random_order = random_order
 
     validate_test_flags(flags, stage=RuleStage.PRE_DISPATCH)
 
@@ -284,6 +310,8 @@ def test(
                     durations=effective_durations,
                     snapshot_update=snapshot_update,
                     exitfirst=exitfirst,
+                    random_order=effective_random_order,
+                    seed=effective_seed,
                 )
             )
         if selected_runtime == "native":
@@ -309,6 +337,8 @@ def test(
                 snapshot_update=snapshot_update,
                 exitfirst=exitfirst,
                 shard=shard,
+                random_order=effective_random_order,
+                seed=effective_seed,
             )
     except TestFailureError as e:
         click.echo(f"Error: {e}", err=True)

@@ -77,6 +77,8 @@ def run_native_test_command(
     durations: int | None = None,
     exitfirst: bool = False,
     shard: tuple[int, int] | None = None,
+    random_order: bool = False,
+    seed: int | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -112,6 +114,8 @@ def run_native_test_command(
             durations=durations,
             exitfirst=exitfirst,
             shard=shard,
+            random_order=random_order,
+            seed=seed,
         )
     finally:
         if previous_sigterm is not None:
@@ -145,6 +149,8 @@ def _run_native_test_command(
     durations: int | None = None,
     exitfirst: bool = False,
     shard: tuple[int, int] | None = None,
+    random_order: bool = False,
+    seed: int | None = None,
 ) -> TestResult:
     """Run native tests and return the existing CLI-facing result model.
 
@@ -176,6 +182,11 @@ def _run_native_test_command(
             suite result; in-flight suites finish (fail-fast).
         shard: Optional (k, n) CI shard selection; runs only the suites
             assigned to shard k of n by round-robin over the plan order.
+        random_order: Shuffle the execution order of the selected suites
+            and of the test methods within each suite.
+        seed: Shuffle seed for ``random_order``; None generates a fresh
+            seed for this run. Replaying a reported seed reproduces its
+            order.
 
     Returns:
         The normalized CLI-facing test result.

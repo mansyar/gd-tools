@@ -74,6 +74,8 @@ def run_watch_mode(
     durations: int | None = None,
     snapshot_update: bool = False,
     exitfirst: bool = False,
+    random_order: bool = False,
+    seed: int | None = None,
     event_source: WatchdogEventSource | None = None,
     clock: Callable[[], float] = time.monotonic,
     sleep: Callable[[float], None] = time.sleep,
@@ -105,6 +107,10 @@ def run_watch_mode(
             re-run; 0 lists every test, None disables the report.
         snapshot_update: Rewrite mismatched snapshots instead of failing
             their tests, on every watch re-run.
+        random_order: Shuffle the execution order of the selected suites
+            and of the test methods within each suite, on every re-run.
+        seed: Shuffle seed forwarded to every re-run. Passing one pins the
+            whole session to a single reproducible order.
         event_source: Injectable event source (defaults to watchdog).
         clock: Injectable clock for debounce timing.
         sleep: Injectable sleep used between poll ticks.
@@ -180,6 +186,8 @@ def run_watch_mode(
                 durations=durations,
                 snapshot_update=snapshot_update,
                 exitfirst=exitfirst,
+                random_order=random_order,
+                seed=seed,
             )
         except TestFailureError as exc:
             return _watch_result(getattr(exc, "result", None), "failed")
