@@ -360,7 +360,7 @@ _Archived tracks live in `./archive/`._
   behavior-frozen refactor verified by full suite)
   *Link: [cli_core_refactor_20261009](./archive/cli_core_refactor_20261009/index.md)*
 
-- [ ] **Track: Random Test Order & Seed Reproducibility** (feature: opt-in
+- [~] **Track: Random Test Order & Seed Reproducibility** (feature: opt-in
   seeded shuffle of `gd-tools test` execution order — `--random-order`
   shuffles suites and the test methods within each suite, `--seed <int>` and
   `[test] seed` make any order replayable, the seed used is printed and
