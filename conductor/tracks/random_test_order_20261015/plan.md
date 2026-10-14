@@ -1,6 +1,6 @@
 # Plan: Random Test Order & Seed Reproducibility (`random_test_order_20261015`)
 
-## Phase 1 — Config and CLI surface
+## Phase 1 — Config and CLI surface [checkpoint: 067c04e]
 
 - [x] Task: Write failing unit tests for the new config keys (`tests/unit/test_config.py`) — `a699de8`
   - [x] Test: `TestConfig` defaults are `random_order=False` and `seed=None`
