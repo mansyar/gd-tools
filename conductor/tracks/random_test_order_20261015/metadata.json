@@ -1,0 +1,8 @@
+{
+  "id": "random_test_order_20261015",
+  "type": "feature",
+  "status": "new",
+  "created": "2026-10-15",
+  "branch": "feature/random-test-order-20261015",
+  "summary": "Opt-in seeded shuffle of `gd-tools test` execution order: `--random-order` shuffles suites and the test methods within each suite, `--seed <int>` (and `[test] seed`) makes any order replayable, and the seed used is printed and recorded in the run artifact index. The shuffle runs after `--changed` narrowing and after the integration preflight, so expanded parameterized cases stay consistent with the manifest sent to Godot. `--shard` membership deliberately stays a round-robin over the deterministic discovery order, so sharded CI jobs under different seeds still cover every suite exactly once; randomization changes execution order only. Composes with --parallel, --exitfirst, --watch, --coverage and the suite/test/tag filters; off by default so existing runs stay byte-identical."
+}

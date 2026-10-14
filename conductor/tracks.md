@@ -360,3 +360,15 @@ _Archived tracks live in `./archive/`._
   behavior-frozen refactor verified by full suite)
   *Link: [cli_core_refactor_20261009](./archive/cli_core_refactor_20261009/index.md)*
 
+- [ ] **Track: Random Test Order & Seed Reproducibility** (feature: opt-in
+  seeded shuffle of `gd-tools test` execution order — `--random-order`
+  shuffles suites and the test methods within each suite, `--seed <int>` and
+  `[test] seed` make any order replayable, the seed used is printed and
+  recorded in the run artifact index, and the shuffle runs after `--changed`
+  narrowing and after the integration preflight; `--shard` membership stays a
+  round-robin over the deterministic discovery order so sharded jobs under
+  different seeds still cover every suite exactly once; composes with
+  `--parallel`, `--exitfirst`, `--watch`, `--coverage`, and the
+  suite/test/tag filters; off by default)
+  *Link: [random_test_order_20261015](./tracks/random_test_order_20261015/index.md)*
+
