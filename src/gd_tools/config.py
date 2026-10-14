@@ -61,6 +61,10 @@ class TestConfig(BaseModel):
             None for sequential execution.
         durations: Number of slowest tests to report (0 shows all),
             or None to disable durations reporting.
+        random_order: Shuffle the suite and test-method execution
+            order. Off by default; opt in per project.
+        seed: Shuffle seed for random ordering, or None to generate a
+            fresh seed on every run.
     """
 
     __test__ = False
@@ -76,6 +80,8 @@ class TestConfig(BaseModel):
     tags: list[str] = Field(default_factory=list)
     parallel: int | None = Field(default=None, ge=1, le=32)
     durations: int | None = Field(default=None, ge=0)
+    random_order: bool = False
+    seed: int | None = Field(default=None, ge=0)
 
     @model_validator(mode="before")
     @classmethod

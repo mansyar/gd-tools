@@ -99,7 +99,7 @@
     },
     "TestConfig": {
       "additionalProperties": false,
-      "description": "Configuration for test discovery and native execution.\n\nAttributes:\n    test_dirs: Directories containing test files.\n    prefix: Test file prefix.\n    suffix: Test file suffix.\n    runtime: Test execution runtime. Only ``\"native\"`` is valid;\n        the GUT runtime was removed in v0.6.0.\n    timeout_seconds: Default per-test timeout for native async tests.\n    retries: Number of explicit opt-in retries per native test.\n    tags: Optional native suite tag filters.\n    parallel: Number of suites to run concurrently (1-32), or\n        None for sequential execution.\n    durations: Number of slowest tests to report (0 shows all),\n        or None to disable durations reporting.",
+      "description": "Configuration for test discovery and native execution.\n\nAttributes:\n    test_dirs: Directories containing test files.\n    prefix: Test file prefix.\n    suffix: Test file suffix.\n    runtime: Test execution runtime. Only ``\"native\"`` is valid;\n        the GUT runtime was removed in v0.6.0.\n    timeout_seconds: Default per-test timeout for native async tests.\n    retries: Number of explicit opt-in retries per native test.\n    tags: Optional native suite tag filters.\n    parallel: Number of suites to run concurrently (1-32), or\n        None for sequential execution.\n    durations: Number of slowest tests to report (0 shows all),\n        or None to disable durations reporting.\n    random_order: Shuffle the suite and test-method execution\n        order. Off by default; opt in per project.\n    seed: Shuffle seed for random ordering, or None to generate a\n        fresh seed on every run.",
       "properties": {
         "test_dirs": {
           "items": {
@@ -169,6 +169,24 @@
           ],
           "default": null,
           "title": "Durations"
+        },
+        "random_order": {
+          "default": false,
+          "title": "Random Order",
+          "type": "boolean"
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seed"
         }
       },
       "title": "TestConfig",
