@@ -81,9 +81,10 @@ def apply_random_order(
 
     The suite list is shuffled first, then each suite's methods are
     shuffled in the resulting suite order, drawing from one seeded stream.
-    Shuffling a sequence shorter than two entries is skipped rather than
-    delegated: it would be a no-op anyway, and skipping keeps such a list
-    from silently becoming an entropy sink.
+    Sequences shorter than two entries are returned as-is rather than
+    handed to ``random.shuffle``: the call would be a no-op (nothing to
+    permute), so skipping it states the intent instead of relying on that
+    detail of the standard library.
 
     Args:
         suites: Suites in deterministic discovery order. Not modified.

@@ -197,11 +197,12 @@ def _validate_shard(
     "shard (i %% N) + 1. For CI matrix splitting, e.g. --shard 2/4.",
 )
 @click.option(
-    "--random-order",
+    "--random-order/--no-random-order",
     is_flag=True,
     default=None,
     help="Shuffle the execution order of suites and of the test methods "
-    "within each suite. Off unless [test] random_order enables it.",
+    "within each suite. Off unless [test] random_order enables it; "
+    "--no-random-order restores the discovery order for one run.",
 )
 @click.option(
     "--seed",

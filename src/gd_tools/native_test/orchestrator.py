@@ -176,6 +176,9 @@ class _SuiteContext:
     coverage: NativeCoverage | None
     parallel: int = 1
     snapshot_update: bool = False
+    # The shuffle seed behind a random-order run, so the incomplete index
+    # published on interrupt can still be replayed. None when unrandomized.
+    random_seed: int | None = None
     registry: _ProcessRegistry = field(default_factory=_ProcessRegistry)
     # Suites whose execution has started, in start order. The incomplete
     # index published on interrupt lists only these, so suites that never
@@ -234,6 +237,7 @@ def _abort_run(context: _SuiteContext) -> None:
             suite_names=list(context.attempted),
             suite_paths=[{} for _ in context.attempted],
             preflight_paths=context.artifact_layout.preflight_paths(),
+            seed=context.random_seed,
         )
     except ArtifactPublishError:
         # The interrupt must surface even if the index cannot be written;
@@ -328,6 +332,7 @@ def run_native_tests(
         coverage=coverage,
         parallel=parallel if parallel and parallel > 1 else 1,
         snapshot_update=snapshot_update,
+        random_seed=random_seed,
     )
     work_items = list(enumerate(suites))
     outcomes: list[tuple[int, _SuiteOutcome]] = []

@@ -73,6 +73,20 @@ def print_info(message: str) -> None:
     console.print(Text(message, style="cyan"))
 
 
+def print_always(message: str) -> None:
+    """Render a message even when verbosity is QUIET.
+
+    Reserved for information a run cannot be replayed or interpreted
+    without --- the seed of a shuffled run is the current case. Styled
+    like :func:`print_info`, but never suppressed: quiet mode trims
+    commentary, not the one line that makes a failure reproducible.
+
+    Args:
+        message: The message to display.
+    """
+    console.print(Text(message, style="cyan"))
+
+
 def print_verbose(message: str) -> None:
     """Render a verbose-only message in dim style.
 

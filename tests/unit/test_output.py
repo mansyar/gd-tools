@@ -1,8 +1,8 @@
 """Unit tests for the shared output module.
 
 Tests the rendering helpers (print_success, print_error, print_warning,
-print_info, print_summary, print_table) and the shared Console instance
-for consistent terminal detection behavior.
+print_info, print_always, print_summary, print_table) and the shared
+Console instance for consistent terminal detection behavior.
 """
 
 import pytest
@@ -11,6 +11,7 @@ from rich.table import Table
 
 from gd_tools.output import (
     console,
+    print_always,
     print_error,
     print_info,
     print_success,
@@ -292,3 +293,27 @@ def test_print_verbose_suppressed_when_quiet(capsys):
     print_verbose("debug info")
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+# --- Verbosity: print_always (renders even when QUIET) ---
+
+
+def test_print_always_renders_when_quiet(capsys):
+    """print_always() renders even when verbosity is QUIET."""
+    set_verbosity(Verbosity.QUIET)
+    try:
+        print_always("replay with --seed 42")
+        captured = capsys.readouterr()
+    finally:
+        # The level is module-global; leaking QUIET would silence the
+        # assertions of every later test in this file.
+        set_verbosity(Verbosity.DEFAULT)
+
+    assert "replay with --seed 42" in captured.out
+
+
+def test_print_always_renders_when_default(capsys):
+    """print_always() renders normally when verbosity is DEFAULT."""
+    print_always("visible")
+    captured = capsys.readouterr()
+    assert "visible" in captured.out

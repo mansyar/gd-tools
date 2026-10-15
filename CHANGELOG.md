@@ -13,7 +13,11 @@
   (absent when ordering is off, so the index shape is unchanged), and lists
   the resolved order suite-by-suite under `--verbose`. Passing `--seed`
   alone implies `--random-order`; without a seed, a fresh 31-bit seed is
-  generated per run. Shuffling is order-only: `--shard` membership is
+  generated per run, and the paired `--no-random-order` restores the
+  discovery order for one invocation without editing `gd-tools.toml`. The
+  seed line is exempt from `--quiet`: quiet mode trims commentary, but a
+  shuffled failure cannot be replayed without its seed. Shuffling is
+  order-only: `--shard` membership is
   computed from the deterministic plan order before the shuffle, so CI
   matrix jobs with different seeds still cover every suite exactly once;
   `--watch` resolves one seed per session and reuses it for every re-run;

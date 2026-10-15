@@ -189,9 +189,9 @@ def test_empty_input_yields_empty_result():
 def test_short_lists_are_not_shuffled(monkeypatch):
     """Lists shorter than two entries are never shuffled.
 
-    ``random.shuffle`` is a no-op on a one-element sequence, but skipping it
-    explicitly also keeps it from being an accidental entropy sink as the
-    module grows. The spy records the length of every list actually shuffled.
+    ``random.shuffle`` is a no-op on a one-element sequence, so the guard
+    only makes the skip explicit. The spy records the length of every list
+    actually handed to ``random.shuffle``.
     """
     lengths = []
     original = random.Random.shuffle

@@ -1262,6 +1262,31 @@ def test_run_native_tests_interrupt_kills_processes_and_publishes_incomplete(
     ]
 
 
+def test_interrupt_incomplete_index_records_the_shuffle_seed(tmp_path):
+    """An interrupted random-order run keeps its seed (FR-14)."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-seed-int")
+
+    with (
+        patch(
+            "gd_tools.native_test.orchestrator._execute_suite",
+            side_effect=KeyboardInterrupt,
+        ),
+        patch("gd_tools.native_test.orchestrator._kill_process_tree"),
+    ):
+        with pytest.raises(NativeInterruptError):
+            run_native_tests(
+                tmp_path,
+                [_suite("FirstSuite")],
+                godot_binary="godot",
+                artifact_layout=layout,
+                random_seed=42,
+            )
+
+    payload = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "incomplete"
+    assert payload["seed"] == 42
+
+
 def test_run_native_tests_parallel_interrupt_stops_dispatch_and_kills(
     tmp_path,
 ):

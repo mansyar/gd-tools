@@ -43,6 +43,7 @@ def test_test_help_exposes_random_order_flags():
 
     assert result.exit_code == 0
     assert "--random-order" in result.output
+    assert "--no-random-order" in result.output
     assert "--seed" in result.output
 
 
@@ -61,6 +62,35 @@ def test_random_order_absent_is_false_by_default():
     assert result.exit_code == 0
     assert mock_run.call_args.kwargs["random_order"] is False
     assert mock_run.call_args.kwargs["seed"] is None
+
+
+def test_no_random_order_overrides_a_configured_opt_in():
+    """--no-random-order unshuffles a project that opted in via config."""
+    config = GdToolsConfig(test=TestConfig(random_order=True, seed=4242))
+    result, mock_run = _invoke_test(
+        ["test", "--no-random-order"], config=config
+    )
+
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["random_order"] is False
+
+
+def test_no_random_order_alone_stays_off():
+    """--no-random-order on an unconfigured project changes nothing."""
+    result, mock_run = _invoke_test(["test", "--no-random-order"])
+
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["random_order"] is False
+
+
+def test_no_random_order_wins_over_a_seed():
+    """An explicit disable beats the ordering a --seed would imply."""
+    result, mock_run = _invoke_test(
+        ["test", "--seed", "1234", "--no-random-order"]
+    )
+
+    assert result.exit_code == 0
+    assert mock_run.call_args.kwargs["random_order"] is False
 
 
 def test_seed_implies_random_order():

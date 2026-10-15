@@ -100,7 +100,7 @@ func test_health_starts_at_full() -> void:
 |---------|-------------|
 | `gd-tools init` | Bootstrap a Godot project -- deploy the native test and coverage addons, generate configs. |
 | `gd-tools doctor` | Diagnose the development environment -- Godot, native test addon, coverage addon, tooling; reports legacy GUT artifacts as migration advice. |
-| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites must extend `GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration guidance. Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. `--durations N` reports the N slowest tests after the run. `--exitfirst` (`-x`) stops dispatching new suites after the first failing suite; `--shard K/N` runs one round-robin shard for CI matrix splitting; `--random-order` shuffles suite and test-method execution order, and `--seed N` pins the shuffle so a run can be replayed. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
+| `gd-tools test` | Run tests with optional coverage, thresholds, and JUnit XML output. Suites must extend `GdToolsTest`; `GutTest` suites are rejected with exit 2 and migration guidance. Accepts optional path arguments to override configured test directories. `--parallel N` runs suites through a bounded worker pool. `--changed` runs only the suites mapped from git-changed files. `--watch` re-runs affected suites on `.gd` file changes. `--durations N` reports the N slowest tests after the run. `--exitfirst` (`-x`) stops dispatching new suites after the first failing suite; `--shard K/N` runs one round-robin shard for CI matrix splitting; `--random-order` (with `--no-random-order` to turn a configured shuffle off) shuffles suite and test-method execution order, and `--seed N` pins the shuffle so a run can be replayed. Every run publishes a machine-readable artifact index under `.gd-tools/artifacts/<run_id>/`. |
 | `gd-tools migrate` | Guided GUT-to-native migration. Default: read-only report with unsupported-construct inventory and proposed base-class rewrites. `--apply` renames clean suites to `GdToolsTest` and translates `.gutconfig.json` into `gd-tools.toml` (merge, never clobber). `--config-only` translates config only. |
 | `gd-tools lint` | Lint GDScript files using gdlint with text, JSON, or GitHub Actions annotation output. Accepts one or more file or directory paths. |
 | `gd-tools format` | Format GDScript files using gdformat with check and diff modes. Accepts one or more file or directory paths. |
@@ -125,6 +125,7 @@ gd-tools test --exitfirst                  # stop dispatching after the first fa
 gd-tools test --shard 2/4                  # CI sharding: run suite shard 2 of 4
 gd-tools test --random-order               # shuffle suite and test method order
 gd-tools test --seed 42                    # --seed implies --random-order; replayable
+gd-tools test --no-random-order            # discovery order for one run, config regardless
 ```
 
 `--tag` is repeatable, and `--test-timeout` (per test) is separate from
@@ -180,10 +181,13 @@ for a GitHub Actions matrix example.
 the test methods within each suite, to surface tests that depend on a
 neighbour's side effects. The order is a pure function of the seed and the
 selected suite/test set: the run summary reports
-`Random order: seed <N> (replay with --seed <N>)`, and re-running with that
+`Random order: seed <N> (replay with --seed <N>)` — exempt from `--quiet`,
+since a shuffled failure cannot be reproduced without its seed — and
+re-running with that
 seed reproduces the order exactly. `--seed N` pins the shuffle and implies
 `--random-order`; without it a fresh 31-bit seed is generated per run. Persist
-the choice with `random_order = true` and `seed = 42` under `[test]`. Shuffling
+the choice with `random_order = true` and `seed = 42` under `[test]`, and undo
+it for one run with the paired `--no-random-order`. Shuffling
 never changes shard membership — `--shard` assigns suites from the
 deterministic plan order, so CI matrix jobs still cover every suite exactly
 once — and `--watch` resolves one seed for the whole session so successive

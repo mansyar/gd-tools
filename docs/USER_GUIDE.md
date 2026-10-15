@@ -403,7 +403,7 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--base` | string | None | With `--changed`: diff committed changes from `merge-base(<ref>, HEAD)` instead of the working tree (the form for pull-request CI). Requires `--changed`; incompatible with `--watch` (exit 2). |
 | `--exitfirst`, `-x` | flag | `false` | Stop dispatching new suites after the first failing suite (test failure or infrastructure error). In-flight suites finish; unstarted suites are reported as skipped and summarized in a `Stopped early: fail-fast after suite <id> (K of M suites skipped)` line. Composes with `--parallel` (pool drains), `--coverage` (partial report), and `--watch` (gate resets per re-run). |
 | `--shard` | string `K/N` | None | Run only suite shard `K` of `N` for CI matrix splitting: suite *i* of the deterministic plan order belongs to shard `(i mod N) + 1`. Applied after `--changed`, before `--parallel`. `--shard 1/1` is valid; malformed values exit 2. Incompatible with `--watch` (exit 2). |
-| `--random-order` | flag | Config `[test].random_order` | Shuffle the execution order of the selected suites and of the test methods within each suite. Off unless `[test] random_order` enables it or a seed is configured. |
+| `--random-order` / `--no-random-order` | flag | Config `[test].random_order` | Shuffle the execution order of the selected suites and of the test methods within each suite. Off unless `[test] random_order` enables it or a seed is configured; `--no-random-order` restores the discovery order for one run. |
 | `--seed` | integer `>= 0` | Config `[test].seed` | Pin the shuffle seed; passing it implies `--random-order`. Omit to generate a fresh seed per run. Replay a reported seed to reproduce its order. Negative values exit 2. A bare `--seed` without a value is a usage error (exit 2). |
 
 **Examples:**
@@ -468,6 +468,9 @@ gd-tools test --seed 42
 
 # Shuffle inside one CI shard; membership is unchanged, only order differs
 gd-tools test --shard 2/4 --random-order --seed 42
+
+# Run one invocation in discovery order despite [test] random_order = true
+gd-tools test --no-random-order
 
 # Run exactly one native test file
 gd-tools test tests/unit/test_player.gd
@@ -543,9 +546,11 @@ A seeded run prints the seed after the summary:
 Random order: seed 42 (replay with --seed 42)
 ```
 
-Reuse that number to reproduce the order. `--verbose` additionally lists the
-resolved order suite-by-suite, each with its method order, before the run
-starts. The seed is also recorded in
+Reuse that number to reproduce the order. This line is exempt from `--quiet`:
+quiet mode trims commentary, but a shuffled failure cannot be reproduced
+without its seed, so the one line that makes it replayable always renders.
+`--verbose` additionally lists the resolved order suite-by-suite, each with
+its method order, before the run starts. The seed is also recorded in
 `.gd-tools/artifacts/<run_id>/artifacts.json` as a top-level `seed` key, so a
 CI run can be replayed from its artifacts without scraping the log; the key
 is absent when randomization is off, leaving the index shape unchanged.
@@ -553,7 +558,10 @@ is absent when randomization is off, leaving the index shape unchanged.
 Persistence and precedence: `random_order = true` and/or `seed = 42` under
 `[test]` turn shuffling on for every run — a configured seed alone is enough,
 you do not need both. `--seed` overrides the configured seed for one
-invocation, and `--random-order` overrides a false `random_order`.
+invocation, and the paired `--random-order` / `--no-random-order` overrides the
+configured `random_order` in either direction: `--no-random-order` restores the
+discovery order for one run without editing `gd-tools.toml`. An explicit
+disable beats a `--seed` on the same command line.
 
 Composition contracts:
 
@@ -572,6 +580,8 @@ Composition contracts:
 - `--watch` resolves **one** seed for the whole session and reuses it for
   every re-run, so successive re-runs stay comparable; an explicit `--seed`
   pins it, and the seed line repeats on each re-run.
+- Interrupting a run keeps the seed in the incomplete artifact index, so a
+  partial run is still replayable from `.gd-tools/artifacts/`.
 
 Replay is reproducible for a given Python version. The order is drawn by
 `random.Random`, and CPython may change its shuffle algorithm between

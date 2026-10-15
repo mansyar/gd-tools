@@ -1,5 +1,6 @@
 """Unit tests for random-order wiring in the native test command."""
 
+import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -7,6 +8,7 @@ import pytest
 
 from gd_tools.native_test.command import run_native_test_command
 from gd_tools.native_test.ordering import apply_random_order
+from gd_tools.verbosity import Verbosity, set_verbosity
 from gd_tools.native_test.orchestrator import NativeRunResult
 from gd_tools.native_test.protocol import (
     NativeSuite,
@@ -198,16 +200,39 @@ def test_no_seed_line_when_random_order_is_disabled(tmp_path, capsys):
     assert "Random order" not in capsys.readouterr().out
 
 
+def test_seed_line_survives_quiet_verbosity(tmp_path, capsys):
+    """The seed is reported even under --quiet (FR-13, AC-13).
+
+    Quiet mode trims commentary, but a shuffled failure cannot be
+    replayed without its seed, so this one line is exempt.
+    """
+    set_verbosity(Verbosity.QUIET)
+    try:
+        _run(_suites(5), tmp_path, random_order=True, seed=42)
+        out = capsys.readouterr().out
+    finally:
+        set_verbosity(Verbosity.DEFAULT)
+
+    assert "Random order: seed 42" in out
+    assert "--seed 42" in out
+
+
 def test_verbose_lists_the_resolved_order(tmp_path):
-    """Under --verbose the resolved execution order is listed (FR-15)."""
+    """Under --verbose the resolved order is listed, methods included.
+
+    FR-15 asks for suite names in run order *and* each suite's shuffled
+    method order, so the assertion checks the bracketed method list too.
+    """
     suites = _suites(3)
 
     _, _, verbose = _run(suites, tmp_path, random_order=True, seed=42)
 
     assert any("Random order" in message for message in verbose)
     listing = " ".join(verbose)
-    for suite in suites:
-        assert suite.name in listing
+    expected = apply_random_order(suites, 42)
+    for suite in expected.suites:
+        methods = ", ".join(test.name for test in suite.tests)
+        assert f"{suite.name} [{methods}]" in listing
 
 
 # --- composition guarantees ---
@@ -266,6 +291,33 @@ def test_orchestration_flags_compose_with_random_order(tmp_path):
     )
 
     assert sorted(s.name for s in forwarded) == _shard_names(suites, 1)
+
+
+def test_interrupted_run_still_records_the_seed(tmp_path):
+    """An interrupt keeps the seed in the incomplete index (FR-14)."""
+    patches = _patch_command(_suites(3), tmp_path)
+    with (
+        patches[0] as _,
+        patches[1] as _,
+        patches[2] as _,
+        patches[3] as _,
+        patches[4] as _,
+        patches[5] as _,
+        patches[6] as run,
+        patches[7] as _,
+        patches[8] as _,
+    ):
+        run.side_effect = KeyboardInterrupt
+        with pytest.raises(KeyboardInterrupt):
+            run_native_test_command(_config_ns(), random_order=True, seed=42)
+
+    indexes = list(
+        (tmp_path / ".gd-tools" / "artifacts").glob("*/artifacts.json")
+    )
+    assert len(indexes) == 1
+    index = json.loads(indexes[0].read_text(encoding="utf-8"))
+    assert index["status"] == "incomplete"
+    assert index["seed"] == 42
 
 
 def test_changed_narrowing_precedes_ordering(tmp_path):

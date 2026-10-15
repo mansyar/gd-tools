@@ -1119,8 +1119,12 @@ truthiness), and `apply_random_order()` draws suite order and then each
 suite's method order from a single `random.Random(seed)` stream, returning a
 copy — the input list and suites are never mutated. The resolved seed travels
 to the orchestrator for the artifact index, and the command layer prints the
-replay line. `run_watch_mode()` resolves one seed before its loop and forwards
-that same seed to every re-run, so successive watch runs stay comparable.
+replay line through `output.print_always` --- the one informational line exempt
+from `--quiet`, because a shuffled failure cannot be replayed without its seed.
+Both interrupted-run index publishers pass the same seed, so a partial run is
+replayable too. `run_watch_mode()` resolves one seed before its loop and
+forwards that same seed to every re-run, so successive watch runs stay
+comparable.
 
 ### 11.2 orchestrator.py
 

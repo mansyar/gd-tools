@@ -383,7 +383,14 @@ def _run_native_test_command(
         # always sees where the partial artifacts live. NativeInterruptError
         # (exit 130) carries the run_dir in its message; a bare
         # KeyboardInterrupt from an earlier phase leaves no index at all.
-        _report_interrupted_run(artifact_layout)
+        _report_interrupted_run(
+            artifact_layout,
+            seed=(
+                random_order_result.seed
+                if random_order_result is not None
+                else None
+            ),
+        )
         raise
     infrastructure_error = native_result.status == "error"
     failed_count = sum(
@@ -421,7 +428,9 @@ def _run_native_test_command(
     )
     format_test_results(result, durations=durations)
     if random_order_result is not None:
-        output.print_info(
+        # print_always, not print_info: a shuffled failure cannot be
+        # replayed without this seed, so --quiet must not drop it (FR-13).
+        output.print_always(
             f"Random order: seed {random_order_result.seed} "
             f"(replay with --seed {random_order_result.seed})"
         )
@@ -442,13 +451,22 @@ def _run_native_test_command(
     return result
 
 
-def _report_interrupted_run(artifact_layout: NativeArtifactLayout) -> None:
+def _report_interrupted_run(
+    artifact_layout: NativeArtifactLayout,
+    seed: int | None = None,
+) -> None:
     """Report an interrupted run and mark its artifacts incomplete.
 
     The orchestrator publishes the incomplete index for interrupts that land
     during suite execution. This covers the earlier phases (import, plan
     preparation, preflight) and publishes only when no index exists yet, so
     a richer orchestrator-published index is never overwritten.
+
+    Args:
+        artifact_layout: The interrupted run's artifact layout.
+        seed: The shuffle seed already resolved for this run, when ordering
+            had been applied before the interrupt. Recorded so a partial run
+            is still replayable; None before a seed exists.
     """
     if not artifact_layout.index_path.exists():
         try:
@@ -458,6 +476,7 @@ def _report_interrupted_run(artifact_layout: NativeArtifactLayout) -> None:
                 suite_names=[],
                 suite_paths=[],
                 preflight_paths=artifact_layout.preflight_paths(),
+                seed=seed,
             )
         except (ArtifactPublishError, OSError, ValueError):
             pass
