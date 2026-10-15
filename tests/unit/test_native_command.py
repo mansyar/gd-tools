@@ -34,7 +34,7 @@ from gd_tools.native_test.protocol import (
     NativeTestResult,
     RuntimeMode,
 )
-from gd_tools.test_results import TestResult
+from gd_tools.test_results import TestDetail, TestResult
 
 pytestmark = pytest.mark.unit
 
@@ -1753,3 +1753,68 @@ def test_write_junit_xml_is_atomic(tmp_path, monkeypatch):
     assert calls, "JUnit XML was written without a temp+replace"
     assert ET.parse(path).getroot().tag == "testsuites"
     assert sorted(i.name for i in tmp_path.iterdir()) == ["results.xml"]
+
+
+def _junit_detail(name, status="pass", attempts=1):
+    """Build a minimal TestDetail for JUnit writer tests."""
+    return TestDetail(
+        name=name,
+        suite="ExampleSuite",
+        status=status,
+        message="",
+        duration=0.1,
+        attempts=attempts,
+        first_failure_message="",
+        diagnostics=None,
+    )
+
+
+def test_write_junit_xml_marks_flaky_testcase(tmp_path):
+    """A test that passed after a retry carries flaky properties."""
+    _write_junit_xml(
+        tmp_path / "results.xml",
+        [_junit_detail("test_flaky", attempts=2), _junit_detail("test_ok")],
+        0.2,
+    )
+
+    cases = (
+        ET.parse(tmp_path / "results.xml")
+        .getroot()
+        .findall("testsuite/testcase")
+    )
+    flaky_props = {
+        prop.attrib["name"]: prop.attrib["value"]
+        for prop in cases[0].find("properties")
+    }
+    assert flaky_props == {"flaky": "true", "attempts": "2"}
+    assert cases[1].find("properties") is None
+
+
+def test_write_junit_xml_omits_properties_when_nothing_flaky(tmp_path):
+    """A run without flaky tests leaves every testcase untouched."""
+    _write_junit_xml(
+        tmp_path / "results.xml",
+        [_junit_detail("test_ok"), _junit_detail("test_other")],
+        0.2,
+    )
+
+    cases = (
+        ET.parse(tmp_path / "results.xml")
+        .getroot()
+        .findall("testsuite/testcase")
+    )
+    assert all(case.find("properties") is None for case in cases)
+
+
+def test_write_junit_xml_never_marks_unpassed_testcase(tmp_path):
+    """A failed test with retries is not flaky, whatever the attempts."""
+    _write_junit_xml(
+        tmp_path / "results.xml",
+        [_junit_detail("test_fail", status="fail", attempts=3)],
+        0.1,
+    )
+
+    case = (
+        ET.parse(tmp_path / "results.xml").getroot().find("testsuite/testcase")
+    )
+    assert case.find("properties") is None
