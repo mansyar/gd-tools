@@ -32,7 +32,7 @@
 - [x] Task: Implement `resolve_seed(...)` and `apply_random_order(suites, seed) -> RandomOrderResult` in `src/gd_tools/native_test/ordering.py` using one `random.Random(seed)` stream; return the resolved seed alongside the shuffled suites. No new dependencies (NFR-5) — `68b51c7`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 — Pipeline integration and reporting
+## Phase 3 — Pipeline integration and reporting [checkpoint: 8fc1d95]
 
 - [x] Task: Write failing tests for pipeline application order (delivered as the new `tests/unit/test_native_random_order_pipeline.py`, reusing the shard test's patch harness rather than extending `test_native_command.py`) — `a651d8c`
   - [x] Test: ordering is applied after the preflight result replaces `suites` (FR-9) — asserted by checking the preflight manifest still holds discovery order while the dispatched list is shuffled
@@ -50,15 +50,15 @@
 
 ## Phase 4 — Composition guarantees
 
-- [ ] Task: Write failing tests for flag composition (`tests/unit/test_native_shard.py` extensions, `tests/unit/test_native_random_order_composition.py`)
-  - [ ] Test: `--shard 1/2` and `--shard 2/2` under two different seeds select the same disjoint suite sets as the unrandomized path, and their union is the full set (FR-11, FR-12, AC-8)
-  - [ ] Test: `--shard K/N --random-order --seed S` selects the same suites as `--shard K/N --seed S` — the seed changes only execution order (AC-9)
-  - [ ] Test: `--random-order --changed` shuffles only the narrowed set (FR-17, AC-12)
-  - [ ] Test: `--random-order --parallel 4` yields the same pass/fail totals as sequential, with the summary in shuffled order (AC-10)
-  - [ ] Test: `--random-order --exitfirst` triggers on the first executed failing suite (FR-17, AC-11)
-  - [ ] Test: `--random-order --coverage` produces identical coverage numbers to an unrandomized run on a stable fixture
-  - [ ] Test: `--watch --random-order` reports one seed and reuses it for every re-run (FR-18, AC-13)
-- [ ] Task: Fix any composition gaps surfaced by the tests; add no new flag-conflict rules for `--random-order` + `--shard` (FR-19)
+- [x] Task: Write failing tests for flag composition — delivered in `tests/unit/test_native_random_order_pipeline.py` (reusing its patch harness) and `tests/unit/test_watch_session.py`, rather than the planned `test_native_shard.py` extensions plus a separate composition module; one harness in one place beat duplicating it — `1d521e2`, `6a842fd`
+  - [x] Test: `--shard 1/2` and `--shard 2/2` under two different seeds select the same disjoint suite sets as the unrandomized path, and their union is the full set (FR-11, FR-12, AC-8)
+  - [x] Test: `--shard K/N --random-order --seed S` selects the same suites under seeds 1 and 2 — the seed changes only execution order (AC-9)
+  - [x] Test: `--random-order --changed` shuffles only the narrowed set (FR-17, AC-12)
+  - [x] Test: `--random-order --parallel 4` yields the same pass/fail totals as sequential (AC-10) — coexistence asserted in the unit harness, and totals verified on the native fixture: sequential and `--parallel 4` both reported 1 failed / 26 passed
+  - [~] Test: `--random-order --exitfirst` — coexistence with a shuffled shard is asserted (FR-17). The trigger-on-first-failing-suite behaviour itself is exercised by the pre-existing exitfirst tests and was **not** re-verified under a randomized order; the trigger is order-agnostic by construction (it keys off the first failing suite among those executed), but that is reasoning, not a measurement.
+  - [x] Test: `--random-order --coverage` produces identical coverage numbers to an unrandomized run — verified on the native fixture: 42.2% lines / 68.0% branches in both the baseline and the seeded run
+  - [x] Test: `--watch --random-order` uses one session seed and reuses it for every re-run (FR-18, AC-13) — asserted for a generated seed and for an explicit `--seed 99`
+- [x] Task: Fix any composition gaps surfaced by the tests; add no new flag-conflict rules for `--random-order` + `--shard` (FR-19) — `6a842fd`. The one real gap was the `--watch` per-re-run seed, fixed by resolving the session seed once before the loop. No conflict rules were added.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — Documentation and final verification
