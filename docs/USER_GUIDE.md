@@ -506,7 +506,12 @@ gd-tools test --snapshot-update
   "passed on attempt N", and the first failed attempt's message (collapsed
   to one line, truncated at 120 characters). The panel is omitted when no
   test was flaky and suppressed under `--quiet`; flakiness never changes
-  the exit code.
+  the exit code. Flakiness is also visible to machines: each flaky JUnit
+  `<testcase>` carries `<properties>` with `flaky=true` and `attempts=N`
+  (non-flaky cases are untouched), and `artifacts.json` records a top-level
+  `flaky` list (`[{suite, name, attempts}]` in run order) plus a per-suite
+  `flaky_tests` list (`[{name, attempts}]`). Both keys are absent when
+  nothing was flaky, and both are emitted even under `--quiet`.
 - Class-level tags can be configured with `[test].tags` or selected with
   repeatable `--tag` options. Explicit file paths are never broadened to
   sibling suites.
@@ -906,7 +911,12 @@ Every run publishes its artifacts under `.gd-tools/artifacts/<run_id>/`:
 The index is printed at the end of the run and recorded as an
 `artifact_index` property on the JUnit `<testsuite>`. It lists only the
 artifacts that were actually written, and `screenshots` lists the realized
-captures for a suite.
+captures for a suite. When tests were flaky, the index also carries a
+top-level `flaky` list (`[{suite, name, attempts}]` in run order) and each
+flaky suite's entry carries `flaky_tests` (`[{name, attempts}]`); both keys
+are absent when nothing was flaky. The matching signal in JUnit XML is a
+`<properties>` block with `flaky=true` and `attempts=N` on each flaky
+`<testcase>`.
 
 Only the latest run is retained. Older run directories are pruned once the new
 index is published, and a directory counts as a run only when it is named the
