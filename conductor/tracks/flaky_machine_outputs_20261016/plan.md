@@ -38,3 +38,7 @@ Verification and Checkpointing Protocol.
   / >70% branch on changed modules; confirm exit-code behavior unchanged
   (flaky-pass = 0) and non-flaky output byte-identical. [1933 passed]
 - [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions 7a893ef
