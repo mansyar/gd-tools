@@ -15,6 +15,7 @@ from gd_tools.native_test.discovery import (
     NativeDiscoveryError,
     discover_native_suites,
 )
+from gd_tools.native_test.ordering import resolve_seed
 from gd_tools.native_test.protocol import (
     NativeRunResult,
     NativeSuite,
@@ -133,6 +134,13 @@ def run_watch_mode(
     banner = WATCH_BANNER.format(count=len(watched))
     output(banner)
 
+    # One seed for the whole session keeps successive re-runs comparable; a
+    # fresh seed per re-run would make two watch runs incomparable (FR-18).
+    # An explicit seed pins it, otherwise it is generated once here.
+    session_seed: int | None = None
+    if random_order:
+        session_seed = resolve_seed(seed, None)
+
     selected_tags = list(tags) if tags else list(config.test.tags)
     effective_test_timeout = (
         test_timeout
@@ -187,7 +195,7 @@ def run_watch_mode(
                 snapshot_update=snapshot_update,
                 exitfirst=exitfirst,
                 random_order=random_order,
-                seed=seed,
+                seed=session_seed,
             )
         except TestFailureError as exc:
             return _watch_result(getattr(exc, "result", None), "failed")

@@ -83,6 +83,8 @@ def _run_watch(
     parallel=None,
     durations=None,
     exitfirst=None,
+    random_order=None,
+    seed=None,
 ):
     with (
         patch(
@@ -101,6 +103,10 @@ def _run_watch(
         ) as mock_native,
     ):
         extra = {"exitfirst": exitfirst} if exitfirst is not None else {}
+        if random_order is not None:
+            extra["random_order"] = random_order
+        if seed is not None:
+            extra["seed"] = seed
         code = run_watch_mode(
             config,
             event_source=FakeEventSource(events),
@@ -287,6 +293,74 @@ def _suites():
         SimpleNamespace(name="EnemySuite", path="res://tests/test_enemy.gd"),
         SimpleNamespace(name="PlayerSuite", path="res://tests/test_player.gd"),
     ]
+
+
+def test_watch_reuses_one_generated_seed_across_re_runs(tmp_path):
+    """--random-order mints one session seed reused by every re-run (FR-18)."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    calls = []
+
+    def fake_native(*args, **kwargs):
+        calls.append(kwargs)
+        if len(calls) >= 2:
+            raise KeyboardInterrupt
+        return MagicMock()
+
+    with patch(
+        "gd_tools.watch.session.discover_native_suites",
+        return_value=_suites(),
+    ):
+        code, mock_native = _run_watch(
+            tmp_path,
+            _config(tmp_path),
+            fake_native,
+            [("src/enemy.gd", "modified")],
+            output,
+            clock,
+            random_order=True,
+        )
+
+    assert code == 0
+    seeds = [call.kwargs["seed"] for call in mock_native.call_args_list]
+    assert len(seeds) >= 2
+    assert all(seed is not None for seed in seeds)
+    assert len(set(seeds)) == 1, "each re-run must reuse the session seed"
+
+
+def test_watch_pins_an_explicit_seed(tmp_path):
+    """An explicit --seed is used verbatim for every watch re-run."""
+    _project(tmp_path)
+    output = []
+    clock = FakeClock()
+    calls = []
+
+    def fake_native(*args, **kwargs):
+        calls.append(kwargs)
+        if len(calls) >= 2:
+            raise KeyboardInterrupt
+        return MagicMock()
+
+    with patch(
+        "gd_tools.watch.session.discover_native_suites",
+        return_value=_suites(),
+    ):
+        code, mock_native = _run_watch(
+            tmp_path,
+            _config(tmp_path),
+            fake_native,
+            [("src/enemy.gd", "modified")],
+            output,
+            clock,
+            random_order=True,
+            seed=99,
+        )
+
+    assert code == 0
+    seeds = [call.kwargs["seed"] for call in mock_native.call_args_list]
+    assert seeds
+    assert set(seeds) == {99}
 
 
 def test_mapped_rerun_passes_suite_filter(tmp_path):
