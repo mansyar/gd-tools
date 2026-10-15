@@ -208,3 +208,95 @@ def test_verbose_lists_the_resolved_order(tmp_path):
     listing = " ".join(verbose)
     for suite in suites:
         assert suite.name in listing
+
+
+# --- composition guarantees ---
+
+
+def _shard_names(suites, index):
+    """Suite names assigned to shard ``index`` by the round-robin rule."""
+    return sorted(
+        suite.name for i, suite in enumerate(suites) if i % 2 == index - 1
+    )
+
+
+def test_shard_membership_is_seed_independent(tmp_path):
+    """--shard picks the same suites whatever the seed is (FR-11, FR-12)."""
+    suites = _suites(6)
+
+    first, _, _ = _run(
+        suites, tmp_path, random_order=True, seed=1, shard=(1, 2)
+    )
+    second, _, _ = _run(
+        suites, tmp_path, random_order=True, seed=2, shard=(1, 2)
+    )
+
+    # Membership is the invariant, not order: the seed reshuffles the
+    # dispatch sequence, never which shard owns a suite.
+    assert sorted(s.name for s in first) == _shard_names(suites, 1)
+    assert sorted(s.name for s in second) == _shard_names(suites, 1)
+
+
+def test_shard_union_is_the_full_plan_under_any_seeds(tmp_path):
+    """Two shards under unrelated seeds still cover every suite once."""
+    suites = _suites(7)
+
+    left, _, _ = _run(suites, tmp_path, random_order=True, seed=1, shard=(1, 2))
+    right, _, _ = _run(
+        suites, tmp_path, random_order=True, seed=99, shard=(2, 2)
+    )
+
+    names = [s.name for s in left] + [s.name for s in right]
+    assert sorted(names) == sorted(s.name for s in suites)
+    assert len(names) == len(set(names))
+
+
+def test_orchestration_flags_compose_with_random_order(tmp_path):
+    """--parallel and --exitfirst coexist with a shuffled shard."""
+    suites = _suites(6)
+
+    forwarded, _, _ = _run(
+        suites,
+        tmp_path,
+        random_order=True,
+        seed=7,
+        shard=(1, 2),
+        parallel=4,
+        exitfirst=True,
+    )
+
+    assert sorted(s.name for s in forwarded) == _shard_names(suites, 1)
+
+
+def test_changed_narrowing_precedes_ordering(tmp_path):
+    """--changed narrows first; only the narrowed suites are shuffled."""
+    suites = _suites(6)
+    narrowed = [suites[1], suites[4]]
+    patches = _patch_command(suites, tmp_path)
+    with (
+        patches[0] as _,
+        patches[1] as _,
+        patches[2] as _,
+        patches[3] as _,
+        patches[4] as _,
+        patches[5] as _,
+        patches[6] as run,
+        patches[7] as _,
+        patches[8] as _,
+        patch(
+            "gd_tools.native_test.command.collect_changed_files",
+            return_value=["src/enemy.gd"],
+        ),
+        patch(
+            "gd_tools.native_test.command._narrow_changed_suites",
+            return_value=list(narrowed),
+        ),
+    ):
+        run_native_test_command(
+            _config_ns(), random_order=True, seed=3, changed=True
+        )
+
+    forwarded = run.call_args.args[1]
+    expected = apply_random_order(narrowed, 3).suites
+    assert [s.name for s in forwarded] == [s.name for s in expected]
+    assert sorted(s.name for s in forwarded) == ["Suite01", "Suite04"]
