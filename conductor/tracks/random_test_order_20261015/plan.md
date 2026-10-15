@@ -20,16 +20,16 @@
 
 ## Phase 2 — Seeded ordering core
 
-- [ ] Task: Write failing unit tests for a new `src/gd_tools/native_test/ordering.py` (`tests/unit/test_native_ordering.py`)
-  - [ ] Test: seed resolution precedence — explicit CLI seed > config seed > generated seed
-  - [ ] Test: a generated seed is a non-negative 31-bit integer and differs across calls
-  - [ ] Test: shuffling the same suite set twice with the same seed yields the identical order (FR-7, FR-16)
-  - [ ] Test: two different seeds produce different orders for a >= 5-suite fixture
-  - [ ] Test: each suite's method list is shuffled deterministically from the same seeded stream (FR-8)
-  - [ ] Test: no suite or method is dropped or duplicated — the shuffled result is a permutation of the input
-  - [ ] Test: empty and single-item inputs are returned unchanged without consuming RNG state
-  - [ ] Test: 1,000 suites / 10,000 tests order in under 50 ms (NFR-2)
-- [ ] Task: Implement `resolve_seed(...)` and `apply_random_order(suites, seed) -> RandomOrderResult` in `src/gd_tools/native_test/ordering.py` using one `random.Random(seed)` stream; return the resolved seed alongside the shuffled suites. No new dependencies (NFR-5)
+- [x] Task: Write failing unit tests for a new `src/gd_tools/native_test/ordering.py` (`tests/unit/test_native_ordering.py`) — `6a34b44`
+  - [x] Test: seed resolution precedence — explicit CLI seed > config seed > generated seed (including seed 0, which must not read as "absent")
+  - [x] Test: a generated seed is a non-negative 31-bit integer and differs across calls
+  - [x] Test: shuffling the same suite set twice with the same seed yields the identical order (FR-7, FR-16)
+  - [x] Test: two different seeds produce different orders for a >= 5-suite fixture
+  - [x] Test: each suite's method list is shuffled deterministically from the same seeded stream (FR-8)
+  - [x] Test: no suite or method is dropped or duplicated — the shuffled result is a permutation of the input
+  - [x] Test: empty and single-item inputs are returned unchanged without consuming RNG state (asserted by spying on `random.Random.shuffle` rather than inferring it)
+  - [x] Test: 1,000 suites / 10,000 tests order in under 50 ms (NFR-2)
+- [x] Task: Implement `resolve_seed(...)` and `apply_random_order(suites, seed) -> RandomOrderResult` in `src/gd_tools/native_test/ordering.py` using one `random.Random(seed)` stream; return the resolved seed alongside the shuffled suites. No new dependencies (NFR-5) — `68b51c7`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Pipeline integration and reporting
