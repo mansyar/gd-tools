@@ -16,7 +16,7 @@
   - [x] Test: config `random_order`/`seed` are used when the flags are absent; `--seed 99` overrides `[test] seed`
   - [x] Test: existing flag-conflict table in `commands/test_validation.py` is unchanged for unrelated combinations (asserted positively: `--random-order --shard 2/4` must NOT exit 2, per FR-19)
 - [x] Task: Add `--random-order` and `--seed` to the `test` command in `src/gd_tools/commands/test.py`, and thread both through `run_native_test_command` and `run_watch_mode` — `29c3228`. Deviation: `FlagState` was **not** extended. It exists only to feed `TEST_FLAG_RULES`, and FR-19 defines no rule for this feature, so the fields would have been dead. `--seed` uses `click.IntRange(min=0)` rather than a hand-written callback, which supplies the exit-2 range message for free.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `067c04e`
 
 ## Phase 2 — Seeded ordering core [checkpoint: 0f9dfe5]
 
@@ -30,7 +30,7 @@
   - [x] Test: empty and single-item inputs are returned unchanged without consuming RNG state (asserted by spying on `random.Random.shuffle` rather than inferring it)
   - [x] Test: 1,000 suites / 10,000 tests order in under 50 ms (NFR-2)
 - [x] Task: Implement `resolve_seed(...)` and `apply_random_order(suites, seed) -> RandomOrderResult` in `src/gd_tools/native_test/ordering.py` using one `random.Random(seed)` stream; return the resolved seed alongside the shuffled suites. No new dependencies (NFR-5) — `68b51c7`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `0f9dfe5`
 
 ## Phase 3 — Pipeline integration and reporting [checkpoint: 8fc1d95]
 
@@ -46,9 +46,9 @@
   - [x] Test: the key is absent when randomization is off, so existing index shape is untouched (NFR-1, NFR-4)
   - [x] Test: `protocol_version` is unchanged
 - [x] Task: Extend `publish_artifact_index` in `src/gd_tools/native_test/artifacts.py` with the additive record and pass it from the orchestrator's index publication call sites (required threading `random_seed` through `run_native_tests`, since the orchestrator is what publishes the final index) — `bd4beb8`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `8fc1d95`
 
-## Phase 4 — Composition guarantees
+## Phase 4 — Composition guarantees [checkpoint: 872f613]
 
 - [x] Task: Write failing tests for flag composition — delivered in `tests/unit/test_native_random_order_pipeline.py` (reusing its patch harness) and `tests/unit/test_watch_session.py`, rather than the planned `test_native_shard.py` extensions plus a separate composition module; one harness in one place beat duplicating it — `1d521e2`, `6a842fd`
   - [x] Test: `--shard 1/2` and `--shard 2/2` under two different seeds select the same disjoint suite sets as the unrandomized path, and their union is the full set (FR-11, FR-12, AC-8)
@@ -59,7 +59,7 @@
   - [x] Test: `--random-order --coverage` produces identical coverage numbers to an unrandomized run — verified on the native fixture: 42.2% lines / 68.0% branches in both the baseline and the seeded run
   - [x] Test: `--watch --random-order` uses one session seed and reuses it for every re-run (FR-18, AC-13) — asserted for a generated seed and for an explicit `--seed 99`
 - [x] Task: Fix any composition gaps surfaced by the tests; add no new flag-conflict rules for `--random-order` + `--shard` (FR-19) — `6a842fd`. The one real gap was the `--watch` per-re-run seed, fixed by resolving the session seed once before the loop. No conflict rules were added.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `872f613`
 
 ## Phase 5 — Documentation and final verification
 
