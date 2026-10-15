@@ -27,11 +27,11 @@ Verification and Checkpointing Protocol.
   `src/gd_tools/native_test/artifacts.py`, thread through the orchestrator's
   publication call sites; run targeted tests plus `ruff check` and
   `black --check`. [5ff03fe]
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
 
-## Phase 3 — Docs + full verification (FR-3 – FR-5, acceptance 2–5)
+## Phase 3 — Docs + full verification (FR-3 – FR-5, acceptance 2–5) [checkpoint: 39db52d] — Docs + full verification (FR-3 – FR-5, acceptance 2–5)
 
-- [ ] Task: Update the `USER_GUIDE.md` flaky section and `ARCHITECTURE.md`
+- [~] Task: Update the `USER_GUIDE.md` flaky section and `ARCHITECTURE.md`
   §9.5 / JUnit docs with the new machine-readable fields.
 - [ ] Task: Run full gates — `CI=true pytest` (unit + integration),
   `ruff check src/ tests/`, `black --check src/ tests/`, coverage >80% line
