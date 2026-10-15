@@ -31,10 +31,10 @@ Verification and Checkpointing Protocol.
 
 ## Phase 3 — Docs + full verification (FR-3 – FR-5, acceptance 2–5) [checkpoint: 39db52d] — Docs + full verification (FR-3 – FR-5, acceptance 2–5)
 
-- [~] Task: Update the `USER_GUIDE.md` flaky section and `ARCHITECTURE.md`
-  §9.5 / JUnit docs with the new machine-readable fields.
-- [ ] Task: Run full gates — `CI=true pytest` (unit + integration),
+- [x] Task: Update the `USER_GUIDE.md` flaky section and `ARCHITECTURE.md`
+  §9.5 / JUnit docs with the new machine-readable fields. [7ad9db4]
+- [x] Task: Run full gates — `CI=true pytest` (unit + integration),
   `ruff check src/ tests/`, `black --check src/ tests/`, coverage >80% line
   / >70% branch on changed modules; confirm exit-code behavior unchanged
-  (flaky-pass = 0) and non-flaky output byte-identical.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  (flaky-pass = 0) and non-flaky output byte-identical. [1933 passed]
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
