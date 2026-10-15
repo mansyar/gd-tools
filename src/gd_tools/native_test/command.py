@@ -36,6 +36,11 @@ from gd_tools.native_test.artifacts import (
     publish_artifact_index,
 )
 from gd_tools.native_test.discovery import discover_native_suites
+from gd_tools.native_test.ordering import (
+    RandomOrderResult,
+    apply_random_order,
+    resolve_seed,
+)
 from gd_tools.native_test.orchestrator import run_native_tests, select_shard
 from gd_tools.native_test.preflight import NativePreflightError
 from gd_tools.native_test.preflight_cache import run_preflight_cached
@@ -328,6 +333,25 @@ def _run_native_test_command(
         _report_interrupted_run(artifact_layout)
         raise
     suites = preflight_result.suites
+
+    # Ordering is applied after the preflight, so the manifest the runner
+    # dispatches carries shuffled method order while preflight itself still
+    # sees the deterministic order (FR-9). The config seed was already folded
+    # into ``seed`` by the command layer, so only generation is left here.
+    random_order_result: RandomOrderResult | None = None
+    if random_order:
+        random_order_result = apply_random_order(
+            suites, resolve_seed(seed, None)
+        )
+        suites = random_order_result.suites
+        output.print_verbose(
+            "Random order: "
+            + ", ".join(
+                f"{suite.name} "
+                f"[{', '.join(test.name for test in suite.tests)}]"
+                for suite in random_order_result.suites
+            )
+        )
     try:
         coverage_settings, _ = _prepare_coverage(
             config,
@@ -347,6 +371,11 @@ def _run_native_test_command(
             artifact_layout=artifact_layout,
             snapshot_update=snapshot_update,
             exitfirst=exitfirst,
+            random_seed=(
+                random_order_result.seed
+                if random_order_result is not None
+                else None
+            ),
         )
     except (KeyboardInterrupt, NativeInterruptError):
         # The orchestrator has already published the incomplete index for
@@ -391,6 +420,11 @@ def _run_native_test_command(
         junit_xml,
     )
     format_test_results(result, durations=durations)
+    if random_order_result is not None:
+        output.print_info(
+            f"Random order: seed {random_order_result.seed} "
+            f"(replay with --seed {random_order_result.seed})"
+        )
     if native_result.fail_fast:
         fail_fast = native_result.fail_fast
         output.print_warning(
