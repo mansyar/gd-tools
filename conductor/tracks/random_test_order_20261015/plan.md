@@ -68,3 +68,20 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) — `d345bae`
 
 Track closure (registry `[~]` → `[x]`, archive move) is deliberately left to a review pass, at the user's request.
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions `c775175`
+  - Seed line moved to a new quiet-exempt `output.print_always` (FR-13: a
+    shuffled failure cannot be replayed without it; verified by a red-check
+    that the old `print_info` fails the new test).
+  - Both interrupted-run index publishers (`_abort_run` in the orchestrator,
+    `_report_interrupted_run` in the command adapter) now record the seed, so
+    a partial run stays replayable (FR-14).
+  - Corrected the inaccurate "entropy sink" rationale on the short-list
+    shuffle guard in `ordering.py` (and the test docstring repeating it).
+  - Asserted FR-15's method-order clause instead of suite names only.
+  - Paired `--random-order/--no-random-order` so a configured opt-in can be
+    undone for one invocation (beyond FR-1, which only requires the opt-in).
+  - Docs updated where behaviour changed: README, USER_GUIDE, ARCHITECTURE,
+    and the unreleased CHANGELOG entry.
