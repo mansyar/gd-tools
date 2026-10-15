@@ -37,4 +37,4 @@ Verification and Checkpointing Protocol.
   `ruff check src/ tests/`, `black --check src/ tests/`, coverage >80% line
   / >70% branch on changed modules; confirm exit-code behavior unchanged
   (flaky-pass = 0) and non-flaky output byte-identical. [1933 passed]
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
