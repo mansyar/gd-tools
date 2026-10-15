@@ -63,6 +63,6 @@
 
 ## Phase 5 — Documentation and final verification
 
-- [ ] Task: Document the feature — README §5 flag list, `docs/USER_GUIDE.md` §3.4 (flag reference, seed replay recipe, shard membership contract, Python-version reproducibility caveat), and `CHANGELOG.md` under the unreleased section
-- [ ] Task: Full quality gate — `CI=true pytest`, `ruff check src/ tests/`, `black --check src/ tests/`, new module at >= 80% line coverage, and the schema snapshot in sync (NFR-6, AC-15)
+- [x] Task: Document the feature — README §5 flag list, `docs/USER_GUIDE.md` §3.4 (flag reference, seed replay recipe, shard membership contract, Python-version reproducibility caveat), and `CHANGELOG.md` under the unreleased section — `9a4bedc`. Scope extended beyond the plan: the `[test] random_order`/`seed` keys also went into README §8's config sample and USER_GUIDE §2.1/§2.3, the sharding recipe gained the membership bullet, and ARCHITECTURE.md §11.1/§11.2 now describe where seeded ordering hooks into the dispatch pipeline. Shipping a CLI flag whose only config keys are undocumented would have been a half-documented feature.
+- [x] Task: Full quality gate — `CI=true pytest`, `ruff check src/ tests/`, `black --check src/ tests/`, new module at >= 80% line coverage, and the schema snapshot in sync (NFR-6, AC-15). *(Result: 1923 passed / 3 skipped / 144 e2e deselected in 141.29s, total coverage 96.04% with the 80% gate reached; `ordering.py` 100% line and branch, `watch/session.py` 97%; ruff "All checks passed" and black "203 files would be left unchanged"; `test_schema.py` 9 passed with `random_order` and `seed` present in the checked-in snapshot.)*
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
