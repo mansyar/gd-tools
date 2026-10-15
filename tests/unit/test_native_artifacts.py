@@ -13,6 +13,7 @@ from gd_tools.native_test.artifacts import (
     mark_run_started,
     publish_artifact_index,
 )
+from gd_tools.native_test.protocol import NATIVE_PROTOCOL_VERSION
 
 pytestmark = pytest.mark.unit
 
@@ -362,6 +363,44 @@ def test_failed_publication_keeps_older_runs(tmp_path):
 
     assert old_run.exists()
     assert not layout.index_path.exists()
+
+
+# --- random-order seed record (FR-14) ---
+
+
+def _publish(tmp_path, run_id="run-1", **kwargs):
+    """Publish a minimal index and return the parsed payload."""
+    layout = NativeArtifactLayout.create(tmp_path, run_id)
+    index_path = publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=["ExampleSuite"],
+        suite_paths=[{}],
+        preflight_paths=layout.preflight_paths(),
+        **kwargs,
+    )
+    return json.loads(index_path.read_text(encoding="utf-8"))
+
+
+def test_seed_is_recorded_in_the_index(tmp_path):
+    """A random-order run records its seed so the order is replayable."""
+    index = _publish(tmp_path, seed=42)
+
+    assert index["seed"] == 42
+
+
+def test_seed_key_is_absent_when_random_order_is_off(tmp_path):
+    """An unrandomized run keeps the existing index shape (NFR-1)."""
+    index = _publish(tmp_path)
+
+    assert "seed" not in index
+
+
+def test_seed_recording_does_not_bump_the_protocol_version(tmp_path):
+    """The seed is an additive key, not a protocol change (NFR-4)."""
+    index = _publish(tmp_path, seed=42)
+
+    assert index["protocol_version"] == NATIVE_PROTOCOL_VERSION
 
 
 def test_mark_run_started_is_atomic(tmp_path, monkeypatch):

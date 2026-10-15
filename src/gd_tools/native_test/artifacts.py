@@ -129,6 +129,7 @@ def publish_artifact_index(
     preflight_paths: dict[str, Path],
     omitted: list[dict[str, Any]] | None = None,
     skipped: list[str] | None = None,
+    seed: int | None = None,
 ) -> Path:
     """Atomically publish one run index, then prune older run directories.
 
@@ -154,6 +155,10 @@ def publish_artifact_index(
         skipped: Suite names recorded as skipped because fail-fast stopped
             dispatch before they started. Their index entries carry the
             additive key ``fail_fast: "skipped"``.
+        seed: The shuffle seed of a random-order run, written as an additive
+            top-level key so the run's order can be replayed from its own
+            artifacts. Omitted for unrandomized runs, which keeps the
+            existing index shape intact.
 
     Returns:
         The published artifact index path.
@@ -188,6 +193,8 @@ def publish_artifact_index(
     }
     if omitted:
         payload["omitted"] = omitted
+    if seed is not None:
+        payload["seed"] = seed
     try:
         atomic_write_json(layout.index_path, payload)
     except (OSError, TypeError, ValueError) as exc:

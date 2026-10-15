@@ -271,6 +271,7 @@ def run_native_tests(
     parallel: int | None = None,
     snapshot_update: bool = False,
     exitfirst: bool = False,
+    random_seed: int | None = None,
 ) -> NativeRunResult:
     """Run each native suite in an isolated Godot process.
 
@@ -297,6 +298,9 @@ def run_native_tests(
             infrastructure error. In-flight suites finish and are collected;
             unstarted suites are recorded as skipped test entries and
             summarized on ``result.fail_fast``.
+        random_seed: The shuffle seed a random-order run used, recorded in
+            the published artifact index so the order is replayable. None
+            for unrandomized runs.
 
     Returns:
         Aggregated native result. A process-level failure is represented as
@@ -538,6 +542,7 @@ def run_native_tests(
                 preflight_paths=artifact_layout.preflight_paths(),
                 omitted=coverage_omissions or None,
                 skipped=skipped_suite_names or None,
+                seed=random_seed,
             )
         except ArtifactPublishError as exc:
             has_error = True
@@ -554,6 +559,7 @@ def run_native_tests(
                     preflight_paths=artifact_layout.preflight_paths(),
                     omitted=coverage_omissions or None,
                     skipped=skipped_suite_names or None,
+                    seed=random_seed,
                 )
             except ArtifactPublishError:
                 pass
