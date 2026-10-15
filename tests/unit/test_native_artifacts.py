@@ -403,6 +403,56 @@ def test_seed_recording_does_not_bump_the_protocol_version(tmp_path):
     assert index["protocol_version"] == NATIVE_PROTOCOL_VERSION
 
 
+def test_publish_records_flaky_tests_per_suite_and_top_level(tmp_path):
+    """Flaky tests are readable per suite and run-wide from the index."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+    flaky = [
+        {"suite": "AlphaSuite", "name": "test_flaky", "attempts": 2},
+        {"suite": "BetaSuite", "name": "test_slow", "attempts": 3},
+        {"suite": "AlphaSuite", "name": "test_retry", "attempts": 2},
+    ]
+
+    index_path = publish_artifact_index(
+        layout,
+        status="passed",
+        suite_names=["AlphaSuite", "BetaSuite"],
+        suite_paths=[{}, {}],
+        preflight_paths=layout.preflight_paths(),
+        flaky=flaky,
+    )
+
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    assert index["suites"][0]["flaky_tests"] == [
+        {"name": "test_flaky", "attempts": 2},
+        {"name": "test_retry", "attempts": 2},
+    ]
+    assert index["suites"][1]["flaky_tests"] == [
+        {"name": "test_slow", "attempts": 3}
+    ]
+    assert index["flaky"] == flaky
+
+
+def test_publish_omits_flaky_keys_when_nothing_was_flaky(tmp_path):
+    """The keys are additive: a clean run writes the old shape exactly."""
+    index = _publish(tmp_path)
+
+    assert "flaky" not in index
+    assert all("flaky_tests" not in entry for entry in index["suites"])
+
+
+def test_flaky_recording_does_not_bump_the_protocol_version(tmp_path):
+    """Flaky keys are additive metadata, not a protocol change."""
+    index = _publish(
+        tmp_path,
+        flaky=[{"suite": "ExampleSuite", "name": "test_x", "attempts": 2}],
+    )
+
+    assert index["protocol_version"] == NATIVE_PROTOCOL_VERSION
+    assert index["suites"][0]["flaky_tests"] == [
+        {"name": "test_x", "attempts": 2}
+    ]
+
+
 def test_mark_run_started_is_atomic(tmp_path, monkeypatch):
     """The run marker is created through a final rename, not in place."""
     layout = NativeArtifactLayout.create(tmp_path, "run-1")
