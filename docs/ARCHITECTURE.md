@@ -1110,18 +1110,31 @@ the `gd-tools migrate` scanner ([docs/gut-migration.md](./gut-migration.md)).
 any coverage threshold is evaluated --- an infrastructure failure must not be
 reported as a coverage shortfall.
 
+Seeded random ordering (`native_test/ordering.py`) is applied here, after the
+preflight has replaced the discovered suite list with its validated one and
+after `--shard` selected the shard's subset, so the shuffle can never change
+*which* suites run. `resolve_seed()` applies CLI-over-config-over-generated
+precedence (seed `0` is a legal seed, hence `is not None` checks rather than
+truthiness), and `apply_random_order()` draws suite order and then each
+suite's method order from a single `random.Random(seed)` stream, returning a
+copy — the input list and suites are never mutated. The resolved seed travels
+to the orchestrator for the artifact index, and the command layer prints the
+replay line. `run_watch_mode()` resolves one seed before its loop and forwards
+that same seed to every re-run, so successive watch runs stay comparable.
+
 ### 11.2 orchestrator.py
 
 Runs one Godot process per suite, in a loop, and merges what comes back.
 
 The dispatch order is fixed: `--changed` filtering (in the command layer)
 narrows the plan first, then `--shard K/N` selects the shard's subset of the
-filtered plan, and only then does `--parallel` distribute suites. Shard
+filtered plan, then seeded random ordering permutes the selected suites
+([11.1](#111-commandpy)), and only then does `--parallel` distribute suites. Shard
 assignment is a pure round-robin over the deterministic plan order — suite
 *i* (0-based) belongs to shard `(i mod N) + 1` — so selection is stable
 across runs and machines and the coverage plan (built pre-shard) is
-unaffected. An empty shard exits cleanly with zero suites without launching
-Godot.
+unaffected; a seed changes execution order only, never membership. An empty
+shard exits cleanly with zero suites without launching Godot.
 
 With `--exitfirst` (fail-fast), the dispatch loop stops **submitting** new
 suites after the first suite whose final aggregated result is a failure or

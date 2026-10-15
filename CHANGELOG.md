@@ -1,3 +1,24 @@
+## Unreleased
+
+### Added
+
+- **test**: Reproducible random test ordering via `--random-order` and
+  `--seed N` (also `[test] random_order` / `[test] seed`). Suites and the
+  test methods within each suite are shuffled from a single seeded stream,
+  so an execution order is a pure function of the seed and the selected
+  suite/test set — the same seed over the same selection always produces
+  the same order. Every seeded run prints
+  `Random order: seed <N> (replay with --seed <N>)`, records the seed as a
+  top-level `seed` key in `.gd-tools/artifacts/<run_id>/artifacts.json`
+  (absent when ordering is off, so the index shape is unchanged), and lists
+  the resolved order suite-by-suite under `--verbose`. Passing `--seed`
+  alone implies `--random-order`; without a seed, a fresh 31-bit seed is
+  generated per run. Shuffling is order-only: `--shard` membership is
+  computed from the deterministic plan order before the shuffle, so CI
+  matrix jobs with different seeds still cover every suite exactly once;
+  `--watch` resolves one seed per session and reuses it for every re-run;
+  and `--coverage` reports identical numbers to an unrandomized run.
+
 ## v0.8.0 (2026-10-08)
 
 ### Added

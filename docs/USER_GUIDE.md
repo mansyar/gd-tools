@@ -136,6 +136,7 @@ retries = 0
 tags = []
 prefix = "test_"
 suffix = ".gd"
+random_order = false
 
 [lint]
 exclude = ["addons", ".godot", ".gd-tools", ".git"]
@@ -189,6 +190,8 @@ binary = "/usr/local/bin/godot"
 | `tags` | list of strings | `[]` | Native class-level tag filters; an empty list matches all tags. |
 | `prefix` | string | `"test_"` | Filename prefix for test scripts (GUT convention). |
 | `suffix` | string | `".gd"` | Filename suffix for test scripts. |
+| `random_order` | boolean | `false` | Shuffle suite and test-method execution order by default. A configured `seed` alone also enables it; `--random-order` overrides this for one invocation. |
+| `seed` | integer `>= 0` | None | Shuffle seed used when random ordering is on. Omit to generate a fresh seed per run; `--seed` overrides this for one invocation. |
 
 Example -- custom test layout:
 
@@ -400,6 +403,8 @@ gd-tools test [PATHS]... [OPTIONS]
 | `--base` | string | None | With `--changed`: diff committed changes from `merge-base(<ref>, HEAD)` instead of the working tree (the form for pull-request CI). Requires `--changed`; incompatible with `--watch` (exit 2). |
 | `--exitfirst`, `-x` | flag | `false` | Stop dispatching new suites after the first failing suite (test failure or infrastructure error). In-flight suites finish; unstarted suites are reported as skipped and summarized in a `Stopped early: fail-fast after suite <id> (K of M suites skipped)` line. Composes with `--parallel` (pool drains), `--coverage` (partial report), and `--watch` (gate resets per re-run). |
 | `--shard` | string `K/N` | None | Run only suite shard `K` of `N` for CI matrix splitting: suite *i* of the deterministic plan order belongs to shard `(i mod N) + 1`. Applied after `--changed`, before `--parallel`. `--shard 1/1` is valid; malformed values exit 2. Incompatible with `--watch` (exit 2). |
+| `--random-order` | flag | Config `[test].random_order` | Shuffle the execution order of the selected suites and of the test methods within each suite. Off unless `[test] random_order` enables it or a seed is configured. |
+| `--seed` | integer `>= 0` | Config `[test].seed` | Pin the shuffle seed; passing it implies `--random-order`. Omit to generate a fresh seed per run. Replay a reported seed to reproduce its order. Negative values exit 2. A bare `--seed` without a value is a usage error (exit 2). |
 
 **Examples:**
 
@@ -455,6 +460,15 @@ gd-tools test --exitfirst --parallel 4
 # CI sharding: run suite shard 2 of 4 (assignment is deterministic round-robin)
 gd-tools test --shard 2/4 --parallel 4 --coverage
 
+# Shuffle suite and test order with a fresh seed (the summary reports it)
+gd-tools test --random-order
+
+# Pin the seed to replay a known order (--seed implies --random-order)
+gd-tools test --seed 42
+
+# Shuffle inside one CI shard; membership is unchanged, only order differs
+gd-tools test --shard 2/4 --random-order --seed 42
+
 # Run exactly one native test file
 gd-tools test tests/unit/test_player.gd
 
@@ -504,6 +518,67 @@ gd-tools test --snapshot-update
   (exit `130`) — in both sequential and parallel runs.
 - The runtime provides an editor UI through the gd-tools editor plugin
   (see [Editor Plugin](#7-editor-plugin)).
+
+**Random test order (`--random-order`, `--seed`):**
+
+`--random-order` shuffles the execution order of the selected suites, and of
+the test methods within each suite, to expose tests that depend on a
+neighbour's side effects. The order is a pure function of the seed and the
+selected suite/test set: the same seed over the same selection always
+produces the same order, so a failure found by shuffling can be handed to
+someone else to reproduce.
+
+```bash
+# Shuffle with a fresh seed; the run summary reports the seed it used
+gd-tools test --random-order
+
+# Pin the seed (this also implies --random-order) and replay it later
+gd-tools test --seed 42
+gd-tools test --seed 42          # identical execution order
+```
+
+A seeded run prints the seed after the summary:
+
+```
+Random order: seed 42 (replay with --seed 42)
+```
+
+Reuse that number to reproduce the order. `--verbose` additionally lists the
+resolved order suite-by-suite, each with its method order, before the run
+starts. The seed is also recorded in
+`.gd-tools/artifacts/<run_id>/artifacts.json` as a top-level `seed` key, so a
+CI run can be replayed from its artifacts without scraping the log; the key
+is absent when randomization is off, leaving the index shape unchanged.
+
+Persistence and precedence: `random_order = true` and/or `seed = 42` under
+`[test]` turn shuffling on for every run — a configured seed alone is enough,
+you do not need both. `--seed` overrides the configured seed for one
+invocation, and `--random-order` overrides a false `random_order`.
+
+Composition contracts:
+
+- `--shard K/N` membership is computed from the deterministic plan order
+  *before* shuffling, so `--random-order` changes only the order of execution
+  within each shard. Two matrix jobs using different seeds still cover the
+  full suite set exactly once.
+- Selection flags (`--suite`, `--test`, `--tag`, `--changed`) bound the suite
+  set first; shuffling applies to the narrowed set only.
+- `--parallel N` dispatches suites in the shuffled order and does not change
+  results, JUnit XML, or coverage.
+- `--exitfirst` still stops at the first failing suite, whichever suite the
+  shuffle happens to run first.
+- `--coverage` reports the same numbers as an unrandomized run; ordering does
+  not affect what is measured.
+- `--watch` resolves **one** seed for the whole session and reuses it for
+  every re-run, so successive re-runs stay comparable; an explicit `--seed`
+  pins it, and the seed line repeats on each re-run.
+
+Replay is reproducible for a given Python version. The order is drawn by
+`random.Random`, and CPython may change its shuffle algorithm between
+releases, so a seed does not guarantee the same permutation across Python
+versions — the same *set* of tests is always run, but the order may differ.
+Record the interpreter version alongside the seed when a failure has to be
+reproduced much later.
 
 **Parameterized tests:**
 
@@ -2060,6 +2135,10 @@ Notes:
 - `--shard` composes with `--changed` (sharding applies to the
   changed-filtered plan) and with `--parallel` (parallelism applies within
   the shard). `--shard` and `--watch` are rejected together.
+- `--random-order` never affects membership: suites are assigned to shards
+  from the deterministic plan order *before* the shuffle, so a shard keeps
+  its suites and a different seed only changes the order they run in. Shards
+  with different seeds still cover every suite exactly once.
 - The coverage plan is built pre-shard, so merging the per-shard reports
   yields the same result as a single un-sharded run.
 - Add `--exitfirst` to each shard to fail it quickly: within a shard,
