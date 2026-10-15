@@ -18,7 +18,7 @@
 - [x] Task: Add `--random-order` and `--seed` to the `test` command in `src/gd_tools/commands/test.py`, and thread both through `run_native_test_command` and `run_watch_mode` — `29c3228`. Deviation: `FlagState` was **not** extended. It exists only to feed `TEST_FLAG_RULES`, and FR-19 defines no rule for this feature, so the fields would have been dead. `--seed` uses `click.IntRange(min=0)` rather than a hand-written callback, which supplies the exit-2 range message for free.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 — Seeded ordering core
+## Phase 2 — Seeded ordering core [checkpoint: 0f9dfe5]
 
 - [x] Task: Write failing unit tests for a new `src/gd_tools/native_test/ordering.py` (`tests/unit/test_native_ordering.py`) — `6a34b44`
   - [x] Test: seed resolution precedence — explicit CLI seed > config seed > generated seed (including seed 0, which must not read as "absent")
