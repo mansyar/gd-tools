@@ -373,12 +373,4 @@ _Archived tracks live in `./archive/`._
   Low review findings were applied in `c775175`)
   *Link: [random_test_order_20261015](./archive/random_test_order_20261015/index.md)*
 
----
-
-- [x] **Track: Flaky Tests in Machine-Readable Outputs** (feature: surface
-  retried-then-passed tests in JUnit XML `<testcase>` properties and
-  `artifacts.json` per-test/top-level fields — additive only, quiet-mode
-  parity, exit codes unchanged; closes the machine-output gap the flaky
-  reporting track descoped)
-  *Link: [flaky_machine_outputs_20261016](./tracks/flaky_machine_outputs_20261016/index.md)*
 
