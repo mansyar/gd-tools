@@ -14,7 +14,7 @@ Verification and Checkpointing Protocol.
 - [x] Task: Green — implement in `_write_junit_xml` [7c589ff]
   (`src/gd_tools/native_test/command.py`) via `is_flaky()`; run targeted
   tests plus `ruff check` and `black --check` on touched files.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
 
 ## Phase 2 — artifacts.json flaky fields (FR-2)
 
