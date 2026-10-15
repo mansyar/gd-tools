@@ -7,11 +7,11 @@ Verification and Checkpointing Protocol.
 
 ## Phase 1 — JUnit flaky properties (FR-1)
 
-- [ ] Task: Red — failing tests for `_write_junit_xml` flaky `<properties>`
+- [x] Task: Red — failing tests for `_write_junit_xml` flaky `<properties>`
   in `tests/unit/test_native_command.py`: a flaky case gains
   `flaky=true`/`attempts=N` properties; a non-flaky run's XML is
   byte-identical to today; quiet-mode runs still carry the properties.
-- [ ] Task: Green — implement in `_write_junit_xml`
+- [x] Task: Green — implement in `_write_junit_xml` [7c589ff]
   (`src/gd_tools/native_test/command.py`) via `is_flaky()`; run targeted
   tests plus `ruff check` and `black --check` on touched files.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
