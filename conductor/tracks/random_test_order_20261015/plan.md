@@ -34,16 +34,18 @@
 
 ## Phase 3 — Pipeline integration and reporting
 
-- [ ] Task: Write failing tests for pipeline application order (`tests/unit/test_native_command.py`, `tests/unit/test_native_random_order_pipeline.py`)
-  - [ ] Test: ordering is applied after `--changed` narrowing and after the preflight result replaces `suites` (FR-9)
-  - [ ] Test: the per-suite manifest dispatched to Godot carries the shuffled method order (AC-4)
-  - [ ] Test: with randomization disabled the `run_native_tests` call is byte-identical to today's (NFR-1)
-- [ ] Task: Apply ordering in `run_native_test_command` immediately before `run_native_tests`, then print the seed line (FR-13) and, under `--verbose`, the resolved order (FR-15)
-- [ ] Task: Write failing tests for seed persistence in the run artifact index (`tests/unit/test_native_artifacts.py`)
-  - [ ] Test: `publish_artifact_index` accepts and writes the seed as an additive top-level key
-  - [ ] Test: the key is absent when randomization is off, so existing index shape is untouched (NFR-1, NFR-4)
-  - [ ] Test: `protocol_version` is unchanged
-- [ ] Task: Extend `publish_artifact_index` in `src/gd_tools/native_test/artifacts.py` with the additive record and pass it from the orchestrator's index publication call sites
+- [x] Task: Write failing tests for pipeline application order (delivered as the new `tests/unit/test_native_random_order_pipeline.py`, reusing the shard test's patch harness rather than extending `test_native_command.py`) — `a651d8c`
+  - [x] Test: ordering is applied after the preflight result replaces `suites` (FR-9) — asserted by checking the preflight manifest still holds discovery order while the dispatched list is shuffled
+  - [x] Test: the per-suite manifest dispatched to Godot carries the shuffled method order (AC-4)
+  - [x] Test: with randomization disabled the `run_native_tests` call is byte-identical to today's (NFR-1)
+  - [x] Test: the seed line is printed, and is absent when randomization is off (FR-13, NFR-1)
+  - [x] Test: `--verbose` lists the resolved order (FR-15)
+- [x] Task: Apply ordering in `run_native_test_command` after the preflight and before `run_native_tests`, print the seed line (FR-13) and, under `--verbose`, the resolved order (FR-15) — `36b8dec`
+- [x] Task: Write failing tests for seed persistence in the run artifact index (`tests/unit/test_native_artifacts.py`) — `bd4beb8`
+  - [x] Test: `publish_artifact_index` accepts and writes the seed as an additive top-level key
+  - [x] Test: the key is absent when randomization is off, so existing index shape is untouched (NFR-1, NFR-4)
+  - [x] Test: `protocol_version` is unchanged
+- [x] Task: Extend `publish_artifact_index` in `src/gd_tools/native_test/artifacts.py` with the additive record and pass it from the orchestrator's index publication call sites (required threading `random_seed` through `run_native_tests`, since the orchestrator is what publishes the final index) — `bd4beb8`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Composition guarantees
