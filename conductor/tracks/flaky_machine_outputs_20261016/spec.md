@@ -30,12 +30,20 @@ flag would be a new CLI surface and is reserved for a separate future track.
   Non-flaky cases are byte-identical to today (no diff noise). The
   suite-level `artifact_index` property behavior is unchanged.
 - **FR-2 — artifacts.json:** `publish_artifact_index`
-  (`src/gd_tools/native_test/artifacts.py`) gains per-test `flaky`/`attempts`
-  fields plus a top-level flaky summary, both additive keys following the
-  `seed`/`omitted` precedent — no version bump, old readers ignore them.
-  Threaded through the orchestrator's existing publication call sites
-  (`src/gd_tools/native_test/orchestrator.py`, `command.py`); parallel-run
-  flaky tests aggregate across workers.
+  (`src/gd_tools/native_test/artifacts.py`) gains per-suite `flaky_tests`
+  lists (`[{name, attempts}]`, only on suites that have flaky tests) plus a
+  top-level `flaky` summary (`[{suite, name, attempts}]` in run order),
+  all additive keys following the `seed`/`omitted`/`fail_fast` precedent —
+  no version bump, old readers ignore them, and both keys are omitted
+  entirely when nothing was flaky. (Per-suite, not per-test: the index has
+  per-suite entries, not per-test entries.) The flat flaky list is computed
+  by the caller via `is_flaky()` and passed as `flaky=[{suite, name,
+  attempts}]`; `artifacts.py` only groups and writes. Threaded through the
+  orchestrator's publication call sites
+  (`src/gd_tools/native_test/orchestrator.py`); the early-error call sites
+  in `command.py` have no test results, so they pass nothing. Parallel-run
+  flaky tests aggregate across workers because the orchestrator publishes
+  from the merged `all_tests`.
 - **FR-3 — Quiet-mode parity:** flaky data is always emitted in both machine
   outputs, even under `--quiet` (quiet trims human commentary only) —
   mirroring the seed-line precedent.
@@ -46,8 +54,10 @@ flag would be a new CLI surface and is reserved for a separate future track.
 
 ## 3. Acceptance Criteria
 
-1. A flaky test carries `flaky=true`, `attempts=N` in JUnit XML and
-   `artifacts.json`; non-flaky runs produce byte-identical output to today.
+1. A flaky test carries `flaky=true`, `attempts=N` in JUnit XML and appears
+   with its attempts in the index's per-suite `flaky_tests` list and the
+   top-level `flaky` summary; non-flaky runs produce byte-identical output
+   to today.
 2. Quiet-mode runs still carry flaky data in both machine outputs.
 3. Parallel-run flaky tests aggregate across workers into both outputs.
 4. Unit + integration tests gate the track; `ruff`/`black` clean; new code

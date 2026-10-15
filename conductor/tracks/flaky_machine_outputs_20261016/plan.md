@@ -18,15 +18,16 @@ Verification and Checkpointing Protocol.
 
 ## Phase 2 — artifacts.json flaky fields (FR-2) [checkpoint: 45161b0]
 
-- [ ] Task: Red — failing tests for `publish_artifact_index` flaky fields in
-  `tests/unit/test_native_artifacts.py` (per-test `flaky`/`attempts` plus
-  top-level summary, additive keys, no version bump), plus orchestrator
-  threading coverage including parallel-merge aggregation across workers.
-- [ ] Task: Green — implement the additive keys in
+- [x] Task: Red — failing tests for `publish_artifact_index` flaky fields in [5ff03fe]
+  `tests/unit/test_native_artifacts.py` (per-suite `flaky_tests` lists plus
+  top-level `flaky` summary, additive keys, no version bump), plus
+  orchestrator threading coverage including parallel-merge aggregation
+  across workers.
+- [x] Task: Green — implement the additive keys in
   `src/gd_tools/native_test/artifacts.py`, thread through the orchestrator's
   publication call sites; run targeted tests plus `ruff check` and
-  `black --check`.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  `black --check`. [5ff03fe]
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
 
 ## Phase 3 — Docs + full verification (FR-3 – FR-5, acceptance 2–5)
 
