@@ -183,6 +183,10 @@ def publish_artifact_index(
     skipped_set = set(skipped or [])
     flaky_by_suite: dict[str, list[dict[str, Any]]] = {}
     for item in flaky or []:
+        if not all(k in item for k in ("suite", "name", "attempts")):
+            raise ValueError(
+                "flaky entries must carry suite, name, attempts: " f"{item!r}"
+            )
         flaky_by_suite.setdefault(item["suite"], []).append(
             {"name": item["name"], "attempts": item["attempts"]}
         )
@@ -211,7 +215,7 @@ def publish_artifact_index(
     if seed is not None:
         payload["seed"] = seed
     if flaky:
-        payload["flaky"] = flaky
+        payload["flaky"] = list(flaky)
     try:
         atomic_write_json(layout.index_path, payload)
     except (OSError, TypeError, ValueError) as exc:

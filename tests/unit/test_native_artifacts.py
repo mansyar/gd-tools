@@ -453,6 +453,21 @@ def test_flaky_recording_does_not_bump_the_protocol_version(tmp_path):
     ]
 
 
+def test_publish_rejects_malformed_flaky_entries(tmp_path):
+    """A flaky entry missing suite/name/attempts is a ValueError."""
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    with pytest.raises(ValueError, match="suite, name, attempts"):
+        publish_artifact_index(
+            layout,
+            status="passed",
+            suite_names=["ExampleSuite"],
+            suite_paths=[{}],
+            preflight_paths=layout.preflight_paths(),
+            flaky=[{"suite": "ExampleSuite", "name": "test_x"}],
+        )
+
+
 def test_mark_run_started_is_atomic(tmp_path, monkeypatch):
     """The run marker is created through a final rename, not in place."""
     layout = NativeArtifactLayout.create(tmp_path, "run-1")
