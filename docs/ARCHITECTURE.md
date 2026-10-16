@@ -1034,8 +1034,9 @@ realized.
 | `status` | `passed` \| `failed` \| `error` \| `cancelled` \| `incomplete` | Terminal run status; `incomplete` means the run was interrupted and in-flight suites were killed |
 | `artifact_root` / `run_dir` | paths | Where the run wrote |
 | `preflight` | map | Preflight artifact paths |
-| `suites[]` | objects | Suite name plus its realized artifact paths |
+| `suites[]` | objects | Suite name plus its realized artifact paths; suites with flaky tests also carry `flaky_tests` (`[{name, attempts}]`) |
 | `omitted` | array\|absent | Present when coverage targets could not be instrumented; each `{file_id, path, reason, fix}` |
+| `flaky` | array\|absent | Present when tests passed only after a retry; each `{suite, name, attempts}` in run order. Flaky JUnit `<testcase>` elements carry the same signal as `<properties>` (`flaky=true`, `attempts=N`); non-flaky cases are untouched |
 
 ### 9.6 Progress Events (`native/suite-NNNN.events.ndjson`)
 

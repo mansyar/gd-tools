@@ -130,6 +130,7 @@ def publish_artifact_index(
     omitted: list[dict[str, Any]] | None = None,
     skipped: list[str] | None = None,
     seed: int | None = None,
+    flaky: list[dict[str, Any]] | None = None,
 ) -> Path:
     """Atomically publish one run index, then prune older run directories.
 
@@ -159,6 +160,13 @@ def publish_artifact_index(
             top-level key so the run's order can be replayed from its own
             artifacts. Omitted for unrandomized runs, which keeps the
             existing index shape intact.
+        flaky: Tests that passed only after a retry, as ``{suite, name,
+            attempts}`` entries in run order, computed by the caller. Each
+            named suite's entry gains the additive key ``flaky_tests``
+            (``[{name, attempts}]``), and the run gains the additive
+            top-level key ``flaky``. Both keys are omitted when nothing was
+            flaky; the payload has no version field of its own, so nothing
+            is bumped.
 
     Returns:
         The published artifact index path.
@@ -173,6 +181,15 @@ def publish_artifact_index(
         raise ValueError("suite_names and suite_paths must have equal length")
 
     skipped_set = set(skipped or [])
+    flaky_by_suite: dict[str, list[dict[str, Any]]] = {}
+    for item in flaky or []:
+        if not all(k in item for k in ("suite", "name", "attempts")):
+            raise ValueError(
+                "flaky entries must carry suite, name, attempts: " f"{item!r}"
+            )
+        flaky_by_suite.setdefault(item["suite"], []).append(
+            {"name": item["name"], "attempts": item["attempts"]}
+        )
     suites: list[dict[str, Any]] = []
     for suite_name, paths in zip(suite_names, suite_paths):
         if not suite_name:
@@ -180,6 +197,8 @@ def publish_artifact_index(
         entry = {"suite": suite_name, **_realized(paths)}
         if suite_name in skipped_set:
             entry["fail_fast"] = "skipped"
+        if suite_name in flaky_by_suite:
+            entry["flaky_tests"] = flaky_by_suite[suite_name]
         suites.append(entry)
 
     payload = {
@@ -195,6 +214,8 @@ def publish_artifact_index(
         payload["omitted"] = omitted
     if seed is not None:
         payload["seed"] = seed
+    if flaky:
+        payload["flaky"] = list(flaky)
     try:
         atomic_write_json(layout.index_path, payload)
     except (OSError, TypeError, ValueError) as exc:

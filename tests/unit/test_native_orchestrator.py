@@ -262,6 +262,68 @@ def test_run_native_tests_publishes_run_index_and_prunes_old_runs(tmp_path):
     assert not old_run.exists()
 
 
+def test_run_native_tests_publishes_flaky_tests_in_the_index(tmp_path):
+    """Flaky tests from the merged run reach the index per suite and top-level.
+
+    Both suites run through the parallel pool, so the published list proves
+    cross-worker aggregation rather than single-dispatch behavior.
+    """
+    layout = NativeArtifactLayout.create(tmp_path, "run-1")
+
+    def fake_run(args, **kwargs):
+        manifest = json.loads(
+            Path(kwargs["env"]["GD_TOOLS_NATIVE_MANIFEST"]).read_text()
+        )
+        suite_name = manifest["suites"][0]["name"]
+        attempts = 2 if suite_name == "FlakySuite" else 1
+        Path(kwargs["env"]["GD_TOOLS_NATIVE_RESULT"]).write_text(
+            json.dumps(
+                {
+                    "protocol_version": 4,
+                    "run_id": "test-run",
+                    "status": "passed",
+                    "engine_warnings": [],
+                    "diagnostics": {},
+                    "tests": [
+                        {
+                            "suite": suite_name,
+                            "name": "test_example",
+                            "status": "passed",
+                            "duration_seconds": 0.01,
+                            "attempts": attempts,
+                            "message": "",
+                            "diagnostics": {},
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return CompletedProcess(args, 0, "", "")
+
+    with patch(
+        "gd_tools.native_test.orchestrator._spawn_process",
+        side_effect=_spawn_adapter(fake_run),
+    ):
+        result = run_native_tests(
+            tmp_path,
+            [_suite("FlakySuite"), _suite("SteadySuite")],
+            godot_binary="godot",
+            artifact_layout=layout,
+            parallel=2,
+        )
+
+    index = json.loads(layout.index_path.read_text(encoding="utf-8"))
+    assert result.status == "passed"
+    assert index["flaky"] == [
+        {"suite": "FlakySuite", "name": "test_example", "attempts": 2}
+    ]
+    assert index["suites"][0]["flaky_tests"] == [
+        {"name": "test_example", "attempts": 2}
+    ]
+    assert "flaky_tests" not in index["suites"][1]
+
+
 def test_run_native_tests_publishes_coverage_omissions_in_the_index(tmp_path):
     """Omissions reported by the suites reach the published artifact index (AC 4)."""
     layout = NativeArtifactLayout.create(tmp_path, "run-1")

@@ -25,6 +25,7 @@ from gd_tools.native_test.artifacts import (
     NativeArtifactLayout,
     publish_artifact_index,
 )
+from gd_tools.native_test.flaky import is_flaky
 from gd_tools.native_test.protocol import (
     NativeCoverage,
     NativeExecutionMode,
@@ -538,6 +539,13 @@ def run_native_tests(
             or artifact_layout.suite_paths(index)
             for index in range(len(suites))
         ]
+        # Flaky tests aggregate here from the merged run, so parallel
+        # workers contribute to one run-wide list in execution order.
+        flaky_tests = [
+            {"suite": test.suite, "name": test.name, "attempts": test.attempts}
+            for test in all_tests
+            if is_flaky(test.status, test.attempts)
+        ]
         try:
             artifact_index_path = publish_artifact_index(
                 artifact_layout,
@@ -548,6 +556,7 @@ def run_native_tests(
                 omitted=coverage_omissions or None,
                 skipped=skipped_suite_names or None,
                 seed=random_seed,
+                flaky=flaky_tests or None,
             )
         except ArtifactPublishError as exc:
             has_error = True
@@ -565,6 +574,7 @@ def run_native_tests(
                     omitted=coverage_omissions or None,
                     skipped=skipped_suite_names or None,
                     seed=random_seed,
+                    flaky=flaky_tests or None,
                 )
             except ArtifactPublishError:
                 pass

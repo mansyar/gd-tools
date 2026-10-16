@@ -36,6 +36,7 @@ from gd_tools.native_test.artifacts import (
     publish_artifact_index,
 )
 from gd_tools.native_test.discovery import discover_native_suites
+from gd_tools.native_test.flaky import is_flaky
 from gd_tools.native_test.ordering import (
     RandomOrderResult,
     apply_random_order,
@@ -803,6 +804,17 @@ def _write_junit_xml(
             name=detail.name,
             time=f"{detail.duration:.6f}",
         )
+        # The writer is quiet-agnostic: machine outputs always carry the
+        # flaky signal, even when the terminal panel is suppressed.
+        if is_flaky(detail.status, detail.attempts):
+            properties = ET.SubElement(case, "properties")
+            ET.SubElement(properties, "property", name="flaky", value="true")
+            ET.SubElement(
+                properties,
+                "property",
+                name="attempts",
+                value=str(detail.attempts),
+            )
         if detail.status == "fail":
             failure = ET.SubElement(
                 case,
