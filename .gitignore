@@ -25,3 +25,6 @@ spike/spike_output.log
 
 # demo script
 demo.ps1
+
+# Conductor runtime state
+.conductor/
