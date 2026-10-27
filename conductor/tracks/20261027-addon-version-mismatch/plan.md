@@ -14,10 +14,14 @@
 - **Covers:** FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7
 - **Touches:** `tests/unit/test_addon_check.py`, `tests/unit/test_coverage_addon_gate.py` (new)
 - **Verification:** `CI=true pytest tests/unit/test_addon_check.py tests/unit/test_coverage_addon_gate.py -q` (new gate tests FAIL before fix)
-- **Status:** in_progress
+- **Status:** verified
 
-- [ ] **P1.T1: Add gate tests for stale/missing coverage addon (exit 2, zero suites dispatched)** — covers: FR-1, FR-2, AC-1, AC-2, AC-7
-- [ ] **P1.T2: Add gate tests for native test addon + suppression/newer/message-content cases** — covers: FR-3, FR-4, FR-5, FR-6, AC-3, AC-4, AC-5, AC-6
+**Result:** verified
+**Checkpoint:** b87245b
+**Evidence:** conductor/tracks/20261027-addon-version-mismatch/verification/phase-1.md
+
+- [x] **P1.T1: Add gate tests for stale/missing coverage addon (exit 2, zero suites dispatched)** — covers: FR-1, FR-2, AC-1, AC-2, AC-7
+- [x] **P1.T2: Add gate tests for native test addon + suppression/newer/message-content cases** — covers: FR-3, FR-4, FR-5, FR-6, AC-3, AC-4, AC-5, AC-6
 
 <!--
 The primary appends after acceptance:
