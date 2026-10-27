@@ -264,15 +264,15 @@ def test_cache_v1_plan_is_regenerated_with_outdated_reason(tmp_path):
     assert plan.files  # a fresh plan was generated
 
 
-def test_plan_version_is_8_after_inference_annotations():
-    """PLAN_VERSION is 8 so pre-inference-annotation plans are stale.
+def test_plan_version_is_9_after_inference_annotations():
+    """PLAN_VERSION is 9 so pre-inference-annotation plans are stale.
 
     Version 7 plans keep zero-point files as silent-omission targets and
     carry no per-file ``warning_ignores``, so wrapped-operand inferred
     declarations fail to reload under default warning settings. The
-    version must have moved on to 8.
+    version must have moved on to 9.
     """
-    assert PLAN_VERSION == 8
+    assert PLAN_VERSION == 9
 
 
 def test_cache_v3_plan_is_regenerated_with_outdated_reason(tmp_path):

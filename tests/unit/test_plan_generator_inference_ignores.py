@@ -252,8 +252,8 @@ def test_zero_point_exclusion_warns(tmp_path, capsys):
 
 
 def test_plan_version_bumped_to_eight():
-    """Stale cached plans (version 7) must regenerate, so bump to 8."""
-    assert PLAN_VERSION == 8
+    """Stale cached plans (version 8) must regenerate, so bump to 9."""
+    assert PLAN_VERSION == 9
 
 
 # --- FR-R1: cache interaction ---

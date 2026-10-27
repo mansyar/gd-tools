@@ -508,6 +508,8 @@ def _inject(source: str, lines, warning_ignores=()) -> str:
     for entry in sorted(lines, key=lambda e: e.line, reverse=True):
         if getattr(entry, "operand_span", None) is not None:
             continue
+        if (entry.branch_type or "").endswith("_short"):
+            continue
         target = entry.line - 1
         if target < 0 or target >= len(src_lines):
             continue
