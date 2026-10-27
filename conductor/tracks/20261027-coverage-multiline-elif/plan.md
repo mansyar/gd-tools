@@ -40,10 +40,16 @@ The primary appends after acceptance:
 - **Covers:** FR-1, FR-2, FR-5, AC-1, AC-2, AC-3, AC-6
 - **Touches:** `src/gd_tools/addons/gd-tools-test/gd_tools_native_coverage.gd`, `tests/integration/test_coverage_instrumentation_parses.py` (port mirror only)
 - **Verification:** `CI=true pytest tests/integration/test_coverage_instrumentation_parses.py -q` (batch parse green incl. new fixture)
-- **Status:** pending
+- **Status:** verified
 
-- [ ] **P2.T1: Implement _find_header_end scan (depth-aware colon, strings/comments/backslash) + use for elif_true/match_case/if_false** — covers: FR-1, FR-2
-- [ ] **P2.T2: Mirror header-end rule in Python test port; update drift guard** — covers: FR-5
+- [x] **P2.T1: Implement _find_header_end scan (depth-aware colon, strings/comments/backslash) + use for elif_true/match_case/if_false** — covers: FR-1, FR-2
+- [x] **P2.T2: Mirror header-end rule in Python test port; update drift guard** — covers: FR-5
+
+**Result:** verified
+**Checkpoint:** ee6b024
+**Evidence:** conductor/tracks/20261027-coverage-multiline-elif/verification/phase-2.md
+**Deviations accepted:** (1) narrowed second assert in header-end red test to `GdToolsNativeCoverage.hit(` — hit_ret operand wrappers are by-design inside guards and parseable; first assert still pins FR-1. (2) EOF-safe indent fallback in collector (fail-open, no single-line behavior change).
+**Note:** Primary applied black formatting to the port mirror file and re-verified 47 passed.
 
 <!--
 The primary appends after acceptance:
