@@ -358,8 +358,14 @@ static func _inject_trackers(
 		var branch_type = str(entry.get("branch_type", ""))
 		var insert_index := target_index
 		if branch_type in ["match_case", "if_false", "elif_true"]:
-			insert_index = target_index + 1
-		var indent := _extract_indent(source_lines[insert_index])
+			var header_end := _find_header_end(source_lines, target_index)
+			if header_end >= 0:
+				insert_index = header_end + 1
+			else:
+				insert_index = target_index + 1
+		var indent := ""
+		if insert_index >= 0 and insert_index < source_lines.size():
+			indent = _extract_indent(source_lines[insert_index])
 		if indent.is_empty():
 			indent = _extract_indent(source_lines[target_index])
 		var tracker := "%sGdToolsNativeCoverage.hit(%d, %d)" % [
@@ -512,3 +518,105 @@ static func _extract_indent(line: String) -> String:
 		else:
 			break
 	return indent
+
+
+static func _find_header_end(source_lines: PackedStringArray, start_index: int) -> int:
+	## Scan forward from a branch header start line to its terminating colon.
+	##
+	## Returns the 0-based line index holding the first `:` at bracket-depth 0
+	## outside strings and comments, or -1 when it cannot be resolved. The
+	## caller fails open on -1 by keeping the historical insertion position
+	## rather than corrupting the source.
+	var size := source_lines.size()
+	if start_index < 0 or start_index >= size:
+		return -1
+	var depth := 0
+	var in_single := ""
+	var in_triple := ""
+	var escaped := false
+	var i := start_index
+	while i < size:
+		var line := source_lines[i]
+		var last_code := ""
+		var j := 0
+		var length := line.length()
+		while j < length:
+			if not in_triple.is_empty():
+				if escaped:
+					escaped = false
+					j += 1
+					continue
+				if line.substr(j, 1) == "\\":
+					escaped = true
+					j += 1
+					continue
+				if line.substr(j, 3) == in_triple:
+					in_triple = ""
+					j += 3
+					continue
+				j += 1
+				continue
+			if not in_single.is_empty():
+				if escaped:
+					escaped = false
+					j += 1
+					continue
+				if line.substr(j, 1) == "\\":
+					escaped = true
+					j += 1
+					continue
+				if line.substr(j, 1) == in_single:
+					in_single = ""
+					j += 1
+					continue
+				j += 1
+				continue
+			var ch := line.substr(j, 1)
+			if ch == "#":
+				break
+			if ch == "\"" or ch == "'":
+				var triple := ch + ch + ch
+				if line.substr(j, 3) == triple:
+					in_triple = triple
+					escaped = false
+					j += 3
+					continue
+				in_single = ch
+				escaped = false
+				j += 1
+				continue
+			if ch == "(" or ch == "[" or ch == "{":
+				depth += 1
+				last_code = ch
+				j += 1
+				continue
+			if ch == ")" or ch == "]" or ch == "}":
+				depth = maxi(0, depth - 1)
+				last_code = ch
+				j += 1
+				continue
+			if ch == ":":
+				if depth == 0:
+					return i
+				last_code = ch
+				j += 1
+				continue
+			if ch == " " or ch == "\t" or ch == "\r":
+				j += 1
+				continue
+			if ch == "\\":
+				last_code = ch
+				j += 1
+				continue
+			last_code = ch
+			j += 1
+		if not in_single.is_empty():
+			in_single = ""
+			escaped = false
+		else:
+			escaped = false
+		if depth > 0 or last_code == "\\":
+			i += 1
+			continue
+		return -1
+	return -1

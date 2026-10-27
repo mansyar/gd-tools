@@ -152,9 +152,9 @@ def test_non_ternary_points_have_no_operand_span(tmp_path):
 
 
 def test_plan_version_is_8_with_expression_branch_points():
-    """PLAN_VERSION bumps past span-less and expression-less plans (3-7)
+    """PLAN_VERSION bumps past span-less and expression-less plans (3-8)
     so they regenerate."""
-    assert PLAN_VERSION == 8
+    assert PLAN_VERSION == 9
 
 
 # --- FR-5: JSON round-trip ---
