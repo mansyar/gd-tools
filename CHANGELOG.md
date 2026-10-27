@@ -1,3 +1,9 @@
+## v0.10.0 (2026-10-27)
+
+### Feat
+
+- **coverage**: refuse test --coverage on stale or missing addons (#56)
+
 ## v0.9.0 (2026-10-27)
 
 ### Feat
