@@ -1,5 +1,7 @@
 # Project Context
 
+<!-- conductor-version: 2 -->
+
 ## Definition
 - [Product Definition](./product.md)
 - [Product Guidelines](./product-guidelines.md)
@@ -10,5 +12,10 @@
 - [Code Style Guides](./code_styleguides/)
 
 ## Management
+- [Tracks Registry](./tracks.md)
+- [Tracks Directory](./tracks/)
+
+## Tracks
+
 - [Tracks Registry](./tracks.md)
 - [Tracks Directory](./tracks/)
