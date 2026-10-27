@@ -382,6 +382,109 @@ def _indent_of(line: str) -> str:
     return out
 
 
+def _find_header_end(src_lines, start_index: int) -> int:
+    """Scan forward to the header-terminating colon.
+
+    Port of the collector's ``_find_header_end``: return the 0-based
+    line index holding the first ``:`` at bracket-depth 0 outside
+    strings and comments, or -1 when it cannot be resolved. The
+    caller fails open on -1 by keeping the historical insertion
+    position rather than corrupting the source.
+    """
+    if start_index < 0 or start_index >= len(src_lines):
+        return -1
+    depth = 0
+    in_single = ""
+    in_triple = ""
+    escaped = False
+    i = start_index
+    while i < len(src_lines):
+        line = src_lines[i]
+        last_code = ""
+        j = 0
+        n = len(line)
+        while j < n:
+            if in_triple:
+                if escaped:
+                    escaped = False
+                    j += 1
+                    continue
+                if line[j] == "\\":
+                    escaped = True
+                    j += 1
+                    continue
+                if line[j : j + 3] == in_triple:
+                    in_triple = ""
+                    j += 3
+                    continue
+                j += 1
+                continue
+            if in_single:
+                if escaped:
+                    escaped = False
+                    j += 1
+                    continue
+                if line[j] == "\\":
+                    escaped = True
+                    j += 1
+                    continue
+                if line[j] == in_single:
+                    in_single = ""
+                    j += 1
+                    continue
+                j += 1
+                continue
+            ch = line[j]
+            if ch == "#":
+                break
+            if ch in ("\"", "'"):
+                triple = ch * 3
+                if line[j : j + 3] == triple:
+                    in_triple = triple
+                    escaped = False
+                    j += 3
+                    continue
+                in_single = ch
+                escaped = False
+                j += 1
+                continue
+            if ch in "([{":
+                depth += 1
+                last_code = ch
+                j += 1
+                continue
+            if ch in ")]}":
+                depth = max(0, depth - 1)
+                last_code = ch
+                j += 1
+                continue
+            if ch == ":":
+                if depth == 0:
+                    return i
+                last_code = ch
+                j += 1
+                continue
+            if ch in (" ", "\t", "\r"):
+                j += 1
+                continue
+            if ch == "\\":
+                last_code = ch
+                j += 1
+                continue
+            last_code = ch
+            j += 1
+        if in_single:
+            in_single = ""
+            escaped = False
+        else:
+            escaped = False
+        if depth > 0 or last_code == "\\":
+            i += 1
+            continue
+        return -1
+    return -1
+
+
 def _inject(source: str, lines, warning_ignores=()) -> str:
     """Port of ``_inject_trackers`` from the native coverage collector.
 
@@ -409,8 +512,14 @@ def _inject(source: str, lines, warning_ignores=()) -> str:
         if target < 0 or target >= len(src_lines):
             continue
         if entry.branch_type in _AFTER_LINE_BRANCH_TYPES:
-            target += 1
-        indent = _indent_of(src_lines[target])
+            header_end = _find_header_end(src_lines, target)
+            if header_end >= 0:
+                target = header_end + 1
+            else:
+                target += 1
+        if target < 0 or target > len(src_lines):
+            continue
+        indent = _indent_of(src_lines[target]) if target < len(src_lines) else ""
         if not indent:
             indent = _indent_of(src_lines[entry.line - 1])
         src_lines.insert(
@@ -633,6 +742,29 @@ def test_injection_port_tracks_the_collector():
         "error-by-default) and the file would vanish from coverage."
     )
 
+    header_finder = re.search(r"func _find_header_end\(", source)
+    assert header_finder, (
+        "Collector no longer defines _find_header_end; _inject's "
+        "header-terminator scan has no collector counterpart to mirror."
+    )
+
+    header_use = re.search(r"_find_header_end\(source_lines", source)
+    assert header_use, (
+        "Collector no longer uses _find_header_end for after-line "
+        "insertion; _inject's header-end rule is now wrong."
+    )
+
+    port_text = Path(__file__).read_text(encoding="utf-8")
+    assert "def _find_header_end(" in port_text, (
+        "Port no longer defines _find_header_end; it cannot mirror the "
+        "collector's header-terminator scan."
+    )
+    inject_section = port_text.split("def _inject(")[1].split("\ndef ")[0]
+    assert "_find_header_end" in inject_section, (
+        "Port's _inject no longer calls _find_header_end for after-line "
+        "branch types; it has diverged from the collector."
+    )
+
 
 SIMPLE_TERNARY = (
     "extends Node\n\n\nfunc f(a: int) -> void:\n"
@@ -783,7 +915,10 @@ def test_multiline_elif_tracker_lands_after_header_terminator(tmp_path):
     head = out_lines.index("\telif (")
     term = out_lines.index("\t):")
     segment = "\n".join(out_lines[head : term + 1])
-    assert "GdToolsNativeCoverage" not in segment, (
+    # Line-inserted hit() trackers must not leak into the open condition.
+    # Value-preserving hit_ret() operand wrappers inside the guard are
+    # expected (or-chain arms) and parse fine, so only forbid hit(.
+    assert "GdToolsNativeCoverage.hit(" not in segment, (
         "tracker leaked into the parenthesized condition:\n" f"{out}"
     )
 
