@@ -2,6 +2,7 @@
 
 import click
 
+from ..addon_check import check_coverage_addon_gate
 from ..config import ConfigError, load_config
 from ..errors import GdToolsError, TestFailureError
 from ..native_test.command import run_native_test_command
@@ -290,6 +291,13 @@ def test(
         effective_random_order = random_order
 
     validate_test_flags(flags, stage=RuleStage.PRE_DISPATCH)
+
+    if coverage:
+        refusal = check_coverage_addon_gate()
+        if refusal is not None:
+            click.echo(refusal, err=True)
+            ctx = click.get_current_context()
+            ctx.exit(2)
 
     try:
         if watch:
