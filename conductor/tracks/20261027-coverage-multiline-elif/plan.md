@@ -90,7 +90,7 @@ The primary appends after acceptance:
 - **Covers:** F1, F2, F3, F4
 - **Touches:** `tests/integration/test_coverage_instrumentation_parses.py`, `tests/unit/test_plan_generator_boolops.py`, `conductor/tech-stack.md`
 - **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/integration/test_coverage_instrumentation_parses.py -q` plus `ruff check` / `black --check`
-- **Status:** pending
+- **Status:** in_progress
 
 - [ ] **R1.T1: Resolve F1 + F3 (port edge units + `_short` parity in drift guard)** — covers: F1, F3
 - [ ] **R1.T2: Resolve F2 (match-when-guard + ternary-in-guard anchor tests)** — covers: F2
