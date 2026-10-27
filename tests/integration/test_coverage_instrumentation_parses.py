@@ -728,6 +728,124 @@ def test_non_ternary_points_still_inject_line_trackers(tmp_path):
         assert f"GdToolsNativeCoverage.hit(0, {pid})" in out, out
 
 
+def _tracker_index(output: str, pid: int) -> int:
+    """Return the 0-based output line holding the hit marker for ``pid``."""
+    marker = f"GdToolsNativeCoverage.hit(0, {pid})"
+    for index, line in enumerate(output.split("\n")):
+        if marker in line:
+            return index
+    raise AssertionError(f"no tracker for point {pid} in:\n{output}")
+
+
+def _branch_id(lines, branch_type: str, line: int) -> int:
+    """Return the point id for one branch type recorded on one line."""
+    ids = [
+        p.id
+        for p in lines
+        if p.branch_type == branch_type and p.line == line
+    ]
+    assert len(ids) == 1, (
+        f"expected exactly one {branch_type} point on line {line}"
+    )
+    return ids[0]
+
+
+# --- Multi-line branch headers (FR-1, FR-2) ---
+#
+# The native collector inserts after-line branch trackers (elif_true,
+# match_case, if_false) on the line after the recorded one. For a header
+# that spans several lines the recorded line is the header *start*, so
+# the tracker lands inside the open condition and the file no longer
+# parses (Godot error 43). The fixed port must scan to the
+# header-terminating colon first. These tests fail until then.
+
+
+def test_multiline_elif_tracker_lands_after_header_terminator(tmp_path):
+    """A tracker for a parenthesized elif must clear the whole header."""
+    source = (
+        "extends Node\n\n\n"
+        "func classify(action: String, fast: bool) -> String:\n"
+        '\tif action == "idle":\n'
+        '\t\treturn "idle"\n'
+        "\telif (\n"
+        '\t\taction == "run"\n'
+        "\t\tor fast\n"
+        "\t):\n"
+        '\t\treturn "moving"\n'
+        "\telse:\n"
+        '\t\treturn "other"\n'
+    )
+    lines = _plan_lines(tmp_path, source)
+    elif_id = _branch_id(lines, "elif_true", 7)
+
+    out = _inject(source, lines)
+
+    out_lines = out.split("\n")
+    assert out_lines[_tracker_index(out, elif_id) - 1] == "\t):", out
+    head = out_lines.index("\telif (")
+    term = out_lines.index("\t):")
+    segment = "\n".join(out_lines[head : term + 1])
+    assert "GdToolsNativeCoverage" not in segment, (
+        "tracker leaked into the parenthesized condition:\n" f"{out}"
+    )
+
+
+def test_single_line_branch_headers_inject_exactly_as_before(tmp_path):
+    """NFR-1 pin: single-line headers keep today's tracker placement."""
+    source = (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        "\tif a > 0:\n\t\tprint(\"big\")\n"
+        "\telif a < 0:\n\t\tprint(\"small\")\n"
+        "\telse:\n\t\tprint(\"zero\")\n"
+        "\tmatch a:\n\t\t1:\n\t\t\tprint(\"one\")\n"
+        '\t\t_:\n\t\t\tprint("other")\n'
+    )
+    lines = _plan_lines(tmp_path, source)
+
+    out = _inject(source, lines)
+
+    out_lines = out.split("\n")
+    # Each after-line tracker sits immediately after its header line,
+    # directly before whatever the body line became after wrapping.
+    # Plan lines are hardcoded: the elif/else/match headers are on
+    # lines 7, 9, and 12 of the source above.
+    for branch_type, plan_line, header in (
+        ("elif_true", 7, "\telif a < 0:"),
+        ("if_false", 9, "\telse:"),
+        ("match_case", 12, "\t\t1:"),
+    ):
+        pid = _branch_id(lines, branch_type, plan_line)
+        line_no = out_lines.index(header)
+        marker = f"GdToolsNativeCoverage.hit(0, {pid})"
+        assert marker in out_lines[line_no + 1], out
+
+
+def test_multiline_elif_fixture_injects_after_header_terminator(tmp_path):
+    """The bug-report fixture instruments without breaking the parse."""
+    fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "gdscript"
+        / "multiline_elif.gd"
+    )
+    source = fixture.read_text(encoding="utf-8")
+    (tmp_path / "multiline_elif.gd").write_text(source, encoding="utf-8")
+    plan = generate_plan(str(tmp_path))
+    assert len(plan.files) == 1, "fixture must parse as GDScript"
+    lines = plan.files[0].lines
+    elif_id = _branch_id(lines, "elif_true", 6)
+
+    out = _inject(source, lines)
+
+    out_lines = out.split("\n")
+    term = out_lines.index("\t):")
+    assert _tracker_index(out, elif_id) == term + 1, out
+
+    case_id = _branch_id(lines, "match_case", 18)
+    case_term = out_lines.index("\t\t\t2]:")
+    assert _tracker_index(out, case_id) == case_term + 1, out
+
+
 def test_ternary_entry_without_span_falls_back_to_line_tracker(tmp_path):
     """A ternary point missing its span (stale/hand-built plan) still
     instruments by line insertion rather than being dropped silently."""
