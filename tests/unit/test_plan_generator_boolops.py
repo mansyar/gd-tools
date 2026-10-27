@@ -394,6 +394,67 @@ def test_or_chain_in_elif_anchors_to_elif_header_line(tmp_path):
     assert short_span is None
 
 
+def test_or_chain_in_match_when_guard_anchors_to_case_line(tmp_path):
+    """An or-chain inside a match `when` guard anchors to the case (FR-3).
+
+    Mirrors ``test_or_chain_in_elif_anchors_to_elif_header_line`` for
+    the match-guard half of ``BRANCH_GUARD_ANCHOR_NODES``.
+    """
+    source = (
+        "extends Node\n"
+        "\n"
+        "func f(a: int, b: bool, c: bool) -> void:\n"
+        "\tmatch a:\n"
+        "\t\t1 when b or c:\n"
+        "\t\t\tprint(1)\n"
+        "\t\t_:\n"
+        "\t\t\tprint(2)\n"
+    )
+    points = _expr_points(tmp_path, source)
+
+    # The guard lives on line 5; every point must say so too.
+    site_line, site_span = _by_type(points, "or_site")
+    assert site_line == 5
+    assert site_span[0] == 5
+    right_line, right_span = _by_type(points, "or_right")
+    assert right_line == 5
+    assert right_span[0] == 5
+    short_line, short_span = _by_type(points, "or_short")
+    assert short_line == 5
+    assert short_span is None
+
+
+def test_ternary_in_elif_guard_anchors_to_elif_line(tmp_path):
+    """A ternary inside an elif guard anchors to the elif line (FR-3).
+
+    The ternary half of the ``BRANCH_GUARD_ANCHOR_NODES`` contract:
+    both arms report against the elif header, not the enclosing if.
+    """
+    source = (
+        "extends Node\n"
+        "\n"
+        "func f(a: bool, b: bool) -> void:\n"
+        "\tif a:\n"
+        "\t\tprint(1)\n"
+        "\telif (1 if b else 2) > 0:\n"
+        "\t\tprint(2)\n"
+    )
+    (tmp_path / "sample.gd").write_text(source, encoding="utf-8")
+    plan = generate_plan(str(tmp_path))
+    assert len(plan.files) == 1, "expected exactly one planned file"
+    points = [
+        (p.branch_type, p.line, p.operand_span)
+        for p in plan.files[0].lines
+        if p.branch_type in ("ternary_true", "ternary_false")
+    ]
+
+    # The ternary lives on line 6; both arms must say so too.
+    assert len(points) == 2, f"expected two ternary arms, got {points}"
+    for branch_type, line, span in points:
+        assert line == 6, f"{branch_type} anchored to {line}, expected 6"
+        assert span is not None and span[0] == 6
+
+
 def test_read_plan_json_rejects_stale_plan_version(tmp_path):
     """A plan cached under an older PLAN_VERSION is rejected (FR-4).
 
