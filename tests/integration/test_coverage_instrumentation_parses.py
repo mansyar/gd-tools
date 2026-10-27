@@ -437,7 +437,7 @@ def _find_header_end(src_lines, start_index: int) -> int:
             ch = line[j]
             if ch == "#":
                 break
-            if ch in ("\"", "'"):
+            if ch in ('"', "'"):
                 triple = ch * 3
                 if line[j : j + 3] == triple:
                     in_triple = triple
@@ -519,7 +519,9 @@ def _inject(source: str, lines, warning_ignores=()) -> str:
                 target += 1
         if target < 0 or target > len(src_lines):
             continue
-        indent = _indent_of(src_lines[target]) if target < len(src_lines) else ""
+        indent = (
+            _indent_of(src_lines[target]) if target < len(src_lines) else ""
+        )
         if not indent:
             indent = _indent_of(src_lines[entry.line - 1])
         src_lines.insert(
