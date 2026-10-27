@@ -376,7 +376,7 @@ _Archived tracks live in `./archive/`._
 - [x] **Track: Coverage Multiline Elif** (`bug`, `high`)
   *Link: [20261027-coverage-multiline-elif](./archive/20261027-coverage-multiline-elif/index.md)*
 
-- [~] **Track: Coverage Addon Version Gate** (`feature`, `medium`)
+- [x] **Track: Coverage Addon Version Gate** (`feature`, `medium`)
   *Link: [20261027-addon-version-mismatch](./tracks/20261027-addon-version-mismatch/index.md)*
 
 
