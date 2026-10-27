@@ -403,8 +403,11 @@ def test_read_plan_json_rejects_stale_plan_version(tmp_path):
     cache_path = tmp_path / "plan.json"
     cache_path.write_text(
         json.dumps(
-            {"version": PLAN_VERSION - 1, "generated_by": "gd-tools",
-             "files": []}
+            {
+                "version": PLAN_VERSION - 1,
+                "generated_by": "gd-tools",
+                "files": [],
+            }
         ),
         encoding="utf-8",
     )

@@ -464,9 +464,7 @@ def test_incomplete_measurement_and_below_threshold_are_distinct(
     assert omission_gate_message(reconcile_omissions(plan, thin), 80) is None
 
     with pytest.raises(CoverageThresholdError) as exc_info:
-        generate_report(
-            plan, thin, tmp_path, format="json", min_threshold=0.8
-        )
+        generate_report(plan, thin, tmp_path, format="json", min_threshold=0.8)
 
     assert "below minimum" in str(exc_info.value)
     assert "incomplete" not in str(exc_info.value).lower()

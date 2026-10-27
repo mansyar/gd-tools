@@ -740,13 +740,11 @@ def _tracker_index(output: str, pid: int) -> int:
 def _branch_id(lines, branch_type: str, line: int) -> int:
     """Return the point id for one branch type recorded on one line."""
     ids = [
-        p.id
-        for p in lines
-        if p.branch_type == branch_type and p.line == line
+        p.id for p in lines if p.branch_type == branch_type and p.line == line
     ]
-    assert len(ids) == 1, (
-        f"expected exactly one {branch_type} point on line {line}"
-    )
+    assert (
+        len(ids) == 1
+    ), f"expected exactly one {branch_type} point on line {line}"
     return ids[0]
 
 
@@ -794,10 +792,10 @@ def test_single_line_branch_headers_inject_exactly_as_before(tmp_path):
     """NFR-1 pin: single-line headers keep today's tracker placement."""
     source = (
         "extends Node\n\n\nfunc f(a: int) -> void:\n"
-        "\tif a > 0:\n\t\tprint(\"big\")\n"
-        "\telif a < 0:\n\t\tprint(\"small\")\n"
-        "\telse:\n\t\tprint(\"zero\")\n"
-        "\tmatch a:\n\t\t1:\n\t\t\tprint(\"one\")\n"
+        '\tif a > 0:\n\t\tprint("big")\n'
+        '\telif a < 0:\n\t\tprint("small")\n'
+        '\telse:\n\t\tprint("zero")\n'
+        '\tmatch a:\n\t\t1:\n\t\t\tprint("one")\n'
         '\t\t_:\n\t\t\tprint("other")\n'
     )
     lines = _plan_lines(tmp_path, source)
