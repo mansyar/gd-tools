@@ -101,3 +101,60 @@ contingency the brief prescribes `blocked` for. Suggested primary sequence:
 literals in `test_plan_generator_ternary_spans.py` /
 `test_plan_generator_inference_ignores.py`, outside this phase's
 verification set but red in full CI), (4) re-run this phase's command.
+
+## Rework round 1 (2026-10-27 UTC)
+
+Tasks R3.T1–R3.T4, all mechanical consequences of the approved v9 bump.
+
+- **R3.T1** — `tests/integration/test_coverage_instrumentation_parses.py`,
+  `_inject`: added the same `_short` skip the real collector has
+  (`gd_tools_native_coverage.gd:350-354`):
+  `if (entry.branch_type or "").endswith("_short"): continue`,
+  right after the `operand_span` skip. Nothing else in the file touched.
+- **R3.T2** — regenerated via `python tools/generate_expected_plans.py`
+  (exit 0; "Regenerated 8 expected plan fixtures"). `git diff` of
+  `tests/fixtures/plans/`: the ONLY content diffs in all 8
+  `*.expected.json` files are `"version": 8` → `9` (one hunk per file).
+  No re-anchored elif/match-guard boolop arms — consistent with the
+  fixtures containing no `and`/`or` chains inside `elif`/`match` guards
+  (verified: no `_short`/`or_`/`and_` branch types in any expected JSON;
+  `branches.gd`/`match_stmt.gd` have plain single-line headers). In
+  particular `match_stmt` and `branches` fixtures show version-only diffs.
+  No out-of-scope diff → no block.
+- **R3.T3** — `tests/fixtures/coverage_plans/test_plan.json`:
+  `"version": 8` → `9`. Its entries hold only statement/if_true/if_false/
+  loop_body points (no elif/match-guard boolops), so the version bump
+  alone suffices; confirmed by the omissions tests passing (17/17).
+- **R3.T4** — version literals `== 8` → `== 9` (+ docstrings):
+  `tests/unit/test_plan_generator.py`
+  (`test_plan_version_is_8_after_inference_annotations` renamed to
+  `test_plan_version_is_9_after_inference_annotations`, docstring updated),
+  `tests/unit/test_plan_generator_inference_ignores.py:254-256`
+  (docstring now "version 8 ... bump to 9", assert `== 9`; test function
+  name left untouched per minimal-change scope),
+  `tests/unit/test_plan_generator_ternary_spans.py:154-157`
+  (docstring range now "(3-8)", assert `== 9`; function name untouched),
+  `tests/integration/test_coverage_playtest_cli.py:289`
+  (`assert plan["version"] == 9`; no surrounding version docstring found —
+  grep shows that line is the only version reference in the file). No
+  other `== 8` occurrences touched.
+
+Verification (exact command from the brief, PowerShell form):
+
+```
+$env:CI='true'; pytest tests/unit/test_plan_generator_boolops.py tests/unit/test_plan_generator.py tests/unit/test_omissions.py tests/integration/test_coverage_instrumentation_parses.py -q
+```
+
+- Exit code: **1**, caused ONLY by the repo-global `fail-under=80` gate
+  tripping on this 4-file partial run (total 31.46% — per-run-totals
+  artifact, not a test failure).
+- Result line: **161 passed in 12.92s** — zero failures, zero errors
+  (previously: 10 failed, 134 passed, 17 errors). Every previously red
+  item is green, including `test_multiline_elif_tracker_lands_after_
+  header_terminator`, `test_multiline_elif_fixture_injects_after_header_
+  terminator`, the 7× `test_plan_generation_matches_expected[*]`, all 17
+  `test_omissions.py` tests (incl. the FR-6/AC-7 gate-split test), and the
+  `PLAN_VERSION` literal tests.
+- `ruff check src/ tests/` → **All checks passed!** (exit 0).
+- `black --check src/ tests/` → **203 files would be left unchanged**
+  (exit 0); no hand-formatting needed.
