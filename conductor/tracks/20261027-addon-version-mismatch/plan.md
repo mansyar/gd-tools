@@ -37,7 +37,7 @@ The primary appends after acceptance:
 - **Covers:** FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7
 - **Touches:** `src/gd_tools/addon_check.py`, `src/gd_tools/commands/test.py`, `tests/unit/test_addon_check.py`, `tests/unit/test_coverage_addon_gate.py`
 - **Verification:** `CI=true pytest tests/unit/test_addon_check.py tests/unit/test_coverage_addon_gate.py -q` (green) plus full `tests/unit` for regressions
-- **Status:** pending
+- **Status:** in_progress
 
 - [ ] **P2.T1: Add strict gate helper (stale/missing → exit 2, both addons, env-suppressible)** — covers: FR-1, FR-2, FR-3, FR-4, FR-5
 - [ ] **P2.T2: Wire gate into `test --coverage` pre-dispatch with promoted refusal message** — covers: FR-6, FR-7, AC-6
