@@ -116,6 +116,13 @@ This check is also suppressed by `GD_TOOLS_NO_UPDATE_CHECK=1`. The
 `gd-tools doctor` command reports addon staleness as part of the
 Coverage Addon check.
 
+For `gd-tools test --coverage`, the check is a hard gate rather than a
+warning: if the deployed coverage addon or the native test addon is
+outdated (or its version file is missing or unparseable), the command
+aborts before running any tests with exit code 2 and an error naming
+both versions. Re-run `gd-tools init` to update the deployed addons.
+A deployed addon newer than the installed CLI is allowed.
+
 
 ## 2. Configuration
 
@@ -1648,10 +1655,10 @@ gd-tools coverage run --report-format html
 |---|---|
 | 0 | Session completed and the report was generated. |
 | 1 | `--min` threshold not met. |
-| 2 | Configuration error, invalid scene, missing project, launch failure, or no coverage data produced. |
+| 2 | Configuration error, invalid scene, missing project, launch failure, stale coverage/test addon on a `--coverage` run, or no coverage data produced. |
 
 **Requires:** the coverage addon installed (`gd-tools init`) with the
-`_GDTCoverage` autoload registered. If the game crashes, a warning
+`_GDTCoverage` autoload registered, at the same version as the installed CLI (see the update check above). If the game crashes, a warning
 notes that partial data from the last periodic snapshot was reported.
 
 ### 3.8 gd-tools version
