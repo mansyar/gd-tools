@@ -63,12 +63,18 @@ The primary appends after acceptance:
 - **Goal:** Boolop anchors point at the true header; stale plans invalidate; gate split is pinned.
 - **Depends on:** Phase 2
 - **Covers:** FR-3, FR-4, FR-6, AC-4, AC-5, AC-7
-- **Touches:** `src/gd_tools/coverage/plan_generator.py`, `tests/unit/test_plan_generator_boolops.py` snapshots, `tests/unit/test_omissions.py`
+- **Touches:** `src/gd_tools/coverage/plan_generator.py`, `tests/unit/test_plan_generator_boolops.py` snapshots, `tests/unit/test_omissions.py`, plus rework expansion (round 1): `tests/integration/test_coverage_instrumentation_parses.py` (port `_short` skip only), `tests/fixtures/plans/*.expected.json` (regenerate), `tests/fixtures/coverage_plans/test_plan.json` (version bump), version literals in `tests/unit/test_plan_generator.py`, `tests/unit/test_plan_generator_inference_ignores.py`, `tests/unit/test_plan_generator_ternary_spans.py`, `tests/integration/test_coverage_playtest_cli.py`
 - **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/unit/test_plan_generator.py tests/unit/test_omissions.py tests/integration/test_coverage_instrumentation_parses.py -q`
-- **Status:** pending
+- **Status:** verified
 
-- [ ] **P3.T1: Re-anchor elif/match-guard boolops to nearest branch header; bump PLAN_VERSION** — covers: FR-3, FR-4
-- [ ] **P3.T2: Refresh plan snapshots + stale-cache test; confirm gate message split** — covers: FR-4, FR-6
+- [x] **P3.T1: Re-anchor elif/match-guard boolops to nearest branch header; bump PLAN_VERSION** — covers: FR-3, FR-4
+- [x] **P3.T2: Refresh plan snapshots + stale-cache test; confirm gate message split** — covers: FR-4, FR-6
+- [x] **R3.T1-T4 (rework round 1): port `_short` skip mirror, regenerate 8 expected fixtures at v9, bump coverage_plans fixture, update version literals** — covers: FR-4, FR-5, FR-6
+
+**Result:** verified
+**Checkpoint:** a1c0f45
+**Evidence:** conductor/tracks/20261027-coverage-multiline-elif/verification/phase-3.md
+**Note:** Rework round 1 used (1 of 2). Regenerated fixture diffs are version-only; full phase command: 161 passed, 0 failed (exit 1 solely from partial-run fail-under=80 totals artifact).
 
 <!--
 The primary appends after acceptance:
