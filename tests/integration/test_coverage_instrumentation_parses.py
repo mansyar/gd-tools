@@ -758,6 +758,13 @@ def test_injection_port_tracks_the_collector():
         "insertion; _inject's header-end rule is now wrong."
     )
 
+    short_skip = re.search(r'ends_with\("_short"\)', source)
+    assert short_skip, (
+        "Collector no longer skips derived _short arms during line "
+        "insertion; _inject's skip would diverge (this exact parity "
+        "regressed once before)."
+    )
+
     port_text = Path(__file__).read_text(encoding="utf-8")
     assert "def _find_header_end(" in port_text, (
         "Port no longer defines _find_header_end; it cannot mirror the "
@@ -767,6 +774,10 @@ def test_injection_port_tracks_the_collector():
     assert "_find_header_end" in inject_section, (
         "Port's _inject no longer calls _find_header_end for after-line "
         "branch types; it has diverged from the collector."
+    )
+    assert 'endswith("_short")' in inject_section, (
+        "Port's _inject no longer skips derived _short arms; it has "
+        "diverged from the collector."
     )
 
 
@@ -981,6 +992,60 @@ def test_multiline_elif_fixture_injects_after_header_terminator(tmp_path):
     case_id = _branch_id(lines, "match_case", 18)
     case_term = out_lines.index("\t\t\t2]:")
     assert _tracker_index(out, case_id) == case_term + 1, out
+
+
+def test_find_header_end_ignores_colon_inside_string():
+    """A colon inside a string is not the header terminator."""
+    src_lines = [
+        '\telif mode == "a:b" \\',
+        "\t\tor fast:",
+        "\t\tpass",
+    ]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_ignores_colon_inside_comment():
+    """A colon inside a trailing comment is not the terminator."""
+    src_lines = [
+        "\telif a == 1 \\  # mode: fast",
+        "\t\tor b == 2:",
+        "\t\tpass",
+    ]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_allows_trailing_comment_after_terminator():
+    """A trailing comment after the terminator changes nothing."""
+    src_lines = ["\telif a == 1:  # done: yes", "\t\tpass"]
+
+    assert _find_header_end(src_lines, 0) == 0
+
+
+def test_find_header_end_follows_backslash_continuation():
+    """A backslash-continued elif header resolves past the break."""
+    src_lines = ["\telif a == 1 \\", "\t\tor b == 2:", "\t\tpass"]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_skips_nested_brackets():
+    """Colons at bracket depth > 0 do not terminate the header."""
+    src_lines = [
+        "\telif (data.get(0) == [1,",
+        '\t\t{"a": 2}] or fast):',
+        "\t\tpass",
+    ]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_resolves_terminator_on_last_line():
+    """A header ending on the final line still resolves (EOF edge)."""
+    src_lines = ["\telif (", "\t\ta == 1", "\t):"]
+
+    assert _find_header_end(src_lines, 0) == 2
 
 
 def test_ternary_entry_without_span_falls_back_to_line_tracker(tmp_path):
