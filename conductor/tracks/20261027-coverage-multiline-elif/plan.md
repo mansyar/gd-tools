@@ -90,7 +90,7 @@ The primary appends after acceptance:
 - **Covers:** F1, F2, F3, F4
 - **Touches:** `tests/integration/test_coverage_instrumentation_parses.py`, `tests/unit/test_plan_generator_boolops.py`, `conductor/tech-stack.md`
 - **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/integration/test_coverage_instrumentation_parses.py -q` plus `ruff check` / `black --check`
-- **Status:** in_progress
+- **Status:** verified
 
 - [x] **R1.T1: Resolve F1 + F3 (port edge units + `_short` parity in drift guard)** — covers: F1, F3
 - [ ] **R1.T2: Resolve F2 (match-when-guard + ternary-in-guard anchor tests)** — covers: F2 (ternary half green; match half carried to R2 — real src gap)
@@ -107,10 +107,15 @@ The primary appends after acceptance:
 - **Covers:** F2, FR-3, AC-4
 - **Touches:** `src/gd_tools/coverage/plan_generator.py`, `tests/fixtures/plans/*.expected.json` (only if the generator changes guarded-case output — accept intended diffs only)
 - **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/unit/test_plan_generator.py tests/unit/test_omissions.py tests/integration/test_coverage_instrumentation_parses.py -q` plus `ruff check` / `black --check`
-- **Status:** in_progress
+- **Status:** verified
 
-- [ ] **R2.T1: Handle guarded_match_branch in plan generator (anchor set + match_case emission)** — covers: F2
-- [ ] **R2.T2: Confirm guarded-case plan output through snapshots/batch parse; keep PLAN_VERSION at 9 (unreleased)** — covers: F2
+- [x] **R2.T1: Handle guarded_match_branch in plan generator (anchor set + match_case emission)** — covers: F2
+- [x] **R2.T2: Confirm guarded-case plan output through snapshots/batch parse; keep PLAN_VERSION at 9 (unreleased)** — covers: F2
+
+**Result:** verified
+**Checkpoint:** 207870d
+**Evidence:** conductor/tracks/20261027-coverage-multiline-elif/verification/phase-R2.md
+**Note:** 169 passed, 0 failed (exit 1 solely from partial-run fail-under=80 totals artifact); zero fixture diffs; ruff/black clean.
 
 <!--
 Review fixes are appended by `conductor-review` as:

@@ -5,7 +5,7 @@
 - **Branch:** `fix/20261027-coverage-multiline-elif`
 - **Range:** `332573836dfcd642f9df80b48037f3339e09ab24..9a1f5f8544fe4c4731e57ba814c030b6ab3dfd8f`
 - **Date:** `2026-10-27`
-- **Verdict:** `BLOCK`
+- **Verdict:** `PASS`
 
 ## Summary
 
@@ -30,17 +30,17 @@ The header-end injection fix, guard re-anchor, and v9 invalidation are correct a
 | ID | Implemented by | Verified by | Status |
 | --- | --- | --- | --- |
 | FR-1 | P2.T1 | header-end units + batch Godot parse | covered |
-| FR-2 | P2.T1 | paren-elif + multiline-match paths only | partial |
-| FR-3 | P3.T1 | single-line elif or-chain anchor test | partial |
+| FR-2 | P2.T1 + Phase R1 (6 port-level edge units) | paren-elif + multiline-match paths + string/comment/backslash/nested/EOF units | covered |
+| FR-3 | P3.T1 + Phase R2 (guarded_match_branch src fix) | elif or-chain + match-when-guard + elif-ternary anchor tests | covered |
 | FR-4 | P3.T1, P3.T2 | stale-rejection test + regenerated fixtures | covered |
 | FR-5 | P2.T2, R3.T1 | drift guard green | covered |
 | FR-6 | P1.T4 | gate-split test | covered |
 | NFR-1 | P2.T1 | byte-identical single-line test | covered |
 | NFR-2 | P2.T1 | line-count test + batch parse | covered |
-| NFR-3 | P2.T1 | code inspection only (no dedicated test) | partial |
+| NFR-3 | P2.T1 + Phase R1 (terminator-on-last-line unit) | EOF-safe fallback + last-line unit | covered |
 | AC-1 | P2.T1 | batch parse incl. new fixture | covered |
 | AC-2 | P2.T1 | byte-identical test | covered |
-| AC-3 | P2.T1 | nested-bracket depth only | partial |
+| AC-3 | P2.T1 + Phase R1 edge units | nested-bracket depth + string/comment/backslash/trailing-comment/EOF units | covered |
 | AC-4 | P3.T1 | elif or-chain anchor test | covered |
 | AC-5 | P3.T1, P3.T2 | stale-version test | covered |
 | AC-6 | P2.T2, R3.T1 | drift guard | covered |
@@ -106,14 +106,15 @@ All 3 phases verified with Result/Checkpoint/Evidence; every checked task implem
 
 ## Debt
 
-- none (all findings go to Phase R1)
+- none (all findings fixed across rounds 1–2)
 
 ## Doc sync
 
-`pending` — F4 updates `conductor/tech-stack.md` in the fix phase; no user-facing docs affected (CHANGELOG is release-generated; historical PLAN_VERSION narratives in ARCHITECTURE/TDD/ROADMAP remain accurate).
+`updated` — `conductor/tech-stack.md` schema note v7 → v9 (F4, Phase R1); no user-facing docs affected (CHANGELOG is release-generated; historical PLAN_VERSION narratives remain accurate).
 
 ## History
 
 | Round | Verdict | Critical | High | Medium | Low | Fixed |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | BLOCK | 0 | 0 | 2 | 2 | 0 |
+| 2 | PASS | 0 | 0 | 0 | 0 | 4 |
