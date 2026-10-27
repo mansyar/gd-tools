@@ -83,6 +83,19 @@ The primary appends after acceptance:
 **Evidence:** conductor/tracks/20261027-coverage-multiline-elif/verification/phase-3.md
 -->
 
+## Phase R1: Review Fixes
+
+- **Goal:** Resolve review findings F1–F4 (edge-unit pins, anchor pins, drift-guard parity, version doc).
+- **Depends on:** Phase 3
+- **Covers:** F1, F2, F3, F4
+- **Touches:** `tests/integration/test_coverage_instrumentation_parses.py`, `tests/unit/test_plan_generator_boolops.py`, `conductor/tech-stack.md`
+- **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/integration/test_coverage_instrumentation_parses.py -q` plus `ruff check` / `black --check`
+- **Status:** pending
+
+- [ ] **R1.T1: Resolve F1 + F3 (port edge units + `_short` parity in drift guard)** — covers: F1, F3
+- [ ] **R1.T2: Resolve F2 (match-when-guard + ternary-in-guard anchor tests)** — covers: F2
+- [ ] **R1.T3: Resolve F4 (tech-stack.md schema version v7 → v9)** — covers: F4
+
 <!--
 Review fixes are appended by `conductor-review` as:
 
