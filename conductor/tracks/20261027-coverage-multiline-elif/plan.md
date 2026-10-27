@@ -14,12 +14,17 @@
 - **Covers:** FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7
 - **Touches:** `tests/unit/test_plan_generator_boolops.py`, `tests/unit/test_omissions.py`, `tests/integration/test_coverage_instrumentation_parses.py`, `tests/fixtures/gdscript/multiline_elif.gd`
 - **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/unit/test_omissions.py -q` (new tests FAIL before fix)
-- **Status:** pending
+- **Status:** verified
 
-- [ ] **P1.T1: Add multiline_elif.gd fixture (repro elif + multi-line match pattern)** — covers: FR-1
-- [ ] **P1.T2: Add header-end injection units via Python port (tracker after `):`, single-line unchanged)** — covers: FR-1, FR-2
-- [ ] **P1.T3: Add boolop anchor expectation (or-chain in elif anchors to elif line) + PLAN_VERSION stale rejection** — covers: FR-3, FR-4
-- [ ] **P1.T4: Add omission-gate message-level split test (incomplete vs threshold)** — covers: FR-6
+- [x] **P1.T1: Add multiline_elif.gd fixture (repro elif + multi-line match pattern)** — covers: FR-1
+- [x] **P1.T2: Add header-end injection units via Python port (tracker after `):`, single-line unchanged)** — covers: FR-1, FR-2
+- [x] **P1.T3: Add boolop anchor expectation (or-chain in elif anchors to elif line) + PLAN_VERSION stale rejection** — covers: FR-3, FR-4
+- [x] **P1.T4: Add omission-gate message-level split test (incomplete vs threshold)** — covers: FR-6
+
+**Result:** verified
+**Checkpoint:** b91c3f0
+**Evidence:** conductor/tracks/20261027-coverage-multiline-elif/verification/phase-1.md
+**Note:** Primary applied black formatting to the 3 touched test files (pre-existing style baseline; base versions were clean) and re-verified red state unchanged.
 
 <!--
 The primary appends after acceptance:
