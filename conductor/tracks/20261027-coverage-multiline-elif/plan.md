@@ -92,9 +92,25 @@ The primary appends after acceptance:
 - **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/integration/test_coverage_instrumentation_parses.py -q` plus `ruff check` / `black --check`
 - **Status:** in_progress
 
-- [ ] **R1.T1: Resolve F1 + F3 (port edge units + `_short` parity in drift guard)** — covers: F1, F3
-- [ ] **R1.T2: Resolve F2 (match-when-guard + ternary-in-guard anchor tests)** — covers: F2
-- [ ] **R1.T3: Resolve F4 (tech-stack.md schema version v7 → v9)** — covers: F4
+- [x] **R1.T1: Resolve F1 + F3 (port edge units + `_short` parity in drift guard)** — covers: F1, F3
+- [ ] **R1.T2: Resolve F2 (match-when-guard + ternary-in-guard anchor tests)** — covers: F2 (ternary half green; match half carried to R2 — real src gap)
+- [x] **R1.T3: Resolve F4 (tech-stack.md schema version v7 → v9)** — covers: F4
+
+**Result:** partial — R1.T1/R1.T3 done; R1.T2 match-when half blocked by src gap (guarded_match_branch). Carried to Phase R2 (round 2 of 2).
+**Checkpoint:** d07c2e0
+**Evidence:** conductor/tracks/20261027-coverage-multiline-elif/verification/phase-R1.md
+
+## Phase R2: Review Fixes, round 2 — guarded match branches
+
+- **Goal:** Resolve the R1.T2 blocker: guarded match cases (`guarded_match_branch`) anchor and emit like unguarded ones.
+- **Depends on:** Phase R1
+- **Covers:** F2, FR-3, AC-4
+- **Touches:** `src/gd_tools/coverage/plan_generator.py`, `tests/fixtures/plans/*.expected.json` (only if the generator changes guarded-case output — accept intended diffs only)
+- **Verification:** `CI=true pytest tests/unit/test_plan_generator_boolops.py tests/unit/test_plan_generator.py tests/unit/test_omissions.py tests/integration/test_coverage_instrumentation_parses.py -q` plus `ruff check` / `black --check`
+- **Status:** in_progress
+
+- [ ] **R2.T1: Handle guarded_match_branch in plan generator (anchor set + match_case emission)** — covers: F2
+- [ ] **R2.T2: Confirm guarded-case plan output through snapshots/batch parse; keep PLAN_VERSION at 9 (unreleased)** — covers: F2
 
 <!--
 Review fixes are appended by `conductor-review` as:
