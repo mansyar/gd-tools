@@ -28,7 +28,7 @@ from gd_tools.atomic_io import atomic_write_text
 from gd_tools.errors import CoveragePlanError
 from gd_tools.file_discovery import discover_gd_files
 
-PLAN_VERSION = 8
+PLAN_VERSION = 9
 """Current coverage plan JSON schema version.
 
 Bumped 1 -> 2 when ``excluded_lines`` was introduced (Track 30) so
@@ -64,6 +64,12 @@ and files with zero trackable points were excluded from the plan.
 Version 7 plans keep zero-point files as silent-omission targets and
 lack the annotations the collector needs to keep wrapped-operand
 inferred declarations compiling under default warning settings.
+
+Bumped 8 -> 9 when ``and``/``or`` (and ternary) expression points
+inside ``elif`` guards and ``match`` pattern guards were re-anchored
+from the enclosing ``if``/``match`` line to the branch header line.
+Version 8 plans attribute those arms to the wrong line, so reusing one
+would misreport branch coverage for elif/match guards.
 """
 
 # --- Data structures (FR-1) ---
@@ -635,6 +641,18 @@ BOOL_OPERATOR_NODES = frozenset(
 #: assert is itself a statement, so its own line is always a legal anchor.
 _EXPRESSION_ANCHOR_NODES = frozenset({"test_expr", *BOOL_OPERATOR_NODES})
 
+#: Branch-header nodes whose guard expressions anchor to the branch header
+#: line instead of the enclosing statement line: an ``and``/``or`` chain
+#: (or ternary) inside an ``elif`` guard anchors to the ``elif`` header,
+#: and one inside a ``match`` pattern guard anchors to the case header,
+#: rather than the enclosing ``if``/``match`` line. These lines are
+#: keyword/case labels rather than statement insertion points, so they
+#: stay out of :data:`ANCHOR_NODES`; expression points are span-wrapped
+#: (never line-injected), so the header line is their correct anchor.
+BRANCH_GUARD_ANCHOR_NODES = frozenset(
+    {"elif_branch", "match_branch", "guarded_match_branch"}
+)
+
 
 def _map_expression_anchors(root: Tree) -> dict[int, int]:
     """Map ``id()`` of each ternary or boolean-operator node to its anchor
@@ -642,7 +660,10 @@ def _map_expression_anchors(root: Tree) -> dict[int, int]:
 
     An expression branch point is only instrumentable when recorded at a
     line where a statement may begin, so it is anchored to the nearest
-    enclosing node in :data:`ANCHOR_NODES`. An expression with no such node
+    enclosing node in :data:`ANCHOR_NODES`. An expression inside an
+    ``elif`` guard or a ``match`` pattern guard anchors to that branch
+    header's line instead (see :data:`BRANCH_GUARD_ANCHOR_NODES`). An
+    expression with no such node
     -- one inside a class-level initializer or a default parameter value --
     has no legal insertion point and is not tracked.
 
@@ -666,7 +687,7 @@ def _map_expression_anchors(root: Tree) -> dict[int, int]:
     anchors: dict[int, int] = {}
 
     def walk(node: Tree, enclosing: int | None) -> None:
-        if node.data in ANCHOR_NODES:
+        if node.data in ANCHOR_NODES or node.data in BRANCH_GUARD_ANCHOR_NODES:
             enclosing = node.meta.line
         if node.data in _EXPRESSION_ANCHOR_NODES and enclosing is not None:
             anchors[id(node)] = enclosing
@@ -879,6 +900,10 @@ class CoverageVisitor(Visitor):
 
     def match_branch(self, tree: Tree) -> None:
         """Track each match case as ``match_case``."""
+        self._add_point(tree, "branch", "match_case")
+
+    def guarded_match_branch(self, tree: Tree) -> None:
+        """Track each guarded match case as ``match_case``."""
         self._add_point(tree, "branch", "match_case")
 
     def test_expr(self, tree: Tree) -> None:

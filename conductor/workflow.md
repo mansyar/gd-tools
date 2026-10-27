@@ -1,278 +1,239 @@
-<protect>
 # Project Workflow
 
 ## Guiding Principles
 
-1. **The Plan is the Source of Truth:** All work must be tracked in `plan.md`
-2. **The Tech Stack is Deliberate:** Changes to the tech stack must be documented in `tech-stack.md` *before* implementation
-3. **Test-Driven Development:** Write unit tests before implementing functionality
-4. **High Code Coverage:** Aim for >80% code coverage for all source code modules
-5. **User Experience First:** Every decision should prioritize user experience
-6. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
+1. **The plan is the source of truth.** Every phase, task, result, checkpoint,
+   and evidence link lives in `plan.md`.
+2. **The tech stack is deliberate.** A change to the stack is recorded in
+   `tech-stack.md` before the implementation depends on it.
+3. **Verification is agent-executed.** The phase subagent runs the configured
+   checks and writes evidence. The user is not asked to manually verify routine
+   work.
+4. **Evidence over assertion.** A phase is complete only when the configured
+   checks pass and the evidence file exists.
+5. **No silent debt.** A finding is fixed, explicitly accepted with a reason, or
+   tracked as an issue. It is never quietly ignored.
+6. **Stay inside the phase contract.** `Touches` defines the expected blast
+   radius. A required deviation is allowed, recorded, and reviewed.
+7. **Non-interactive and CI-aware.** Prefer commands that terminate. Use
+   `CI=true` for watch-mode tools where the ecosystem supports it.
 
-## AI Agent Behavioral Guidelines
+## Workflow Config
 
-When an AI agent (such as Claude, Cursor, Roo, or Conductor itself) is executing tasks in this repository, it MUST adhere to the following code of conduct:
-
-**1. Think Before Coding**
-- State assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
-
-**2. Simplicity First**
-- Write the minimum code that solves the problem. Nothing speculative.
-- No features beyond what was asked. No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-**3. Surgical Changes**
-- Touch only what you must. Clean up only your own mess.
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken. Match existing style.
-- Remove imports/variables/functions that YOUR changes made unused, but don't delete pre-existing dead code unless asked.
-
-**4. Goal-Driven Execution**
-- Define success criteria and loop until verified.
-- Transform tasks into verifiable goals (e.g., "Fix the bug" → "Write a test that reproduces it, then make it pass").
-- For multi-step tasks, state a brief plan and verify each step.
-
-## Task Workflow
-
-All tasks follow a strict lifecycle:
-
-### Standard Task Workflow
-
-1. **Select Task:** Choose the next available task from `plan.md` in sequential order
-
-2. **Mark In Progress:** Before beginning work, edit `plan.md` and change the task from `[ ]` to `[~]`
-
-3. **Write Failing Tests (Red Phase):**
-   - Create a new test file for the feature or bug fix.
-   - Write one or more unit tests that clearly define the expected behavior and acceptance criteria for the task.
-   - **CRITICAL:** Tests are only required for source code files (`.py`, `.gd`). Configuration files (`.toml`, `.json`, `.yaml`), documentation (`.md`), and other non-code assets do NOT require tests.
-   - **CRITICAL:** Run the tests and confirm that they fail as expected. This is the "Red" phase of TDD. Do not proceed until you have failing tests.
-
-4. **Implement to Pass Tests (Green Phase):**
-   - Write the minimum amount of application code necessary to make the failing tests pass.
-   - Run the test suite again and confirm that all tests now pass. This is the "Green" phase.
-
-5. **Refactor (Optional but Recommended):**
-   - With the safety of passing tests, refactor the implementation code and the test code to improve clarity, remove duplication, and enhance performance without changing the external behavior.
-   - Rerun tests to ensure they still pass after refactoring.
-
-6. **Verify Coverage:** Run coverage reports using the project's chosen tools:
-   ```bash
-   pytest --cov=gd_tools --cov-report=html --cov-branch
-   ```
-   Target: >80% line coverage and >70% branch coverage for new source code. Coverage is measured against source code only (`.py` files in `src/gd_tools/`), not config files or documentation.
-
-7. **Document Deviations:** If implementation differs from tech stack:
-   - **STOP** implementation
-   - Update `tech-stack.md` with new design
-   - Add dated note explaining the change
-   - Resume implementation
-
-8. **Commit Code Changes:**
-   - Stage all code changes related to the task.
-   - Propose a clear, concise commit message e.g, `feat(config): Implement gd-tools.toml loading and validation`.
-   - Perform the commit.
-
-9. **Attach Task Summary with Git Notes:**
-   - **Step 9.1: Get Commit Hash:** Obtain the hash of the *just-completed commit* (`git log -1 --format="%H"`).
-   - **Step 9.2: Draft Note Content:** Create a detailed summary for the completed task. This should include the task name, a summary of changes, a list of all created/modified files, and the core "why" for the change.
-   - **Step 9.3: Attach Note:** Use the `git notes` command to attach the summary to the commit.
-     ```bash
-     # The note content from the previous step is passed via the -m flag.
-     git notes add -m "<note content>" <commit_hash>
-     ```
-
-10. **Get and Record Task Commit SHA:**
-    - **Step 10.1: Update Plan:** Read `plan.md`, find the line for the completed task, update its status from `[~]` to `[x]`, and append the first 7 characters of the *just-completed commit's* commit hash.
-    - **Step 10.2: Write Plan:** Write the updated content back to `plan.md`.
-
-11. **Commit Plan Update:**
-    - **Action:** Stage the modified `plan.md` file.
-    - **Action:** Commit this change with a descriptive message (e.g., `conductor(plan): Mark task 'Implement config loading' as complete`).
-
-### Phase Completion Verification and Checkpointing Protocol
-
-**Trigger:** This protocol is executed immediately after a task is completed that also concludes a phase in `plan.md`.
-
-1.  **Announce Protocol Start:** Inform the user that the phase is complete and the verification and checkpointing protocol has begun.
-
-2.  **Ensure Test Coverage for Phase Changes:**
-    -   **Step 2.1: Determine Phase Scope:** To identify the files changed in this phase, you must first find the starting point. Read `plan.md` to find the Git commit SHA of the *previous* phase's checkpoint. If no previous checkpoint exists, the scope is all changes since the first commit.
-    -   **Step 2.2: List Changed Files:** Execute `git diff --name-only <previous_checkpoint_sha> HEAD` to get a precise list of all files modified during this phase.
-    -   **Step 2.3: Verify and Create Tests:** For each file in the list:
-        -   **CRITICAL:** First, check its extension. Exclude non-code files (e.g., `.json`, `.md`, `.yaml`, `.toml`). Only source code files (`.py`, `.gd`) require tests.
-        -   For each remaining source code file, verify a corresponding test file exists.
-        -   If a test file is missing, you **must** create one. Before writing the test, **first, analyze other test files in the repository to determine the correct naming convention and testing style.** The new tests **must** validate the functionality described in this phase's tasks (`plan.md`).
-
-3.  **Execute Automated Tests with Proactive Debugging:**
-    -   Before execution, you **must** announce the exact shell command you will use to run the tests.
-    -   **Example Announcement:** "I will now run the automated test suite to verify the phase. **Command:** `CI=true pytest`"
-    -   Execute the announced command.
-    -   If tests fail, you **must** inform the user and begin debugging. You may attempt to propose a fix a **maximum of two times**. If the tests still fail after your second proposed fix, you **must stop**, report the persistent failure, and ask the user for guidance.
-
-4.  **Propose a Detailed, Actionable Manual Verification Plan:**
-    -   **CRITICAL:** To generate the plan, first analyze `product.md`, `product-guidelines.md`, and `plan.md` to determine the user-facing goals of the completed phase.
-    -   You **must** generate a step-by-step plan that walks the user through the verification process, including any necessary commands and specific, expected outcomes.
-    -   The plan you present to the user **must** follow this format:
-
-        **For a CLI Feature Change:**
-        ```
-        The automated tests have passed. For manual verification, please follow these steps:
-
-        **Manual Verification Steps:**
-        1.  **Ensure gd-tools is installed:** `pip install -e .`
-        2.  **Run the command:** `gd-tools <command> [options]`
-        3.  **Confirm that you see:** The expected output (e.g., lint results in a rich table, coverage summary, exit code 0).
-        ```
-
-        **For a Coverage System Change:**
-        ```
-        The automated tests have passed. For manual verification, please follow these steps:
-
-        **Manual Verification Steps:**
-        1.  **Ensure a Godot test project is available** with the native test addon deployed (`gd-tools init`).
-        2.  **Run coverage:** `gd-tools test --coverage --min 80`
-        3.  **Confirm that you see:** Coverage reports generated in `.gd-tools/coverage/html/`, with correct line and branch percentages.
-        ```
-
-5.  **Await Explicit User Feedback:**
-    -   After presenting the detailed plan, ask the user for confirmation: "**Does this meet your expectations? Please confirm with yes or provide feedback on what needs to be changed.**"
-    -   **PAUSE** and await the user's response. Do not proceed without an explicit yes or confirmation.
-
-6.  **Create Checkpoint Commit:**
-    -   Stage all changes. If no changes occurred in this step, proceed with an empty commit.
-    -   Perform the commit with a clear and concise message (e.g., `conductor(checkpoint): Checkpoint end of Phase X`).
-
-7.  **Attach Auditable Verification Report using Git Notes:**
-    -   **Step 7.1: Draft Note Content:** Create a detailed verification report including the automated test command, the manual verification steps, and the user's confirmation.
-    -   **Step 7.2: Attach Note:** Use the `git notes` command and the full commit hash from the previous step to attach the full report to the checkpoint commit.
-
-8.  **Get and Record Phase Checkpoint SHA:**
-    -   **Step 8.1: Get Commit Hash:** Obtain the hash of the *just-created checkpoint commit* (`git log -1 --format="%H"`).
-    -   **Step 8.2: Update Plan:** Read `plan.md`, find the heading for the completed phase, and append the first 7 characters of the commit hash in the format `[checkpoint: <sha>]`.
-    -   **Step 8.3: Write Plan:** Write the updated content back to `plan.md`.
-
-9. **Commit Plan Update:**
-    - **Action:** Stage the modified `plan.md` file.
-    - **Action:** Commit this change with a descriptive message following the format `conductor(plan): Mark phase '<PHASE NAME>' as complete`.
-
-10.  **Announce Completion:** Inform the user that the phase is complete and the checkpoint has been created, with the detailed verification report attached as a git note.
-
-### Quality Gates
-
-Before marking any task complete, verify:
-
-- [ ] All tests pass
-- [ ] Code coverage meets requirements (>80% line, >70% branch for source code)
-- [ ] Code follows project's code style guidelines (as defined in `code_styleguides/`)
-- [ ] All public functions/methods are documented (Python docstrings, GDScript comments)
-- [ ] Type safety is enforced (Python type hints)
-- [ ] No linting or static analysis errors (`ruff check`, `black --check`)
-- [ ] Documentation updated if needed
-- [ ] No security vulnerabilities introduced
+```yaml
+project:
+  type: "python-cli"
+  languages: ["Python", "GDScript"]
+commands:
+  setup: "pip install -e \".[dev]\""
+  dev: "gd-tools --help"
+  test: "CI=true pytest"
+  coverage: "CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing"
+  lint: "ruff check src/ tests/"
+  format: "black --check src/ tests/"
+  typecheck: "echo 'no typecheck configured'"
+  build: "python -m build"
+  verify_phase: "ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest"
+coverage:
+  gate: { line: 80, branch: 70 }
+  scope: "project"
+verification:
+  layers: ["static", "unit", "integration", "e2e"]
+  retry: 2
+  manual_exceptions: ["Godot binary install for parse/e2e checks", "PyPI/TestPyPI credentials", "external release approvals"]
+git:
+  base_branch: "main"
+  fetch: true
+  commit_style: "conventional"
+  task_commits: true
+  phase_squash: true
+review:
+  strict: false
+  issues:
+    enabled: true
+    auto_create: false
+    min_severity: "medium"
+    group_low: true
+    labels: ["tech-debt", "conductor"]
+pr:
+  enabled: true
+  tool: "gh"
+  base: "main"
+  media: "always"
+  watch_ci: true
+  watch_timeout_minutes: 15
+  merge_method: "squash"
+```
 
 ## Development Commands
 
 ### Setup
+
 ```bash
-# Install gd-tools in editable mode with dev dependencies
 pip install -e ".[dev]"
 ```
 
 ### Daily Development
+
 ```bash
-# Run the full test suite
+# Sanity check the CLI
+gd-tools --help
+
+# Run tests
 CI=true pytest
 
-# Run tests with coverage
+# Run coverage
 CI=true pytest --cov=gd_tools --cov-branch --cov-report=term-missing
 
-# Run a specific test file
-CI=true pytest tests/test_config.py
-
-# Lint the codebase
+# Lint
 ruff check src/ tests/
 
-# Format check (without modifying)
+# Format (check only; write with `black src/ tests/`)
 black --check src/ tests/
 
-# Format the codebase
-black src/ tests/
+# Typecheck
+echo 'no typecheck configured'
 
-# Run gd-tools itself
-gd-tools --version
-gd-tools --help
-gd-tools doctor
+# Build
+python -m build
 ```
 
 ### Before Committing
+
 ```bash
-# Run all pre-commit checks: lint, format check, and tests
 ruff check src/ tests/ && black --check src/ tests/ && CI=true pytest
 ```
 
-## Testing Requirements
+## Phase & Task Workflow
 
-### Unit Testing
-- Every source code module (`.py` files in `src/gd_tools/`) must have corresponding tests.
-- **Tests are only required for source code.** Configuration files (`.toml`, `.json`, `.yaml`), documentation (`.md`), and other non-code assets do NOT require tests.
-- Use `pytest` fixtures for setup/teardown.
-- Mock external dependencies (Godot binary, subprocess calls, network requests, file system).
-- Test both success and failure cases.
-- Test exit codes (0 = success, 1 = failure, 2 = config error).
+Implementation is executed one phase at a time by a phase subagent. The primary
+agent owns `plan.md`, `metadata.json`, the registry, and review artifacts.
 
-### Integration Testing
-- Test complete CLI command flows (e.g., `gd-tools lint`, `gd-tools test`).
-- Use fixture GDScript files for lint/format/coverage tests.
-- Mock Godot subprocess invocations where possible.
-- Test config loading with real `gd-tools.toml` fixtures.
+### Task Lifecycle
 
-### End-to-End Testing
-- Full `gd-tools test --coverage` run on a sample Godot project using the native runtime.
-- Verify JUnit XML and coverage JSON are produced correctly.
-- Test cross-platform path handling (Windows, macOS, Linux).
+1. Read the phase contract in `plan.md`, the relevant requirements in `spec.md`,
+   and the applicable style guides.
+2. Work through the phase's tasks in order.
+3. This project uses test-first development: write or update the failing test
+   before the implementation.
+4. Implement the smallest change that satisfies the task.
+5. Run the targeted checks for the task.
+6. Commit the task with a conventional commit message.
+7. Report the task's status and commit SHA to the primary agent.
 
-## Code Review Process
+The subagent does **not** edit `plan.md`. The primary marks tasks complete after
+it accepts the phase.
 
-### Self-Review Checklist
-Before requesting review:
+### Deviations
 
-1. **Functionality**
-   - Feature works as specified
-   - Edge cases handled
-   - Error messages are actionable with fix hints
+- If the phase goal requires a file outside `Touches`, make the smallest
+  necessary change and record it in the report under `deviations`.
+- If the work requires a product or design decision, stop and report `blocked`.
+- Do not silently expand scope, add a dependency, or migrate unrelated code.
 
-2. **Code Quality**
-   - Follows style guide (`code_styleguides/python.md`)
-   - DRY principle applied
-   - Clear variable/function names (snake_case for Python)
-   - Appropriate comments (explain *why*, not *what*)
+### Phase Completion
 
-3. **Testing**
-   - Unit tests comprehensive
-   - Integration tests pass
-   - Coverage adequate (>80% line, >70% branch)
+1. Run the phase's `Verification` command exactly as written in `plan.md`.
+2. Run `verify_phase` when it is configured and different from the phase command.
+3. Write the evidence file using the configured evidence path.
+4. Return the structured report to the primary agent.
+5. Do not merge, rebase, reset, push, open a PR, or edit Conductor state files.
 
-4. **Security**
-   - No hardcoded secrets
-   - Input validation present
-   - Safe subprocess invocation (no shell injection)
-   - Safe file path handling
+## Verification Strategy
 
-5. **Performance**
-   - Lark parsing efficient for large projects
-   - Subprocess invocation minimized
-   - No unnecessary file I/O
+### Layers
+
+- **Static:** ruff lint + black format check (required every phase).
+- **Unit:** isolated behavior and edge cases via pytest `tests/unit` (required).
+- **Integration:** module boundaries and GDScript fixture flows via pytest
+  `tests/integration`, including the batched Godot parse check (required when
+  the phase touches `src/gd_tools/` or `*.gd`).
+- **E2E:** complete user flows via pytest `tests/e2e` (only when the phase
+  touches runtime flows; the PR-critical subset is `e2e_smoke`).
+
+No typecheck layer: the project configures no typechecker. `compileall` is not
+a substitute and is intentionally not wired in.
+
+### Commands
+
+| Layer | Command | Required |
+| --- | --- | --- |
+| static | `ruff check src/ tests/` | yes |
+| static | `black --check src/ tests/` | yes |
+| unit | `CI=true pytest tests/unit -q` | yes |
+| integration | `CI=true pytest tests/integration -q` | when phase touches src or .gd |
+| e2e | `CI=true pytest -m e2e_smoke -q` | when phase touches runtime flows |
+
+### Services and Fixtures
+
+- **Services:** Godot binary (4.5+, repo uses 4.7.x) for parse checks and e2e;
+  no ports, containers, or databases.
+- **Fixtures/seed data:** `tests/fixtures/gdscript/` GDScript fixtures,
+  `tests/fixtures/projects/` sample projects.
+- **Environment variables:** `CI=true` for single-execution runs.
+- **Start/stop commands:** none; Godot is invoked headless per test.
+
+### Pass Criteria
+
+- Every required command exits `0`.
+- The coverage gate is met for the configured scope (line >= 80, branch >= 70).
+- Every acceptance criterion has a test or a documented evidence artifact.
+- No new Critical or High review findings remain.
+
+### Evidence
+
+Write a report to:
+
+```text
+conductor/tracks/<track-id>/verification/phase-<n>.md
+```
+
+Include: title; track, phase, date, branch, base and head commits; result
+(`verified`, `failed`, `blocked`, or `partial`); a commands table (layer,
+command, exit, summary); an acceptance-criteria table (ID, criterion, evidence,
+status); evidence paths; deviations; and notes. Put binaries, screenshots, and
+large reports under `.conductor/evidence/`; that directory is gitignored. The
+report itself is committed with the track.
+
+### Fallback Ladder
+
+1. Run the full configured layer.
+2. If the Godot binary is missing, report which check could not run and mark
+   the phase `partial` with the reason; do not fake a parse result.
+3. If it still cannot run, run the narrowest reliable subset and mark the phase
+   `partial` with the reason.
+4. Stop and ask the user (via the question tool) only for credentials, hardware, or an external
+   approval.
+
+### Retry Policy
+
+- A failed check may be fixed and re-run at most **2** times.
+- If it still fails, report `failed` with the command and output.
+- Never mark a phase `verified` when a required check did not run.
+
+### Human-Only Exceptions
+
+- Godot binary installation when it is absent from the machine.
+- PyPI/TestPyPI credentials for release steps.
+- External release approvals.
+
+## Quality Gates
+
+Before a phase is accepted:
+
+- [ ] Required tests pass
+- [ ] Coverage gate is met for the configured scope
+- [ ] Lint and format checks pass
+- [ ] Code follows the applicable `conductor/code_styleguides/`
+- [ ] No secrets, credentials, or PII are introduced
+- [ ] Public behavior is documented when it changed
+- [ ] Evidence is written and linked in `plan.md`
 
 ## Commit Guidelines
 
 ### Message Format
-```
+
+```text
 <type>(<scope>): <description>
 
 [optional body]
@@ -281,90 +242,96 @@ Before requesting review:
 ```
 
 ### Types
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation only
-- `style`: Formatting, missing semicolons, etc.
-- `refactor`: Code change that neither fixes a bug nor adds a feature
-- `test`: Adding missing tests
-- `chore`: Maintenance tasks
+
+- `feat`: new feature
+- `fix`: bug fix
+- `docs`: documentation only
+- `style`: formatting
+- `refactor`: behavior-preserving change
+- `test`: tests only
+- `chore`: maintenance
 
 ### Examples
+
 ```bash
 git commit -m "feat(config): Implement gd-tools.toml loading and validation"
-git commit -m "fix(godot): Correct Godot 4.6 version detection"
+git commit -m "fix(coverage): Correct Godot 4.6 version detection"
 git commit -m "test(coverage): Add tests for plan generator branch detection"
-git commit -m "docs(prd): Update coverage architecture section"
 ```
+
+Task-level commits are made by the phase subagent. The primary squashes them
+into one phase commit on acceptance, unless a foreign commit landed in the range.
+The plan update is a separate state commit.
 
 ## Definition of Done
 
-A task is complete when:
+A track is complete when:
 
-1. All source code implemented to specification
-2. Unit tests written and passing (source code only)
-3. Code coverage meets project requirements (>80% line, >70% branch)
-4. Documentation complete (if applicable)
-5. Code passes all configured linting and static analysis checks (`ruff`, `black`)
-6. Implementation notes added to `plan.md`
-7. Changes committed with proper message
-8. Git note with task summary attached to the commit
+1. Every phase is `verified` with a checkpoint and evidence.
+2. The integrated verification on the track branch passes.
+3. Review is `PASS`, or every finding is fixed, accepted with a reason, or
+   tracked as an issue. No Critical or High finding remains unresolved without an
+   explicit user override recorded in `review.md`.
+4. Post-review documentation sync is complete.
+5. The registry and `metadata.json` show the track as complete.
+6. When a remote exists, the branch is pushed. When `pr.enabled` is true, a PR
+   is open or `pr_state: "unavailable"` records that PR creation could not run.
+   When `pr.enabled` is false, no PR is expected.
 
 ## Emergency Procedures
 
-### Critical Bug in Published Release
-1. Create hotfix branch from main
-2. Write failing test for bug
-3. Implement minimal fix
-4. Test thoroughly
-5. Bump patch version, publish to PyPI
-6. Document in plan.md
+### Critical Bug in Production
 
-### Release Failure (PyPI)
-1. Verify package builds: `python -m build`
-2. Run `twine check dist/*`
-3. Test on TestPyPI first
-4. If corruption: yank the release on PyPI
-5. Document incident and update release process
+1. Create a hotfix branch from the configured base.
+2. Write a failing regression test.
+3. Implement the minimal fix.
+4. Run the full verification strategy.
+5. Open a PR immediately; do not batch unrelated work.
 
-## Deployment Workflow
+### Data Loss
 
-### Pre-Release Checklist
-- [ ] Run this checklist **after** the version bump, not before —
-  release-gate tests (version pin, checked-in schema snapshot) compare
-  fresh metadata, and a stale editable install silently masks failures
-  (learned in v0.7.0: CI caught two failures the pre-bump run missed)
-- [ ] All tests passing (`CI=true pytest`)
-- [ ] Coverage >80% line, >70% branch
-- [ ] No linting errors (`ruff check`)
-- [ ] No formatting issues (`black --check`)
-- [ ] `pyproject.toml` metadata correct
-- [ ] Package builds (`python -m build`)
-- [ ] `twine check` passes
-- [ ] Tested on TestPyPI
+1. Stop all write operations.
+2. Restore from the latest verified backup.
+3. Verify data integrity.
+4. Document the incident and update the recovery procedure.
 
-### Release Steps
-1. Merge all feature branches to main
-2. Tag release with version (`git tag v0.1.0`)
-3. Build package: `python -m build`
-4. Upload to TestPyPI: `twine upload --repository testpypi dist/*`
-5. Verify TestPyPI install works
-6. Upload to PyPI: `twine upload dist/*`
-7. Verify `pip install gd-tools` works
-8. Create GitHub release with release notes
+### Security Breach
 
-### Post-Release
-1. Monitor PyPI download stats
-2. Check for issue reports
-3. Gather user feedback
-4. Plan next iteration
+1. Rotate all affected secrets.
+2. Review access logs.
+3. Patch the vulnerability.
+4. Notify affected users when required.
+5. Document the incident and update the security procedure.
+
+## Deployment
+
+### Pre-Deployment Checklist
+
+- [ ] All required checks pass (`ruff check`, `black --check`, `CI=true pytest`)
+- [ ] Coverage gate met (line >= 80, branch >= 70)
+- [ ] `pyproject.toml` metadata correct (version, changelog via commitizen)
+- [ ] Package builds (`python -m build`) and `twine check dist/*` passes
+- [ ] Tested on TestPyPI first
+
+### Deployment Steps
+
+1. Merge the track PR.
+2. Bump version with commitizen (`cz bump`).
+3. Tag the release (`vX.Y.Z`).
+4. Build (`python -m build`) and verify with `twine check`.
+5. Upload to TestPyPI, verify install, then upload to PyPI.
+6. Create the GitHub release with notes.
+7. Monitor PyPI stats and issue reports.
+
+### Post-Deployment
+
+1. Monitor analytics and error logs.
+2. Gather user feedback.
+3. Record follow-ups as issues or a new track.
 
 ## Continuous Improvement
 
-- Review workflow weekly
-- Update based on pain points
-- Document lessons learned
-- Optimize for user happiness
-- Keep things simple and maintainable
-
-</protect>
+- Review this workflow after each track.
+- Update commands and verification layers when the tooling changes.
+- Record recurring review findings as process improvements.
+- Keep the process as small as the project allows.

@@ -28,6 +28,8 @@ Covered here (Expression-Level Branch Coverage track):
 * plain conditions produce no expression points (FR-1)
 """
 
+import json
+
 import pytest
 
 from gd_tools.coverage.plan_generator import (
@@ -35,8 +37,10 @@ from gd_tools.coverage.plan_generator import (
     CoveragePlan,
     generate_plan,
     generate_plan_cached,
+    read_plan_json,
     write_plan_json,
 )
+from gd_tools.errors import CoveragePlanError
 
 pytestmark = pytest.mark.unit
 
@@ -355,3 +359,119 @@ def test_generate_plan_cached_miss_stale_plan_version(tmp_path):
 
     assert status.hit is False, "stale plan version must force regeneration"
     assert plan.version == PLAN_VERSION
+
+
+# --- Elif/match-guard boolop anchors (FR-3) ---
+
+
+def test_or_chain_in_elif_anchors_to_elif_header_line(tmp_path):
+    """An or-chain inside an elif guard anchors to the elif line (FR-3).
+
+    The anchor walk currently only knows statement and control-flow
+    header lines, so the elif guard's operator points land on the
+    enclosing if line. They must report against the elif header.
+    """
+    source = (
+        "extends Node\n"
+        "\n"
+        "func f(a: bool, b: bool, c: bool) -> void:\n"
+        "\tif a:\n"
+        "\t\tprint(1)\n"
+        "\telif b or c:\n"
+        "\t\tprint(2)\n"
+    )
+    points = _expr_points(tmp_path, source)
+
+    # The expression lives on line 6; every point must say so too.
+    site_line, site_span = _by_type(points, "or_site")
+    assert site_line == 6
+    assert site_span[0] == 6
+    right_line, right_span = _by_type(points, "or_right")
+    assert right_line == 6
+    assert right_span[0] == 6
+    short_line, short_span = _by_type(points, "or_short")
+    assert short_line == 6
+    assert short_span is None
+
+
+def test_or_chain_in_match_when_guard_anchors_to_case_line(tmp_path):
+    """An or-chain inside a match `when` guard anchors to the case (FR-3).
+
+    Mirrors ``test_or_chain_in_elif_anchors_to_elif_header_line`` for
+    the match-guard half of ``BRANCH_GUARD_ANCHOR_NODES``.
+    """
+    source = (
+        "extends Node\n"
+        "\n"
+        "func f(a: int, b: bool, c: bool) -> void:\n"
+        "\tmatch a:\n"
+        "\t\t1 when b or c:\n"
+        "\t\t\tprint(1)\n"
+        "\t\t_:\n"
+        "\t\t\tprint(2)\n"
+    )
+    points = _expr_points(tmp_path, source)
+
+    # The guard lives on line 5; every point must say so too.
+    site_line, site_span = _by_type(points, "or_site")
+    assert site_line == 5
+    assert site_span[0] == 5
+    right_line, right_span = _by_type(points, "or_right")
+    assert right_line == 5
+    assert right_span[0] == 5
+    short_line, short_span = _by_type(points, "or_short")
+    assert short_line == 5
+    assert short_span is None
+
+
+def test_ternary_in_elif_guard_anchors_to_elif_line(tmp_path):
+    """A ternary inside an elif guard anchors to the elif line (FR-3).
+
+    The ternary half of the ``BRANCH_GUARD_ANCHOR_NODES`` contract:
+    both arms report against the elif header, not the enclosing if.
+    """
+    source = (
+        "extends Node\n"
+        "\n"
+        "func f(a: bool, b: bool) -> void:\n"
+        "\tif a:\n"
+        "\t\tprint(1)\n"
+        "\telif (1 if b else 2) > 0:\n"
+        "\t\tprint(2)\n"
+    )
+    (tmp_path / "sample.gd").write_text(source, encoding="utf-8")
+    plan = generate_plan(str(tmp_path))
+    assert len(plan.files) == 1, "expected exactly one planned file"
+    points = [
+        (p.branch_type, p.line, p.operand_span)
+        for p in plan.files[0].lines
+        if p.branch_type in ("ternary_true", "ternary_false")
+    ]
+
+    # The ternary lives on line 6; both arms must say so too.
+    assert len(points) == 2, f"expected two ternary arms, got {points}"
+    for branch_type, line, span in points:
+        assert line == 6, f"{branch_type} anchored to {line}, expected 6"
+        assert span is not None and span[0] == 6
+
+
+def test_read_plan_json_rejects_stale_plan_version(tmp_path):
+    """A plan cached under an older PLAN_VERSION is rejected (FR-4).
+
+    Passes today: pins the current invalidation contract that Phase 3
+    extends with the version bump.
+    """
+    cache_path = tmp_path / "plan.json"
+    cache_path.write_text(
+        json.dumps(
+            {
+                "version": PLAN_VERSION - 1,
+                "generated_by": "gd-tools",
+                "files": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(CoveragePlanError, match="Unsupported plan version"):
+        read_plan_json(str(cache_path))

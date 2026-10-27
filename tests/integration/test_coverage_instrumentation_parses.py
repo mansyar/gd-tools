@@ -382,6 +382,109 @@ def _indent_of(line: str) -> str:
     return out
 
 
+def _find_header_end(src_lines, start_index: int) -> int:
+    """Scan forward to the header-terminating colon.
+
+    Port of the collector's ``_find_header_end``: return the 0-based
+    line index holding the first ``:`` at bracket-depth 0 outside
+    strings and comments, or -1 when it cannot be resolved. The
+    caller fails open on -1 by keeping the historical insertion
+    position rather than corrupting the source.
+    """
+    if start_index < 0 or start_index >= len(src_lines):
+        return -1
+    depth = 0
+    in_single = ""
+    in_triple = ""
+    escaped = False
+    i = start_index
+    while i < len(src_lines):
+        line = src_lines[i]
+        last_code = ""
+        j = 0
+        n = len(line)
+        while j < n:
+            if in_triple:
+                if escaped:
+                    escaped = False
+                    j += 1
+                    continue
+                if line[j] == "\\":
+                    escaped = True
+                    j += 1
+                    continue
+                if line[j : j + 3] == in_triple:
+                    in_triple = ""
+                    j += 3
+                    continue
+                j += 1
+                continue
+            if in_single:
+                if escaped:
+                    escaped = False
+                    j += 1
+                    continue
+                if line[j] == "\\":
+                    escaped = True
+                    j += 1
+                    continue
+                if line[j] == in_single:
+                    in_single = ""
+                    j += 1
+                    continue
+                j += 1
+                continue
+            ch = line[j]
+            if ch == "#":
+                break
+            if ch in ('"', "'"):
+                triple = ch * 3
+                if line[j : j + 3] == triple:
+                    in_triple = triple
+                    escaped = False
+                    j += 3
+                    continue
+                in_single = ch
+                escaped = False
+                j += 1
+                continue
+            if ch in "([{":
+                depth += 1
+                last_code = ch
+                j += 1
+                continue
+            if ch in ")]}":
+                depth = max(0, depth - 1)
+                last_code = ch
+                j += 1
+                continue
+            if ch == ":":
+                if depth == 0:
+                    return i
+                last_code = ch
+                j += 1
+                continue
+            if ch in (" ", "\t", "\r"):
+                j += 1
+                continue
+            if ch == "\\":
+                last_code = ch
+                j += 1
+                continue
+            last_code = ch
+            j += 1
+        if in_single:
+            in_single = ""
+            escaped = False
+        else:
+            escaped = False
+        if depth > 0 or last_code == "\\":
+            i += 1
+            continue
+        return -1
+    return -1
+
+
 def _inject(source: str, lines, warning_ignores=()) -> str:
     """Port of ``_inject_trackers`` from the native coverage collector.
 
@@ -405,12 +508,22 @@ def _inject(source: str, lines, warning_ignores=()) -> str:
     for entry in sorted(lines, key=lambda e: e.line, reverse=True):
         if getattr(entry, "operand_span", None) is not None:
             continue
+        if (entry.branch_type or "").endswith("_short"):
+            continue
         target = entry.line - 1
         if target < 0 or target >= len(src_lines):
             continue
         if entry.branch_type in _AFTER_LINE_BRANCH_TYPES:
-            target += 1
-        indent = _indent_of(src_lines[target])
+            header_end = _find_header_end(src_lines, target)
+            if header_end >= 0:
+                target = header_end + 1
+            else:
+                target += 1
+        if target < 0 or target > len(src_lines):
+            continue
+        indent = (
+            _indent_of(src_lines[target]) if target < len(src_lines) else ""
+        )
         if not indent:
             indent = _indent_of(src_lines[entry.line - 1])
         src_lines.insert(
@@ -633,6 +746,40 @@ def test_injection_port_tracks_the_collector():
         "error-by-default) and the file would vanish from coverage."
     )
 
+    header_finder = re.search(r"func _find_header_end\(", source)
+    assert header_finder, (
+        "Collector no longer defines _find_header_end; _inject's "
+        "header-terminator scan has no collector counterpart to mirror."
+    )
+
+    header_use = re.search(r"_find_header_end\(source_lines", source)
+    assert header_use, (
+        "Collector no longer uses _find_header_end for after-line "
+        "insertion; _inject's header-end rule is now wrong."
+    )
+
+    short_skip = re.search(r'ends_with\("_short"\)', source)
+    assert short_skip, (
+        "Collector no longer skips derived _short arms during line "
+        "insertion; _inject's skip would diverge (this exact parity "
+        "regressed once before)."
+    )
+
+    port_text = Path(__file__).read_text(encoding="utf-8")
+    assert "def _find_header_end(" in port_text, (
+        "Port no longer defines _find_header_end; it cannot mirror the "
+        "collector's header-terminator scan."
+    )
+    inject_section = port_text.split("def _inject(")[1].split("\ndef ")[0]
+    assert "_find_header_end" in inject_section, (
+        "Port's _inject no longer calls _find_header_end for after-line "
+        "branch types; it has diverged from the collector."
+    )
+    assert 'endswith("_short")' in inject_section, (
+        "Port's _inject no longer skips derived _short arms; it has "
+        "diverged from the collector."
+    )
+
 
 SIMPLE_TERNARY = (
     "extends Node\n\n\nfunc f(a: int) -> void:\n"
@@ -726,6 +873,179 @@ def test_non_ternary_points_still_inject_line_trackers(tmp_path):
 
     for pid in stmt_ids:
         assert f"GdToolsNativeCoverage.hit(0, {pid})" in out, out
+
+
+def _tracker_index(output: str, pid: int) -> int:
+    """Return the 0-based output line holding the hit marker for ``pid``."""
+    marker = f"GdToolsNativeCoverage.hit(0, {pid})"
+    for index, line in enumerate(output.split("\n")):
+        if marker in line:
+            return index
+    raise AssertionError(f"no tracker for point {pid} in:\n{output}")
+
+
+def _branch_id(lines, branch_type: str, line: int) -> int:
+    """Return the point id for one branch type recorded on one line."""
+    ids = [
+        p.id for p in lines if p.branch_type == branch_type and p.line == line
+    ]
+    assert (
+        len(ids) == 1
+    ), f"expected exactly one {branch_type} point on line {line}"
+    return ids[0]
+
+
+# --- Multi-line branch headers (FR-1, FR-2) ---
+#
+# The native collector inserts after-line branch trackers (elif_true,
+# match_case, if_false) on the line after the recorded one. For a header
+# that spans several lines the recorded line is the header *start*, so
+# the tracker lands inside the open condition and the file no longer
+# parses (Godot error 43). The fixed port must scan to the
+# header-terminating colon first. These tests fail until then.
+
+
+def test_multiline_elif_tracker_lands_after_header_terminator(tmp_path):
+    """A tracker for a parenthesized elif must clear the whole header."""
+    source = (
+        "extends Node\n\n\n"
+        "func classify(action: String, fast: bool) -> String:\n"
+        '\tif action == "idle":\n'
+        '\t\treturn "idle"\n'
+        "\telif (\n"
+        '\t\taction == "run"\n'
+        "\t\tor fast\n"
+        "\t):\n"
+        '\t\treturn "moving"\n'
+        "\telse:\n"
+        '\t\treturn "other"\n'
+    )
+    lines = _plan_lines(tmp_path, source)
+    elif_id = _branch_id(lines, "elif_true", 7)
+
+    out = _inject(source, lines)
+
+    out_lines = out.split("\n")
+    assert out_lines[_tracker_index(out, elif_id) - 1] == "\t):", out
+    head = out_lines.index("\telif (")
+    term = out_lines.index("\t):")
+    segment = "\n".join(out_lines[head : term + 1])
+    # Line-inserted hit() trackers must not leak into the open condition.
+    # Value-preserving hit_ret() operand wrappers inside the guard are
+    # expected (or-chain arms) and parse fine, so only forbid hit(.
+    assert "GdToolsNativeCoverage.hit(" not in segment, (
+        "tracker leaked into the parenthesized condition:\n" f"{out}"
+    )
+
+
+def test_single_line_branch_headers_inject_exactly_as_before(tmp_path):
+    """NFR-1 pin: single-line headers keep today's tracker placement."""
+    source = (
+        "extends Node\n\n\nfunc f(a: int) -> void:\n"
+        '\tif a > 0:\n\t\tprint("big")\n'
+        '\telif a < 0:\n\t\tprint("small")\n'
+        '\telse:\n\t\tprint("zero")\n'
+        '\tmatch a:\n\t\t1:\n\t\t\tprint("one")\n'
+        '\t\t_:\n\t\t\tprint("other")\n'
+    )
+    lines = _plan_lines(tmp_path, source)
+
+    out = _inject(source, lines)
+
+    out_lines = out.split("\n")
+    # Each after-line tracker sits immediately after its header line,
+    # directly before whatever the body line became after wrapping.
+    # Plan lines are hardcoded: the elif/else/match headers are on
+    # lines 7, 9, and 12 of the source above.
+    for branch_type, plan_line, header in (
+        ("elif_true", 7, "\telif a < 0:"),
+        ("if_false", 9, "\telse:"),
+        ("match_case", 12, "\t\t1:"),
+    ):
+        pid = _branch_id(lines, branch_type, plan_line)
+        line_no = out_lines.index(header)
+        marker = f"GdToolsNativeCoverage.hit(0, {pid})"
+        assert marker in out_lines[line_no + 1], out
+
+
+def test_multiline_elif_fixture_injects_after_header_terminator(tmp_path):
+    """The bug-report fixture instruments without breaking the parse."""
+    fixture = (
+        Path(__file__).resolve().parents[1]
+        / "fixtures"
+        / "gdscript"
+        / "multiline_elif.gd"
+    )
+    source = fixture.read_text(encoding="utf-8")
+    (tmp_path / "multiline_elif.gd").write_text(source, encoding="utf-8")
+    plan = generate_plan(str(tmp_path))
+    assert len(plan.files) == 1, "fixture must parse as GDScript"
+    lines = plan.files[0].lines
+    elif_id = _branch_id(lines, "elif_true", 6)
+
+    out = _inject(source, lines)
+
+    out_lines = out.split("\n")
+    term = out_lines.index("\t):")
+    assert _tracker_index(out, elif_id) == term + 1, out
+
+    case_id = _branch_id(lines, "match_case", 18)
+    case_term = out_lines.index("\t\t\t2]:")
+    assert _tracker_index(out, case_id) == case_term + 1, out
+
+
+def test_find_header_end_ignores_colon_inside_string():
+    """A colon inside a string is not the header terminator."""
+    src_lines = [
+        '\telif mode == "a:b" \\',
+        "\t\tor fast:",
+        "\t\tpass",
+    ]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_ignores_colon_inside_comment():
+    """A colon inside a trailing comment is not the terminator."""
+    src_lines = [
+        "\telif a == 1 \\  # mode: fast",
+        "\t\tor b == 2:",
+        "\t\tpass",
+    ]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_allows_trailing_comment_after_terminator():
+    """A trailing comment after the terminator changes nothing."""
+    src_lines = ["\telif a == 1:  # done: yes", "\t\tpass"]
+
+    assert _find_header_end(src_lines, 0) == 0
+
+
+def test_find_header_end_follows_backslash_continuation():
+    """A backslash-continued elif header resolves past the break."""
+    src_lines = ["\telif a == 1 \\", "\t\tor b == 2:", "\t\tpass"]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_skips_nested_brackets():
+    """Colons at bracket depth > 0 do not terminate the header."""
+    src_lines = [
+        "\telif (data.get(0) == [1,",
+        '\t\t{"a": 2}] or fast):',
+        "\t\tpass",
+    ]
+
+    assert _find_header_end(src_lines, 0) == 1
+
+
+def test_find_header_end_resolves_terminator_on_last_line():
+    """A header ending on the final line still resolves (EOF edge)."""
+    src_lines = ["\telif (", "\t\ta == 1", "\t):"]
+
+    assert _find_header_end(src_lines, 0) == 2
 
 
 def test_ternary_entry_without_span_falls_back_to_line_tracker(tmp_path):
