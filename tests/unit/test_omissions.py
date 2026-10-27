@@ -37,8 +37,10 @@ from gd_tools.coverage.reporter import (
     FileCoverage,
     OmittedTarget,
     compute_summary,
+    generate_report,
     read_coverage_json,
 )
+from gd_tools.errors import CoverageThresholdError
 
 pytestmark = pytest.mark.unit
 
@@ -436,6 +438,38 @@ def test_gate_message_states_how_much_of_the_project_was_measured(plan):
     message = omission_gate_message(report, 80)
 
     assert "1 of 2" in message
+
+
+def test_incomplete_measurement_and_below_threshold_are_distinct(
+    plan, tmp_path
+):
+    """AC-7/FR-6: a partial measurement fails differently from low coverage.
+
+    An incomplete measurement (omissions present) reports what could not
+    be instrumented; a complete measurement below the threshold reports
+    the shortfall instead. Neither message may read like the other.
+    """
+    incomplete = reconcile_omissions(plan, _with_enemy_omitted())
+    gate_message = omission_gate_message(incomplete, 80)
+
+    assert gate_message is not None
+    assert "incomplete" in gate_message.lower()
+    assert "below minimum" not in gate_message.lower()
+
+    thin = CoverageData(
+        version=1,
+        generated_at="2026-09-28T00:00:00Z",
+        files=[_entry(0, {"0": 1}), _entry(1, {"0": 0})],
+    )
+    assert omission_gate_message(reconcile_omissions(plan, thin), 80) is None
+
+    with pytest.raises(CoverageThresholdError) as exc_info:
+        generate_report(
+            plan, thin, tmp_path, format="json", min_threshold=0.8
+        )
+
+    assert "below minimum" in str(exc_info.value)
+    assert "incomplete" not in str(exc_info.value).lower()
 
 
 # --- The instrumented-set figure (R6) --------------------------------------
