@@ -373,4 +373,7 @@ _Archived tracks live in `./archive/`._
   Low review findings were applied in `c775175`)
   *Link: [random_test_order_20261015](./archive/random_test_order_20261015/index.md)*
 
+- [ ] **Track: Coverage Multiline Elif** (`bug`, `high`)
+  *Link: [20261027-coverage-multiline-elif](./tracks/20261027-coverage-multiline-elif/index.md)*
+
 
