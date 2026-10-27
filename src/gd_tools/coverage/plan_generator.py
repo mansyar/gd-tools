@@ -649,7 +649,9 @@ _EXPRESSION_ANCHOR_NODES = frozenset({"test_expr", *BOOL_OPERATOR_NODES})
 #: keyword/case labels rather than statement insertion points, so they
 #: stay out of :data:`ANCHOR_NODES`; expression points are span-wrapped
 #: (never line-injected), so the header line is their correct anchor.
-BRANCH_GUARD_ANCHOR_NODES = frozenset({"elif_branch", "match_branch"})
+BRANCH_GUARD_ANCHOR_NODES = frozenset(
+    {"elif_branch", "match_branch", "guarded_match_branch"}
+)
 
 
 def _map_expression_anchors(root: Tree) -> dict[int, int]:
@@ -898,6 +900,10 @@ class CoverageVisitor(Visitor):
 
     def match_branch(self, tree: Tree) -> None:
         """Track each match case as ``match_case``."""
+        self._add_point(tree, "branch", "match_case")
+
+    def guarded_match_branch(self, tree: Tree) -> None:
+        """Track each guarded match case as ``match_case``."""
         self._add_point(tree, "branch", "match_case")
 
     def test_expr(self, tree: Tree) -> None:
